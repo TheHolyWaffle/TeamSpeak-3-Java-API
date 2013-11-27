@@ -6,7 +6,7 @@ An Java implementation of [TeamSpeak's 3 server query API](http://media.teamspea
 
 ## Features
 
-- Contains all functionality (see [TeamSpeak 3 Server Query Manual](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf))
+- Contains all functionality! (see [TeamSpeak 3 Server Query Manual](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf))
 - Built-in keep alive method
 - Threaded event-based system
 
@@ -20,11 +20,7 @@ All functionality is contained in the [TS3Api](src/com/github/theholywaffle/team
 4. Call `getApi()` to get an TS3Api object.
 5. Do whatever you want with this api :)
 
-IMPORTANT:
-
-Only use `FloodRate.UNLIMITED` if you are sure that your query account is whitelisted. If not use `FloodRate.DEFAULT`. The server will temporarily ban your account if you send too many commands in a certain period of time. For more info on this check [TeamSpeak 3 Server Query Manual, page 6](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf).
-
-Example:
+**Example:**
 
     TS3Api api = new TS3Query("77.77.77.77", TS3Query.DEFAULT_PORT,FloodRate.UNLIMITED).debug().connect().getApi();
     api.login("serveradmin", "serveradminpassword");
@@ -34,7 +30,15 @@ Example:
     
 More examples can be found [here](src/com/github/theholywaffle/teamspeak3/example).
     
+**Important:**
+
+Only use `FloodRate.UNLIMITED` if you are sure that your query account is whitelisted. If not, use `FloodRate.DEFAULT`. The server will temporarily ban your account if you send too many commands in a short period of time. For more info on this check [TeamSpeak 3 Server Query Manual, page 6](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf).
+
 ## TODO (aka I need your help on this)
 
 * Add Javadoc to [TS3Api](src/com/github/theholywaffle/teamspeak3/TS3Api.java).
 * Add more methods to simplify [TS3Api](src/com/github/theholywaffle/teamspeak3/TS3Api.java).
+
+## Questions or bugs?
+
+Please let me know them [here](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/issues). I'll help you out as soon as I can.
