@@ -28,3 +28,11 @@ Example:
     api.selectDefaultVirtualServer();
     api.setNickname("PutPutBot");
     ...
+    
+More examples can be found [here](src/com/github/theholywaffle/teamspeak3/example).
+    
+TODO (aka I need your help on this)
+====
+
+* Add JavaDoc to [TS3Api](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/blob/master/src/com/github/theholywaffle/teamspeak3/TS3Api.java).
+* Add more methods to [TS3Api](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/blob/master/src/com/github/theholywaffle/teamspeak3/TS3Api.java).
