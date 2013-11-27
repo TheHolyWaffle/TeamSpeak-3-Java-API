@@ -183,7 +183,7 @@ public class TS3Query {
 		return eventManager;
 	}
 	
-	public TS3Api getBot(){
+	public TS3Api getApi(){
 		if(bot == null){
 			bot = new TS3Api(this);
 		}
