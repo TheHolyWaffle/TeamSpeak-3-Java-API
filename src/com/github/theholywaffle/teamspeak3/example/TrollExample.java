@@ -9,7 +9,7 @@ import com.github.theholywaffle.teamspeak3.TS3Query.FloodRate;
 import com.github.theholywaffle.teamspeak3.api.event.DefaultListener;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Channel;
 
-public class Example1 {
+public class TrollExample {
 
 	public static void main(String[] args) {
 
