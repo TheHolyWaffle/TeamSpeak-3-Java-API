@@ -23,10 +23,8 @@ All functionality is contained in the [TS3Api](https://github.com/TheHolyWaffle/
 
 Example:
 
-```TS3Api api = new TS3Query("77.77.77.77", TS3Query.DEFAULT_PORT,
-				FloodRate.UNLIMITED).debug().connect().getApi();
-				api.login("serveradmin", "5acRN2FmYPAoke9");
-api.selectDefaultVirtualServer();
-api.setNickname("PutPutBot");
-...
-```
+    TS3Api api = new TS3Query("77.77.77.77", TS3Query.DEFAULT_PORT,FloodRate.UNLIMITED).debug().connect().getApi();
+    api.login("serveradmin", "serveradminpassword");
+    api.selectDefaultVirtualServer();
+    api.setNickname("PutPutBot");
+    ...
