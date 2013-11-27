@@ -13,9 +13,9 @@ Features
 
 Getting Started
 ===============
-All functionality is contained in the [TS3Api](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/blob/master/src/com/github/theholywaffle/teamspeak3/TS3Api.java) object.
+All functionality is contained in the [TS3Api](src/com/github/theholywaffle/teamspeak3/TS3Api.java) object.
 
-1. In order to obtain this object you first need to create a new [TS3Query](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/blob/master/src/com/github/theholywaffle/teamspeak3/TS3Query.java) object.
+1. In order to obtain this object you first need to create a new [TS3Query](src/com/github/theholywaffle/teamspeak3/TS3Query.java) object.
 2. Enable debug if you wish by calling `debug()`
 3. Connect to the server with `connect()`
 4. Call `getApi()` to get an TS3Api object.
@@ -34,5 +34,5 @@ More examples can be found [here](src/com/github/theholywaffle/teamspeak3/exampl
 TODO (aka I need your help on this)
 ====
 
-* Add JavaDoc to [TS3Api](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/blob/master/src/com/github/theholywaffle/teamspeak3/TS3Api.java).
-* Add more methods to [TS3Api](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/blob/master/src/com/github/theholywaffle/teamspeak3/TS3Api.java).
+* Add JavaDoc to [TS3Api](src/com/github/theholywaffle/teamspeak3/TS3Api.java).
+* Add more methods to [TS3Api](src/com/github/theholywaffle/teamspeak3/TS3Api.java).
