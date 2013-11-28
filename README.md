@@ -44,4 +44,4 @@ Only use `FloodRate.UNLIMITED` if you are sure that your query account is whitel
 
 ## Questions or bugs?
 
-Please let me know them [here](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/issues). I'll help you out as soon as I can.
+Please let me know them [here](../../issues). I'll help you out as soon as I can.
