@@ -7,3 +7,4 @@
 *.war
 *.ear
 /bin
+/releases

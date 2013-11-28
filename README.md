@@ -9,8 +9,11 @@ An Java implementation of [TeamSpeak's 3 server query API](http://media.teamspea
 - Contains all functionality! (see [TeamSpeak 3 Server Query Manual](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf))
 - Built-in keep alive method
 - Threaded event-based system
+- No extra libraries
 
 ## Getting Started
+
+First of all, you can always download the latest release [here](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/releases). And add it to the buildpath of your project.
 
 All functionality is contained in the [TS3Api](src/com/github/theholywaffle/teamspeak3/TS3Api.java) object.
 
