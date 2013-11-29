@@ -10,8 +10,6 @@ public class SocketReader extends Thread {
 
 	private TS3Query ts3;
 
-	private boolean errorFound = false;
-
 	public SocketReader(TS3Query ts3) {
 		this.ts3 = ts3;
 		try {
@@ -32,43 +30,45 @@ public class SocketReader extends Thread {
 			try {
 				if (ts3.getIn().ready()) {
 					final String line = ts3.getIn().readLine();
+					if (!line.isEmpty()) {
+						Command c = ts3.getCommandList().peek();
+						if (line.startsWith("notify")) {
+							TS3Query.log("< [event] " + line);
+							new Thread(new Runnable() {
 
-					Command c = ts3.getCommandList().getFirstNotAnswered();
-					if (line.startsWith("notify")) {
-						new Thread(new Runnable() {
+								public void run() {
+									String arr[] = line.split(" ", 2);
+									ts3.getEventManager().fireEvent(arr[0],
+											arr[1]);
 
-							public void run() {
-								String arr[] = line.split(" ", 2);
-								ts3.getEventManager().fireEvent(arr[0], arr[1]);
-
-							}
-						}).start();
-
-					} else if (c != null && c.isSent()) {
-						TS3Query.log("[" + c.getName() + "] < " + line);
-						if (line.startsWith("error")) {
-							c.feedError(new QueryError(line.substring("error "
-									.length())));
-							if (c.getError().getId() != 0) {
-								try {
-									throw new UnknownErrorException(
-											"[ERROR] id:"
-													+ c.getError().getId()
-													+ " msg:"
-													+ c.getError().getMessage());
-								} catch (UnknownErrorException e) {
-									e.printStackTrace();
 								}
+							}).start();
+
+						} else if (c != null && c.isSent()) {
+							TS3Query.log("[" + c.getName() + "] < " + line);
+							if (line.startsWith("error")) {
+								c.feedError(new QueryError(line
+										.substring("error ".length())));
+								if (c.getError().getId() != 0) {
+									try {
+										throw new UnknownErrorException(
+												"[ERROR] ["+c.getName()+"] id:"
+														+ c.getError().getId()
+														+ " msg:"
+														+ c.getError()
+																.getMessage());
+									} catch (UnknownErrorException e) {
+										e.printStackTrace();
+									}
+								}
+								c.setAnswered();
+								ts3.getCommandList().remove(c);
+							}else if (!line.isEmpty()) {
+								c.feed(line);
 							}
-							errorFound = true;
-						} else if (line.isEmpty() && errorFound) {
-							c.setAnswered();
-							errorFound = false;
-						} else if (!line.isEmpty()) {
-							c.feed(line);
+						} else {
+							TS3Query.log("< " + line);
 						}
-					} else {
-						TS3Query.log("< " + line);
 					}
 				}
 			} catch (IOException e) {

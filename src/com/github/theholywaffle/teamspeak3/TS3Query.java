@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.github.theholywaffle.teamspeak3.api.Callback;
 import com.github.theholywaffle.teamspeak3.commands.Command;
@@ -22,7 +23,7 @@ public class TS3Query {
 	private SocketReader socketReader;
 	private SocketWriter socketWriter;
 
-	private CommandList commandList = new CommandList();
+	private ConcurrentLinkedQueue<Command> commandList = new ConcurrentLinkedQueue<>();
 	private EventManager eventManager;
 
 	private int floodRate;
@@ -102,7 +103,7 @@ public class TS3Query {
 	}
 
 	public boolean doCommand(Command c) {
-		commandList.add(c);
+		commandList.offer(c);
 		long start = System.currentTimeMillis();
 		while (!c.isAnswered() && System.currentTimeMillis() - start < 5_000) {
 			try {
@@ -110,10 +111,10 @@ public class TS3Query {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-		}
-		commandList.remove(c);
+		}		
 		if (!c.isAnswered()) {
 			TS3Query.log("Command " + c.getName() + " is not answered in time.");
+			commandList.remove(c);
 			return false;
 		}
 		return true;
@@ -159,32 +160,32 @@ public class TS3Query {
 		}
 		commandList.clear();
 	}
-	
+
 	public static void log(String msg) {
-		log(msg, false);	
+		log(msg, false);
 	}
 
 	public static void log(String msg, boolean forced) {
-		if(debug || forced){
+		if (debug || forced) {
 			System.out.println("[DEBUG] " + msg);
-		}		
+		}
 	}
-	
-	public TS3Query debug(){
+
+	public TS3Query debug() {
 		debug = true;
 		return this;
 	}
 
-	public CommandList getCommandList() {
+	public ConcurrentLinkedQueue<Command> getCommandList() {
 		return commandList;
 	}
-	
-	public EventManager getEventManager(){
+
+	public EventManager getEventManager() {
 		return eventManager;
 	}
-	
-	public TS3Api getApi(){
-		if(bot == null){
+
+	public TS3Api getApi() {
+		if (bot == null) {
 			bot = new TS3Api(this);
 		}
 		return bot;

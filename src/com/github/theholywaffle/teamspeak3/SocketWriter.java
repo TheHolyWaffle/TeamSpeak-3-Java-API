@@ -17,22 +17,20 @@ public class SocketWriter extends Thread {
 
 	public void run() {
 		while (ts3.getSocket().isConnected() && ts3.getOut() != null) {
-			if (ts3.getCommandList().getFirstNotAnswered() == ts3
-					.getCommandList().getFirstNotSent()) {
-				Command c = ts3.getCommandList().getFirstNotSent();
-				if (c != null) {
-					String msg = c.toString();
-					TS3Query.log("> " + msg);
-					ts3.getOut().println(msg);
-					c.setSent();
-				}
-			}
-			try {
-				Thread.sleep(floodRate);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			Command c = ts3.getCommandList().peek();
+			if (c != null && !c.isSent()) {
+				String msg = c.toString();
+				TS3Query.log("> " + msg);
+				ts3.getOut().println(msg);
+				c.setSent();
 			}
 		}
+		try {
+			Thread.sleep(floodRate);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
 		TS3Query.log("SocketWriter has a problem!", true);
 	}
 }
