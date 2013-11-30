@@ -2,9 +2,7 @@ package com.github.theholywaffle.teamspeak3;
 
 import java.io.IOException;
 
-import com.github.theholywaffle.teamspeak3.api.exception.UnknownErrorException;
 import com.github.theholywaffle.teamspeak3.commands.Command;
-import com.github.theholywaffle.teamspeak3.commands.response.QueryError;
 
 public class SocketReader extends Thread {
 
@@ -16,7 +14,7 @@ public class SocketReader extends Thread {
 			int i = 0;
 			while (i < 4) {
 				if (ts3.getIn().ready()) {
-					TS3Query.log("< " + ts3.getIn().readLine());
+					TS3Query.log.info("< " + ts3.getIn().readLine());
 					i++;
 				}
 			}
@@ -33,7 +31,7 @@ public class SocketReader extends Thread {
 					if (!line.isEmpty()) {
 						Command c = ts3.getCommandList().peek();
 						if (line.startsWith("notify")) {
-							TS3Query.log("< [event] " + line);
+							TS3Query.log.info("< [event] " + line);
 							new Thread(new Runnable() {
 
 								public void run() {
@@ -45,29 +43,19 @@ public class SocketReader extends Thread {
 							}).start();
 
 						} else if (c != null && c.isSent()) {
-							TS3Query.log("[" + c.getName() + "] < " + line);
+							TS3Query.log.info("[" + c.getName() + "] < " + line);
 							if (line.startsWith("error")) {
-								c.feedError(new QueryError(line
-										.substring("error ".length())));
+								c.feedError(line.substring("error ".length()));
 								if (c.getError().getId() != 0) {
-									try {
-										throw new UnknownErrorException(
-												"[ERROR] ["+c.getName()+"] id:"
-														+ c.getError().getId()
-														+ " msg:"
-														+ c.getError()
-																.getMessage());
-									} catch (UnknownErrorException e) {
-										e.printStackTrace();
-									}
+									TS3Query.log.severe("[ERROR] "+c.getError());
 								}
 								c.setAnswered();
 								ts3.getCommandList().remove(c);
-							}else if (!line.isEmpty()) {
+							} else if (!line.isEmpty()) {
 								c.feed(line);
 							}
 						} else {
-							TS3Query.log("< " + line);
+							TS3Query.log.info("< " + line);
 						}
 					}
 				}
@@ -80,7 +68,7 @@ public class SocketReader extends Thread {
 				e.printStackTrace();
 			}
 		}
-		TS3Query.log("SocketReader has a problem!", true);
+		TS3Query.log.severe("SocketReader has a problem!");
 	}
 
 }

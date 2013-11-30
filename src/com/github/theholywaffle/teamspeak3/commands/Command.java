@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.parameter.Parameter;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
-import com.github.theholywaffle.teamspeak3.commands.response.QueryError;
 
 public class Command {
 
@@ -34,8 +34,10 @@ public class Command {
 		}
 	}
 
-	public void feedError(QueryError err) {
-		error = err;
+	public void feedError(String err) {
+		if(error == null){
+			error = new QueryError(new DefaultArrayResponse(err).getArray().get(0));
+		}
 	}
 
 	public QueryError getError() {

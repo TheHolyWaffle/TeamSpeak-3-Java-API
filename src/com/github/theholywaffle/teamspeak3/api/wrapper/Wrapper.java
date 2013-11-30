@@ -77,5 +77,9 @@ public class Wrapper {
 	public String get(Property p) {
 		return get(p.getName());
 	}
+	
+	public String toString(){
+		return map.toString();
+	}
 
 }

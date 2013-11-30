@@ -46,28 +46,28 @@ public class StringUtil {
 	}
 
 	public static boolean getBoolean(String str) {
-		if (str.isEmpty()) {
+		if (str == null || str.isEmpty()) {
 			return false;
 		}
 		return StringUtil.getInt(str) == 1;
 	}
 
 	public static double getDouble(String str) {
-		if (str.isEmpty()) {
+		if (str == null || str.isEmpty()) {
 			return -1D;
 		}
 		return Double.parseDouble(str);
 	}
 
 	public static long getLong(String str) {
-		if (str.isEmpty()) {
+		if (str == null || str.isEmpty()) {
 			return -1L;
 		}
 		return Long.parseLong(str);
 	}
 
 	public static int getInt(String str) {
-		if (str.isEmpty()) {
+		if (str == null || str.isEmpty()) {
 			return -1;
 		}
 		return Integer.parseInt(str);

@@ -18,14 +18,14 @@ First of all, you can always download the latest release [here](../../releases/l
 All functionality is contained in the [TS3Api](src/com/github/theholywaffle/teamspeak3/TS3Api.java) object.
 
 1. In order to obtain this api object you first need to create a new [TS3Query](src/com/github/theholywaffle/teamspeak3/TS3Query.java) object with the correct constructor parameters.
-2. Enable debug if you wish by calling `debug()`
+2. (Optional) Enable debug if you wish by calling `debug(Level l)`. Default Level is `Level.WARNING`. Use `Level.ALL` to debug everything.
 3. Connect to the server with `connect()`
 4. Call `getApi()` to get an TS3Api object.
 5. Do whatever you want with this api :)
 
 **Example:**
 
-    TS3Api api = new TS3Query("77.77.77.77", TS3Query.DEFAULT_PORT,FloodRate.DEFAULT).debug().connect().getApi();
+    TS3Api api = new TS3Query("77.77.77.77", TS3Query.DEFAULT_PORT,FloodRate.DEFAULT).debug(Level.ALL).connect().getApi();
     api.login("serveradmin", "serveradminpassword"); //Your ServerQuery credentials
     api.selectDefaultVirtualServer();
     api.setNickname("PutPutBot");

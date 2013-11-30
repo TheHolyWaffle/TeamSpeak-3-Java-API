@@ -1027,6 +1027,10 @@ public class TS3Api {
 	public boolean moveClient(int channelId) {
 		return moveClient(whoAmI().getId(), channelId);
 	}
+	
+	public boolean moveClient(int channelId, String channelPassword) {
+		return moveClient(whoAmI().getId(), channelId,channelPassword);
+	}
 
 	public boolean pokeClient(int clientId, String message) {
 		CClientPoke poke = new CClientPoke(clientId, message);

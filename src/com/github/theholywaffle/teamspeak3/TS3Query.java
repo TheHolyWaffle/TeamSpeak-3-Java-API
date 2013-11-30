@@ -6,9 +6,12 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.github.theholywaffle.teamspeak3.api.Callback;
 import com.github.theholywaffle.teamspeak3.commands.Command;
+import com.github.theholywaffle.teamspeak3.log.LogHandler;
 
 public class TS3Query {
 
@@ -27,8 +30,9 @@ public class TS3Query {
 	private EventManager eventManager;
 
 	private int floodRate;
-	private static boolean debug;
 	private TS3Api bot;
+
+	public static final Logger log = Logger.getLogger(TS3Query.class.getName());
 
 	public enum FloodRate {
 		DEFAULT(350),
@@ -54,7 +58,7 @@ public class TS3Query {
 	}
 
 	public TS3Query(String host, FloodRate floodRate) {
-		this(host, DEFAULT_PORT, FloodRate.DEFAULT);
+		this(host, DEFAULT_PORT, floodRate.getMs());
 	}
 
 	public TS3Query(String host, int port, FloodRate floodRate) {
@@ -62,6 +66,9 @@ public class TS3Query {
 	}
 
 	public TS3Query(String host, int port, int floodRate) {
+		log.setUseParentHandlers(false);
+		log.addHandler(new LogHandler());
+		log.setLevel(Level.WARNING);
 		this.host = host;
 		this.port = port;
 		this.floodRate = floodRate;
@@ -80,7 +87,7 @@ public class TS3Query {
 				socketReader.start();
 				socketWriter = new SocketWriter(this, floodRate);
 				socketWriter.start();
-				new KeepAliveThread(this).start();
+				new KeepAliveThread(this, socketWriter).start();
 			}
 
 		} catch (IOException e) {
@@ -111,9 +118,9 @@ public class TS3Query {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-		}		
+		}
 		if (!c.isAnswered()) {
-			TS3Query.log("Command " + c.getName() + " is not answered in time.");
+			log.severe(("Command " + c.getName() + " is not answered in time."));
 			commandList.remove(c);
 			return false;
 		}
@@ -161,18 +168,8 @@ public class TS3Query {
 		commandList.clear();
 	}
 
-	public static void log(String msg) {
-		log(msg, false);
-	}
-
-	public static void log(String msg, boolean forced) {
-		if (debug || forced) {
-			System.out.println("[DEBUG] " + msg);
-		}
-	}
-
-	public TS3Query debug() {
-		debug = true;
+	public TS3Query debug(Level l) {
+		log.setLevel(l);
 		return this;
 	}
 

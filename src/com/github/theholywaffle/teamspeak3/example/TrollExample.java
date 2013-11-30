@@ -14,7 +14,7 @@ public class TrollExample {
 	public static void main(String[] args) {
 
 		TS3Api api = new TS3Query("77.77.77.77", TS3Query.DEFAULT_PORT,
-				FloodRate.DEFAULT).debug().connect().getApi();
+				FloodRate.DEFAULT).connect().getApi();
 
 		api.login("serveradmin", "serveradminpassword");
 		api.selectDefaultVirtualServer();

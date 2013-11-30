@@ -5,6 +5,7 @@ import com.github.theholywaffle.teamspeak3.commands.Command;
 public class SocketWriter extends Thread {
 	private TS3Query ts3;
 	private int floodRate;
+	private long lastCommand = System.currentTimeMillis();
 
 	public SocketWriter(TS3Query ts3, int floodRate) {
 		this.ts3 = ts3;
@@ -20,8 +21,9 @@ public class SocketWriter extends Thread {
 			Command c = ts3.getCommandList().peek();
 			if (c != null && !c.isSent()) {
 				String msg = c.toString();
-				TS3Query.log("> " + msg);
+				TS3Query.log.info("> " + msg);
 				ts3.getOut().println(msg);
+				lastCommand = System.currentTimeMillis();
 				c.setSent();
 			}
 		}
@@ -31,6 +33,10 @@ public class SocketWriter extends Thread {
 			e.printStackTrace();
 		}
 
-		TS3Query.log("SocketWriter has a problem!", true);
+		TS3Query.log.severe("SocketWriter has a problem!");
+	}
+	
+	public long getIdleTime(){
+		return System.currentTimeMillis() - lastCommand;
 	}
 }
