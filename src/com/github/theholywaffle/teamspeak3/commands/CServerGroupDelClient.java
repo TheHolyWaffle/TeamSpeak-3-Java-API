@@ -6,8 +6,8 @@ public class CServerGroupDelClient extends Command {
 
 	public CServerGroupDelClient(int groupId, int clientDBId) {
 		super("servergroupdelclient");
-		add(new KeyValueParam("sgid", groupId + ""));
-		add(new KeyValueParam("cldbid", clientDBId + ""));
+		add(new KeyValueParam("sgid", groupId));
+		add(new KeyValueParam("cldbid", clientDBId));
 	}
 
 }

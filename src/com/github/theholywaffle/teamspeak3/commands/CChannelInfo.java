@@ -6,7 +6,7 @@ public class CChannelInfo extends Command {
 
 	public CChannelInfo(int channelId) {
 		super("channelinfo");
-		add(new KeyValueParam("cid", channelId + ""));
+		add(new KeyValueParam("cid", channelId));
 	}
 
 }

@@ -6,7 +6,7 @@ public class CServerDelete extends Command {
 
 	public CServerDelete(int id) {
 		super("serverdelete");
-		add(new KeyValueParam("sid", id + ""));
+		add(new KeyValueParam("sid", id));
 	}
 
 }

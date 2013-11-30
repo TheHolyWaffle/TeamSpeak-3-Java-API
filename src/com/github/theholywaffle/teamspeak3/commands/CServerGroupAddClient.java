@@ -6,8 +6,8 @@ public class CServerGroupAddClient extends Command {
 
 	public CServerGroupAddClient(int groupId, int clientDBId) {
 		super("servergroupaddclient");
-		add(new KeyValueParam("sgid", groupId + ""));
-		add(new KeyValueParam("cldbid", clientDBId + ""));
+		add(new KeyValueParam("sgid", groupId));
+		add(new KeyValueParam("cldbid", clientDBId));
 	}
 
 }

@@ -7,7 +7,7 @@ public class CServerGroupPermList extends Command {
 
 	public CServerGroupPermList(int id) {
 		super("servergrouppermlist");
-		add(new KeyValueParam("sgid", id + ""));
+		add(new KeyValueParam("sgid", id));
 		add(new OptionParam("permsid"));
 	}
 

@@ -13,7 +13,7 @@ public class CServerNotifyRegister extends Command {
 		super("servernotifyregister");
 		add(new KeyValueParam("event", t.toString()));
 		if (channelId >= 0) {
-			add(new KeyValueParam("id", channelId + ""));
+			add(new KeyValueParam("id", channelId));
 		}
 
 	}

@@ -6,6 +6,6 @@ public class CServerStop extends Command {
 
 	public CServerStop(int id) {
 		super("serverstop");
-		add(new KeyValueParam("sid", id + ""));
+		add(new KeyValueParam("sid", id));
 	}
 }

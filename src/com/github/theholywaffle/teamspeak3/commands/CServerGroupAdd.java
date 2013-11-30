@@ -12,7 +12,7 @@ public class CServerGroupAdd extends Command {
 	public CServerGroupAdd(String name, PermissionGroupDatabaseType t) {
 		super("servergroupadd");
 		add(new KeyValueParam("name", name));
-		add(new KeyValueParam("type", t.getIndex() + ""));
+		add(new KeyValueParam("type", t.getIndex()));
 	}
 
 }

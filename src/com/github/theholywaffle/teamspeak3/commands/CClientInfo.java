@@ -6,7 +6,7 @@ public class CClientInfo extends Command {
 
 	public CClientInfo(int clientId) {
 		super("clientinfo");
-		add(new KeyValueParam("clid", clientId + ""));
+		add(new KeyValueParam("clid", clientId));
 	}
 
 }

@@ -6,7 +6,7 @@ public class CServerGroupDelPerm extends Command {
 
 	public CServerGroupDelPerm(int groupId, String permName) {
 		super("servergroupdelperm");
-		add(new KeyValueParam("sgid", groupId + ""));
+		add(new KeyValueParam("sgid", groupId));
 		add(new KeyValueParam("permsid", permName));
 	}
 

@@ -7,7 +7,7 @@ public class CServerGroupAutoDelPerm extends Command {
 
 	public CServerGroupAutoDelPerm(ServerGroupType t, String permName) {
 		super("servergroupautodelperm");
-		add(new KeyValueParam("sgtype", t.getIndex() + ""));
+		add(new KeyValueParam("sgtype", t.getIndex()));
 		add(new KeyValueParam("permsid", permName));
 	}
 

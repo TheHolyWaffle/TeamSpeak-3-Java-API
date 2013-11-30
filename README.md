@@ -29,6 +29,7 @@ All functionality is contained in the [TS3Api](src/com/github/theholywaffle/team
     api.login("serveradmin", "serveradminpassword"); //Your ServerQuery credentials
     api.selectDefaultVirtualServer();
     api.setNickname("PutPutBot");
+    api.sendChannelMessage("sup?");
     ...
     
 More examples can be found [here](src/com/github/theholywaffle/teamspeak3/example).

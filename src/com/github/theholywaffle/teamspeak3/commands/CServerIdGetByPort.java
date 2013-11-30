@@ -6,7 +6,7 @@ public class CServerIdGetByPort extends Command {
 
 	public CServerIdGetByPort(int port) {
 		super("serveridgetbyport");
-		add(new KeyValueParam("virtualserver_port", port + ""));
+		add(new KeyValueParam("virtualserver_port", port));
 	}
 
 }
