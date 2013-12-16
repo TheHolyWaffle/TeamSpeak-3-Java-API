@@ -23,7 +23,7 @@ public class EventListenerExample {
 				FloodRate.DEFAULT).connect().getApi();
 
 		api.login("serveradmin", "serveradminpassword");
-		api.selectDefaultVirtualServer();
+		api.selectVirtualServerById(1);
 		api.setNickname("PutPutBot");
 
 		api.addTS3Listeners(new TS3Listener() {

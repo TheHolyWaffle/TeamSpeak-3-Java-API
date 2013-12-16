@@ -1118,16 +1118,16 @@ public class TS3Api {
 		return null;
 	}
 
-	public boolean selectDefaultVirtualServer() {
-		return selectVirtualServer(1);
+	public boolean selectVirtualServerById(int id) {
+		CUse use = new CUse(id, -1);
+		if (query.doCommand(use)) {
+			return use.getError().isSuccessful();
+		}
+		return false;
 	}
 
-	public boolean selectVirtualServer(int id) {
-		return selectVirtualServer(id, -1);
-	}
-
-	public boolean selectVirtualServer(int id, int port) {
-		CUse use = new CUse(id, port);
+	public boolean selectVirtualServerByPort(int port) {
+		CUse use = new CUse(-1, port);
 		if (query.doCommand(use)) {
 			return use.getError().isSuccessful();
 		}
@@ -1135,7 +1135,7 @@ public class TS3Api {
 	}
 
 	public boolean selectVirtualServer(VirtualServer server) {
-		return selectVirtualServer(server.getId(), server.getPort());
+		return selectVirtualServerById(server.getId());
 	}
 
 	public boolean sendOfflineMessage(String clientUId, String subject,

@@ -10,8 +10,10 @@ public class CUse extends Command {
 
 	public CUse(int id, int port) {
 		super("use");
-		add(new KeyValueParam("sid", id));
-		if (port >= 0) {
+		if(id > 0){
+			add(new KeyValueParam("sid", id));
+		}		
+		if (port > 0) {
 			add(new KeyValueParam("port", port));
 		}
 	}

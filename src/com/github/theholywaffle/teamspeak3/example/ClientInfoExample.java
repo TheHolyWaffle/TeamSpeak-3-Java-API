@@ -16,7 +16,7 @@ public class ClientInfoExample {
 				FloodRate.DEFAULT).connect().getApi();
 
 		api.login("serveradmin", "serveradminpassword");
-		api.selectDefaultVirtualServer();
+		api.selectVirtualServerById(1);
 		api.setNickname("PutPutBot");
 
 		for (Client c : api.getClients()) {
