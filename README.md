@@ -13,7 +13,7 @@ An Java implementation of [TeamSpeak's 3 server query API](http://media.teamspea
 
 ## Getting Started
 
-First of all, you can always download the latest release [here](../../releases/latest). And add it to the buildpath of your project.
+First of all, you can always download the latest release [here](../../releases/latest) and add it to the buildpath of your project. Or you can also just download the sourcecode and put it in your project's source folder.
 
 All functionality is contained in the [TS3Api](src/com/github/theholywaffle/teamspeak3/TS3Api.java) object.
 
@@ -27,7 +27,7 @@ All functionality is contained in the [TS3Api](src/com/github/theholywaffle/team
 
     TS3Api api = new TS3Query("77.77.77.77", TS3Query.DEFAULT_PORT,FloodRate.DEFAULT).debug(Level.ALL).connect().getApi();
     api.login("serveradmin", "serveradminpassword"); //Your ServerQuery credentials
-    api.selectDefaultVirtualServer();
+    api.selectVirtualServerById(1);
     api.setNickname("PutPutBot");
     api.sendChannelMessage("sup?");
     ...
