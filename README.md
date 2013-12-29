@@ -15,9 +15,9 @@ An Java implementation of [TeamSpeak's 3 server query API](http://media.teamspea
 
 First of all, you can always download the latest release [here](../../releases/latest) and add it to the buildpath of your project. Or you can also just download the sourcecode and put it in your project's source folder.
 
-All functionality is contained in the [TS3Api](src/com/github/theholywaffle/teamspeak3/TS3Api.java) object.
+All functionality is contained in the [TS3Api](src/main/java/com/github/theholywaffle/teamspeak3/TS3Api.java) object.
 
-1. In order to obtain this api object you first need to create a new [TS3Query](src/com/github/theholywaffle/teamspeak3/TS3Query.java) object with the correct constructor parameters.
+1. In order to obtain this api object you first need to create a new [TS3Query](src/main/java/com/github/theholywaffle/teamspeak3/TS3Query.java) object with the correct constructor parameters.
 2. (Optional) Enable debug if you wish by calling `debug(Level l)`. Default Level is `Level.WARNING`. Use `Level.ALL` to debug everything.
 3. Connect to the server with `connect()`
 4. Call `getApi()` to get an TS3Api object.
@@ -27,12 +27,12 @@ All functionality is contained in the [TS3Api](src/com/github/theholywaffle/team
 
     TS3Api api = new TS3Query("77.77.77.77", TS3Query.DEFAULT_PORT,FloodRate.DEFAULT).debug(Level.ALL).connect().getApi();
     api.login("serveradmin", "serveradminpassword"); //Your ServerQuery credentials
-    api.selectVirtualServerById(1);
+    api.selectVirtualServerById(1); //or api.selectVirtualServerByPort(9987)
     api.setNickname("PutPutBot");
     api.sendChannelMessage("sup?");
     ...
     
-More examples can be found [here](src/com/github/theholywaffle/teamspeak3/example).
+More examples can be found [here](src/main/java/com/github/theholywaffle/teamspeak3/example).
     
 **Important:**
 
@@ -40,8 +40,8 @@ Only use `FloodRate.UNLIMITED` if you are sure that your query account is whitel
 
 ## TODO (aka I need your help on this)
 
-* Add Javadoc to [TS3Api](src/com/github/theholywaffle/teamspeak3/TS3Api.java).
-* Add more methods to simplify [TS3Api](src/com/github/theholywaffle/teamspeak3/TS3Api.java).
+* Add Javadoc to [TS3Api](src/main/java/com/github/theholywaffle/teamspeak3/TS3Api.java).
+* Add more methods to simplify [TS3Api](src/main/java/com/github/theholywaffle/teamspeak3/TS3Api.java).
 
 ## Questions or bugs?
 
