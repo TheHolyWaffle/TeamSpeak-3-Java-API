@@ -18,4 +18,7 @@ public class TS3Exception extends RuntimeException {
 		super(msg + " [Please report this exception to the developer!]");
 	}
 
+    public TS3Exception(String msg, Throwable cause) {
+        super(msg, cause);
+    }
 }
