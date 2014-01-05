@@ -4,7 +4,7 @@
  * are made available under the terms of the GNU Public License v3.0
  * which accompanies this distribution, and is available at
  * http://www.gnu.org/licenses/gpl.html
- * 
+ *
  * Contributors:
  *     Bert De Geyter (https://github.com/TheHolyWaffle) - initial API and implementation
  ******************************************************************************/
@@ -21,6 +21,8 @@ import java.util.logging.Logger;
 
 import com.github.theholywaffle.teamspeak3.api.Callback;
 import com.github.theholywaffle.teamspeak3.commands.Command;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectFailedException;
 import com.github.theholywaffle.teamspeak3.log.LogHandler;
 
 public class TS3Query {
@@ -41,6 +43,9 @@ public class TS3Query {
 
 	private int floodRate;
 	private TS3Api bot;
+
+    private boolean exitOnConnectFailure = true;
+    private boolean throwExceptionWhenCommandFails;
 
 	public static final Logger log = Logger.getLogger(TS3Query.class.getName());
 
@@ -102,7 +107,11 @@ public class TS3Query {
 
 		} catch (IOException e) {
 			e.printStackTrace();
-			System.exit(1);
+            if(exitOnConnectFailure) {
+			    System.exit(1);
+            } else {
+                throw new TS3ConnectFailedException("An error occurred while connecting with teamspeak", e);
+            }
 		}
 		return this;
 	}
@@ -126,6 +135,9 @@ public class TS3Query {
 			try {
 				Thread.sleep(50);
 			} catch (InterruptedException e) {
+                if(throwExceptionWhenCommandFails) {
+                    throw new TS3CommandFailedException("An error occurred while sending a command to a teamspeak server", e);
+                }
 				e.printStackTrace();
 			}
 		}
@@ -198,4 +210,11 @@ public class TS3Query {
 		return bot;
 	}
 
+    public void setExitOnConnectFailure(boolean exitOnConnectFailure) {
+        this.exitOnConnectFailure = exitOnConnectFailure;
+    }
+
+    public void setThrowExceptionWhenCommandFails(boolean throwExceptionWhenCommandFails) {
+        this.throwExceptionWhenCommandFails = throwExceptionWhenCommandFails;
+    }
 }
