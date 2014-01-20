@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Bert De Geyter (https://github.com/TheHolyWaffle).
+ * Copyright (c) 2014 Bert De Geyter (https://github.com/TheHolyWaffle).
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Public License v3.0
  * which accompanies this distribution, and is available at
@@ -17,16 +17,15 @@ import com.github.theholywaffle.teamspeak3.commands.Command;
 public class SocketReader extends Thread {
 
 	private TS3Query ts3;
+	private boolean stop;
 
 	public SocketReader(TS3Query ts3) {
 		this.ts3 = ts3;
 		try {
 			int i = 0;
-			while (i < 4) {
-				if (ts3.getIn().ready()) {
-					TS3Query.log.info("< " + ts3.getIn().readLine());
-					i++;
-				}
+			while (i < 4 || ts3.getIn().ready()) {
+				TS3Query.log.info("< " + ts3.getIn().readLine());
+				i++;
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -34,7 +33,7 @@ public class SocketReader extends Thread {
 	}
 
 	public void run() {
-		while (ts3.getSocket().isConnected() && ts3.getIn() != null) {
+		while (ts3.getSocket().isConnected() && ts3.getIn() != null && !stop) {
 			try {
 				if (ts3.getIn().ready()) {
 					final String line = ts3.getIn().readLine();
@@ -53,11 +52,13 @@ public class SocketReader extends Thread {
 							}).start();
 
 						} else if (c != null && c.isSent()) {
-							TS3Query.log.info("[" + c.getName() + "] < " + line);
+							TS3Query.log
+									.info("[" + c.getName() + "] < " + line);
 							if (line.startsWith("error")) {
 								c.feedError(line.substring("error ".length()));
 								if (c.getError().getId() != 0) {
-									TS3Query.log.severe("[ERROR] "+c.getError());
+									TS3Query.log.severe("[ERROR] "
+											+ c.getError());
 								}
 								c.setAnswered();
 								ts3.getCommandList().remove(c);
@@ -78,7 +79,11 @@ public class SocketReader extends Thread {
 				e.printStackTrace();
 			}
 		}
-		TS3Query.log.severe("SocketReader has a problem!");
+		TS3Query.log.severe("SocketReader has stopped!");
+	}
+
+	public void finish() {
+		stop = true;
 	}
 
 }

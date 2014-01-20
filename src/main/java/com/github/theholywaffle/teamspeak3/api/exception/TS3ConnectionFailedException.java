@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Bert De Geyter (https://github.com/TheHolyWaffle).
+ * Copyright (c) 2014 Bert De Geyter (https://github.com/TheHolyWaffle).
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Public License v3.0
  * which accompanies this distribution, and is available at
@@ -10,12 +10,12 @@
  ******************************************************************************/
 package com.github.theholywaffle.teamspeak3.api.exception;
 
-public class UnknownEventException extends TS3Exception {
+public class TS3ConnectionFailedException extends TS3Exception{
 
-	private static final long serialVersionUID = -9179157153557357715L;
+	private static final long serialVersionUID = 6849777544299282019L;
 
-	public UnknownEventException(String event) {
-		super(event);
+	public TS3ConnectionFailedException(Throwable c) {
+		super("An error occurred while sending a command to a teamspeak server", c);
 	}
 
 }

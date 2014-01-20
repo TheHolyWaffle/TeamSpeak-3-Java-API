@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Bert De Geyter (https://github.com/TheHolyWaffle).
+ * Copyright (c) 2014 Bert De Geyter (https://github.com/TheHolyWaffle).
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Public License v3.0
  * which accompanies this distribution, and is available at
@@ -16,19 +16,15 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.github.theholywaffle.teamspeak3.api.Callback;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 import com.github.theholywaffle.teamspeak3.log.LogHandler;
 
 public class TS3Query {
-
-	public static final int DEFAULT_PORT = 10011;
-
-	private final String host;
-	private final int port;
 
 	private Socket socket;
 	private PrintWriter out;
@@ -37,10 +33,10 @@ public class TS3Query {
 	private SocketWriter socketWriter;
 
 	private ConcurrentLinkedQueue<Command> commandList = new ConcurrentLinkedQueue<>();
-	private EventManager eventManager;
+	private EventManager eventManager = new EventManager();
 
-	private int floodRate;
 	private TS3Api bot;
+	private TS3Config config;
 
 	public static final Logger log = Logger.getLogger(TS3Query.class.getName());
 
@@ -59,50 +55,37 @@ public class TS3Query {
 		}
 	}
 
-	public TS3Query(String host) {
-		this(host, DEFAULT_PORT, FloodRate.DEFAULT);
-	}
-
-	public TS3Query(String host, int port) {
-		this(host, port, FloodRate.DEFAULT);
-	}
-
-	public TS3Query(String host, FloodRate floodRate) {
-		this(host, DEFAULT_PORT, floodRate.getMs());
-	}
-
-	public TS3Query(String host, int port, FloodRate floodRate) {
-		this(host, port, floodRate.getMs());
-	}
-
-	public TS3Query(String host, int port, int floodRate) {
+	public TS3Query(TS3Config config) {
 		log.setUseParentHandlers(false);
-		log.addHandler(new LogHandler());
-		log.setLevel(Level.WARNING);
-		this.host = host;
-		this.port = port;
-		this.floodRate = floodRate;
-		this.eventManager = new EventManager();
+		log.addHandler(new LogHandler(config.getDebugToFile()));
+		log.setLevel(config.getDebugLevel());
+		this.config = config;
 	}
 
 	public TS3Query connect() {
 		exit();
 		try {
-			socket = new Socket(host, port);
+			socket = new Socket(config.getHost(), config.getQueryPort());
 			if (socket.isConnected()) {
 				out = new PrintWriter(socket.getOutputStream(), true);
 				in = new BufferedReader(new InputStreamReader(
 						socket.getInputStream()));
 				socketReader = new SocketReader(this);
 				socketReader.start();
-				socketWriter = new SocketWriter(this, floodRate);
+				socketWriter = new SocketWriter(this, config.getFloodRate()
+						.getMs());
 				socketWriter.start();
 				new KeepAliveThread(this, socketWriter).start();
 			}
 
 		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
+			throw new TS3ConnectionFailedException(e);
+		}
+
+		// Executing config object
+		final TS3Api api = getApi();
+		if (config.getUsername() != null && config.getPassword() != null) {
+			api.login(config.getUsername(), config.getPassword());
 		}
 		return this;
 	}
@@ -122,11 +105,11 @@ public class TS3Query {
 	public boolean doCommand(Command c) {
 		commandList.offer(c);
 		long start = System.currentTimeMillis();
-		while (!c.isAnswered() && System.currentTimeMillis() - start < 5_000) {
+		while (!c.isAnswered() && System.currentTimeMillis() - start < 4_000) {
 			try {
 				Thread.sleep(50);
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				throw new TS3CommandFailedException(e);
 			}
 		}
 		if (!c.isAnswered()) {
@@ -175,12 +158,15 @@ public class TS3Query {
 			} catch (IOException ignored) {
 			}
 		}
+		if (socketReader != null) {
+			socketReader.finish();
+			socketReader = null;
+		}
+		if (socketWriter != null) {
+			socketWriter.finish();
+			socketWriter = null;
+		}
 		commandList.clear();
-	}
-
-	public TS3Query debug(Level l) {
-		log.setLevel(l);
-		return this;
 	}
 
 	public ConcurrentLinkedQueue<Command> getCommandList() {

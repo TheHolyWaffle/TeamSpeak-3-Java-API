@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Bert De Geyter (https://github.com/TheHolyWaffle).
+ * Copyright (c) 2014 Bert De Geyter (https://github.com/TheHolyWaffle).
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Public License v3.0
  * which accompanies this distribution, and is available at
@@ -16,6 +16,7 @@ public class SocketWriter extends Thread {
 	private TS3Query ts3;
 	private int floodRate;
 	private long lastCommand = System.currentTimeMillis();
+	private boolean stop;
 
 	public SocketWriter(TS3Query ts3, int floodRate) {
 		this.ts3 = ts3;
@@ -27,7 +28,7 @@ public class SocketWriter extends Thread {
 	}
 
 	public void run() {
-		while (ts3.getSocket().isConnected() && ts3.getOut() != null) {
+		while (ts3.getSocket().isConnected() && ts3.getOut() != null && !stop) {
 			Command c = ts3.getCommandList().peek();
 			if (c != null && !c.isSent()) {
 				String msg = c.toString();
@@ -43,10 +44,14 @@ public class SocketWriter extends Thread {
 			e.printStackTrace();
 		}
 
-		TS3Query.log.severe("SocketWriter has a problem!");
+		TS3Query.log.severe("SocketWriter has stopped!");
 	}
-	
-	public long getIdleTime(){
+
+	public long getIdleTime() {
 		return System.currentTimeMillis() - lastCommand;
+	}
+
+	public void finish() {
+		stop = true;
 	}
 }

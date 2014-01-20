@@ -8,17 +8,14 @@
  * Contributors:
  *     Bert De Geyter (https://github.com/TheHolyWaffle) - initial API and implementation
  ******************************************************************************/
-package com.github.theholywaffle.teamspeak3.commands;
+package com.github.theholywaffle.teamspeak3.api.exception;
 
-import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
+public class TS3UnknownErrorException extends TS3Exception {
 
-public class CPermOverview extends Command {
+	private static final long serialVersionUID = -8458508268312921713L;
 
-	public CPermOverview(int channelId, int clientDBId) {
-		super("permoverview");
-		add(new KeyValueParam("cid",channelId+""));
-		add(new KeyValueParam("cldbid",clientDBId+""));
-		add(new KeyValueParam("permid",0+""));
+	public TS3UnknownErrorException(String error) {
+		super(error+" [Please report this exception to the developer!]");
 	}
 
 }

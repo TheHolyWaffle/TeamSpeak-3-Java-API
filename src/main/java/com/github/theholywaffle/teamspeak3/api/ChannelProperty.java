@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Bert De Geyter (https://github.com/TheHolyWaffle).
+ * Copyright (c) 2014 Bert De Geyter (https://github.com/TheHolyWaffle).
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Public License v3.0
  * which accompanies this distribution, and is available at
@@ -24,6 +24,7 @@ public enum ChannelProperty implements Property {
 	CHANNEL_FLAG_PASSWORD(false),
 	CHANNEL_FLAG_PERMANENT(true),
 	CHANNEL_FLAG_SEMI_PERMANENT(true),
+	CHANNEL_FLAG_TEMPORARY(true),
 	CHANNEL_FORCED_SILENCE(false),
 	CHANNEL_ICON_ID(true),
 	CHANNEL_MAXCLIENTS(true),
@@ -36,8 +37,9 @@ public enum ChannelProperty implements Property {
 	CHANNEL_PASSWORD(true),
 	CHANNEL_TOPIC(true),
 	CID(false),
-	PID(true);
-	
+	PID(false),
+	CPID(true);
+
 	private boolean changeable;
 
 	ChannelProperty(boolean changeable) {

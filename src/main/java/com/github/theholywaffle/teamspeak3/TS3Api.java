@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Bert De Geyter (https://github.com/TheHolyWaffle).
+ * Copyright (c) 2014 Bert De Geyter (https://github.com/TheHolyWaffle).
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Public License v3.0
  * which accompanies this distribution, and is available at
@@ -72,7 +72,7 @@ public class TS3Api {
 	 * @param uid
 	 *            target UID, can be null
 	 * @param timeInSeconds
-	 *            the duration of the ban, 0 means permanent
+	 *            the duration of the ban, 0 equals permanent
 	 * @param reason
 	 *            the reason for the ban
 	 * @return banid
