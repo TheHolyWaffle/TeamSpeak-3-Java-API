@@ -50,14 +50,14 @@ Only use `FloodRate.UNLIMITED` if you are sure that your query account is whitel
 **TS3Config Settings**
 
 |Option | Description | Default value | Required |
-|--- | --- | --- | --- |
+|--- | --- |:---:|:---:|
 |Host/IP | IP/Host of TeamSpeak 3 server.|  | yes |
 |QueryPort | Query port of TeamSpeak 3 server. | 10011 | yes |
 |FloodRate | Prevents possible spam to the server. | `FloodRate.DEFAULT` | no |
 |Username | Username of your query account. |   | no |
 |Password | Password of your query account. |  | no |
 |DebugLevel | Determines how much will be logged. | `Level.WARNING` | no |
-|Debug to file | Write logs to logfile (teamspeak.log).|  false | no |
+|Debug to file | Write logs to logfile (teamspeak.log).|  False | no |
 
 ## TODO
 
