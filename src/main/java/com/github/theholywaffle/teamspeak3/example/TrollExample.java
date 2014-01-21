@@ -28,6 +28,7 @@ public class TrollExample {
 		config.setLoginCredentials("serveradmin", "serveradminpassword");
 		
 		final TS3Query query = new TS3Query(config);
+		query.connect();
 		
 		final TS3Api api = query.getApi();
 		api.selectVirtualServerById(1);
