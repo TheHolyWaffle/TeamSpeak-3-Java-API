@@ -19,6 +19,7 @@ public class SocketWriter extends Thread {
 	private boolean stop;
 
 	public SocketWriter(TS3Query ts3, int floodRate) {
+		super("SocketWriter");
 		this.ts3 = ts3;
 		if (floodRate > 50) {
 			this.floodRate = floodRate;
@@ -37,12 +38,12 @@ public class SocketWriter extends Thread {
 				lastCommand = System.currentTimeMillis();
 				c.setSent();
 			}
-		}
-		try {
-			Thread.sleep(floodRate);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+			try {
+				Thread.sleep(floodRate);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}	
 
 		TS3Query.log.severe("SocketWriter has stopped!");
 	}

@@ -20,6 +20,7 @@ public class SocketReader extends Thread {
 	private boolean stop;
 
 	public SocketReader(TS3Query ts3) {
+		super("SocketReader");
 		this.ts3 = ts3;
 		try {
 			int i = 0;

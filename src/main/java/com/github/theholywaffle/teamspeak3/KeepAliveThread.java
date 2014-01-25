@@ -20,6 +20,7 @@ public class KeepAliveThread extends Thread{
 	private SocketWriter writer;
 
 	public KeepAliveThread(TS3Query ts3, SocketWriter socketWriter) {
+		super("Keep alive");
 		this.ts3=ts3;
 		this.writer=socketWriter;
 	}
