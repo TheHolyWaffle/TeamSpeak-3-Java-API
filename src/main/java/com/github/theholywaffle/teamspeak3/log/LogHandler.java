@@ -6,7 +6,7 @@
  * http://www.gnu.org/licenses/gpl.html
  * 
  * Contributors:
- *     Bert De Geyter (https://github.com/TheHolyWaffle) - initial API and implementation
+ *     Bert De Geyter (https://github.com/TheHolyWaffle)
  ******************************************************************************/
 package com.github.theholywaffle.teamspeak3.log;
 

@@ -6,7 +6,7 @@
  * http://www.gnu.org/licenses/gpl.html
  * 
  * Contributors:
- *     Bert De Geyter (https://github.com/TheHolyWaffle) - initial API and implementation
+ *     Bert De Geyter (https://github.com/TheHolyWaffle)
  ******************************************************************************/
 package com.github.theholywaffle.teamspeak3.commands;
 
@@ -17,7 +17,7 @@ public class CChannelMove extends Command {
 	public CChannelMove(int channelId, int channelParentId, int order) {
 		super("channelmove");
 		add(new KeyValueParam("cid", channelId));
-		add(new KeyValueParam("cpid", channelId));
+		add(new KeyValueParam("cpid", channelParentId));
 		if (order < 0) {
 			order = 0;
 		}
