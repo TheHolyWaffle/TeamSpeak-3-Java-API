@@ -29,7 +29,7 @@ public class SocketWriter extends Thread {
 	}
 
 	public void run() {
-		while (ts3.getSocket().isConnected() && ts3.getOut() != null && !stop) {
+		while (ts3.getSocket()!= null &&ts3.getSocket().isConnected() && ts3.getOut() != null && !stop) {
 			Command c = ts3.getCommandList().peek();
 			if (c != null && !c.isSent()) {
 				String msg = c.toString();
@@ -45,7 +45,7 @@ public class SocketWriter extends Thread {
 			}
 		}	
 
-		TS3Query.log.severe("SocketWriter has stopped!");
+		TS3Query.log.warning("SocketWriter has stopped!");
 	}
 
 	public long getIdleTime() {

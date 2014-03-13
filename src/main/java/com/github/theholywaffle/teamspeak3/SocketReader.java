@@ -34,7 +34,7 @@ public class SocketReader extends Thread {
 	}
 
 	public void run() {
-		while (ts3.getSocket().isConnected() && ts3.getIn() != null && !stop) {
+		while (ts3.getSocket()!= null && ts3.getSocket().isConnected() && ts3.getIn() != null && !stop) {
 			try {
 				if (ts3.getIn().ready()) {
 					final String line = ts3.getIn().readLine();
@@ -80,7 +80,7 @@ public class SocketReader extends Thread {
 				e.printStackTrace();
 			}
 		}
-		TS3Query.log.severe("SocketReader has stopped!");
+		TS3Query.log.warning("SocketReader has stopped!");
 	}
 
 	public void finish() {

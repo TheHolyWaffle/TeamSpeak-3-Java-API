@@ -31,11 +31,12 @@ public class TS3Query {
 	private BufferedReader in;
 	private SocketReader socketReader;
 	private SocketWriter socketWriter;
+	private KeepAliveThread keepAlive;
 
 	private ConcurrentLinkedQueue<Command> commandList = new ConcurrentLinkedQueue<>();
 	private EventManager eventManager = new EventManager();
 
-	private TS3Api bot;
+	private TS3Api api;
 	private TS3Config config;
 
 	public static final Logger log = Logger.getLogger(TS3Query.class.getName());
@@ -63,19 +64,18 @@ public class TS3Query {
 	}
 
 	public TS3Query connect() {
-		exit();
+		//exit();
 		try {
 			socket = new Socket(config.getHost(), config.getQueryPort());
 			if (socket.isConnected()) {
 				out = new PrintWriter(socket.getOutputStream(), true);
-				in = new BufferedReader(new InputStreamReader(
-						socket.getInputStream()));
+				in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 				socketReader = new SocketReader(this);
 				socketReader.start();
-				socketWriter = new SocketWriter(this, config.getFloodRate()
-						.getMs());
+				socketWriter = new SocketWriter(this, config.getFloodRate().getMs());
 				socketWriter.start();
-				new KeepAliveThread(this, socketWriter).start();
+				keepAlive = new KeepAliveThread(this, socketWriter);
+				keepAlive.start();
 			}
 
 		} catch (IOException e) {
@@ -83,7 +83,7 @@ public class TS3Query {
 		}
 
 		// Executing config object
-		final TS3Api api = getApi();
+		TS3Api api = getApi();
 		if (config.getUsername() != null && config.getPassword() != null) {
 			api.login(config.getUsername(), config.getPassword());
 		}
@@ -140,33 +140,41 @@ public class TS3Query {
 	public void exit() {
 		if (out != null) {
 			out.close();
-			out = null;
 		}
 		if (in != null) {
 			try {
 				in.close();
-				in = null;
 			} catch (IOException ignored) {
+				ignored.printStackTrace();
 			}
 		}
 		if (socket != null) {
 			try {
-				socket.shutdownInput();
-				socket.shutdownOutput();
 				socket.close();
-				socket = null;
 			} catch (IOException ignored) {
+				ignored.printStackTrace();
 			}
 		}
-		if (socketReader != null) {
-			socketReader.finish();
-			socketReader = null;
+		try {
+			if (socketReader != null) {
+				socketReader.finish();
+				socketReader.join();
+			}
+			if (socketWriter != null) {
+				socketWriter.finish();
+				socketWriter.join();
+			}
+			if (keepAlive != null) {
+				keepAlive.finish();
+				keepAlive.join();
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
-		if (socketWriter != null) {
-			socketWriter.finish();
-			socketWriter = null;
-		}
+
 		commandList.clear();
+		commandList = null;
+
 	}
 
 	public ConcurrentLinkedQueue<Command> getCommandList() {
@@ -178,10 +186,10 @@ public class TS3Query {
 	}
 
 	public TS3Api getApi() {
-		if (bot == null) {
-			bot = new TS3Api(this);
+		if (api == null) {
+			api = new TS3Api(this);
 		}
-		return bot;
+		return api;
 	}
 
 }
