@@ -19,7 +19,7 @@ public class KeepAliveThread extends Thread {
 	private TS3Query ts3;
 	private SocketWriter writer;
 
-	private boolean stop;
+	private volatile boolean stop;
 
 	public KeepAliveThread(TS3Query ts3, SocketWriter socketWriter) {
 		super("Keep alive");

@@ -16,6 +16,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.logging.Handler;
 import java.util.logging.Logger;
 
 import com.github.theholywaffle.teamspeak3.api.Callback;
@@ -64,7 +65,7 @@ public class TS3Query {
 	}
 
 	public TS3Query connect() {
-		//exit();
+		// exit();
 		try {
 			socket = new Socket(config.getHost(), config.getQueryPort());
 			if (socket.isConnected()) {
@@ -137,6 +138,9 @@ public class TS3Query {
 		}).start();
 	}
 
+	/**
+	 * Removes and closes all used resources to the teamspeak server.
+	 */
 	public void exit() {
 		if (out != null) {
 			out.close();
@@ -145,14 +149,12 @@ public class TS3Query {
 			try {
 				in.close();
 			} catch (IOException ignored) {
-				ignored.printStackTrace();
 			}
 		}
 		if (socket != null) {
 			try {
 				socket.close();
 			} catch (IOException ignored) {
-				ignored.printStackTrace();
 			}
 		}
 		try {
@@ -174,7 +176,9 @@ public class TS3Query {
 
 		commandList.clear();
 		commandList = null;
-
+		for (Handler lh : log.getHandlers()) {
+			log.removeHandler(lh);
+		}
 	}
 
 	public ConcurrentLinkedQueue<Command> getCommandList() {

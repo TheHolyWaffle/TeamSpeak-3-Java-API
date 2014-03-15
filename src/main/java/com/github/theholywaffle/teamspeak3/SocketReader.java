@@ -17,7 +17,7 @@ import com.github.theholywaffle.teamspeak3.commands.Command;
 public class SocketReader extends Thread {
 
 	private TS3Query ts3;
-	private boolean stop;
+	private volatile boolean stop;
 
 	public SocketReader(TS3Query ts3) {
 		super("SocketReader");

@@ -472,7 +472,7 @@ public class TS3Api {
 	}
 
 	/**
-	 * So far only ClientProperty.CLIENT_DESCRIPTION seems to a correct
+	 * So far only ClientProperty.CLIENT_DESCRIPTION seems to be a correct
 	 * ClientProperty. Others don't.
 	 */
 	public void editClient(int clientId, HashMap<ClientProperty, String> options) {
@@ -1050,13 +1050,13 @@ public class TS3Api {
 		return false;
 	}
 
+	/**
+	 * Leaves the TeamSpeak 3 server.
+	 * 
+	 * @return True if succesful, otherwise false.
+	 */
 	public boolean quit() {
-		CQuit quit = new CQuit();
-		if (query.doCommand(quit)) {
-			System.exit(0);
-			return true;
-		}
-		return false;
+		return query.doCommand(new CQuit());
 	}
 
 	public void registerAllEvents() {

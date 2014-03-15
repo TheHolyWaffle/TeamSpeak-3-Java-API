@@ -16,7 +16,7 @@ public class SocketWriter extends Thread {
 	private TS3Query ts3;
 	private int floodRate;
 	private long lastCommand = System.currentTimeMillis();
-	private boolean stop;
+	private volatile boolean stop;
 
 	public SocketWriter(TS3Query ts3, int floodRate) {
 		super("SocketWriter");
