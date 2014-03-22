@@ -8,3 +8,7 @@
 *.ear
 /bin
 /releases
+/target
+
+# Eclise Files
+.settings
