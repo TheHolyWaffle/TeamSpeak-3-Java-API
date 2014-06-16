@@ -29,12 +29,14 @@ public class LogHandler extends Handler {
 
 	public LogHandler(boolean debugToFile) {
 		this.debugToFile = debugToFile;
-		log = new File("teamspeak.log");
-		if (!log.exists()) {
-			try {
-				log.createNewFile();
-			} catch (IOException e) {
-				e.printStackTrace();
+		if(this.debugToFile) {
+			log = new File("teamspeak.log");
+			if (!log.exists()) {
+				try {
+					log.createNewFile();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
