@@ -25,5 +25,11 @@ public interface TS3Listener {
 	public void onChannelDescriptionChanged(ChannelDescriptionEditedEvent e);
 
 	public void onClientMoved(ClientMovedEvent e);
+	
+	public void onChannelCreate(ChannelCreateEvent e);
+	
+	public void onChannelDeleted(ChannelDeletedEvent e);
+	
+	public void onChannelMoved(ChannelMovedEvent e);
 
 }

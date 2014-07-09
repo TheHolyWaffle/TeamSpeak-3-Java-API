@@ -50,4 +50,22 @@ public class DefaultListener implements TS3Listener {
 
 	}
 
+	@Override
+	public void onChannelCreate(ChannelCreateEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onChannelDeleted(ChannelDeletedEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onChannelMoved(ChannelMovedEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

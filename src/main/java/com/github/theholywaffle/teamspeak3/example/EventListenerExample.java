@@ -15,8 +15,11 @@ import java.util.logging.Level;
 import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3Config;
 import com.github.theholywaffle.teamspeak3.TS3Query;
+import com.github.theholywaffle.teamspeak3.api.event.ChannelCreateEvent;
+import com.github.theholywaffle.teamspeak3.api.event.ChannelDeletedEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ChannelDescriptionEditedEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ChannelEditedEvent;
+import com.github.theholywaffle.teamspeak3.api.event.ChannelMovedEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ClientMovedEvent;
@@ -79,6 +82,24 @@ public class EventListenerExample {
 					ChannelDescriptionEditedEvent e) {
 				// ...
 
+			}
+
+			@Override
+			public void onChannelCreate(ChannelCreateEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onChannelDeleted(ChannelDeletedEvent e) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onChannelMoved(ChannelMovedEvent e) {
+				// TODO Auto-generated method stub
+				
 			}
 		});
 
