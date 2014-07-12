@@ -1,5 +1,3 @@
-package com.github.theholywaffle.teamspeak3.commands;
-
 /*
  * #%L
  * TeamSpeak 3 Java API
@@ -26,14 +24,37 @@ package com.github.theholywaffle.teamspeak3.commands;
  * #L%
  */
 
-import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
+import java.util.logging.Level;
 
-public class CComplainAdd extends Command {
+import com.github.theholywaffle.teamspeak3.TS3Api;
+import com.github.theholywaffle.teamspeak3.TS3Config;
+import com.github.theholywaffle.teamspeak3.TS3Query;
+import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 
-	public CComplainAdd(int clientDBId, String text) {
-		super("complainadd");
-		add(new KeyValueParam("tcldbid", clientDBId));
-		add(new KeyValueParam("message", text));
+public class ClientInfoExample {
+
+	public static void main(String[] args) {
+		new ClientInfoExample();
+	}
+
+	public ClientInfoExample() {
+		final TS3Config config = new TS3Config();
+		config.setHost("77.77.77.77");
+		config.setDebugLevel(Level.ALL);
+		config.setLoginCredentials("serveradmin", "serveradminpassword");
+
+		final TS3Query query = new TS3Query(config);
+		query.connect();
+
+		final TS3Api api = query.getApi();
+		api.selectVirtualServerById(1);
+		api.setNickname("PutPutBot");
+		api.sendChannelMessage("PutPutBot is online!");
+
+		for (final Client c : api.getClients()) {
+			System.out.println(c.getNickname() + " in channel: "
+					+ api.getChannelInfo(c.getChannelId()).getName());
+		}
 	}
 
 }

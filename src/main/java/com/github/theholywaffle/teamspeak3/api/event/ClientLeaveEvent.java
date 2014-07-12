@@ -1,14 +1,30 @@
-/*******************************************************************************
- * Copyright (c) 2014 Bert De Geyter (https://github.com/TheHolyWaffle).
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Public License v3.0
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/gpl.html
- * 
- * Contributors:
- *     Bert De Geyter (https://github.com/TheHolyWaffle)
- ******************************************************************************/
 package com.github.theholywaffle.teamspeak3.api.event;
+
+/*
+ * #%L
+ * TeamSpeak 3 Java API
+ * %%
+ * Copyright (C) 2014 Bert De Geyter
+ * %%
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * #L%
+ */
 
 import java.util.HashMap;
 
@@ -16,7 +32,7 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 
 public class ClientLeaveEvent extends Wrapper implements TS3Event,
 		TS3EventEmitter {
-	
+
 	public ClientLeaveEvent() {
 		super(null);
 	}
@@ -24,36 +40,36 @@ public class ClientLeaveEvent extends Wrapper implements TS3Event,
 	public ClientLeaveEvent(HashMap<String, String> map) {
 		super(map);
 	}
-	
-	public int getClientFromId(){
+
+	public int getClientFromId() {
 		return getInt("cfid");
 	}
-	
-	public int getClientTargetId(){
+
+	public int getClientTargetId() {
 		return getInt("ctid");
 	}
-	
-	public int getReasonId(){
+
+	public int getReasonId() {
 		return getInt("reasonid");
 	}
-	
-	public int getInvokerId(){
+
+	public int getInvokerId() {
 		return getInt("invokerid");
 	}
-	
-	public String getInvokerName(){
+
+	public String getInvokerName() {
 		return get("invokername");
 	}
-	
-	public String getInvokerUniqueId(){
+
+	public String getInvokerUniqueId() {
 		return get("invokeruid");
 	}
-	
-	public String getReasonMessage(){
+
+	public String getReasonMessage() {
 		return get("reasonmsg");
 	}
-	
-	public int getClientId(){
+
+	public int getClientId() {
 		return getInt("clid");
 	}
 
