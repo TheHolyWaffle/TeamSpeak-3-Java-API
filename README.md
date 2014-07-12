@@ -15,11 +15,11 @@ An Java 7 implementation of [TeamSpeak's 3 server query API](http://media.teamsp
 
 **Download**
 
-Standalone Jar: You can download the latest release [here](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/tree/mvn-repo/com/github/theholywaffle/teamspeak3-api) and add it to the buildpath of your project. 
+- Standalone Jar: You can download the latest release [here](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/tree/mvn-repo/com/github/theholywaffle/teamspeak3-api) and add it to the buildpath of your project. 
 
 or
 
-Maven: add the following to your pom.xml
+- Maven: add the following to your pom.xml
 
 ```xml
 <project>	
