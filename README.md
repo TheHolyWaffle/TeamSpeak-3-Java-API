@@ -13,9 +13,13 @@ An Java 7 implementation of [TeamSpeak's 3 server query API](http://media.teamsp
 
 ## Getting Started
 
-First of all, you can always download the latest release [here](../../releases/latest) and add it to the buildpath of your project. 
+**Download**
 
-Or if you prefer Maven you add the following to your pom.xml:
+Standalone Jar: You can download the latest release [here](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/tree/mvn-repo/com/github/theholywaffle/teamspeak3-api) and add it to the buildpath of your project. 
+
+or
+
+Maven: add the following to your pom.xml
 
 ```xml
 <project>	
@@ -45,6 +49,8 @@ Or if you prefer Maven you add the following to your pom.xml:
 	...
 </project>
 ```
+
+**Usage**
 
 All functionality is contained in the [TS3Api](src/main/java/com/github/theholywaffle/teamspeak3/TS3Api.java) object.
 
