@@ -1,0 +1,9 @@
+com.github.theholywaffle.teamspeak3
+com.github.theholywaffle.teamspeak3.api
+com.github.theholywaffle.teamspeak3.api.event
+com.github.theholywaffle.teamspeak3.api.exception
+com.github.theholywaffle.teamspeak3.api.wrapper
+com.github.theholywaffle.teamspeak3.commands
+com.github.theholywaffle.teamspeak3.commands.parameter
+com.github.theholywaffle.teamspeak3.commands.response
+com.github.theholywaffle.teamspeak3.log
