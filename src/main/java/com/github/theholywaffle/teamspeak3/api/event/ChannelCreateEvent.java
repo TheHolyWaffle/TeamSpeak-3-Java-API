@@ -31,7 +31,7 @@ public class ChannelCreateEvent extends Wrapper implements TS3EventEmitter,TS3Ev
 	public String getInvokerUniqueId(){
 		return get("invokeruid");
 	}
-	@Override
+	
 	public void fire(TS3Listener listener, HashMap<String, String> map) {
 		listener.onChannelCreate(new ChannelCreateEvent(map));
 

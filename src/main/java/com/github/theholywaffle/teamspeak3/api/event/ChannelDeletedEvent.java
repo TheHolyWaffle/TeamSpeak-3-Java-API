@@ -15,7 +15,7 @@ public class ChannelDeletedEvent extends Wrapper implements TS3EventEmitter,TS3E
 	public int getChannelId() {
 		return getInt("cid");
 	}
-	@Override
+	
 	public void fire(TS3Listener listener, HashMap<String, String> map) {
 		listener.onChannelDeleted(new ChannelDeletedEvent(map));
 	}

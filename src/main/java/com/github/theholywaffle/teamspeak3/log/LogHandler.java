@@ -26,25 +26,27 @@ public class LogHandler extends Handler {
 	private static final DateFormat format = DateFormat.getInstance();
 	private boolean debugToFile;
 	private File log;
-
+	
 	public LogHandler(boolean debugToFile) {
 		this.debugToFile = debugToFile;
-		log = new File("teamspeak.log");
-		if (!log.exists()) {
-			try {
-				log.createNewFile();
-			} catch (IOException e) {
-				e.printStackTrace();
+		if(this.debugToFile) {
+			log = new File("teamspeak.log");
+			if (!log.exists()) {
+				try {
+					log.createNewFile();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
-
+	
 	public void close() throws SecurityException {
 	}
-
+	
 	public void flush() {
 	}
-
+	
 	public void publish(LogRecord record) {
 		if (record.getLevel().intValue() < Level.WARNING.intValue()) {
 			System.out.println("[DEBUG] " + record.getMessage());
