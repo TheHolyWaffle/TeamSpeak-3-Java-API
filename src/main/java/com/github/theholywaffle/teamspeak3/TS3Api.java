@@ -1,14 +1,30 @@
-/*******************************************************************************
- * Copyright (c) 2014 Bert De Geyter (https://github.com/TheHolyWaffle).
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Public License v3.0
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/gpl.html
- * 
- * Contributors:
- *     Bert De Geyter (https://github.com/TheHolyWaffle)
- ******************************************************************************/
 package com.github.theholywaffle.teamspeak3;
+
+/*
+ * #%L
+ * TeamSpeak 3 Java API
+ * %%
+ * Copyright (C) 2014 Bert De Geyter
+ * %%
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * #L%
+ */
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -79,7 +95,7 @@ public class TS3Api {
 	 */
 	public int addBan(String ip, String name, String uid, long timeInSeconds,
 			String reason) {
-		CBanAdd add = new CBanAdd(ip, name, uid, timeInSeconds, reason);
+		final CBanAdd add = new CBanAdd(ip, name, uid, timeInSeconds, reason);
 		if (query.doCommand(add)) {
 			return StringUtil.getInt(add.getFirstResponse().get("banid"));
 		}
@@ -89,7 +105,7 @@ public class TS3Api {
 
 	public boolean addChannelClientPermission(int channelId, int clientDBId,
 			String permName, int permValue) {
-		CChannelClientAddPerm add = new CChannelClientAddPerm(channelId,
+		final CChannelClientAddPerm add = new CChannelClientAddPerm(channelId,
 				clientDBId, permName, permValue);
 		if (query.doCommand(add)) {
 			return add.getError().isSuccessful();
@@ -102,7 +118,7 @@ public class TS3Api {
 	}
 
 	public int addChannelGroup(String name, PermissionGroupDatabaseType t) {
-		CChannelGroupAdd add = new CChannelGroupAdd(name, t);
+		final CChannelGroupAdd add = new CChannelGroupAdd(name, t);
 		if (query.doCommand(add)) {
 			return StringUtil.getInt(add.getFirstResponse().get("cgid"));
 		}
@@ -111,7 +127,7 @@ public class TS3Api {
 
 	public boolean addChannelPermission(int channelId, String permName,
 			int permValue) {
-		CChannelAddPerm perm = new CChannelAddPerm(channelId, permName,
+		final CChannelAddPerm perm = new CChannelAddPerm(channelId, permName,
 				permValue);
 		if (query.doCommand(perm)) {
 			return perm.getError().isSuccessful();
@@ -121,7 +137,7 @@ public class TS3Api {
 
 	public boolean addClientPermission(int clientDBId, String permName,
 			int permValue, boolean permSkipped) {
-		CClientAddPerm add = new CClientAddPerm(clientDBId, permName,
+		final CClientAddPerm add = new CClientAddPerm(clientDBId, permName,
 				permValue, permSkipped);
 		if (query.doCommand(add)) {
 			return add.getError().isSuccessful();
@@ -130,7 +146,7 @@ public class TS3Api {
 	}
 
 	public boolean addClientToServerGroup(int groupId, int clientDatabaseId) {
-		CServerGroupAddClient add = new CServerGroupAddClient(groupId,
+		final CServerGroupAddClient add = new CServerGroupAddClient(groupId,
 				clientDatabaseId);
 		if (query.doCommand(add)) {
 			return add.getError().isSuccessful();
@@ -139,7 +155,7 @@ public class TS3Api {
 	}
 
 	public boolean addComplain(int clientDBId, String text) {
-		CComplainAdd add = new CComplainAdd(clientDBId, text);
+		final CComplainAdd add = new CComplainAdd(clientDBId, text);
 		if (query.doCommand(add)) {
 			return add.getError().isSuccessful();
 		}
@@ -149,8 +165,8 @@ public class TS3Api {
 	public boolean addPermissionToAllServerGroups(ServerGroupType t,
 			String permName, int permValue, boolean permNegated,
 			boolean permSkipped) {
-		CServerGroupAutoAddPerm add = new CServerGroupAutoAddPerm(t, permName,
-				permValue, permNegated, permSkipped);
+		final CServerGroupAutoAddPerm add = new CServerGroupAutoAddPerm(t,
+				permName, permValue, permNegated, permSkipped);
 		if (query.doCommand(add)) {
 			return add.getError().isSuccessful();
 		}
@@ -159,8 +175,8 @@ public class TS3Api {
 
 	public boolean addPermissionToChannelGroup(int groupId, String permName,
 			int permValue) {
-		CChannelGroupAddPerm add = new CChannelGroupAddPerm(groupId, permName,
-				permValue);
+		final CChannelGroupAddPerm add = new CChannelGroupAddPerm(groupId,
+				permName, permValue);
 		if (query.doCommand(add)) {
 			return add.getError().isSuccessful();
 		}
@@ -169,8 +185,8 @@ public class TS3Api {
 
 	public String addPrivilegeKey(int type, int groupId, int channelId,
 			String description) {
-		CPrivilegeKeyAdd add = new CPrivilegeKeyAdd(type, groupId, channelId,
-				description);
+		final CPrivilegeKeyAdd add = new CPrivilegeKeyAdd(type, groupId,
+				channelId, description);
 		if (query.doCommand(add)) {
 			return add.getFirstResponse().get("token");
 		}
@@ -192,7 +208,7 @@ public class TS3Api {
 	}
 
 	public int addServerGroup(String name, PermissionGroupDatabaseType t) {
-		CServerGroupAdd add = new CServerGroupAdd(name, t);
+		final CServerGroupAdd add = new CServerGroupAdd(name, t);
 		if (query.doCommand(add)) {
 			return StringUtil.getInt(add.getFirstResponse().get("sgid"));
 		}
@@ -201,8 +217,8 @@ public class TS3Api {
 
 	public boolean addServerGroupPermission(int groupId, String permName,
 			int value, boolean negated, boolean skipped) {
-		CServerGroupAddPerm add = new CServerGroupAddPerm(groupId, permName,
-				value, negated, skipped);
+		final CServerGroupAddPerm add = new CServerGroupAddPerm(groupId,
+				permName, value, negated, skipped);
 		if (query.doCommand(add)) {
 			return add.getError().isSuccessful();
 		}
@@ -218,7 +234,8 @@ public class TS3Api {
 	}
 
 	public int banClient(int clientId, long timeInSeconds, String reason) {
-		CBanClient client = new CBanClient(clientId, timeInSeconds, reason);
+		final CBanClient client = new CBanClient(clientId, timeInSeconds,
+				reason);
 		if (query.doCommand(client)) {
 			return StringUtil.getInt(client.getFirstResponse().get("banid"));
 		}
@@ -230,7 +247,7 @@ public class TS3Api {
 	}
 
 	public boolean broadcast(String message) {
-		CGM broadcast = new CGM(message);
+		final CGM broadcast = new CGM(message);
 		if (query.doCommand(broadcast)) {
 			return broadcast.getError().isSuccessful();
 		}
@@ -239,7 +256,7 @@ public class TS3Api {
 
 	public boolean copyChannelGroup(int sourceGroupId, int targetGroupId,
 			PermissionGroupDatabaseType t) {
-		CChannelGroupCopy copy = new CChannelGroupCopy(sourceGroupId,
+		final CChannelGroupCopy copy = new CChannelGroupCopy(sourceGroupId,
 				targetGroupId, t);
 		if (query.doCommand(copy)) {
 			return copy.getError().isSuccessful();
@@ -249,7 +266,7 @@ public class TS3Api {
 
 	public int copyChannelGroup(int sourceGroupId, String targetName,
 			PermissionGroupDatabaseType t) {
-		CChannelGroupCopy copy = new CChannelGroupCopy(sourceGroupId,
+		final CChannelGroupCopy copy = new CChannelGroupCopy(sourceGroupId,
 				targetName, t);
 		if (query.doCommand(copy)) {
 			return StringUtil.getInt(copy.getFirstResponse().get("cgid"));
@@ -264,8 +281,8 @@ public class TS3Api {
 
 	private int copyServerGroup(int idSource, int idTarget, String name,
 			PermissionGroupDatabaseType t) {
-		CServerGroupCopy copy = new CServerGroupCopy(idSource, idTarget, name,
-				t);
+		final CServerGroupCopy copy = new CServerGroupCopy(idSource, idTarget,
+				name, t);
 		if (query.doCommand(copy)) {
 			return StringUtil.getInt(copy.getFirstResponse().get("sgid"));
 		}
@@ -279,7 +296,7 @@ public class TS3Api {
 
 	public int createChannel(String name,
 			HashMap<ChannelProperty, String> options) {
-		CChannelCreate create = new CChannelCreate(name, options);
+		final CChannelCreate create = new CChannelCreate(name, options);
 		if (query.doCommand(create)) {
 			return StringUtil.getInt(create.getFirstResponse().get("cid"));
 		}
@@ -288,7 +305,7 @@ public class TS3Api {
 
 	public boolean createServer(String name,
 			HashMap<VirtualServerProperty, String> map) {
-		CServerCreate create = new CServerCreate(name, map);
+		final CServerCreate create = new CServerCreate(name, map);
 		if (query.doCommand(create)) {
 			return create.getError().isSuccessful();
 		}
@@ -296,7 +313,8 @@ public class TS3Api {
 	}
 
 	public String createServerQueryLogin(String name) {
-		CClientSetServerQueryLogin login = new CClientSetServerQueryLogin(name);
+		final CClientSetServerQueryLogin login = new CClientSetServerQueryLogin(
+				name);
 		if (query.doCommand(login)) {
 			return login.getFirstResponse().get("client_login_password");
 		}
@@ -304,7 +322,7 @@ public class TS3Api {
 	}
 
 	public Snapshot createServerSnapshot() {
-		CServerSnapshotCreate create = new CServerSnapshotCreate();
+		final CServerSnapshotCreate create = new CServerSnapshotCreate();
 		if (query.doCommand(create)) {
 			return new Snapshot(create.getRaw());
 		}
@@ -312,7 +330,7 @@ public class TS3Api {
 	}
 
 	public boolean deleteAllBans() {
-		CBanDelAll del = new CBanDelAll();
+		final CBanDelAll del = new CBanDelAll();
 		if (query.doCommand(del)) {
 			return del.getError().isSuccessful();
 		}
@@ -320,7 +338,7 @@ public class TS3Api {
 	}
 
 	public boolean deleteAllComplaints(int clientDBId) {
-		CComplainDelAll del = new CComplainDelAll(clientDBId);
+		final CComplainDelAll del = new CComplainDelAll(clientDBId);
 		if (query.doCommand(del)) {
 			return del.getError().isSuccessful();
 		}
@@ -328,7 +346,7 @@ public class TS3Api {
 	}
 
 	public boolean deleteBan(int banId) {
-		CBanDel del = new CBanDel(banId);
+		final CBanDel del = new CBanDel(banId);
 		if (query.doCommand(del)) {
 			return del.getError().isSuccessful();
 		}
@@ -336,7 +354,7 @@ public class TS3Api {
 	}
 
 	public boolean deleteChannel(int channelId) {
-		CChannelDelete del = new CChannelDelete(channelId, true);
+		final CChannelDelete del = new CChannelDelete(channelId, true);
 		if (query.doCommand(del)) {
 			return del.getError().isSuccessful();
 		}
@@ -345,7 +363,7 @@ public class TS3Api {
 
 	public boolean deleteChannelClientPermission(int channelId, int clientDBId,
 			String permName) {
-		CChannelClientDelPerm del = new CChannelClientDelPerm(channelId,
+		final CChannelClientDelPerm del = new CChannelClientDelPerm(channelId,
 				clientDBId, permName);
 		if (query.doCommand(del)) {
 			return del.getError().isSuccessful();
@@ -354,7 +372,7 @@ public class TS3Api {
 	}
 
 	public boolean deleteChannelGroup(int groupId) {
-		CChannelGroupDel del = new CChannelGroupDel(groupId, true);
+		final CChannelGroupDel del = new CChannelGroupDel(groupId, true);
 		if (query.doCommand(del)) {
 			return del.getError().isSuccessful();
 		}
@@ -362,7 +380,8 @@ public class TS3Api {
 	}
 
 	public boolean deleteChannelGroupPermission(int groupId, String permName) {
-		CChannelGroupDelPerm del = new CChannelGroupDelPerm(groupId, permName);
+		final CChannelGroupDelPerm del = new CChannelGroupDelPerm(groupId,
+				permName);
 		if (query.doCommand(del)) {
 			return del.getError().isSuccessful();
 		}
@@ -370,7 +389,7 @@ public class TS3Api {
 	}
 
 	public boolean deleteChannelPermission(int channelId, String permName) {
-		CChannelDelPerm del = new CChannelDelPerm(channelId, permName);
+		final CChannelDelPerm del = new CChannelDelPerm(channelId, permName);
 		if (query.doCommand(del)) {
 			return del.getError().isSuccessful();
 		}
@@ -378,7 +397,7 @@ public class TS3Api {
 	}
 
 	public boolean deleteClientPermission(int clientDBId, String permName) {
-		CClientDelPerm del = new CClientDelPerm(clientDBId, permName);
+		final CClientDelPerm del = new CClientDelPerm(clientDBId, permName);
 		if (query.doCommand(del)) {
 			return del.getError().isSuccessful();
 		}
@@ -386,7 +405,8 @@ public class TS3Api {
 	}
 
 	public boolean deleteComplaint(int targetClientDBId, int fromClientDBId) {
-		CComplainDel del = new CComplainDel(targetClientDBId, fromClientDBId);
+		final CComplainDel del = new CComplainDel(targetClientDBId,
+				fromClientDBId);
 		if (query.doCommand(del)) {
 			return del.getError().isSuccessful();
 		}
@@ -394,7 +414,7 @@ public class TS3Api {
 	}
 
 	public boolean deleteDatabaseClientProperties(int clientDBId) {
-		CClientDBDelelete del = new CClientDBDelelete(clientDBId);
+		final CClientDBDelelete del = new CClientDBDelelete(clientDBId);
 		if (query.doCommand(del)) {
 			return del.getError().isSuccessful();
 		}
@@ -402,7 +422,7 @@ public class TS3Api {
 	}
 
 	public boolean deleteOfflineMessage(int messageId) {
-		CMessageDel del = new CMessageDel(messageId);
+		final CMessageDel del = new CMessageDel(messageId);
 		if (query.doCommand(del)) {
 			return del.getError().isSuccessful();
 		}
@@ -411,7 +431,8 @@ public class TS3Api {
 
 	public boolean deletePermissionFromAllServerGroups(ServerGroupType t,
 			String permName) {
-		CServerGroupAutoDelPerm del = new CServerGroupAutoDelPerm(t, permName);
+		final CServerGroupAutoDelPerm del = new CServerGroupAutoDelPerm(t,
+				permName);
 		if (query.doCommand(del)) {
 			return del.getError().isSuccessful();
 		}
@@ -419,7 +440,7 @@ public class TS3Api {
 	}
 
 	public boolean deletePrivilegeKey(String token) {
-		CPrivilegeKeyDelete del = new CPrivilegeKeyDelete(token);
+		final CPrivilegeKeyDelete del = new CPrivilegeKeyDelete(token);
 		if (query.doCommand(del)) {
 			return del.getError().isSuccessful();
 		}
@@ -427,7 +448,7 @@ public class TS3Api {
 	}
 
 	public boolean deleteServer(int id) {
-		CServerDelete delete = new CServerDelete(id);
+		final CServerDelete delete = new CServerDelete(id);
 		if (query.doCommand(delete)) {
 			return delete.getError().isSuccessful();
 		}
@@ -439,7 +460,7 @@ public class TS3Api {
 	}
 
 	public boolean deleteServerGroup(int id, boolean forced) {
-		CServerGroupDel del = new CServerGroupDel(id, forced);
+		final CServerGroupDel del = new CServerGroupDel(id, forced);
 		if (query.doCommand(del)) {
 			return del.getError().isSuccessful();
 		}
@@ -447,7 +468,8 @@ public class TS3Api {
 	}
 
 	public boolean deleteServerGroupPermission(int groupId, String permName) {
-		CServerGroupDelPerm del = new CServerGroupDelPerm(groupId, permName);
+		final CServerGroupDelPerm del = new CServerGroupDelPerm(groupId,
+				permName);
 		if (query.doCommand(del)) {
 			return del.getError().isSuccessful();
 		}
@@ -455,7 +477,8 @@ public class TS3Api {
 	}
 
 	public boolean deployServerSnapshot(Snapshot snapshot) {
-		CServerSnapshotDeploy deploy = new CServerSnapshotDeploy(snapshot.get());
+		final CServerSnapshotDeploy deploy = new CServerSnapshotDeploy(
+				snapshot.get());
 		if (query.doCommand(deploy)) {
 			return deploy.getError().isSuccessful();
 		}
@@ -464,7 +487,7 @@ public class TS3Api {
 
 	public boolean editChannel(int channelId,
 			HashMap<ChannelProperty, String> options) {
-		CChannelEdit edit = new CChannelEdit(channelId, options);
+		final CChannelEdit edit = new CChannelEdit(channelId, options);
 		if (query.doCommand(edit)) {
 			return edit.getError().isSuccessful();
 		}
@@ -476,13 +499,13 @@ public class TS3Api {
 	 * ClientProperty. Others don't.
 	 */
 	public void editClient(int clientId, HashMap<ClientProperty, String> options) {
-		CClientEdit edit = new CClientEdit(clientId, options);
+		final CClientEdit edit = new CClientEdit(clientId, options);
 		query.doCommand(edit);
 	}
 
 	public boolean editDatabaseClient(int clientDBId,
 			HashMap<ClientProperty, String> options) {
-		CClientDBEdit edit = new CClientDBEdit(clientDBId, options);
+		final CClientDBEdit edit = new CClientDBEdit(clientDBId, options);
 		if (query.doCommand(edit)) {
 			return edit.getError().isSuccessful();
 		}
@@ -491,7 +514,7 @@ public class TS3Api {
 
 	public boolean editInstance(ServerInstanceProperty p, String value) {
 		if (p.isChangeable()) {
-			CInstanceEdit edit = new CInstanceEdit(p, value);
+			final CInstanceEdit edit = new CInstanceEdit(p, value);
 			if (query.doCommand(edit)) {
 				return edit.getError().isSuccessful();
 			}
@@ -500,7 +523,7 @@ public class TS3Api {
 	}
 
 	public boolean editServer(HashMap<VirtualServerProperty, String> map) {
-		CServerEdit edit = new CServerEdit(map);
+		final CServerEdit edit = new CServerEdit(map);
 		if (query.doCommand(edit)) {
 			return edit.getError().isSuccessful();
 		}
@@ -508,10 +531,10 @@ public class TS3Api {
 	}
 
 	public List<Ban> getBans() {
-		CBanList list = new CBanList();
+		final CBanList list = new CBanList();
 		if (query.doCommand(list)) {
-			List<Ban> bans = new ArrayList<>();
-			for (HashMap<String, String> opt : list.getResponse()) {
+			final List<Ban> bans = new ArrayList<>();
+			for (final HashMap<String, String> opt : list.getResponse()) {
 				bans.add(new Ban(opt));
 			}
 			return bans;
@@ -520,10 +543,10 @@ public class TS3Api {
 	}
 
 	public List<Binding> getBindings() {
-		CBindingList list = new CBindingList();
+		final CBindingList list = new CBindingList();
 		if (query.doCommand(list)) {
-			List<Binding> bindings = new ArrayList<>();
-			for (HashMap<String, String> map : list.getResponse()) {
+			final List<Binding> bindings = new ArrayList<>();
+			for (final HashMap<String, String> map : list.getResponse()) {
 				bindings.add(new Binding(map));
 			}
 			return bindings;
@@ -532,9 +555,9 @@ public class TS3Api {
 	}
 
 	public Channel getChannelByName(String name) {
-		CChannelFind find = new CChannelFind(name);
+		final CChannelFind find = new CChannelFind(name);
 		if (query.doCommand(find)) {
-			for (Channel c : getChannels()) {
+			for (final Channel c : getChannels()) {
 				if (c.getId() == StringUtil.getInt(find.getFirstResponse().get(
 						"cid"))) {
 					return c;
@@ -546,11 +569,11 @@ public class TS3Api {
 
 	public List<Permission> getChannelClientPermissions(int channelId,
 			int clientDBId) {
-		CChannelClientPermList list = new CChannelClientPermList(channelId,
-				clientDBId);
+		final CChannelClientPermList list = new CChannelClientPermList(
+				channelId, clientDBId);
 		if (query.doCommand(list)) {
-			List<Permission> permissions = new ArrayList<>();
-			for (HashMap<String, String> opt : list.getResponse()) {
+			final List<Permission> permissions = new ArrayList<>();
+			for (final HashMap<String, String> opt : list.getResponse()) {
 				permissions.add(new Permission(opt));
 			}
 			return permissions;
@@ -564,11 +587,11 @@ public class TS3Api {
 	 */
 	public List<ChannelGroupClient> getChannelGroupClients(int channelId,
 			int clientDBId, int groupId) {
-		CChannelGroupClientList list = new CChannelGroupClientList(channelId,
-				clientDBId, groupId);
+		final CChannelGroupClientList list = new CChannelGroupClientList(
+				channelId, clientDBId, groupId);
 		if (query.doCommand(list)) {
-			List<ChannelGroupClient> clients = new ArrayList<>();
-			for (HashMap<String, String> opt : list.getResponse()) {
+			final List<ChannelGroupClient> clients = new ArrayList<>();
+			for (final HashMap<String, String> opt : list.getResponse()) {
 				clients.add(new ChannelGroupClient(opt));
 			}
 			return clients;
@@ -592,10 +615,10 @@ public class TS3Api {
 	}
 
 	public List<Permission> getChannelGroupPermissions(int groupId) {
-		CChannelGroupPermList list = new CChannelGroupPermList(groupId);
+		final CChannelGroupPermList list = new CChannelGroupPermList(groupId);
 		if (query.doCommand(list)) {
-			List<Permission> p = new ArrayList<>();
-			for (HashMap<String, String> opt : list.getResponse()) {
+			final List<Permission> p = new ArrayList<>();
+			for (final HashMap<String, String> opt : list.getResponse()) {
 				p.add(new Permission(opt));
 			}
 			return p;
@@ -604,10 +627,10 @@ public class TS3Api {
 	}
 
 	public List<ChannelGroup> getChannelGroups() {
-		CChannelGroupList list = new CChannelGroupList();
+		final CChannelGroupList list = new CChannelGroupList();
 		if (query.doCommand(list)) {
-			List<ChannelGroup> groups = new ArrayList<>();
-			for (HashMap<String, String> opt : list.getResponse()) {
+			final List<ChannelGroup> groups = new ArrayList<>();
+			for (final HashMap<String, String> opt : list.getResponse()) {
 				groups.add(new ChannelGroup(opt));
 			}
 			return groups;
@@ -616,7 +639,7 @@ public class TS3Api {
 	}
 
 	public ChannelInfo getChannelInfo(int channelId) {
-		CChannelInfo info = new CChannelInfo(channelId);
+		final CChannelInfo info = new CChannelInfo(channelId);
 		if (query.doCommand(info)) {
 			return new ChannelInfo(info.getFirstResponse().getMap());
 		}
@@ -624,10 +647,10 @@ public class TS3Api {
 	}
 
 	public List<Permission> getChannelPermissions(int channelId) {
-		CChannelPermList list = new CChannelPermList(channelId);
+		final CChannelPermList list = new CChannelPermList(channelId);
 		if (query.doCommand(list)) {
-			List<Permission> p = new ArrayList<>();
-			for (HashMap<String, String> opt : list.getResponse()) {
+			final List<Permission> p = new ArrayList<>();
+			for (final HashMap<String, String> opt : list.getResponse()) {
 				p.add(new Permission(opt));
 			}
 			return p;
@@ -636,10 +659,10 @@ public class TS3Api {
 	}
 
 	public List<Channel> getChannels() {
-		CChannelList list = new CChannelList();
+		final CChannelList list = new CChannelList();
 		if (query.doCommand(list)) {
-			List<Channel> channels = new ArrayList<>();
-			for (HashMap<String, String> opt : list.getResponse()) {
+			final List<Channel> channels = new ArrayList<>();
+			for (final HashMap<String, String> opt : list.getResponse()) {
 				channels.add(new Channel(opt));
 			}
 			return channels;
@@ -648,11 +671,11 @@ public class TS3Api {
 	}
 
 	public List<Client> getClientByName(String pattern) {
-		CClientFind find = new CClientFind(pattern);
+		final CClientFind find = new CClientFind(pattern);
 		if (query.doCommand(find)) {
-			List<Client> clients = new ArrayList<>();
-			for (Client c : getClients()) {
-				for (HashMap<String, String> opt : find.getResponse()) {
+			final List<Client> clients = new ArrayList<>();
+			for (final Client c : getClients()) {
+				for (final HashMap<String, String> opt : find.getResponse()) {
 					if (c.getId() == StringUtil.getInt(new Wrapper(opt)
 							.get("clid"))) {
 						clients.add(c);
@@ -665,7 +688,7 @@ public class TS3Api {
 	}
 
 	public ClientInfo getClientByUId(String clientUId) {
-		CClientGetIds get = new CClientGetIds(clientUId);
+		final CClientGetIds get = new CClientGetIds(clientUId);
 		if (query.doCommand(get)) {
 			return getClientInfo(StringUtil.getInt(get.getFirstResponse()
 					.getMap().get("clid")));
@@ -674,7 +697,7 @@ public class TS3Api {
 	}
 
 	public ClientInfo getClientInfo(int clientId) {
-		CClientInfo info = new CClientInfo(clientId);
+		final CClientInfo info = new CClientInfo(clientId);
 		if (query.doCommand(info)) {
 			return new ClientInfo(info.getFirstResponse().getMap());
 		}
@@ -682,10 +705,10 @@ public class TS3Api {
 	}
 
 	public List<Permission> getClientPermissions(int clientDBId) {
-		CClientPermList list = new CClientPermList(clientDBId);
+		final CClientPermList list = new CClientPermList(clientDBId);
 		if (query.doCommand(list)) {
-			List<Permission> permissions = new ArrayList<>();
-			for (HashMap<String, String> opt : list.getResponse()) {
+			final List<Permission> permissions = new ArrayList<>();
+			for (final HashMap<String, String> opt : list.getResponse()) {
 				permissions.add(new Permission(opt));
 			}
 			return permissions;
@@ -694,10 +717,10 @@ public class TS3Api {
 	}
 
 	public List<Client> getClients() {
-		CClientList list = new CClientList();
+		final CClientList list = new CClientList();
 		if (query.doCommand(list)) {
-			List<Client> clients = new ArrayList<>();
-			for (HashMap<String, String> opt : list.getResponse()) {
+			final List<Client> clients = new ArrayList<>();
+			for (final HashMap<String, String> opt : list.getResponse()) {
 				clients.add(new Client(opt));
 			}
 			return clients;
@@ -710,10 +733,10 @@ public class TS3Api {
 	}
 
 	public List<Complaint> getComplaints(int clientDBId) {
-		CComplainList list = new CComplainList(clientDBId);
+		final CComplainList list = new CComplainList(clientDBId);
 		if (query.doCommand(list)) {
-			List<Complaint> complaints = new ArrayList<>();
-			for (HashMap<String, String> opt : list.getResponse()) {
+			final List<Complaint> complaints = new ArrayList<>();
+			for (final HashMap<String, String> opt : list.getResponse()) {
 				complaints.add(new Complaint(opt));
 			}
 			return complaints;
@@ -722,7 +745,7 @@ public class TS3Api {
 	}
 
 	public ConnectionInfo getConnectionInfo() {
-		CServerRequestConnectionInfo info = new CServerRequestConnectionInfo();
+		final CServerRequestConnectionInfo info = new CServerRequestConnectionInfo();
 		if (query.doCommand(info)) {
 			return new ConnectionInfo(info.getFirstResponse().getMap());
 		}
@@ -730,7 +753,7 @@ public class TS3Api {
 	}
 
 	public DatabaseClientInfo getDatabaseClientByName(String name) {
-		CClientDBFind find = new CClientDBFind(name, false);
+		final CClientDBFind find = new CClientDBFind(name, false);
 		if (query.doCommand(find)) {
 			return getDatabaseClientInfo(StringUtil.getInt(find
 					.getFirstResponse().get("cldbid")));
@@ -739,7 +762,7 @@ public class TS3Api {
 	}
 
 	public DatabaseClientInfo getDatabaseClientByUId(String clientUId) {
-		CClientGetDBIdFromUId get = new CClientGetDBIdFromUId(clientUId);
+		final CClientGetDBIdFromUId get = new CClientGetDBIdFromUId(clientUId);
 		if (query.doCommand(get)) {
 			return getDatabaseClientInfo(StringUtil.getInt(get
 					.getFirstResponse().get("cldbid")));
@@ -748,7 +771,7 @@ public class TS3Api {
 	}
 
 	public DatabaseClientInfo getDatabaseClientInfo(int clientDBId) {
-		CClientDBInfo info = new CClientDBInfo(clientDBId);
+		final CClientDBInfo info = new CClientDBInfo(clientDBId);
 		if (query.doCommand(info)) {
 			return new DatabaseClientInfo(info.getFirstResponse().getMap());
 		}
@@ -759,16 +782,16 @@ public class TS3Api {
 	 * Be warned, this method takes quite some time to execute.
 	 */
 	public List<DatabaseClient> getDatabaseClients() {
-		CClientDBList countList = new CClientDBList(0, 1, true);
+		final CClientDBList countList = new CClientDBList(0, 1, true);
 		if (query.doCommand(countList)) {
-			int count = StringUtil.getInt(countList.getFirstResponse().get(
-					"count"));
+			final int count = StringUtil.getInt(countList.getFirstResponse()
+					.get("count"));
 			int i = 0;
-			List<DatabaseClient> clients = new ArrayList<>();
+			final List<DatabaseClient> clients = new ArrayList<>();
 			while (i < count) {
-				CClientDBList list = new CClientDBList(i, 200, false);
+				final CClientDBList list = new CClientDBList(i, 200, false);
 				if (query.doCommand(list)) {
-					for (HashMap<String, String> map : list.getResponse()) {
+					for (final HashMap<String, String> map : list.getResponse()) {
 						clients.add(new DatabaseClient(map));
 					}
 				}
@@ -780,7 +803,7 @@ public class TS3Api {
 	}
 
 	public HostInfo getHostInfo() {
-		CHostInfo info = new CHostInfo();
+		final CHostInfo info = new CHostInfo();
 		if (query.doCommand(info)) {
 			return new HostInfo(info.getFirstResponse().getMap());
 		}
@@ -788,7 +811,7 @@ public class TS3Api {
 	}
 
 	public InstanceInfo getInstanceInfo() {
-		CInstanceInfo info = new CInstanceInfo();
+		final CInstanceInfo info = new CInstanceInfo();
 		if (query.doCommand(info)) {
 			return new InstanceInfo(info.getFirstResponse().getMap());
 		}
@@ -796,7 +819,7 @@ public class TS3Api {
 	}
 
 	public String getOfflineMessage(int messageId) {
-		CMessageGet get = new CMessageGet(messageId);
+		final CMessageGet get = new CMessageGet(messageId);
 		if (query.doCommand(get)) {
 			return get.getFirstResponse().get("message");
 		}
@@ -804,10 +827,10 @@ public class TS3Api {
 	}
 
 	public List<Message> getOfflineMessages() {
-		CMessageList list = new CMessageList();
+		final CMessageList list = new CMessageList();
 		if (query.doCommand(list)) {
-			List<Message> msg = new ArrayList<>();
-			for (HashMap<String, String> opt : list.getResponse()) {
+			final List<Message> msg = new ArrayList<>();
+			for (final HashMap<String, String> opt : list.getResponse()) {
 				msg.add(new Message(opt));
 			}
 			return msg;
@@ -816,14 +839,14 @@ public class TS3Api {
 	}
 
 	public void getPermission(String permName) {
-		CPermFind find = new CPermFind(permName);
+		final CPermFind find = new CPermFind(permName);
 		if (query.doCommand(find)) {
 
 		}
 	}
 
 	public int getPermissionIdByName(String permName) {
-		CPermIdGetByName get = new CPermIdGetByName(permName);
+		final CPermIdGetByName get = new CPermIdGetByName(permName);
 		if (query.doCommand(get)) {
 			return StringUtil.getInt(get.getFirstResponse().get("permid"));
 		}
@@ -832,10 +855,10 @@ public class TS3Api {
 
 	public List<AdvancedPermission> getPermissionOverview(int channelId,
 			int clientDBId) {
-		CPermOverview overview = new CPermOverview(channelId, clientDBId);
+		final CPermOverview overview = new CPermOverview(channelId, clientDBId);
 		if (query.doCommand(overview)) {
-			List<AdvancedPermission> permissions = new ArrayList<>();
-			for (HashMap<String, String> opt : overview.getResponse()) {
+			final List<AdvancedPermission> permissions = new ArrayList<>();
+			for (final HashMap<String, String> opt : overview.getResponse()) {
 				permissions.add(new AdvancedPermission(opt));
 			}
 			return permissions;
@@ -844,10 +867,10 @@ public class TS3Api {
 	}
 
 	public List<PermissionInfo> getPermissions() {
-		CPermissionList list = new CPermissionList();
+		final CPermissionList list = new CPermissionList();
 		if (query.doCommand(list)) {
-			List<PermissionInfo> permissions = new ArrayList<>();
-			for (HashMap<String, String> opt : list.getResponse()) {
+			final List<PermissionInfo> permissions = new ArrayList<>();
+			for (final HashMap<String, String> opt : list.getResponse()) {
 				permissions.add(new PermissionInfo(opt));
 			}
 			return permissions;
@@ -856,7 +879,7 @@ public class TS3Api {
 	}
 
 	public int getPermissionValue(String permName) {
-		CPermGet get = new CPermGet(permName);
+		final CPermGet get = new CPermGet(permName);
 		if (query.doCommand(get)) {
 			return StringUtil.getInt(get.getFirstResponse().get("permvalue"));
 		}
@@ -864,10 +887,10 @@ public class TS3Api {
 	}
 
 	public List<PrivilegeKey> getPrivilegeKeys() {
-		CPrivilegeKeyList list = new CPrivilegeKeyList();
+		final CPrivilegeKeyList list = new CPrivilegeKeyList();
 		if (query.doCommand(list)) {
-			List<PrivilegeKey> keys = new ArrayList<>();
-			for (HashMap<String, String> opt : list.getResponse()) {
+			final List<PrivilegeKey> keys = new ArrayList<>();
+			for (final HashMap<String, String> opt : list.getResponse()) {
 				keys.add(new PrivilegeKey(opt));
 			}
 			return keys;
@@ -876,10 +899,10 @@ public class TS3Api {
 	}
 
 	public List<ServerGroupClient> getServerGroupClients(int groupId) {
-		CServerGroupClientList list = new CServerGroupClientList(groupId);
+		final CServerGroupClientList list = new CServerGroupClientList(groupId);
 		if (query.doCommand(list)) {
-			List<ServerGroupClient> clients = new ArrayList<>();
-			for (HashMap<String, String> opt : list.getResponse()) {
+			final List<ServerGroupClient> clients = new ArrayList<>();
+			for (final HashMap<String, String> opt : list.getResponse()) {
 				clients.add(new ServerGroupClient(opt));
 			}
 			return clients;
@@ -888,10 +911,10 @@ public class TS3Api {
 	}
 
 	public List<Permission> getServerGroupPermissions(int id) {
-		CServerGroupPermList list = new CServerGroupPermList(id);
+		final CServerGroupPermList list = new CServerGroupPermList(id);
 		if (query.doCommand(list)) {
-			List<Permission> p = new ArrayList<>();
-			for (HashMap<String, String> opt : list.getResponse()) {
+			final List<Permission> p = new ArrayList<>();
+			for (final HashMap<String, String> opt : list.getResponse()) {
 				p.add(new Permission(opt));
 			}
 			return p;
@@ -900,10 +923,10 @@ public class TS3Api {
 	}
 
 	public List<ServerGroup> getServerGroups() {
-		CServerGroupList list = new CServerGroupList();
+		final CServerGroupList list = new CServerGroupList();
 		if (query.doCommand(list)) {
-			List<ServerGroup> groups = new ArrayList<>();
-			for (HashMap<String, String> opt : list.getResponse()) {
+			final List<ServerGroup> groups = new ArrayList<>();
+			for (final HashMap<String, String> opt : list.getResponse()) {
 				groups.add(new ServerGroup(opt));
 			}
 			return groups;
@@ -912,13 +935,13 @@ public class TS3Api {
 	}
 
 	public List<ServerGroup> getServerGroupsByClientId(int clientDatabaseId) {
-		CServerGroupsByClientId client = new CServerGroupsByClientId(
+		final CServerGroupsByClientId client = new CServerGroupsByClientId(
 				clientDatabaseId);
 		if (query.doCommand(client)) {
-			List<ServerGroup> list = new ArrayList<>();
-			List<ServerGroup> allGroups = getServerGroups();
-			for (HashMap<String, String> opt : client.getResponse()) {
-				for (ServerGroup s : allGroups) {
+			final List<ServerGroup> list = new ArrayList<>();
+			final List<ServerGroup> allGroups = getServerGroups();
+			for (final HashMap<String, String> opt : client.getResponse()) {
+				for (final ServerGroup s : allGroups) {
 					if (s.getId() == StringUtil.getInt(opt.get("sgid"))) {
 						list.add(s);
 					}
@@ -930,7 +953,7 @@ public class TS3Api {
 	}
 
 	public int getServerIdByPort(int port) {
-		CServerIdGetByPort s = new CServerIdGetByPort(port);
+		final CServerIdGetByPort s = new CServerIdGetByPort(port);
 		if (query.doCommand(s)) {
 			return StringUtil.getInt(s.getFirstResponse().get("server_id"));
 		}
@@ -938,7 +961,7 @@ public class TS3Api {
 	}
 
 	public VirtualServerInfo getServerInfo() {
-		CServerInfo info = new CServerInfo();
+		final CServerInfo info = new CServerInfo();
 		if (query.doCommand(info)) {
 			return new VirtualServerInfo(info.getFirstResponse().getMap());
 		}
@@ -946,7 +969,7 @@ public class TS3Api {
 	}
 
 	public Version getVersion() {
-		CVersion version = new CVersion();
+		final CVersion version = new CVersion();
 		if (query.doCommand(version)) {
 			return new Version(version.getFirstResponse().getMap());
 		}
@@ -954,10 +977,10 @@ public class TS3Api {
 	}
 
 	public List<VirtualServer> getVirtualServers() {
-		CServerList serverList = new CServerList();
+		final CServerList serverList = new CServerList();
 		if (query.doCommand(serverList)) {
-			ArrayList<VirtualServer> servers = new ArrayList<>();
-			for (HashMap<String, String> opt : serverList.getResponse()) {
+			final ArrayList<VirtualServer> servers = new ArrayList<>();
+			for (final HashMap<String, String> opt : serverList.getResponse()) {
 				servers.add((new VirtualServer(opt)));
 			}
 			return servers;
@@ -986,7 +1009,7 @@ public class TS3Api {
 
 	private boolean kickClients(ReasonIdentifier reason, String message,
 			int... clientIds) {
-		CClientKick kick = new CClientKick(reason, message, clientIds);
+		final CClientKick kick = new CClientKick(reason, message, clientIds);
 		if (query.doCommand(kick)) {
 			return kick.getError().isSuccessful();
 		}
@@ -994,7 +1017,7 @@ public class TS3Api {
 	}
 
 	public boolean login(String username, String password) {
-		CLogin login = new CLogin(username, password);
+		final CLogin login = new CLogin(username, password);
 		if (query.doCommand(login)) {
 			return login.getError().isSuccessful();
 		}
@@ -1002,7 +1025,7 @@ public class TS3Api {
 	}
 
 	public boolean logout() {
-		CLogout logout = new CLogout();
+		final CLogout logout = new CLogout();
 		if (query.doCommand(logout)) {
 			return true;
 		}
@@ -1014,7 +1037,8 @@ public class TS3Api {
 	}
 
 	public boolean moveChannel(int channelId, int channelTargetId, int order) {
-		CChannelMove move = new CChannelMove(channelId, channelTargetId, order);
+		final CChannelMove move = new CChannelMove(channelId, channelTargetId,
+				order);
 		if (query.doCommand(move)) {
 			return move.getError().isSuccessful();
 		}
@@ -1027,7 +1051,8 @@ public class TS3Api {
 
 	public boolean moveClient(int clientId, int channelId,
 			String channelPassword) {
-		CClientMove move = new CClientMove(clientId, channelId, channelPassword);
+		final CClientMove move = new CClientMove(clientId, channelId,
+				channelPassword);
 		if (query.doCommand(move)) {
 			return move.getError().isSuccessful();
 		}
@@ -1037,13 +1062,13 @@ public class TS3Api {
 	public boolean moveClient(int channelId) {
 		return moveClient(whoAmI().getId(), channelId);
 	}
-	
+
 	public boolean moveClient(int channelId, String channelPassword) {
-		return moveClient(whoAmI().getId(), channelId,channelPassword);
+		return moveClient(whoAmI().getId(), channelId, channelPassword);
 	}
 
 	public boolean pokeClient(int clientId, String message) {
-		CClientPoke poke = new CClientPoke(clientId, message);
+		final CClientPoke poke = new CClientPoke(clientId, message);
 		if (query.doCommand(poke)) {
 			return poke.getError().isSuccessful();
 		}
@@ -1072,7 +1097,7 @@ public class TS3Api {
 	}
 
 	public boolean registerEvent(TS3EventType t, int channelId) {
-		CServerNotifyRegister r = new CServerNotifyRegister(t, channelId);
+		final CServerNotifyRegister r = new CServerNotifyRegister(t, channelId);
 		if (query.doCommand(r)) {
 			return r.getError().isSuccessful();
 		}
@@ -1080,13 +1105,13 @@ public class TS3Api {
 	}
 
 	public void registerEvents(TS3EventType... t) {
-		for (TS3EventType type : t) {
+		for (final TS3EventType type : t) {
 			registerEvent(type, -1);
 		}
 	}
 
 	public boolean removeClientFromServerGroup(int groupId, int clientDatabaseId) {
-		CServerGroupDelClient del = new CServerGroupDelClient(groupId,
+		final CServerGroupDelClient del = new CServerGroupDelClient(groupId,
 				clientDatabaseId);
 		if (query.doCommand(del)) {
 			return del.getError().isSuccessful();
@@ -1099,7 +1124,8 @@ public class TS3Api {
 	}
 
 	public boolean renameChannelGroup(int groupId, String name) {
-		CChannelGroupRename rename = new CChannelGroupRename(groupId, name);
+		final CChannelGroupRename rename = new CChannelGroupRename(groupId,
+				name);
 		if (query.doCommand(rename)) {
 			return rename.getError().isSuccessful();
 		}
@@ -1107,7 +1133,7 @@ public class TS3Api {
 	}
 
 	public boolean renameServerGroup(int id, String name) {
-		CServerGroupRename rename = new CServerGroupRename(id, name);
+		final CServerGroupRename rename = new CServerGroupRename(id, name);
 		if (query.doCommand(rename)) {
 			return rename.getError().isSuccessful();
 		}
@@ -1121,7 +1147,7 @@ public class TS3Api {
 	 * @return A new administrator account
 	 */
 	public String resetPermissions() {
-		CPermReset reset = new CPermReset();
+		final CPermReset reset = new CPermReset();
 		if (query.doCommand(reset)) {
 			return reset.getFirstResponse().get("token");
 		}
@@ -1129,7 +1155,7 @@ public class TS3Api {
 	}
 
 	public boolean selectVirtualServerById(int id) {
-		CUse use = new CUse(id, -1);
+		final CUse use = new CUse(id, -1);
 		if (query.doCommand(use)) {
 			return use.getError().isSuccessful();
 		}
@@ -1137,7 +1163,7 @@ public class TS3Api {
 	}
 
 	public boolean selectVirtualServerByPort(int port) {
-		CUse use = new CUse(-1, port);
+		final CUse use = new CUse(-1, port);
 		if (query.doCommand(use)) {
 			return use.getError().isSuccessful();
 		}
@@ -1150,7 +1176,7 @@ public class TS3Api {
 
 	public boolean sendOfflineMessage(String clientUId, String subject,
 			String message) {
-		CMessageAdd add = new CMessageAdd(clientUId, subject, message);
+		final CMessageAdd add = new CMessageAdd(clientUId, subject, message);
 		if (query.doCommand(add)) {
 			return add.getError().isSuccessful();
 		}
@@ -1159,8 +1185,8 @@ public class TS3Api {
 
 	public boolean sendTextMessage(TextMessageTargetMode targetMode,
 			int targetId, String message) {
-		CSendTextMessage msg = new CSendTextMessage(targetMode.getIndex(),
-				targetId, message);
+		final CSendTextMessage msg = new CSendTextMessage(
+				targetMode.getIndex(), targetId, message);
 		if (query.doCommand(msg)) {
 			return msg.getError().isSuccessful();
 		}
@@ -1190,8 +1216,8 @@ public class TS3Api {
 
 	public boolean setClientChannelGroup(int groupId, int channelId,
 			int clientDBId) {
-		CSetClientChannelGroup group = new CSetClientChannelGroup(groupId,
-				channelId, clientDBId);
+		final CSetClientChannelGroup group = new CSetClientChannelGroup(
+				groupId, channelId, clientDBId);
 		if (query.doCommand(group)) {
 			return group.getError().isSuccessful();
 		}
@@ -1203,7 +1229,7 @@ public class TS3Api {
 	}
 
 	public boolean setMessageReadFlag(int messageId, boolean read) {
-		CMessageUpdateFlag flag = new CMessageUpdateFlag(messageId, read);
+		final CMessageUpdateFlag flag = new CMessageUpdateFlag(messageId, read);
 		if (query.doCommand(flag)) {
 			return flag.getError().isSuccessful();
 		}
@@ -1211,13 +1237,13 @@ public class TS3Api {
 	}
 
 	public boolean setNickname(String name) {
-		HashMap<ClientProperty, String> options = new HashMap<>();
+		final HashMap<ClientProperty, String> options = new HashMap<>();
 		options.put(ClientProperty.CLIENT_NICKNAME, name);
 		return updateClient(options);
 	}
 
 	public boolean startServer(int id) {
-		CServerStart start = new CServerStart(id);
+		final CServerStart start = new CServerStart(id);
 		if (query.doCommand(start)) {
 			return start.getError().isSuccessful();
 		}
@@ -1225,7 +1251,7 @@ public class TS3Api {
 	}
 
 	public boolean stopServer(int id) {
-		CServerStop start = new CServerStop(id);
+		final CServerStop start = new CServerStop(id);
 		if (query.doCommand(start)) {
 			return start.getError().isSuccessful();
 		}
@@ -1233,7 +1259,7 @@ public class TS3Api {
 	}
 
 	public boolean stopServerProcess() {
-		CServerProcessStop stop = new CServerProcessStop();
+		final CServerProcessStop stop = new CServerProcessStop();
 		if (query.doCommand(stop)) {
 			return stop.getError().isSuccessful();
 		}
@@ -1241,7 +1267,7 @@ public class TS3Api {
 	}
 
 	public boolean unregisterAllEvents() {
-		CServerNotifyUnregister unr = new CServerNotifyUnregister();
+		final CServerNotifyUnregister unr = new CServerNotifyUnregister();
 		if (query.doCommand(unr)) {
 			return unr.getError().isSuccessful();
 		}
@@ -1249,7 +1275,7 @@ public class TS3Api {
 	}
 
 	public boolean updateClient(HashMap<ClientProperty, String> options) {
-		CClientUpdate update = new CClientUpdate(options);
+		final CClientUpdate update = new CClientUpdate(options);
 		if (query.doCommand(update)) {
 			return update.getError().isSuccessful();
 		}
@@ -1257,7 +1283,7 @@ public class TS3Api {
 	}
 
 	public boolean usePrivilegeKey(String token) {
-		CPrivilegeKeyUse use = new CPrivilegeKeyUse(token);
+		final CPrivilegeKeyUse use = new CPrivilegeKeyUse(token);
 		if (query.doCommand(use)) {
 			return use.getError().isSuccessful();
 		}
@@ -1265,7 +1291,7 @@ public class TS3Api {
 	}
 
 	public ServerQueryInfo whoAmI() {
-		CWhoAmI whoAmI = new CWhoAmI();
+		final CWhoAmI whoAmI = new CWhoAmI();
 		if (query.doCommand(whoAmI)) {
 			return new ServerQueryInfo(whoAmI.getFirstResponse().getMap());
 		}

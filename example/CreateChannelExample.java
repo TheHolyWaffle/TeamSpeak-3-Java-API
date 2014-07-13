@@ -1,5 +1,3 @@
-package com.github.theholywaffle.teamspeak3.api.wrapper;
-
 /*
  * #%L
  * TeamSpeak 3 Java API
@@ -27,15 +25,42 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  */
 
 import java.util.HashMap;
+import java.util.logging.Level;
 
-public class Binding extends Wrapper {
+import com.github.theholywaffle.teamspeak3.TS3Api;
+import com.github.theholywaffle.teamspeak3.TS3Config;
+import com.github.theholywaffle.teamspeak3.TS3Query;
+import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 
-	public Binding(HashMap<String, String> map) {
-		super(map);
+public class CreateChannelExample {
+
+	public static void main(String[] args) {
+		new ChatBotExample();
 	}
 
-	public String getIp() {
-		return get("ip");
+	public CreateChannelExample() {
+		final TS3Config config = new TS3Config();
+		config.setHost("77.77.77.77");
+		config.setDebugLevel(Level.ALL);
+		config.setLoginCredentials("serveradmin", "serveradminpassword");
+
+		final TS3Query query = new TS3Query(config);
+		query.connect();
+
+		final TS3Api api = query.getApi();
+		api.selectVirtualServerById(1);
+		api.setNickname("PutPutBot");
+		api.sendChannelMessage("PutPutBot is online!");
+
+		final HashMap<ChannelProperty, String> properties = new HashMap<>();
+		properties.put(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"); // Make
+																		// channel
+																		// permanent
+		properties.put(ChannelProperty.CPID, "3"); // Make it a subchannel of
+													// channel 3
+
+		api.createChannel("New Channel", properties); // Create the channel with
+														// our properties :)
 	}
 
 }

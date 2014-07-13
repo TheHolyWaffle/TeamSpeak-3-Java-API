@@ -13,7 +13,44 @@ An Java 7 implementation of [TeamSpeak's 3 server query API](http://media.teamsp
 
 ## Getting Started
 
-First of all, you can always download the latest release [here](../../releases/latest) and add it to the buildpath of your project. Or you can also just download the sourcecode and put it in your project's source folder.
+**Download**
+
+- Standalone Jar: You can download the latest release [here](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/tree/mvn-repo/com/github/theholywaffle/teamspeak3-api) and add it to the buildpath of your project. 
+
+or
+
+- Maven: add the following to your pom.xml
+
+```xml
+<project>	
+	...
+	<repositories>
+		...
+		<repository>
+			<id>TeamSpeak-3-Java-API-mvn-repo</id>
+			<url>https://raw.githubusercontent.com/TheHolyWaffle/TeamSpeak-3-Java-API/mvn-repo/</url>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+			</snapshots>
+		</repository>
+		...
+	</repositories>
+	
+	<dependencies>
+		...
+		<dependency>
+			<groupId>com.github.theholywaffle</groupId>
+			<artifactId>teamspeak3-api</artifactId>
+			<version>[1.0.0,2.0.0)</version>
+		</dependency>
+		...
+	</dependencies>
+	...
+</project>
+```
+
+**Usage**
 
 All functionality is contained in the [TS3Api](src/main/java/com/github/theholywaffle/teamspeak3/TS3Api.java) object.
 
@@ -42,7 +79,13 @@ api.sendChannelMessage("PutPutBot is online!");
 ...
 ```
     
-More examples can be found [here](src/main/java/com/github/theholywaffle/teamspeak3/example).
+**More examples:**
+
+[look here](example)
+
+**Latest Javadocs:**
+
+[look here](http://theholywaffle.github.io/TeamSpeak-3-Java-API/latest/)
     
 **Important:**
 
@@ -63,7 +106,6 @@ Only use `FloodRate.UNLIMITED` if you are sure that your query account is whitel
 ## TODO
 
 * Add Javadoc to [TS3Api](src/main/java/com/github/theholywaffle/teamspeak3/TS3Api.java).
-* Add more methods to simplify [TS3Api](src/main/java/com/github/theholywaffle/teamspeak3/TS3Api.java).
 
 ## Questions or bugs?
 

@@ -1,14 +1,30 @@
-/*******************************************************************************
- * Copyright (c) 2014 Bert De Geyter (https://github.com/TheHolyWaffle).
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Public License v3.0
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/gpl.html
- * 
- * Contributors:
- *     Bert De Geyter (https://github.com/TheHolyWaffle)
- ******************************************************************************/
 package com.github.theholywaffle.teamspeak3.commands.response;
+
+/*
+ * #%L
+ * TeamSpeak 3 Java API
+ * %%
+ * Copyright (C) 2014 Bert De Geyter
+ * %%
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * #L%
+ */
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,26 +33,25 @@ import java.util.StringTokenizer;
 
 import com.github.theholywaffle.teamspeak3.StringUtil;
 
-public class DefaultArrayResponse{
+public class DefaultArrayResponse {
 
 	private final List<HashMap<String, String>> array = new ArrayList<>();
 
-
 	public DefaultArrayResponse(String raw) {
-		StringTokenizer tkn = new StringTokenizer(raw, "|", false);
-		
+		final StringTokenizer tkn = new StringTokenizer(raw, "|", false);
+
 		while (tkn.hasMoreTokens()) {
 			array.add(parse(tkn.nextToken()));
 		}
 	}
-	
-	private HashMap<String, String> parse(String raw){
-		StringTokenizer st = new StringTokenizer(raw, " ", false);
-		HashMap<String, String> options = new HashMap<>();
+
+	private HashMap<String, String> parse(String raw) {
+		final StringTokenizer st = new StringTokenizer(raw, " ", false);
+		final HashMap<String, String> options = new HashMap<>();
 
 		while (st.hasMoreTokens()) {
-			String tmp = st.nextToken();
-			int pos = tmp.indexOf("=");
+			final String tmp = st.nextToken();
+			final int pos = tmp.indexOf("=");
 
 			if (pos == -1) {
 				options.put(tmp, "");
@@ -47,15 +62,16 @@ public class DefaultArrayResponse{
 		}
 		return options;
 	}
-	
-	public List<HashMap<String, String>> getArray(){
+
+	public List<HashMap<String, String>> getArray() {
 		return array;
 	}
-	
-	public String toString(){
+
+	@Override
+	public String toString() {
 		String str = "";
-		for(HashMap<String, String> opt : array){
-			str+=opt+" | ";
+		for (final HashMap<String, String> opt : array) {
+			str += opt + " | ";
 		}
 		return str;
 	}
