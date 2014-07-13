@@ -1,14 +1,30 @@
-/*******************************************************************************
- * Copyright (c) 2014 Bert De Geyter (https://github.com/TheHolyWaffle).
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Public License v3.0
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/gpl.html
- * 
- * Contributors:
- *     Bert De Geyter (https://github.com/TheHolyWaffle)
- ******************************************************************************/
 package com.github.theholywaffle.teamspeak3;
+
+/*
+ * #%L
+ * TeamSpeak 3 Java API
+ * %%
+ * Copyright (C) 2014 Bert De Geyter
+ * %%
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * #L%
+ */
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -35,10 +51,10 @@ public class TS3Query {
 	private KeepAliveThread keepAlive;
 
 	private ConcurrentLinkedQueue<Command> commandList = new ConcurrentLinkedQueue<>();
-	private EventManager eventManager = new EventManager();
+	private final EventManager eventManager = new EventManager();
 
 	private TS3Api api;
-	private TS3Config config;
+	private final TS3Config config;
 
 	public static final Logger log = Logger.getLogger(TS3Query.class.getName());
 
@@ -70,21 +86,23 @@ public class TS3Query {
 			socket = new Socket(config.getHost(), config.getQueryPort());
 			if (socket.isConnected()) {
 				out = new PrintWriter(socket.getOutputStream(), true);
-				in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+				in = new BufferedReader(new InputStreamReader(
+						socket.getInputStream()));
 				socketReader = new SocketReader(this);
 				socketReader.start();
-				socketWriter = new SocketWriter(this, config.getFloodRate().getMs());
+				socketWriter = new SocketWriter(this, config.getFloodRate()
+						.getMs());
 				socketWriter.start();
 				keepAlive = new KeepAliveThread(this, socketWriter);
 				keepAlive.start();
 			}
 
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new TS3ConnectionFailedException(e);
 		}
 
 		// Executing config object
-		TS3Api api = getApi();
+		final TS3Api api = getApi();
 		if (config.getUsername() != null && config.getPassword() != null) {
 			api.login(config.getUsername(), config.getPassword());
 		}
@@ -105,11 +123,11 @@ public class TS3Query {
 
 	public boolean doCommand(Command c) {
 		commandList.offer(c);
-		long start = System.currentTimeMillis();
+		final long start = System.currentTimeMillis();
 		while (!c.isAnswered() && System.currentTimeMillis() - start < 4_000) {
 			try {
 				Thread.sleep(50);
-			} catch (InterruptedException e) {
+			} catch (final InterruptedException e) {
 				throw new TS3CommandFailedException(e);
 			}
 		}
@@ -148,13 +166,13 @@ public class TS3Query {
 		if (in != null) {
 			try {
 				in.close();
-			} catch (IOException ignored) {
+			} catch (final IOException ignored) {
 			}
 		}
 		if (socket != null) {
 			try {
 				socket.close();
-			} catch (IOException ignored) {
+			} catch (final IOException ignored) {
 			}
 		}
 		try {
@@ -170,13 +188,13 @@ public class TS3Query {
 				keepAlive.finish();
 				keepAlive.join();
 			}
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			e.printStackTrace();
 		}
 
 		commandList.clear();
 		commandList = null;
-		for (Handler lh : log.getHandlers()) {
+		for (final Handler lh : log.getHandlers()) {
 			log.removeHandler(lh);
 		}
 	}

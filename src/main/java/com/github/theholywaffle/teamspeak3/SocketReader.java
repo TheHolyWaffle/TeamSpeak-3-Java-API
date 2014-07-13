@@ -1,14 +1,30 @@
-/*******************************************************************************
- * Copyright (c) 2014 Bert De Geyter (https://github.com/TheHolyWaffle).
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Public License v3.0
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/gpl.html
- * 
- * Contributors:
- *     Bert De Geyter (https://github.com/TheHolyWaffle)
- ******************************************************************************/
 package com.github.theholywaffle.teamspeak3;
+
+/*
+ * #%L
+ * TeamSpeak 3 Java API
+ * %%
+ * Copyright (C) 2014 Bert De Geyter
+ * %%
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * #L%
+ */
 
 import java.io.IOException;
 
@@ -16,7 +32,7 @@ import com.github.theholywaffle.teamspeak3.commands.Command;
 
 public class SocketReader extends Thread {
 
-	private TS3Query ts3;
+	private final TS3Query ts3;
 	private volatile boolean stop;
 
 	public SocketReader(TS3Query ts3) {
@@ -28,24 +44,26 @@ public class SocketReader extends Thread {
 				TS3Query.log.info("< " + ts3.getIn().readLine());
 				i++;
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			e.printStackTrace();
 		}
 	}
 
+	@Override
 	public void run() {
-		while (ts3.getSocket()!= null && ts3.getSocket().isConnected() && ts3.getIn() != null && !stop) {
+		while (ts3.getSocket() != null && ts3.getSocket().isConnected()
+				&& ts3.getIn() != null && !stop) {
 			try {
 				if (ts3.getIn().ready()) {
 					final String line = ts3.getIn().readLine();
 					if (!line.isEmpty()) {
-						Command c = ts3.getCommandList().peek();
+						final Command c = ts3.getCommandList().peek();
 						if (line.startsWith("notify")) {
 							TS3Query.log.info("< [event] " + line);
 							new Thread(new Runnable() {
 
 								public void run() {
-									String arr[] = line.split(" ", 2);
+									final String arr[] = line.split(" ", 2);
 									ts3.getEventManager().fireEvent(arr[0],
 											arr[1]);
 
@@ -71,12 +89,12 @@ public class SocketReader extends Thread {
 						}
 					}
 				}
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				e.printStackTrace();
 			}
 			try {
 				Thread.sleep(50);
-			} catch (InterruptedException e) {
+			} catch (final InterruptedException e) {
 				e.printStackTrace();
 			}
 		}

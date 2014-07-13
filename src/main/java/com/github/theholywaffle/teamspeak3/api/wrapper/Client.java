@@ -1,14 +1,30 @@
-/*******************************************************************************
- * Copyright (c) 2014 Bert De Geyter (https://github.com/TheHolyWaffle).
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Public License v3.0
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/gpl.html
- * 
- * Contributors:
- *     Bert De Geyter (https://github.com/TheHolyWaffle)
- ******************************************************************************/
 package com.github.theholywaffle.teamspeak3.api.wrapper;
+
+/*
+ * #%L
+ * TeamSpeak 3 Java API
+ * %%
+ * Copyright (C) 2014 Bert De Geyter
+ * %%
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * #L%
+ */
 
 import java.util.Date;
 import java.util.HashMap;
@@ -16,127 +32,127 @@ import java.util.HashMap;
 import com.github.theholywaffle.teamspeak3.StringUtil;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 
-public class Client  extends Wrapper{
+public class Client extends Wrapper {
 
 	public Client(HashMap<String, String> map) {
 		super(map);
 	}
-	
-	public boolean canTalk(){
+
+	public boolean canTalk() {
 		return getBoolean(ClientProperty.CLIENT_IS_TALKER);
 	}
-	
-	public String getAwayMessage(){
+
+	public String getAwayMessage() {
 		return get(ClientProperty.CLIENT_AWAY_MESSAGE);
 	}
-	
-	public int getChannelGroupId(){
+
+	public int getChannelGroupId() {
 		return getInt(ClientProperty.CLIENT_CHANNEL_GROUP_ID);
 	}
-	
-	public int getChannelId(){
+
+	public int getChannelId() {
 		return getInt(ClientProperty.CID);
 	}
 
-	public String getCountry(){
+	public String getCountry() {
 		return get(ClientProperty.CLIENT_COUNTRY);
 	}
-	
-	public Date getCreatedDate(){
-		return new Date(getLong(ClientProperty.CLIENT_CREATED)*1000);
+
+	public Date getCreatedDate() {
+		return new Date(getLong(ClientProperty.CLIENT_CREATED) * 1000);
 	}
-	
-	public int getDatabaseId(){
+
+	public int getDatabaseId() {
 		return getInt(ClientProperty.CLIENT_DATABASE_ID);
 	}
-	
-	public long getIconId(){
+
+	public long getIconId() {
 		return getLong(ClientProperty.CLIENT_ICON_ID);
 	}
-	
-	public int getId(){
+
+	public int getId() {
 		return getInt("clid");
 	}
-	
-	public long getIdleTime(){
+
+	public long getIdleTime() {
 		return getLong(ClientProperty.CLIENT_IDLE_TIME);
 	}
-	
-	public int getInheritedChannelGroupId(){
+
+	public int getInheritedChannelGroupId() {
 		return getInt(ClientProperty.CLIENT_CHANNEL_GROUP_INHERITED_CHANNEL_ID);
 	}
-	
-	public Date getLastConnectedDate(){
-		return new Date(getLong(ClientProperty.CLIENT_LASTCONNECTED)*1000);
+
+	public Date getLastConnectedDate() {
+		return new Date(getLong(ClientProperty.CLIENT_LASTCONNECTED) * 1000);
 	}
-	
-	public String getNickname(){
+
+	public String getNickname() {
 		return get(ClientProperty.CLIENT_NICKNAME);
 	}
-	
-	public String getPlatform(){
+
+	public String getPlatform() {
 		return get(ClientProperty.CLIENT_PLATFORM);
 	}
-	
-	public int[] getServerGroups(){
-		String str = get(ClientProperty.CLIENT_SERVERGROUPS);
-		String[] arr = str.split(",");
-		int[] groups = new int[arr.length];
-		for(int i=0;i<groups.length;i++){
+
+	public int[] getServerGroups() {
+		final String str = get(ClientProperty.CLIENT_SERVERGROUPS);
+		final String[] arr = str.split(",");
+		final int[] groups = new int[arr.length];
+		for (int i = 0; i < groups.length; i++) {
 			groups[i] = StringUtil.getInt(arr[i]);
 		}
 		return groups;
 	}
-	
-	public int getTalkPower(){
+
+	public int getTalkPower() {
 		return getInt(ClientProperty.CLIENT_TALK_POWER);
 	}
-	
-	public int getType(){
+
+	public int getType() {
 		return getInt(ClientProperty.CLIENT_TYPE);
 	}
-	
-	public String getUniqueIdentifier(){
+
+	public String getUniqueIdentifier() {
 		return get(ClientProperty.CLIENT_UNIQUE_IDENTIFIER);
 	}
-	
-	public String getVersion(){
+
+	public String getVersion() {
 		return get(ClientProperty.CLIENT_VERSION);
 	}
-	
-	public boolean isAway(){
+
+	public boolean isAway() {
 		return getBoolean(ClientProperty.CLIENT_AWAY);
 	}
-	
-	public boolean isChannelCommander(){
+
+	public boolean isChannelCommander() {
 		return getBoolean(ClientProperty.CLIENT_IS_CHANNEL_COMMANDER);
 	}
-	
-	public boolean isInputHardware(){
+
+	public boolean isInputHardware() {
 		return getBoolean(ClientProperty.CLIENT_INPUT_HARDWARE);
 	}
-	
-	public boolean isInputMuted(){
+
+	public boolean isInputMuted() {
 		return getBoolean(ClientProperty.CLIENT_INPUT_MUTED);
 	}
-	
-	public boolean isOutputHardware(){
+
+	public boolean isOutputHardware() {
 		return getBoolean(ClientProperty.CLIENT_OUTPUT_HARDWARE);
 	}
-	
-	public boolean isOutputMuted(){
+
+	public boolean isOutputMuted() {
 		return getBoolean(ClientProperty.CLIENT_OUTPUT_MUTED);
 	}
-	
-	public boolean isPrioritySpeaker(){
+
+	public boolean isPrioritySpeaker() {
 		return getBoolean(ClientProperty.CLIENT_IS_PRIORITY_SPEAKER);
 	}
-	
-	public boolean isRecording(){
+
+	public boolean isRecording() {
 		return getBoolean(ClientProperty.CLIENT_IS_RECORDING);
 	}
-	
-	public boolean isTalking(){
+
+	public boolean isTalking() {
 		return getBoolean("client_flag_talking");
 	}
 }

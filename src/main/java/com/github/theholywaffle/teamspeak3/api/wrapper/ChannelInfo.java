@@ -1,118 +1,134 @@
-/*******************************************************************************
- * Copyright (c) 2014 Bert De Geyter (https://github.com/TheHolyWaffle).
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Public License v3.0
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/gpl.html
- * 
- * Contributors:
- *     Bert De Geyter (https://github.com/TheHolyWaffle)
- ******************************************************************************/
 package com.github.theholywaffle.teamspeak3.api.wrapper;
+
+/*
+ * #%L
+ * TeamSpeak 3 Java API
+ * %%
+ * Copyright (C) 2014 Bert De Geyter
+ * %%
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * #L%
+ */
 
 import java.util.HashMap;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 
-public class ChannelInfo  extends Wrapper{
+public class ChannelInfo extends Wrapper {
 
 	public ChannelInfo(HashMap<String, String> map) {
 		super(map);
 	}
-	
-	public int getParentChannelId(){
+
+	public int getParentChannelId() {
 		return getInt(ChannelProperty.PID);
 	}
-	
-	public String getName(){
+
+	public String getName() {
 		return get(ChannelProperty.CHANNEL_NAME);
 	}
-	
-	public String getTopic(){
+
+	public String getTopic() {
 		return get(ChannelProperty.CHANNEL_TOPIC);
 	}
-	
-	public String getDescription(){
+
+	public String getDescription() {
 		return get(ChannelProperty.CHANNEL_DESCRIPTION);
 	}
-	
-	public String getPassword(){
+
+	public String getPassword() {
 		return get(ChannelProperty.CHANNEL_PASSWORD);
 	}
-	
-	public int getCodec(){
+
+	public int getCodec() {
 		return getInt(ChannelProperty.CHANNEL_CODEC);
 	}
-	
-	public int getCodecQuality(){
+
+	public int getCodecQuality() {
 		return getInt(ChannelProperty.CHANNEL_CODEC_QUALITY);
 	}
-	
-	public int getMaxClients(){
+
+	public int getMaxClients() {
 		return getInt(ChannelProperty.CHANNEL_MAXCLIENTS);
 	}
-	
-	public int getMaxFamilyClients(){
+
+	public int getMaxFamilyClients() {
 		return getInt(ChannelProperty.CHANNEL_MAXFAMILYCLIENTS);
 	}
-	
-	public int getOrder(){
+
+	public int getOrder() {
 		return getInt(ChannelProperty.CHANNEL_ORDER);
 	}
-	
-	public boolean isPermanent(){
+
+	public boolean isPermanent() {
 		return getBoolean(ChannelProperty.CHANNEL_FLAG_PERMANENT);
 	}
-	
-	public boolean isSemiPermanent(){
+
+	public boolean isSemiPermanent() {
 		return getBoolean(ChannelProperty.CHANNEL_FLAG_SEMI_PERMANENT);
 	}
-	
-	public boolean isDefault(){
+
+	public boolean isDefault() {
 		return getBoolean(ChannelProperty.CHANNEL_FLAG_DEFAULT);
 	}
-	
-	public boolean hasPassword(){
+
+	public boolean hasPassword() {
 		return getBoolean(ChannelProperty.CHANNEL_FLAG_PASSWORD);
 	}
-	
-	public int getCodecLatencyFactor(){
+
+	public int getCodecLatencyFactor() {
 		return getInt(ChannelProperty.CHANNEL_CODEC_LATENCY_FACTOR);
 	}
-	
-	public boolean isEncrypted(){
+
+	public boolean isEncrypted() {
 		return !getBoolean(ChannelProperty.CHANNEL_CODEC_IS_UNENCRYPTED);
 	}
-	
-	public boolean hasUnlimitedClients(){
+
+	public boolean hasUnlimitedClients() {
 		return getBoolean(ChannelProperty.CHANNEL_FLAG_MAXCLIENTS_UNLIMITED);
 	}
-	
-	public boolean hasUnlimitedFamilyClients(){
+
+	public boolean hasUnlimitedFamilyClients() {
 		return getBoolean(ChannelProperty.CHANNEL_FLAG_MAXFAMILYCLIENTS_UNLIMITED);
 	}
-	
-	public boolean hasInheritedMaxFamilyClients(){
+
+	public boolean hasInheritedMaxFamilyClients() {
 		return getBoolean(ChannelProperty.CHANNEL_FLAG_MAXFAMILYCLIENTS_INHERITED);
 	}
-	
-	public String getFilePath(){
+
+	public String getFilePath() {
 		return get(ChannelProperty.CHANNEL_FILEPATH);
 	}
-	
-	public int getNeededTalkPower(){
+
+	public int getNeededTalkPower() {
 		return getInt(ChannelProperty.CHANNEL_NEEDED_TALK_POWER);
 	}
-	
-	public boolean isForcedSilence(){
+
+	public boolean isForcedSilence() {
 		return getBoolean(ChannelProperty.CHANNEL_FORCED_SILENCE);
 	}
-	
-	public String getPhoneticName(){
+
+	public String getPhoneticName() {
 		return get(ChannelProperty.CHANNEL_NAME_PHONETIC);
 	}
 
-	public long getIconId(){
+	public long getIconId() {
 		return getLong(ChannelProperty.CHANNEL_ICON_ID);
 	}
 
