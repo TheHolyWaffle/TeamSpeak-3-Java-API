@@ -110,4 +110,10 @@ public class DefaultListener implements TS3Listener {
 		
 	}
 
+	@Override
+	public void onChannelPasswordChanged(ChannelPasswordChangedEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

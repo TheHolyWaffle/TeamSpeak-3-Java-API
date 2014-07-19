@@ -74,4 +74,6 @@ public interface TS3Listener {
 	
 	public void onChannelMoved(ChannelMovedEvent e);
 
+	public void onChannelPasswordChanged(ChannelPasswordChangedEvent e);
+
 }
