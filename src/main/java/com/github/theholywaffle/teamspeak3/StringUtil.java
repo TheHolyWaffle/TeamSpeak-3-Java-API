@@ -102,5 +102,12 @@ public class StringUtil {
 		}
 		return Integer.parseInt(str);
 	}
+	
+	public static String convertToUTF8(String str){
+		return str.replace("ä", "Ã¤").replace("ö", "Ã¶").replace("ü", "Ã¼").replace("Ä", "Ã„").replace("Ö", "Ã–").replace("Ü", "Ãœ").trim();
+	}
+	public static String convertFromUTF8(String str){
+		return str.replace("Ã¤", "ä").replace("Ã¶", "ö").replace("Ã¼", "ü").replace("Ã„", "Ä").replace("Ã–", "Ö").replace("Ãœ", "Ü").trim();
+	}
 
 }

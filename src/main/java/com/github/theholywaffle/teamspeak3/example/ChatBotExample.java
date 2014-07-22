@@ -36,6 +36,8 @@ package com.github.theholywaffle.teamspeak3.example;
  * #L%
  */
 
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.logging.Level;
 
 import com.github.theholywaffle.teamspeak3.TS3Api;
@@ -63,9 +65,9 @@ public class ChatBotExample {
 
 	public ChatBotExample() {
 		final TS3Config config = new TS3Config();
-		config.setHost("77.77.77.77");
+		config.setHost("188.40.60.18");
 		config.setDebugLevel(Level.ALL);
-		config.setLoginCredentials("serveradmin", "serveradminpassword");
+		config.setLoginCredentials("chronicbot", "phdaHBBD");
 		
 		final TS3Query query = new TS3Query(config);
 		query.connect();
@@ -85,6 +87,21 @@ public class ChatBotExample {
 					}
 					if(e.getMessage().toLowerCase().contains("hello")){
 						api.sendChannelMessage("Hello "+e.getInvokerName());
+					}
+					if(e.getMessage().toLowerCase().contains("!test")){
+						char a = 'ä';
+						char o = 'ö';
+						char u = 'ü';
+						api.sendChannelMessage("Umlaute: \u00e4 \u00f6 \u00fc \u00c4 \u00d6 \u00dc \u00df");
+						api.sendChannelMessage("Umlaute: ä ö ü Ä Ö Ü");
+						api.sendChannelMessage("Umlaute: " + a + " " + o + " " + u);
+						api.sendChannelMessage(new String("Umlaute: ä ö ü Ä Ö Ü".getBytes(), Charset.forName("UTF8")));
+						byte[] m = "Umlaute: ä ö ü Ä Ö Ü".getBytes(Charset.forName("UTF8"));
+						api.sendChannelMessage(m.toString());
+						//Hallo\s& #228;\s& #246;\s& #252;\s& #223;
+						api.sendChannelMessage("Umlaute: &#228; &#246; &#252; &#223");
+						api.sendChannelMessage(Charset.forName("UTF8").decode(ByteBuffer.wrap(m)).toString());
+						api.sendChannelMessage("Ã¤Ã¶Ã¼Ã„Ã–Ãœ");
 					}
 				}
 			}

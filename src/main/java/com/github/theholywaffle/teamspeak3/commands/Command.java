@@ -105,8 +105,7 @@ public class Command {
 	public void setSent() {
 		sent = true;
 	}
-
-	@Override
+	
 	public String toString() {
 		String str = command;
 		for (final Parameter p : params) {

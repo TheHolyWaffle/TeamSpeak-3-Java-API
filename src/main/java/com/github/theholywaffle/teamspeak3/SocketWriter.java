@@ -44,15 +44,14 @@ public class SocketWriter extends Thread {
 		}
 	}
 
-	@Override
 	public void run() {
 		while (ts3.getSocket() != null && ts3.getSocket().isConnected()
 				&& ts3.getOut() != null && !stop) {
 			final Command c = ts3.getCommandList().peek();
 			if (c != null && !c.isSent()) {
 				final String msg = c.toString();
-				TS3Query.log.info("> " + msg);
-				ts3.getOut().println(msg);
+				TS3Query.log.info("> " + StringUtil.convertToUTF8(msg));
+				ts3.getOut().println(StringUtil.convertToUTF8(msg));
 				lastCommand = System.currentTimeMillis();
 				c.setSent();
 			}
