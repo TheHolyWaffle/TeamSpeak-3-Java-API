@@ -50,8 +50,8 @@ public class SocketWriter extends Thread {
 			final Command c = ts3.getCommandList().peek();
 			if (c != null && !c.isSent()) {
 				final String msg = c.toString();
-				TS3Query.log.info("> " + StringUtil.convertToUTF8(msg));
-				ts3.getOut().println(StringUtil.convertToUTF8(msg));
+				TS3Query.log.info("> " + msg);
+				ts3.getOut().println(msg);
 				lastCommand = System.currentTimeMillis();
 				c.setSent();
 			}

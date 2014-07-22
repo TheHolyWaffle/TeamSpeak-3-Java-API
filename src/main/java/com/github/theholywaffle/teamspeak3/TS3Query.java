@@ -29,7 +29,7 @@ package com.github.theholywaffle.teamspeak3;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.PrintStream;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Handler;
@@ -44,7 +44,7 @@ import com.github.theholywaffle.teamspeak3.log.LogHandler;
 public class TS3Query {
 
 	private Socket socket;
-	private PrintWriter out;
+	private PrintStream out;
 	private BufferedReader in;
 	private SocketReader socketReader;
 	private SocketWriter socketWriter;
@@ -85,9 +85,9 @@ public class TS3Query {
 		try {
 			socket = new Socket(config.getHost(), config.getQueryPort());
 			if (socket.isConnected()) {
-				out = new PrintWriter(socket.getOutputStream(), true);
+				out = new PrintStream(socket.getOutputStream(), true, "UTF-8");
 				in = new BufferedReader(new InputStreamReader(
-						socket.getInputStream()));
+						socket.getInputStream(), "UTF-8"));
 				socketReader = new SocketReader(this);
 				socketReader.start();
 				socketWriter = new SocketWriter(this, config.getFloodRate()
@@ -113,7 +113,7 @@ public class TS3Query {
 		return socket;
 	}
 
-	public PrintWriter getOut() {
+	public PrintStream getOut() {
 		return out;
 	}
 

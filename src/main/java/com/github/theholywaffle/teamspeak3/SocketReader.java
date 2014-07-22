@@ -55,7 +55,7 @@ public class SocketReader extends Thread {
 				&& ts3.getIn() != null && !stop) {
 			try {
 				if (ts3.getIn().ready()) {
-					final String line = StringUtil.convertFromUTF8(ts3.getIn().readLine());
+					final String line = ts3.getIn().readLine();
 					if (!line.isEmpty()) {
 						final Command c = ts3.getCommandList().peek();
 						if (line.startsWith("notify")) {
