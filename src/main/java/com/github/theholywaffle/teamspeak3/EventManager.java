@@ -31,8 +31,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.github.theholywaffle.teamspeak3.api.event.ChannelCreateEvent;
+import com.github.theholywaffle.teamspeak3.api.event.ChannelDeletedEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ChannelDescriptionEditedEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ChannelEditedEvent;
+import com.github.theholywaffle.teamspeak3.api.event.ChannelMovedEvent;
+import com.github.theholywaffle.teamspeak3.api.event.ChannelPasswordChangedEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ClientMovedEvent;
@@ -55,9 +59,12 @@ public class EventManager {
 		map.put("notifyclientleftview", new ClientLeaveEvent());
 		map.put("notifyserveredited", new ServerEditedEvent());
 		map.put("notifychanneledited", new ChannelEditedEvent());
-		map.put("notifychanneldescriptionchanged",
-				new ChannelDescriptionEditedEvent());
+		map.put("notifychanneldescriptionchanged", new ChannelDescriptionEditedEvent());
 		map.put("notifyclientmoved", new ClientMovedEvent());
+		map.put("notifychannelcreated", new ChannelCreateEvent());
+		map.put("notifychanneldeleted", new ChannelDeletedEvent());
+		map.put("notifychannelmoved", new ChannelMovedEvent());
+		map.put("notifychannelpasswordchanged", new ChannelPasswordChangedEvent());
 	}
 
 	public void addListeners(TS3Listener... listeners) {

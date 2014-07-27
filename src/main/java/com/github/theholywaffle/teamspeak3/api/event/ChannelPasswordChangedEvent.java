@@ -1,4 +1,4 @@
-package com.github.theholywaffle.teamspeak3;
+package com.github.theholywaffle.teamspeak3.api.event;
 
 /*
  * #%L
@@ -26,50 +26,39 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
-import com.github.theholywaffle.teamspeak3.commands.Command;
 
-public class SocketWriter extends Thread {
-	private final TS3Query ts3;
-	private int floodRate;
-	private long lastCommand = System.currentTimeMillis();
-	private volatile boolean stop;
+import java.util.HashMap;
 
-	public SocketWriter(TS3Query ts3, int floodRate) {
-		super("SocketWriter");
-		this.ts3 = ts3;
-		if (floodRate > 50) {
-			this.floodRate = floodRate;
-		} else {
-			this.floodRate = 50;
-		}
+import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
+
+public class ChannelPasswordChangedEvent extends Wrapper implements TS3EventEmitter {
+
+	public ChannelPasswordChangedEvent() {
+		super(null);
+	}
+	public ChannelPasswordChangedEvent(HashMap<String, String> map) {
+		super(map);
+	}
+	
+	public int getChannelId() {
+		return getInt("cid");
+	}
+	public int getReasonId(){
+		return getInt("reasonid");
+	}
+	public int getInvokerId(){
+		return getInt("invokerid");
+	}
+	public String getInvokerName(){
+		return get("invokername");
+	}
+	public String getInvokerUId(){
+		return get("invokeruid");
+	}
+	@Override
+	public void fire(TS3Listener listener, HashMap<String, String> map) {
+		listener.onChannelPasswordChanged(new ChannelPasswordChangedEvent(map));
+
 	}
 
-	public void run() {
-		while (ts3.getSocket() != null && ts3.getSocket().isConnected()
-				&& ts3.getOut() != null && !stop) {
-			final Command c = ts3.getCommandList().peek();
-			if (c != null && !c.isSent()) {
-				final String msg = c.toString();
-				TS3Query.log.info("> " + msg);
-				ts3.getOut().println(msg);
-				lastCommand = System.currentTimeMillis();
-				c.setSent();
-			}
-			try {
-				Thread.sleep(floodRate);
-			} catch (final InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-
-		TS3Query.log.warning("SocketWriter has stopped!");
-	}
-
-	public long getIdleTime() {
-		return System.currentTimeMillis() - lastCommand;
-	}
-
-	public void finish() {
-		stop = true;
-	}
 }

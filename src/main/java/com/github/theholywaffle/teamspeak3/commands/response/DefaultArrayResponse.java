@@ -67,7 +67,6 @@ public class DefaultArrayResponse {
 		return array;
 	}
 
-	@Override
 	public String toString() {
 		String str = "";
 		for (final HashMap<String, String> opt : array) {

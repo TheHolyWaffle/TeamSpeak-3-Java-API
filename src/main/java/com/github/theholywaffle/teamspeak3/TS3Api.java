@@ -1173,7 +1173,13 @@ public class TS3Api {
 	public boolean selectVirtualServer(VirtualServer server) {
 		return selectVirtualServerById(server.getId());
 	}
-
+	/**
+	 * Sends an offline message to a Client
+	 * @param clientUId The Unique string
+	 * @param subject header
+	 * @param message your message to send
+	 * @return true if the message was send
+	 */
 	public boolean sendOfflineMessage(String clientUId, String subject,
 			String message) {
 		final CMessageAdd add = new CMessageAdd(clientUId, subject, message);
@@ -1182,7 +1188,13 @@ public class TS3Api {
 		}
 		return false;
 	}
-
+	/**
+	 * Sends a TextMessage
+	 * @param targetMode The targetmode (Server, channel or private)
+	 * @param targetId The recipient of this message
+	 * @param message Yout text message to send
+	 * @return true if the message was send
+	 */
 	public boolean sendTextMessage(TextMessageTargetMode targetMode,
 			int targetId, String message) {
 		final CSendTextMessage msg = new CSendTextMessage(
@@ -1192,7 +1204,12 @@ public class TS3Api {
 		}
 		return false;
 	}
-
+	/**
+	 * Sends a ChannelMessage
+	 * @param channelId The channelID which receive your message
+	 * @param message Your message which you would send
+	 * @return true if the message was succesfully send
+	 */
 	public boolean sendChannelMessage(int channelId, String message) {
 		return sendTextMessage(TextMessageTargetMode.CHANNEL, channelId,
 				message);
