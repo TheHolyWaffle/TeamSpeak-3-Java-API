@@ -6,6 +6,7 @@ An Java 7 implementation of [TeamSpeak's 3 server query API](http://media.teamsp
 
 ## Features
 
+- [Documented source](http://theholywaffle.github.io/TeamSpeak-3-Java-API/latest/)
 - Contains all server query functionality! (see [TeamSpeak 3 Server Query Manual](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf))
 - Built-in keep alive method
 - Threaded event-based system
@@ -81,11 +82,11 @@ api.sendChannelMessage("PutPutBot is online!");
     
 **More examples:**
 
-[look here](example)
+[here](example)
 
 **Latest Javadocs:**
 
-[look here](http://theholywaffle.github.io/TeamSpeak-3-Java-API/latest/)
+[here](http://theholywaffle.github.io/TeamSpeak-3-Java-API/latest/)
     
 **Important:**
 
