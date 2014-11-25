@@ -103,10 +103,7 @@ public class ClientJoinEvent extends Wrapper implements TS3Event,
 	}
 
 	public int getAmountOfServerGroups() {
-		//getInt was turning the String 1,2,3,.. to a int which wasn't right.
-		//Now it gets the Amount even if the ID is <=10
-		String[] split= get(ClientProperty.CLIENT_SERVERGROUPS).split(",");
-		return split.length;
+		return getInt(ClientProperty.Client_SERVERGROUPS);
 	}
 	
 	public String getClientServerGroups(){
