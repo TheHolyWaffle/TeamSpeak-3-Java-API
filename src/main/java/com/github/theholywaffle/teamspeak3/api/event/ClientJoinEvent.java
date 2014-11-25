@@ -127,7 +127,7 @@ public class ClientJoinEvent extends Wrapper implements TS3Event,
 	}
 
 	public String getClientFlagAvatarId() {
-		return get(ClientProperty.CLIENT_FLAG_AVATAR);
+		return get(ClientProperty.CLIENT_FLAG_AVATAR); 
 	}
 
 	public int getClientTalkPower() {
