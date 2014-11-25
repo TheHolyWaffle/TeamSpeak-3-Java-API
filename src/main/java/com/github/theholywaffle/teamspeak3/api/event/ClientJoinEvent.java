@@ -106,10 +106,6 @@ public class ClientJoinEvent extends Wrapper implements TS3Event,
 		return getInt(ClientProperty.Client_SERVERGROUPS);
 	}
 	
-	public String getClientServerGroups(){
-		//getClientServerGroups returns a string containing the server group ID for example 1,2,3,...
-		return get(ClientProperty.CLIENT_SERVERGROUPS);
-	}
 	
 	public boolean isClientAway() {
 		return getBoolean(ClientProperty.CLIENT_AWAY);
