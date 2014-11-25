@@ -103,9 +103,17 @@ public class ClientJoinEvent extends Wrapper implements TS3Event,
 	}
 
 	public int getAmountOfServerGroups() {
-		return getInt(ClientProperty.CLIENT_SERVERGROUPS);
+		//get(ClientProperty.CLIENT_SERVERGROUPS).length() returns the doubled servergroups because of the comma
+		//But because there is always one comma too less I added 1 to get(ClientProperty.CLIENT_SERVERGROUPS).length() and then halft it
+		//getInt was turning the String 1,2,3,.. to a int which wasn't right.
+		return (get(ClientProperty.CLIENT_SERVERGROUPS).length()+1)/2;
 	}
-
+	
+	public String getClientServerGroups(){
+		//getClientServerGroups returns a string containing the server group ID for example 1,2,3,...
+		return get(ClientProperty.CLIENT_SERVERGROUPS);
+	}
+	
 	public boolean isClientAway() {
 		return getBoolean(ClientProperty.CLIENT_AWAY);
 	}
