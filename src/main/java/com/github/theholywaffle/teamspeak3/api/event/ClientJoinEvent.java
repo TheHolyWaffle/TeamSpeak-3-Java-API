@@ -103,9 +103,18 @@ public class ClientJoinEvent extends Wrapper implements TS3Event,
 	}
 
 	public int getAmountOfServerGroups() {
-		return getInt(ClientProperty.CLIENT_SERVERGROUPS);
+		//getInt was turning the String 1,2,3,.. to a int which wasn't right.
+		//Now it gets the Amount even if the ID is <=10
+		String[] split= get(ClientProperty.CLIENT_SERVERGROUPS).split(",");
+		return split.length;
 	}
-
+	
+	public String getClientServerGroups(){
+		//getClientServerGroups returns a string containing the server group ID for example 1,2,3,...
+		return get(ClientProperty.CLIENT_SERVERGROUPS);
+	}
+	
+	
 	public boolean isClientAway() {
 		return getBoolean(ClientProperty.CLIENT_AWAY);
 	}
@@ -119,7 +128,7 @@ public class ClientJoinEvent extends Wrapper implements TS3Event,
 	}
 
 	public String getClientFlagAvatarId() {
-		return get(ClientProperty.CLIENT_FLAG_AVATAR);
+		return get(ClientProperty.CLIENT_FLAG_AVATAR); 
 	}
 
 	public int getClientTalkPower() {
