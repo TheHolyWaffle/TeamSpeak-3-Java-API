@@ -26,26 +26,14 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.event.*;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3UnknownEventException;
+import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.github.theholywaffle.teamspeak3.api.event.ChannelCreateEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ChannelDeletedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ChannelDescriptionEditedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ChannelEditedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ChannelMovedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ChannelPasswordChangedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ClientMovedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ServerEditedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.TS3EventEmitter;
-import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
-import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
-import com.github.theholywaffle.teamspeak3.api.exception.TS3UnknownEventException;
-import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 
 public class EventManager {
 
@@ -81,15 +69,12 @@ public class EventManager {
 
 	public void fireEvent(String notifyName, String notifyBody) {
 		final TS3EventEmitter emitter = map.get(notifyName);
-		if (emitter != null) {
-			for (final TS3Listener l : listeners) {
-				emitter.fire(l, new DefaultArrayResponse(notifyBody).getArray()
-						.get(0));
-			}
-		} else {
+		if (emitter == null) {
 			throw new TS3UnknownEventException(notifyName + " " + notifyBody);
 		}
 
+		for (final TS3Listener l : listeners) {
+			emitter.fire(l, new DefaultArrayResponse(notifyBody).getArray().get(0));
+		}
 	}
-
 }

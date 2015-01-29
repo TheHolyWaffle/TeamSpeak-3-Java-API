@@ -52,9 +52,9 @@ public class KeepAliveThread extends Thread {
 				ts3.doCommand(new CWhoAmI());
 			}
 			try {
-				Thread.sleep(50);
+				Thread.sleep(SLEEP - idleTime);
 			} catch (final InterruptedException e) {
-				e.printStackTrace();
+				Thread.currentThread().interrupt(); // Forward interrupt
 			}
 		}
 		TS3Query.log.warning("KeepAlive thread has stopped!");
