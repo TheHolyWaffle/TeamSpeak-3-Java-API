@@ -26,14 +26,34 @@ package com.github.theholywaffle.teamspeak3.api.exception;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
+
 public class TS3CommandFailedException extends TS3Exception {
 
 	private static final long serialVersionUID = 8179203326662268882L;
 
-	public TS3CommandFailedException(Throwable c) {
-		super(
-				"An error occurred while sending a command to the teamspeak server",
-				c);
+	public TS3CommandFailedException(QueryError error) {
+		super(buildMessage(error));
 	}
 
+	public TS3CommandFailedException(Throwable c) {
+		super("An error occurred while sending a command to the teamspeak server", c);
+	}
+
+	private static String buildMessage(QueryError error) {
+		final StringBuilder msg = new StringBuilder("A command returned with a server error.\n");
+		msg.append(error.getMessage()).append(" (ID ").append(error.getId()).append(")");
+
+		final String extra = error.getExtraMessage();
+		if (extra != null && !extra.isEmpty()) {
+			msg.append(": ").append(extra);
+		}
+
+		final int failedPermissionId = error.getFailedPermissionId();
+		if (failedPermissionId > 0) {
+			msg.append(", failed permission with ID ").append(failedPermissionId);
+		}
+
+		return msg.toString();
+	}
 }

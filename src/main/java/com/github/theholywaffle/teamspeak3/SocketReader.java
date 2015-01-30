@@ -26,18 +26,27 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
-import java.io.IOException;
-
+import com.github.theholywaffle.teamspeak3.api.Callback;
 import com.github.theholywaffle.teamspeak3.commands.Command;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.logging.Level;
 
 public class SocketReader extends Thread {
 
 	private final TS3Query ts3;
-	private volatile boolean stop;
+	private final ExecutorService userThreadPool;
+	private final Map<Command, Callback> callbackMap;
 
 	public SocketReader(TS3Query ts3) {
 		super("SocketReader");
 		this.ts3 = ts3;
+		this.userThreadPool = Executors.newScheduledThreadPool(1);
+		this.callbackMap = Collections.synchronizedMap(new LinkedHashMap<Command, Callback>());
+
 		try {
 			int i = 0;
 			while (i < 4 || ts3.getIn().ready()) {
@@ -52,57 +61,92 @@ public class SocketReader extends Thread {
 	@Override
 	public void run() {
 		while (ts3.getSocket() != null && ts3.getSocket().isConnected()
-				&& ts3.getIn() != null && !stop) {
+				&& ts3.getIn() != null && !isInterrupted()) {
+			final String line;
+
 			try {
-				if (ts3.getIn().ready()) {
-					final String line = ts3.getIn().readLine();
-					if (!line.isEmpty()) {
-						final Command c = ts3.getCommandList().peek();
-						if (line.startsWith("notify")) {
-							TS3Query.log.info("< [event] " + line);
-							new Thread(new Runnable() {
-
-								public void run() {
-									final String arr[] = line.split(" ", 2);
-									ts3.getEventManager().fireEvent(arr[0],
-											arr[1]);
-
-								}
-							}).start();
-
-						} else if (c != null && c.isSent()) {
-							TS3Query.log
-									.info("[" + c.getName() + "] < " + line);
-							if (line.startsWith("error")) {
-								c.feedError(line.substring("error ".length()));
-								if (c.getError().getId() != 0) {
-									TS3Query.log.severe("[ERROR] "
-											+ c.getError());
-								}
-								c.setAnswered();
-								ts3.getCommandList().remove(c);
-							} else if (!line.isEmpty()) {
-								c.feed(line);
-							}
-						} else {
-							TS3Query.log.info("< " + line);
-						}
-					}
+				// Will block until a full line of text could be read.
+				line = ts3.getIn().readLine();
+			} catch (IOException io) {
+				if (!isInterrupted()) {
+					io.printStackTrace();
 				}
-			} catch (final IOException e) {
-				e.printStackTrace();
+				break;
 			}
-			try {
-				Thread.sleep(50);
-			} catch (final InterruptedException e) {
-				e.printStackTrace();
+
+			if (line == null) {
+				break; // The underlying socket was closed
+			} else if (line.isEmpty()) {
+				continue; // The server is sending garbage
+			}
+
+			final Command c = ts3.getCommandList().peek();
+
+			if (line.startsWith("notify")) {
+				TS3Query.log.info("< [event] " + line);
+
+				userThreadPool.execute(new Runnable() {
+					@Override
+					public void run() {
+						final String arr[] = line.split(" ", 2);
+						ts3.getEventManager().fireEvent(arr[0], arr[1]);
+					}
+				});
+			} else if (c != null && c.isSent()) {
+				TS3Query.log.info("[" + c.getName() + "] < " + line);
+				if (line.startsWith("error")) {
+					c.feedError(line.substring("error ".length()));
+					if (c.getError().getId() != 0) {
+						TS3Query.log.severe("[ERROR] " + c.getError());
+					}
+					c.setAnswered();
+					ts3.getCommandList().remove(c);
+					answerCallback(c);
+				} else {
+					c.feed(line);
+				}
+			} else {
+				TS3Query.log.info("< " + line);
 			}
 		}
-		TS3Query.log.warning("SocketReader has stopped!");
+
+		userThreadPool.shutdown();
+		if (!isInterrupted()) {
+			TS3Query.log.warning("SocketReader has stopped!");
+		}
 	}
 
-	public void finish() {
-		stop = true;
+	private void answerCallback(Command c) {
+		final Callback callback = callbackMap.get(c);
+
+		// Command had no callback registered
+		if (callback == null) return;
+
+		// To avoid the possibility of clogging the map with callbacks for
+		// inexistent commands, remove all entries before the current one
+		// Typically, this will exit without removing a single entry
+		Set<Command> keySet = callbackMap.keySet();
+		synchronized (callbackMap) {
+			Iterator<Command> iterator = keySet.iterator();
+			while (iterator.hasNext() && !c.equals(iterator.next())) {
+				iterator.remove();
+			}
+		}
+
+		userThreadPool.execute(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					callback.handle();
+				} catch (Throwable t) {
+					TS3Query.log.log(Level.WARNING, "User callback threw exception", t);
+				}
+			}
+		});
+	}
+
+	void registerCallback(Command command, Callback callback) {
+		callbackMap.put(command, callback);
 	}
 
 }

@@ -26,6 +26,11 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.Callback;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
+import com.github.theholywaffle.teamspeak3.commands.Command;
+import com.github.theholywaffle.teamspeak3.log.LogHandler;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -35,28 +40,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Handler;
 import java.util.logging.Logger;
 
-import com.github.theholywaffle.teamspeak3.api.Callback;
-import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
-import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
-import com.github.theholywaffle.teamspeak3.commands.Command;
-import com.github.theholywaffle.teamspeak3.log.LogHandler;
-
 public class TS3Query {
-
-	private Socket socket;
-	private PrintStream out;
-	private BufferedReader in;
-	private SocketReader socketReader;
-	private SocketWriter socketWriter;
-	private KeepAliveThread keepAlive;
-
-	private ConcurrentLinkedQueue<Command> commandList = new ConcurrentLinkedQueue<>();
-	private final EventManager eventManager = new EventManager();
-
-	private TS3Api api;
-	private final TS3Config config;
-
-	public static final Logger log = Logger.getLogger(TS3Query.class.getName());
 
 	public enum FloodRate {
 		DEFAULT(350),
@@ -73,6 +57,19 @@ public class TS3Query {
 		}
 	}
 
+	public static final Logger log = Logger.getLogger(TS3Query.class.getName());
+	private final EventManager eventManager = new EventManager();
+	private final TS3Config config;
+	private Socket socket;
+	private PrintStream out;
+	private BufferedReader in;
+	private SocketReader socketReader;
+	private SocketWriter socketWriter;
+	private KeepAliveThread keepAlive;
+	private ConcurrentLinkedQueue<Command> commandList = new ConcurrentLinkedQueue<>();
+	private TS3Api api;
+	private TS3ApiAsync asyncApi;
+
 	public TS3Query(TS3Config config) {
 		log.setUseParentHandlers(false);
 		log.addHandler(new LogHandler(config.getDebugToFile()));
@@ -86,17 +83,14 @@ public class TS3Query {
 			socket = new Socket(config.getHost(), config.getQueryPort());
 			if (socket.isConnected()) {
 				out = new PrintStream(socket.getOutputStream(), true, "UTF-8");
-				in = new BufferedReader(new InputStreamReader(
-						socket.getInputStream(), "UTF-8"));
+				in = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
 				socketReader = new SocketReader(this);
 				socketReader.start();
-				socketWriter = new SocketWriter(this, config.getFloodRate()
-						.getMs());
+				socketWriter = new SocketWriter(this, config.getFloodRate().getMs());
 				socketWriter.start();
 				keepAlive = new KeepAliveThread(this, socketWriter);
 				keepAlive.start();
 			}
-
 		} catch (final IOException e) {
 			throw new TS3ConnectionFailedException(e);
 		}
@@ -121,22 +115,41 @@ public class TS3Query {
 		return in;
 	}
 
-	public boolean doCommand(Command c) {
+	public boolean doCommand(final Command c) {
+		final Callback callback = new Callback() {
+			@Override
+			public void handle() {
+				synchronized (c) {
+					c.notifyAll();
+				}
+			}
+		};
+		socketReader.registerCallback(c, callback);
+
+		final long end = System.currentTimeMillis() + 4000;
 		commandList.offer(c);
-		final long start = System.currentTimeMillis();
-		while (!c.isAnswered() && System.currentTimeMillis() - start < 4_000) {
+
+		boolean interrupted = false;
+		while (!c.isAnswered() && System.currentTimeMillis() < end) {
 			try {
-				Thread.sleep(50);
+				synchronized (c) {
+					c.wait(end - System.currentTimeMillis());
+				}
 			} catch (final InterruptedException e) {
-				throw new TS3CommandFailedException(e);
+				interrupted = true;
 			}
 		}
+		if (interrupted) {
+			// Restore the interrupt
+			Thread.currentThread().interrupt();
+		}
+
 		if (!c.isAnswered()) {
-			log.severe(("Command " + c.getName() + " is not answered in time."));
-			commandList.remove(c);
+			log.severe("Command " + c.getName() + " was not answered in time.");
 			return false;
 		}
-		return true;
+
+		return c.getError().isSuccessful();
 	}
 
 	public void doCommandAsync(final Command c) {
@@ -144,52 +157,55 @@ public class TS3Query {
 	}
 
 	public void doCommandAsync(final Command c, final Callback callback) {
-		new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				doCommand(c);
-				if (callback != null) {
-					callback.handle();
-				}
-			}
-		}).start();
+		if (callback != null) {
+			socketReader.registerCallback(c, callback);
+		}
+		commandList.offer(c);
 	}
 
 	/**
 	 * Removes and closes all used resources to the teamspeak server.
 	 */
 	public void exit() {
+		if (keepAlive != null) {
+			keepAlive.interrupt();
+		}
+		if (socketWriter != null) {
+			socketWriter.interrupt();
+		}
+		if (socketReader != null) {
+			socketReader.interrupt();
+		}
+
 		if (out != null) {
 			out.close();
 		}
 		if (in != null) {
 			try {
 				in.close();
-			} catch (final IOException ignored) {
+			} catch (IOException ignored) {
 			}
 		}
 		if (socket != null) {
 			try {
 				socket.close();
-			} catch (final IOException ignored) {
+			} catch (IOException ignored) {
 			}
 		}
+
 		try {
-			if (socketReader != null) {
-				socketReader.finish();
-				socketReader.join();
-			}
-			if (socketWriter != null) {
-				socketWriter.finish();
-				socketWriter.join();
-			}
 			if (keepAlive != null) {
-				keepAlive.finish();
 				keepAlive.join();
 			}
+			if (socketWriter != null) {
+				socketWriter.join();
+			}
+			if (socketReader != null) {
+				socketReader.join();
+			}
 		} catch (final InterruptedException e) {
-			e.printStackTrace();
+			// Restore the interrupt for the caller
+			Thread.currentThread().interrupt();
 		}
 
 		commandList.clear();
@@ -214,4 +230,10 @@ public class TS3Query {
 		return api;
 	}
 
+	public TS3ApiAsync getAsyncApi() {
+		if (asyncApi == null) {
+			asyncApi = new TS3ApiAsync(this);
+		}
+		return asyncApi;
+	}
 }
