@@ -149,6 +149,10 @@ public class CommandFuture<V> implements Future<V> {
 		return throwable.get() != null;
 	}
 
+	public boolean isSuccessful() {
+		return done.get() && !cancelled.get() && throwable.get() == null;
+	}
+
 	public void set(V value) {
 		if (done.get()) return; // Ignore
 
