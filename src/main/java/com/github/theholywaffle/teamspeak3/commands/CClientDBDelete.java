@@ -28,9 +28,9 @@ package com.github.theholywaffle.teamspeak3.commands;
 
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 
-public class CClientDBDelelete extends Command {
+public class CClientDBDelete extends Command {
 
-	public CClientDBDelelete(int clientDBId) {
+	public CClientDBDelete(int clientDBId) {
 		super("clientdbdelete");
 		add(new KeyValueParam("cldbid", clientDBId + ""));
 	}

@@ -35,8 +35,6 @@ public class KeepAliveThread extends Thread {
 	private final TS3Query ts3;
 	private final SocketWriter writer;
 
-	private volatile boolean stop;
-
 	public KeepAliveThread(TS3Query ts3, SocketWriter socketWriter) {
 		super("Keep alive");
 		this.ts3 = ts3;
@@ -46,22 +44,22 @@ public class KeepAliveThread extends Thread {
 	@Override
 	public void run() {
 		while (ts3.getSocket() != null && ts3.getSocket().isConnected()
-				&& ts3.getIn() != null && !stop) {
+				&& ts3.getOut() != null && !isInterrupted()) {
 			final long idleTime = writer.getIdleTime();
 			if (idleTime >= SLEEP) {
 				ts3.doCommand(new CWhoAmI());
 			}
 			try {
-				Thread.sleep(50);
+				Thread.sleep(SLEEP - idleTime);
 			} catch (final InterruptedException e) {
-				e.printStackTrace();
+				interrupt();
+				break;
 			}
 		}
-		TS3Query.log.warning("KeepAlive thread has stopped!");
-	}
 
-	public void finish() {
-		stop = true;
+		if (!isInterrupted()) {
+			TS3Query.log.warning("KeepAlive thread has stopped!");
+		}
 	}
 
 }

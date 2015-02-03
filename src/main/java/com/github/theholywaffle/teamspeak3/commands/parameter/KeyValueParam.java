@@ -39,11 +39,11 @@ public class KeyValueParam extends Parameter {
 	}
 
 	public KeyValueParam(String key, int value) {
-		this(key, value + "");
+		this(key, String.valueOf(value));
 	}
 
 	public KeyValueParam(String key, long value) {
-		this(key, value + "");
+		this(key, String.valueOf(value));
 	}
 
 	@Override

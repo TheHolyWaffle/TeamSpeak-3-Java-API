@@ -30,9 +30,8 @@ import com.github.theholywaffle.teamspeak3.commands.Command;
 
 public class SocketWriter extends Thread {
 	private final TS3Query ts3;
-	private int floodRate;
+	private final int floodRate;
 	private long lastCommand = System.currentTimeMillis();
-	private volatile boolean stop;
 
 	public SocketWriter(TS3Query ts3, int floodRate) {
 		super("SocketWriter");
@@ -44,32 +43,34 @@ public class SocketWriter extends Thread {
 		}
 	}
 
+	@Override
 	public void run() {
 		while (ts3.getSocket() != null && ts3.getSocket().isConnected()
-				&& ts3.getOut() != null && !stop) {
+				&& ts3.getOut() != null && !isInterrupted()) {
 			final Command c = ts3.getCommandList().peek();
 			if (c != null && !c.isSent()) {
 				final String msg = c.toString();
 				TS3Query.log.info("> " + msg);
+
+				c.setSent();
 				ts3.getOut().println(msg);
 				lastCommand = System.currentTimeMillis();
-				c.setSent();
 			}
 			try {
 				Thread.sleep(floodRate);
 			} catch (final InterruptedException e) {
-				e.printStackTrace();
+				interrupt();
+				break;
 			}
 		}
 
-		TS3Query.log.warning("SocketWriter has stopped!");
+		if (!isInterrupted()) {
+			TS3Query.log.warning("SocketWriter has stopped!");
+		}
 	}
 
 	public long getIdleTime() {
 		return System.currentTimeMillis() - lastCommand;
 	}
 
-	public void finish() {
-		stop = true;
-	}
 }

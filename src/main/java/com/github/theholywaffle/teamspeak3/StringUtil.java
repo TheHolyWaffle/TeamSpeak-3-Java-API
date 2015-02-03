@@ -30,6 +30,7 @@ public class StringUtil {
 
 	public static String encode(String str) {
 		str = str.replace("\\", "\\\\");
+
 		str = str.replace(" ", "\\s");
 		str = str.replace("/", "\\/");
 		str = str.replace("|", "\\p");
@@ -38,21 +39,13 @@ public class StringUtil {
 		str = str.replace("\n", "\\n");
 		str = str.replace("\r", "\\r");
 		str = str.replace("\t", "\\t");
-
-		final Character cBell = new Character((char) 7); // \a (not supported by
-															// Java)
-		final Character cVTab = new Character((char) 11); // \v (not supported
-															// by
-		// Java)
-
-		str = str.replace(cBell.toString(), "\\a");
-		str = str.replace(cVTab.toString(), "\\v");
+		str = str.replace(String.valueOf((char) 7), "\\a");
+		str = str.replace(String.valueOf((char) 11), "\\v");
 
 		return str;
 	}
 
 	public static String decode(String str) {
-		str = str.replace("\\\\", "\\[$mksave]");
 		str = str.replace("\\s", " ");
 		str = str.replace("\\/", "/");
 		str = str.replace("\\p", "|");
@@ -61,17 +54,11 @@ public class StringUtil {
 		str = str.replace("\\n", "\n");
 		str = str.replace("\\r", "\r");
 		str = str.replace("\\t", "\t");
+		str = str.replace("\\a", String.valueOf((char) 7)); // Bell
+		str = str.replace("\\v", String.valueOf((char) 11)); // Vertical Tab
 
-		final Character cBell = new Character((char) 7); // \a (not supported by
-															// Java)
-		final Character cVTab = new Character((char) 11); // \v (not supported
-															// by
-		// Java)
+		str = str.replace("\\\\", "\\");
 
-		str = str.replace("\\a", cBell.toString());
-		str = str.replace("\\v", cVTab.toString());
-
-		str = str.replace("\\[$mksave]", "\\");
 		return str;
 	}
 

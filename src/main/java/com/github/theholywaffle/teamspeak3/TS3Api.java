@@ -243,7 +243,7 @@ public class TS3Api {
 	}
 
 	public int banClient(int clientId, String reason) {
-		return banClient(clientId, reason);
+		return banClient(clientId, 0, reason);
 	}
 
 	public boolean broadcast(String message) {
@@ -414,7 +414,7 @@ public class TS3Api {
 	}
 
 	public boolean deleteDatabaseClientProperties(int clientDBId) {
-		final CClientDBDelelete del = new CClientDBDelelete(clientDBId);
+		final CClientDBDelete del = new CClientDBDelete(clientDBId);
 		if (query.doCommand(del)) {
 			return del.getError().isSuccessful();
 		}
@@ -787,7 +787,7 @@ public class TS3Api {
 			final int count = StringUtil.getInt(countList.getFirstResponse()
 					.get("count"));
 			int i = 0;
-			final List<DatabaseClient> clients = new ArrayList<>();
+			final List<DatabaseClient> clients = new ArrayList<>(count);
 			while (i < count) {
 				final CClientDBList list = new CClientDBList(i, 200, false);
 				if (query.doCommand(list)) {
@@ -838,11 +838,16 @@ public class TS3Api {
 		return null;
 	}
 
-	public void getPermission(String permName) {
+	public List<AdvancedPermission> getPermissionAssignments(String permName) {
 		final CPermFind find = new CPermFind(permName);
 		if (query.doCommand(find)) {
-
+			final List<AdvancedPermission> assignments = new ArrayList<>();
+			for (final HashMap<String, String> opt : find.getResponse()) {
+				assignments.add(new AdvancedPermission(opt));
+			}
+			return assignments;
 		}
+		return null;
 	}
 
 	public int getPermissionIdByName(String permName) {
@@ -1032,8 +1037,8 @@ public class TS3Api {
 		return false;
 	}
 
-	public void moveChannel(int channelId, int channelTargetId) {
-		moveChannel(channelId, channelTargetId, -1);
+	public boolean moveChannel(int channelId, int channelTargetId) {
+		return moveChannel(channelId, channelTargetId, -1);
 	}
 
 	public boolean moveChannel(int channelId, int channelTargetId, int order) {
@@ -1078,7 +1083,7 @@ public class TS3Api {
 	/**
 	 * Leaves the TeamSpeak 3 server.
 	 * 
-	 * @return True if succesful, otherwise false.
+	 * @return True if successful, otherwise false.
 	 */
 	public boolean quit() {
 		return query.doCommand(new CQuit());
@@ -1268,9 +1273,9 @@ public class TS3Api {
 	}
 
 	public boolean stopServer(int id) {
-		final CServerStop start = new CServerStop(id);
-		if (query.doCommand(start)) {
-			return start.getError().isSuccessful();
+		final CServerStop stop = new CServerStop(id);
+		if (query.doCommand(stop)) {
+			return stop.getError().isSuccessful();
 		}
 		return false;
 	}
