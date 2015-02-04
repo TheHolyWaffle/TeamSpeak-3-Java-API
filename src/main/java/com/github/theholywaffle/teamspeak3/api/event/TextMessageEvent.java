@@ -26,20 +26,14 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
+
 import java.util.HashMap;
 
-import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
-import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
-
-public class TextMessageEvent extends Wrapper implements TS3Event,
-		TS3EventEmitter {
+public class TextMessageEvent extends BaseEvent {
 
 	public TextMessageEvent(HashMap<String, String> map) {
 		super(map);
-	}
-
-	public TextMessageEvent() {
-		super(null);
 	}
 
 	public TextMessageTargetMode getTargetMode() {
@@ -55,20 +49,8 @@ public class TextMessageEvent extends Wrapper implements TS3Event,
 		return get("msg");
 	}
 
-	public int getInvokerId() {
-		return getInt("invokerid");
+	@Override
+	public void fire(TS3Listener listener) {
+		listener.onTextMessage(this);
 	}
-
-	public String getInvokerName() {
-		return get("invokername");
-	}
-
-	public String getInvokerUserId() {
-		return get("invokeruid");
-	}
-
-	public void fire(TS3Listener listener, HashMap<String, String> map) {
-		listener.onTextMessage(new TextMessageEvent(map));
-	}
-
 }

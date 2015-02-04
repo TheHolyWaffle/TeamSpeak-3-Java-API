@@ -26,25 +26,22 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 
 import java.util.HashMap;
 
-import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
+public class ChannelDeletedEvent extends BaseEvent {
 
-public class ChannelDeletedEvent extends Wrapper implements TS3EventEmitter,TS3Event {
-
-	public ChannelDeletedEvent(){
-		super(null);
-	}
-	public ChannelDeletedEvent(HashMap<String, String> map){
+	public ChannelDeletedEvent(HashMap<String, String> map) {
 		super(map);
 	}
+
 	public int getChannelId() {
-		return getInt("cid");
-	}
-	
-	public void fire(TS3Listener listener, HashMap<String, String> map) {
-		listener.onChannelDeleted(new ChannelDeletedEvent(map));
+		return getInt(ChannelProperty.CID);
 	}
 
+	@Override
+	public void fire(TS3Listener listener) {
+		listener.onChannelDeleted(this);
+	}
 }
