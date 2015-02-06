@@ -126,7 +126,7 @@ public class TS3Query {
 		};
 		socketReader.registerCallback(c, callback);
 
-		final long end = System.currentTimeMillis() + 4000;
+		final long end = System.currentTimeMillis() + config.getCommandTimeout();
 		commandList.offer(c);
 
 		boolean interrupted = false;
