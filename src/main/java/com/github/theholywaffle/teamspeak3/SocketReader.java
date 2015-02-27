@@ -30,7 +30,11 @@ import com.github.theholywaffle.teamspeak3.api.Callback;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -42,7 +46,7 @@ public class SocketReader extends Thread {
 	private final Map<Command, Callback> callbackMap;
 
 	public SocketReader(TS3Query ts3) {
-		super("SocketReader");
+		super("[TeamSpeak-3-Java-API] SocketReader");
 		this.ts3 = ts3;
 		this.userThreadPool = Executors.newScheduledThreadPool(1);
 		this.callbackMap = Collections.synchronizedMap(new LinkedHashMap<Command, Callback>());

@@ -36,7 +36,7 @@ public class KeepAliveThread extends Thread {
 	private final SocketWriter writer;
 
 	public KeepAliveThread(TS3Query ts3, SocketWriter socketWriter) {
-		super("Keep alive");
+		super("[TeamSpeak-3-Java-API] Keep alive");
 		this.ts3 = ts3;
 		this.writer = socketWriter;
 	}

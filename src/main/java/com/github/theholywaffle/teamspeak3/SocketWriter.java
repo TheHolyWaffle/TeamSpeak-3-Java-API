@@ -29,12 +29,13 @@ package com.github.theholywaffle.teamspeak3;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 
 public class SocketWriter extends Thread {
+
 	private final TS3Query ts3;
 	private final int floodRate;
 	private volatile long lastCommand = System.currentTimeMillis();
 
 	public SocketWriter(TS3Query ts3, int floodRate) {
-		super("SocketWriter");
+		super("[TeamSpeak-3-Java-API] SocketWriter");
 		this.ts3 = ts3;
 		if (floodRate > 50) {
 			this.floodRate = floodRate;
