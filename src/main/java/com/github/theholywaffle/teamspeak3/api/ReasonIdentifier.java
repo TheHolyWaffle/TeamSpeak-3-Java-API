@@ -31,7 +31,7 @@ public enum ReasonIdentifier {
 	REASON_KICK_CHANNEL(4),
 	REASON_KICK_SERVER(5);
 
-	private int i;
+	private final int i;
 
 	ReasonIdentifier(int i) {
 		this.i = i;

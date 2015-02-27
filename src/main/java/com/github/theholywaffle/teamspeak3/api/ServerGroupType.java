@@ -27,6 +27,7 @@ package com.github.theholywaffle.teamspeak3.api;
  */
 
 public enum ServerGroupType {
+
 	CHANNEL_GUEST(10),
 	SERVER_GUEST(15),
 	QUERY_GUEST(20),
@@ -37,7 +38,7 @@ public enum ServerGroupType {
 	SERVER_ADMIN(45),
 	QUERY_ADMIN(50);
 
-	private int i;
+	private final int i;
 
 	ServerGroupType(int i) {
 		this.i = i;

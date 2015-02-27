@@ -36,7 +36,7 @@ public enum VirtualServerStatus implements Property {
 	VIRTUAL_ONLINE("virtual online"),
 	UNKNOWN("unknown");
 
-	private String name;
+	private final String name;
 
 	VirtualServerStatus(String name) {
 		this.name = name;

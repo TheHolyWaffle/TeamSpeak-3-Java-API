@@ -33,7 +33,7 @@ public enum LogLevel {
 	DEBUG(3),
 	INFO(4);
 
-	private int i;
+	private final int i;
 
 	LogLevel(int i) {
 		this.i = i;

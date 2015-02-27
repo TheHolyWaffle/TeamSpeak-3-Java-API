@@ -46,7 +46,7 @@ public class TS3Query {
 		DEFAULT(350),
 		UNLIMITED(0);
 
-		private int ms;
+		private final int ms;
 
 		FloodRate(int ms) {
 			this.ms = ms;

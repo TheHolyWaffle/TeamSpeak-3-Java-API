@@ -34,7 +34,7 @@ public enum PermissionGroupType {
 	CHANNEL_GROUP(3),
 	CHANNEL_CLIENT(4);
 
-	private int i;
+	private final int i;
 
 	PermissionGroupType(int i) {
 		this.i = i;
