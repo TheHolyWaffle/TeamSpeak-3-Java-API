@@ -50,8 +50,8 @@ public class ArrayParameter extends Parameter {
 	@Override
 	public String build() {
 		StringBuilder str = new StringBuilder();
-		for (int i = 0; i < parameters.size(); i++) {
-			str.append(parameters.get(i).build()).append("|");
+		for (Parameter parameter : parameters) {
+			str.append(parameter.build()).append("|");
 		}
 		str.setLength(str.length() - 1);
 		return str.toString();
