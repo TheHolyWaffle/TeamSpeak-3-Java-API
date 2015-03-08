@@ -33,169 +33,671 @@ import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedExcepti
 import com.github.theholywaffle.teamspeak3.api.wrapper.*;
 import com.github.theholywaffle.teamspeak3.commands.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
+/**
+ * This class is used to easily interact with a {@link TS3Query}. It constructs commands,
+ * sends them to the TeamSpeak3 server, processes the response and returns the result.
+ * <p>
+ * All methods in this class are asynchronous (so they won't block) and
+ * will return a {@link CommandFuture} of the corresponding return type in {@link TS3Api}.
+ * If a command fails, no exception will be thrown directly. It will however be rethrown in
+ * {@link CommandFuture#get()} and {@link CommandFuture#get(long, TimeUnit)}.
+ * Usually, the thrown exception is a {@link TS3CommandFailedException}, which will get you
+ * access to the {@link QueryError} from which more information about the error can be obtained.
+ * </p><p>
+ * Also note that while these methods are asynchronous, the commands will still be sent through a
+ * synchronous command pipeline. That means if an asynchronous method is called immediately
+ * followed by a synchronous method, the synchronous method will first have to wait until the
+ * asynchronous method completed until it its command is sent.
+ * </p><p>
+ * You won't be able to execute most commands while you're not logged in due to missing permissions.
+ * Make sure to either pass your login credentials to the {@link TS3Config} object when
+ * creating the {@code TS3Query} or to call {@link #login(String, String)} to log in.
+ * </p><p>
+ * After that, most commands also require you to select a {@linkplain VirtualServer virtual server}.
+ * To do so, call either {@link #selectVirtualServerByPort(int)} or {@link #selectVirtualServerById(int)}.
+ * </p>
+ *
+ * @see TS3Api The synchronous version of the API
+ */
 public class TS3ApiAsync {
 
+	/**
+	 * The TS3 query to which this API sends its commands.
+	 */
 	private final TS3Query query;
 
+	/**
+	 * Creates a new asynchronous API object for the given {@code TS3Query}.
+	 * <p>
+	 * <b>Usually, this constructor should not be called.</b> Use {@link TS3Query#getAsyncApi()} instead.
+	 * </p>
+	 *
+	 * @param query
+	 * 		the TS3Query to call
+	 */
 	public TS3ApiAsync(TS3Query query) {
 		this.query = query;
 	}
 
 	/**
-	 * Adds a new ban entry.
+	 * Adds a new ban entry. At least one of the parameters {@code ip}, {@code name} or {@code uid} needs to be not null.
+	 * Returns the ID of the newly created ban.
 	 *
 	 * @param ip
-	 * 		target ip-adress, can be null
+	 * 		a RegEx pattern to match a client's IP against, can be null
 	 * @param name
-	 * 		target name, can be null.
+	 * 		a RegEx pattern to match a client's name against, can be null
 	 * @param uid
-	 * 		target UID, can be null
+	 * 		the unique identifier of a client, can be null
 	 * @param timeInSeconds
-	 * 		the duration of the ban, 0 equals permanent
+	 * 		the duration of the ban in seconds. 0 equals a permanent ban
 	 * @param reason
-	 * 		the reason for the ban
+	 * 		the reason for the ban, can be null
 	 *
-	 * @return banid
+	 * @return the ID of the newly created ban entry
+	 *
+	 * @see Pattern RegEx Pattern
+	 * @see Client#getId()
+	 * @see Client#getUniqueIdentifier()
+	 * @see ClientInfo#getIp()
 	 */
 	public CommandFuture<Integer> addBan(String ip, String name, String uid, long timeInSeconds, String reason) {
+		if (ip == null && name == null && uid == null) {
+			throw new IllegalArgumentException("Either IP, Name or UID must be set");
+		}
+
 		final CBanAdd add = new CBanAdd(ip, name, uid, timeInSeconds, reason);
 		return executeAndReturnIntProperty(add, "banid");
 	}
 
+	/**
+	 * Adds a specified permission to a client in a specific channel.
+	 *
+	 * @param channelId
+	 * 		the ID of the channel wherein the permission should be granted
+	 * @param clientDBId
+	 * 		the database ID of the client to add a permission to
+	 * @param permName
+	 * 		the name of the permission to grant
+	 * @param permValue
+	 * 		the numeric value of the permission (or for boolean permissions: 1 = true, 0 = false)
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Channel#getId()
+	 * @see Client#getDatabaseId()
+	 * @see Permission
+	 */
 	public CommandFuture<Boolean> addChannelClientPermission(int channelId, int clientDBId, String permName, int permValue) {
 		final CChannelClientAddPerm add = new CChannelClientAddPerm(channelId, clientDBId, permName, permValue);
 		return executeAndReturnError(add);
 	}
 
+	/**
+	 * Creates a new channel group for clients using a given name and returns its ID.
+	 * <p>
+	 * To create channel group templates or ones for server queries,
+	 * use {@link #addChannelGroup(String, PermissionGroupDatabaseType)}.
+	 * </p>
+	 *
+	 * @param name
+	 * 		the name of the new channel group
+	 *
+	 * @return the ID of the newly created channel group
+	 *
+	 * @see ChannelGroup
+	 */
 	public CommandFuture<Integer> addChannelGroup(String name) {
 		return addChannelGroup(name, null);
 	}
 
-	public CommandFuture<Integer> addChannelGroup(String name, PermissionGroupDatabaseType t) {
-		final CChannelGroupAdd add = new CChannelGroupAdd(name, t);
+	/**
+	 * Creates a new channel group using a given name and returns its ID.
+	 *
+	 * @param name
+	 * 		the name of the new channel group
+	 * @param type
+	 * 		the desired type of channel group
+	 *
+	 * @return the ID of the newly created channel group
+	 *
+	 * @see ChannelGroup
+	 */
+	public CommandFuture<Integer> addChannelGroup(String name, PermissionGroupDatabaseType type) {
+		final CChannelGroupAdd add = new CChannelGroupAdd(name, type);
 		return executeAndReturnIntProperty(add, "cgid");
 	}
 
+	/**
+	 * Adds a specified permission to a channel group.
+	 *
+	 * @param groupId
+	 * 		the ID of the channel group to grant the permission
+	 * @param permName
+	 * 		the name of the permission to be granted
+	 * @param permValue
+	 * 		the numeric value of the permission (or for boolean permissions: 1 = true, 0 = false)
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see ChannelGroup#getId()
+	 * @see Permission
+	 */
+	public CommandFuture<Boolean> addChannelGroupPermission(int groupId, String permName, int permValue) {
+		final CChannelGroupAddPerm add = new CChannelGroupAddPerm(groupId, permName, permValue);
+		return executeAndReturnError(add);
+	}
+
+	/**
+	 * Adds a specified permission to a channel.
+	 *
+	 * @param channelId
+	 * 		the ID of the channel wherein the permission should be granted
+	 * @param permName
+	 * 		the name of the permission to grant
+	 * @param permValue
+	 * 		the numeric value of the permission (or for boolean permissions: 1 = true, 0 = false)
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Channel#getId()
+	 * @see Permission
+	 */
 	public CommandFuture<Boolean> addChannelPermission(int channelId, String permName, int permValue) {
 		final CChannelAddPerm perm = new CChannelAddPerm(channelId, permName, permValue);
 		return executeAndReturnError(perm);
 	}
 
-	public CommandFuture<Boolean> addClientPermission(int clientDBId, String permName, int permValue, boolean permSkipped) {
-		final CClientAddPerm add = new CClientAddPerm(clientDBId, permName, permValue, permSkipped);
+	/**
+	 * Adds a specified permission to a channel.
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the client to grant the permission
+	 * @param permName
+	 * 		the name of the permission to grant
+	 * @param value
+	 * 		the numeric value of the permission (or for boolean permissions: 1 = true, 0 = false)
+	 * @param skipped
+	 * 		if set to {@code true}, the permission will not be overridden by channel permissions
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Client#getDatabaseId()
+	 * @see Permission
+	 */
+	public CommandFuture<Boolean> addClientPermission(int clientDBId, String permName, int value, boolean skipped) {
+		final CClientAddPerm add = new CClientAddPerm(clientDBId, permName, value, skipped);
 		return executeAndReturnError(add);
 	}
 
+	/**
+	 * Adds a client to the specified server group.
+	 * <p>
+	 * Please note that a client cannot be added to default groups or template groups.
+	 * </p>
+	 *
+	 * @param groupId
+	 * 		the ID of the server group to add the client to
+	 * @param clientDatabaseId
+	 * 		the database ID of the client to add
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see ServerGroup#getId()
+	 * @see Client#getDatabaseId()
+	 */
 	public CommandFuture<Boolean> addClientToServerGroup(int groupId, int clientDatabaseId) {
 		final CServerGroupAddClient add = new CServerGroupAddClient(groupId, clientDatabaseId);
 		return executeAndReturnError(add);
 	}
 
-	public CommandFuture<Boolean> addComplain(int clientDBId, String text) {
-		final CComplainAdd add = new CComplainAdd(clientDBId, text);
+	/**
+	 * Submits a complaint about the specified client.
+	 * The length of the message is limited to 200 UTF-8 bytes and BB codes in it will be ignored.
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the client
+	 * @param message
+	 * 		the message of the complaint, may not contain BB codes
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Client#getDatabaseId()
+	 * @see Complaint#getMessage()
+	 */
+	public CommandFuture<Boolean> addComplaint(int clientDBId, String message) {
+		final CComplainAdd add = new CComplainAdd(clientDBId, message);
 		return executeAndReturnError(add);
 	}
 
-	public CommandFuture<Boolean> addPermissionToAllServerGroups(ServerGroupType t, String permName, int permValue, boolean permNegated,
-																 boolean permSkipped) {
-		final CServerGroupAutoAddPerm add = new CServerGroupAutoAddPerm(t, permName, permValue, permNegated, permSkipped);
+	/**
+	 * Adds a specified permission to all server groups of the type specified by {@code type} on all virtual servers.
+	 *
+	 * @param type
+	 * 		the kind of server group this permission should be added to
+	 * @param permName
+	 * 		the name of the permission to be granted
+	 * @param value
+	 * 		the numeric value of the permission (or for boolean permissions: 1 = true, 0 = false)
+	 * @param negated
+	 * 		if set to true, the lowest permission value will be selected instead of the highest
+	 * @param skipped
+	 * 		if set to true, this permission will not be overridden by client of channel permissions
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see ServerGroupType
+	 * @see Permission
+	 */
+	public CommandFuture<Boolean> addPermissionToAllServerGroups(ServerGroupType type, String permName, int value, boolean negated, boolean skipped) {
+		final CServerGroupAutoAddPerm add = new CServerGroupAutoAddPerm(type, permName, value, negated, skipped);
 		return executeAndReturnError(add);
 	}
 
-	public CommandFuture<Boolean> addPermissionToChannelGroup(int groupId, String permName, int permValue) {
-		final CChannelGroupAddPerm add = new CChannelGroupAddPerm(groupId, permName, permValue);
-		return executeAndReturnError(add);
-	}
-
-	public CommandFuture<String> addPrivilegeKey(int type, int groupId, int channelId, String description) {
-		final CPrivilegeKeyAdd add = new CPrivilegeKeyAdd(type, groupId, channelId, description);
+	/**
+	 * Create a new privilege key that allows one client to join a server or channel group.
+	 * <ul>
+	 * <li>If {@code type} is set to {@linkplain TokenType#SERVER_GROUP SERVER_GROUP},
+	 * {@code groupId} is used as a server group ID and {@code channelId} is ignored.</li>
+	 * <li>If {@code type} is set to {@linkplain TokenType#CHANNEL_GROUP CHANNEL_GROUP},
+	 * {@code groupId} is used as a channel group ID and {@code channelId} is used as the channel in which the group should be set.</li>
+	 * </ul>
+	 *
+	 * @param type
+	 * 		the type of token that should be created
+	 * @param groupId
+	 * 		the ID of the server or channel group
+	 * @param channelId
+	 * 		the ID of the channel, in case the token is channel group token
+	 * @param description
+	 * 		the description for the token, can be null
+	 *
+	 * @return the created token for a client to use
+	 *
+	 * @see TokenType
+	 * @see #addPrivilegeKeyServerGroup(int, String)
+	 * @see #addPrivilegeKeyChannelGroup(int, int, String)
+	 */
+	public CommandFuture<String> addPrivilegeKey(TokenType type, int groupId, int channelId, String description) {
+		final CPrivilegeKeyAdd add = new CPrivilegeKeyAdd(type.getIndex(), groupId, channelId, description);
 		return executeAndReturnStringProperty(add, "token");
 	}
 
+	/**
+	 * Creates a new privilege key for a channel group.
+	 *
+	 * @param channelGroupId
+	 * 		the ID of the channel group
+	 * @param channelId
+	 * 		the ID of the channel in which the channel group should be set
+	 * @param description
+	 * 		the description for the token, can be null
+	 *
+	 * @return the created token for a client to use
+	 *
+	 * @see ChannelGroup#getId()
+	 * @see Channel#getId()
+	 * @see #addPrivilegeKey(TokenType, int, int, String)
+	 * @see #addPrivilegeKeyServerGroup(int, String)
+	 */
 	public CommandFuture<String> addPrivilegeKeyChannelGroup(int channelGroupId, int channelId, String description) {
-		return addPrivilegeKey(1, channelGroupId, channelId, description);
+		return addPrivilegeKey(TokenType.CHANNEL_GROUP, channelGroupId, channelId, description);
 	}
 
+	/**
+	 * Creates a new privilege key for a server group.
+	 *
+	 * @param serverGroupId
+	 * 		the ID of the server group
+	 * @param description
+	 * 		the description for the token, can be null
+	 *
+	 * @return the created token for a client to use
+	 *
+	 * @see ServerGroup#getId()
+	 * @see #addPrivilegeKey(TokenType, int, int, String)
+	 * @see #addPrivilegeKeyChannelGroup(int, int, String)
+	 */
 	public CommandFuture<String> addPrivilegeKeyServerGroup(int serverGroupId, String description) {
-		return addPrivilegeKey(0, serverGroupId, 0, description);
+		return addPrivilegeKey(TokenType.SERVER_GROUP, serverGroupId, 0, description);
 	}
 
+	/**
+	 * Creates a new server group for clients using a given name and returns its ID.
+	 * <p>
+	 * To create server group templates or ones for server queries,
+	 * use {@link #addServerGroup(String, PermissionGroupDatabaseType)}.
+	 * </p>
+	 *
+	 * @param name
+	 * 		the name of the new server group
+	 *
+	 * @return the ID of the newly created server group
+	 *
+	 * @see ServerGroup
+	 */
 	public CommandFuture<Integer> addServerGroup(String name) {
 		return addServerGroup(name, PermissionGroupDatabaseType.REGULAR);
 	}
 
-	public CommandFuture<Integer> addServerGroup(String name, PermissionGroupDatabaseType t) {
-		final CServerGroupAdd add = new CServerGroupAdd(name, t);
+	/**
+	 * Creates a new server group using a given name and returns its ID.
+	 *
+	 * @param name
+	 * 		the name of the new server group
+	 * @param type
+	 * 		the desired type of server group
+	 *
+	 * @return the ID of the newly created server group
+	 *
+	 * @see ServerGroup
+	 * @see PermissionGroupDatabaseType
+	 */
+	public CommandFuture<Integer> addServerGroup(String name, PermissionGroupDatabaseType type) {
+		final CServerGroupAdd add = new CServerGroupAdd(name, type);
 		return executeAndReturnIntProperty(add, "sgid");
 	}
 
+	/**
+	 * Adds a specified permission to a server group.
+	 *
+	 * @param groupId
+	 * 		the ID of the channel group to which the permission should be added
+	 * @param permName
+	 * 		the name of the permission to add
+	 * @param value
+	 * 		the numeric value of the permission (or for boolean permissions: 1 = true, 0 = false)
+	 * @param negated
+	 * 		if set to true, the lowest permission value will be selected instead of the highest
+	 * @param skipped
+	 * 		if set to true, this permission will not be overridden by client of channel permissions
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see ServerGroup#getId()
+	 * @see Permission
+	 */
 	public CommandFuture<Boolean> addServerGroupPermission(int groupId, String permName, int value, boolean negated, boolean skipped) {
 		final CServerGroupAddPerm add = new CServerGroupAddPerm(groupId, permName, value, negated, skipped);
 		return executeAndReturnError(add);
 	}
 
-	public void addTS3Listeners(TS3Listener... l) {
-		query.getEventManager().addListeners(l);
+	/**
+	 * Adds one or more {@link TS3Listener}s to the event manager of the query.
+	 * These listeners will be notified when the TS3 server fires an event.
+	 * <p>
+	 * Note that for the TS3 server to fire events, you must first also register
+	 * the event types you want to listen to.
+	 * </p>
+	 *
+	 * @param listeners
+	 * 		one or more listeners to register
+	 *
+	 * @see #registerAllEvents()
+	 * @see #registerEvent(TS3EventType, int)
+	 * @see TS3Listener
+	 * @see TS3EventType
+	 */
+	public void addTS3Listeners(TS3Listener... listeners) {
+		query.getEventManager().addListeners(listeners);
 	}
 
-	public CommandFuture<Integer> banClient(int clientId, long timeInSeconds) {
+	/**
+	 * Bans a client with a given client ID for a given time.
+	 * <p>
+	 * Please note that this will create two separate ban rules,
+	 * one for the targeted client's IP address and their unique identifier.
+	 * </p>
+	 *
+	 * @param clientId
+	 * 		the ID of the client
+	 * @param timeInSeconds
+	 * 		the duration of the ban in seconds. 0 equals a permanent ban
+	 *
+	 * @return an array containing the IDs of the first and the second ban entry
+	 *
+	 * @see Client#getId()
+	 * @see #addBan(String, String, String, long, String)
+	 */
+	public CommandFuture<Integer[]> banClient(int clientId, long timeInSeconds) {
 		return banClient(clientId, timeInSeconds, null);
 	}
 
-	public CommandFuture<Integer> banClient(int clientId, long timeInSeconds, String reason) {
+	/**
+	 * Bans a client with a given client ID for a given time for the specified reason.
+	 * <p>
+	 * Please note that this will create two separate ban rules,
+	 * one for the targeted client's IP address and their unique identifier.
+	 * </p>
+	 *
+	 * @param clientId
+	 * 		the ID of the client
+	 * @param timeInSeconds
+	 * 		the duration of the ban in seconds. 0 equals a permanent ban
+	 * @param reason
+	 * 		the reason for the ban, can be null
+	 *
+	 * @return an array containing the IDs of the first and the second ban entry
+	 *
+	 * @see Client#getId()
+	 * @see #addBan(String, String, String, long, String)
+	 */
+	public CommandFuture<Integer[]> banClient(int clientId, long timeInSeconds, String reason) {
 		final CBanClient client = new CBanClient(clientId, timeInSeconds, reason);
-		return executeAndReturnIntProperty(client, "banid");
+		final CommandFuture<Integer[]> future = new CommandFuture<>();
+
+		query.doCommandAsync(client, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(client, future)) return;
+
+				final List<HashMap<String, String>> response = client.getResponse();
+				final int banId1 = StringUtil.getInt(response.get(0).get("banid"));
+				final int banId2 = StringUtil.getInt(response.get(1).get("banid"));
+				future.set(new Integer[] {banId1, banId2});
+			}
+		});
+		return future;
 	}
 
-	public CommandFuture<Integer> banClient(int clientId, String reason) {
+	/**
+	 * Bans a client with a given client ID permanently for the specified reason.
+	 * <p>
+	 * Please note that this will create two separate ban rules,
+	 * one for the targeted client's IP address and their unique identifier.
+	 * </p>
+	 *
+	 * @param clientId
+	 * 		the ID of the client
+	 * @param reason
+	 * 		the reason for the ban, can be null
+	 *
+	 * @return an array containing the IDs of the first and the second ban entry
+	 *
+	 * @see Client#getId()
+	 * @see #addBan(String, String, String, long, String)
+	 */
+	public CommandFuture<Integer[]> banClient(int clientId, String reason) {
 		return banClient(clientId, 0, reason);
 	}
 
+	/**
+	 * Sends a text message to all clients on all virtual servers.
+	 * These messages will appear to clients in the tab for server messages.
+	 *
+	 * @param message
+	 * 		the message to be sent
+	 *
+	 * @return whether the command succeeded or not
+	 */
 	public CommandFuture<Boolean> broadcast(String message) {
 		final CGM broadcast = new CGM(message);
 		return executeAndReturnError(broadcast);
 	}
 
-	public CommandFuture<Boolean> copyChannelGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType t) {
-		final CChannelGroupCopy copy = new CChannelGroupCopy(sourceGroupId, targetGroupId, t);
+	/**
+	 * Creates a copy of the channel group specified by {@code sourceGroupId},
+	 * overwriting any other channel group specified by {@code targetGroupId}.
+	 * <p>
+	 * The parameter {@code type} can be used to create server query and template groups.
+	 * </p>
+	 *
+	 * @param sourceGroupId
+	 * 		the ID of the channel group to copy
+	 * @param targetGroupId
+	 * 		the ID of another channel group to overwrite
+	 * @param type
+	 * 		the desired type of channel group
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see ChannelGroup#getId()
+	 */
+	public CommandFuture<Boolean> copyChannelGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
+		if (targetGroupId <= 0) {
+			throw new IllegalArgumentException("To create a new channel group, use the method with a String argument");
+		}
+
+		final CChannelGroupCopy copy = new CChannelGroupCopy(sourceGroupId, targetGroupId, type);
 		return executeAndReturnError(copy);
 	}
 
-	public CommandFuture<Integer> copyChannelGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType t) {
-		final CChannelGroupCopy copy = new CChannelGroupCopy(sourceGroupId, targetName, t);
+	/**
+	 * Creates a copy of the channel group specified by {@code sourceGroupId} with a given name
+	 * and returns the ID of the newly created channel group.
+	 *
+	 * @param sourceGroupId
+	 * 		the ID of the channel group to copy
+	 * @param targetName
+	 * 		the name for the copy of the channel group
+	 * @param type
+	 * 		the desired type of channel group
+	 *
+	 * @return the ID of the newly created channel group
+	 *
+	 * @see ChannelGroup#getId()
+	 */
+	public CommandFuture<Integer> copyChannelGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
+		final CChannelGroupCopy copy = new CChannelGroupCopy(sourceGroupId, targetName, type);
 		return executeAndReturnIntProperty(copy, "cgid");
 	}
 
-	public CommandFuture<Integer> copyServerGroup(int idSource, int idTarget, PermissionGroupDatabaseType t) {
-		return copyServerGroup(idSource, idTarget, "ignored", t);
-	}
+	/**
+	 * Creates a copy of the server group specified by {@code sourceGroupId},
+	 * overwriting another server group specified by {@code targetGroupId}.
+	 * <p>
+	 * The parameter {@code type} can be used to create server query and template groups.
+	 * </p>
+	 *
+	 * @param sourceGroupId
+	 * 		the ID of the server group to copy
+	 * @param targetGroupId
+	 * 		the ID of another server group to overwrite
+	 * @param type
+	 * 		the desired type of server group
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see ServerGroup#getId()
+	 */
+	public CommandFuture<Integer> copyServerGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
+		if (targetGroupId <= 0) {
+			throw new IllegalArgumentException("To create a new server group, use the method with a String argument");
+		}
 
-	private CommandFuture<Integer> copyServerGroup(int idSource, int idTarget, String name, PermissionGroupDatabaseType t) {
-		final CServerGroupCopy copy = new CServerGroupCopy(idSource, idTarget, name, t);
+		final CServerGroupCopy copy = new CServerGroupCopy(sourceGroupId, targetGroupId, "ignored", type);
 		return executeAndReturnIntProperty(copy, "sgid");
 	}
 
-	public CommandFuture<Integer> copyServerGroup(int idSource, String name, PermissionGroupDatabaseType t) {
-		return copyServerGroup(idSource, 0, name, t);
+	/**
+	 * Creates a copy of the server group specified by {@code sourceGroupId} with a given name
+	 * and returns the ID of the newly created server group.
+	 *
+	 * @param sourceGroupId
+	 * 		the ID of the server group to copy
+	 * @param targetName
+	 * 		the name for the copy of the server group
+	 * @param type
+	 * 		the desired type of server group
+	 *
+	 * @return the ID of the newly created server group
+	 *
+	 * @see ServerGroup#getId()
+	 */
+	public CommandFuture<Integer> copyServerGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
+		final CServerGroupCopy copy = new CServerGroupCopy(sourceGroupId, 0, targetName, type);
+		return executeAndReturnIntProperty(copy, "sgid");
 	}
 
+	/**
+	 * Creates a new channel with a given name using the given properties and returns its ID.
+	 *
+	 * @param name
+	 * 		the name for the new channel
+	 * @param options
+	 * 		a map of options that should be set for the channel
+	 *
+	 * @return the ID of the newly created channel
+	 *
+	 * @see Channel
+	 */
 	public CommandFuture<Integer> createChannel(String name, HashMap<ChannelProperty, String> options) {
 		final CChannelCreate create = new CChannelCreate(name, options);
 		return executeAndReturnIntProperty(create, "cid");
 	}
 
-	public CommandFuture<Boolean> createServer(String name, HashMap<VirtualServerProperty, String> map) {
-		final CServerCreate create = new CServerCreate(name, map);
-		return executeAndReturnError(create);
+	/**
+	 * Creates a new virtual server with the given name and returns an object containing the ID of the newly
+	 * created virtual server, the default server admin token and the virtual server's voice port. Usually,
+	 * the virtual server is also automatically started. This can be turned off on the TS3 server, though.
+	 * <p>
+	 * If {@link VirtualServerProperty#VIRTUALSERVER_PORT} is not specified in the virtual server properties,
+	 * the server will test for the first unused UDP port.
+	 * </p><p>
+	 * Please also note that creating virtual servers usually requires the server query admin account
+	 * and that there is a limit to how many virtual servers can be created, which is dependent on your license.
+	 * Unlicensed TS3 server instances are limited to 1 virtual server with up to 32 client slots.
+	 * </p>
+	 *
+	 * @param name
+	 * 		the name for the new virtual server
+	 * @param options
+	 * 		a map of options that should be set for the virtual server
+	 *
+	 * @return information about the newly created virtual server
+	 *
+	 * @see VirtualServer
+	 */
+	public CommandFuture<CreatedVirtualServer> createServer(String name, HashMap<VirtualServerProperty, String> options) {
+		final CServerCreate create = new CServerCreate(name, options);
+		final CommandFuture<CreatedVirtualServer> future = new CommandFuture<>();
+
+		query.doCommandAsync(create, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(create, future)) return;
+				future.set(new CreatedVirtualServer(create.getFirstResponse().getMap()));
+			}
+		});
+		return future;
 	}
 
-	public CommandFuture<String> createServerQueryLogin(String name) {
-		final CClientSetServerQueryLogin login = new CClientSetServerQueryLogin(name);
-		return executeAndReturnStringProperty(login, "client_login_password");
-	}
-
+	/**
+	 * Creates a {@link Snapshot} of the selected virtual server containing all settings,
+	 * groups and known client identities. The data from a server snapshot can be
+	 * used to restore a virtual servers configuration.
+	 *
+	 * @return a snapshot of the virtual server
+	 *
+	 * @see #deployServerSnapshot(Snapshot)
+	 */
 	public CommandFuture<Snapshot> createServerSnapshot() {
 		final CServerSnapshotCreate create = new CServerSnapshotCreate();
 		final CommandFuture<Snapshot> future = new CommandFuture<>();
@@ -210,133 +712,485 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Deletes all active ban rules from the server. Use with caution.
+	 *
+	 * @return whether the command succeeded or not
+	 */
 	public CommandFuture<Boolean> deleteAllBans() {
 		final CBanDelAll del = new CBanDelAll();
 		return executeAndReturnError(del);
 	}
 
+	/**
+	 * Deletes all complaints about the client with specified database ID from the server.
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the client
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Client#getDatabaseId()
+	 * @see Complaint
+	 */
 	public CommandFuture<Boolean> deleteAllComplaints(int clientDBId) {
 		final CComplainDelAll del = new CComplainDelAll(clientDBId);
 		return executeAndReturnError(del);
 	}
 
+	/**
+	 * Deletes the ban rule with the specified ID from the server.
+	 *
+	 * @param banId
+	 * 		the ID of the ban to delete
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Ban#getId()
+	 */
 	public CommandFuture<Boolean> deleteBan(int banId) {
 		final CBanDel del = new CBanDel(banId);
 		return executeAndReturnError(del);
 	}
 
+	/**
+	 * Deletes an existing channel specified by its ID, kicking all clients out of the channel.
+	 *
+	 * @param channelId
+	 * 		the ID of the channel to delete
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Channel#getId()
+	 * @see #deleteChannel(int, boolean)
+	 * @see #kickClientFromChannel(String, int...)
+	 */
 	public CommandFuture<Boolean> deleteChannel(int channelId) {
-		final CChannelDelete del = new CChannelDelete(channelId, true);
+		return deleteChannel(channelId, true);
+	}
+
+	/**
+	 * Deletes an existing channel with a given ID.
+	 * If {@code force} is true, the channel will be deleted even if there are clients within,
+	 * else the command will fail in this situation.
+	 *
+	 * @param channelId
+	 * 		the ID of the channel to delete
+	 * @param force
+	 * 		whether clients should be kicked out of the channel
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Channel#getId()
+	 * @see #kickClientFromChannel(String, int...)
+	 */
+	public CommandFuture<Boolean> deleteChannel(int channelId, boolean force) {
+		final CChannelDelete del = new CChannelDelete(channelId, force);
 		return executeAndReturnError(del);
 	}
 
+	/**
+	 * Removes a specified permission from a client in a specific channel.
+	 *
+	 * @param channelId
+	 * 		the ID of the channel wherein the permission should be removed
+	 * @param clientDBId
+	 * 		the database ID of the client
+	 * @param permName
+	 * 		the name of the permission to revoke
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Channel#getId()
+	 * @see Client#getDatabaseId()
+	 * @see Permission#getName()
+	 */
 	public CommandFuture<Boolean> deleteChannelClientPermission(int channelId, int clientDBId, String permName) {
 		final CChannelClientDelPerm del = new CChannelClientDelPerm(channelId, clientDBId, permName);
 		return executeAndReturnError(del);
 	}
 
+	/**
+	 * Removes the channel group with the given ID.
+	 *
+	 * @param groupId
+	 * 		the ID of the channel group
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see ChannelGroup#getId()
+	 */
 	public CommandFuture<Boolean> deleteChannelGroup(int groupId) {
-		final CChannelGroupDel del = new CChannelGroupDel(groupId, true);
+		return deleteChannelGroup(groupId, true);
+	}
+
+	/**
+	 * Removes the channel group with the given ID.
+	 * If {@code force} is true, the channel group will be deleted even if it still contains clients,
+	 * else the command will fail in this situation.
+	 *
+	 * @param groupId
+	 * 		the ID of the channel group
+	 * @param force
+	 * 		whether the channel group should be deleted even if it still contains clients
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see ChannelGroup#getId()
+	 */
+	public CommandFuture<Boolean> deleteChannelGroup(int groupId, boolean force) {
+		final CChannelGroupDel del = new CChannelGroupDel(groupId, force);
 		return executeAndReturnError(del);
 	}
 
+	/**
+	 * Removes a permission from the channel group with the given ID.
+	 *
+	 * @param groupId
+	 * 		the ID of the channel group
+	 * @param permName
+	 * 		the name of the permission to revoke
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see ChannelGroup#getId()
+	 * @see Permission#getName()
+	 */
 	public CommandFuture<Boolean> deleteChannelGroupPermission(int groupId, String permName) {
 		final CChannelGroupDelPerm del = new CChannelGroupDelPerm(groupId, permName);
 		return executeAndReturnError(del);
 	}
 
+	/**
+	 * Removes a permission from the channel with the given ID.
+	 *
+	 * @param channelId
+	 * 		the ID of the channel
+	 * @param permName
+	 * 		the name of the permission to revoke
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Channel#getId()
+	 * @see Permission#getName()
+	 */
 	public CommandFuture<Boolean> deleteChannelPermission(int channelId, String permName) {
 		final CChannelDelPerm del = new CChannelDelPerm(channelId, permName);
 		return executeAndReturnError(del);
 	}
 
+	/**
+	 * Removes a permission from a client.
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the client
+	 * @param permName
+	 * 		the name of the permission to revoke
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Client#getDatabaseId()
+	 * @see Permission#getName()
+	 */
 	public CommandFuture<Boolean> deleteClientPermission(int clientDBId, String permName) {
 		final CClientDelPerm del = new CClientDelPerm(clientDBId, permName);
 		return executeAndReturnError(del);
 	}
 
+	/**
+	 * Deletes the complaint about the client with database ID {@code targetClientDBId} submitted by
+	 * the client with database ID {@code fromClientDBId} from the server.
+	 *
+	 * @param targetClientDBId
+	 * 		the database ID of the client the complaint is about
+	 * @param fromClientDBId
+	 * 		the database ID of the client who added the complaint
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Complaint
+	 * @see Client#getDatabaseId()
+	 */
 	public CommandFuture<Boolean> deleteComplaint(int targetClientDBId, int fromClientDBId) {
 		final CComplainDel del = new CComplainDel(targetClientDBId, fromClientDBId);
 		return executeAndReturnError(del);
 	}
 
+	/**
+	 * Removes all stored database information about the specified client.
+	 * Please note that this data is also automatically removed after a configured time (usually 90 days).
+	 * <p>
+	 * See {@link DatabaseClientInfo} for a list of stored information about a client.
+	 * </p>
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the client
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Client#getDatabaseId()
+	 * @see #getDatabaseClientInfo(int)
+	 * @see DatabaseClientInfo
+	 */
 	public CommandFuture<Boolean> deleteDatabaseClientProperties(int clientDBId) {
 		final CClientDBDelete del = new CClientDBDelete(clientDBId);
 		return executeAndReturnError(del);
 	}
 
+	/**
+	 * Deletes the offline message with the specified ID.
+	 *
+	 * @param messageId
+	 * 		the ID of the offline message to delete
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Message#getId()
+	 */
 	public CommandFuture<Boolean> deleteOfflineMessage(int messageId) {
 		final CMessageDel del = new CMessageDel(messageId);
 		return executeAndReturnError(del);
 	}
 
-	public CommandFuture<Boolean> deletePermissionFromAllServerGroups(ServerGroupType t, String permName) {
-		final CServerGroupAutoDelPerm del = new CServerGroupAutoDelPerm(t, permName);
+	/**
+	 * Removes a specified permission from all server groups of the type specified by {@code type} on all virtual servers.
+	 *
+	 * @param type
+	 * 		the kind of server group this permission should be removed from
+	 * @param permName
+	 * 		the name of the permission to remove
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see ServerGroupType
+	 * @see Permission#getName()
+	 */
+	public CommandFuture<Boolean> deletePermissionFromAllServerGroups(ServerGroupType type, String permName) {
+		final CServerGroupAutoDelPerm del = new CServerGroupAutoDelPerm(type, permName);
 		return executeAndReturnError(del);
 	}
 
+	/**
+	 * Deletes the privilege key with the given token.
+	 *
+	 * @param token
+	 * 		the token of the privilege key
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see PrivilegeKey
+	 */
 	public CommandFuture<Boolean> deletePrivilegeKey(String token) {
 		final CPrivilegeKeyDelete del = new CPrivilegeKeyDelete(token);
 		return executeAndReturnError(del);
 	}
 
-	public CommandFuture<Boolean> deleteServer(int id) {
-		final CServerDelete delete = new CServerDelete(id);
+	/**
+	 * Deletes the virtual server with the specified ID.
+	 * <p>
+	 * Only stopped virtual servers can be deleted.
+	 * </p>
+	 *
+	 * @param serverId
+	 * 		the ID of the virtual server
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see VirtualServer#getId()
+	 * @see #stopServer(int)
+	 */
+	public CommandFuture<Boolean> deleteServer(int serverId) {
+		final CServerDelete delete = new CServerDelete(serverId);
 		return executeAndReturnError(delete);
 	}
 
-	public CommandFuture<Boolean> deleteServerGroup(int id) {
-		return deleteServerGroup(id, true);
+	/**
+	 * Deletes the server group with the specified ID, even if the server group still contains clients.
+	 *
+	 * @param groupId
+	 * 		the ID of the server group
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see ServerGroup#getId()
+	 */
+	public CommandFuture<Boolean> deleteServerGroup(int groupId) {
+		return deleteServerGroup(groupId, true);
 	}
 
-	public CommandFuture<Boolean> deleteServerGroup(int id, boolean forced) {
-		final CServerGroupDel del = new CServerGroupDel(id, forced);
+	/**
+	 * Deletes a server group with the specified ID.
+	 * <p>
+	 * If {@code force} is true, the server group will be deleted even if it contains clients,
+	 * else the command will fail in this situation.
+	 * </p>
+	 *
+	 * @param groupId
+	 * 		the ID of the server group
+	 * @param force
+	 * 		whether the server group should be deleted if it still contains clients
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see ServerGroup#getId()
+	 */
+	public CommandFuture<Boolean> deleteServerGroup(int groupId, boolean force) {
+		final CServerGroupDel del = new CServerGroupDel(groupId, force);
 		return executeAndReturnError(del);
 	}
 
+	/**
+	 * Removes a permission from the server group with the given ID.
+	 *
+	 * @param groupId
+	 * 		the ID of the server group
+	 * @param permName
+	 * 		the name of the permission to revoke
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see ServerGroup#getId()
+	 * @see Permission#getName()
+	 */
 	public CommandFuture<Boolean> deleteServerGroupPermission(int groupId, String permName) {
 		final CServerGroupDelPerm del = new CServerGroupDelPerm(groupId, permName);
 		return executeAndReturnError(del);
 	}
 
+	/**
+	 * Restores the selected virtual servers configuration using the data from a
+	 * previously created server snapshot.
+	 *
+	 * @param snapshot
+	 * 		the snapshot to restore
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see #createServerSnapshot()
+	 */
 	public CommandFuture<Boolean> deployServerSnapshot(Snapshot snapshot) {
-		final CServerSnapshotDeploy deploy = new CServerSnapshotDeploy(snapshot.get());
+		return deployServerSnapshot(snapshot.get());
+	}
+
+	/**
+	 * Restores the configuration of the selected virtual server using the data from a
+	 * previously created server snapshot.
+	 *
+	 * @param snapshot
+	 * 		the snapshot to restore
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see #createServerSnapshot()
+	 */
+	public CommandFuture<Boolean> deployServerSnapshot(String snapshot) {
+		final CServerSnapshotDeploy deploy = new CServerSnapshotDeploy(snapshot);
 		return executeAndReturnError(deploy);
 	}
 
+	/**
+	 * Changes a channel's configuration using the given properties.
+	 *
+	 * @param channelId
+	 * 		the ID of the channel to edit
+	 * @param options
+	 * 		the map of properties to modify
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Channel#getId()
+	 */
 	public CommandFuture<Boolean> editChannel(int channelId, HashMap<ChannelProperty, String> options) {
 		final CChannelEdit edit = new CChannelEdit(channelId, options);
 		return executeAndReturnError(edit);
 	}
 
 	/**
-	 * So far only ClientProperty.CLIENT_DESCRIPTION seems to be a correct ClientProperty. Others don't.
+	 * Changes a client's configuration using given properties.
+	 * <p>
+	 * Only {@link ClientProperty#CLIENT_DESCRIPTION} can be changed for other clients.
+	 * To update the current client's properties, use {@link #updateClient(HashMap)}.
+	 * </p>
+	 *
+	 * @param clientId
+	 * 		the ID of the client to edit
+	 * @param options
+	 * 		the map of properties to modify
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Client#getId()
+	 * @see #updateClient(HashMap)
 	 */
 	public CommandFuture<Boolean> editClient(int clientId, HashMap<ClientProperty, String> options) {
 		final CClientEdit edit = new CClientEdit(clientId, options);
 		return executeAndReturnError(edit);
 	}
 
+	/**
+	 * Changes a client's database settings using given properties.
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the client to edit
+	 * @param options
+	 * 		the map of properties to modify
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see DatabaseClientInfo
+	 * @see Client#getDatabaseId()
+	 */
 	public CommandFuture<Boolean> editDatabaseClient(int clientDBId, HashMap<ClientProperty, String> options) {
 		final CClientDBEdit edit = new CClientDBEdit(clientDBId, options);
 		return executeAndReturnError(edit);
 	}
 
-	public CommandFuture<Boolean> editInstance(ServerInstanceProperty p, String value) {
-		if (p.isChangeable()) {
-			final CInstanceEdit edit = new CInstanceEdit(p, value);
-			return executeAndReturnError(edit);
+	/**
+	 * Changes the server instance configuration using given properties.
+	 * If the given property is not changeable, {@code IllegalArgumentException} will be thrown.
+	 *
+	 * @param property
+	 * 		the property to edit, must be changeable
+	 * @param value
+	 * 		the new value for the edit
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code property} is not changeable
+	 * @see ServerInstanceProperty#isChangeable()
+	 */
+	public CommandFuture<Boolean> editInstance(ServerInstanceProperty property, String value) {
+		if (!property.isChangeable()) {
+			throw new IllegalArgumentException("Property is not changeable");
 		}
-		CommandFuture<Boolean> immediatelyFalse = new CommandFuture<>();
-		immediatelyFalse.set(false);
-		return immediatelyFalse;
-	}
 
-	public CommandFuture<Boolean> editServer(HashMap<VirtualServerProperty, String> map) {
-		final CServerEdit edit = new CServerEdit(map);
+		final CInstanceEdit edit = new CInstanceEdit(property, value);
 		return executeAndReturnError(edit);
 	}
 
+	/**
+	 * Changes the configuration of the selected virtual server using given properties.
+	 *
+	 * @param options
+	 * 		the map of properties to edit
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see VirtualServerProperty
+	 */
+	public CommandFuture<Boolean> editServer(HashMap<VirtualServerProperty, String> options) {
+		final CServerEdit edit = new CServerEdit(options);
+		return executeAndReturnError(edit);
+	}
+
+	/**
+	 * Gets a list of all bans on the selected virtual server.
+	 *
+	 * @return a list of all bans on the virtual server
+	 *
+	 * @see Ban
+	 */
 	public CommandFuture<List<Ban>> getBans() {
 		final CBanList list = new CBanList();
 		final CommandFuture<List<Ban>> future = new CommandFuture<>();
@@ -356,6 +1210,13 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Gets a list of IP addresses used by the server instance.
+	 *
+	 * @return the list of bound IP addresses
+	 *
+	 * @see Binding
+	 */
 	public CommandFuture<List<Binding>> getBindings() {
 		final CBindingList list = new CBindingList();
 		final CommandFuture<List<Binding>> future = new CommandFuture<>();
@@ -375,25 +1236,73 @@ public class TS3ApiAsync {
 		return future;
 	}
 
-	public CommandFuture<Channel> getChannelByName(String name) {
-		final CChannelFind find = new CChannelFind(name);
+	/**
+	 * Finds and returns the channel matching the given name exactly.
+	 *
+	 * @param name
+	 * 		the name of the channel
+	 * @param ignoreCase
+	 * 		whether the case of the name should be ignored
+	 *
+	 * @return the found channel or {@code null} if no channel was found
+	 *
+	 * @see Channel
+	 * @see #getChannelsByName(String)
+	 */
+	public CommandFuture<Channel> getChannelByNameExact(String name, final boolean ignoreCase) {
 		final CommandFuture<Channel> future = new CommandFuture<>();
+		final String caseName = ignoreCase ? name.toLowerCase() : name;
 
 		getChannels().onSuccess(new CommandFuture.SuccessListener<List<Channel>>() {
 			@Override
-			public void handleSuccess(final List<Channel> result) {
+			public void handleSuccess(final List<Channel> allChannels) {
+				for (final Channel c : allChannels) {
+					final String channelName = ignoreCase ? c.getName().toLowerCase() : c.getName();
+					if (caseName.equals(channelName)) {
+						future.set(c);
+						return;
+					}
+				}
+				future.set(null); // Not found
+			}
+		}).forwardFailure(future);
+		return future;
+	}
+
+	/**
+	 * Gets a list of channels whose names contain the given search string.
+	 *
+	 * @param name
+	 * 		the name to search
+	 *
+	 * @return a list of all channels with names matching the search pattern
+	 *
+	 * @see Channel
+	 * @see #getChannelByNameExact(String, boolean)
+	 */
+	public CommandFuture<List<Channel>> getChannelsByName(String name) {
+		final CChannelFind find = new CChannelFind(name);
+		final CommandFuture<List<Channel>> future = new CommandFuture<>();
+
+		getChannels().onSuccess(new CommandFuture.SuccessListener<List<Channel>>() {
+			@Override
+			public void handleSuccess(final List<Channel> allChannels) {
 				query.doCommandAsync(find, new Callback() {
 					@Override
 					public void handle() {
 						if (hasFailed(find, future)) return;
 
-						for (final Channel c : result) {
-							if (c.getId() == StringUtil.getInt(find.getFirstResponse().get("cid"))) {
-								future.set(c);
-								return;
+						final List<Channel> channels = new ArrayList<>();
+						for (final HashMap<String, String> response : find.getResponse()) {
+							final int channelId = StringUtil.getInt(response.get("cid"));
+							for (final Channel c : allChannels) {
+								if (c.getId() == channelId) {
+									channels.add(c);
+									break;
+								}
 							}
-							future.set(null); // Not found
 						}
+						future.set(channels);
 					}
 				});
 			}
@@ -401,6 +1310,20 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Displays a list of permissions defined for a client in a specific channel.
+	 *
+	 * @param channelId
+	 * 		the ID of the channel
+	 * @param clientDBId
+	 * 		the database ID of the client
+	 *
+	 * @return a list of permissions for the user in the specified channel
+	 *
+	 * @see Channel#getId()
+	 * @see Client#getDatabaseId()
+	 * @see Permission
+	 */
 	public CommandFuture<List<Permission>> getChannelClientPermissions(int channelId, int clientDBId) {
 		final CChannelClientPermList list = new CChannelClientPermList(channelId, clientDBId);
 		final CommandFuture<List<Permission>> future = new CommandFuture<>();
@@ -421,7 +1344,22 @@ public class TS3ApiAsync {
 	}
 
 	/**
-	 * Use -1 to ingore an argument.
+	 * Gets all client / channel ID combinations currently assigned to channel groups.
+	 * All three parameters are optional and can be turned off by setting it to {@code -1}.
+	 *
+	 * @param channelId
+	 * 		restricts the search to the channel with a specified ID. Set to {@code -1} to ignore.
+	 * @param clientDBId
+	 * 		restricts the search to the client with a specified database ID. Set to {@code -1} to ignore.
+	 * @param groupId
+	 * 		restricts the search to the channel group with the specified ID. Set to {@code -1} to ignore.
+	 *
+	 * @return a list of combinations of channel ID, client database ID and channel group ID
+	 *
+	 * @see Channel#getId()
+	 * @see Client#getDatabaseId()
+	 * @see ChannelGroup#getId()
+	 * @see ChannelGroupClient
 	 */
 	public CommandFuture<List<ChannelGroupClient>> getChannelGroupClients(int channelId, int clientDBId, int groupId) {
 		final CChannelGroupClientList list = new CChannelGroupClientList(channelId, clientDBId, groupId);
@@ -442,18 +1380,65 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Gets all client / channel ID combinations currently assigned to the specified channel group.
+	 *
+	 * @param groupId
+	 * 		the ID of the channel group whose client / channel assignments should be returned.
+	 *
+	 * @return a list of combinations of channel ID, client database ID and channel group ID
+	 *
+	 * @see ChannelGroup#getId()
+	 * @see ChannelGroupClient
+	 * @see #getChannelGroupClients(int, int, int)
+	 */
 	public CommandFuture<List<ChannelGroupClient>> getChannelGroupClientsByChannelGroupId(int groupId) {
 		return getChannelGroupClients(-1, -1, groupId);
 	}
 
+	/**
+	 * Gets all channel group assignments in the specified channel.
+	 *
+	 * @param channelId
+	 * 		the ID of the channel whose channel group assignments should be returned.
+	 *
+	 * @return a list of combinations of channel ID, client database ID and channel group ID
+	 *
+	 * @see Channel#getId()
+	 * @see ChannelGroupClient
+	 * @see #getChannelGroupClients(int, int, int)
+	 */
 	public CommandFuture<List<ChannelGroupClient>> getChannelGroupClientsByChannelId(int channelId) {
 		return getChannelGroupClients(channelId, -1, -1);
 	}
 
+	/**
+	 * Gets all channel group assignments for the specified client.
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the client whose channel group
+	 *
+	 * @return a list of combinations of channel ID, client database ID and channel group ID
+	 *
+	 * @see Client#getDatabaseId()
+	 * @see ChannelGroupClient
+	 * @see #getChannelGroupClients(int, int, int)
+	 */
 	public CommandFuture<List<ChannelGroupClient>> getChannelGroupClientsByClientDBId(int clientDBId) {
 		return getChannelGroupClients(-1, clientDBId, -1);
 	}
 
+	/**
+	 * Gets a list of all permissions assigned to the specified channel group.
+	 *
+	 * @param groupId
+	 * 		the ID of the channel group.
+	 *
+	 * @return a list of permissions assigned to the channel group
+	 *
+	 * @see ChannelGroup#getId()
+	 * @see Permission
+	 */
 	public CommandFuture<List<Permission>> getChannelGroupPermissions(int groupId) {
 		final CChannelGroupPermList list = new CChannelGroupPermList(groupId);
 		final CommandFuture<List<Permission>> future = new CommandFuture<>();
@@ -473,6 +1458,13 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Gets a list of all channel groups on the selected virtual server.
+	 *
+	 * @return a list of all channel groups on the virtual server
+	 *
+	 * @see ChannelGroup
+	 */
 	public CommandFuture<List<ChannelGroup>> getChannelGroups() {
 		final CChannelGroupList list = new CChannelGroupList();
 		final CommandFuture<List<ChannelGroup>> future = new CommandFuture<>();
@@ -492,6 +1484,17 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Gets detailed configuration information about the channel specified channel.
+	 *
+	 * @param channelId
+	 * 		the ID of the channel
+	 *
+	 * @return information about the channel
+	 *
+	 * @see Channel#getId()
+	 * @see ChannelInfo
+	 */
 	public CommandFuture<ChannelInfo> getChannelInfo(int channelId) {
 		final CChannelInfo info = new CChannelInfo(channelId);
 		final CommandFuture<ChannelInfo> future = new CommandFuture<>();
@@ -506,6 +1509,17 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Gets a list of all permissions assigned to the specified channel.
+	 *
+	 * @param channelId
+	 * 		the ID of the channel
+	 *
+	 * @return a list of all permissions assigned to the channel
+	 *
+	 * @see Channel#getId()
+	 * @see Permission
+	 */
 	public CommandFuture<List<Permission>> getChannelPermissions(int channelId) {
 		final CChannelPermList list = new CChannelPermList(channelId);
 		final CommandFuture<List<Permission>> future = new CommandFuture<>();
@@ -525,6 +1539,13 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Gets a list of all channels on the selected virtual server.
+	 *
+	 * @return a list of all channels on the virtual server
+	 *
+	 * @see Channel
+	 */
 	public CommandFuture<List<Channel>> getChannels() {
 		final CChannelList list = new CChannelList();
 		final CommandFuture<List<Channel>> future = new CommandFuture<>();
@@ -544,23 +1565,68 @@ public class TS3ApiAsync {
 		return future;
 	}
 
-	public CommandFuture<List<Client>> getClientByName(String pattern) {
-		final CClientFind find = new CClientFind(pattern);
+	/**
+	 * Finds and returns the client whose nickname matches the given name exactly.
+	 *
+	 * @param name
+	 * 		the name of the client
+	 * @param ignoreCase
+	 * 		whether the case of the name should be ignored
+	 *
+	 * @return the found client or {@code null} if no client was found
+	 *
+	 * @see Client
+	 * @see #getClientsByName(String)
+	 */
+	public CommandFuture<Client> getClientByNameExact(String name, final boolean ignoreCase) {
+		final CommandFuture<Client> future = new CommandFuture<>();
+		final String caseName = ignoreCase ? name.toLowerCase() : name;
+
+		getClients().onSuccess(new CommandFuture.SuccessListener<List<Client>>() {
+			@Override
+			public void handleSuccess(final List<Client> allClients) {
+				for (final Client c : allClients) {
+					final String clientName = ignoreCase ? c.getNickname().toLowerCase() : c.getNickname();
+					if (caseName.equals(clientName)) {
+						future.set(c);
+						return;
+					}
+				}
+				future.set(null); // Not found
+			}
+		}).forwardFailure(future);
+		return future;
+	}
+
+	/**
+	 * Gets a list of clients whose nicknames contain the given search string.
+	 *
+	 * @param name
+	 * 		the name to search
+	 *
+	 * @return a list of all clients with nicknames matching the search pattern
+	 *
+	 * @see Client
+	 * @see #getClientByNameExact(String, boolean)
+	 */
+	public CommandFuture<List<Client>> getClientsByName(String name) {
+		final CClientFind find = new CClientFind(name);
 		final CommandFuture<List<Client>> future = new CommandFuture<>();
 
 		getClients().onSuccess(new CommandFuture.SuccessListener<List<Client>>() {
 			@Override
-			public void handleSuccess(final List<Client> result) {
+			public void handleSuccess(final List<Client> allClients) {
 				query.doCommandAsync(find, new Callback() {
 					@Override
 					public void handle() {
 						if (hasFailed(find, future)) return;
 
 						final List<Client> clients = new ArrayList<>();
-						for (final Client c : result) {
-							for (final HashMap<String, String> opt : find.getResponse()) {
-								if (c.getId() == StringUtil.getInt(new Wrapper(opt).get("clid"))) {
+						for (final HashMap<String, String> response : find.getResponse()) {
+							for (final Client c : allClients) {
+								if (c.getId() == StringUtil.getInt(response.get("clid"))) {
 									clients.add(c);
+									break;
 								}
 							}
 						}
@@ -572,6 +1638,17 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Gets information about the client with the specified unique identifier.
+	 *
+	 * @param clientUId
+	 * 		the unique identifier of the client
+	 *
+	 * @return the client or {@code null} if no client was found
+	 *
+	 * @see Client#getUniqueIdentifier()
+	 * @see ClientInfo
+	 */
 	public CommandFuture<ClientInfo> getClientByUId(String clientUId) {
 		final CClientGetIds get = new CClientGetIds(clientUId);
 		final CommandFuture<ClientInfo> future = new CommandFuture<>();
@@ -587,7 +1664,18 @@ public class TS3ApiAsync {
 		return future;
 	}
 
-	public CommandFuture<ClientInfo> getClientInfo(int clientId) {
+	/**
+	 * Gets information about the client with the specified client ID.
+	 *
+	 * @param clientId
+	 * 		the client ID of the client
+	 *
+	 * @return the client or {@code null} if no client was found
+	 *
+	 * @see Client#getId()
+	 * @see ClientInfo
+	 */
+	public CommandFuture<ClientInfo> getClientInfo(final int clientId) {
 		final CClientInfo info = new CClientInfo(clientId);
 		final CommandFuture<ClientInfo> future = new CommandFuture<>();
 
@@ -601,6 +1689,17 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Gets a list of all permissions assigned to the specified client.
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the client
+	 *
+	 * @return a list of all permissions assigned to the client
+	 *
+	 * @see Client#getDatabaseId()
+	 * @see Permission
+	 */
 	public CommandFuture<List<Permission>> getClientPermissions(int clientDBId) {
 		final CClientPermList list = new CClientPermList(clientDBId);
 		final CommandFuture<List<Permission>> future = new CommandFuture<>();
@@ -620,6 +1719,13 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Gets a list of all clients on the selected virtual server.
+	 *
+	 * @return a list of all clients on the virtual server
+	 *
+	 * @see Client
+	 */
 	public CommandFuture<List<Client>> getClients() {
 		final CClientList list = new CClientList();
 		final CommandFuture<List<Client>> future = new CommandFuture<>();
@@ -639,10 +1745,29 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Gets a list of all complaints on the selected virtual server.
+	 *
+	 * @return a list of all complaints on the virtual server
+	 *
+	 * @see Complaint
+	 * @see #getComplaints(int)
+	 */
 	public CommandFuture<List<Complaint>> getComplaints() {
 		return getComplaints(-1);
 	}
 
+	/**
+	 * Gets a list of all complaints about the specified client.
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the client
+	 *
+	 * @return a list of all complaints about the specified client
+	 *
+	 * @see Client#getDatabaseId()
+	 * @see Complaint
+	 */
 	public CommandFuture<List<Complaint>> getComplaints(int clientDBId) {
 		final CComplainList list = new CComplainList(clientDBId);
 		final CommandFuture<List<Complaint>> future = new CommandFuture<>();
@@ -662,6 +1787,14 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Gets detailed connection information about the selected virtual server.
+	 *
+	 * @return connection information about the selected virtual server
+	 *
+	 * @see ConnectionInfo
+	 * @see #getServerInfo()
+	 */
 	public CommandFuture<ConnectionInfo> getConnectionInfo() {
 		final CServerRequestConnectionInfo info = new CServerRequestConnectionInfo();
 		final CommandFuture<ConnectionInfo> future = new CommandFuture<>();
@@ -676,21 +1809,54 @@ public class TS3ApiAsync {
 		return future;
 	}
 
-	public CommandFuture<DatabaseClientInfo> getDatabaseClientByName(String name) {
+	/**
+	 * Gets all clients in the database whose last nickname matches the specified name <b>exactly</b>.
+	 *
+	 * @param name
+	 * 		the nickname for the clients to match
+	 *
+	 * @return a list of all clients with a matching nickname
+	 *
+	 * @see Client#getNickname()
+	 */
+	public CommandFuture<List<DatabaseClientInfo>> getDatabaseClientsByName(String name) {
 		final CClientDBFind find = new CClientDBFind(name, false);
-		final CommandFuture<DatabaseClientInfo> future = new CommandFuture<>();
+		final CommandFuture<List<DatabaseClientInfo>> future = new CommandFuture<>();
 
 		query.doCommandAsync(find, new Callback() {
 			@Override
 			public void handle() {
 				if (hasFailed(find, future)) return;
 
-				getDatabaseClientInfo(StringUtil.getInt(find.getFirstResponse().get("cldbid"))).forwardResult(future);
+				final List<HashMap<String, String>> responses = find.getResponse();
+				final List<CommandFuture<DatabaseClientInfo>> infoFutures = new ArrayList<>(responses.size());
+				for (HashMap<String, String> response : responses) {
+					final int databaseId = StringUtil.getInt(response.get("cldbid"));
+					infoFutures.add(getDatabaseClientInfo(databaseId));
+				}
+
+				CommandFuture.awaitAll(infoFutures).onSuccess(new CommandFuture.SuccessListener<Collection<DatabaseClientInfo>>() {
+					@Override
+					public void handleSuccess(Collection<DatabaseClientInfo> result) {
+						future.set(new ArrayList<>(result));
+					}
+				}).forwardFailure(future);
 			}
 		});
 		return future;
 	}
 
+	/**
+	 * Gets information about the client with the specified unique identifier in the server database.
+	 *
+	 * @param clientUId
+	 * 		the unique identifier of the client
+	 *
+	 * @return the database client or {@code null} if no client was found
+	 *
+	 * @see Client#getUniqueIdentifier()
+	 * @see DatabaseClientInfo
+	 */
 	public CommandFuture<DatabaseClientInfo> getDatabaseClientByUId(String clientUId) {
 		final CClientGetDBIdFromUId get = new CClientGetDBIdFromUId(clientUId);
 		final CommandFuture<DatabaseClientInfo> future = new CommandFuture<>();
@@ -706,6 +1872,17 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Gets information about the client with the specified database ID in the server database.
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the client
+	 *
+	 * @return the database client or {@code null} if no client was found
+	 *
+	 * @see Client#getDatabaseId()
+	 * @see DatabaseClientInfo
+	 */
 	public CommandFuture<DatabaseClientInfo> getDatabaseClientInfo(int clientDBId) {
 		final CClientDBInfo info = new CClientDBInfo(clientDBId);
 		final CommandFuture<DatabaseClientInfo> future = new CommandFuture<>();
@@ -721,7 +1898,17 @@ public class TS3ApiAsync {
 	}
 
 	/**
-	 * Be warned, this method takes quite some time to execute.
+	 * Gets information about all clients in the server database.
+	 * <p>
+	 * As this method uses internal commands which can only return 200 clients at once,
+	 * this method can take quite some time to execute.
+	 * </p><p>
+	 * Also keep in mind that the client database can easily accumulate several thousand entries.
+	 * </p>
+	 *
+	 * @return a {@link List} of all database clients
+	 *
+	 * @see DatabaseClient
 	 */
 	public CommandFuture<List<DatabaseClient>> getDatabaseClients() {
 		final CClientDBList countList = new CClientDBList(0, 1, true);
@@ -734,7 +1921,7 @@ public class TS3ApiAsync {
 
 				final int count = StringUtil.getInt(countList.getFirstResponse().get("count"));
 				final int futuresCount = ((count - 1) / 200) + 1;
-				final ArrayList<CommandFuture<List<DatabaseClient>>> futures = new ArrayList<>(futuresCount);
+				final List<CommandFuture<List<DatabaseClient>>> futures = new ArrayList<>(futuresCount);
 				for (int i = 0; i < count; i += 200) {
 					futures.add(getDatabaseClients(i, 200));
 				}
@@ -747,7 +1934,7 @@ public class TS3ApiAsync {
 							total += list.size();
 						}
 
-						final ArrayList<DatabaseClient> combination = new ArrayList<>(total);
+						final List<DatabaseClient> combination = new ArrayList<>(total);
 						for (List<DatabaseClient> list : result) {
 							combination.addAll(list);
 						}
@@ -759,6 +1946,20 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Gets information about a set number of clients in the server database, starting at {@code offset}.
+	 *
+	 * @param offset
+	 * 		the index of the first database client to be returned.
+	 * 		Note that this is <b>not</b> a database ID, but an arbitrary, 0-based index.
+	 * @param count
+	 * 		the number of database clients that should be returned.
+	 * 		Any integer greater than 200 might cause problems with the connection
+	 *
+	 * @return a {@link List} of database clients
+	 *
+	 * @see DatabaseClient
+	 */
 	public CommandFuture<List<DatabaseClient>> getDatabaseClients(final int offset, final int count) {
 		final CClientDBList list = new CClientDBList(offset, count, false);
 		final CommandFuture<List<DatabaseClient>> future = new CommandFuture<>();
@@ -778,6 +1979,12 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Displays detailed configuration information about the server instance including
+	 * uptime, number of virtual servers online, traffic information, etc.
+	 *
+	 * @return information about the
+	 */
 	public CommandFuture<HostInfo> getHostInfo() {
 		final CHostInfo info = new CHostInfo();
 		final CommandFuture<HostInfo> future = new CommandFuture<>();
@@ -792,6 +1999,12 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Displays the server instance configuration including database revision number,
+	 * the file transfer port, default group IDs, etc.
+	 *
+	 * @return information about the TeamSpeak server instance.
+	 */
 	public CommandFuture<InstanceInfo> getInstanceInfo() {
 		final CInstanceInfo info = new CInstanceInfo();
 		final CommandFuture<InstanceInfo> future = new CommandFuture<>();
@@ -806,11 +2019,44 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Reads the message body of a message. This will not set the read flag, though.
+	 *
+	 * @param messageId
+	 * 		the ID of the message to be read
+	 *
+	 * @return the body of the message with the specified ID or {@code null} if there was no message with that ID
+	 *
+	 * @see Message#getId()
+	 * @see #setMessageRead(int)
+	 */
 	public CommandFuture<String> getOfflineMessage(int messageId) {
 		final CMessageGet get = new CMessageGet(messageId);
 		return executeAndReturnStringProperty(get, "message");
 	}
 
+	/**
+	 * Reads the message body of a message. This will not set the read flag, though.
+	 *
+	 * @param message
+	 * 		the message to be read
+	 *
+	 * @return the body of the message with the specified ID or {@code null} if there was no message with that ID
+	 *
+	 * @see Message#getId()
+	 * @see #setMessageRead(Message)
+	 */
+	public CommandFuture<String> getOfflineMessage(Message message) {
+		return getOfflineMessage(message.getId());
+	}
+
+	/**
+	 * Gets a list of all offline messages for the server query.
+	 * The returned messages lack their message body, though.
+	 * To read the actual message, use {@link #getOfflineMessage(int)} or {@link #getOfflineMessage(Message)}.
+	 *
+	 * @return a list of all offline messages this server query has received
+	 */
 	public CommandFuture<List<Message>> getOfflineMessages() {
 		final CMessageList list = new CMessageList();
 		final CommandFuture<List<Message>> future = new CommandFuture<>();
@@ -830,6 +2076,18 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Displays detailed information about all assignments of the permission specified
+	 * with {@code permName}. The output includes the type and the ID of the client,
+	 * channel or group associated with the permission.
+	 *
+	 * @param permName
+	 * 		the name of the permission
+	 *
+	 * @return a list of permission assignments
+	 *
+	 * @see #getPermissionOverview(int, int)
+	 */
 	public CommandFuture<List<AdvancedPermission>> getPermissionAssignments(String permName) {
 		final CPermFind find = new CPermFind(permName);
 		final CommandFuture<List<AdvancedPermission>> future = new CommandFuture<>();
@@ -849,11 +2107,37 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Gets the ID of the permission specified by {@code permName}.
+	 * <p>
+	 * Note that the use of numeric permission IDs is deprecated
+	 * and that this API only uses the string variant of the IDs.
+	 * </p>
+	 *
+	 * @param permName
+	 * 		the name of the permission
+	 *
+	 * @return the numeric ID of the specified permission
+	 */
 	public CommandFuture<Integer> getPermissionIdByName(String permName) {
 		final CPermIdGetByName get = new CPermIdGetByName(permName);
 		return executeAndReturnIntProperty(get, "permid");
 	}
 
+	/**
+	 * Gets a list of all assigned permissions for a client in a specified channel.
+	 * If you do not care about channel permissions, set {@code channelId} to {@code -1}.
+	 *
+	 * @param channelId
+	 * 		the ID of the channel
+	 * @param clientDBId
+	 * 		the database ID of the client to create the overview for
+	 *
+	 * @return a list of all permission assignments for the client in the specified channel
+	 *
+	 * @see Channel#getId()
+	 * @see Client#getDatabaseId()
+	 */
 	public CommandFuture<List<AdvancedPermission>> getPermissionOverview(int channelId, int clientDBId) {
 		final CPermOverview overview = new CPermOverview(channelId, clientDBId);
 		final CommandFuture<List<AdvancedPermission>> future = new CommandFuture<>();
@@ -873,6 +2157,11 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Displays a list of all permissions, including ID, name and description.
+	 *
+	 * @return a list of all permissions
+	 */
 	public CommandFuture<List<PermissionInfo>> getPermissions() {
 		final CPermissionList list = new CPermissionList();
 		final CommandFuture<List<PermissionInfo>> future = new CommandFuture<>();
@@ -892,11 +2181,28 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Displays the current value of the specified permission for this server query instance.
+	 *
+	 * @param permName
+	 * 		the name of the permission
+	 *
+	 * @return the permission value, usually ranging from 0 to 100
+	 */
 	public CommandFuture<Integer> getPermissionValue(String permName) {
 		final CPermGet get = new CPermGet(permName);
 		return executeAndReturnIntProperty(get, "permvalue");
 	}
 
+	/**
+	 * Gets a list of all available tokens to join channel or server groups,
+	 * including their type and group IDs.
+	 *
+	 * @return a list of all generated, but still unclaimed privilege keys
+	 *
+	 * @see #addPrivilegeKey(TokenType, int, int, String)
+	 * @see #usePrivilegeKey(String)
+	 */
 	public CommandFuture<List<PrivilegeKey>> getPrivilegeKeys() {
 		final CPrivilegeKeyList list = new CPrivilegeKeyList();
 		final CommandFuture<List<PrivilegeKey>> future = new CommandFuture<>();
@@ -916,8 +2222,16 @@ public class TS3ApiAsync {
 		return future;
 	}
 
-	public CommandFuture<List<ServerGroupClient>> getServerGroupClients(int groupId) {
-		final CServerGroupClientList list = new CServerGroupClientList(groupId);
+	/**
+	 * Gets a list of all clients in the specified server group.
+	 *
+	 * @param serverGroupId
+	 * 		the ID of the server group for which the clients should be looked up
+	 *
+	 * @return a list of all clients in the server group
+	 */
+	public CommandFuture<List<ServerGroupClient>> getServerGroupClients(int serverGroupId) {
+		final CServerGroupClientList list = new CServerGroupClientList(serverGroupId);
 		final CommandFuture<List<ServerGroupClient>> future = new CommandFuture<>();
 
 		query.doCommandAsync(list, new Callback() {
@@ -935,8 +2249,31 @@ public class TS3ApiAsync {
 		return future;
 	}
 
-	public CommandFuture<List<Permission>> getServerGroupPermissions(int id) {
-		final CServerGroupPermList list = new CServerGroupPermList(id);
+	/**
+	 * Gets a list of all clients in the specified server group.
+	 *
+	 * @param serverGroup
+	 * 		the server group for which the clients should be looked up
+	 *
+	 * @return a list of all clients in the server group
+	 */
+	public CommandFuture<List<ServerGroupClient>> getServerGroupClients(ServerGroup serverGroup) {
+		return getServerGroupClients(serverGroup.getId());
+	}
+
+	/**
+	 * Gets a list of all permissions assigned to the specified server group.
+	 *
+	 * @param serverGroupId
+	 * 		the ID of the server group for which the permissions should be looked up
+	 *
+	 * @return a list of all permissions assigned to the server group
+	 *
+	 * @see ServerGroup#getId()
+	 * @see #getServerGroupPermissions(ServerGroup)
+	 */
+	public CommandFuture<List<Permission>> getServerGroupPermissions(int serverGroupId) {
+		final CServerGroupPermList list = new CServerGroupPermList(serverGroupId);
 		final CommandFuture<List<Permission>> future = new CommandFuture<>();
 
 		query.doCommandAsync(list, new Callback() {
@@ -954,6 +2291,27 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Gets a list of all permissions assigned to the specified server group.
+	 *
+	 * @param serverGroup
+	 * 		the server group for which the permissions should be looked up
+	 *
+	 * @return a list of all permissions assigned to the server group
+	 */
+	public CommandFuture<List<Permission>> getServerGroupPermissions(ServerGroup serverGroup) {
+		return getServerGroupPermissions(serverGroup.getId());
+	}
+
+	/**
+	 * Gets a list of all server groups on the virtual server.
+	 * <p>
+	 * Depending on your permissions, the output may also contain
+	 * global server query groups and template groups.
+	 * </p>
+	 *
+	 * @return a list of all server groups
+	 */
 	public CommandFuture<List<ServerGroup>> getServerGroups() {
 		final CServerGroupList list = new CServerGroupList();
 		final CommandFuture<List<ServerGroup>> future = new CommandFuture<>();
@@ -973,6 +2331,17 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Gets a list of all server groups set for a client.
+	 *
+	 * @param clientDatabaseId
+	 * 		the database ID of the client for which the server groups should be looked up
+	 *
+	 * @return a list of all server groups set for the client
+	 *
+	 * @see Client#getDatabaseId()
+	 * @see #getServerGroupsByClient(Client)
+	 */
 	public CommandFuture<List<ServerGroup>> getServerGroupsByClientId(int clientDatabaseId) {
 		final CServerGroupsByClientId client = new CServerGroupsByClientId(clientDatabaseId);
 		final CommandFuture<List<ServerGroup>> future = new CommandFuture<>();
@@ -994,11 +2363,41 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Gets a list of all server groups set for a client.
+	 *
+	 * @param client
+	 * 		the client for which the server groups should be looked up
+	 *
+	 * @return a list of all server group set for the client
+	 *
+	 * @see #getServerGroupsByClientId(int)
+	 */
+	public CommandFuture<List<ServerGroup>> getServerGroupsByClient(Client client) {
+		return getServerGroupsByClientId(client.getDatabaseId());
+	}
+
+	/**
+	 * Gets the ID of a virtual server by its port.
+	 *
+	 * @param port
+	 * 		the port of a virtual server
+	 *
+	 * @return the ID of the virtual server
+	 *
+	 * @see VirtualServer#getPort()
+	 * @see VirtualServer#getId()
+	 */
 	public CommandFuture<Integer> getServerIdByPort(int port) {
 		final CServerIdGetByPort s = new CServerIdGetByPort(port);
 		return executeAndReturnIntProperty(s, "server_id");
 	}
 
+	/**
+	 * Gets detailed information about the virtual server the server query is currently in.
+	 *
+	 * @return information about the current virtual server
+	 */
 	public CommandFuture<VirtualServerInfo> getServerInfo() {
 		final CServerInfo info = new CServerInfo();
 		final CommandFuture<VirtualServerInfo> future = new CommandFuture<>();
@@ -1013,6 +2412,11 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Gets the version, build number and platform of the TeamSpeak3 server.
+	 *
+	 * @return the version information of the server
+	 */
 	public CommandFuture<Version> getVersion() {
 		final CVersion version = new CVersion();
 		final CommandFuture<Version> future = new CommandFuture<>();
@@ -1027,6 +2431,11 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Gets a list of all virtual servers including their ID, status, number of clients online, etc.
+	 *
+	 * @return a list of all virtual servers
+	 */
 	public CommandFuture<List<VirtualServer>> getVirtualServers() {
 		final CServerList serverList = new CServerList();
 		final CommandFuture<List<VirtualServer>> future = new CommandFuture<>();
@@ -1036,7 +2445,7 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(serverList, future)) return;
 
-				final ArrayList<VirtualServer> servers = new ArrayList<>();
+				final List<VirtualServer> servers = new ArrayList<>();
 				for (final HashMap<String, String> opt : serverList.getResponse()) {
 					servers.add((new VirtualServer(opt)));
 				}
@@ -1046,174 +2455,742 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Kicks one or more clients from their current channels.
+	 * This will move the kicked clients into the default channel and
+	 * won't do anything if the clients are already in the default channel.
+	 *
+	 * @param clientIds
+	 * 		the IDs of the clients to kick
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see #kickClientFromChannel(Client...)
+	 * @see #kickClientFromChannel(String, int...)
+	 */
 	public CommandFuture<Boolean> kickClientFromChannel(int... clientIds) {
 		return kickClients(ReasonIdentifier.REASON_KICK_CHANNEL, null, clientIds);
 	}
 
+	/**
+	 * Kicks one or more clients from their current channels.
+	 * This will move the kicked clients into the default channel and
+	 * won't do anything if the clients are already in the default channel.
+	 *
+	 * @param clients
+	 * 		the clients to kick
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see #kickClientFromChannel(int...)
+	 * @see #kickClientFromChannel(String, Client...)
+	 */
+	public CommandFuture<Boolean> kickClientFromChannel(Client... clients) {
+		return kickClients(ReasonIdentifier.REASON_KICK_CHANNEL, null, clients);
+	}
+
+	/**
+	 * Kicks one or more clients from their current channels for the specified reason.
+	 * This will move the kicked clients into the default channel and
+	 * won't do anything if the clients are already in the default channel.
+	 *
+	 * @param message
+	 * 		the reason message to display to the clients
+	 * @param clientIds
+	 * 		the IDs of the clients to kick
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Client#getId()
+	 * @see #kickClientFromChannel(int...)
+	 * @see #kickClientFromChannel(String, Client...)
+	 */
 	public CommandFuture<Boolean> kickClientFromChannel(String message, int... clientIds) {
 		return kickClients(ReasonIdentifier.REASON_KICK_CHANNEL, message, clientIds);
 	}
 
+	/**
+	 * Kicks one or more clients from their current channels for the specified reason.
+	 * This will move the kicked clients into the default channel and
+	 * won't do anything if the clients are already in the default channel.
+	 *
+	 * @param message
+	 * 		the reason message to display to the clients
+	 * @param clients
+	 * 		the clients to kick
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see #kickClientFromChannel(Client...)
+	 * @see #kickClientFromChannel(String, int...)
+	 */
+	public CommandFuture<Boolean> kickClientFromChannel(String message, Client... clients) {
+		return kickClients(ReasonIdentifier.REASON_KICK_CHANNEL, message, clients);
+	}
+
+	/**
+	 * Kicks one or more clients from the server.
+	 *
+	 * @param clientIds
+	 * 		the IDs of the clients to kick
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Client#getId()
+	 * @see #kickClientFromServer(Client...)
+	 * @see #kickClientFromServer(String, int...)
+	 */
 	public CommandFuture<Boolean> kickClientFromServer(int... clientIds) {
 		return kickClients(ReasonIdentifier.REASON_KICK_SERVER, null, clientIds);
 	}
 
+	/**
+	 * Kicks one or more clients from the server.
+	 *
+	 * @param clients
+	 * 		the clients to kick
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see #kickClientFromServer(int...)
+	 * @see #kickClientFromServer(String, Client...)
+	 */
+	public CommandFuture<Boolean> kickClientFromServer(Client... clients) {
+		return kickClients(ReasonIdentifier.REASON_KICK_SERVER, null, clients);
+	}
+
+	/**
+	 * Kicks one or more clients from the server for the specified reason.
+	 *
+	 * @param message
+	 * 		the reason message to display to the clients
+	 * @param clientIds
+	 * 		the IDs of the clients to kick
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Client#getId()
+	 * @see #kickClientFromServer(int...)
+	 * @see #kickClientFromServer(String, Client...)
+	 */
 	public CommandFuture<Boolean> kickClientFromServer(String message, int... clientIds) {
 		return kickClients(ReasonIdentifier.REASON_KICK_SERVER, message, clientIds);
 	}
 
+	/**
+	 * Kicks one or more clients from the server for the specified reason.
+	 *
+	 * @param message
+	 * 		the reason message to display to the clients
+	 * @param clients
+	 * 		the clients to kick
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see #kickClientFromServer(Client...)
+	 * @see #kickClientFromServer(String, int...)
+	 */
+	public CommandFuture<Boolean> kickClientFromServer(String message, Client... clients) {
+		return kickClients(ReasonIdentifier.REASON_KICK_SERVER, message, clients);
+	}
+
+	/**
+	 * Kicks a list of clients from either the channel or the server for a given reason.
+	 *
+	 * @param reason
+	 * 		where to kick the clients from
+	 * @param message
+	 * 		the reason message to display to the clients
+	 * @param clients
+	 * 		the clients to kick
+	 *
+	 * @return whether the command succeeded or not
+	 */
+	private CommandFuture<Boolean> kickClients(ReasonIdentifier reason, String message, Client... clients) {
+		int[] clientIds = new int[clients.length];
+		for (int i = 0; i < clients.length; ++i) {
+			clientIds[i] = clients[i].getId();
+		}
+		return kickClients(reason, message, clientIds);
+	}
+
+	/**
+	 * Kicks a list of clients from either the channel or the server for a given reason.
+	 *
+	 * @param reason
+	 * 		where to kick the clients from
+	 * @param message
+	 * 		the reason message to display to the clients
+	 * @param clientIds
+	 * 		the IDs of the clients to kick
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Client#getId()
+	 */
 	private CommandFuture<Boolean> kickClients(ReasonIdentifier reason, String message, int... clientIds) {
 		final CClientKick kick = new CClientKick(reason, message, clientIds);
 		return executeAndReturnError(kick);
 	}
 
+	/**
+	 * Logs the server query in using the specified username and password.
+	 * <p>
+	 * Note that you can also set the login in the {@link TS3Config},
+	 * so that you will be logged in right after the connection is established.
+	 * </p>
+	 *
+	 * @param username
+	 * 		the username of the server query
+	 * @param password
+	 * 		the password to use
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see TS3Config#setLoginCredentials(String, String)
+	 * @see #logout()
+	 */
 	public CommandFuture<Boolean> login(String username, String password) {
 		final CLogin login = new CLogin(username, password);
 		return executeAndReturnError(login);
 	}
 
+	/**
+	 * Logs the server query out and deselects the current virtual server.
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see #login(String, String)
+	 */
 	public CommandFuture<Boolean> logout() {
 		final CLogout logout = new CLogout();
 		return executeAndReturnError(logout);
 	}
 
+	/**
+	 * Moves a channel to a new parent channel specified by its ID.
+	 * To move a channel to root level, set {@code channelTargetId} to {@code 0}.
+	 * <p>
+	 * This will move the channel right below the specified parent channel, above all other child channels.
+	 * This command will fail if the channel already has the specified target channel as the parent channel.
+	 * </p>
+	 *
+	 * @param channelId
+	 * 		the channel to move
+	 * @param channelTargetId
+	 * 		the new parent channel for the specified channel
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Channel#getId()
+	 * @see #moveChannel(int, int, int)
+	 */
 	public CommandFuture<Boolean> moveChannel(int channelId, int channelTargetId) {
-		return moveChannel(channelId, channelTargetId, -1);
+		return moveChannel(channelId, channelTargetId, 0);
 	}
 
+	/**
+	 * Moves a channel to a new parent channel specified by its ID.
+	 * To move a channel to root level, set {@code channelTargetId} to {@code 0}.
+	 * <p>
+	 * The channel will be ordered below the channel with the ID specified by {@code order}.
+	 * To move the channel right below the parent channel, set {@code order} to {@code 0}.
+	 * Also note that a channel cannot be re-ordered without also changing its parent channel.
+	 * </p>
+	 *
+	 * @param channelId
+	 * 		the channel to move
+	 * @param channelTargetId
+	 * 		the new parent channel for the specified channel
+	 * @param order
+	 * 		the channel to sort the specified channel below
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Channel#getId()
+	 * @see #moveChannel(int, int)
+	 */
 	public CommandFuture<Boolean> moveChannel(int channelId, int channelTargetId, int order) {
 		final CChannelMove move = new CChannelMove(channelId, channelTargetId, order);
 		return executeAndReturnError(move);
 	}
 
+	/**
+	 * Moves the server query into the specified channel.
+	 *
+	 * @param channelId
+	 * 		the ID of the channel to move the client into
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Channel#getId()
+	 */
+	public CommandFuture<Boolean> moveClient(int channelId) {
+		return moveClient(channelId, null);
+	}
+
+	/**
+	 * Moves the server query into the specified channel.
+	 *
+	 * @param channel
+	 * 		the channel to move the client into
+	 *
+	 * @return whether the command succeeded or not
+	 */
+	public CommandFuture<Boolean> moveClient(Channel channel) {
+		return moveClient(channel.getId(), null);
+	}
+
+	/**
+	 * Moves the server query into the specified channel using the specified password.
+	 *
+	 * @param channelId
+	 * 		the ID of the channel to move the client into
+	 * @param channelPassword
+	 * 		the password of the channel
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Channel#getId()
+	 */
+	public CommandFuture<Boolean> moveClient(int channelId, String channelPassword) {
+		return moveClient(0, channelId, channelPassword);
+	}
+
+	/**
+	 * Moves the server query into the specified channel using the specified password.
+	 *
+	 * @param channel
+	 * 		the channel to move the client into
+	 * @param channelPassword
+	 * 		the password of the channel
+	 *
+	 * @return whether the command succeeded or not
+	 */
+	public CommandFuture<Boolean> moveClient(Channel channel, String channelPassword) {
+		return moveClient(0, channel.getId(), channelPassword);
+	}
+
+	/**
+	 * Moves a client into the specified channel.
+	 *
+	 * @param clientId
+	 * 		the ID of the client to move
+	 * @param channelId
+	 * 		the ID of the channel to move the client into
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Client#getId()
+	 * @see Channel#getId()
+	 */
 	public CommandFuture<Boolean> moveClient(int clientId, int channelId) {
 		return moveClient(clientId, channelId, null);
 	}
 
+	/**
+	 * Moves a client into the specified channel.
+	 *
+	 * @param client
+	 * 		the client to move
+	 * @param channel
+	 * 		the channel to move the client into
+	 *
+	 * @return whether the command succeeded or not
+	 */
+	public CommandFuture<Boolean> moveClient(Client client, Channel channel) {
+		return moveClient(client.getId(), channel.getId(), null);
+	}
+
+	/**
+	 * Moves a client into the specified channel using the specified password.
+	 *
+	 * @param clientId
+	 * 		the ID of the client to move
+	 * @param channelId
+	 * 		the ID of the channel to move the client into
+	 * @param channelPassword
+	 * 		the password of the channel
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Client#getId()
+	 * @see Channel#getId()
+	 */
 	public CommandFuture<Boolean> moveClient(int clientId, int channelId, String channelPassword) {
 		final CClientMove move = new CClientMove(clientId, channelId, channelPassword);
 		return executeAndReturnError(move);
 	}
 
-	public CommandFuture<Boolean> moveClient(final int channelId) {
-		final CommandFuture<Boolean> future = new CommandFuture<>();
-
-		whoAmI().onSuccess(new CommandFuture.SuccessListener<ServerQueryInfo>() {
-			@Override
-			public void handleSuccess(ServerQueryInfo result) {
-				moveClient(result.getId(), channelId).forwardResult(future);
-			}
-		}).forwardFailure(future);
-		return future;
+	/**
+	 * Moves a client into the specified channel using the specified password.
+	 *
+	 * @param client
+	 * 		the client to move
+	 * @param channel
+	 * 		the channel to move the client into
+	 * @param channelPassword
+	 * 		the password of the channel
+	 *
+	 * @return whether the command succeeded or not
+	 */
+	public CommandFuture<Boolean> moveClient(Client client, Channel channel, String channelPassword) {
+		return moveClient(client.getId(), channel.getId(), channelPassword);
 	}
 
-	public CommandFuture<Boolean> moveClient(final int channelId, final String channelPassword) {
-		final CommandFuture<Boolean> future = new CommandFuture<>();
-
-		whoAmI().onSuccess(new CommandFuture.SuccessListener<ServerQueryInfo>() {
-			@Override
-			public void handleSuccess(ServerQueryInfo result) {
-				moveClient(result.getId(), channelId, channelPassword).forwardResult(future);
-			}
-		}).forwardFailure(future);
-		return future;
-	}
-
+	/**
+	 * Pokes the client with the specified client ID.
+	 * This opens up a small popup window for the client containing your message and plays a sound.
+	 * The displayed message will be formatted like this: <br>
+	 * {@code hh:mm:ss - "Your Nickname" poked you: <your message in green color>}
+	 * <p>
+	 * The displayed message length is limited to 100 UTF-8 bytes.
+	 * If a client has already received a poke message, all subsequent pokes will simply add a line
+	 * to the already opened popup window and will still play a sound.
+	 * </p>
+	 *
+	 * @param clientId
+	 * 		the ID of the client to poke
+	 * @param message
+	 * 		the message to send, may contain BB codes
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Client#getId()
+	 */
 	public CommandFuture<Boolean> pokeClient(int clientId, String message) {
 		final CClientPoke poke = new CClientPoke(clientId, message);
 		return executeAndReturnError(poke);
 	}
 
 	/**
-	 * Leaves the TeamSpeak 3 server.
+	 * Terminates the connection with the TeamSpeak3 server.
+	 * This command should never be executed manually.
 	 *
-	 * @return True if succesful, otherwise false.
+	 * @return whether the command succeeded or not
+	 *
+	 * @deprecated This command leaves the query in an undefined state,
+	 * where the connection is closed without the socket being closed and no more command can be executed.
+	 * To terminate a connection, use {@link TS3Query#exit()}.
 	 */
+	@Deprecated
 	public CommandFuture<Boolean> quit() {
 		final CQuit quit = new CQuit();
 		return executeAndReturnError(quit);
 	}
 
-	public void registerAllEvents() {
-		// Technically not 100% async
-		final int channelId = whoAmI().get().getChannelId();
+	/**
+	 * Registers the server query to receive notifications about all server events.
+	 * <p>
+	 * This means that the following actions will trigger event notifications:
+	 * <ul>
+	 * <li>A client joins the server or disconnects from it</li>
+	 * <li>A client switches channels</li>
+	 * <li>A client sends a server message</li>
+	 * <li>A client sends a channel message <b>in the channel the query is in</b></li>
+	 * <li>A client sends <b>the server query</b> a private message or a response to a private message</li>
+	 * </ul>
+	 * The limitations to when the query receives notifications about chat events cannot be circumvented.
+	 * </p>
+	 * To be able to process these events in your application, register an event listener.
+	 *
+	 * @return whether all commands succeeded or not
+	 *
+	 * @see #addTS3Listeners(TS3Listener...)
+	 */
+	public CommandFuture<Boolean> registerAllEvents() {
+		final CommandFuture<Boolean> future = new CommandFuture<>();
+		final Collection<CommandFuture<Boolean>> eventFutures = new ArrayList<>(5);
 
-		registerEvent(TS3EventType.CHANNEL, channelId);
-		registerEvent(TS3EventType.SERVER);
-		registerEvent(TS3EventType.TEXT_CHANNEL);
-		registerEvent(TS3EventType.TEXT_PRIVATE);
-		registerEvent(TS3EventType.TEXT_SERVER);
+		eventFutures.add(registerEvent(TS3EventType.SERVER));
+		eventFutures.add(registerEvent(TS3EventType.TEXT_SERVER));
+		eventFutures.add(registerEvent(TS3EventType.CHANNEL, 0));
+		eventFutures.add(registerEvent(TS3EventType.TEXT_CHANNEL, 0));
+		eventFutures.add(registerEvent(TS3EventType.TEXT_PRIVATE));
+
+		CommandFuture.awaitAll(eventFutures).onSuccess(new CommandFuture.SuccessListener<Collection<Boolean>>() {
+			@Override
+			public void handleSuccess(Collection<Boolean> result) {
+				future.set(true);
+			}
+		}).forwardFailure(future);
+		return future;
 	}
 
-	public CommandFuture<Boolean> registerEvent(TS3EventType t) {
-		return registerEvent(t, -1);
+	/**
+	 * Registers the server query to receive notifications about a given event type.
+	 * <p>
+	 * This method can not be used for {@link TS3EventType#CHANNEL} or {@link TS3EventType#TEXT_CHANNEL},
+	 * as these methods require a channel ID to be specified.
+	 * </p>
+	 *
+	 * @param eventType
+	 * 		the event type to be notified about
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see #addTS3Listeners(TS3Listener...)
+	 * @see #registerEvent(TS3EventType, int)
+	 * @see #registerAllEvents()
+	 */
+	public CommandFuture<Boolean> registerEvent(TS3EventType eventType) {
+		return registerEvent(eventType, -1);
 	}
 
-	public CommandFuture<Boolean> registerEvent(TS3EventType t, int channelId) {
-		final CServerNotifyRegister r = new CServerNotifyRegister(t, channelId);
-		return executeAndReturnError(r);
+	/**
+	 * Registers the server query to receive notifications about a given event type.
+	 *
+	 * @param eventType
+	 * 		the event type to be notified about
+	 * @param channelId
+	 * 		the ID of the channel to listen to, will be ignored if set to {@code -1}.
+	 * 		Can be set to {@code 0} for {@link TS3EventType#CHANNEL} to receive notifications about all channel switches.
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Channel#getId()
+	 * @see #addTS3Listeners(TS3Listener...)
+	 * @see #registerAllEvents()
+	 */
+	public CommandFuture<Boolean> registerEvent(TS3EventType eventType, int channelId) {
+		final CServerNotifyRegister register = new CServerNotifyRegister(eventType, channelId);
+		return executeAndReturnError(register);
 	}
 
-	public void registerEvents(TS3EventType... t) {
-		for (final TS3EventType type : t) {
-			registerEvent(type, -1);
+	/**
+	 * Registers the server query to receive notifications about multiple given event types.
+	 * <p>
+	 * This method can not be used for {@link TS3EventType#CHANNEL} or {@link TS3EventType#TEXT_CHANNEL},
+	 * as these methods require a channel ID to be specified.
+	 * </p>
+	 *
+	 * @param eventTypes
+	 * 		the event types to be notified about
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see #addTS3Listeners(TS3Listener...)
+	 * @see #registerEvent(TS3EventType, int)
+	 * @see #registerAllEvents()
+	 */
+	public CommandFuture<Boolean> registerEvents(TS3EventType... eventTypes) {
+		final CommandFuture<Boolean> future = new CommandFuture<>();
+		if (eventTypes.length == 0) {
+			future.set(true);
+			return future;
 		}
+
+		final List<CommandFuture<Boolean>> registerFutures = new ArrayList<>(eventTypes.length);
+		for (final TS3EventType type : eventTypes) {
+			registerFutures.add(registerEvent(type, -1));
+		}
+
+		CommandFuture.awaitAll(registerFutures).onSuccess(new CommandFuture.SuccessListener<Collection<Boolean>>() {
+			@Override
+			public void handleSuccess(Collection<Boolean> result) {
+				future.set(true);
+			}
+		}).forwardFailure(future);
+		return future;
 	}
 
-	public CommandFuture<Boolean> removeClientFromServerGroup(int groupId, int clientDatabaseId) {
-		final CServerGroupDelClient del = new CServerGroupDelClient(groupId, clientDatabaseId);
+	/**
+	 * Removes the client specified by its database ID from the specified server group.
+	 *
+	 * @param serverGroupId
+	 * 		the ID of the server group
+	 * @param clientDatabaseId
+	 * 		the database ID of the client
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see ServerGroup#getId()
+	 * @see Client#getDatabaseId()
+	 * @see #removeClientFromServerGroup(ServerGroup, Client)
+	 */
+	public CommandFuture<Boolean> removeClientFromServerGroup(int serverGroupId, int clientDatabaseId) {
+		final CServerGroupDelClient del = new CServerGroupDelClient(serverGroupId, clientDatabaseId);
 		return executeAndReturnError(del);
 	}
 
-	public void removeTS3Listeners(TS3Listener... l) {
-		query.getEventManager().removeListeners(l);
+	/**
+	 * Removes the specified client from the specified server group.
+	 *
+	 * @param serverGroup
+	 * 		the server group to remove the client from
+	 * @param client
+	 * 		the client to remove from the server group
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see #removeClientFromServerGroup(int, int)
+	 */
+	public CommandFuture<Boolean> removeClientFromServerGroup(ServerGroup serverGroup, Client client) {
+		return removeClientFromServerGroup(serverGroup.getId(), client.getDatabaseId());
 	}
 
-	public CommandFuture<Boolean> renameChannelGroup(int groupId, String name) {
-		final CChannelGroupRename rename = new CChannelGroupRename(groupId, name);
-		return executeAndReturnError(rename);
+	/**
+	 * Removes one or more {@link TS3Listener}s to the event manager of the query.
+	 * <p>
+	 * If a listener was not actually registered, it will be ignored and no exception will be thrown.
+	 * </p>
+	 *
+	 * @param listeners
+	 * 		one or more listeners to remove
+	 *
+	 * @see #addTS3Listeners(TS3Listener...)
+	 * @see TS3Listener
+	 * @see TS3EventType
+	 */
+	public void removeTS3Listeners(TS3Listener... listeners) {
+		query.getEventManager().removeListeners(listeners);
 	}
 
-	public CommandFuture<Boolean> renameServerGroup(int id, String name) {
-		final CServerGroupRename rename = new CServerGroupRename(id, name);
+	/**
+	 * Renames the channel group with the specified ID.
+	 *
+	 * @param channelGroupId
+	 * 		the ID of the channel group to rename
+	 * @param name
+	 * 		the new name for the channel group
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see ChannelGroup#getId()
+	 * @see #renameChannelGroup(ChannelGroup, String)
+	 */
+	public CommandFuture<Boolean> renameChannelGroup(int channelGroupId, String name) {
+		final CChannelGroupRename rename = new CChannelGroupRename(channelGroupId, name);
 		return executeAndReturnError(rename);
 	}
 
 	/**
-	 * Resets all permissions and deletes all server/channel groups. Use carefully.
+	 * Renames the specified channel group.
 	 *
-	 * @return A new administrator account
+	 * @param channelGroup
+	 * 		the channel group to rename
+	 * @param name
+	 * 		the new name for the channel group
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see #renameChannelGroup(int, String)
+	 */
+	public CommandFuture<Boolean> renameChannelGroup(ChannelGroup channelGroup, String name) {
+		return renameChannelGroup(channelGroup.getId(), name);
+	}
+
+	/**
+	 * Renames the server group with the specified ID.
+	 *
+	 * @param serverGroupId
+	 * 		the ID of the server group to rename
+	 * @param name
+	 * 		the new name for the server group
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see ServerGroup#getId()
+	 * @see #renameServerGroup(ServerGroup, String)
+	 */
+	public CommandFuture<Boolean> renameServerGroup(int serverGroupId, String name) {
+		final CServerGroupRename rename = new CServerGroupRename(serverGroupId, name);
+		return executeAndReturnError(rename);
+	}
+
+	/**
+	 * Renames the specified server group.
+	 *
+	 * @param serverGroup
+	 * 		the server group to rename
+	 * @param name
+	 * 		the new name for the server group
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see #renameServerGroup(int, String)
+	 */
+	public CommandFuture<Boolean> renameServerGroup(ServerGroup serverGroup, String name) {
+		return renameChannelGroup(serverGroup.getId(), name);
+	}
+
+	/**
+	 * Resets all permissions and deletes all server / channel groups. Use carefully.
+	 *
+	 * @return a token for a new administrator account
 	 */
 	public CommandFuture<String> resetPermissions() {
 		final CPermReset reset = new CPermReset();
 		return executeAndReturnStringProperty(reset, "token");
 	}
 
+	/**
+	 * Moves the server query into the virtual server with the specified ID.
+	 *
+	 * @param id
+	 * 		the ID of the virtual server
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see VirtualServer#getId()
+	 * @see #selectVirtualServerByPort(int)
+	 * @see #selectVirtualServer(VirtualServer)
+	 */
 	public CommandFuture<Boolean> selectVirtualServerById(int id) {
 		final CUse use = new CUse(id, -1);
 		return executeAndReturnError(use);
 	}
 
+	/**
+	 * Moves the server query into the virtual server with the specified voice port.
+	 *
+	 * @param port
+	 * 		the voice port of the virtual server
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see VirtualServer#getPort()
+	 * @see #selectVirtualServerById(int)
+	 * @see #selectVirtualServer(VirtualServer)
+	 */
 	public CommandFuture<Boolean> selectVirtualServerByPort(int port) {
 		final CUse use = new CUse(-1, port);
 		return executeAndReturnError(use);
 	}
 
+	/**
+	 * Moves the server query into the specified virtual server.
+	 *
+	 * @param server
+	 * 		the virtual server to move into
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see #selectVirtualServerById(int)
+	 * @see #selectVirtualServerByPort(int)
+	 */
 	public CommandFuture<Boolean> selectVirtualServer(VirtualServer server) {
 		return selectVirtualServerById(server.getId());
 	}
 
 	/**
-	 * Sends an offline message to a Client
+	 * Sends an offline message to the client with the given unique identifier.
+	 * <p>
+	 * The message subject's length is limited to 200 UTF-8 bytes and BB codes in it will be ignored.
+	 * The message body's length is limited to 4096 UTF-8 bytes and accepts BB codes
+	 * </p>
 	 *
 	 * @param clientUId
-	 * 		The Unique string
+	 * 		the unique identifier of the client to send the message to
 	 * @param subject
-	 * 		header
+	 * 		the subject for the message, may not contain BB codes
 	 * @param message
-	 * 		your message to send
+	 * 		the actual message body, may contain BB codes
 	 *
-	 * @return true if the message was send
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Client#getUniqueIdentifier()
+	 * @see Message
 	 */
 	public CommandFuture<Boolean> sendOfflineMessage(String clientUId, String subject, String message) {
 		final CMessageAdd add = new CMessageAdd(clientUId, subject, message);
@@ -1221,16 +3198,23 @@ public class TS3ApiAsync {
 	}
 
 	/**
-	 * Sends a TextMessage
+	 * Sends a text message either to the whole virtual server, a channel or specific client.
+	 * Your message may contain BB codes, but its length is limited to 1024 UTF-8 bytes.
+	 * <p>
+	 * To send a message to all virtual servers, use {@link #broadcast(String)}.
+	 * To send an offline message, use {@link #sendOfflineMessage(String, String, String)}.
+	 * </p>
 	 *
 	 * @param targetMode
-	 * 		The targetmode (Server, channel or private)
+	 * 		where the message should be sent to
 	 * @param targetId
-	 * 		The recipient of this message
+	 * 		the client ID of the recipient of this message. This value is ignored unless {@code targetMode} is {@code CLIENT}
 	 * @param message
-	 * 		Yout text message to send
+	 * 		the text message to send
 	 *
-	 * @return true if the message was send
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Client#getId()
 	 */
 	public CommandFuture<Boolean> sendTextMessage(TextMessageTargetMode targetMode, int targetId, String message) {
 		final CSendTextMessage msg = new CSendTextMessage(targetMode.getIndex(), targetId, message);
@@ -1238,93 +3222,360 @@ public class TS3ApiAsync {
 	}
 
 	/**
-	 * Sends a ChannelMessage
+	 * Sends a text message to the channel with the specified ID.
+	 * Your message may contain BB codes, but its length is limited to 1024 UTF-8 bytes.
+	 * <p>
+	 * This will move the client into the channel with the specified channel ID,
+	 * <b>but will not move it back to the original channel!</b>
+	 * </p>
 	 *
 	 * @param channelId
-	 * 		The channelID which receive your message
+	 * 		the ID of the channel to which the message should be sent to
 	 * @param message
-	 * 		Your message which you would send
+	 * 		the text message to send
 	 *
-	 * @return true if the message was succesfully send
+	 * @return whether the command succeeded or not
+	 *
+	 * @see #sendChannelMessage(String)
+	 * @see Channel#getId()
 	 */
-	public CommandFuture<Boolean> sendChannelMessage(int channelId, String message) {
-		return sendTextMessage(TextMessageTargetMode.CHANNEL, channelId, message);
-	}
-
-	public CommandFuture<Boolean> sendChannelMessage(final String message) {
+	public CommandFuture<Boolean> sendChannelMessage(int channelId, final String message) {
 		final CommandFuture<Boolean> future = new CommandFuture<>();
 
-		whoAmI().onSuccess(new CommandFuture.SuccessListener<ServerQueryInfo>() {
+		moveClient(channelId).onSuccess(new CommandFuture.SuccessListener<Boolean>() {
 			@Override
-			public void handleSuccess(ServerQueryInfo result) {
-				sendChannelMessage(result.getChannelId(), message).forwardResult(future);
+			public void handleSuccess(Boolean result) {
+				sendTextMessage(TextMessageTargetMode.CHANNEL, 0, message).forwardResult(future);
 			}
 		}).forwardFailure(future);
+
 		return future;
 	}
 
-	public CommandFuture<Boolean> sendServerMessage(int serverId, String message) {
-		return sendTextMessage(TextMessageTargetMode.SERVER, serverId, message);
+	/**
+	 * Sends a text message to the channel the server query is currently in.
+	 * Your message may contain BB codes, but its length is limited to 1024 UTF-8 bytes.
+	 *
+	 * @param message
+	 * 		the text message to send
+	 *
+	 * @return whether the command succeeded or not
+	 */
+	public CommandFuture<Boolean> sendChannelMessage(String message) {
+		return sendTextMessage(TextMessageTargetMode.CHANNEL, 0, message);
 	}
 
+	/**
+	 * Sends a text message to the virtual server with the specified ID.
+	 * Your message may contain BB codes, but its length is limited to 1024 UTF-8 bytes.
+	 * <p>
+	 * This will move the client to the virtual server with the specified server ID,
+	 * <b>but will not move it back to the original virtual server!</b>
+	 * </p>
+	 *
+	 * @param serverId
+	 * 		the ID of the virtual server to which the message should be sent to
+	 * @param message
+	 * 		the text message to send
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see #sendServerMessage(String)
+	 * @see VirtualServer#getId()
+	 */
+	public CommandFuture<Boolean> sendServerMessage(int serverId, final String message) {
+		final CommandFuture<Boolean> future = new CommandFuture<>();
+
+		selectVirtualServerById(serverId).onSuccess(new CommandFuture.SuccessListener<Boolean>() {
+			@Override
+			public void handleSuccess(Boolean result) {
+				sendTextMessage(TextMessageTargetMode.SERVER, 0, message).forwardResult(future);
+			}
+		}).forwardFailure(future);
+
+		return future;
+	}
+
+	/**
+	 * Sends a text message to the virtual server the server query is currently in.
+	 * Your message may contain BB codes, but its length is limited to 1024 UTF-8 bytes.
+	 *
+	 * @param message
+	 * 		the text message to send
+	 *
+	 * @return whether the command succeeded or not
+	 */
 	public CommandFuture<Boolean> sendServerMessage(String message) {
-		return sendServerMessage(1, message);
+		return sendTextMessage(TextMessageTargetMode.SERVER, 0, message);
 	}
 
+	/**
+	 * Sends a private message to the client with the specified client ID.
+	 * Your message may contain BB codes, but its length is limited to 1024 UTF-8 bytes.
+	 *
+	 * @param clientId
+	 * 		the ID of the client to send the message to
+	 * @param message
+	 * 		the text message to send
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see Client#getId()
+	 */
 	public CommandFuture<Boolean> sendPrivateMessage(int clientId, String message) {
 		return sendTextMessage(TextMessageTargetMode.CLIENT, clientId, message);
 	}
 
+	/**
+	 * Sets a channel group for a client in a specific channel.
+	 *
+	 * @param groupId
+	 * 		the ID of the group the client should join
+	 * @param channelId
+	 * 		the ID of the channel where the channel group should be assigned
+	 * @param clientDBId
+	 * 		the database ID of the client for which the channel group should be set
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see ChannelGroup#getId()
+	 * @see Channel#getId()
+	 * @see Client#getDatabaseId()
+	 */
 	public CommandFuture<Boolean> setClientChannelGroup(int groupId, int channelId, int clientDBId) {
 		final CSetClientChannelGroup group = new CSetClientChannelGroup(groupId, channelId, clientDBId);
 		return executeAndReturnError(group);
 	}
 
+	/**
+	 * Sets the read flag to true for a given message. This will not delete the message.
+	 *
+	 * @param messageId
+	 * 		the ID of the message for which the read flag should be set
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see #setMessageReadFlag(int, boolean)
+	 */
 	public CommandFuture<Boolean> setMessageRead(int messageId) {
 		return setMessageReadFlag(messageId, true);
 	}
 
+	/**
+	 * Sets the read flag to true for a given message. This will not delete the message.
+	 *
+	 * @param message
+	 * 		the message for which the read flag should be set
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see #setMessageRead(int)
+	 * @see #setMessageReadFlag(Message, boolean)
+	 * @see #deleteOfflineMessage(int)
+	 */
+	public CommandFuture<Boolean> setMessageRead(Message message) {
+		return setMessageReadFlag(message.getId(), true);
+	}
+
+	/**
+	 * Sets the read flag for a given message. This will not delete the message.
+	 *
+	 * @param messageId
+	 * 		the ID of the message for which the read flag should be set
+	 * @param read
+	 * 		the boolean value to which the read flag should be set
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see #setMessageRead(int)
+	 * @see #setMessageReadFlag(Message, boolean)
+	 * @see #deleteOfflineMessage(int)
+	 */
 	public CommandFuture<Boolean> setMessageReadFlag(int messageId, boolean read) {
 		final CMessageUpdateFlag flag = new CMessageUpdateFlag(messageId, read);
 		return executeAndReturnError(flag);
 	}
 
-	public CommandFuture<Boolean> setNickname(String name) {
+	/**
+	 * Sets the read flag for a given message. This will not delete the message.
+	 *
+	 * @param message
+	 * 		the message for which the read flag should be set
+	 * @param read
+	 * 		the boolean value to which the read flag should be set
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see #setMessageRead(Message)
+	 * @see #setMessageReadFlag(int, boolean)
+	 * @see #deleteOfflineMessage(int)
+	 */
+	public CommandFuture<Boolean> setMessageReadFlag(Message message, boolean read) {
+		return setMessageReadFlag(message.getId(), read);
+	}
+
+	/**
+	 * Sets the nickname of the server query client.
+	 * The nickname must be between 3 and 30 UTF-8 bytes long and BB codes will be ignored.
+	 *
+	 * @param nickname
+	 * 		the new nickname, may not contain any BB codes and may not be {@code null}
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see #updateClient(HashMap)
+	 */
+	public CommandFuture<Boolean> setNickname(String nickname) {
 		final HashMap<ClientProperty, String> options = new HashMap<>();
-		options.put(ClientProperty.CLIENT_NICKNAME, name);
+		options.put(ClientProperty.CLIENT_NICKNAME, nickname);
 		return updateClient(options);
 	}
 
-	public CommandFuture<Boolean> startServer(int id) {
-		final CServerStart start = new CServerStart(id);
+	/**
+	 * Starts the virtual server with the specified ID.
+	 *
+	 * @param serverId
+	 * 		the ID of the virtual server
+	 *
+	 * @return whether the command succeeded or not
+	 */
+	public CommandFuture<Boolean> startServer(int serverId) {
+		final CServerStart start = new CServerStart(serverId);
 		return executeAndReturnError(start);
 	}
 
-	public CommandFuture<Boolean> stopServer(int id) {
-		final CServerStop stop = new CServerStop(id);
+	/**
+	 * Starts the specified virtual server.
+	 *
+	 * @param virtualServer
+	 * 		the virtual server to start
+	 *
+	 * @return whether the command succeeded or not
+	 */
+	public CommandFuture<Boolean> startServer(VirtualServer virtualServer) {
+		return startServer(virtualServer.getId());
+	}
+
+	/**
+	 * Stops the virtual server with the specified ID.
+	 *
+	 * @param serverId
+	 * 		the ID of the virtual server
+	 *
+	 * @return whether the command succeeded or not
+	 */
+	public CommandFuture<Boolean> stopServer(int serverId) {
+		final CServerStop stop = new CServerStop(serverId);
 		return executeAndReturnError(stop);
 	}
 
+	/**
+	 * Stops the specified virtual server.
+	 *
+	 * @param virtualServer
+	 * 		the virtual server to stop
+	 *
+	 * @return whether the command succeeded or not
+	 */
+	public CommandFuture<Boolean> stopServer(VirtualServer virtualServer) {
+		return stopServer(virtualServer.getId());
+	}
+
+	/**
+	 * Stops the entire TeamSpeak 3 Server instance by shutting down the process.
+	 * <p>
+	 * To have permission to use this command, you need to use the server query admin login.
+	 * </p>
+	 *
+	 * @return whether the command succeeded or not
+	 */
 	public CommandFuture<Boolean> stopServerProcess() {
 		final CServerProcessStop stop = new CServerProcessStop();
 		return executeAndReturnError(stop);
 	}
 
+	/**
+	 * Unregisters the server query from receiving any event notifications.
+	 *
+	 * @return whether the command succeeded or not
+	 */
 	public CommandFuture<Boolean> unregisterAllEvents() {
 		final CServerNotifyUnregister unr = new CServerNotifyUnregister();
 		return executeAndReturnError(unr);
 	}
 
+	/**
+	 * Updates several client properties for this server query instance.
+	 *
+	 * @param options
+	 * 		the map of properties to update
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see #editClient(int, HashMap)
+	 */
 	public CommandFuture<Boolean> updateClient(HashMap<ClientProperty, String> options) {
 		final CClientUpdate update = new CClientUpdate(options);
 		return executeAndReturnError(update);
 	}
 
+	/**
+	 * Generates new login credentials for the currently connected server query instance, using the given name.
+	 * <p>
+	 * <b>This will remove the current login credentials!</b> You won't be logged out, but after disconnecting,
+	 * the old credentials will no longer work. Make sure to not lock yourselves out!
+	 * </p>
+	 *
+	 * @param loginName
+	 * 		the name for the server query login
+	 *
+	 * @return the generated password for the server query login
+	 */
+	public CommandFuture<String> updateServerQueryLogin(String loginName) {
+		final CClientSetServerQueryLogin login = new CClientSetServerQueryLogin(loginName);
+		return executeAndReturnStringProperty(login, "client_login_password");
+	}
+
+	/**
+	 * Uses an existing privilege key to join a server or channel group.
+	 *
+	 * @param token
+	 * 		the privilege key to use
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see PrivilegeKey
+	 * @see #addPrivilegeKey(TokenType, int, int, String)
+	 * @see #usePrivilegeKey(PrivilegeKey)
+	 */
 	public CommandFuture<Boolean> usePrivilegeKey(String token) {
 		final CPrivilegeKeyUse use = new CPrivilegeKeyUse(token);
 		return executeAndReturnError(use);
 	}
 
+	/**
+	 * Uses an existing privilege key to join a server or channel group.
+	 *
+	 * @param privilegeKey
+	 * 		the privilege key to use
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @see PrivilegeKey
+	 * @see #addPrivilegeKey(TokenType, int, int, String)
+	 * @see #usePrivilegeKey(String)
+	 */
+	public CommandFuture<Boolean> usePrivilegeKey(PrivilegeKey privilegeKey) {
+		return usePrivilegeKey(privilegeKey.getToken());
+	}
+
+	/**
+	 * Gets information about the current server query instance.
+	 *
+	 * @return information about the server query instance
+	 *
+	 * @see #getClientInfo(int)
+	 */
 	public CommandFuture<ServerQueryInfo> whoAmI() {
 		final CWhoAmI whoAmI = new CWhoAmI();
 		final CommandFuture<ServerQueryInfo> future = new CommandFuture<>();
@@ -1339,6 +3590,14 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Executes a command, checking for failure and returning true if the command succeeded.
+	 *
+	 * @param command
+	 * 		the command to execute
+	 *
+	 * @return whether the command succeeded or not
+	 */
 	private CommandFuture<Boolean> executeAndReturnError(final Command command) {
 		final CommandFuture<Boolean> future = new CommandFuture<>();
 
@@ -1352,6 +3611,17 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Executes a command, checking for failure and returning a single
+	 * {@code String} property from the first response map.
+	 *
+	 * @param command
+	 * 		the command to execute
+	 * @param property
+	 * 		the name of the property to return
+	 *
+	 * @return the value of the specified {@code String} property
+	 */
 	private CommandFuture<String> executeAndReturnStringProperty(final Command command, final String property) {
 		final CommandFuture<String> future = new CommandFuture<>();
 
@@ -1365,6 +3635,17 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * Executes a command, checking for failure and returning a single
+	 * {@code Integer} property from the first response map.
+	 *
+	 * @param command
+	 * 		the command to execute
+	 * @param property
+	 * 		the name of the property to return
+	 *
+	 * @return the value of the specified {@code Integer} property
+	 */
 	private CommandFuture<Integer> executeAndReturnIntProperty(final Command command, final String property) {
 		final CommandFuture<Integer> future = new CommandFuture<>();
 
@@ -1378,6 +3659,19 @@ public class TS3ApiAsync {
 		return future;
 	}
 
+	/**
+	 * If a command has failed (i.e. the error ID is not 0),
+	 * the future will be marked as failed and true will be returned.
+	 *
+	 * @param command
+	 * 		the command to be checked for failure
+	 * @param future
+	 * 		the future to be notified in case of a failure
+	 *
+	 * @return true if the command has failed
+	 *
+	 * @see Command
+	 */
 	private boolean hasFailed(Command command, CommandFuture<?> future) {
 		final QueryError error = command.getError();
 		if (error.isSuccessful()) return false;
