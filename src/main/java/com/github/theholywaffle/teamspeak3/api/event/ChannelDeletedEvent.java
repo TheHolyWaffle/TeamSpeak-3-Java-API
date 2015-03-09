@@ -1,4 +1,4 @@
-package com.github.theholywaffle.teamspeak3;
+package com.github.theholywaffle.teamspeak3.api.event;
 
 /*
  * #%L
@@ -26,40 +26,22 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
-import com.github.theholywaffle.teamspeak3.commands.CWhoAmI;
+import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 
-public class KeepAliveThread extends Thread {
+import java.util.HashMap;
 
-	private static final int SLEEP = 60_000;
+public class ChannelDeletedEvent extends BaseEvent {
 
-	private final TS3Query ts3;
-	private final SocketWriter writer;
+	public ChannelDeletedEvent(HashMap<String, String> map) {
+		super(map);
+	}
 
-	public KeepAliveThread(TS3Query ts3, SocketWriter socketWriter) {
-		super("[TeamSpeak-3-Java-API] Keep alive");
-		this.ts3 = ts3;
-		this.writer = socketWriter;
+	public int getChannelId() {
+		return getInt(ChannelProperty.CID);
 	}
 
 	@Override
-	public void run() {
-		while (ts3.getSocket() != null && ts3.getSocket().isConnected()
-				&& ts3.getOut() != null && !isInterrupted()) {
-			final long idleTime = writer.getIdleTime();
-			if (idleTime >= SLEEP) {
-				ts3.doCommand(new CWhoAmI());
-			}
-			try {
-				Thread.sleep(SLEEP - idleTime);
-			} catch (final InterruptedException e) {
-				interrupt();
-				break;
-			}
-		}
-
-		if (!isInterrupted()) {
-			TS3Query.log.warning("KeepAlive thread has stopped!");
-		}
+	public void fire(TS3Listener listener) {
+		listener.onChannelDeleted(this);
 	}
-
 }

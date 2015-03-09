@@ -34,7 +34,7 @@ public enum TS3EventType {
 	TEXT_CHANNEL("textchannel"),
 	TEXT_PRIVATE("textprivate");
 
-	private String name;
+	private final String name;
 
 	TS3EventType(String name) {
 		this.name = name;

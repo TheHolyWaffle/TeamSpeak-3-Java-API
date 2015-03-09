@@ -26,9 +26,9 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
-import java.util.logging.Level;
-
 import com.github.theholywaffle.teamspeak3.TS3Query.FloodRate;
+
+import java.util.logging.Level;
 
 public class TS3Config {
 
@@ -39,6 +39,7 @@ public class TS3Config {
 	private String username = null;
 	private String password = null;
 	private boolean debugToFile = false;
+	private long commandTimeout = 4000;
 
 	public TS3Config setHost(String host) {
 		this.host = host;
@@ -99,4 +100,28 @@ public class TS3Config {
 		return debugToFile;
 	}
 
+	/**
+	 * Sets how many milliseconds a call in {@link TS3Api} should block at most until a command
+	 * without response fails. By default, this timeout is 4000 milliseconds.
+	 *
+	 * @param commandTimeout
+	 * 		the maximum time to wait for a response until a synchronous command call fails
+	 *
+	 * @return this TS3Config object for chaining
+	 *
+	 * @throws IllegalArgumentException
+	 * 		if the timeout value is smaller than or equal to {@code 0}
+	 */
+	public TS3Config setCommandTimeout(long commandTimeout) {
+		if (commandTimeout <= 0) {
+			throw new IllegalArgumentException("Timeout value must be greater than 0");
+		}
+
+		this.commandTimeout = commandTimeout;
+		return this;
+	}
+
+	long getCommandTimeout() {
+		return commandTimeout;
+	}
 }

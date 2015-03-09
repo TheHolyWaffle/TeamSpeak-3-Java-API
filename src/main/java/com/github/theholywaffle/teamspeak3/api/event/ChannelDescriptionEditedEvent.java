@@ -26,28 +26,22 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
+
 import java.util.HashMap;
 
-import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
-
-public class ChannelDescriptionEditedEvent extends Wrapper implements TS3Event,
-		TS3EventEmitter {
-
-	public ChannelDescriptionEditedEvent() {
-		super(null);
-	}
+public class ChannelDescriptionEditedEvent extends BaseEvent {
 
 	public ChannelDescriptionEditedEvent(HashMap<String, String> map) {
 		super(map);
 	}
 
 	public int getChannelId() {
-		return getInt("cid");
+		return getInt(ChannelProperty.CID);
 	}
 
-	public void fire(TS3Listener listener, HashMap<String, String> map) {
-		listener.onChannelDescriptionChanged(new ChannelDescriptionEditedEvent(
-				map));
+	@Override
+	public void fire(TS3Listener listener) {
+		listener.onChannelDescriptionChanged(this);
 	}
-
 }

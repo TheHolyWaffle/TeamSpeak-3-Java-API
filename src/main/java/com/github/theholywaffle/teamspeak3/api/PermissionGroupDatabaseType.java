@@ -32,7 +32,7 @@ public enum PermissionGroupDatabaseType {
 	REGULAR(1),
 	QUERY(2);
 
-	private int i;
+	private final int i;
 
 	PermissionGroupDatabaseType(int i) {
 		this.i = i;

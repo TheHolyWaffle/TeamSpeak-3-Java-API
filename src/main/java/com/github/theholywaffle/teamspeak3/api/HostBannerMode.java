@@ -32,7 +32,7 @@ public enum HostBannerMode {
 	KEEP_ASPECT(2),
 	UNKNOWN(-1);
 
-	private int i;
+	private final int i;
 
 	HostBannerMode(int i) {
 		this.i = i;

@@ -27,6 +27,7 @@ package com.github.theholywaffle.teamspeak3.api;
  */
 
 public enum ChannelProperty implements Property {
+
 	CHANNEL_CODEC(true),
 	CHANNEL_CODEC_IS_UNENCRYPTED(true),
 	CHANNEL_CODEC_LATENCY_FACTOR(false),
@@ -56,7 +57,7 @@ public enum ChannelProperty implements Property {
 	PID(false),
 	CPID(true);
 
-	private boolean changeable;
+	private final boolean changeable;
 
 	ChannelProperty(boolean changeable) {
 		this.changeable = changeable;

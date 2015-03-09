@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.github.theholywaffle</groupId>
 	<artifactId>teamspeak3-api</artifactId>
-	<version>1.0.9</version>
+	<version>1.0.11</version>
 
 	<issueManagement>
 		<url>https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/issues</url>
@@ -86,7 +86,8 @@
 					<execution>
 						<id>attach-javadocs1</id>
 						<configuration>
-							<quiet>true</quiet><show>public</show>
+							<quiet>true</quiet>
+							<show>public</show>
 							<outputDirectory>${project.build.directory}/apidocs/${project.version}</outputDirectory>
 						</configuration>
 						<goals>
@@ -96,7 +97,8 @@
 					<execution>
 						<id>attach-javadocs2</id>
 						<configuration>
-							<quiet>true</quiet><show>public</show>
+							<quiet>true</quiet>
+							<show>public</show>
 							<outputDirectory>${project.build.directory}/apidocs/latest</outputDirectory>
 						</configuration>
 						<goals>
@@ -159,7 +161,28 @@
 					</execution>
 				</executions>
 			</plugin>
-
+			<plugin>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>2.6</version>
+				<executions>
+					<execution>
+						<id>copy-resources</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/apidocs</outputDirectory>
+							<resources>
+								<resource>
+									<directory>html</directory>
+									<filtering>true</filtering>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 		<pluginManagement>
 			<plugins>

@@ -26,10 +26,13 @@ package com.github.theholywaffle.teamspeak3.commands;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.commands.parameter.OptionParam;
+
 public class CServerList extends Command {
 
 	public CServerList() {
 		super("serverlist");
+		add(new OptionParam("uid"));
+		add(new OptionParam("all"));
 	}
-
 }

@@ -27,19 +27,19 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
  */
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ArrayParameter extends Parameter {
 
-	private final List<Parameter> parameters = new ArrayList<>();
+	private final List<Parameter> parameters;
 
 	public ArrayParameter() {
+		parameters = new ArrayList<>();
 	}
 
 	public ArrayParameter(Parameter... parameters) {
-		for (final Parameter p : parameters) {
-			this.parameters.add(p);
-		}
+		this.parameters = new ArrayList<>(Arrays.asList(parameters));
 	}
 
 	public ArrayParameter add(Parameter p) {
@@ -49,14 +49,12 @@ public class ArrayParameter extends Parameter {
 
 	@Override
 	public String build() {
-		String str = "";
-		for (int i = 0; i < parameters.size(); i++) {
-			str += parameters.get(i).build();
-			if (i < parameters.size() - 1) {
-				str += "|";
-			}
+		StringBuilder str = new StringBuilder();
+		for (Parameter parameter : parameters) {
+			str.append(parameter.build()).append("|");
 		}
-		return str;
+		str.setLength(str.length() - 1);
+		return str.toString();
 	}
 
 }

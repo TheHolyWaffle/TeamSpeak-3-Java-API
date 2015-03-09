@@ -67,13 +67,13 @@ public class DefaultArrayResponse {
 		return array;
 	}
 
-	@Override
 	public String toString() {
-		String str = "";
+		StringBuilder str = new StringBuilder();
 		for (final HashMap<String, String> opt : array) {
-			str += opt + " | ";
+			str.append(opt).append(" | ");
 		}
-		return str;
+		str.setLength(str.length() - " | ".length());
+		return str.toString();
 	}
 
 }

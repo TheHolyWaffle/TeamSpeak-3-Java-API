@@ -26,14 +26,45 @@ package com.github.theholywaffle.teamspeak3.api;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.TS3Api;
+
+import java.util.HashMap;
+
+/**
+ * Describes how the virtual server manages audio encryption.
+ * <p>
+ * Can be edited with {@link TS3Api#editServer(HashMap)}.
+ * </p>
+ */
 public enum CodecEncryptionMode {
 
+	/**
+	 * Each channel manages audio encryption on its own.
+	 *
+	 * @see TS3Api#editChannel(int, HashMap)
+	 */
 	CODEC_CRYPT_INDIVIDUAL(0),
+
+	/**
+	 * Audio encryption is globally disabled on this virtual server.
+	 */
 	CODEC_CRYPT_DISABLED(1),
+
+	/**
+	 * Audio encryption is globally enabled on this virtual server.
+	 */
 	CODEC_CRYPT_ENABLED(2),
+
+	/**
+	 * An unknown codec encryption mode.
+	 * <p>
+	 * If you ever encounter an unknown mode, please tell us!
+	 * We may have to update the API.
+	 * </p>
+	 */
 	UNKNOWN(-1);
 
-	private int i;
+	private final int i;
 
 	CodecEncryptionMode(int i) {
 		this.i = i;
@@ -42,5 +73,4 @@ public enum CodecEncryptionMode {
 	public int getIndex() {
 		return i;
 	}
-
 }

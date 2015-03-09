@@ -32,7 +32,7 @@ public enum TextMessageTargetMode {
 	CHANNEL(2),
 	SERVER(3);
 
-	private int i;
+	private final int i;
 
 	TextMessageTargetMode(int i) {
 		this.i = i;

@@ -26,20 +26,14 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.ClientProperty;
+
 import java.util.HashMap;
 
-import com.github.theholywaffle.teamspeak3.api.ClientProperty;
-import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
-
-public class ClientJoinEvent extends Wrapper implements TS3Event,
-		TS3EventEmitter {
+public class ClientJoinEvent extends BaseEvent {
 
 	public ClientJoinEvent(HashMap<String, String> map) {
 		super(map);
-	}
-
-	public ClientJoinEvent() {
-		super(null);
 	}
 
 	public int getClientFromId() {
@@ -48,10 +42,6 @@ public class ClientJoinEvent extends Wrapper implements TS3Event,
 
 	public int getClientTargetId() {
 		return getInt("ctid");
-	}
-
-	public int getReasonId() {
-		return getInt("reasonid");
 	}
 
 	public int getClientId() {
@@ -103,7 +93,15 @@ public class ClientJoinEvent extends Wrapper implements TS3Event,
 	}
 
 	public int getAmountOfServerGroups() {
-		return getInt(ClientProperty.CLIENT_SERVERGROUPS);
+		//getInt was turning the String 1,2,3,.. to a int which wasn't right.
+		//Now it gets the Amount even if the ID is <=10
+		String[] split = get(ClientProperty.CLIENT_SERVERGROUPS).split(",");
+		return split.length;
+	}
+
+	public String getClientServerGroups() {
+		//getClientServerGroups returns a string containing the server group ID for example 1,2,3,...
+		return get(ClientProperty.CLIENT_SERVERGROUPS);
 	}
 
 	public boolean isClientAway() {
@@ -174,8 +172,8 @@ public class ClientJoinEvent extends Wrapper implements TS3Event,
 		return getInt(ClientProperty.CLIENT_CHANNEL_GROUP_INHERITED_CHANNEL_ID);
 	}
 
-	public void fire(TS3Listener listener, HashMap<String, String> map) {
-		listener.onClientJoin(new ClientJoinEvent(map));
+	@Override
+	public void fire(TS3Listener listener) {
+		listener.onClientJoin(this);
 	}
-
 }

@@ -29,24 +29,32 @@ package com.github.theholywaffle.teamspeak3;
 import com.github.theholywaffle.teamspeak3.api.*;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
-import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.*;
 import com.github.theholywaffle.teamspeak3.commands.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
  * This class is used to easily interact with a {@link TS3Query}. It constructs commands,
  * sends them to the TeamSpeak3 server, processes the response and returns the result.
  * <p>
- * All methods in this class are synchronous, so they will block until the response arrives.
- * Calls to this API will usually take about 50 milliseconds to complete (plus ping),
- * but delays can range up to 4 seconds.
- * If a command takes longer than 4 seconds to complete, a {@link TS3ConnectionFailedException}
- * will be thrown.
+ * All methods in this class are asynchronous (so they won't block) and
+ * will return a {@link CommandFuture} of the corresponding return type in {@link TS3Api}.
+ * If a command fails, no exception will be thrown directly. It will however be rethrown in
+ * {@link CommandFuture#get()} and {@link CommandFuture#get(long, TimeUnit)}.
+ * Usually, the thrown exception is a {@link TS3CommandFailedException}, which will get you
+ * access to the {@link QueryError} from which more information about the error can be obtained.
+ * </p><p>
+ * Also note that while these methods are asynchronous, the commands will still be sent through a
+ * synchronous command pipeline. That means if an asynchronous method is called immediately
+ * followed by a synchronous method, the synchronous method will first have to wait until the
+ * asynchronous method completed until it its command is sent.
  * </p><p>
  * You won't be able to execute most commands while you're not logged in due to missing permissions.
  * Make sure to either pass your login credentials to the {@link TS3Config} object when
@@ -54,13 +62,11 @@ import java.util.regex.Pattern;
  * </p><p>
  * After that, most commands also require you to select a {@linkplain VirtualServer virtual server}.
  * To do so, call either {@link #selectVirtualServerByPort(int)} or {@link #selectVirtualServerById(int)}.
- * </p><p>
- * Be aware that many methods in this class will return {@code null} or {@code -1} if a command fails.
  * </p>
  *
- * @see TS3ApiAsync The asynchronous version of the API
+ * @see TS3Api The synchronous version of the API
  */
-public class TS3Api {
+public class TS3ApiAsync {
 
 	/**
 	 * The TS3 query to which this API sends its commands.
@@ -68,15 +74,15 @@ public class TS3Api {
 	private final TS3Query query;
 
 	/**
-	 * Creates a new synchronous API object for the given {@code TS3Query}.
+	 * Creates a new asynchronous API object for the given {@code TS3Query}.
 	 * <p>
-	 * <b>Usually, this constructor should not be called.</b> Use {@link TS3Query#getApi()} instead.
+	 * <b>Usually, this constructor should not be called.</b> Use {@link TS3Query#getAsyncApi()} instead.
 	 * </p>
 	 *
 	 * @param query
 	 * 		the TS3Query to call
 	 */
-	public TS3Api(TS3Query query) {
+	public TS3ApiAsync(TS3Query query) {
 		this.query = query;
 	}
 
@@ -102,16 +108,13 @@ public class TS3Api {
 	 * @see Client#getUniqueIdentifier()
 	 * @see ClientInfo#getIp()
 	 */
-	public int addBan(String ip, String name, String uid, long timeInSeconds, String reason) {
+	public CommandFuture<Integer> addBan(String ip, String name, String uid, long timeInSeconds, String reason) {
 		if (ip == null && name == null && uid == null) {
 			throw new IllegalArgumentException("Either IP, Name or UID must be set");
 		}
 
 		final CBanAdd add = new CBanAdd(ip, name, uid, timeInSeconds, reason);
-		if (query.doCommand(add)) {
-			return StringUtil.getInt(add.getFirstResponse().get("banid"));
-		}
-		return -1;
+		return executeAndReturnIntProperty(add, "banid");
 	}
 
 	/**
@@ -132,9 +135,9 @@ public class TS3Api {
 	 * @see Client#getDatabaseId()
 	 * @see Permission
 	 */
-	public boolean addChannelClientPermission(int channelId, int clientDBId, String permName, int permValue) {
+	public CommandFuture<Boolean> addChannelClientPermission(int channelId, int clientDBId, String permName, int permValue) {
 		final CChannelClientAddPerm add = new CChannelClientAddPerm(channelId, clientDBId, permName, permValue);
-		return query.doCommand(add);
+		return executeAndReturnError(add);
 	}
 
 	/**
@@ -151,7 +154,7 @@ public class TS3Api {
 	 *
 	 * @see ChannelGroup
 	 */
-	public int addChannelGroup(String name) {
+	public CommandFuture<Integer> addChannelGroup(String name) {
 		return addChannelGroup(name, null);
 	}
 
@@ -167,12 +170,9 @@ public class TS3Api {
 	 *
 	 * @see ChannelGroup
 	 */
-	public int addChannelGroup(String name, PermissionGroupDatabaseType type) {
+	public CommandFuture<Integer> addChannelGroup(String name, PermissionGroupDatabaseType type) {
 		final CChannelGroupAdd add = new CChannelGroupAdd(name, type);
-		if (query.doCommand(add)) {
-			return StringUtil.getInt(add.getFirstResponse().get("cgid"));
-		}
-		return -1;
+		return executeAndReturnIntProperty(add, "cgid");
 	}
 
 	/**
@@ -190,9 +190,9 @@ public class TS3Api {
 	 * @see ChannelGroup#getId()
 	 * @see Permission
 	 */
-	public boolean addChannelGroupPermission(int groupId, String permName, int permValue) {
+	public CommandFuture<Boolean> addChannelGroupPermission(int groupId, String permName, int permValue) {
 		final CChannelGroupAddPerm add = new CChannelGroupAddPerm(groupId, permName, permValue);
-		return query.doCommand(add);
+		return executeAndReturnError(add);
 	}
 
 	/**
@@ -210,9 +210,9 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 * @see Permission
 	 */
-	public boolean addChannelPermission(int channelId, String permName, int permValue) {
+	public CommandFuture<Boolean> addChannelPermission(int channelId, String permName, int permValue) {
 		final CChannelAddPerm perm = new CChannelAddPerm(channelId, permName, permValue);
-		return query.doCommand(perm);
+		return executeAndReturnError(perm);
 	}
 
 	/**
@@ -232,9 +232,9 @@ public class TS3Api {
 	 * @see Client#getDatabaseId()
 	 * @see Permission
 	 */
-	public boolean addClientPermission(int clientDBId, String permName, int value, boolean skipped) {
+	public CommandFuture<Boolean> addClientPermission(int clientDBId, String permName, int value, boolean skipped) {
 		final CClientAddPerm add = new CClientAddPerm(clientDBId, permName, value, skipped);
-		return query.doCommand(add);
+		return executeAndReturnError(add);
 	}
 
 	/**
@@ -253,9 +253,9 @@ public class TS3Api {
 	 * @see ServerGroup#getId()
 	 * @see Client#getDatabaseId()
 	 */
-	public boolean addClientToServerGroup(int groupId, int clientDatabaseId) {
+	public CommandFuture<Boolean> addClientToServerGroup(int groupId, int clientDatabaseId) {
 		final CServerGroupAddClient add = new CServerGroupAddClient(groupId, clientDatabaseId);
-		return query.doCommand(add);
+		return executeAndReturnError(add);
 	}
 
 	/**
@@ -272,9 +272,9 @@ public class TS3Api {
 	 * @see Client#getDatabaseId()
 	 * @see Complaint#getMessage()
 	 */
-	public boolean addComplaint(int clientDBId, String message) {
+	public CommandFuture<Boolean> addComplaint(int clientDBId, String message) {
 		final CComplainAdd add = new CComplainAdd(clientDBId, message);
-		return query.doCommand(add);
+		return executeAndReturnError(add);
 	}
 
 	/**
@@ -296,9 +296,9 @@ public class TS3Api {
 	 * @see ServerGroupType
 	 * @see Permission
 	 */
-	public boolean addPermissionToAllServerGroups(ServerGroupType type, String permName, int value, boolean negated, boolean skipped) {
+	public CommandFuture<Boolean> addPermissionToAllServerGroups(ServerGroupType type, String permName, int value, boolean negated, boolean skipped) {
 		final CServerGroupAutoAddPerm add = new CServerGroupAutoAddPerm(type, permName, value, negated, skipped);
-		return query.doCommand(add);
+		return executeAndReturnError(add);
 	}
 
 	/**
@@ -325,12 +325,9 @@ public class TS3Api {
 	 * @see #addPrivilegeKeyServerGroup(int, String)
 	 * @see #addPrivilegeKeyChannelGroup(int, int, String)
 	 */
-	public String addPrivilegeKey(TokenType type, int groupId, int channelId, String description) {
+	public CommandFuture<String> addPrivilegeKey(TokenType type, int groupId, int channelId, String description) {
 		final CPrivilegeKeyAdd add = new CPrivilegeKeyAdd(type.getIndex(), groupId, channelId, description);
-		if (query.doCommand(add)) {
-			return add.getFirstResponse().get("token");
-		}
-		return null;
+		return executeAndReturnStringProperty(add, "token");
 	}
 
 	/**
@@ -350,7 +347,7 @@ public class TS3Api {
 	 * @see #addPrivilegeKey(TokenType, int, int, String)
 	 * @see #addPrivilegeKeyServerGroup(int, String)
 	 */
-	public String addPrivilegeKeyChannelGroup(int channelGroupId, int channelId, String description) {
+	public CommandFuture<String> addPrivilegeKeyChannelGroup(int channelGroupId, int channelId, String description) {
 		return addPrivilegeKey(TokenType.CHANNEL_GROUP, channelGroupId, channelId, description);
 	}
 
@@ -368,7 +365,7 @@ public class TS3Api {
 	 * @see #addPrivilegeKey(TokenType, int, int, String)
 	 * @see #addPrivilegeKeyChannelGroup(int, int, String)
 	 */
-	public String addPrivilegeKeyServerGroup(int serverGroupId, String description) {
+	public CommandFuture<String> addPrivilegeKeyServerGroup(int serverGroupId, String description) {
 		return addPrivilegeKey(TokenType.SERVER_GROUP, serverGroupId, 0, description);
 	}
 
@@ -386,7 +383,7 @@ public class TS3Api {
 	 *
 	 * @see ServerGroup
 	 */
-	public int addServerGroup(String name) {
+	public CommandFuture<Integer> addServerGroup(String name) {
 		return addServerGroup(name, PermissionGroupDatabaseType.REGULAR);
 	}
 
@@ -403,12 +400,9 @@ public class TS3Api {
 	 * @see ServerGroup
 	 * @see PermissionGroupDatabaseType
 	 */
-	public int addServerGroup(String name, PermissionGroupDatabaseType type) {
+	public CommandFuture<Integer> addServerGroup(String name, PermissionGroupDatabaseType type) {
 		final CServerGroupAdd add = new CServerGroupAdd(name, type);
-		if (query.doCommand(add)) {
-			return StringUtil.getInt(add.getFirstResponse().get("sgid"));
-		}
-		return -1;
+		return executeAndReturnIntProperty(add, "sgid");
 	}
 
 	/**
@@ -430,9 +424,9 @@ public class TS3Api {
 	 * @see ServerGroup#getId()
 	 * @see Permission
 	 */
-	public boolean addServerGroupPermission(int groupId, String permName, int value, boolean negated, boolean skipped) {
+	public CommandFuture<Boolean> addServerGroupPermission(int groupId, String permName, int value, boolean negated, boolean skipped) {
 		final CServerGroupAddPerm add = new CServerGroupAddPerm(groupId, permName, value, negated, skipped);
-		return query.doCommand(add);
+		return executeAndReturnError(add);
 	}
 
 	/**
@@ -472,7 +466,7 @@ public class TS3Api {
 	 * @see Client#getId()
 	 * @see #addBan(String, String, String, long, String)
 	 */
-	public int[] banClient(int clientId, long timeInSeconds) {
+	public CommandFuture<Integer[]> banClient(int clientId, long timeInSeconds) {
 		return banClient(clientId, timeInSeconds, null);
 	}
 
@@ -495,15 +489,22 @@ public class TS3Api {
 	 * @see Client#getId()
 	 * @see #addBan(String, String, String, long, String)
 	 */
-	public int[] banClient(int clientId, long timeInSeconds, String reason) {
+	public CommandFuture<Integer[]> banClient(int clientId, long timeInSeconds, String reason) {
 		final CBanClient client = new CBanClient(clientId, timeInSeconds, reason);
-		if (query.doCommand(client)) {
-			final List<HashMap<String, String>> response = client.getResponse();
-			final int banId1 = StringUtil.getInt(response.get(0).get("banid"));
-			final int banId2 = StringUtil.getInt(response.get(1).get("banid"));
-			return new int[] {banId1, banId2};
-		}
-		return null;
+		final CommandFuture<Integer[]> future = new CommandFuture<>();
+
+		query.doCommandAsync(client, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(client, future)) return;
+
+				final List<HashMap<String, String>> response = client.getResponse();
+				final int banId1 = StringUtil.getInt(response.get(0).get("banid"));
+				final int banId2 = StringUtil.getInt(response.get(1).get("banid"));
+				future.set(new Integer[] {banId1, banId2});
+			}
+		});
+		return future;
 	}
 
 	/**
@@ -523,7 +524,7 @@ public class TS3Api {
 	 * @see Client#getId()
 	 * @see #addBan(String, String, String, long, String)
 	 */
-	public int[] banClient(int clientId, String reason) {
+	public CommandFuture<Integer[]> banClient(int clientId, String reason) {
 		return banClient(clientId, 0, reason);
 	}
 
@@ -536,9 +537,9 @@ public class TS3Api {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	public boolean broadcast(String message) {
+	public CommandFuture<Boolean> broadcast(String message) {
 		final CGM broadcast = new CGM(message);
-		return query.doCommand(broadcast);
+		return executeAndReturnError(broadcast);
 	}
 
 	/**
@@ -559,13 +560,13 @@ public class TS3Api {
 	 *
 	 * @see ChannelGroup#getId()
 	 */
-	public boolean copyChannelGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
+	public CommandFuture<Boolean> copyChannelGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
 		if (targetGroupId <= 0) {
 			throw new IllegalArgumentException("To create a new channel group, use the method with a String argument");
 		}
 
 		final CChannelGroupCopy copy = new CChannelGroupCopy(sourceGroupId, targetGroupId, type);
-		return query.doCommand(copy);
+		return executeAndReturnError(copy);
 	}
 
 	/**
@@ -583,12 +584,9 @@ public class TS3Api {
 	 *
 	 * @see ChannelGroup#getId()
 	 */
-	public int copyChannelGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
+	public CommandFuture<Integer> copyChannelGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
 		final CChannelGroupCopy copy = new CChannelGroupCopy(sourceGroupId, targetName, type);
-		if (query.doCommand(copy)) {
-			return StringUtil.getInt(copy.getFirstResponse().get("cgid"));
-		}
-		return -1;
+		return executeAndReturnIntProperty(copy, "cgid");
 	}
 
 	/**
@@ -609,13 +607,13 @@ public class TS3Api {
 	 *
 	 * @see ServerGroup#getId()
 	 */
-	public boolean copyServerGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
+	public CommandFuture<Integer> copyServerGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
 		if (targetGroupId <= 0) {
 			throw new IllegalArgumentException("To create a new server group, use the method with a String argument");
 		}
 
 		final CServerGroupCopy copy = new CServerGroupCopy(sourceGroupId, targetGroupId, "ignored", type);
-		return query.doCommand(copy);
+		return executeAndReturnIntProperty(copy, "sgid");
 	}
 
 	/**
@@ -633,12 +631,9 @@ public class TS3Api {
 	 *
 	 * @see ServerGroup#getId()
 	 */
-	public int copyServerGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
+	public CommandFuture<Integer> copyServerGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
 		final CServerGroupCopy copy = new CServerGroupCopy(sourceGroupId, 0, targetName, type);
-		if (query.doCommand(copy)) {
-			return StringUtil.getInt(copy.getFirstResponse().get("sgid"));
-		}
-		return -1;
+		return executeAndReturnIntProperty(copy, "sgid");
 	}
 
 	/**
@@ -653,12 +648,9 @@ public class TS3Api {
 	 *
 	 * @see Channel
 	 */
-	public int createChannel(String name, HashMap<ChannelProperty, String> options) {
+	public CommandFuture<Integer> createChannel(String name, HashMap<ChannelProperty, String> options) {
 		final CChannelCreate create = new CChannelCreate(name, options);
-		if (query.doCommand(create)) {
-			return StringUtil.getInt(create.getFirstResponse().get("cid"));
-		}
-		return -1;
+		return executeAndReturnIntProperty(create, "cid");
 	}
 
 	/**
@@ -683,12 +675,18 @@ public class TS3Api {
 	 *
 	 * @see VirtualServer
 	 */
-	public CreatedVirtualServer createServer(String name, HashMap<VirtualServerProperty, String> options) {
+	public CommandFuture<CreatedVirtualServer> createServer(String name, HashMap<VirtualServerProperty, String> options) {
 		final CServerCreate create = new CServerCreate(name, options);
-		if (query.doCommand(create)) {
-			return new CreatedVirtualServer(create.getFirstResponse().getMap());
-		}
-		return null;
+		final CommandFuture<CreatedVirtualServer> future = new CommandFuture<>();
+
+		query.doCommandAsync(create, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(create, future)) return;
+				future.set(new CreatedVirtualServer(create.getFirstResponse().getMap()));
+			}
+		});
+		return future;
 	}
 
 	/**
@@ -700,12 +698,18 @@ public class TS3Api {
 	 *
 	 * @see #deployServerSnapshot(Snapshot)
 	 */
-	public Snapshot createServerSnapshot() {
+	public CommandFuture<Snapshot> createServerSnapshot() {
 		final CServerSnapshotCreate create = new CServerSnapshotCreate();
-		if (query.doCommand(create)) {
-			return new Snapshot(create.getRaw());
-		}
-		return null;
+		final CommandFuture<Snapshot> future = new CommandFuture<>();
+
+		query.doCommandAsync(create, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(create, future)) return;
+				future.set(new Snapshot(create.getRaw()));
+			}
+		});
+		return future;
 	}
 
 	/**
@@ -713,9 +717,9 @@ public class TS3Api {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	public boolean deleteAllBans() {
+	public CommandFuture<Boolean> deleteAllBans() {
 		final CBanDelAll del = new CBanDelAll();
-		return query.doCommand(del);
+		return executeAndReturnError(del);
 	}
 
 	/**
@@ -729,9 +733,9 @@ public class TS3Api {
 	 * @see Client#getDatabaseId()
 	 * @see Complaint
 	 */
-	public boolean deleteAllComplaints(int clientDBId) {
+	public CommandFuture<Boolean> deleteAllComplaints(int clientDBId) {
 		final CComplainDelAll del = new CComplainDelAll(clientDBId);
-		return query.doCommand(del);
+		return executeAndReturnError(del);
 	}
 
 	/**
@@ -744,9 +748,9 @@ public class TS3Api {
 	 *
 	 * @see Ban#getId()
 	 */
-	public boolean deleteBan(int banId) {
+	public CommandFuture<Boolean> deleteBan(int banId) {
 		final CBanDel del = new CBanDel(banId);
-		return query.doCommand(del);
+		return executeAndReturnError(del);
 	}
 
 	/**
@@ -761,7 +765,7 @@ public class TS3Api {
 	 * @see #deleteChannel(int, boolean)
 	 * @see #kickClientFromChannel(String, int...)
 	 */
-	public boolean deleteChannel(int channelId) {
+	public CommandFuture<Boolean> deleteChannel(int channelId) {
 		return deleteChannel(channelId, true);
 	}
 
@@ -780,9 +784,9 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 * @see #kickClientFromChannel(String, int...)
 	 */
-	public boolean deleteChannel(int channelId, boolean force) {
+	public CommandFuture<Boolean> deleteChannel(int channelId, boolean force) {
 		final CChannelDelete del = new CChannelDelete(channelId, force);
-		return query.doCommand(del);
+		return executeAndReturnError(del);
 	}
 
 	/**
@@ -801,9 +805,9 @@ public class TS3Api {
 	 * @see Client#getDatabaseId()
 	 * @see Permission#getName()
 	 */
-	public boolean deleteChannelClientPermission(int channelId, int clientDBId, String permName) {
+	public CommandFuture<Boolean> deleteChannelClientPermission(int channelId, int clientDBId, String permName) {
 		final CChannelClientDelPerm del = new CChannelClientDelPerm(channelId, clientDBId, permName);
-		return query.doCommand(del);
+		return executeAndReturnError(del);
 	}
 
 	/**
@@ -816,7 +820,7 @@ public class TS3Api {
 	 *
 	 * @see ChannelGroup#getId()
 	 */
-	public boolean deleteChannelGroup(int groupId) {
+	public CommandFuture<Boolean> deleteChannelGroup(int groupId) {
 		return deleteChannelGroup(groupId, true);
 	}
 
@@ -834,9 +838,9 @@ public class TS3Api {
 	 *
 	 * @see ChannelGroup#getId()
 	 */
-	public boolean deleteChannelGroup(int groupId, boolean force) {
+	public CommandFuture<Boolean> deleteChannelGroup(int groupId, boolean force) {
 		final CChannelGroupDel del = new CChannelGroupDel(groupId, force);
-		return query.doCommand(del);
+		return executeAndReturnError(del);
 	}
 
 	/**
@@ -852,9 +856,9 @@ public class TS3Api {
 	 * @see ChannelGroup#getId()
 	 * @see Permission#getName()
 	 */
-	public boolean deleteChannelGroupPermission(int groupId, String permName) {
+	public CommandFuture<Boolean> deleteChannelGroupPermission(int groupId, String permName) {
 		final CChannelGroupDelPerm del = new CChannelGroupDelPerm(groupId, permName);
-		return query.doCommand(del);
+		return executeAndReturnError(del);
 	}
 
 	/**
@@ -870,9 +874,9 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 * @see Permission#getName()
 	 */
-	public boolean deleteChannelPermission(int channelId, String permName) {
+	public CommandFuture<Boolean> deleteChannelPermission(int channelId, String permName) {
 		final CChannelDelPerm del = new CChannelDelPerm(channelId, permName);
-		return query.doCommand(del);
+		return executeAndReturnError(del);
 	}
 
 	/**
@@ -888,9 +892,9 @@ public class TS3Api {
 	 * @see Client#getDatabaseId()
 	 * @see Permission#getName()
 	 */
-	public boolean deleteClientPermission(int clientDBId, String permName) {
+	public CommandFuture<Boolean> deleteClientPermission(int clientDBId, String permName) {
 		final CClientDelPerm del = new CClientDelPerm(clientDBId, permName);
-		return query.doCommand(del);
+		return executeAndReturnError(del);
 	}
 
 	/**
@@ -907,9 +911,9 @@ public class TS3Api {
 	 * @see Complaint
 	 * @see Client#getDatabaseId()
 	 */
-	public boolean deleteComplaint(int targetClientDBId, int fromClientDBId) {
+	public CommandFuture<Boolean> deleteComplaint(int targetClientDBId, int fromClientDBId) {
 		final CComplainDel del = new CComplainDel(targetClientDBId, fromClientDBId);
-		return query.doCommand(del);
+		return executeAndReturnError(del);
 	}
 
 	/**
@@ -928,9 +932,9 @@ public class TS3Api {
 	 * @see #getDatabaseClientInfo(int)
 	 * @see DatabaseClientInfo
 	 */
-	public boolean deleteDatabaseClientProperties(int clientDBId) {
+	public CommandFuture<Boolean> deleteDatabaseClientProperties(int clientDBId) {
 		final CClientDBDelete del = new CClientDBDelete(clientDBId);
-		return query.doCommand(del);
+		return executeAndReturnError(del);
 	}
 
 	/**
@@ -943,9 +947,9 @@ public class TS3Api {
 	 *
 	 * @see Message#getId()
 	 */
-	public boolean deleteOfflineMessage(int messageId) {
+	public CommandFuture<Boolean> deleteOfflineMessage(int messageId) {
 		final CMessageDel del = new CMessageDel(messageId);
-		return query.doCommand(del);
+		return executeAndReturnError(del);
 	}
 
 	/**
@@ -961,9 +965,9 @@ public class TS3Api {
 	 * @see ServerGroupType
 	 * @see Permission#getName()
 	 */
-	public boolean deletePermissionFromAllServerGroups(ServerGroupType type, String permName) {
+	public CommandFuture<Boolean> deletePermissionFromAllServerGroups(ServerGroupType type, String permName) {
 		final CServerGroupAutoDelPerm del = new CServerGroupAutoDelPerm(type, permName);
-		return query.doCommand(del);
+		return executeAndReturnError(del);
 	}
 
 	/**
@@ -976,9 +980,9 @@ public class TS3Api {
 	 *
 	 * @see PrivilegeKey
 	 */
-	public boolean deletePrivilegeKey(String token) {
+	public CommandFuture<Boolean> deletePrivilegeKey(String token) {
 		final CPrivilegeKeyDelete del = new CPrivilegeKeyDelete(token);
-		return query.doCommand(del);
+		return executeAndReturnError(del);
 	}
 
 	/**
@@ -995,9 +999,9 @@ public class TS3Api {
 	 * @see VirtualServer#getId()
 	 * @see #stopServer(int)
 	 */
-	public boolean deleteServer(int serverId) {
+	public CommandFuture<Boolean> deleteServer(int serverId) {
 		final CServerDelete delete = new CServerDelete(serverId);
-		return query.doCommand(delete);
+		return executeAndReturnError(delete);
 	}
 
 	/**
@@ -1010,7 +1014,7 @@ public class TS3Api {
 	 *
 	 * @see ServerGroup#getId()
 	 */
-	public boolean deleteServerGroup(int groupId) {
+	public CommandFuture<Boolean> deleteServerGroup(int groupId) {
 		return deleteServerGroup(groupId, true);
 	}
 
@@ -1030,9 +1034,9 @@ public class TS3Api {
 	 *
 	 * @see ServerGroup#getId()
 	 */
-	public boolean deleteServerGroup(int groupId, boolean force) {
+	public CommandFuture<Boolean> deleteServerGroup(int groupId, boolean force) {
 		final CServerGroupDel del = new CServerGroupDel(groupId, force);
-		return query.doCommand(del);
+		return executeAndReturnError(del);
 	}
 
 	/**
@@ -1048,9 +1052,9 @@ public class TS3Api {
 	 * @see ServerGroup#getId()
 	 * @see Permission#getName()
 	 */
-	public boolean deleteServerGroupPermission(int groupId, String permName) {
+	public CommandFuture<Boolean> deleteServerGroupPermission(int groupId, String permName) {
 		final CServerGroupDelPerm del = new CServerGroupDelPerm(groupId, permName);
-		return query.doCommand(del);
+		return executeAndReturnError(del);
 	}
 
 	/**
@@ -1064,7 +1068,7 @@ public class TS3Api {
 	 *
 	 * @see #createServerSnapshot()
 	 */
-	public boolean deployServerSnapshot(Snapshot snapshot) {
+	public CommandFuture<Boolean> deployServerSnapshot(Snapshot snapshot) {
 		return deployServerSnapshot(snapshot.get());
 	}
 
@@ -1079,9 +1083,9 @@ public class TS3Api {
 	 *
 	 * @see #createServerSnapshot()
 	 */
-	public boolean deployServerSnapshot(String snapshot) {
+	public CommandFuture<Boolean> deployServerSnapshot(String snapshot) {
 		final CServerSnapshotDeploy deploy = new CServerSnapshotDeploy(snapshot);
-		return query.doCommand(deploy);
+		return executeAndReturnError(deploy);
 	}
 
 	/**
@@ -1096,9 +1100,9 @@ public class TS3Api {
 	 *
 	 * @see Channel#getId()
 	 */
-	public boolean editChannel(int channelId, HashMap<ChannelProperty, String> options) {
+	public CommandFuture<Boolean> editChannel(int channelId, HashMap<ChannelProperty, String> options) {
 		final CChannelEdit edit = new CChannelEdit(channelId, options);
-		return query.doCommand(edit);
+		return executeAndReturnError(edit);
 	}
 
 	/**
@@ -1118,9 +1122,9 @@ public class TS3Api {
 	 * @see Client#getId()
 	 * @see #updateClient(HashMap)
 	 */
-	public boolean editClient(int clientId, HashMap<ClientProperty, String> options) {
+	public CommandFuture<Boolean> editClient(int clientId, HashMap<ClientProperty, String> options) {
 		final CClientEdit edit = new CClientEdit(clientId, options);
-		return query.doCommand(edit);
+		return executeAndReturnError(edit);
 	}
 
 	/**
@@ -1136,9 +1140,9 @@ public class TS3Api {
 	 * @see DatabaseClientInfo
 	 * @see Client#getDatabaseId()
 	 */
-	public boolean editDatabaseClient(int clientDBId, HashMap<ClientProperty, String> options) {
+	public CommandFuture<Boolean> editDatabaseClient(int clientDBId, HashMap<ClientProperty, String> options) {
 		final CClientDBEdit edit = new CClientDBEdit(clientDBId, options);
-		return query.doCommand(edit);
+		return executeAndReturnError(edit);
 	}
 
 	/**
@@ -1156,13 +1160,13 @@ public class TS3Api {
 	 * 		if {@code property} is not changeable
 	 * @see ServerInstanceProperty#isChangeable()
 	 */
-	public boolean editInstance(ServerInstanceProperty property, String value) {
+	public CommandFuture<Boolean> editInstance(ServerInstanceProperty property, String value) {
 		if (!property.isChangeable()) {
 			throw new IllegalArgumentException("Property is not changeable");
 		}
 
 		final CInstanceEdit edit = new CInstanceEdit(property, value);
-		return query.doCommand(edit);
+		return executeAndReturnError(edit);
 	}
 
 	/**
@@ -1175,9 +1179,9 @@ public class TS3Api {
 	 *
 	 * @see VirtualServerProperty
 	 */
-	public boolean editServer(HashMap<VirtualServerProperty, String> options) {
+	public CommandFuture<Boolean> editServer(HashMap<VirtualServerProperty, String> options) {
 		final CServerEdit edit = new CServerEdit(options);
-		return query.doCommand(edit);
+		return executeAndReturnError(edit);
 	}
 
 	/**
@@ -1187,16 +1191,23 @@ public class TS3Api {
 	 *
 	 * @see Ban
 	 */
-	public List<Ban> getBans() {
+	public CommandFuture<List<Ban>> getBans() {
 		final CBanList list = new CBanList();
-		if (query.doCommand(list)) {
-			final List<Ban> bans = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				bans.add(new Ban(opt));
+		final CommandFuture<List<Ban>> future = new CommandFuture<>();
+
+		query.doCommandAsync(list, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(list, future)) return;
+
+				final List<Ban> bans = new ArrayList<>();
+				for (final HashMap<String, String> opt : list.getResponse()) {
+					bans.add(new Ban(opt));
+				}
+				future.set(bans);
 			}
-			return bans;
-		}
-		return null;
+		});
+		return future;
 	}
 
 	/**
@@ -1206,16 +1217,23 @@ public class TS3Api {
 	 *
 	 * @see Binding
 	 */
-	public List<Binding> getBindings() {
+	public CommandFuture<List<Binding>> getBindings() {
 		final CBindingList list = new CBindingList();
-		if (query.doCommand(list)) {
-			final List<Binding> bindings = new ArrayList<>();
-			for (final HashMap<String, String> map : list.getResponse()) {
-				bindings.add(new Binding(map));
+		final CommandFuture<List<Binding>> future = new CommandFuture<>();
+
+		query.doCommandAsync(list, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(list, future)) return;
+
+				final List<Binding> bindings = new ArrayList<>();
+				for (final HashMap<String, String> map : list.getResponse()) {
+					bindings.add(new Binding(map));
+				}
+				future.set(bindings);
 			}
-			return bindings;
-		}
-		return null;
+		});
+		return future;
 	}
 
 	/**
@@ -1231,18 +1249,24 @@ public class TS3Api {
 	 * @see Channel
 	 * @see #getChannelsByName(String)
 	 */
-	public Channel getChannelByNameExact(String name, final boolean ignoreCase) {
+	public CommandFuture<Channel> getChannelByNameExact(String name, final boolean ignoreCase) {
+		final CommandFuture<Channel> future = new CommandFuture<>();
 		final String caseName = ignoreCase ? name.toLowerCase() : name;
-		final List<Channel> allChannels = getChannels();
-		if (allChannels == null) return null;
 
-		for (final Channel channel : allChannels) {
-			final String channelName = ignoreCase ? channel.getName().toLowerCase() : channel.getName();
-			if (caseName.equals(channelName)) {
-				return channel;
+		getChannels().onSuccess(new CommandFuture.SuccessListener<List<Channel>>() {
+			@Override
+			public void handleSuccess(final List<Channel> allChannels) {
+				for (final Channel c : allChannels) {
+					final String channelName = ignoreCase ? c.getName().toLowerCase() : c.getName();
+					if (caseName.equals(channelName)) {
+						future.set(c);
+						return;
+					}
+				}
+				future.set(null); // Not found
 			}
-		}
-		return null; // Not found
+		}).forwardFailure(future);
+		return future;
 	}
 
 	/**
@@ -1256,27 +1280,34 @@ public class TS3Api {
 	 * @see Channel
 	 * @see #getChannelByNameExact(String, boolean)
 	 */
-	public List<Channel> getChannelsByName(String name) {
+	public CommandFuture<List<Channel>> getChannelsByName(String name) {
 		final CChannelFind find = new CChannelFind(name);
-		final List<Channel> allChannels = getChannels();
-		if (allChannels == null) return null;
+		final CommandFuture<List<Channel>> future = new CommandFuture<>();
 
-		if (query.doCommand(find)) {
-			final List<HashMap<String, String>> responses = find.getResponse();
-			final List<Channel> channels = new ArrayList<>(responses.size());
+		getChannels().onSuccess(new CommandFuture.SuccessListener<List<Channel>>() {
+			@Override
+			public void handleSuccess(final List<Channel> allChannels) {
+				query.doCommandAsync(find, new Callback() {
+					@Override
+					public void handle() {
+						if (hasFailed(find, future)) return;
 
-			for (final HashMap<String, String> response : responses) {
-				final int channelId = StringUtil.getInt(response.get("cid"));
-				for (final Channel channel : allChannels) {
-					if (channel.getId() == channelId) {
-						channels.add(channel);
-						break;
+						final List<Channel> channels = new ArrayList<>();
+						for (final HashMap<String, String> response : find.getResponse()) {
+							final int channelId = StringUtil.getInt(response.get("cid"));
+							for (final Channel c : allChannels) {
+								if (c.getId() == channelId) {
+									channels.add(c);
+									break;
+								}
+							}
+						}
+						future.set(channels);
 					}
-				}
+				});
 			}
-			return channels;
-		}
-		return null;
+		}).forwardFailure(future);
+		return future;
 	}
 
 	/**
@@ -1293,16 +1324,23 @@ public class TS3Api {
 	 * @see Client#getDatabaseId()
 	 * @see Permission
 	 */
-	public List<Permission> getChannelClientPermissions(int channelId, int clientDBId) {
+	public CommandFuture<List<Permission>> getChannelClientPermissions(int channelId, int clientDBId) {
 		final CChannelClientPermList list = new CChannelClientPermList(channelId, clientDBId);
-		if (query.doCommand(list)) {
-			final List<Permission> permissions = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				permissions.add(new Permission(opt));
+		final CommandFuture<List<Permission>> future = new CommandFuture<>();
+
+		query.doCommandAsync(list, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(list, future)) return;
+
+				final List<Permission> permissions = new ArrayList<>();
+				for (final HashMap<String, String> opt : list.getResponse()) {
+					permissions.add(new Permission(opt));
+				}
+				future.set(permissions);
 			}
-			return permissions;
-		}
-		return null;
+		});
+		return future;
 	}
 
 	/**
@@ -1323,16 +1361,23 @@ public class TS3Api {
 	 * @see ChannelGroup#getId()
 	 * @see ChannelGroupClient
 	 */
-	public List<ChannelGroupClient> getChannelGroupClients(int channelId, int clientDBId, int groupId) {
+	public CommandFuture<List<ChannelGroupClient>> getChannelGroupClients(int channelId, int clientDBId, int groupId) {
 		final CChannelGroupClientList list = new CChannelGroupClientList(channelId, clientDBId, groupId);
-		if (query.doCommand(list)) {
-			final List<ChannelGroupClient> clients = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				clients.add(new ChannelGroupClient(opt));
+		final CommandFuture<List<ChannelGroupClient>> future = new CommandFuture<>();
+
+		query.doCommandAsync(list, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(list, future)) return;
+
+				final List<ChannelGroupClient> clients = new ArrayList<>();
+				for (final HashMap<String, String> opt : list.getResponse()) {
+					clients.add(new ChannelGroupClient(opt));
+				}
+				future.set(clients);
 			}
-			return clients;
-		}
-		return null;
+		});
+		return future;
 	}
 
 	/**
@@ -1347,7 +1392,7 @@ public class TS3Api {
 	 * @see ChannelGroupClient
 	 * @see #getChannelGroupClients(int, int, int)
 	 */
-	public List<ChannelGroupClient> getChannelGroupClientsByChannelGroupId(int groupId) {
+	public CommandFuture<List<ChannelGroupClient>> getChannelGroupClientsByChannelGroupId(int groupId) {
 		return getChannelGroupClients(-1, -1, groupId);
 	}
 
@@ -1363,7 +1408,7 @@ public class TS3Api {
 	 * @see ChannelGroupClient
 	 * @see #getChannelGroupClients(int, int, int)
 	 */
-	public List<ChannelGroupClient> getChannelGroupClientsByChannelId(int channelId) {
+	public CommandFuture<List<ChannelGroupClient>> getChannelGroupClientsByChannelId(int channelId) {
 		return getChannelGroupClients(channelId, -1, -1);
 	}
 
@@ -1379,7 +1424,7 @@ public class TS3Api {
 	 * @see ChannelGroupClient
 	 * @see #getChannelGroupClients(int, int, int)
 	 */
-	public List<ChannelGroupClient> getChannelGroupClientsByClientDBId(int clientDBId) {
+	public CommandFuture<List<ChannelGroupClient>> getChannelGroupClientsByClientDBId(int clientDBId) {
 		return getChannelGroupClients(-1, clientDBId, -1);
 	}
 
@@ -1394,16 +1439,23 @@ public class TS3Api {
 	 * @see ChannelGroup#getId()
 	 * @see Permission
 	 */
-	public List<Permission> getChannelGroupPermissions(int groupId) {
+	public CommandFuture<List<Permission>> getChannelGroupPermissions(int groupId) {
 		final CChannelGroupPermList list = new CChannelGroupPermList(groupId);
-		if (query.doCommand(list)) {
-			final List<Permission> p = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				p.add(new Permission(opt));
+		final CommandFuture<List<Permission>> future = new CommandFuture<>();
+
+		query.doCommandAsync(list, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(list, future)) return;
+
+				final List<Permission> p = new ArrayList<>();
+				for (final HashMap<String, String> opt : list.getResponse()) {
+					p.add(new Permission(opt));
+				}
+				future.set(p);
 			}
-			return p;
-		}
-		return null;
+		});
+		return future;
 	}
 
 	/**
@@ -1413,16 +1465,23 @@ public class TS3Api {
 	 *
 	 * @see ChannelGroup
 	 */
-	public List<ChannelGroup> getChannelGroups() {
+	public CommandFuture<List<ChannelGroup>> getChannelGroups() {
 		final CChannelGroupList list = new CChannelGroupList();
-		if (query.doCommand(list)) {
-			final List<ChannelGroup> groups = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				groups.add(new ChannelGroup(opt));
+		final CommandFuture<List<ChannelGroup>> future = new CommandFuture<>();
+
+		query.doCommandAsync(list, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(list, future)) return;
+
+				final List<ChannelGroup> groups = new ArrayList<>();
+				for (final HashMap<String, String> opt : list.getResponse()) {
+					groups.add(new ChannelGroup(opt));
+				}
+				future.set(groups);
 			}
-			return groups;
-		}
-		return null;
+		});
+		return future;
 	}
 
 	/**
@@ -1436,12 +1495,18 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 * @see ChannelInfo
 	 */
-	public ChannelInfo getChannelInfo(int channelId) {
+	public CommandFuture<ChannelInfo> getChannelInfo(int channelId) {
 		final CChannelInfo info = new CChannelInfo(channelId);
-		if (query.doCommand(info)) {
-			return new ChannelInfo(info.getFirstResponse().getMap());
-		}
-		return null;
+		final CommandFuture<ChannelInfo> future = new CommandFuture<>();
+
+		query.doCommandAsync(info, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(info, future)) return;
+				future.set(new ChannelInfo(info.getFirstResponse().getMap()));
+			}
+		});
+		return future;
 	}
 
 	/**
@@ -1455,16 +1520,23 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 * @see Permission
 	 */
-	public List<Permission> getChannelPermissions(int channelId) {
+	public CommandFuture<List<Permission>> getChannelPermissions(int channelId) {
 		final CChannelPermList list = new CChannelPermList(channelId);
-		if (query.doCommand(list)) {
-			final List<Permission> p = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				p.add(new Permission(opt));
+		final CommandFuture<List<Permission>> future = new CommandFuture<>();
+
+		query.doCommandAsync(list, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(list, future)) return;
+
+				final List<Permission> p = new ArrayList<>();
+				for (final HashMap<String, String> opt : list.getResponse()) {
+					p.add(new Permission(opt));
+				}
+				future.set(p);
 			}
-			return p;
-		}
-		return null;
+		});
+		return future;
 	}
 
 	/**
@@ -1474,16 +1546,23 @@ public class TS3Api {
 	 *
 	 * @see Channel
 	 */
-	public List<Channel> getChannels() {
+	public CommandFuture<List<Channel>> getChannels() {
 		final CChannelList list = new CChannelList();
-		if (query.doCommand(list)) {
-			final List<Channel> channels = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				channels.add(new Channel(opt));
+		final CommandFuture<List<Channel>> future = new CommandFuture<>();
+
+		query.doCommandAsync(list, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(list, future)) return;
+
+				final List<Channel> channels = new ArrayList<>();
+				for (final HashMap<String, String> opt : list.getResponse()) {
+					channels.add(new Channel(opt));
+				}
+				future.set(channels);
 			}
-			return channels;
-		}
-		return null;
+		});
+		return future;
 	}
 
 	/**
@@ -1499,18 +1578,24 @@ public class TS3Api {
 	 * @see Client
 	 * @see #getClientsByName(String)
 	 */
-	public Client getClientByNameExact(String name, final boolean ignoreCase) {
+	public CommandFuture<Client> getClientByNameExact(String name, final boolean ignoreCase) {
+		final CommandFuture<Client> future = new CommandFuture<>();
 		final String caseName = ignoreCase ? name.toLowerCase() : name;
-		final List<Client> allClients = getClients();
-		if (allClients == null) return null;
 
-		for (final Client client : allClients) {
-			final String clientName = ignoreCase ? client.getNickname().toLowerCase() : client.getNickname();
-			if (caseName.equals(clientName)) {
-				return client;
+		getClients().onSuccess(new CommandFuture.SuccessListener<List<Client>>() {
+			@Override
+			public void handleSuccess(final List<Client> allClients) {
+				for (final Client c : allClients) {
+					final String clientName = ignoreCase ? c.getNickname().toLowerCase() : c.getNickname();
+					if (caseName.equals(clientName)) {
+						future.set(c);
+						return;
+					}
+				}
+				future.set(null); // Not found
 			}
-		}
-		return null; // Not found
+		}).forwardFailure(future);
+		return future;
 	}
 
 	/**
@@ -1524,24 +1609,33 @@ public class TS3Api {
 	 * @see Client
 	 * @see #getClientByNameExact(String, boolean)
 	 */
-	public List<Client> getClientsByName(String name) {
+	public CommandFuture<List<Client>> getClientsByName(String name) {
 		final CClientFind find = new CClientFind(name);
-		final List<Client> allClients = getClients();
-		if (allClients == null) return null;
+		final CommandFuture<List<Client>> future = new CommandFuture<>();
 
-		if (query.doCommand(find)) {
-			final List<Client> clients = new ArrayList<>();
-			for (final HashMap<String, String> response : find.getResponse()) {
-				for (final Client client : allClients) {
-					if (client.getId() == StringUtil.getInt(response.get("clid"))) {
-						clients.add(client);
-						break;
+		getClients().onSuccess(new CommandFuture.SuccessListener<List<Client>>() {
+			@Override
+			public void handleSuccess(final List<Client> allClients) {
+				query.doCommandAsync(find, new Callback() {
+					@Override
+					public void handle() {
+						if (hasFailed(find, future)) return;
+
+						final List<Client> clients = new ArrayList<>();
+						for (final HashMap<String, String> response : find.getResponse()) {
+							for (final Client c : allClients) {
+								if (c.getId() == StringUtil.getInt(response.get("clid"))) {
+									clients.add(c);
+									break;
+								}
+							}
+						}
+						future.set(clients);
 					}
-				}
+				});
 			}
-			return clients;
-		}
-		return null;
+		}).forwardFailure(future);
+		return future;
 	}
 
 	/**
@@ -1555,12 +1649,19 @@ public class TS3Api {
 	 * @see Client#getUniqueIdentifier()
 	 * @see ClientInfo
 	 */
-	public ClientInfo getClientByUId(String clientUId) {
+	public CommandFuture<ClientInfo> getClientByUId(String clientUId) {
 		final CClientGetIds get = new CClientGetIds(clientUId);
-		if (query.doCommand(get)) {
-			return getClientInfo(StringUtil.getInt(get.getFirstResponse().getMap().get("clid")));
-		}
-		return null;
+		final CommandFuture<ClientInfo> future = new CommandFuture<>();
+
+		query.doCommandAsync(get, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(get, future)) return;
+
+				getClientInfo(StringUtil.getInt(get.getFirstResponse().getMap().get("clid"))).forwardResult(future);
+			}
+		});
+		return future;
 	}
 
 	/**
@@ -1574,12 +1675,18 @@ public class TS3Api {
 	 * @see Client#getId()
 	 * @see ClientInfo
 	 */
-	public ClientInfo getClientInfo(int clientId) {
+	public CommandFuture<ClientInfo> getClientInfo(final int clientId) {
 		final CClientInfo info = new CClientInfo(clientId);
-		if (query.doCommand(info)) {
-			return new ClientInfo(info.getFirstResponse().getMap());
-		}
-		return null;
+		final CommandFuture<ClientInfo> future = new CommandFuture<>();
+
+		query.doCommandAsync(info, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(info, future)) return;
+				future.set(new ClientInfo(info.getFirstResponse().getMap()));
+			}
+		});
+		return future;
 	}
 
 	/**
@@ -1593,16 +1700,23 @@ public class TS3Api {
 	 * @see Client#getDatabaseId()
 	 * @see Permission
 	 */
-	public List<Permission> getClientPermissions(int clientDBId) {
+	public CommandFuture<List<Permission>> getClientPermissions(int clientDBId) {
 		final CClientPermList list = new CClientPermList(clientDBId);
-		if (query.doCommand(list)) {
-			final List<Permission> permissions = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				permissions.add(new Permission(opt));
+		final CommandFuture<List<Permission>> future = new CommandFuture<>();
+
+		query.doCommandAsync(list, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(list, future)) return;
+
+				final List<Permission> permissions = new ArrayList<>();
+				for (final HashMap<String, String> opt : list.getResponse()) {
+					permissions.add(new Permission(opt));
+				}
+				future.set(permissions);
 			}
-			return permissions;
-		}
-		return null;
+		});
+		return future;
 	}
 
 	/**
@@ -1612,16 +1726,23 @@ public class TS3Api {
 	 *
 	 * @see Client
 	 */
-	public List<Client> getClients() {
+	public CommandFuture<List<Client>> getClients() {
 		final CClientList list = new CClientList();
-		if (query.doCommand(list)) {
-			final List<Client> clients = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				clients.add(new Client(opt));
+		final CommandFuture<List<Client>> future = new CommandFuture<>();
+
+		query.doCommandAsync(list, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(list, future)) return;
+
+				final List<Client> clients = new ArrayList<>();
+				for (final HashMap<String, String> opt : list.getResponse()) {
+					clients.add(new Client(opt));
+				}
+				future.set(clients);
 			}
-			return clients;
-		}
-		return null;
+		});
+		return future;
 	}
 
 	/**
@@ -1632,7 +1753,7 @@ public class TS3Api {
 	 * @see Complaint
 	 * @see #getComplaints(int)
 	 */
-	public List<Complaint> getComplaints() {
+	public CommandFuture<List<Complaint>> getComplaints() {
 		return getComplaints(-1);
 	}
 
@@ -1647,16 +1768,23 @@ public class TS3Api {
 	 * @see Client#getDatabaseId()
 	 * @see Complaint
 	 */
-	public List<Complaint> getComplaints(int clientDBId) {
+	public CommandFuture<List<Complaint>> getComplaints(int clientDBId) {
 		final CComplainList list = new CComplainList(clientDBId);
-		if (query.doCommand(list)) {
-			final List<Complaint> complaints = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				complaints.add(new Complaint(opt));
+		final CommandFuture<List<Complaint>> future = new CommandFuture<>();
+
+		query.doCommandAsync(list, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(list, future)) return;
+
+				final List<Complaint> complaints = new ArrayList<>();
+				for (final HashMap<String, String> opt : list.getResponse()) {
+					complaints.add(new Complaint(opt));
+				}
+				future.set(complaints);
 			}
-			return complaints;
-		}
-		return null;
+		});
+		return future;
 	}
 
 	/**
@@ -1667,12 +1795,18 @@ public class TS3Api {
 	 * @see ConnectionInfo
 	 * @see #getServerInfo()
 	 */
-	public ConnectionInfo getConnectionInfo() {
+	public CommandFuture<ConnectionInfo> getConnectionInfo() {
 		final CServerRequestConnectionInfo info = new CServerRequestConnectionInfo();
-		if (query.doCommand(info)) {
-			return new ConnectionInfo(info.getFirstResponse().getMap());
-		}
-		return null;
+		final CommandFuture<ConnectionInfo> future = new CommandFuture<>();
+
+		query.doCommandAsync(info, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(info, future)) return;
+				future.set(new ConnectionInfo(info.getFirstResponse().getMap()));
+			}
+		});
+		return future;
 	}
 
 	/**
@@ -1685,23 +1819,31 @@ public class TS3Api {
 	 *
 	 * @see Client#getNickname()
 	 */
-	public List<DatabaseClientInfo> getDatabaseClientsByName(String name) {
+	public CommandFuture<List<DatabaseClientInfo>> getDatabaseClientsByName(String name) {
 		final CClientDBFind find = new CClientDBFind(name, false);
+		final CommandFuture<List<DatabaseClientInfo>> future = new CommandFuture<>();
 
-		if (query.doCommand(find)) {
-			final List<HashMap<String, String>> responses = find.getResponse();
-			final List<DatabaseClientInfo> clients = new ArrayList<>(responses.size());
+		query.doCommandAsync(find, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(find, future)) return;
 
-			for (HashMap<String, String> response : responses) {
-				final int databaseId = StringUtil.getInt(response.get("cldbid"));
-				final DatabaseClientInfo clientInfo = getDatabaseClientInfo(databaseId);
-				if (clientInfo != null) {
-					clients.add(clientInfo);
+				final List<HashMap<String, String>> responses = find.getResponse();
+				final List<CommandFuture<DatabaseClientInfo>> infoFutures = new ArrayList<>(responses.size());
+				for (HashMap<String, String> response : responses) {
+					final int databaseId = StringUtil.getInt(response.get("cldbid"));
+					infoFutures.add(getDatabaseClientInfo(databaseId));
 				}
+
+				CommandFuture.awaitAll(infoFutures).onSuccess(new CommandFuture.SuccessListener<Collection<DatabaseClientInfo>>() {
+					@Override
+					public void handleSuccess(Collection<DatabaseClientInfo> result) {
+						future.set(new ArrayList<>(result));
+					}
+				}).forwardFailure(future);
 			}
-			return clients;
-		}
-		return null;
+		});
+		return future;
 	}
 
 	/**
@@ -1715,12 +1857,19 @@ public class TS3Api {
 	 * @see Client#getUniqueIdentifier()
 	 * @see DatabaseClientInfo
 	 */
-	public DatabaseClientInfo getDatabaseClientByUId(String clientUId) {
+	public CommandFuture<DatabaseClientInfo> getDatabaseClientByUId(String clientUId) {
 		final CClientGetDBIdFromUId get = new CClientGetDBIdFromUId(clientUId);
-		if (query.doCommand(get)) {
-			return getDatabaseClientInfo(StringUtil.getInt(get.getFirstResponse().get("cldbid")));
-		}
-		return null;
+		final CommandFuture<DatabaseClientInfo> future = new CommandFuture<>();
+
+		query.doCommandAsync(get, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(get, future)) return;
+
+				getDatabaseClientInfo(StringUtil.getInt(get.getFirstResponse().get("cldbid"))).forwardResult(future);
+			}
+		});
+		return future;
 	}
 
 	/**
@@ -1734,12 +1883,18 @@ public class TS3Api {
 	 * @see Client#getDatabaseId()
 	 * @see DatabaseClientInfo
 	 */
-	public DatabaseClientInfo getDatabaseClientInfo(int clientDBId) {
+	public CommandFuture<DatabaseClientInfo> getDatabaseClientInfo(int clientDBId) {
 		final CClientDBInfo info = new CClientDBInfo(clientDBId);
-		if (query.doCommand(info)) {
-			return new DatabaseClientInfo(info.getFirstResponse().getMap());
-		}
-		return null;
+		final CommandFuture<DatabaseClientInfo> future = new CommandFuture<>();
+
+		query.doCommandAsync(info, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(info, future)) return;
+				future.set(new DatabaseClientInfo(info.getFirstResponse().getMap()));
+			}
+		});
+		return future;
 	}
 
 	/**
@@ -1755,24 +1910,73 @@ public class TS3Api {
 	 *
 	 * @see DatabaseClient
 	 */
-	public List<DatabaseClient> getDatabaseClients() {
+	public CommandFuture<List<DatabaseClient>> getDatabaseClients() {
 		final CClientDBList countList = new CClientDBList(0, 1, true);
-		if (query.doCommand(countList)) {
-			final int count = StringUtil.getInt(countList.getFirstResponse().get("count"));
-			int i = 0;
-			final List<DatabaseClient> clients = new ArrayList<>(count);
-			while (i < count) {
-				final CClientDBList list = new CClientDBList(i, 200, false);
-				if (query.doCommand(list)) {
-					for (final HashMap<String, String> map : list.getResponse()) {
-						clients.add(new DatabaseClient(map));
-					}
+		final CommandFuture<List<DatabaseClient>> future = new CommandFuture<>();
+
+		query.doCommandAsync(countList, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(countList, future)) return;
+
+				final int count = StringUtil.getInt(countList.getFirstResponse().get("count"));
+				final int futuresCount = ((count - 1) / 200) + 1;
+				final List<CommandFuture<List<DatabaseClient>>> futures = new ArrayList<>(futuresCount);
+				for (int i = 0; i < count; i += 200) {
+					futures.add(getDatabaseClients(i, 200));
 				}
-				i += 200;
+
+				CommandFuture.awaitAll(futures).onSuccess(new CommandFuture.SuccessListener<Collection<List<DatabaseClient>>>() {
+					@Override
+					public void handleSuccess(Collection<List<DatabaseClient>> result) {
+						int total = 0;
+						for (List<DatabaseClient> list : result) {
+							total += list.size();
+						}
+
+						final List<DatabaseClient> combination = new ArrayList<>(total);
+						for (List<DatabaseClient> list : result) {
+							combination.addAll(list);
+						}
+						future.set(combination);
+					}
+				}).forwardFailure(future);
 			}
-			return clients;
-		}
-		return null;
+		});
+		return future;
+	}
+
+	/**
+	 * Gets information about a set number of clients in the server database, starting at {@code offset}.
+	 *
+	 * @param offset
+	 * 		the index of the first database client to be returned.
+	 * 		Note that this is <b>not</b> a database ID, but an arbitrary, 0-based index.
+	 * @param count
+	 * 		the number of database clients that should be returned.
+	 * 		Any integer greater than 200 might cause problems with the connection
+	 *
+	 * @return a {@link List} of database clients
+	 *
+	 * @see DatabaseClient
+	 */
+	public CommandFuture<List<DatabaseClient>> getDatabaseClients(final int offset, final int count) {
+		final CClientDBList list = new CClientDBList(offset, count, false);
+		final CommandFuture<List<DatabaseClient>> future = new CommandFuture<>();
+
+		query.doCommandAsync(list, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(list, future)) return;
+
+				final List<DatabaseClient> clients = new ArrayList<>(count);
+				for (final HashMap<String, String> map : list.getResponse()) {
+					clients.add(new DatabaseClient(map));
+				}
+				future.set(clients);
+			}
+		});
+		return future;
 	}
 
 	/**
@@ -1781,12 +1985,18 @@ public class TS3Api {
 	 *
 	 * @return information about the
 	 */
-	public HostInfo getHostInfo() {
+	public CommandFuture<HostInfo> getHostInfo() {
 		final CHostInfo info = new CHostInfo();
-		if (query.doCommand(info)) {
-			return new HostInfo(info.getFirstResponse().getMap());
-		}
-		return null;
+		final CommandFuture<HostInfo> future = new CommandFuture<>();
+
+		query.doCommandAsync(info, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(info, future)) return;
+				future.set(new HostInfo(info.getFirstResponse().getMap()));
+			}
+		});
+		return future;
 	}
 
 	/**
@@ -1795,12 +2005,18 @@ public class TS3Api {
 	 *
 	 * @return information about the TeamSpeak server instance.
 	 */
-	public InstanceInfo getInstanceInfo() {
+	public CommandFuture<InstanceInfo> getInstanceInfo() {
 		final CInstanceInfo info = new CInstanceInfo();
-		if (query.doCommand(info)) {
-			return new InstanceInfo(info.getFirstResponse().getMap());
-		}
-		return null;
+		final CommandFuture<InstanceInfo> future = new CommandFuture<>();
+
+		query.doCommandAsync(info, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(info, future)) return;
+				future.set(new InstanceInfo(info.getFirstResponse().getMap()));
+			}
+		});
+		return future;
 	}
 
 	/**
@@ -1814,12 +2030,9 @@ public class TS3Api {
 	 * @see Message#getId()
 	 * @see #setMessageRead(int)
 	 */
-	public String getOfflineMessage(int messageId) {
+	public CommandFuture<String> getOfflineMessage(int messageId) {
 		final CMessageGet get = new CMessageGet(messageId);
-		if (query.doCommand(get)) {
-			return get.getFirstResponse().get("message");
-		}
-		return null;
+		return executeAndReturnStringProperty(get, "message");
 	}
 
 	/**
@@ -1833,7 +2046,7 @@ public class TS3Api {
 	 * @see Message#getId()
 	 * @see #setMessageRead(Message)
 	 */
-	public String getOfflineMessage(Message message) {
+	public CommandFuture<String> getOfflineMessage(Message message) {
 		return getOfflineMessage(message.getId());
 	}
 
@@ -1844,16 +2057,23 @@ public class TS3Api {
 	 *
 	 * @return a list of all offline messages this server query has received
 	 */
-	public List<Message> getOfflineMessages() {
+	public CommandFuture<List<Message>> getOfflineMessages() {
 		final CMessageList list = new CMessageList();
-		if (query.doCommand(list)) {
-			final List<Message> msg = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				msg.add(new Message(opt));
+		final CommandFuture<List<Message>> future = new CommandFuture<>();
+
+		query.doCommandAsync(list, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(list, future)) return;
+
+				final List<Message> msg = new ArrayList<>();
+				for (final HashMap<String, String> opt : list.getResponse()) {
+					msg.add(new Message(opt));
+				}
+				future.set(msg);
 			}
-			return msg;
-		}
-		return null;
+		});
+		return future;
 	}
 
 	/**
@@ -1868,16 +2088,23 @@ public class TS3Api {
 	 *
 	 * @see #getPermissionOverview(int, int)
 	 */
-	public List<AdvancedPermission> getPermissionAssignments(String permName) {
+	public CommandFuture<List<AdvancedPermission>> getPermissionAssignments(String permName) {
 		final CPermFind find = new CPermFind(permName);
-		if (query.doCommand(find)) {
-			final List<AdvancedPermission> assignments = new ArrayList<>();
-			for (final HashMap<String, String> opt : find.getResponse()) {
-				assignments.add(new AdvancedPermission(opt));
+		final CommandFuture<List<AdvancedPermission>> future = new CommandFuture<>();
+
+		query.doCommandAsync(find, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(find, future)) return;
+
+				final List<AdvancedPermission> assignments = new ArrayList<>();
+				for (final HashMap<String, String> opt : find.getResponse()) {
+					assignments.add(new AdvancedPermission(opt));
+				}
+				future.set(assignments);
 			}
-			return assignments;
-		}
-		return null;
+		});
+		return future;
 	}
 
 	/**
@@ -1892,12 +2119,9 @@ public class TS3Api {
 	 *
 	 * @return the numeric ID of the specified permission
 	 */
-	public int getPermissionIdByName(String permName) {
+	public CommandFuture<Integer> getPermissionIdByName(String permName) {
 		final CPermIdGetByName get = new CPermIdGetByName(permName);
-		if (query.doCommand(get)) {
-			return StringUtil.getInt(get.getFirstResponse().get("permid"));
-		}
-		return -1;
+		return executeAndReturnIntProperty(get, "permid");
 	}
 
 	/**
@@ -1914,16 +2138,23 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
 	 */
-	public List<AdvancedPermission> getPermissionOverview(int channelId, int clientDBId) {
+	public CommandFuture<List<AdvancedPermission>> getPermissionOverview(int channelId, int clientDBId) {
 		final CPermOverview overview = new CPermOverview(channelId, clientDBId);
-		if (query.doCommand(overview)) {
-			final List<AdvancedPermission> permissions = new ArrayList<>();
-			for (final HashMap<String, String> opt : overview.getResponse()) {
-				permissions.add(new AdvancedPermission(opt));
+		final CommandFuture<List<AdvancedPermission>> future = new CommandFuture<>();
+
+		query.doCommandAsync(overview, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(overview, future)) return;
+
+				final List<AdvancedPermission> permissions = new ArrayList<>();
+				for (final HashMap<String, String> opt : overview.getResponse()) {
+					permissions.add(new AdvancedPermission(opt));
+				}
+				future.set(permissions);
 			}
-			return permissions;
-		}
-		return null;
+		});
+		return future;
 	}
 
 	/**
@@ -1931,16 +2162,23 @@ public class TS3Api {
 	 *
 	 * @return a list of all permissions
 	 */
-	public List<PermissionInfo> getPermissions() {
+	public CommandFuture<List<PermissionInfo>> getPermissions() {
 		final CPermissionList list = new CPermissionList();
-		if (query.doCommand(list)) {
-			final List<PermissionInfo> permissions = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				permissions.add(new PermissionInfo(opt));
+		final CommandFuture<List<PermissionInfo>> future = new CommandFuture<>();
+
+		query.doCommandAsync(list, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(list, future)) return;
+
+				final List<PermissionInfo> permissions = new ArrayList<>();
+				for (final HashMap<String, String> opt : list.getResponse()) {
+					permissions.add(new PermissionInfo(opt));
+				}
+				future.set(permissions);
 			}
-			return permissions;
-		}
-		return null;
+		});
+		return future;
 	}
 
 	/**
@@ -1951,12 +2189,9 @@ public class TS3Api {
 	 *
 	 * @return the permission value, usually ranging from 0 to 100
 	 */
-	public int getPermissionValue(String permName) {
+	public CommandFuture<Integer> getPermissionValue(String permName) {
 		final CPermGet get = new CPermGet(permName);
-		if (query.doCommand(get)) {
-			return StringUtil.getInt(get.getFirstResponse().get("permvalue"));
-		}
-		return -1;
+		return executeAndReturnIntProperty(get, "permvalue");
 	}
 
 	/**
@@ -1968,16 +2203,23 @@ public class TS3Api {
 	 * @see #addPrivilegeKey(TokenType, int, int, String)
 	 * @see #usePrivilegeKey(String)
 	 */
-	public List<PrivilegeKey> getPrivilegeKeys() {
+	public CommandFuture<List<PrivilegeKey>> getPrivilegeKeys() {
 		final CPrivilegeKeyList list = new CPrivilegeKeyList();
-		if (query.doCommand(list)) {
-			final List<PrivilegeKey> keys = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				keys.add(new PrivilegeKey(opt));
+		final CommandFuture<List<PrivilegeKey>> future = new CommandFuture<>();
+
+		query.doCommandAsync(list, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(list, future)) return;
+
+				final List<PrivilegeKey> keys = new ArrayList<>();
+				for (final HashMap<String, String> opt : list.getResponse()) {
+					keys.add(new PrivilegeKey(opt));
+				}
+				future.set(keys);
 			}
-			return keys;
-		}
-		return null;
+		});
+		return future;
 	}
 
 	/**
@@ -1988,16 +2230,23 @@ public class TS3Api {
 	 *
 	 * @return a list of all clients in the server group
 	 */
-	public List<ServerGroupClient> getServerGroupClients(int serverGroupId) {
+	public CommandFuture<List<ServerGroupClient>> getServerGroupClients(int serverGroupId) {
 		final CServerGroupClientList list = new CServerGroupClientList(serverGroupId);
-		if (query.doCommand(list)) {
-			final List<ServerGroupClient> clients = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				clients.add(new ServerGroupClient(opt));
+		final CommandFuture<List<ServerGroupClient>> future = new CommandFuture<>();
+
+		query.doCommandAsync(list, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(list, future)) return;
+
+				final List<ServerGroupClient> clients = new ArrayList<>();
+				for (final HashMap<String, String> opt : list.getResponse()) {
+					clients.add(new ServerGroupClient(opt));
+				}
+				future.set(clients);
 			}
-			return clients;
-		}
-		return null;
+		});
+		return future;
 	}
 
 	/**
@@ -2008,7 +2257,7 @@ public class TS3Api {
 	 *
 	 * @return a list of all clients in the server group
 	 */
-	public List<ServerGroupClient> getServerGroupClients(ServerGroup serverGroup) {
+	public CommandFuture<List<ServerGroupClient>> getServerGroupClients(ServerGroup serverGroup) {
 		return getServerGroupClients(serverGroup.getId());
 	}
 
@@ -2023,16 +2272,23 @@ public class TS3Api {
 	 * @see ServerGroup#getId()
 	 * @see #getServerGroupPermissions(ServerGroup)
 	 */
-	public List<Permission> getServerGroupPermissions(int serverGroupId) {
+	public CommandFuture<List<Permission>> getServerGroupPermissions(int serverGroupId) {
 		final CServerGroupPermList list = new CServerGroupPermList(serverGroupId);
-		if (query.doCommand(list)) {
-			final List<Permission> p = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				p.add(new Permission(opt));
+		final CommandFuture<List<Permission>> future = new CommandFuture<>();
+
+		query.doCommandAsync(list, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(list, future)) return;
+
+				final List<Permission> p = new ArrayList<>();
+				for (final HashMap<String, String> opt : list.getResponse()) {
+					p.add(new Permission(opt));
+				}
+				future.set(p);
 			}
-			return p;
-		}
-		return null;
+		});
+		return future;
 	}
 
 	/**
@@ -2043,7 +2299,7 @@ public class TS3Api {
 	 *
 	 * @return a list of all permissions assigned to the server group
 	 */
-	public List<Permission> getServerGroupPermissions(ServerGroup serverGroup) {
+	public CommandFuture<List<Permission>> getServerGroupPermissions(ServerGroup serverGroup) {
 		return getServerGroupPermissions(serverGroup.getId());
 	}
 
@@ -2056,16 +2312,23 @@ public class TS3Api {
 	 *
 	 * @return a list of all server groups
 	 */
-	public List<ServerGroup> getServerGroups() {
+	public CommandFuture<List<ServerGroup>> getServerGroups() {
 		final CServerGroupList list = new CServerGroupList();
-		if (query.doCommand(list)) {
-			final List<ServerGroup> groups = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				groups.add(new ServerGroup(opt));
+		final CommandFuture<List<ServerGroup>> future = new CommandFuture<>();
+
+		query.doCommandAsync(list, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(list, future)) return;
+
+				final List<ServerGroup> groups = new ArrayList<>();
+				for (final HashMap<String, String> opt : list.getResponse()) {
+					groups.add(new ServerGroup(opt));
+				}
+				future.set(groups);
 			}
-			return groups;
-		}
-		return null;
+		});
+		return future;
 	}
 
 	/**
@@ -2079,21 +2342,25 @@ public class TS3Api {
 	 * @see Client#getDatabaseId()
 	 * @see #getServerGroupsByClient(Client)
 	 */
-	public List<ServerGroup> getServerGroupsByClientId(int clientDatabaseId) {
+	public CommandFuture<List<ServerGroup>> getServerGroupsByClientId(int clientDatabaseId) {
 		final CServerGroupsByClientId client = new CServerGroupsByClientId(clientDatabaseId);
-		if (query.doCommand(client)) {
-			final List<ServerGroup> list = new ArrayList<>();
-			final List<ServerGroup> allGroups = getServerGroups();
-			for (final HashMap<String, String> opt : client.getResponse()) {
-				for (final ServerGroup s : allGroups) {
-					if (s.getId() == StringUtil.getInt(opt.get("sgid"))) {
-						list.add(s);
+		final CommandFuture<List<ServerGroup>> future = new CommandFuture<>();
+
+		getServerGroups().onSuccess(new CommandFuture.SuccessListener<List<ServerGroup>>() {
+			@Override
+			public void handleSuccess(List<ServerGroup> result) {
+				final List<ServerGroup> list = new ArrayList<>();
+				for (final HashMap<String, String> opt : client.getResponse()) {
+					for (final ServerGroup s : result) {
+						if (s.getId() == StringUtil.getInt(opt.get("sgid"))) {
+							list.add(s);
+						}
 					}
 				}
+				future.set(list);
 			}
-			return list;
-		}
-		return null;
+		}).forwardFailure(future);
+		return future;
 	}
 
 	/**
@@ -2106,7 +2373,7 @@ public class TS3Api {
 	 *
 	 * @see #getServerGroupsByClientId(int)
 	 */
-	public List<ServerGroup> getServerGroupsByClient(Client client) {
+	public CommandFuture<List<ServerGroup>> getServerGroupsByClient(Client client) {
 		return getServerGroupsByClientId(client.getDatabaseId());
 	}
 
@@ -2121,12 +2388,9 @@ public class TS3Api {
 	 * @see VirtualServer#getPort()
 	 * @see VirtualServer#getId()
 	 */
-	public int getServerIdByPort(int port) {
+	public CommandFuture<Integer> getServerIdByPort(int port) {
 		final CServerIdGetByPort s = new CServerIdGetByPort(port);
-		if (query.doCommand(s)) {
-			return StringUtil.getInt(s.getFirstResponse().get("server_id"));
-		}
-		return -1;
+		return executeAndReturnIntProperty(s, "server_id");
 	}
 
 	/**
@@ -2134,12 +2398,18 @@ public class TS3Api {
 	 *
 	 * @return information about the current virtual server
 	 */
-	public VirtualServerInfo getServerInfo() {
+	public CommandFuture<VirtualServerInfo> getServerInfo() {
 		final CServerInfo info = new CServerInfo();
-		if (query.doCommand(info)) {
-			return new VirtualServerInfo(info.getFirstResponse().getMap());
-		}
-		return null;
+		final CommandFuture<VirtualServerInfo> future = new CommandFuture<>();
+
+		query.doCommandAsync(info, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(info, future)) return;
+				future.set(new VirtualServerInfo(info.getFirstResponse().getMap()));
+			}
+		});
+		return future;
 	}
 
 	/**
@@ -2147,12 +2417,18 @@ public class TS3Api {
 	 *
 	 * @return the version information of the server
 	 */
-	public Version getVersion() {
+	public CommandFuture<Version> getVersion() {
 		final CVersion version = new CVersion();
-		if (query.doCommand(version)) {
-			return new Version(version.getFirstResponse().getMap());
-		}
-		return null;
+		final CommandFuture<Version> future = new CommandFuture<>();
+
+		query.doCommandAsync(version, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(version, future)) return;
+				future.set(new Version(version.getFirstResponse().getMap()));
+			}
+		});
+		return future;
 	}
 
 	/**
@@ -2160,16 +2436,23 @@ public class TS3Api {
 	 *
 	 * @return a list of all virtual servers
 	 */
-	public List<VirtualServer> getVirtualServers() {
+	public CommandFuture<List<VirtualServer>> getVirtualServers() {
 		final CServerList serverList = new CServerList();
-		if (query.doCommand(serverList)) {
-			final List<VirtualServer> servers = new ArrayList<>();
-			for (final HashMap<String, String> opt : serverList.getResponse()) {
-				servers.add((new VirtualServer(opt)));
+		final CommandFuture<List<VirtualServer>> future = new CommandFuture<>();
+
+		query.doCommandAsync(serverList, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(serverList, future)) return;
+
+				final List<VirtualServer> servers = new ArrayList<>();
+				for (final HashMap<String, String> opt : serverList.getResponse()) {
+					servers.add((new VirtualServer(opt)));
+				}
+				future.set(servers);
 			}
-			return servers;
-		}
-		return null;
+		});
+		return future;
 	}
 
 	/**
@@ -2185,7 +2468,7 @@ public class TS3Api {
 	 * @see #kickClientFromChannel(Client...)
 	 * @see #kickClientFromChannel(String, int...)
 	 */
-	public boolean kickClientFromChannel(int... clientIds) {
+	public CommandFuture<Boolean> kickClientFromChannel(int... clientIds) {
 		return kickClients(ReasonIdentifier.REASON_KICK_CHANNEL, null, clientIds);
 	}
 
@@ -2202,7 +2485,7 @@ public class TS3Api {
 	 * @see #kickClientFromChannel(int...)
 	 * @see #kickClientFromChannel(String, Client...)
 	 */
-	public boolean kickClientFromChannel(Client... clients) {
+	public CommandFuture<Boolean> kickClientFromChannel(Client... clients) {
 		return kickClients(ReasonIdentifier.REASON_KICK_CHANNEL, null, clients);
 	}
 
@@ -2222,7 +2505,7 @@ public class TS3Api {
 	 * @see #kickClientFromChannel(int...)
 	 * @see #kickClientFromChannel(String, Client...)
 	 */
-	public boolean kickClientFromChannel(String message, int... clientIds) {
+	public CommandFuture<Boolean> kickClientFromChannel(String message, int... clientIds) {
 		return kickClients(ReasonIdentifier.REASON_KICK_CHANNEL, message, clientIds);
 	}
 
@@ -2241,7 +2524,7 @@ public class TS3Api {
 	 * @see #kickClientFromChannel(Client...)
 	 * @see #kickClientFromChannel(String, int...)
 	 */
-	public boolean kickClientFromChannel(String message, Client... clients) {
+	public CommandFuture<Boolean> kickClientFromChannel(String message, Client... clients) {
 		return kickClients(ReasonIdentifier.REASON_KICK_CHANNEL, message, clients);
 	}
 
@@ -2257,7 +2540,7 @@ public class TS3Api {
 	 * @see #kickClientFromServer(Client...)
 	 * @see #kickClientFromServer(String, int...)
 	 */
-	public boolean kickClientFromServer(int... clientIds) {
+	public CommandFuture<Boolean> kickClientFromServer(int... clientIds) {
 		return kickClients(ReasonIdentifier.REASON_KICK_SERVER, null, clientIds);
 	}
 
@@ -2272,7 +2555,7 @@ public class TS3Api {
 	 * @see #kickClientFromServer(int...)
 	 * @see #kickClientFromServer(String, Client...)
 	 */
-	public boolean kickClientFromServer(Client... clients) {
+	public CommandFuture<Boolean> kickClientFromServer(Client... clients) {
 		return kickClients(ReasonIdentifier.REASON_KICK_SERVER, null, clients);
 	}
 
@@ -2290,7 +2573,7 @@ public class TS3Api {
 	 * @see #kickClientFromServer(int...)
 	 * @see #kickClientFromServer(String, Client...)
 	 */
-	public boolean kickClientFromServer(String message, int... clientIds) {
+	public CommandFuture<Boolean> kickClientFromServer(String message, int... clientIds) {
 		return kickClients(ReasonIdentifier.REASON_KICK_SERVER, message, clientIds);
 	}
 
@@ -2307,7 +2590,7 @@ public class TS3Api {
 	 * @see #kickClientFromServer(Client...)
 	 * @see #kickClientFromServer(String, int...)
 	 */
-	public boolean kickClientFromServer(String message, Client... clients) {
+	public CommandFuture<Boolean> kickClientFromServer(String message, Client... clients) {
 		return kickClients(ReasonIdentifier.REASON_KICK_SERVER, message, clients);
 	}
 
@@ -2323,7 +2606,7 @@ public class TS3Api {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	private boolean kickClients(ReasonIdentifier reason, String message, Client... clients) {
+	private CommandFuture<Boolean> kickClients(ReasonIdentifier reason, String message, Client... clients) {
 		int[] clientIds = new int[clients.length];
 		for (int i = 0; i < clients.length; ++i) {
 			clientIds[i] = clients[i].getId();
@@ -2345,9 +2628,9 @@ public class TS3Api {
 	 *
 	 * @see Client#getId()
 	 */
-	private boolean kickClients(ReasonIdentifier reason, String message, int... clientIds) {
+	private CommandFuture<Boolean> kickClients(ReasonIdentifier reason, String message, int... clientIds) {
 		final CClientKick kick = new CClientKick(reason, message, clientIds);
-		return query.doCommand(kick);
+		return executeAndReturnError(kick);
 	}
 
 	/**
@@ -2367,9 +2650,9 @@ public class TS3Api {
 	 * @see TS3Config#setLoginCredentials(String, String)
 	 * @see #logout()
 	 */
-	public boolean login(String username, String password) {
+	public CommandFuture<Boolean> login(String username, String password) {
 		final CLogin login = new CLogin(username, password);
-		return query.doCommand(login);
+		return executeAndReturnError(login);
 	}
 
 	/**
@@ -2379,9 +2662,9 @@ public class TS3Api {
 	 *
 	 * @see #login(String, String)
 	 */
-	public boolean logout() {
+	public CommandFuture<Boolean> logout() {
 		final CLogout logout = new CLogout();
-		return query.doCommand(logout);
+		return executeAndReturnError(logout);
 	}
 
 	/**
@@ -2402,7 +2685,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 * @see #moveChannel(int, int, int)
 	 */
-	public boolean moveChannel(int channelId, int channelTargetId) {
+	public CommandFuture<Boolean> moveChannel(int channelId, int channelTargetId) {
 		return moveChannel(channelId, channelTargetId, 0);
 	}
 
@@ -2427,9 +2710,9 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 * @see #moveChannel(int, int)
 	 */
-	public boolean moveChannel(int channelId, int channelTargetId, int order) {
+	public CommandFuture<Boolean> moveChannel(int channelId, int channelTargetId, int order) {
 		final CChannelMove move = new CChannelMove(channelId, channelTargetId, order);
-		return query.doCommand(move);
+		return executeAndReturnError(move);
 	}
 
 	/**
@@ -2442,7 +2725,7 @@ public class TS3Api {
 	 *
 	 * @see Channel#getId()
 	 */
-	public boolean moveClient(int channelId) {
+	public CommandFuture<Boolean> moveClient(int channelId) {
 		return moveClient(channelId, null);
 	}
 
@@ -2454,7 +2737,7 @@ public class TS3Api {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	public boolean moveClient(Channel channel) {
+	public CommandFuture<Boolean> moveClient(Channel channel) {
 		return moveClient(channel.getId(), null);
 	}
 
@@ -2470,7 +2753,7 @@ public class TS3Api {
 	 *
 	 * @see Channel#getId()
 	 */
-	public boolean moveClient(int channelId, String channelPassword) {
+	public CommandFuture<Boolean> moveClient(int channelId, String channelPassword) {
 		return moveClient(0, channelId, channelPassword);
 	}
 
@@ -2484,7 +2767,7 @@ public class TS3Api {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	public boolean moveClient(Channel channel, String channelPassword) {
+	public CommandFuture<Boolean> moveClient(Channel channel, String channelPassword) {
 		return moveClient(0, channel.getId(), channelPassword);
 	}
 
@@ -2501,7 +2784,7 @@ public class TS3Api {
 	 * @see Client#getId()
 	 * @see Channel#getId()
 	 */
-	public boolean moveClient(int clientId, int channelId) {
+	public CommandFuture<Boolean> moveClient(int clientId, int channelId) {
 		return moveClient(clientId, channelId, null);
 	}
 
@@ -2515,7 +2798,7 @@ public class TS3Api {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	public boolean moveClient(Client client, Channel channel) {
+	public CommandFuture<Boolean> moveClient(Client client, Channel channel) {
 		return moveClient(client.getId(), channel.getId(), null);
 	}
 
@@ -2534,9 +2817,9 @@ public class TS3Api {
 	 * @see Client#getId()
 	 * @see Channel#getId()
 	 */
-	public boolean moveClient(int clientId, int channelId, String channelPassword) {
+	public CommandFuture<Boolean> moveClient(int clientId, int channelId, String channelPassword) {
 		final CClientMove move = new CClientMove(clientId, channelId, channelPassword);
-		return query.doCommand(move);
+		return executeAndReturnError(move);
 	}
 
 	/**
@@ -2551,7 +2834,7 @@ public class TS3Api {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	public boolean moveClient(Client client, Channel channel, String channelPassword) {
+	public CommandFuture<Boolean> moveClient(Client client, Channel channel, String channelPassword) {
 		return moveClient(client.getId(), channel.getId(), channelPassword);
 	}
 
@@ -2575,9 +2858,9 @@ public class TS3Api {
 	 *
 	 * @see Client#getId()
 	 */
-	public boolean pokeClient(int clientId, String message) {
+	public CommandFuture<Boolean> pokeClient(int clientId, String message) {
 		final CClientPoke poke = new CClientPoke(clientId, message);
-		return query.doCommand(poke);
+		return executeAndReturnError(poke);
 	}
 
 	/**
@@ -2591,8 +2874,9 @@ public class TS3Api {
 	 * To terminate a connection, use {@link TS3Query#exit()}.
 	 */
 	@Deprecated
-	public boolean quit() {
-		return query.doCommand(new CQuit());
+	public CommandFuture<Boolean> quit() {
+		final CQuit quit = new CQuit();
+		return executeAndReturnError(quit);
 	}
 
 	/**
@@ -2614,19 +2898,23 @@ public class TS3Api {
 	 *
 	 * @see #addTS3Listeners(TS3Listener...)
 	 */
-	public boolean registerAllEvents() {
-		// No immediate return because even if one registration fails, a following one might still work
-		boolean[] success = new boolean[5];
-		success[0] = registerEvent(TS3EventType.SERVER);
-		success[1] = registerEvent(TS3EventType.TEXT_SERVER);
-		success[2] = registerEvent(TS3EventType.CHANNEL, 0);
-		success[3] = registerEvent(TS3EventType.TEXT_CHANNEL, 0);
-		success[4] = registerEvent(TS3EventType.TEXT_PRIVATE);
+	public CommandFuture<Boolean> registerAllEvents() {
+		final CommandFuture<Boolean> future = new CommandFuture<>();
+		final Collection<CommandFuture<Boolean>> eventFutures = new ArrayList<>(5);
 
-		for (boolean successful : success) {
-			if (!successful) return false;
-		}
-		return true;
+		eventFutures.add(registerEvent(TS3EventType.SERVER));
+		eventFutures.add(registerEvent(TS3EventType.TEXT_SERVER));
+		eventFutures.add(registerEvent(TS3EventType.CHANNEL, 0));
+		eventFutures.add(registerEvent(TS3EventType.TEXT_CHANNEL, 0));
+		eventFutures.add(registerEvent(TS3EventType.TEXT_PRIVATE));
+
+		CommandFuture.awaitAll(eventFutures).onSuccess(new CommandFuture.SuccessListener<Collection<Boolean>>() {
+			@Override
+			public void handleSuccess(Collection<Boolean> result) {
+				future.set(true);
+			}
+		}).forwardFailure(future);
+		return future;
 	}
 
 	/**
@@ -2645,7 +2933,7 @@ public class TS3Api {
 	 * @see #registerEvent(TS3EventType, int)
 	 * @see #registerAllEvents()
 	 */
-	public boolean registerEvent(TS3EventType eventType) {
+	public CommandFuture<Boolean> registerEvent(TS3EventType eventType) {
 		return registerEvent(eventType, -1);
 	}
 
@@ -2664,9 +2952,9 @@ public class TS3Api {
 	 * @see #addTS3Listeners(TS3Listener...)
 	 * @see #registerAllEvents()
 	 */
-	public boolean registerEvent(TS3EventType eventType, int channelId) {
+	public CommandFuture<Boolean> registerEvent(TS3EventType eventType, int channelId) {
 		final CServerNotifyRegister register = new CServerNotifyRegister(eventType, channelId);
-		return query.doCommand(register);
+		return executeAndReturnError(register);
 	}
 
 	/**
@@ -2685,11 +2973,25 @@ public class TS3Api {
 	 * @see #registerEvent(TS3EventType, int)
 	 * @see #registerAllEvents()
 	 */
-	public boolean registerEvents(TS3EventType... eventTypes) {
-		for (final TS3EventType type : eventTypes) {
-			if (!registerEvent(type, -1)) return false;
+	public CommandFuture<Boolean> registerEvents(TS3EventType... eventTypes) {
+		final CommandFuture<Boolean> future = new CommandFuture<>();
+		if (eventTypes.length == 0) {
+			future.set(true);
+			return future;
 		}
-		return true;
+
+		final List<CommandFuture<Boolean>> registerFutures = new ArrayList<>(eventTypes.length);
+		for (final TS3EventType type : eventTypes) {
+			registerFutures.add(registerEvent(type, -1));
+		}
+
+		CommandFuture.awaitAll(registerFutures).onSuccess(new CommandFuture.SuccessListener<Collection<Boolean>>() {
+			@Override
+			public void handleSuccess(Collection<Boolean> result) {
+				future.set(true);
+			}
+		}).forwardFailure(future);
+		return future;
 	}
 
 	/**
@@ -2706,9 +3008,9 @@ public class TS3Api {
 	 * @see Client#getDatabaseId()
 	 * @see #removeClientFromServerGroup(ServerGroup, Client)
 	 */
-	public boolean removeClientFromServerGroup(int serverGroupId, int clientDatabaseId) {
+	public CommandFuture<Boolean> removeClientFromServerGroup(int serverGroupId, int clientDatabaseId) {
 		final CServerGroupDelClient del = new CServerGroupDelClient(serverGroupId, clientDatabaseId);
-		return query.doCommand(del);
+		return executeAndReturnError(del);
 	}
 
 	/**
@@ -2723,7 +3025,7 @@ public class TS3Api {
 	 *
 	 * @see #removeClientFromServerGroup(int, int)
 	 */
-	public boolean removeClientFromServerGroup(ServerGroup serverGroup, Client client) {
+	public CommandFuture<Boolean> removeClientFromServerGroup(ServerGroup serverGroup, Client client) {
 		return removeClientFromServerGroup(serverGroup.getId(), client.getDatabaseId());
 	}
 
@@ -2757,9 +3059,9 @@ public class TS3Api {
 	 * @see ChannelGroup#getId()
 	 * @see #renameChannelGroup(ChannelGroup, String)
 	 */
-	public boolean renameChannelGroup(int channelGroupId, String name) {
+	public CommandFuture<Boolean> renameChannelGroup(int channelGroupId, String name) {
 		final CChannelGroupRename rename = new CChannelGroupRename(channelGroupId, name);
-		return query.doCommand(rename);
+		return executeAndReturnError(rename);
 	}
 
 	/**
@@ -2774,7 +3076,7 @@ public class TS3Api {
 	 *
 	 * @see #renameChannelGroup(int, String)
 	 */
-	public boolean renameChannelGroup(ChannelGroup channelGroup, String name) {
+	public CommandFuture<Boolean> renameChannelGroup(ChannelGroup channelGroup, String name) {
 		return renameChannelGroup(channelGroup.getId(), name);
 	}
 
@@ -2791,9 +3093,9 @@ public class TS3Api {
 	 * @see ServerGroup#getId()
 	 * @see #renameServerGroup(ServerGroup, String)
 	 */
-	public boolean renameServerGroup(int serverGroupId, String name) {
+	public CommandFuture<Boolean> renameServerGroup(int serverGroupId, String name) {
 		final CServerGroupRename rename = new CServerGroupRename(serverGroupId, name);
-		return query.doCommand(rename);
+		return executeAndReturnError(rename);
 	}
 
 	/**
@@ -2808,7 +3110,7 @@ public class TS3Api {
 	 *
 	 * @see #renameServerGroup(int, String)
 	 */
-	public boolean renameServerGroup(ServerGroup serverGroup, String name) {
+	public CommandFuture<Boolean> renameServerGroup(ServerGroup serverGroup, String name) {
 		return renameChannelGroup(serverGroup.getId(), name);
 	}
 
@@ -2817,12 +3119,9 @@ public class TS3Api {
 	 *
 	 * @return a token for a new administrator account
 	 */
-	public String resetPermissions() {
+	public CommandFuture<String> resetPermissions() {
 		final CPermReset reset = new CPermReset();
-		if (query.doCommand(reset)) {
-			return reset.getFirstResponse().get("token");
-		}
-		return null;
+		return executeAndReturnStringProperty(reset, "token");
 	}
 
 	/**
@@ -2837,9 +3136,9 @@ public class TS3Api {
 	 * @see #selectVirtualServerByPort(int)
 	 * @see #selectVirtualServer(VirtualServer)
 	 */
-	public boolean selectVirtualServerById(int id) {
+	public CommandFuture<Boolean> selectVirtualServerById(int id) {
 		final CUse use = new CUse(id, -1);
-		return query.doCommand(use);
+		return executeAndReturnError(use);
 	}
 
 	/**
@@ -2854,9 +3153,9 @@ public class TS3Api {
 	 * @see #selectVirtualServerById(int)
 	 * @see #selectVirtualServer(VirtualServer)
 	 */
-	public boolean selectVirtualServerByPort(int port) {
+	public CommandFuture<Boolean> selectVirtualServerByPort(int port) {
 		final CUse use = new CUse(-1, port);
-		return query.doCommand(use);
+		return executeAndReturnError(use);
 	}
 
 	/**
@@ -2870,7 +3169,7 @@ public class TS3Api {
 	 * @see #selectVirtualServerById(int)
 	 * @see #selectVirtualServerByPort(int)
 	 */
-	public boolean selectVirtualServer(VirtualServer server) {
+	public CommandFuture<Boolean> selectVirtualServer(VirtualServer server) {
 		return selectVirtualServerById(server.getId());
 	}
 
@@ -2893,9 +3192,9 @@ public class TS3Api {
 	 * @see Client#getUniqueIdentifier()
 	 * @see Message
 	 */
-	public boolean sendOfflineMessage(String clientUId, String subject, String message) {
+	public CommandFuture<Boolean> sendOfflineMessage(String clientUId, String subject, String message) {
 		final CMessageAdd add = new CMessageAdd(clientUId, subject, message);
-		return query.doCommand(add);
+		return executeAndReturnError(add);
 	}
 
 	/**
@@ -2917,9 +3216,9 @@ public class TS3Api {
 	 *
 	 * @see Client#getId()
 	 */
-	public boolean sendTextMessage(TextMessageTargetMode targetMode, int targetId, String message) {
+	public CommandFuture<Boolean> sendTextMessage(TextMessageTargetMode targetMode, int targetId, String message) {
 		final CSendTextMessage msg = new CSendTextMessage(targetMode.getIndex(), targetId, message);
-		return query.doCommand(msg);
+		return executeAndReturnError(msg);
 	}
 
 	/**
@@ -2940,8 +3239,17 @@ public class TS3Api {
 	 * @see #sendChannelMessage(String)
 	 * @see Channel#getId()
 	 */
-	public boolean sendChannelMessage(int channelId, String message) {
-		return moveClient(channelId) && sendTextMessage(TextMessageTargetMode.CHANNEL, 0, message);
+	public CommandFuture<Boolean> sendChannelMessage(int channelId, final String message) {
+		final CommandFuture<Boolean> future = new CommandFuture<>();
+
+		moveClient(channelId).onSuccess(new CommandFuture.SuccessListener<Boolean>() {
+			@Override
+			public void handleSuccess(Boolean result) {
+				sendTextMessage(TextMessageTargetMode.CHANNEL, 0, message).forwardResult(future);
+			}
+		}).forwardFailure(future);
+
+		return future;
 	}
 
 	/**
@@ -2953,7 +3261,7 @@ public class TS3Api {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	public boolean sendChannelMessage(String message) {
+	public CommandFuture<Boolean> sendChannelMessage(String message) {
 		return sendTextMessage(TextMessageTargetMode.CHANNEL, 0, message);
 	}
 
@@ -2975,8 +3283,17 @@ public class TS3Api {
 	 * @see #sendServerMessage(String)
 	 * @see VirtualServer#getId()
 	 */
-	public boolean sendServerMessage(int serverId, String message) {
-		return selectVirtualServerById(serverId) && sendTextMessage(TextMessageTargetMode.SERVER, 0, message);
+	public CommandFuture<Boolean> sendServerMessage(int serverId, final String message) {
+		final CommandFuture<Boolean> future = new CommandFuture<>();
+
+		selectVirtualServerById(serverId).onSuccess(new CommandFuture.SuccessListener<Boolean>() {
+			@Override
+			public void handleSuccess(Boolean result) {
+				sendTextMessage(TextMessageTargetMode.SERVER, 0, message).forwardResult(future);
+			}
+		}).forwardFailure(future);
+
+		return future;
 	}
 
 	/**
@@ -2988,7 +3305,7 @@ public class TS3Api {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	public boolean sendServerMessage(String message) {
+	public CommandFuture<Boolean> sendServerMessage(String message) {
 		return sendTextMessage(TextMessageTargetMode.SERVER, 0, message);
 	}
 
@@ -3005,7 +3322,7 @@ public class TS3Api {
 	 *
 	 * @see Client#getId()
 	 */
-	public boolean sendPrivateMessage(int clientId, String message) {
+	public CommandFuture<Boolean> sendPrivateMessage(int clientId, String message) {
 		return sendTextMessage(TextMessageTargetMode.CLIENT, clientId, message);
 	}
 
@@ -3025,9 +3342,9 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
 	 */
-	public boolean setClientChannelGroup(int groupId, int channelId, int clientDBId) {
+	public CommandFuture<Boolean> setClientChannelGroup(int groupId, int channelId, int clientDBId) {
 		final CSetClientChannelGroup group = new CSetClientChannelGroup(groupId, channelId, clientDBId);
-		return query.doCommand(group);
+		return executeAndReturnError(group);
 	}
 
 	/**
@@ -3040,7 +3357,7 @@ public class TS3Api {
 	 *
 	 * @see #setMessageReadFlag(int, boolean)
 	 */
-	public boolean setMessageRead(int messageId) {
+	public CommandFuture<Boolean> setMessageRead(int messageId) {
 		return setMessageReadFlag(messageId, true);
 	}
 
@@ -3056,7 +3373,7 @@ public class TS3Api {
 	 * @see #setMessageReadFlag(Message, boolean)
 	 * @see #deleteOfflineMessage(int)
 	 */
-	public boolean setMessageRead(Message message) {
+	public CommandFuture<Boolean> setMessageRead(Message message) {
 		return setMessageReadFlag(message.getId(), true);
 	}
 
@@ -3074,12 +3391,9 @@ public class TS3Api {
 	 * @see #setMessageReadFlag(Message, boolean)
 	 * @see #deleteOfflineMessage(int)
 	 */
-	public boolean setMessageReadFlag(int messageId, boolean read) {
+	public CommandFuture<Boolean> setMessageReadFlag(int messageId, boolean read) {
 		final CMessageUpdateFlag flag = new CMessageUpdateFlag(messageId, read);
-		if (query.doCommand(flag)) {
-			return flag.getError().isSuccessful();
-		}
-		return read;
+		return executeAndReturnError(flag);
 	}
 
 	/**
@@ -3096,7 +3410,7 @@ public class TS3Api {
 	 * @see #setMessageReadFlag(int, boolean)
 	 * @see #deleteOfflineMessage(int)
 	 */
-	public boolean setMessageReadFlag(Message message, boolean read) {
+	public CommandFuture<Boolean> setMessageReadFlag(Message message, boolean read) {
 		return setMessageReadFlag(message.getId(), read);
 	}
 
@@ -3111,7 +3425,7 @@ public class TS3Api {
 	 *
 	 * @see #updateClient(HashMap)
 	 */
-	public boolean setNickname(String nickname) {
+	public CommandFuture<Boolean> setNickname(String nickname) {
 		final HashMap<ClientProperty, String> options = new HashMap<>();
 		options.put(ClientProperty.CLIENT_NICKNAME, nickname);
 		return updateClient(options);
@@ -3125,9 +3439,9 @@ public class TS3Api {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	public boolean startServer(int serverId) {
+	public CommandFuture<Boolean> startServer(int serverId) {
 		final CServerStart start = new CServerStart(serverId);
-		return query.doCommand(start);
+		return executeAndReturnError(start);
 	}
 
 	/**
@@ -3138,7 +3452,7 @@ public class TS3Api {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	public boolean startServer(VirtualServer virtualServer) {
+	public CommandFuture<Boolean> startServer(VirtualServer virtualServer) {
 		return startServer(virtualServer.getId());
 	}
 
@@ -3150,9 +3464,9 @@ public class TS3Api {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	public boolean stopServer(int serverId) {
+	public CommandFuture<Boolean> stopServer(int serverId) {
 		final CServerStop stop = new CServerStop(serverId);
-		return query.doCommand(stop);
+		return executeAndReturnError(stop);
 	}
 
 	/**
@@ -3163,7 +3477,7 @@ public class TS3Api {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	public boolean stopServer(VirtualServer virtualServer) {
+	public CommandFuture<Boolean> stopServer(VirtualServer virtualServer) {
 		return stopServer(virtualServer.getId());
 	}
 
@@ -3175,9 +3489,9 @@ public class TS3Api {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	public boolean stopServerProcess() {
+	public CommandFuture<Boolean> stopServerProcess() {
 		final CServerProcessStop stop = new CServerProcessStop();
-		return query.doCommand(stop);
+		return executeAndReturnError(stop);
 	}
 
 	/**
@@ -3185,9 +3499,9 @@ public class TS3Api {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	public boolean unregisterAllEvents() {
+	public CommandFuture<Boolean> unregisterAllEvents() {
 		final CServerNotifyUnregister unr = new CServerNotifyUnregister();
-		return query.doCommand(unr);
+		return executeAndReturnError(unr);
 	}
 
 	/**
@@ -3200,9 +3514,9 @@ public class TS3Api {
 	 *
 	 * @see #editClient(int, HashMap)
 	 */
-	public boolean updateClient(HashMap<ClientProperty, String> options) {
+	public CommandFuture<Boolean> updateClient(HashMap<ClientProperty, String> options) {
 		final CClientUpdate update = new CClientUpdate(options);
-		return query.doCommand(update);
+		return executeAndReturnError(update);
 	}
 
 	/**
@@ -3217,12 +3531,9 @@ public class TS3Api {
 	 *
 	 * @return the generated password for the server query login
 	 */
-	public String updateServerQueryLogin(String loginName) {
+	public CommandFuture<String> updateServerQueryLogin(String loginName) {
 		final CClientSetServerQueryLogin login = new CClientSetServerQueryLogin(loginName);
-		if (query.doCommand(login)) {
-			return login.getFirstResponse().get("client_login_password");
-		}
-		return null;
+		return executeAndReturnStringProperty(login, "client_login_password");
 	}
 
 	/**
@@ -3237,9 +3548,9 @@ public class TS3Api {
 	 * @see #addPrivilegeKey(TokenType, int, int, String)
 	 * @see #usePrivilegeKey(PrivilegeKey)
 	 */
-	public boolean usePrivilegeKey(String token) {
+	public CommandFuture<Boolean> usePrivilegeKey(String token) {
 		final CPrivilegeKeyUse use = new CPrivilegeKeyUse(token);
-		return query.doCommand(use);
+		return executeAndReturnError(use);
 	}
 
 	/**
@@ -3254,7 +3565,7 @@ public class TS3Api {
 	 * @see #addPrivilegeKey(TokenType, int, int, String)
 	 * @see #usePrivilegeKey(String)
 	 */
-	public boolean usePrivilegeKey(PrivilegeKey privilegeKey) {
+	public CommandFuture<Boolean> usePrivilegeKey(PrivilegeKey privilegeKey) {
 		return usePrivilegeKey(privilegeKey.getToken());
 	}
 
@@ -3265,11 +3576,108 @@ public class TS3Api {
 	 *
 	 * @see #getClientInfo(int)
 	 */
-	public ServerQueryInfo whoAmI() {
+	public CommandFuture<ServerQueryInfo> whoAmI() {
 		final CWhoAmI whoAmI = new CWhoAmI();
-		if (query.doCommand(whoAmI)) {
-			return new ServerQueryInfo(whoAmI.getFirstResponse().getMap());
-		}
-		return null;
+		final CommandFuture<ServerQueryInfo> future = new CommandFuture<>();
+
+		query.doCommandAsync(whoAmI, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(whoAmI, future)) return;
+				future.set(new ServerQueryInfo(whoAmI.getFirstResponse().getMap()));
+			}
+		});
+		return future;
+	}
+
+	/**
+	 * Executes a command, checking for failure and returning true if the command succeeded.
+	 *
+	 * @param command
+	 * 		the command to execute
+	 *
+	 * @return whether the command succeeded or not
+	 */
+	private CommandFuture<Boolean> executeAndReturnError(final Command command) {
+		final CommandFuture<Boolean> future = new CommandFuture<>();
+
+		query.doCommandAsync(command, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(command, future)) return;
+				future.set(true);
+			}
+		});
+		return future;
+	}
+
+	/**
+	 * Executes a command, checking for failure and returning a single
+	 * {@code String} property from the first response map.
+	 *
+	 * @param command
+	 * 		the command to execute
+	 * @param property
+	 * 		the name of the property to return
+	 *
+	 * @return the value of the specified {@code String} property
+	 */
+	private CommandFuture<String> executeAndReturnStringProperty(final Command command, final String property) {
+		final CommandFuture<String> future = new CommandFuture<>();
+
+		query.doCommandAsync(command, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(command, future)) return;
+				future.set(command.getFirstResponse().get(property));
+			}
+		});
+		return future;
+	}
+
+	/**
+	 * Executes a command, checking for failure and returning a single
+	 * {@code Integer} property from the first response map.
+	 *
+	 * @param command
+	 * 		the command to execute
+	 * @param property
+	 * 		the name of the property to return
+	 *
+	 * @return the value of the specified {@code Integer} property
+	 */
+	private CommandFuture<Integer> executeAndReturnIntProperty(final Command command, final String property) {
+		final CommandFuture<Integer> future = new CommandFuture<>();
+
+		query.doCommandAsync(command, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(command, future)) return;
+				future.set(StringUtil.getInt(command.getFirstResponse().get(property)));
+			}
+		});
+		return future;
+	}
+
+	/**
+	 * If a command has failed (i.e. the error ID is not 0),
+	 * the future will be marked as failed and true will be returned.
+	 *
+	 * @param command
+	 * 		the command to be checked for failure
+	 * @param future
+	 * 		the future to be notified in case of a failure
+	 *
+	 * @return true if the command has failed
+	 *
+	 * @see Command
+	 */
+	private boolean hasFailed(Command command, CommandFuture<?> future) {
+		final QueryError error = command.getError();
+		if (error.isSuccessful()) return false;
+
+		final TS3CommandFailedException exception = new TS3CommandFailedException(error);
+		future.fail(exception);
+		return true;
 	}
 }

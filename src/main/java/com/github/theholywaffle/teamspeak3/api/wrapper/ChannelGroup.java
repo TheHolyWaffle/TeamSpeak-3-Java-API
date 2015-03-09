@@ -26,9 +26,9 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.HashMap;
-
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
+
+import java.util.HashMap;
 
 public class ChannelGroup extends Wrapper {
 
@@ -36,8 +36,16 @@ public class ChannelGroup extends Wrapper {
 		super(map);
 	}
 
-	public int getGroupId() {
+	public int getId() {
 		return getInt("cgid");
+	}
+
+	/**
+	 * @deprecated Use {@link #getId()} instead.
+	 */
+	@Deprecated
+	public int getGroupId() {
+		return getId();
 	}
 
 	public String getName() {
@@ -45,9 +53,9 @@ public class ChannelGroup extends Wrapper {
 	}
 
 	public PermissionGroupDatabaseType getType() {
-		for (final PermissionGroupDatabaseType t : PermissionGroupDatabaseType
-				.values()) {
-			if (t.getIndex() == getInt("type")) {
+		final int type = getInt("type");
+		for (final PermissionGroupDatabaseType t : PermissionGroupDatabaseType.values()) {
+			if (t.getIndex() == type) {
 				return t;
 			}
 		}

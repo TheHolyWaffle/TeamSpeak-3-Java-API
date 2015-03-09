@@ -1,4 +1,4 @@
-package com.github.theholywaffle.teamspeak3.api;
+package com.github.theholywaffle.teamspeak3.api.wrapper;
 
 /*
  * #%L
@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,24 +26,23 @@ package com.github.theholywaffle.teamspeak3.api;
  * #L%
  */
 
-public enum VirtualServerStatus implements Property {
+import java.util.HashMap;
 
-	ONLINE("online"),
-	OFFLINE("offline"),
-	DEPLOY_RUNNING("deploy running"),
-	BOOTING_UP("booting up"),
-	SHUTTING_DOWN("shutting down"),
-	VIRTUAL_ONLINE("virtual online"),
-	UNKNOWN("unknown");
+public class CreatedVirtualServer extends Wrapper {
 
-	private final String name;
-
-	VirtualServerStatus(String name) {
-		this.name = name;
+	public CreatedVirtualServer(HashMap<String, String> map) {
+		super(map);
 	}
 
-	public String getName() {
-		return name;
+	public int getId() {
+		return getInt("sid");
 	}
 
+	public int getPort() {
+		return getInt("virtualserver_port");
+	}
+
+	public String getServerAdminToken() {
+		return get("token");
+	}
 }

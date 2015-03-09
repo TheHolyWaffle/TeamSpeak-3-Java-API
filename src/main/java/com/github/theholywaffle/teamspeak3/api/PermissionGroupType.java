@@ -26,7 +26,7 @@ package com.github.theholywaffle.teamspeak3.api;
  * #L%
  */
 
-public enum PermissionGroupTypes {
+public enum PermissionGroupType {
 
 	SERVER_GROUP(0),
 	GLOBAL_CLIENT(1),
@@ -34,9 +34,9 @@ public enum PermissionGroupTypes {
 	CHANNEL_GROUP(3),
 	CHANNEL_CLIENT(4);
 
-	private int i;
+	private final int i;
 
-	PermissionGroupTypes(int i) {
+	PermissionGroupType(int i) {
 		this.i = i;
 	}
 

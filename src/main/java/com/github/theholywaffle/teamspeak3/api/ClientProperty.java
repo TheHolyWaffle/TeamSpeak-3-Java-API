@@ -85,7 +85,7 @@ public enum ClientProperty implements Property {
 	CONNECTION_PACKETS_RECEIVED_TOTAL(false),
 	CONNECTION_PACKETS_SENT_TOTAL(false);
 
-	private boolean changeable;
+	private final boolean changeable;
 
 	ClientProperty(boolean changeable) {
 		this.changeable = changeable;

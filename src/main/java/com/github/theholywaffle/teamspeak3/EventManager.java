@@ -26,39 +26,17 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import com.github.theholywaffle.teamspeak3.api.event.ChannelDescriptionEditedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ChannelEditedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ClientMovedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ServerEditedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.TS3EventEmitter;
-import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
-import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
+import com.github.theholywaffle.teamspeak3.api.event.*;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3UnknownEventException;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 public class EventManager {
 
-	private final Map<String, TS3EventEmitter> map = new HashMap<>();
-
 	private final List<TS3Listener> listeners = new ArrayList<>();
-
-	public EventManager() {
-		map.put("notifytextmessage", new TextMessageEvent());
-		map.put("notifycliententerview", new ClientJoinEvent());
-		map.put("notifyclientleftview", new ClientLeaveEvent());
-		map.put("notifyserveredited", new ServerEditedEvent());
-		map.put("notifychanneledited", new ChannelEditedEvent());
-		map.put("notifychanneldescriptionchanged",
-				new ChannelDescriptionEditedEvent());
-		map.put("notifyclientmoved", new ClientMovedEvent());
-	}
 
 	public void addListeners(TS3Listener... listeners) {
 		for (final TS3Listener l : listeners) {
@@ -73,16 +51,41 @@ public class EventManager {
 	}
 
 	public void fireEvent(String notifyName, String notifyBody) {
-		final TS3EventEmitter emitter = map.get(notifyName);
-		if (emitter != null) {
-			for (final TS3Listener l : listeners) {
-				emitter.fire(l, new DefaultArrayResponse(notifyBody).getArray()
-						.get(0));
-			}
-		} else {
-			throw new TS3UnknownEventException(notifyName + " " + notifyBody);
-		}
+		TS3Event event = createEvent(notifyName, notifyBody);
 
+		for (final TS3Listener listener : listeners) {
+			event.fire(listener);
+		}
 	}
 
+	private TS3Event createEvent(String notifyName, String notifyBody) {
+		final HashMap<String, String> eventData = new DefaultArrayResponse(notifyBody).getArray().get(0);
+
+		switch (notifyName) {
+			case "notifytextmessage":
+				return new TextMessageEvent(eventData);
+			case "notifycliententerview":
+				return new ClientJoinEvent(eventData);
+			case "notifyclientleftview":
+				return new ClientLeaveEvent(eventData);
+			case "notifyserveredited":
+				return new ServerEditedEvent(eventData);
+			case "notifychanneledited":
+				return new ChannelEditedEvent(eventData);
+			case "notifychanneldescriptionchanged":
+				return new ChannelDescriptionEditedEvent(eventData);
+			case "notifyclientmoved":
+				return new ClientMovedEvent(eventData);
+			case "notifychannelcreated":
+				return new ChannelCreateEvent(eventData);
+			case "notifychanneldeleted":
+				return new ChannelDeletedEvent(eventData);
+			case "notifychannelmoved":
+				return new ChannelMovedEvent(eventData);
+			case "notifychannelpasswordchanged":
+				return new ChannelPasswordChangedEvent(eventData);
+			default:
+				throw new TS3UnknownEventException(notifyName + " " + notifyBody);
+		}
+	}
 }

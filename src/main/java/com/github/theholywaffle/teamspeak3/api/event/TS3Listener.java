@@ -42,4 +42,12 @@ public interface TS3Listener {
 
 	public void onClientMoved(ClientMovedEvent e);
 
+	public void onChannelCreate(ChannelCreateEvent e);
+
+	public void onChannelDeleted(ChannelDeletedEvent e);
+
+	public void onChannelMoved(ChannelMovedEvent e);
+
+	public void onChannelPasswordChanged(ChannelPasswordChangedEvent e);
+
 }

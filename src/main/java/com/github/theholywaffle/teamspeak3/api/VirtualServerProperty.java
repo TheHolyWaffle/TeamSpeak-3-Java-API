@@ -27,6 +27,7 @@ package com.github.theholywaffle.teamspeak3.api;
  */
 
 public enum VirtualServerProperty implements Property {
+
 	CONNECTION_BANDWIDTH_RECEIVED_LAST_MINUTE_TOTAL(false),
 	CONNECTION_BANDWIDTH_RECEIVED_LAST_SECOND_TOTAL(false),
 	CONNECTION_BANDWIDTH_SENT_LAST_MINUTE_TOTAL(false),
@@ -121,7 +122,7 @@ public enum VirtualServerProperty implements Property {
 	VIRTUALSERVER_WEBLIST_ENABLED(true),
 	VIRTUALSERVER_WELCOMEMESSAGE(true);
 
-	private boolean changeable;
+	private final boolean changeable;
 
 	VirtualServerProperty(boolean changeable) {
 		this.changeable = changeable;

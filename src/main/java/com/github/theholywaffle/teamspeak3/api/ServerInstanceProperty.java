@@ -60,7 +60,7 @@ public enum ServerInstanceProperty implements Property {
 	VIRTUALSERVERS_TOTAL_CLIENTS_ONLINE(false),
 	VIRTUALSERVERS_TOTAL_MAXCLIENTS(false);
 
-	private boolean changeable;
+	private final boolean changeable;
 
 	ServerInstanceProperty(boolean changeable) {
 		this.changeable = changeable;

@@ -1,4 +1,4 @@
-package com.github.theholywaffle.teamspeak3.api.event;
+package com.github.theholywaffle.teamspeak3.commands;
 
 /*
  * #%L
@@ -26,10 +26,13 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * #L%
  */
 
-import java.util.HashMap;
+import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 
-public interface TS3EventEmitter {
+public class CClientDBDelete extends Command {
 
-	public void fire(TS3Listener listener, HashMap<String, String> map);
+	public CClientDBDelete(int clientDBId) {
+		super("clientdbdelete");
+		add(new KeyValueParam("cldbid", clientDBId + ""));
+	}
 
 }
