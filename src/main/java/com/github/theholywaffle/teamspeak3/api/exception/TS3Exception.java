@@ -26,7 +26,7 @@ package com.github.theholywaffle.teamspeak3.api.exception;
  * #L%
  */
 
-public class TS3Exception extends RuntimeException {
+public abstract class TS3Exception extends RuntimeException {
 
 	private static final long serialVersionUID = 7167169981592989359L;
 

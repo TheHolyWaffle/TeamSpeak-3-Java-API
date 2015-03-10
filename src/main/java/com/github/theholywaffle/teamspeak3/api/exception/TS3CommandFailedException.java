@@ -32,12 +32,11 @@ public class TS3CommandFailedException extends TS3Exception {
 
 	private static final long serialVersionUID = 8179203326662268882L;
 
+	private final QueryError queryError;
+
 	public TS3CommandFailedException(QueryError error) {
 		super(buildMessage(error));
-	}
-
-	public TS3CommandFailedException(Throwable c) {
-		super("An error occurred while sending a command to the teamspeak server", c);
+		queryError = error;
 	}
 
 	private static String buildMessage(QueryError error) {
@@ -55,5 +54,9 @@ public class TS3CommandFailedException extends TS3Exception {
 		}
 
 		return msg.toString();
+	}
+
+	public QueryError getError() {
+		return queryError;
 	}
 }
