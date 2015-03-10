@@ -45,11 +45,14 @@ public class SocketReader extends Thread {
 	private final ExecutorService userThreadPool;
 	private final Map<Command, Callback> callbackMap;
 
+	private String lastEvent;
+
 	public SocketReader(TS3Query ts3) {
 		super("[TeamSpeak-3-Java-API] SocketReader");
 		this.ts3 = ts3;
 		this.userThreadPool = Executors.newScheduledThreadPool(1);
 		this.callbackMap = Collections.synchronizedMap(new LinkedHashMap<Command, Callback>());
+		this.lastEvent = "";
 
 		try {
 			int i = 0;
@@ -88,6 +91,9 @@ public class SocketReader extends Thread {
 
 			if (line.startsWith("notify")) {
 				TS3Query.log.info("< [event] " + line);
+
+				// Filter out duplicate events for join, quit and channel move events
+				if (isDuplicate(line)) continue;
 
 				userThreadPool.execute(new Runnable() {
 					@Override
@@ -153,4 +159,22 @@ public class SocketReader extends Thread {
 		callbackMap.put(command, callback);
 	}
 
+	private boolean isDuplicate(String eventMessage) {
+		if (!(eventMessage.startsWith("notifyclientmoved")
+				|| eventMessage.startsWith("notifycliententerview")
+				|| eventMessage.startsWith("notifyclientleftview"))) {
+
+			// Event that will never cause duplicates
+			return false;
+		}
+
+		if (eventMessage.equals(lastEvent)) {
+			// Duplicate event!
+			lastEvent = ""; // Let's only ever filter one duplicate
+			return true;
+		}
+
+		lastEvent = eventMessage;
+		return false;
+	}
 }
