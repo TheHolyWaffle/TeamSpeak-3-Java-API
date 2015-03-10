@@ -41,9 +41,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
+ * Asynchronous version of {@link TS3Api} to interact with the {@link TS3Query}.
+ * <p>
  * This class is used to easily interact with a {@link TS3Query}. It constructs commands,
  * sends them to the TeamSpeak3 server, processes the response and returns the result.
- * <p>
+ * </p><p>
  * All methods in this class are asynchronous (so they won't block) and
  * will return a {@link CommandFuture} of the corresponding return type in {@link TS3Api}.
  * If a command fails, no exception will be thrown directly. It will however be rethrown in
@@ -326,7 +328,7 @@ public class TS3ApiAsync {
 	 * @see #addPrivilegeKeyChannelGroup(int, int, String)
 	 */
 	public CommandFuture<String> addPrivilegeKey(TokenType type, int groupId, int channelId, String description) {
-		final CPrivilegeKeyAdd add = new CPrivilegeKeyAdd(type.getIndex(), groupId, channelId, description);
+		final CPrivilegeKeyAdd add = new CPrivilegeKeyAdd(type, groupId, channelId, description);
 		return executeAndReturnStringProperty(add, "token");
 	}
 
@@ -612,7 +614,7 @@ public class TS3ApiAsync {
 			throw new IllegalArgumentException("To create a new server group, use the method with a String argument");
 		}
 
-		final CServerGroupCopy copy = new CServerGroupCopy(sourceGroupId, targetGroupId, "ignored", type);
+		final CServerGroupCopy copy = new CServerGroupCopy(sourceGroupId, targetGroupId, type);
 		return executeAndReturnIntProperty(copy, "sgid");
 	}
 
@@ -632,7 +634,7 @@ public class TS3ApiAsync {
 	 * @see ServerGroup#getId()
 	 */
 	public CommandFuture<Integer> copyServerGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
-		final CServerGroupCopy copy = new CServerGroupCopy(sourceGroupId, 0, targetName, type);
+		final CServerGroupCopy copy = new CServerGroupCopy(sourceGroupId, targetName, type);
 		return executeAndReturnIntProperty(copy, "sgid");
 	}
 

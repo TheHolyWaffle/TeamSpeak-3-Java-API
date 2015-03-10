@@ -31,13 +31,19 @@ import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 
 public class CServerGroupCopy extends Command {
 
-	public CServerGroupCopy(int sourceId, int targetId, String targetName,
-			PermissionGroupDatabaseType t) {
-		super("servergroupcopy");
-		add(new KeyValueParam("ssgid", sourceId));
-		add(new KeyValueParam("tsgid", targetId));
-		add(new KeyValueParam("name", targetName));
-		add(new KeyValueParam("type", t.getIndex()));
+	public CServerGroupCopy(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
+		this(sourceGroupId, targetGroupId, "name", type);
 	}
 
+	public CServerGroupCopy(int sourceGroupId, String groupName, PermissionGroupDatabaseType type) {
+		this(sourceGroupId, 0, groupName, type);
+	}
+
+	private CServerGroupCopy(int sourceGroupId, int targetGroupId, String groupName, PermissionGroupDatabaseType type) {
+		super("servergroupcopy");
+		add(new KeyValueParam("ssgid", sourceGroupId));
+		add(new KeyValueParam("tsgid", targetGroupId));
+		add(new KeyValueParam("name", groupName));
+		add(new KeyValueParam("type", type.getIndex()));
+	}
 }

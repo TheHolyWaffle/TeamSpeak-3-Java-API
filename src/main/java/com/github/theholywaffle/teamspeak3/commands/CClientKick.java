@@ -32,18 +32,18 @@ import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 
 public class CClientKick extends Command {
 
-	public CClientKick(ReasonIdentifier reason, String reasonMessage,
-			int... clientIds) {
+	public CClientKick(ReasonIdentifier reason, String reasonMessage, int... clientIds) {
 		super("clientkick");
+
 		final ArrayParameter p = new ArrayParameter();
 		for (final int id : clientIds) {
-			p.add(new KeyValueParam("clid", id + ""));
+			p.add(new KeyValueParam("clid", id));
 		}
 		add(p);
-		add(new KeyValueParam("reasonid", reason.getIndex() + ""));
+
+		add(new KeyValueParam("reasonid", reason.getIndex()));
 		if (reasonMessage != null) {
 			add(new KeyValueParam("reasonmsg", reasonMessage));
 		}
 	}
-
 }

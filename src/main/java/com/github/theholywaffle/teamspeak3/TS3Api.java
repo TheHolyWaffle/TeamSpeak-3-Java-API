@@ -39,9 +39,11 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
+ * API to interact with the {@link TS3Query} synchronously.
+ * <p>
  * This class is used to easily interact with a {@link TS3Query}. It constructs commands,
  * sends them to the TeamSpeak3 server, processes the response and returns the result.
- * <p>
+ * </p><p>
  * All methods in this class are synchronous, so they will block until the response arrives.
  * Calls to this API will usually take about 50 milliseconds to complete (plus ping),
  * but delays can range up to 4 seconds.
@@ -326,7 +328,7 @@ public class TS3Api {
 	 * @see #addPrivilegeKeyChannelGroup(int, int, String)
 	 */
 	public String addPrivilegeKey(TokenType type, int groupId, int channelId, String description) {
-		final CPrivilegeKeyAdd add = new CPrivilegeKeyAdd(type.getIndex(), groupId, channelId, description);
+		final CPrivilegeKeyAdd add = new CPrivilegeKeyAdd(type, groupId, channelId, description);
 		if (query.doCommand(add)) {
 			return add.getFirstResponse().get("token");
 		}
@@ -614,7 +616,7 @@ public class TS3Api {
 			throw new IllegalArgumentException("To create a new server group, use the method with a String argument");
 		}
 
-		final CServerGroupCopy copy = new CServerGroupCopy(sourceGroupId, targetGroupId, "ignored", type);
+		final CServerGroupCopy copy = new CServerGroupCopy(sourceGroupId, targetGroupId, type);
 		return query.doCommand(copy);
 	}
 
@@ -634,7 +636,7 @@ public class TS3Api {
 	 * @see ServerGroup#getId()
 	 */
 	public int copyServerGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
-		final CServerGroupCopy copy = new CServerGroupCopy(sourceGroupId, 0, targetName, type);
+		final CServerGroupCopy copy = new CServerGroupCopy(sourceGroupId, targetName, type);
 		if (query.doCommand(copy)) {
 			return StringUtil.getInt(copy.getFirstResponse().get("sgid"));
 		}
