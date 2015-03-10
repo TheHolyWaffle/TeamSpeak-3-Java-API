@@ -2883,6 +2883,7 @@ public class TS3ApiAsync {
 	 * Registers the server query to receive notifications about all server events.
 	 * <p>
 	 * This means that the following actions will trigger event notifications:
+	 * </p>
 	 * <ul>
 	 * <li>A client joins the server or disconnects from it</li>
 	 * <li>A client switches channels</li>
@@ -2890,6 +2891,7 @@ public class TS3ApiAsync {
 	 * <li>A client sends a channel message <b>in the channel the query is in</b></li>
 	 * <li>A client sends <b>the server query</b> a private message or a response to a private message</li>
 	 * </ul>
+	 * <p>
 	 * The limitations to when the query receives notifications about chat events cannot be circumvented.
 	 * </p>
 	 * To be able to process these events in your application, register an event listener.
