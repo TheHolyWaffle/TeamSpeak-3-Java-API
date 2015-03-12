@@ -32,7 +32,7 @@ public class CMessageGet extends Command {
 
 	public CMessageGet(int messageId) {
 		super("messageget");
-		add(new KeyValueParam("msgid", messageId + ""));
+		add(new KeyValueParam("msgid", messageId));
 	}
 
 }

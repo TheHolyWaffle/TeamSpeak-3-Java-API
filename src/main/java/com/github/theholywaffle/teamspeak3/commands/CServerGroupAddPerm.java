@@ -36,8 +36,8 @@ public class CServerGroupAddPerm extends Command {
 		add(new KeyValueParam("sgid", groupId));
 		add(new KeyValueParam("permsid", permName));
 		add(new KeyValueParam("permvalue", permValue));
-		add(new KeyValueParam("permnegated", (isNegated ? "1" : "0")));
-		add(new KeyValueParam("permskip", (isSkipped ? "1" : "0")));
+		add(new KeyValueParam("permnegated", isNegated));
+		add(new KeyValueParam("permskip", isSkipped));
 	}
 
 }

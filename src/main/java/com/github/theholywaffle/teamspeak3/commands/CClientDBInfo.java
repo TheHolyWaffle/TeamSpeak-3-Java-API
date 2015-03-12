@@ -32,7 +32,7 @@ public class CClientDBInfo extends Command {
 
 	public CClientDBInfo(int clientDBId) {
 		super("clientdbinfo");
-		add(new KeyValueParam("cldbid", clientDBId + ""));
+		add(new KeyValueParam("cldbid", clientDBId));
 	}
 
 }

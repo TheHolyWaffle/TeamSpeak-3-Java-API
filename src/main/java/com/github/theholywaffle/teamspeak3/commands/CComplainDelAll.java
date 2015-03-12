@@ -32,7 +32,7 @@ public class CComplainDelAll extends Command {
 
 	public CComplainDelAll(int clientDBId) {
 		super("complaindelall");
-		add(new KeyValueParam("tcldbid", clientDBId + ""));
+		add(new KeyValueParam("tcldbid", clientDBId));
 	}
 
 }

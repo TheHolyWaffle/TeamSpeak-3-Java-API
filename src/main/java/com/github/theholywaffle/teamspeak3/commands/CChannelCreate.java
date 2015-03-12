@@ -36,11 +36,14 @@ public class CChannelCreate extends Command {
 	public CChannelCreate(String name, HashMap<ChannelProperty, String> options) {
 		super("channelcreate");
 		add(new KeyValueParam("channel_name", name));
+
 		if (options != null) {
 			for (final ChannelProperty p : options.keySet()) {
-				if (p.isChangeable()) {
-					add(new KeyValueParam(p.getName(), options.get(p)));
+				if (!p.isChangeable()) {
+					throw new IllegalArgumentException("ChannelProperty " + p.getName() + " is not changeable!");
 				}
+
+				add(new KeyValueParam(p.getName(), options.get(p)));
 			}
 		}
 	}

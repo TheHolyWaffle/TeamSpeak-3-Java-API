@@ -34,6 +34,7 @@ public class CClientDBFind extends Command {
 	public CClientDBFind(String pattern, boolean uid) {
 		super("clientdbfind");
 		add(new KeyValueParam("pattern", pattern));
+
 		if (uid) {
 			add(new OptionParam("uid"));
 		}

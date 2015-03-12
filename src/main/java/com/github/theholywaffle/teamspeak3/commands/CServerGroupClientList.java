@@ -33,7 +33,7 @@ public class CServerGroupClientList extends Command {
 
 	public CServerGroupClientList(int groupId) {
 		super("servergroupclientlist");
-		add(new KeyValueParam("sgid", groupId + ""));
+		add(new KeyValueParam("sgid", groupId));
 		add(new OptionParam("names"));
 	}
 

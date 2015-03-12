@@ -30,8 +30,7 @@ import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 
 public class CBanAdd extends Command {
 
-	public CBanAdd(String ip, String name, String uid, long timeInSeconds,
-			String reason) {
+	public CBanAdd(String ip, String name, String uid, long timeInSeconds, String reason) {
 		super("banadd");
 		if (ip != null) {
 			add(new KeyValueParam("ip", ip));

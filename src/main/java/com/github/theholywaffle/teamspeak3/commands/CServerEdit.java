@@ -35,7 +35,12 @@ public class CServerEdit extends Command {
 
 	public CServerEdit(HashMap<VirtualServerProperty, String> map) {
 		super("serveredit");
+
 		for (final VirtualServerProperty p : map.keySet()) {
+			if (!p.isChangeable()) {
+				throw new IllegalArgumentException("VirtualServerProperty " + p.getName() + " is not changeable!");
+			}
+
 			add(new KeyValueParam(p.getName(), map.get(p)));
 		}
 	}

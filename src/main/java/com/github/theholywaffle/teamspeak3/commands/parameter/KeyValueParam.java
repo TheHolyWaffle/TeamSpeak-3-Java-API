@@ -46,6 +46,10 @@ public class KeyValueParam extends Parameter {
 		this(key, String.valueOf(value));
 	}
 
+	public KeyValueParam(String key, boolean value) {
+		this(key, value ? "1" : "0");
+	}
+
 	@Override
 	public String build() {
 		return StringUtil.encode(key) + "=" + StringUtil.encode(value);

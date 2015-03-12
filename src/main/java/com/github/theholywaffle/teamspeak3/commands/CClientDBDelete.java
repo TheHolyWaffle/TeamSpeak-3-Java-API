@@ -32,7 +32,7 @@ public class CClientDBDelete extends Command {
 
 	public CClientDBDelete(int clientDBId) {
 		super("clientdbdelete");
-		add(new KeyValueParam("cldbid", clientDBId + ""));
+		add(new KeyValueParam("cldbid", clientDBId));
 	}
 
 }

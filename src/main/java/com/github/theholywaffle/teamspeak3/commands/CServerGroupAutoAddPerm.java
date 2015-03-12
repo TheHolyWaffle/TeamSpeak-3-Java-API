@@ -37,8 +37,8 @@ public class CServerGroupAutoAddPerm extends Command {
 		add(new KeyValueParam("sgtype", t.getIndex()));
 		add(new KeyValueParam("permsid", permName));
 		add(new KeyValueParam("permvalue", permValue));
-		add(new KeyValueParam("permnegated", permNegated ? "1" : "0"));
-		add(new KeyValueParam("permskip", permSkipped ? "1" : "0"));
+		add(new KeyValueParam("permnegated", permNegated));
+		add(new KeyValueParam("permskip", permSkipped));
 	}
 
 }

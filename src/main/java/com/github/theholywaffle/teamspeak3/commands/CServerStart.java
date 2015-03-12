@@ -32,7 +32,6 @@ public class CServerStart extends Command {
 
 	public CServerStart(int id) {
 		super("serverstart");
-		add(new KeyValueParam("sid", id + ""));
+		add(new KeyValueParam("sid", id));
 	}
-
 }

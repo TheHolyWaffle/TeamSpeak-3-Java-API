@@ -33,7 +33,7 @@ public class CChannelGroupPermList extends Command {
 
 	public CChannelGroupPermList(int groupId) {
 		super("channelgrouppermlist");
-		add(new KeyValueParam("cgid", groupId + ""));
+		add(new KeyValueParam("cgid", groupId));
 		add(new OptionParam("permsid"));
 	}
 

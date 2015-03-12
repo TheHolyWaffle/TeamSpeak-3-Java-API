@@ -38,6 +38,7 @@ public class CChannelGroupAdd extends Command {
 	public CChannelGroupAdd(String name, PermissionGroupDatabaseType t) {
 		super("channelgroupadd");
 		add(new KeyValueParam("name", name));
+
 		if (t != null) {
 			add(new KeyValueParam("type", t.getIndex()));
 		}

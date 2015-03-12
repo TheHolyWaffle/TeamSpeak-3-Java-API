@@ -32,6 +32,7 @@ public class CChannelGroupClientList extends Command {
 
 	public CChannelGroupClientList(int channelId, int clientDBId, int groupId) {
 		super("channelgroupclientlist");
+
 		if (channelId > 0) {
 			add(new KeyValueParam("cid", channelId));
 		}

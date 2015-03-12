@@ -35,14 +35,17 @@ public class CServerCreate extends Command {
 
 	public CServerCreate(String name, HashMap<VirtualServerProperty, String> map) {
 		super("servercreate");
-		add(new KeyValueParam(
-				VirtualServerProperty.VIRTUALSERVER_NAME.getName(), name));
+		add(new KeyValueParam(VirtualServerProperty.VIRTUALSERVER_NAME.getName(), name));
+
 		if (map != null) {
 			for (final VirtualServerProperty p : map.keySet()) {
+				if (!p.isChangeable()) {
+					throw new IllegalArgumentException("VirtualServerProperty " + p.getName() + " is not changeable!");
+				}
+
 				add(new KeyValueParam(p.getName(), map.get(p)));
 			}
 		}
-
 	}
 
 }

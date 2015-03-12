@@ -35,14 +35,16 @@ public class CClientEdit extends Command {
 
 	public CClientEdit(int clientId, HashMap<ClientProperty, String> options) {
 		super("clientedit");
-		add(new KeyValueParam("clid", clientId + ""));
+		add(new KeyValueParam("clid", clientId));
+
 		if (options != null) {
 			for (final ClientProperty p : options.keySet()) {
-				if (p.isChangeable()) {
-					add(new KeyValueParam(p.getName(), options.get(p)));
+				if (!p.isChangeable()) {
+					throw new IllegalArgumentException("ClientProperty " + p.getName() + " is not changeable!");
 				}
+
+				add(new KeyValueParam(p.getName(), options.get(p)));
 			}
 		}
 	}
-
 }

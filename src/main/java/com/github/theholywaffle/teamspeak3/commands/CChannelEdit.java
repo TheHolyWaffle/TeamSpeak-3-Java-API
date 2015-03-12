@@ -36,11 +36,14 @@ public class CChannelEdit extends Command {
 	public CChannelEdit(int channelId, HashMap<ChannelProperty, String> options) {
 		super("channeledit");
 		add(new KeyValueParam("cid", channelId));
+
 		if (options != null) {
 			for (final ChannelProperty p : options.keySet()) {
-				if (p.isChangeable()) {
-					add(new KeyValueParam(p.getName(), options.get(p)));
+				if (!p.isChangeable()) {
+					throw new IllegalArgumentException("ChannelProperty " + p.getName() + " is not changeable!");
 				}
+
+				add(new KeyValueParam(p.getName(), options.get(p)));
 			}
 		}
 	}

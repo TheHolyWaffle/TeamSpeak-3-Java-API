@@ -32,7 +32,7 @@ public class CMessageDel extends Command {
 
 	public CMessageDel(int messageId) {
 		super("messagedel");
-		add(new KeyValueParam("msgid", messageId + ""));
+		add(new KeyValueParam("msgid", messageId));
 	}
 
 }

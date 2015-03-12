@@ -35,11 +35,14 @@ public class CClientUpdate extends Command {
 
 	public CClientUpdate(HashMap<ClientProperty, String> options) {
 		super("clientupdate");
+
 		if (options != null) {
 			for (final ClientProperty p : options.keySet()) {
-				if (p.isChangeable()) {
-					add(new KeyValueParam(p.getName(), options.get(p)));
+				if (!p.isChangeable()) {
+					throw new IllegalArgumentException("ClientProperty " + p.getName() + " is not changeable!");
 				}
+
+				add(new KeyValueParam(p.getName(), options.get(p)));
 			}
 		}
 	}

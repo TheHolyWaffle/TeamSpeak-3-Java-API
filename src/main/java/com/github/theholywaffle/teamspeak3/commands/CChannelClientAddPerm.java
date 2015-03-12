@@ -30,8 +30,7 @@ import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 
 public class CChannelClientAddPerm extends Command {
 
-	public CChannelClientAddPerm(int channelId, int clientDBId,
-			String permName, int permValue) {
+	public CChannelClientAddPerm(int channelId, int clientDBId, String permName, int permValue) {
 		super("channelclientaddperm");
 		add(new KeyValueParam("cid", channelId));
 		add(new KeyValueParam("cldbid", clientDBId));

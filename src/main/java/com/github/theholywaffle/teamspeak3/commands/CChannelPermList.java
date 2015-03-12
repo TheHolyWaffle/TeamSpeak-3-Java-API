@@ -33,7 +33,7 @@ public class CChannelPermList extends Command {
 
 	public CChannelPermList(int channelId) {
 		super("channelpermlist");
-		add(new KeyValueParam("cid", channelId + ""));
+		add(new KeyValueParam("cid", channelId));
 		add(new OptionParam("permsid"));
 	}
 
