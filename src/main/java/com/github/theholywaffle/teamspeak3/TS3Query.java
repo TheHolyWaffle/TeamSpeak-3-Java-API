@@ -115,12 +115,13 @@ public class TS3Query {
 		return in;
 	}
 
-	public boolean doCommand(final Command c) {
+	public boolean doCommand(Command c) {
+		final Object signal = new Object();
 		final Callback callback = new Callback() {
 			@Override
 			public void handle() {
-				synchronized (c) {
-					c.notifyAll();
+				synchronized (signal) {
+					signal.notifyAll();
 				}
 			}
 		};
@@ -132,8 +133,8 @@ public class TS3Query {
 		boolean interrupted = false;
 		while (!c.isAnswered() && System.currentTimeMillis() < end) {
 			try {
-				synchronized (c) {
-					c.wait(end - System.currentTimeMillis());
+				synchronized (signal) {
+					signal.wait(end - System.currentTimeMillis());
 				}
 			} catch (final InterruptedException e) {
 				interrupted = true;
