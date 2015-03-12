@@ -26,13 +26,13 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.HashMap;
+import java.util.Map;
 
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 
 public class ConnectionInfo extends Wrapper {
 
-	public ConnectionInfo(HashMap<String, String> map) {
+	public ConnectionInfo(Map<String, String> map) {
 		super(map);
 	}
 

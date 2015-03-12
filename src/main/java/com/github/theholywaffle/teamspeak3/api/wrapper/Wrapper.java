@@ -26,70 +26,66 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.HashMap;
-
-import com.github.theholywaffle.teamspeak3.StringUtil;
 import com.github.theholywaffle.teamspeak3.api.Property;
+
+import java.util.Map;
 
 public class Wrapper {
 
-	private final HashMap<String, String> map;
+	private final Map<String, String> map;
 
-	public Wrapper(HashMap<String, String> map) {
+	public Wrapper(Map<String, String> map) {
 		this.map = map;
 	}
 
-	public HashMap<String, String> getMap() {
+	public Map<String, String> getMap() {
 		return map;
 	}
 
-	protected boolean getBoolean(String str) {
-		if (str.isEmpty()) {
-			return false;
-		}
-		return StringUtil.getBoolean(get(str));
+	public boolean getBoolean(String str) {
+		return getInt(str) == 1;
 	}
 
-	protected boolean getBoolean(Property p) {
+	public boolean getBoolean(Property p) {
 		return getBoolean(p.getName());
 	}
 
-	protected double getDouble(String str) {
-		if (str.isEmpty()) {
+	public double getDouble(String str) {
+		final String value = get(str);
+		if (value == null || value.isEmpty()) {
 			return -1D;
 		}
-		return StringUtil.getDouble(get(str));
+		return Double.valueOf(value);
 	}
 
-	protected double getDouble(Property p) {
+	public double getDouble(Property p) {
 		return getDouble(p.getName());
 	}
 
-	protected long getLong(String str) {
-		if (str.isEmpty()) {
+	public long getLong(String str) {
+		if (str == null || str.isEmpty()) {
 			return -1L;
 		}
-		return StringUtil.getLong(get(str));
+		return Long.valueOf(str);
 	}
 
-	protected long getLong(Property p) {
+	public long getLong(Property p) {
 		return getLong(p.getName());
 	}
 
-	protected int getInt(String str) {
-		if (str.isEmpty()) {
+	public int getInt(String str) {
+		if (str == null || str.isEmpty()) {
 			return -1;
 		}
-		return StringUtil.getInt(get(str));
+		return Integer.valueOf(str);
 	}
 
-	protected int getInt(Property p) {
+	public int getInt(Property p) {
 		return getInt(p.getName());
 	}
 
 	/**
 	 * Only use this if you know what you are doing.
-	 * 
 	 */
 	public String get(String str) {
 		final String result = map.get(str);
@@ -98,7 +94,6 @@ public class Wrapper {
 
 	/**
 	 * Only use this if you know what you are doing.
-	 * 
 	 */
 	public String get(Property p) {
 		return get(p.getName());

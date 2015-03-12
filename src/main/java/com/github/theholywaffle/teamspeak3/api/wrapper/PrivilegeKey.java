@@ -27,11 +27,11 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  */
 
 import java.util.Date;
-import java.util.HashMap;
+import java.util.Map;
 
 public class PrivilegeKey extends Wrapper {
 
-	public PrivilegeKey(HashMap<String, String> map) {
+	public PrivilegeKey(Map<String, String> map) {
 		super(map);
 	}
 

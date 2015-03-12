@@ -26,14 +26,14 @@ package com.github.theholywaffle.teamspeak3.commands;
  * #L%
  */
 
-import java.util.HashMap;
-
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 
+import java.util.Map;
+
 public class CClientUpdate extends Command {
 
-	public CClientUpdate(HashMap<ClientProperty, String> options) {
+	public CClientUpdate(Map<ClientProperty, String> options) {
 		super("clientupdate");
 
 		if (options != null) {
@@ -46,5 +46,4 @@ public class CClientUpdate extends Command {
 			}
 		}
 	}
-
 }

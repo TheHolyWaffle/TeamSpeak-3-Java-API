@@ -27,13 +27,13 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  */
 
 import java.util.Date;
-import java.util.HashMap;
+import java.util.Map;
 
 import com.github.theholywaffle.teamspeak3.api.ServerInstanceProperty;
 
 public class HostInfo extends Wrapper {
 
-	public HostInfo(HashMap<String, String> map) {
+	public HostInfo(Map<String, String> map) {
 		super(map);
 	}
 
@@ -42,8 +42,7 @@ public class HostInfo extends Wrapper {
 	}
 
 	public Date getTimeStamp() {
-		return new Date(
-				getLong(ServerInstanceProperty.HOST_TIMESTAMP_UTC) * 1000);
+		return new Date(getLong(ServerInstanceProperty.HOST_TIMESTAMP_UTC) * 1000);
 	}
 
 	public int getTotalRunningServers() {

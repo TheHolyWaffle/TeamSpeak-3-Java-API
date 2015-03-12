@@ -28,11 +28,11 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
 
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
 
-import java.util.HashMap;
+import java.util.Map;
 
 public class ChannelGroup extends Wrapper {
 
-	public ChannelGroup(HashMap<String, String> map) {
+	public ChannelGroup(Map<String, String> map) {
 		super(map);
 	}
 

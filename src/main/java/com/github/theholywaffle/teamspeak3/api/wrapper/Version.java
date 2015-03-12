@@ -26,11 +26,11 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.HashMap;
+import java.util.Map;
 
 public class Version extends Wrapper {
 
-	public Version(HashMap<String, String> map) {
+	public Version(Map<String, String> map) {
 		super(map);
 	}
 

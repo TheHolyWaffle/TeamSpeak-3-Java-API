@@ -26,15 +26,14 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.Date;
-import java.util.HashMap;
-
-import com.github.theholywaffle.teamspeak3.StringUtil;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
+
+import java.util.Date;
+import java.util.Map;
 
 public class Client extends Wrapper {
 
-	public Client(HashMap<String, String> map) {
+	public Client(Map<String, String> map) {
 		super(map);
 	}
 
@@ -99,7 +98,7 @@ public class Client extends Wrapper {
 		final String[] arr = str.split(",");
 		final int[] groups = new int[arr.length];
 		for (int i = 0; i < groups.length; i++) {
-			groups[i] = StringUtil.getInt(arr[i]);
+			groups[i] = Integer.valueOf(arr[i]);
 		}
 		return groups;
 	}

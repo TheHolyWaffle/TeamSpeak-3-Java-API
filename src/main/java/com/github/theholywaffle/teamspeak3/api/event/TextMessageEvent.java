@@ -28,11 +28,11 @@ package com.github.theholywaffle.teamspeak3.api.event;
 
 import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
 
-import java.util.HashMap;
+import java.util.Map;
 
 public class TextMessageEvent extends BaseEvent {
 
-	public TextMessageEvent(HashMap<String, String> map) {
+	public TextMessageEvent(Map<String, String> map) {
 		super(map);
 	}
 

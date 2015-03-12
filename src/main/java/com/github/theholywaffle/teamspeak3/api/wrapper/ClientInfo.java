@@ -27,14 +27,13 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  */
 
 import java.util.Date;
-import java.util.HashMap;
+import java.util.Map;
 
-import com.github.theholywaffle.teamspeak3.StringUtil;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 
 public class ClientInfo extends Wrapper {
 
-	public ClientInfo(HashMap<String, String> map) {
+	public ClientInfo(Map<String, String> map) {
 		super(map);
 	}
 
@@ -95,8 +94,7 @@ public class ClientInfo extends Wrapper {
 	}
 
 	public int getDefaultChannel() {
-		return StringUtil.getInt(get(ClientProperty.CLIENT_DEFAULT_CHANNEL)
-				.substring(1));
+		return getInt(ClientProperty.CLIENT_DEFAULT_CHANNEL);
 	}
 
 	public String getDefaultToken() {
@@ -168,7 +166,7 @@ public class ClientInfo extends Wrapper {
 		final String[] arr = str.split(",");
 		final int[] groups = new int[arr.length];
 		for (int i = 0; i < groups.length; i++) {
-			groups[i] = StringUtil.getInt(arr[i]);
+			groups[i] = Integer.valueOf(arr[i]);
 		}
 		return groups;
 	}

@@ -26,14 +26,14 @@ package com.github.theholywaffle.teamspeak3.commands;
  * #L%
  */
 
-import java.util.HashMap;
-
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 
+import java.util.Map;
+
 public class CChannelEdit extends Command {
 
-	public CChannelEdit(int channelId, HashMap<ChannelProperty, String> options) {
+	public CChannelEdit(int channelId, Map<ChannelProperty, String> options) {
 		super("channeledit");
 		add(new KeyValueParam("cid", channelId));
 
@@ -47,5 +47,4 @@ public class CChannelEdit extends Command {
 			}
 		}
 	}
-
 }

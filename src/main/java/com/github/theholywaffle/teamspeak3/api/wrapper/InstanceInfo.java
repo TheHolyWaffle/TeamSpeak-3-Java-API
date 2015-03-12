@@ -26,13 +26,13 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.HashMap;
+import java.util.Map;
 
 import com.github.theholywaffle.teamspeak3.api.ServerInstanceProperty;
 
 public class InstanceInfo extends Wrapper {
 
-	public InstanceInfo(HashMap<String, String> map) {
+	public InstanceInfo(Map<String, String> map) {
 		super(map);
 	}
 

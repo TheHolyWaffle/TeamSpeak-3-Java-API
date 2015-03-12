@@ -26,13 +26,13 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.HashMap;
+import java.util.Map;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 
 public class Channel extends Wrapper {
 
-	public Channel(HashMap<String, String> map) {
+	public Channel(Map<String, String> map) {
 		super(map);
 	}
 
@@ -106,7 +106,5 @@ public class Channel extends Wrapper {
 
 	public int getNeededSubscribePower() {
 		return getInt(ChannelProperty.CHANNEL_NEEDED_SUBSCRIBE_POWER);
-
 	}
-
 }

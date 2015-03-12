@@ -26,11 +26,11 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.HashMap;
+import java.util.Map;
 
 public class AdvancedPermission extends Wrapper {
 
-	public AdvancedPermission(HashMap<String, String> map) {
+	public AdvancedPermission(Map<String, String> map) {
 		super(map);
 	}
 

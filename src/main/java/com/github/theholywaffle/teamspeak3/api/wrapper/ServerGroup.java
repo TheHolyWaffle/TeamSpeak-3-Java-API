@@ -26,13 +26,13 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.HashMap;
+import java.util.Map;
 
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
 
 public class ServerGroup extends Wrapper {
 
-	public ServerGroup(HashMap<String, String> map) {
+	public ServerGroup(Map<String, String> map) {
 		super(map);
 	}
 
@@ -45,9 +45,9 @@ public class ServerGroup extends Wrapper {
 	}
 
 	public PermissionGroupDatabaseType getType() {
-		for (final PermissionGroupDatabaseType p : PermissionGroupDatabaseType
-				.values()) {
-			if (p.getIndex() == getInt("type")) {
+		final int type = getInt("type");
+		for (final PermissionGroupDatabaseType p : PermissionGroupDatabaseType.values()) {
+			if (p.getIndex() == type) {
 				return p;
 			}
 		}

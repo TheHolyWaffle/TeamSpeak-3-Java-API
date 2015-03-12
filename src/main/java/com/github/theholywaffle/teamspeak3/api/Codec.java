@@ -28,12 +28,12 @@ package com.github.theholywaffle.teamspeak3.api;
 
 import com.github.theholywaffle.teamspeak3.TS3Api;
 
-import java.util.HashMap;
+import java.util.Map;
 
 /**
- * A list of codecs currently used by TeamSpeak.
+ * Voice codecs currently used by TeamSpeak3.
  * <p>
- * A channel's codec may be edited by using {@link TS3Api#editChannel(int, HashMap)}.
+ * A channel's codec may be edited by using {@link TS3Api#editChannel(int, Map)}.
  * All voice data may also be encrypted.
  * </p>
  */

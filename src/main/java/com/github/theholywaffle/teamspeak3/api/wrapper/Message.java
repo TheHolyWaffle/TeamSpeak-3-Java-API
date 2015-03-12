@@ -27,11 +27,11 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  */
 
 import java.util.Date;
-import java.util.HashMap;
+import java.util.Map;
 
 public class Message extends Wrapper {
 
-	public Message(HashMap<String, String> map) {
+	public Message(Map<String, String> map) {
 		super(map);
 	}
 
@@ -39,7 +39,7 @@ public class Message extends Wrapper {
 		return getInt("msgid");
 	}
 
-	public String getClientUniqueIdentifier() {
+	public String getSenderUniqueIdentifier() {
 		return get("cluid");
 	}
 
@@ -51,8 +51,7 @@ public class Message extends Wrapper {
 		return new Date(getLong("timestamp") * 1000);
 	}
 
-	public boolean hasRead() {
+	public boolean hasBeenRead() {
 		return getBoolean("flag_read");
 	}
-
 }

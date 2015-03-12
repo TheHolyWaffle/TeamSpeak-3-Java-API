@@ -26,14 +26,14 @@ package com.github.theholywaffle.teamspeak3.commands;
  * #L%
  */
 
-import java.util.HashMap;
-
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 
+import java.util.Map;
+
 public class CClientEdit extends Command {
 
-	public CClientEdit(int clientId, HashMap<ClientProperty, String> options) {
+	public CClientEdit(int clientId, Map<ClientProperty, String> options) {
 		super("clientedit");
 		add(new KeyValueParam("clid", clientId));
 
@@ -47,4 +47,5 @@ public class CClientEdit extends Command {
 			}
 		}
 	}
+
 }

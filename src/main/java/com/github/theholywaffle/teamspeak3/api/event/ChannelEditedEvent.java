@@ -28,11 +28,11 @@ package com.github.theholywaffle.teamspeak3.api.event;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 
-import java.util.HashMap;
+import java.util.Map;
 
 public class ChannelEditedEvent extends BaseEvent {
 
-	public ChannelEditedEvent(HashMap<String, String> map) {
+	public ChannelEditedEvent(Map<String, String> map) {
 		super(map);
 	}
 

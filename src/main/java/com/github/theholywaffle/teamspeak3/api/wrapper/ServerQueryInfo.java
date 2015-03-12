@@ -26,13 +26,15 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.HashMap;
+import java.util.Map;
 
+import com.github.theholywaffle.teamspeak3.api.ClientProperty;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerStatus;
 
 public class ServerQueryInfo extends Wrapper {
 
-	public ServerQueryInfo(HashMap<String, String> map) {
+	public ServerQueryInfo(Map<String, String> map) {
 		super(map);
 	}
 
@@ -41,7 +43,7 @@ public class ServerQueryInfo extends Wrapper {
 	}
 
 	public int getDatabaseId() {
-		return getInt("client_database_id");
+		return getInt(ClientProperty.CLIENT_DATABASE_ID);
 	}
 
 	public int getId() {
@@ -49,11 +51,11 @@ public class ServerQueryInfo extends Wrapper {
 	}
 
 	public String getLoginName() {
-		return get("client_login_name");
+		return get(ClientProperty.CLIENT_LOGIN_NAME);
 	}
 
 	public String getNickname() {
-		return get("client_nickname");
+		return get(ClientProperty.CLIENT_NICKNAME);
 	}
 
 	public int getOriginServerId() {
@@ -61,20 +63,21 @@ public class ServerQueryInfo extends Wrapper {
 	}
 
 	public String getUniqueIdentifier() {
-		return get("client_unique_identifier");
+		return get(ClientProperty.CLIENT_UNIQUE_IDENTIFIER);
 	}
 
 	public int getVirtualServerId() {
-		return getInt("virtualserver_id");
+		return getInt(VirtualServerProperty.VIRTUALSERVER_ID);
 	}
 
 	public int getVirtualServerPort() {
-		return getInt("virtualserver_port");
+		return getInt(VirtualServerProperty.VIRTUALSERVER_PORT);
 	}
 
 	public VirtualServerStatus getVirtualServerStatus() {
+		final String status = get(VirtualServerProperty.VIRTUALSERVER_STATUS);
 		for (final VirtualServerStatus s : VirtualServerStatus.values()) {
-			if (s.getName().equals(get("virtualserver_status"))) {
+			if (s.getName().equals(status)) {
 				return s;
 			}
 		}
@@ -82,7 +85,6 @@ public class ServerQueryInfo extends Wrapper {
 	}
 
 	public String getVirtualServerUniqueIdentifier() {
-		return get("virtualserver_unique_identifier");
+		return get(VirtualServerProperty.VIRTUALSERVER_UNIQUE_IDENTIFIER);
 	}
-
 }

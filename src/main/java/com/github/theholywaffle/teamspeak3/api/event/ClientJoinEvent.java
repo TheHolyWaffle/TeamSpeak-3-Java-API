@@ -28,11 +28,11 @@ package com.github.theholywaffle.teamspeak3.api.event;
 
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 
-import java.util.HashMap;
+import java.util.Map;
 
 public class ClientJoinEvent extends BaseEvent {
 
-	public ClientJoinEvent(HashMap<String, String> map) {
+	public ClientJoinEvent(Map<String, String> map) {
 		super(map);
 	}
 

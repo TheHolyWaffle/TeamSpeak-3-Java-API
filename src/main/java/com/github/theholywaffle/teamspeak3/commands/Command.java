@@ -26,26 +26,27 @@ package com.github.theholywaffle.teamspeak3.commands;
  * #L%
  */
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
 import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.parameter.Parameter;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 
-public class Command {
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+
+public abstract class Command {
 
 	private final String command;
+	private final List<Parameter> params = new LinkedList<>();
+
 	private boolean sent = false;
 	private boolean answered = false;
 	private DefaultArrayResponse response;
 	private QueryError error;
-	private final ArrayList<Parameter> params = new ArrayList<>();
 	private String raw;
 
-	public Command(String command) {
+	protected Command(String command) {
 		this.command = command;
 	}
 
@@ -62,8 +63,8 @@ public class Command {
 
 	public void feedError(String err) {
 		if (error == null) {
-			error = new QueryError(new DefaultArrayResponse(err).getArray()
-					.get(0));
+			final DefaultArrayResponse errorResponse = new DefaultArrayResponse(err);
+			error = new QueryError(errorResponse.getFirstResponse().getMap());
 		}
 	}
 
@@ -76,17 +77,15 @@ public class Command {
 	}
 
 	public Wrapper getFirstResponse() {
-		final List<HashMap<String, String>> resp = getResponse();
-		if (resp.size() > 0) {
-			return new Wrapper(resp.get(0));
+		if (response == null || response.getArray().isEmpty()) {
+			return new Wrapper(Collections.<String, String>emptyMap());
 		}
-		return new Wrapper(new HashMap<String, String>());
+
+		return response.getFirstResponse();
 	}
 
-	public List<HashMap<String, String>> getResponse() {
-		if (response == null) {
-			return new DefaultArrayResponse("").getArray();
-		}
+	public List<Wrapper> getResponse() {
+		if (response == null) return Collections.emptyList();
 		return response.getArray();
 	}
 
@@ -105,7 +104,7 @@ public class Command {
 	public void setSent() {
 		sent = true;
 	}
-	
+
 	public String toString() {
 		String str = command;
 		for (final Parameter p : params) {

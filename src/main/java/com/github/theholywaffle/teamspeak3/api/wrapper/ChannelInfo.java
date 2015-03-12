@@ -26,13 +26,13 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.HashMap;
+import java.util.Map;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 
 public class ChannelInfo extends Wrapper {
 
-	public ChannelInfo(HashMap<String, String> map) {
+	public ChannelInfo(Map<String, String> map) {
 		super(map);
 	}
 

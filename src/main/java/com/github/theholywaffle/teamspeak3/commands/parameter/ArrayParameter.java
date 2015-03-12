@@ -26,8 +26,8 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
  * #L%
  */
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 public class ArrayParameter extends Parameter {
@@ -35,11 +35,11 @@ public class ArrayParameter extends Parameter {
 	private final List<Parameter> parameters;
 
 	public ArrayParameter() {
-		parameters = new ArrayList<>();
+		parameters = new LinkedList<>();
 	}
 
 	public ArrayParameter(Parameter... parameters) {
-		this.parameters = new ArrayList<>(Arrays.asList(parameters));
+		this.parameters = new LinkedList<>(Arrays.asList(parameters));
 	}
 
 	public ArrayParameter add(Parameter p) {

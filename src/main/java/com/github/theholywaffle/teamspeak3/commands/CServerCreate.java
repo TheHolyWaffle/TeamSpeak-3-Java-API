@@ -26,14 +26,14 @@ package com.github.theholywaffle.teamspeak3.commands;
  * #L%
  */
 
-import java.util.HashMap;
-
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 
+import java.util.Map;
+
 public class CServerCreate extends Command {
 
-	public CServerCreate(String name, HashMap<VirtualServerProperty, String> map) {
+	public CServerCreate(String name, Map<VirtualServerProperty, String> map) {
 		super("servercreate");
 		add(new KeyValueParam(VirtualServerProperty.VIRTUALSERVER_NAME.getName(), name));
 
@@ -46,6 +46,7 @@ public class CServerCreate extends Command {
 				add(new KeyValueParam(p.getName(), map.get(p)));
 			}
 		}
+
 	}
 
 }

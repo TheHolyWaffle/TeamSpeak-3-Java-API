@@ -26,11 +26,11 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * #L%
  */
 
-import java.util.HashMap;
+import java.util.Map;
 
 public class ServerEditedEvent extends BaseEvent {
 
-	public ServerEditedEvent(HashMap<String, String> map) {
+	public ServerEditedEvent(Map<String, String> map) {
 		super(map);
 	}
 

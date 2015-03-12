@@ -26,11 +26,11 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.HashMap;
+import java.util.Map;
 
 public class CreatedVirtualServer extends Wrapper {
 
-	public CreatedVirtualServer(HashMap<String, String> map) {
+	public CreatedVirtualServer(Map<String, String> map) {
 		super(map);
 	}
 

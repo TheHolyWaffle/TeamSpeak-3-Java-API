@@ -30,13 +30,13 @@ import com.github.theholywaffle.teamspeak3.api.event.*;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3UnknownEventException;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class EventManager {
 
-	private final List<TS3Listener> listeners = new ArrayList<>();
+	private final List<TS3Listener> listeners = new LinkedList<>();
 
 	public void addListeners(TS3Listener... listeners) {
 		for (final TS3Listener l : listeners) {
@@ -59,7 +59,8 @@ public class EventManager {
 	}
 
 	private TS3Event createEvent(String notifyName, String notifyBody) {
-		final HashMap<String, String> eventData = new DefaultArrayResponse(notifyBody).getArray().get(0);
+		final DefaultArrayResponse response = new DefaultArrayResponse(notifyBody);
+		final Map<String, String> eventData = response.getFirstResponse().getMap();
 
 		switch (notifyName) {
 			case "notifytextmessage":

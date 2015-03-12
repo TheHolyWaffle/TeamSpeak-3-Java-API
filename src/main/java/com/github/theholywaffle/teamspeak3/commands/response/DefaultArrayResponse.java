@@ -26,54 +26,71 @@ package com.github.theholywaffle.teamspeak3.commands.response;
  * #L%
  */
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 
-import com.github.theholywaffle.teamspeak3.StringUtil;
+import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
+import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 
 public class DefaultArrayResponse {
 
-	private final List<HashMap<String, String>> array = new ArrayList<>();
+	private final List<Wrapper> array;
+
+	public DefaultArrayResponse() {
+		array = Collections.emptyList();
+	}
 
 	public DefaultArrayResponse(String raw) {
 		final StringTokenizer tkn = new StringTokenizer(raw, "|", false);
+		array = new LinkedList<>();
 
 		while (tkn.hasMoreTokens()) {
-			array.add(parse(tkn.nextToken()));
+			final Wrapper wrapper = new Wrapper(parse(tkn.nextToken()));
+			array.add(wrapper);
 		}
 	}
 
-	private HashMap<String, String> parse(String raw) {
+	private Map<String, String> parse(String raw) {
 		final StringTokenizer st = new StringTokenizer(raw, " ", false);
-		final HashMap<String, String> options = new HashMap<>();
+		final Map<String, String> options = new HashMap<>();
 
 		while (st.hasMoreTokens()) {
 			final String tmp = st.nextToken();
 			final int pos = tmp.indexOf("=");
 
 			if (pos == -1) {
-				options.put(tmp, "");
+				final String valuelessKey = CommandEncoding.decode(tmp);
+				options.put(valuelessKey, "");
 			} else {
-				options.put(StringUtil.decode(tmp.substring(0, pos)),
-						StringUtil.decode(tmp.substring(pos + 1)));
+				final String key = CommandEncoding.decode(tmp.substring(0, pos));
+				final String value = CommandEncoding.decode(tmp.substring(pos + 1));
+				options.put(key, value);
 			}
 		}
 		return options;
 	}
 
-	public List<HashMap<String, String>> getArray() {
+	public List<Wrapper> getArray() {
 		return array;
+	}
+
+	public Wrapper getFirstResponse() {
+		if (array.size() == 0) return null;
+		return array.get(0);
 	}
 
 	public String toString() {
 		StringBuilder str = new StringBuilder();
-		for (final HashMap<String, String> opt : array) {
-			str.append(opt).append(" | ");
+
+		for (final Wrapper wrapper : array) {
+			str.append(wrapper.getMap()).append(" | ");
 		}
+
 		str.setLength(str.length() - " | ".length());
 		return str.toString();
 	}
-
 }

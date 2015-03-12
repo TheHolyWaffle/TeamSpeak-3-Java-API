@@ -34,8 +34,9 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.*;
 import com.github.theholywaffle.teamspeak3.commands.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -111,7 +112,7 @@ public class TS3Api {
 
 		final CBanAdd add = new CBanAdd(ip, name, uid, timeInSeconds, reason);
 		if (query.doCommand(add)) {
-			return StringUtil.getInt(add.getFirstResponse().get("banid"));
+			return add.getFirstResponse().getInt("banid");
 		}
 		return -1;
 	}
@@ -172,7 +173,7 @@ public class TS3Api {
 	public int addChannelGroup(String name, PermissionGroupDatabaseType type) {
 		final CChannelGroupAdd add = new CChannelGroupAdd(name, type);
 		if (query.doCommand(add)) {
-			return StringUtil.getInt(add.getFirstResponse().get("cgid"));
+			return add.getFirstResponse().getInt("cgid");
 		}
 		return -1;
 	}
@@ -408,7 +409,7 @@ public class TS3Api {
 	public int addServerGroup(String name, PermissionGroupDatabaseType type) {
 		final CServerGroupAdd add = new CServerGroupAdd(name, type);
 		if (query.doCommand(add)) {
-			return StringUtil.getInt(add.getFirstResponse().get("sgid"));
+			return add.getFirstResponse().getInt("sgid");
 		}
 		return -1;
 	}
@@ -500,9 +501,9 @@ public class TS3Api {
 	public int[] banClient(int clientId, long timeInSeconds, String reason) {
 		final CBanClient client = new CBanClient(clientId, timeInSeconds, reason);
 		if (query.doCommand(client)) {
-			final List<HashMap<String, String>> response = client.getResponse();
-			final int banId1 = StringUtil.getInt(response.get(0).get("banid"));
-			final int banId2 = StringUtil.getInt(response.get(1).get("banid"));
+			final List<Wrapper> response = client.getResponse();
+			final int banId1 = response.get(0).getInt("banid");
+			final int banId2 = response.get(1).getInt("banid");
 			return new int[] {banId1, banId2};
 		}
 		return null;
@@ -588,7 +589,7 @@ public class TS3Api {
 	public int copyChannelGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
 		final CChannelGroupCopy copy = new CChannelGroupCopy(sourceGroupId, targetName, type);
 		if (query.doCommand(copy)) {
-			return StringUtil.getInt(copy.getFirstResponse().get("cgid"));
+			return copy.getFirstResponse().getInt("cgid");
 		}
 		return -1;
 	}
@@ -638,7 +639,7 @@ public class TS3Api {
 	public int copyServerGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
 		final CServerGroupCopy copy = new CServerGroupCopy(sourceGroupId, targetName, type);
 		if (query.doCommand(copy)) {
-			return StringUtil.getInt(copy.getFirstResponse().get("sgid"));
+			return copy.getFirstResponse().getInt("sgid");
 		}
 		return -1;
 	}
@@ -655,10 +656,10 @@ public class TS3Api {
 	 *
 	 * @see Channel
 	 */
-	public int createChannel(String name, HashMap<ChannelProperty, String> options) {
+	public int createChannel(String name, Map<ChannelProperty, String> options) {
 		final CChannelCreate create = new CChannelCreate(name, options);
 		if (query.doCommand(create)) {
-			return StringUtil.getInt(create.getFirstResponse().get("cid"));
+			return create.getFirstResponse().getInt("cid");
 		}
 		return -1;
 	}
@@ -685,7 +686,7 @@ public class TS3Api {
 	 *
 	 * @see VirtualServer
 	 */
-	public CreatedVirtualServer createServer(String name, HashMap<VirtualServerProperty, String> options) {
+	public CreatedVirtualServer createServer(String name, Map<VirtualServerProperty, String> options) {
 		final CServerCreate create = new CServerCreate(name, options);
 		if (query.doCommand(create)) {
 			return new CreatedVirtualServer(create.getFirstResponse().getMap());
@@ -1098,7 +1099,7 @@ public class TS3Api {
 	 *
 	 * @see Channel#getId()
 	 */
-	public boolean editChannel(int channelId, HashMap<ChannelProperty, String> options) {
+	public boolean editChannel(int channelId, Map<ChannelProperty, String> options) {
 		final CChannelEdit edit = new CChannelEdit(channelId, options);
 		return query.doCommand(edit);
 	}
@@ -1107,7 +1108,7 @@ public class TS3Api {
 	 * Changes a client's configuration using given properties.
 	 * <p>
 	 * Only {@link ClientProperty#CLIENT_DESCRIPTION} can be changed for other clients.
-	 * To update the current client's properties, use {@link #updateClient(HashMap)}.
+	 * To update the current client's properties, use {@link #updateClient(Map)}.
 	 * </p>
 	 *
 	 * @param clientId
@@ -1118,9 +1119,9 @@ public class TS3Api {
 	 * @return whether the command succeeded or not
 	 *
 	 * @see Client#getId()
-	 * @see #updateClient(HashMap)
+	 * @see #updateClient(Map)
 	 */
-	public boolean editClient(int clientId, HashMap<ClientProperty, String> options) {
+	public boolean editClient(int clientId, Map<ClientProperty, String> options) {
 		final CClientEdit edit = new CClientEdit(clientId, options);
 		return query.doCommand(edit);
 	}
@@ -1138,7 +1139,7 @@ public class TS3Api {
 	 * @see DatabaseClientInfo
 	 * @see Client#getDatabaseId()
 	 */
-	public boolean editDatabaseClient(int clientDBId, HashMap<ClientProperty, String> options) {
+	public boolean editDatabaseClient(int clientDBId, Map<ClientProperty, String> options) {
 		final CClientDBEdit edit = new CClientDBEdit(clientDBId, options);
 		return query.doCommand(edit);
 	}
@@ -1177,7 +1178,7 @@ public class TS3Api {
 	 *
 	 * @see VirtualServerProperty
 	 */
-	public boolean editServer(HashMap<VirtualServerProperty, String> options) {
+	public boolean editServer(Map<VirtualServerProperty, String> options) {
 		final CServerEdit edit = new CServerEdit(options);
 		return query.doCommand(edit);
 	}
@@ -1192,9 +1193,11 @@ public class TS3Api {
 	public List<Ban> getBans() {
 		final CBanList list = new CBanList();
 		if (query.doCommand(list)) {
-			final List<Ban> bans = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				bans.add(new Ban(opt));
+			final List<Wrapper> responses = list.getResponse();
+			final List<Ban> bans = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				bans.add(new Ban(response.getMap()));
 			}
 			return bans;
 		}
@@ -1211,9 +1214,11 @@ public class TS3Api {
 	public List<Binding> getBindings() {
 		final CBindingList list = new CBindingList();
 		if (query.doCommand(list)) {
-			final List<Binding> bindings = new ArrayList<>();
-			for (final HashMap<String, String> map : list.getResponse()) {
-				bindings.add(new Binding(map));
+			final List<Wrapper> responses = list.getResponse();
+			final List<Binding> bindings = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				bindings.add(new Binding(response.getMap()));
 			}
 			return bindings;
 		}
@@ -1264,11 +1269,11 @@ public class TS3Api {
 		if (allChannels == null) return null;
 
 		if (query.doCommand(find)) {
-			final List<HashMap<String, String>> responses = find.getResponse();
+			final List<Wrapper> responses = find.getResponse();
 			final List<Channel> channels = new ArrayList<>(responses.size());
 
-			for (final HashMap<String, String> response : responses) {
-				final int channelId = StringUtil.getInt(response.get("cid"));
+			for (final Wrapper response : responses) {
+				final int channelId = response.getInt("cid");
 				for (final Channel channel : allChannels) {
 					if (channel.getId() == channelId) {
 						channels.add(channel);
@@ -1298,9 +1303,11 @@ public class TS3Api {
 	public List<Permission> getChannelClientPermissions(int channelId, int clientDBId) {
 		final CChannelClientPermList list = new CChannelClientPermList(channelId, clientDBId);
 		if (query.doCommand(list)) {
-			final List<Permission> permissions = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				permissions.add(new Permission(opt));
+			final List<Wrapper> responses = list.getResponse();
+			final List<Permission> permissions = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				permissions.add(new Permission(response.getMap()));
 			}
 			return permissions;
 		}
@@ -1328,9 +1335,11 @@ public class TS3Api {
 	public List<ChannelGroupClient> getChannelGroupClients(int channelId, int clientDBId, int groupId) {
 		final CChannelGroupClientList list = new CChannelGroupClientList(channelId, clientDBId, groupId);
 		if (query.doCommand(list)) {
-			final List<ChannelGroupClient> clients = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				clients.add(new ChannelGroupClient(opt));
+			final List<Wrapper> responses = list.getResponse();
+			final List<ChannelGroupClient> clients = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				clients.add(new ChannelGroupClient(response.getMap()));
 			}
 			return clients;
 		}
@@ -1399,11 +1408,13 @@ public class TS3Api {
 	public List<Permission> getChannelGroupPermissions(int groupId) {
 		final CChannelGroupPermList list = new CChannelGroupPermList(groupId);
 		if (query.doCommand(list)) {
-			final List<Permission> p = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				p.add(new Permission(opt));
+			final List<Wrapper> responses = list.getResponse();
+			final List<Permission> permissions = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				permissions.add(new Permission(response.getMap()));
 			}
-			return p;
+			return permissions;
 		}
 		return null;
 	}
@@ -1418,9 +1429,11 @@ public class TS3Api {
 	public List<ChannelGroup> getChannelGroups() {
 		final CChannelGroupList list = new CChannelGroupList();
 		if (query.doCommand(list)) {
-			final List<ChannelGroup> groups = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				groups.add(new ChannelGroup(opt));
+			final List<Wrapper> responses = list.getResponse();
+			final List<ChannelGroup> groups = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				groups.add(new ChannelGroup(response.getMap()));
 			}
 			return groups;
 		}
@@ -1460,11 +1473,13 @@ public class TS3Api {
 	public List<Permission> getChannelPermissions(int channelId) {
 		final CChannelPermList list = new CChannelPermList(channelId);
 		if (query.doCommand(list)) {
-			final List<Permission> p = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				p.add(new Permission(opt));
+			final List<Wrapper> responses = list.getResponse();
+			final List<Permission> permissions = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				permissions.add(new Permission(response.getMap()));
 			}
-			return p;
+			return permissions;
 		}
 		return null;
 	}
@@ -1479,9 +1494,10 @@ public class TS3Api {
 	public List<Channel> getChannels() {
 		final CChannelList list = new CChannelList();
 		if (query.doCommand(list)) {
-			final List<Channel> channels = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				channels.add(new Channel(opt));
+			final List<Wrapper> responses = list.getResponse();
+			final List<Channel> channels = new ArrayList<>(responses.size());
+			for (final Wrapper response : responses) {
+				channels.add(new Channel(response.getMap()));
 			}
 			return channels;
 		}
@@ -1532,10 +1548,12 @@ public class TS3Api {
 		if (allClients == null) return null;
 
 		if (query.doCommand(find)) {
-			final List<Client> clients = new ArrayList<>();
-			for (final HashMap<String, String> response : find.getResponse()) {
+			final List<Wrapper> responses = find.getResponse();
+			final List<Client> clients = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
 				for (final Client client : allClients) {
-					if (client.getId() == StringUtil.getInt(response.get("clid"))) {
+					if (client.getId() == response.getInt("clid")) {
 						clients.add(client);
 						break;
 					}
@@ -1560,7 +1578,7 @@ public class TS3Api {
 	public ClientInfo getClientByUId(String clientUId) {
 		final CClientGetIds get = new CClientGetIds(clientUId);
 		if (query.doCommand(get)) {
-			return getClientInfo(StringUtil.getInt(get.getFirstResponse().getMap().get("clid")));
+			return getClientInfo(get.getFirstResponse().getInt("clid"));
 		}
 		return null;
 	}
@@ -1598,9 +1616,11 @@ public class TS3Api {
 	public List<Permission> getClientPermissions(int clientDBId) {
 		final CClientPermList list = new CClientPermList(clientDBId);
 		if (query.doCommand(list)) {
-			final List<Permission> permissions = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				permissions.add(new Permission(opt));
+			final List<Wrapper> responses = list.getResponse();
+			final List<Permission> permissions = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				permissions.add(new Permission(response.getMap()));
 			}
 			return permissions;
 		}
@@ -1617,9 +1637,11 @@ public class TS3Api {
 	public List<Client> getClients() {
 		final CClientList list = new CClientList();
 		if (query.doCommand(list)) {
-			final List<Client> clients = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				clients.add(new Client(opt));
+			final List<Wrapper> responses = list.getResponse();
+			final List<Client> clients = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				clients.add(new Client(response.getMap()));
 			}
 			return clients;
 		}
@@ -1652,9 +1674,11 @@ public class TS3Api {
 	public List<Complaint> getComplaints(int clientDBId) {
 		final CComplainList list = new CComplainList(clientDBId);
 		if (query.doCommand(list)) {
-			final List<Complaint> complaints = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				complaints.add(new Complaint(opt));
+			final List<Wrapper> responses = list.getResponse();
+			final List<Complaint> complaints = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				complaints.add(new Complaint(response.getMap()));
 			}
 			return complaints;
 		}
@@ -1691,11 +1715,11 @@ public class TS3Api {
 		final CClientDBFind find = new CClientDBFind(name, false);
 
 		if (query.doCommand(find)) {
-			final List<HashMap<String, String>> responses = find.getResponse();
+			final List<Wrapper> responses = find.getResponse();
 			final List<DatabaseClientInfo> clients = new ArrayList<>(responses.size());
 
-			for (HashMap<String, String> response : responses) {
-				final int databaseId = StringUtil.getInt(response.get("cldbid"));
+			for (Wrapper response : responses) {
+				final int databaseId = response.getInt("cldbid");
 				final DatabaseClientInfo clientInfo = getDatabaseClientInfo(databaseId);
 				if (clientInfo != null) {
 					clients.add(clientInfo);
@@ -1720,7 +1744,7 @@ public class TS3Api {
 	public DatabaseClientInfo getDatabaseClientByUId(String clientUId) {
 		final CClientGetDBIdFromUId get = new CClientGetDBIdFromUId(clientUId);
 		if (query.doCommand(get)) {
-			return getDatabaseClientInfo(StringUtil.getInt(get.getFirstResponse().get("cldbid")));
+			return getDatabaseClientInfo(get.getFirstResponse().getInt("cldbid"));
 		}
 		return null;
 	}
@@ -1760,14 +1784,15 @@ public class TS3Api {
 	public List<DatabaseClient> getDatabaseClients() {
 		final CClientDBList countList = new CClientDBList(0, 1, true);
 		if (query.doCommand(countList)) {
-			final int count = StringUtil.getInt(countList.getFirstResponse().get("count"));
-			int i = 0;
+			final int count = countList.getFirstResponse().getInt("count");
 			final List<DatabaseClient> clients = new ArrayList<>(count);
+
+			int i = 0;
 			while (i < count) {
 				final CClientDBList list = new CClientDBList(i, 200, false);
 				if (query.doCommand(list)) {
-					for (final HashMap<String, String> map : list.getResponse()) {
-						clients.add(new DatabaseClient(map));
+					for (final Wrapper response : list.getResponse()) {
+						clients.add(new DatabaseClient(response.getMap()));
 					}
 				}
 				i += 200;
@@ -1849,9 +1874,11 @@ public class TS3Api {
 	public List<Message> getOfflineMessages() {
 		final CMessageList list = new CMessageList();
 		if (query.doCommand(list)) {
-			final List<Message> msg = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				msg.add(new Message(opt));
+			final List<Wrapper> responses = list.getResponse();
+			final List<Message> msg = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				msg.add(new Message(response.getMap()));
 			}
 			return msg;
 		}
@@ -1873,9 +1900,11 @@ public class TS3Api {
 	public List<AdvancedPermission> getPermissionAssignments(String permName) {
 		final CPermFind find = new CPermFind(permName);
 		if (query.doCommand(find)) {
-			final List<AdvancedPermission> assignments = new ArrayList<>();
-			for (final HashMap<String, String> opt : find.getResponse()) {
-				assignments.add(new AdvancedPermission(opt));
+			final List<Wrapper> responses = find.getResponse();
+			final List<AdvancedPermission> assignments = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				assignments.add(new AdvancedPermission(response.getMap()));
 			}
 			return assignments;
 		}
@@ -1897,7 +1926,7 @@ public class TS3Api {
 	public int getPermissionIdByName(String permName) {
 		final CPermIdGetByName get = new CPermIdGetByName(permName);
 		if (query.doCommand(get)) {
-			return StringUtil.getInt(get.getFirstResponse().get("permid"));
+			return get.getFirstResponse().getInt("permid");
 		}
 		return -1;
 	}
@@ -1919,9 +1948,11 @@ public class TS3Api {
 	public List<AdvancedPermission> getPermissionOverview(int channelId, int clientDBId) {
 		final CPermOverview overview = new CPermOverview(channelId, clientDBId);
 		if (query.doCommand(overview)) {
-			final List<AdvancedPermission> permissions = new ArrayList<>();
-			for (final HashMap<String, String> opt : overview.getResponse()) {
-				permissions.add(new AdvancedPermission(opt));
+			final List<Wrapper> responses = overview.getResponse();
+			final List<AdvancedPermission> permissions = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				permissions.add(new AdvancedPermission(response.getMap()));
 			}
 			return permissions;
 		}
@@ -1936,9 +1967,11 @@ public class TS3Api {
 	public List<PermissionInfo> getPermissions() {
 		final CPermissionList list = new CPermissionList();
 		if (query.doCommand(list)) {
-			final List<PermissionInfo> permissions = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				permissions.add(new PermissionInfo(opt));
+			final List<Wrapper> responses = list.getResponse();
+			final List<PermissionInfo> permissions = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				permissions.add(new PermissionInfo(response.getMap()));
 			}
 			return permissions;
 		}
@@ -1956,7 +1989,7 @@ public class TS3Api {
 	public int getPermissionValue(String permName) {
 		final CPermGet get = new CPermGet(permName);
 		if (query.doCommand(get)) {
-			return StringUtil.getInt(get.getFirstResponse().get("permvalue"));
+			return get.getFirstResponse().getInt("permvalue");
 		}
 		return -1;
 	}
@@ -1973,9 +2006,11 @@ public class TS3Api {
 	public List<PrivilegeKey> getPrivilegeKeys() {
 		final CPrivilegeKeyList list = new CPrivilegeKeyList();
 		if (query.doCommand(list)) {
-			final List<PrivilegeKey> keys = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				keys.add(new PrivilegeKey(opt));
+			final List<Wrapper> responses = list.getResponse();
+			final List<PrivilegeKey> keys = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				keys.add(new PrivilegeKey(response.getMap()));
 			}
 			return keys;
 		}
@@ -1993,9 +2028,11 @@ public class TS3Api {
 	public List<ServerGroupClient> getServerGroupClients(int serverGroupId) {
 		final CServerGroupClientList list = new CServerGroupClientList(serverGroupId);
 		if (query.doCommand(list)) {
-			final List<ServerGroupClient> clients = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				clients.add(new ServerGroupClient(opt));
+			final List<Wrapper> responses = list.getResponse();
+			final List<ServerGroupClient> clients = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				clients.add(new ServerGroupClient(response.getMap()));
 			}
 			return clients;
 		}
@@ -2028,11 +2065,13 @@ public class TS3Api {
 	public List<Permission> getServerGroupPermissions(int serverGroupId) {
 		final CServerGroupPermList list = new CServerGroupPermList(serverGroupId);
 		if (query.doCommand(list)) {
-			final List<Permission> p = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				p.add(new Permission(opt));
+			final List<Wrapper> responses = list.getResponse();
+			final List<Permission> permissions = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				permissions.add(new Permission(response.getMap()));
 			}
-			return p;
+			return permissions;
 		}
 		return null;
 	}
@@ -2061,9 +2100,11 @@ public class TS3Api {
 	public List<ServerGroup> getServerGroups() {
 		final CServerGroupList list = new CServerGroupList();
 		if (query.doCommand(list)) {
-			final List<ServerGroup> groups = new ArrayList<>();
-			for (final HashMap<String, String> opt : list.getResponse()) {
-				groups.add(new ServerGroup(opt));
+			final List<Wrapper> responses = list.getResponse();
+			final List<ServerGroup> groups = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				groups.add(new ServerGroup(response.getMap()));
 			}
 			return groups;
 		}
@@ -2084,11 +2125,13 @@ public class TS3Api {
 	public List<ServerGroup> getServerGroupsByClientId(int clientDatabaseId) {
 		final CServerGroupsByClientId client = new CServerGroupsByClientId(clientDatabaseId);
 		if (query.doCommand(client)) {
-			final List<ServerGroup> list = new ArrayList<>();
+			final List<Wrapper> responses = client.getResponse();
+			final List<ServerGroup> list = new ArrayList<>(responses.size());
 			final List<ServerGroup> allGroups = getServerGroups();
-			for (final HashMap<String, String> opt : client.getResponse()) {
+
+			for (final Wrapper response : responses) {
 				for (final ServerGroup s : allGroups) {
-					if (s.getId() == StringUtil.getInt(opt.get("sgid"))) {
+					if (s.getId() == response.getInt("sgid")) {
 						list.add(s);
 					}
 				}
@@ -2126,7 +2169,7 @@ public class TS3Api {
 	public int getServerIdByPort(int port) {
 		final CServerIdGetByPort s = new CServerIdGetByPort(port);
 		if (query.doCommand(s)) {
-			return StringUtil.getInt(s.getFirstResponse().get("server_id"));
+			return s.getFirstResponse().getInt("server_id");
 		}
 		return -1;
 	}
@@ -2165,9 +2208,11 @@ public class TS3Api {
 	public List<VirtualServer> getVirtualServers() {
 		final CServerList serverList = new CServerList();
 		if (query.doCommand(serverList)) {
-			final List<VirtualServer> servers = new ArrayList<>();
-			for (final HashMap<String, String> opt : serverList.getResponse()) {
-				servers.add((new VirtualServer(opt)));
+			final List<Wrapper> responses = serverList.getResponse();
+			final List<VirtualServer> servers = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				servers.add((new VirtualServer(response.getMap())));
 			}
 			return servers;
 		}
@@ -3113,11 +3158,10 @@ public class TS3Api {
 	 *
 	 * @return whether the command succeeded or not
 	 *
-	 * @see #updateClient(HashMap)
+	 * @see #updateClient(Map)
 	 */
 	public boolean setNickname(String nickname) {
-		final HashMap<ClientProperty, String> options = new HashMap<>();
-		options.put(ClientProperty.CLIENT_NICKNAME, nickname);
+		final Map<ClientProperty, String> options = Collections.singletonMap(ClientProperty.CLIENT_NICKNAME, nickname);
 		return updateClient(options);
 	}
 
@@ -3202,9 +3246,9 @@ public class TS3Api {
 	 *
 	 * @return whether the command succeeded or not
 	 *
-	 * @see #editClient(int, HashMap)
+	 * @see #editClient(int, Map)
 	 */
-	public boolean updateClient(HashMap<ClientProperty, String> options) {
+	public boolean updateClient(Map<ClientProperty, String> options) {
 		final CClientUpdate update = new CClientUpdate(options);
 		return query.doCommand(update);
 	}

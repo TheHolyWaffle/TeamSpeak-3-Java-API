@@ -27,7 +27,7 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  */
 
 import java.util.Date;
-import java.util.HashMap;
+import java.util.Map;
 
 import com.github.theholywaffle.teamspeak3.api.CodecEncryptionMode;
 import com.github.theholywaffle.teamspeak3.api.HostBannerMode;
@@ -37,7 +37,7 @@ import com.github.theholywaffle.teamspeak3.api.VirtualServerStatus;
 
 public class VirtualServerInfo extends Wrapper {
 
-	public VirtualServerInfo(HashMap<String, String> map) {
+	public VirtualServerInfo(Map<String, String> map) {
 		super(map);
 	}
 

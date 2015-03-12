@@ -26,11 +26,11 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * #L%
  */
 
-import java.util.HashMap;
+import java.util.Map;
 
 public class ClientLeaveEvent extends BaseEvent {
 
-	public ClientLeaveEvent(HashMap<String, String> map) {
+	public ClientLeaveEvent(Map<String, String> map) {
 		super(map);
 	}
 

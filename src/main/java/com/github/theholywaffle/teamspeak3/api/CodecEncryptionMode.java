@@ -28,12 +28,12 @@ package com.github.theholywaffle.teamspeak3.api;
 
 import com.github.theholywaffle.teamspeak3.TS3Api;
 
-import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Describes how the virtual server manages audio encryption.
  * <p>
- * Can be edited with {@link TS3Api#editServer(HashMap)}.
+ * Can be edited with {@link TS3Api#editServer(Map)}.
  * </p>
  */
 public enum CodecEncryptionMode {
@@ -41,7 +41,7 @@ public enum CodecEncryptionMode {
 	/**
 	 * Each channel manages audio encryption on its own.
 	 *
-	 * @see TS3Api#editChannel(int, HashMap)
+	 * @see TS3Api#editChannel(int, Map)
 	 */
 	CODEC_CRYPT_INDIVIDUAL(0),
 

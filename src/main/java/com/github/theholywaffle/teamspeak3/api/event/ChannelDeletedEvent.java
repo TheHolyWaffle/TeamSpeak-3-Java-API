@@ -28,11 +28,11 @@ package com.github.theholywaffle.teamspeak3.api.event;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 
-import java.util.HashMap;
+import java.util.Map;
 
 public class ChannelDeletedEvent extends BaseEvent {
 
-	public ChannelDeletedEvent(HashMap<String, String> map) {
+	public ChannelDeletedEvent(Map<String, String> map) {
 		super(map);
 	}
 

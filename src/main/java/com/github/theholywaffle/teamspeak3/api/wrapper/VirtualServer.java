@@ -26,27 +26,29 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.HashMap;
-
+import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerStatus;
+
+import java.util.Map;
 
 public class VirtualServer extends Wrapper {
 
-	public VirtualServer(HashMap<String, String> map) {
+	public VirtualServer(Map<String, String> map) {
 		super(map);
 	}
 
 	public int getId() {
-		return getInt("virtualserver_id");
+		return getInt(VirtualServerProperty.VIRTUALSERVER_ID);
 	}
 
 	public int getPort() {
-		return getInt("virtualserver_port");
+		return getInt(VirtualServerProperty.VIRTUALSERVER_PORT);
 	}
 
 	public VirtualServerStatus getStatus() {
+		final String status = get(VirtualServerProperty.VIRTUALSERVER_STATUS);
 		for (final VirtualServerStatus s : VirtualServerStatus.values()) {
-			if (s.getName().equals(get("virtualserver_status"))) {
+			if (s.getName().equals(status)) {
 				return s;
 			}
 		}
@@ -54,27 +56,30 @@ public class VirtualServer extends Wrapper {
 	}
 
 	public int getClientsOnline() {
-		return getInt("virtualserver_clientsonline");
+		return getInt(VirtualServerProperty.VIRTUALSERVER_CLIENTSONLINE);
 	}
 
 	public int getQueryClientsOnline() {
-		return getInt("virtualserver_queryclientsonline");
+		return getInt(VirtualServerProperty.VIRTUALSERVER_QUERYCLIENTSONLINE);
 	}
 
 	public int getMaxClients() {
-		return getInt("virtualserver_maxclients");
+		return getInt(VirtualServerProperty.VIRTUALSERVER_MAXCLIENTS);
 	}
 
-	public int getUptime() {
-		return getInt("virtualserver_uptime"); // in seconds
+	public String getUniqueIdentifier() {
+		return get(VirtualServerProperty.VIRTUALSERVER_UNIQUE_IDENTIFIER);
+	}
+
+	public long getUptime() {
+		return getLong(VirtualServerProperty.VIRTUALSERVER_UPTIME); // in seconds
 	}
 
 	public String getName() {
-		return get("virtualserver_name");
+		return get(VirtualServerProperty.VIRTUALSERVER_NAME);
 	}
 
 	public boolean isAutoStart() {
-		return getBoolean("virtualserver_autostart");
+		return getBoolean(VirtualServerProperty.VIRTUALSERVER_AUTOSTART);
 	}
-
 }

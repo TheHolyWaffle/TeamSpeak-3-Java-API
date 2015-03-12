@@ -35,8 +35,9 @@ import com.github.theholywaffle.teamspeak3.commands.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -500,9 +501,9 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(client, future)) return;
 
-				final List<HashMap<String, String>> response = client.getResponse();
-				final int banId1 = StringUtil.getInt(response.get(0).get("banid"));
-				final int banId2 = StringUtil.getInt(response.get(1).get("banid"));
+				final List<Wrapper> response = client.getResponse();
+				final int banId1 = response.get(0).getInt("banid");
+				final int banId2 = response.get(1).getInt("banid");
 				future.set(new Integer[] {banId1, banId2});
 			}
 		});
@@ -650,7 +651,7 @@ public class TS3ApiAsync {
 	 *
 	 * @see Channel
 	 */
-	public CommandFuture<Integer> createChannel(String name, HashMap<ChannelProperty, String> options) {
+	public CommandFuture<Integer> createChannel(String name, Map<ChannelProperty, String> options) {
 		final CChannelCreate create = new CChannelCreate(name, options);
 		return executeAndReturnIntProperty(create, "cid");
 	}
@@ -677,7 +678,7 @@ public class TS3ApiAsync {
 	 *
 	 * @see VirtualServer
 	 */
-	public CommandFuture<CreatedVirtualServer> createServer(String name, HashMap<VirtualServerProperty, String> options) {
+	public CommandFuture<CreatedVirtualServer> createServer(String name, Map<VirtualServerProperty, String> options) {
 		final CServerCreate create = new CServerCreate(name, options);
 		final CommandFuture<CreatedVirtualServer> future = new CommandFuture<>();
 
@@ -1102,7 +1103,7 @@ public class TS3ApiAsync {
 	 *
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Boolean> editChannel(int channelId, HashMap<ChannelProperty, String> options) {
+	public CommandFuture<Boolean> editChannel(int channelId, Map<ChannelProperty, String> options) {
 		final CChannelEdit edit = new CChannelEdit(channelId, options);
 		return executeAndReturnError(edit);
 	}
@@ -1111,7 +1112,7 @@ public class TS3ApiAsync {
 	 * Changes a client's configuration using given properties.
 	 * <p>
 	 * Only {@link ClientProperty#CLIENT_DESCRIPTION} can be changed for other clients.
-	 * To update the current client's properties, use {@link #updateClient(HashMap)}.
+	 * To update the current client's properties, use {@link #updateClient(Map)}.
 	 * </p>
 	 *
 	 * @param clientId
@@ -1122,9 +1123,9 @@ public class TS3ApiAsync {
 	 * @return whether the command succeeded or not
 	 *
 	 * @see Client#getId()
-	 * @see #updateClient(HashMap)
+	 * @see #updateClient(Map)
 	 */
-	public CommandFuture<Boolean> editClient(int clientId, HashMap<ClientProperty, String> options) {
+	public CommandFuture<Boolean> editClient(int clientId, Map<ClientProperty, String> options) {
 		final CClientEdit edit = new CClientEdit(clientId, options);
 		return executeAndReturnError(edit);
 	}
@@ -1142,7 +1143,7 @@ public class TS3ApiAsync {
 	 * @see DatabaseClientInfo
 	 * @see Client#getDatabaseId()
 	 */
-	public CommandFuture<Boolean> editDatabaseClient(int clientDBId, HashMap<ClientProperty, String> options) {
+	public CommandFuture<Boolean> editDatabaseClient(int clientDBId, Map<ClientProperty, String> options) {
 		final CClientDBEdit edit = new CClientDBEdit(clientDBId, options);
 		return executeAndReturnError(edit);
 	}
@@ -1181,7 +1182,7 @@ public class TS3ApiAsync {
 	 *
 	 * @see VirtualServerProperty
 	 */
-	public CommandFuture<Boolean> editServer(HashMap<VirtualServerProperty, String> options) {
+	public CommandFuture<Boolean> editServer(Map<VirtualServerProperty, String> options) {
 		final CServerEdit edit = new CServerEdit(options);
 		return executeAndReturnError(edit);
 	}
@@ -1202,9 +1203,11 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(list, future)) return;
 
-				final List<Ban> bans = new ArrayList<>();
-				for (final HashMap<String, String> opt : list.getResponse()) {
-					bans.add(new Ban(opt));
+				final List<Wrapper> responses = list.getResponse();
+				final List<Ban> bans = new ArrayList<>(responses.size());
+
+				for (final Wrapper response : responses) {
+					bans.add(new Ban(response.getMap()));
 				}
 				future.set(bans);
 			}
@@ -1228,9 +1231,11 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(list, future)) return;
 
-				final List<Binding> bindings = new ArrayList<>();
-				for (final HashMap<String, String> map : list.getResponse()) {
-					bindings.add(new Binding(map));
+				final List<Wrapper> responses = list.getResponse();
+				final List<Binding> bindings = new ArrayList<>(responses.size());
+
+				for (final Wrapper response : responses) {
+					bindings.add(new Binding(response.getMap()));
 				}
 				future.set(bindings);
 			}
@@ -1294,9 +1299,11 @@ public class TS3ApiAsync {
 					public void handle() {
 						if (hasFailed(find, future)) return;
 
-						final List<Channel> channels = new ArrayList<>();
-						for (final HashMap<String, String> response : find.getResponse()) {
-							final int channelId = StringUtil.getInt(response.get("cid"));
+						final List<Wrapper> responses = find.getResponse();
+						final List<Channel> channels = new ArrayList<>(responses.size());
+
+						for (final Wrapper response : responses) {
+							final int channelId = response.getInt("cid");
 							for (final Channel c : allChannels) {
 								if (c.getId() == channelId) {
 									channels.add(c);
@@ -1335,9 +1342,11 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(list, future)) return;
 
-				final List<Permission> permissions = new ArrayList<>();
-				for (final HashMap<String, String> opt : list.getResponse()) {
-					permissions.add(new Permission(opt));
+				final List<Wrapper> responses = list.getResponse();
+				final List<Permission> permissions = new ArrayList<>(responses.size());
+
+				for (final Wrapper response : responses) {
+					permissions.add(new Permission(response.getMap()));
 				}
 				future.set(permissions);
 			}
@@ -1372,9 +1381,11 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(list, future)) return;
 
-				final List<ChannelGroupClient> clients = new ArrayList<>();
-				for (final HashMap<String, String> opt : list.getResponse()) {
-					clients.add(new ChannelGroupClient(opt));
+				final List<Wrapper> responses = list.getResponse();
+				final List<ChannelGroupClient> clients = new ArrayList<>(responses.size());
+
+				for (final Wrapper response : responses) {
+					clients.add(new ChannelGroupClient(response.getMap()));
 				}
 				future.set(clients);
 			}
@@ -1450,11 +1461,13 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(list, future)) return;
 
-				final List<Permission> p = new ArrayList<>();
-				for (final HashMap<String, String> opt : list.getResponse()) {
-					p.add(new Permission(opt));
+				final List<Wrapper> responses = list.getResponse();
+				final List<Permission> permissions = new ArrayList<>(responses.size());
+
+				for (final Wrapper response : responses) {
+					permissions.add(new Permission(response.getMap()));
 				}
-				future.set(p);
+				future.set(permissions);
 			}
 		});
 		return future;
@@ -1476,9 +1489,11 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(list, future)) return;
 
-				final List<ChannelGroup> groups = new ArrayList<>();
-				for (final HashMap<String, String> opt : list.getResponse()) {
-					groups.add(new ChannelGroup(opt));
+				final List<Wrapper> responses = list.getResponse();
+				final List<ChannelGroup> groups = new ArrayList<>(responses.size());
+
+				for (final Wrapper response : responses) {
+					groups.add(new ChannelGroup(response.getMap()));
 				}
 				future.set(groups);
 			}
@@ -1531,11 +1546,13 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(list, future)) return;
 
-				final List<Permission> p = new ArrayList<>();
-				for (final HashMap<String, String> opt : list.getResponse()) {
-					p.add(new Permission(opt));
+				final List<Wrapper> responses = list.getResponse();
+				final List<Permission> permissions = new ArrayList<>(responses.size());
+
+				for (final Wrapper response : responses) {
+					permissions.add(new Permission(response.getMap()));
 				}
-				future.set(p);
+				future.set(permissions);
 			}
 		});
 		return future;
@@ -1557,9 +1574,11 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(list, future)) return;
 
-				final List<Channel> channels = new ArrayList<>();
-				for (final HashMap<String, String> opt : list.getResponse()) {
-					channels.add(new Channel(opt));
+				final List<Wrapper> responses = list.getResponse();
+				final List<Channel> channels = new ArrayList<>(responses.size());
+
+				for (final Wrapper response : responses) {
+					channels.add(new Channel(response.getMap()));
 				}
 				future.set(channels);
 			}
@@ -1623,10 +1642,12 @@ public class TS3ApiAsync {
 					public void handle() {
 						if (hasFailed(find, future)) return;
 
-						final List<Client> clients = new ArrayList<>();
-						for (final HashMap<String, String> response : find.getResponse()) {
+						final List<Wrapper> responses = find.getResponse();
+						final List<Client> clients = new ArrayList<>(responses.size());
+
+						for (final Wrapper response : responses) {
 							for (final Client c : allClients) {
-								if (c.getId() == StringUtil.getInt(response.get("clid"))) {
+								if (c.getId() == response.getInt("clid")) {
 									clients.add(c);
 									break;
 								}
@@ -1660,7 +1681,7 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(get, future)) return;
 
-				getClientInfo(StringUtil.getInt(get.getFirstResponse().getMap().get("clid"))).forwardResult(future);
+				getClientInfo(get.getFirstResponse().getInt("clid")).forwardResult(future);
 			}
 		});
 		return future;
@@ -1711,9 +1732,11 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(list, future)) return;
 
-				final List<Permission> permissions = new ArrayList<>();
-				for (final HashMap<String, String> opt : list.getResponse()) {
-					permissions.add(new Permission(opt));
+				final List<Wrapper> responses = list.getResponse();
+				final List<Permission> permissions = new ArrayList<>(responses.size());
+
+				for (final Wrapper response : responses) {
+					permissions.add(new Permission(response.getMap()));
 				}
 				future.set(permissions);
 			}
@@ -1737,9 +1760,11 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(list, future)) return;
 
-				final List<Client> clients = new ArrayList<>();
-				for (final HashMap<String, String> opt : list.getResponse()) {
-					clients.add(new Client(opt));
+				final List<Wrapper> responses = list.getResponse();
+				final List<Client> clients = new ArrayList<>(responses.size());
+
+				for (final Wrapper response : responses) {
+					clients.add(new Client(response.getMap()));
 				}
 				future.set(clients);
 			}
@@ -1779,9 +1804,11 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(list, future)) return;
 
-				final List<Complaint> complaints = new ArrayList<>();
-				for (final HashMap<String, String> opt : list.getResponse()) {
-					complaints.add(new Complaint(opt));
+				final List<Wrapper> responses = list.getResponse();
+				final List<Complaint> complaints = new ArrayList<>(responses.size());
+
+				for (final Wrapper response : responses) {
+					complaints.add(new Complaint(response.getMap()));
 				}
 				future.set(complaints);
 			}
@@ -1830,10 +1857,10 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(find, future)) return;
 
-				final List<HashMap<String, String>> responses = find.getResponse();
+				final List<Wrapper> responses = find.getResponse();
 				final List<CommandFuture<DatabaseClientInfo>> infoFutures = new ArrayList<>(responses.size());
-				for (HashMap<String, String> response : responses) {
-					final int databaseId = StringUtil.getInt(response.get("cldbid"));
+				for (Wrapper response : responses) {
+					final int databaseId = response.getInt("cldbid");
 					infoFutures.add(getDatabaseClientInfo(databaseId));
 				}
 
@@ -1868,7 +1895,7 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(get, future)) return;
 
-				getDatabaseClientInfo(StringUtil.getInt(get.getFirstResponse().get("cldbid"))).forwardResult(future);
+				getDatabaseClientInfo(get.getFirstResponse().getInt("cldbid")).forwardResult(future);
 			}
 		});
 		return future;
@@ -1921,7 +1948,7 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(countList, future)) return;
 
-				final int count = StringUtil.getInt(countList.getFirstResponse().get("count"));
+				final int count = countList.getFirstResponse().getInt("count");
 				final int futuresCount = ((count - 1) / 200) + 1;
 				final List<CommandFuture<List<DatabaseClient>>> futures = new ArrayList<>(futuresCount);
 				for (int i = 0; i < count; i += 200) {
@@ -1972,8 +1999,8 @@ public class TS3ApiAsync {
 				if (hasFailed(list, future)) return;
 
 				final List<DatabaseClient> clients = new ArrayList<>(count);
-				for (final HashMap<String, String> map : list.getResponse()) {
-					clients.add(new DatabaseClient(map));
+				for (final Wrapper response : list.getResponse()) {
+					clients.add(new DatabaseClient(response.getMap()));
 				}
 				future.set(clients);
 			}
@@ -2068,9 +2095,11 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(list, future)) return;
 
-				final List<Message> msg = new ArrayList<>();
-				for (final HashMap<String, String> opt : list.getResponse()) {
-					msg.add(new Message(opt));
+				final List<Wrapper> responses = list.getResponse();
+				final List<Message> msg = new ArrayList<>(responses.size());
+
+				for (final Wrapper response : responses) {
+					msg.add(new Message(response.getMap()));
 				}
 				future.set(msg);
 			}
@@ -2099,9 +2128,11 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(find, future)) return;
 
-				final List<AdvancedPermission> assignments = new ArrayList<>();
-				for (final HashMap<String, String> opt : find.getResponse()) {
-					assignments.add(new AdvancedPermission(opt));
+				final List<Wrapper> responses = find.getResponse();
+				final List<AdvancedPermission> assignments = new ArrayList<>(responses.size());
+
+				for (final Wrapper response : responses) {
+					assignments.add(new AdvancedPermission(response.getMap()));
 				}
 				future.set(assignments);
 			}
@@ -2149,9 +2180,11 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(overview, future)) return;
 
-				final List<AdvancedPermission> permissions = new ArrayList<>();
-				for (final HashMap<String, String> opt : overview.getResponse()) {
-					permissions.add(new AdvancedPermission(opt));
+				final List<Wrapper> responses = overview.getResponse();
+				final List<AdvancedPermission> permissions = new ArrayList<>(responses.size());
+
+				for (final Wrapper response : responses) {
+					permissions.add(new AdvancedPermission(response.getMap()));
 				}
 				future.set(permissions);
 			}
@@ -2173,9 +2206,11 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(list, future)) return;
 
-				final List<PermissionInfo> permissions = new ArrayList<>();
-				for (final HashMap<String, String> opt : list.getResponse()) {
-					permissions.add(new PermissionInfo(opt));
+				final List<Wrapper> responses = list.getResponse();
+				final List<PermissionInfo> permissions = new ArrayList<>(responses.size());
+
+				for (final Wrapper response : responses) {
+					permissions.add(new PermissionInfo(response.getMap()));
 				}
 				future.set(permissions);
 			}
@@ -2214,9 +2249,11 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(list, future)) return;
 
-				final List<PrivilegeKey> keys = new ArrayList<>();
-				for (final HashMap<String, String> opt : list.getResponse()) {
-					keys.add(new PrivilegeKey(opt));
+				final List<Wrapper> responses = list.getResponse();
+				final List<PrivilegeKey> keys = new ArrayList<>(responses.size());
+
+				for (final Wrapper response : responses) {
+					keys.add(new PrivilegeKey(response.getMap()));
 				}
 				future.set(keys);
 			}
@@ -2241,9 +2278,11 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(list, future)) return;
 
-				final List<ServerGroupClient> clients = new ArrayList<>();
-				for (final HashMap<String, String> opt : list.getResponse()) {
-					clients.add(new ServerGroupClient(opt));
+				final List<Wrapper> responses = list.getResponse();
+				final List<ServerGroupClient> clients = new ArrayList<>(responses.size());
+
+				for (final Wrapper response : responses) {
+					clients.add(new ServerGroupClient(response.getMap()));
 				}
 				future.set(clients);
 			}
@@ -2283,11 +2322,13 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(list, future)) return;
 
-				final List<Permission> p = new ArrayList<>();
-				for (final HashMap<String, String> opt : list.getResponse()) {
-					p.add(new Permission(opt));
+				final List<Wrapper> responses = list.getResponse();
+				final List<Permission> permissions = new ArrayList<>(responses.size());
+
+				for (final Wrapper response : responses) {
+					permissions.add(new Permission(response.getMap()));
 				}
-				future.set(p);
+				future.set(permissions);
 			}
 		});
 		return future;
@@ -2323,9 +2364,11 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(list, future)) return;
 
-				final List<ServerGroup> groups = new ArrayList<>();
-				for (final HashMap<String, String> opt : list.getResponse()) {
-					groups.add(new ServerGroup(opt));
+				final List<Wrapper> responses = list.getResponse();
+				final List<ServerGroup> groups = new ArrayList<>(responses.size());
+
+				for (final Wrapper response : responses) {
+					groups.add(new ServerGroup(response.getMap()));
 				}
 				future.set(groups);
 			}
@@ -2350,16 +2393,25 @@ public class TS3ApiAsync {
 
 		getServerGroups().onSuccess(new CommandFuture.SuccessListener<List<ServerGroup>>() {
 			@Override
-			public void handleSuccess(List<ServerGroup> result) {
-				final List<ServerGroup> list = new ArrayList<>();
-				for (final HashMap<String, String> opt : client.getResponse()) {
-					for (final ServerGroup s : result) {
-						if (s.getId() == StringUtil.getInt(opt.get("sgid"))) {
-							list.add(s);
+			public void handleSuccess(final List<ServerGroup> allServerGroups) {
+				query.doCommandAsync(client, new Callback() {
+					@Override
+					public void handle() {
+						if (hasFailed(client, future)) return;
+
+						final List<Wrapper> responses = client.getResponse();
+						final List<ServerGroup> list = new ArrayList<>(responses.size());
+
+						for (final Wrapper response : responses) {
+							for (final ServerGroup s : allServerGroups) {
+								if (s.getId() == response.getInt("sgid")) {
+									list.add(s);
+								}
+							}
 						}
+						future.set(list);
 					}
-				}
-				future.set(list);
+				});
 			}
 		}).forwardFailure(future);
 		return future;
@@ -2447,9 +2499,11 @@ public class TS3ApiAsync {
 			public void handle() {
 				if (hasFailed(serverList, future)) return;
 
-				final List<VirtualServer> servers = new ArrayList<>();
-				for (final HashMap<String, String> opt : serverList.getResponse()) {
-					servers.add((new VirtualServer(opt)));
+				final List<Wrapper> responses = serverList.getResponse();
+				final List<VirtualServer> servers = new ArrayList<>(responses.size());
+
+				for (final Wrapper response : responses) {
+					servers.add((new VirtualServer(response.getMap())));
 				}
 				future.set(servers);
 			}
@@ -3427,11 +3481,10 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
-	 * @see #updateClient(HashMap)
+	 * @see #updateClient(Map)
 	 */
 	public CommandFuture<Boolean> setNickname(String nickname) {
-		final HashMap<ClientProperty, String> options = new HashMap<>();
-		options.put(ClientProperty.CLIENT_NICKNAME, nickname);
+		final Map<ClientProperty, String> options = Collections.singletonMap(ClientProperty.CLIENT_NICKNAME, nickname);
 		return updateClient(options);
 	}
 
@@ -3516,9 +3569,9 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
-	 * @see #editClient(int, HashMap)
+	 * @see #editClient(int, Map)
 	 */
-	public CommandFuture<Boolean> updateClient(HashMap<ClientProperty, String> options) {
+	public CommandFuture<Boolean> updateClient(Map<ClientProperty, String> options) {
 		final CClientUpdate update = new CClientUpdate(options);
 		return executeAndReturnError(update);
 	}
@@ -3657,7 +3710,7 @@ public class TS3ApiAsync {
 			@Override
 			public void handle() {
 				if (hasFailed(command, future)) return;
-				future.set(StringUtil.getInt(command.getFirstResponse().get(property)));
+				future.set(command.getFirstResponse().getInt(property));
 			}
 		});
 		return future;

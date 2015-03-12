@@ -26,14 +26,14 @@ package com.github.theholywaffle.teamspeak3.commands;
  * #L%
  */
 
-import java.util.HashMap;
-
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 
+import java.util.Map;
+
 public class CChannelCreate extends Command {
 
-	public CChannelCreate(String name, HashMap<ChannelProperty, String> options) {
+	public CChannelCreate(String name, Map<ChannelProperty, String> options) {
 		super("channelcreate");
 		add(new KeyValueParam("channel_name", name));
 
@@ -47,5 +47,4 @@ public class CChannelCreate extends Command {
 			}
 		}
 	}
-
 }

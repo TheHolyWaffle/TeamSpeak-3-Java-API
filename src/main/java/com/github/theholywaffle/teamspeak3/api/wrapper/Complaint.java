@@ -27,11 +27,11 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  */
 
 import java.util.Date;
-import java.util.HashMap;
+import java.util.Map;
 
 public class Complaint extends Wrapper {
 
-	public Complaint(HashMap<String, String> map) {
+	public Complaint(Map<String, String> map) {
 		super(map);
 	}
 

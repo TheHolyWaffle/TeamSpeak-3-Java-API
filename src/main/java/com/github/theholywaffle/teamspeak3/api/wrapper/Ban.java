@@ -27,11 +27,11 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  */
 
 import java.util.Date;
-import java.util.HashMap;
+import java.util.Map;
 
 public class Ban extends Wrapper {
 
-	public Ban(HashMap<String, String> map) {
+	public Ban(Map<String, String> map) {
 		super(map);
 	}
 

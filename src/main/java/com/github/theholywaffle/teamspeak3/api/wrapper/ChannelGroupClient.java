@@ -26,11 +26,11 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.HashMap;
+import java.util.Map;
 
 public class ChannelGroupClient extends Wrapper {
 
-	public ChannelGroupClient(HashMap<String, String> map) {
+	public ChannelGroupClient(Map<String, String> map) {
 		super(map);
 	}
 

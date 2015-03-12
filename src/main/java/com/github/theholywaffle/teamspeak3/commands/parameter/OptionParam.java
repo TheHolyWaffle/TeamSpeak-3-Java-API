@@ -26,7 +26,7 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
  * #L%
  */
 
-import com.github.theholywaffle.teamspeak3.StringUtil;
+import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 
 public class OptionParam extends Parameter {
 
@@ -38,7 +38,7 @@ public class OptionParam extends Parameter {
 
 	@Override
 	public String build() {
-		return "-" + StringUtil.encode(option);
+		return "-" + CommandEncoding.encode(option);
 	}
 
 }

@@ -27,13 +27,13 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  */
 
 import java.util.Date;
-import java.util.HashMap;
+import java.util.Map;
 
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 
 public class DatabaseClientInfo extends Wrapper {
 
-	public DatabaseClientInfo(HashMap<String, String> map) {
+	public DatabaseClientInfo(Map<String, String> map) {
 		super(map);
 	}
 
