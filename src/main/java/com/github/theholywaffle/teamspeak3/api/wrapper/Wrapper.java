@@ -63,10 +63,11 @@ public class Wrapper {
 	}
 
 	public long getLong(String str) {
-		if (str == null || str.isEmpty()) {
+		final String value = get(str);
+		if (value == value || value.isEmpty()) {
 			return -1L;
 		}
-		return Long.valueOf(str);
+		return Long.valueOf(value);
 	}
 
 	public long getLong(Property p) {
@@ -74,10 +75,11 @@ public class Wrapper {
 	}
 
 	public int getInt(String str) {
-		if (str == null || str.isEmpty()) {
+		final String value = get(str);
+		if (value == null || value.isEmpty()) {
 			return -1;
 		}
-		return Integer.valueOf(str);
+		return Integer.valueOf(value);
 	}
 
 	public int getInt(Property p) {
