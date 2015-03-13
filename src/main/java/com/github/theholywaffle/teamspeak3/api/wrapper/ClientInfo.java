@@ -94,7 +94,10 @@ public class ClientInfo extends Wrapper {
 	}
 
 	public int getDefaultChannel() {
-		return getInt(ClientProperty.CLIENT_DEFAULT_CHANNEL);
+		// TeamSpeak decided to prefix the channel ID with a forward slash (/)...
+		final String channelId = get(ClientProperty.CLIENT_DEFAULT_CHANNEL);
+		if (channelId.isEmpty()) return -1;
+		return Integer.valueOf(channelId.substring(1));
 	}
 
 	public String getDefaultToken() {
