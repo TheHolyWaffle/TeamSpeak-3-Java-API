@@ -64,7 +64,7 @@ public class Wrapper {
 
 	public long getLong(String str) {
 		final String value = get(str);
-		if (value == value || value.isEmpty()) {
+		if (value == null || value.isEmpty()) {
 			return -1L;
 		}
 		return Long.valueOf(value);
