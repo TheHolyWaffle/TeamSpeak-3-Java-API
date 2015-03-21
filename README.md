@@ -107,7 +107,7 @@ Only use `FloodRate.UNLIMITED` if you are sure that your query account is whitel
 
 ## TODO
 
-* Add Javadoc to [TS3Api](src/main/java/com/github/theholywaffle/teamspeak3/TS3Api.java).
+* Add Javadoc to core API and wrapper classes.
 
 ## Questions or bugs?
 
