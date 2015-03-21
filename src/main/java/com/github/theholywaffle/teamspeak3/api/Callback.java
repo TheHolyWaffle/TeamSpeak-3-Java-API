@@ -26,8 +26,15 @@ package com.github.theholywaffle.teamspeak3.api;
  * #L%
  */
 
+/**
+ * A callback to be executed when an asynchronous command is answered by the
+ * TeamSpeak3 server.
+ */
 public interface Callback {
 
+	/**
+	 * This method will be executed when a command is answered by the server.
+	 */
 	public void handle();
 
 }
