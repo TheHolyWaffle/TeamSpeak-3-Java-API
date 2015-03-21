@@ -18,6 +18,13 @@
 			<url>https://github.com/TheHolyWaffle</url>
 			<id>TheHolyWaffle</id>
 		</developer>
+		<developer>
+			<email>rogermarcbaumgartner@hotmail.com</email>
+			<name>Roger Baumgartner</name>
+			<url>https://github.com/Firedroide</url>
+			<id>Firedroide</id>
+			<timezone>+1</timezone>
+		</developer>
 	</developers>
 
 	<licenses>
@@ -36,14 +43,8 @@
 
 	<build>
 		<plugins>
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.1</version>
-				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
-				</configuration>
-			</plugin>
+			<!-- Phase: COMPILE -->
+			<!-- Update license header -->
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>license-maven-plugin</artifactId>
@@ -65,6 +66,18 @@
 					</execution>
 				</executions>
 			</plugin>
+			<!-- Compile java sources -->
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.1</version>
+				<configuration>
+					<source>1.7</source>
+					<target>1.7</target>
+				</configuration>
+			</plugin>
+			<!-- PHASE: Package -->
+			<!-- [IMPLIED BY PACKAGING] Package compiled class files into jar -->
+			<!-- Generate sources jar -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
@@ -78,35 +91,53 @@
 					</execution>
 				</executions>
 			</plugin>
+			<!-- Generate javadoc directory /apidocs/<version> and pack into jar -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<version>2.9.1</version>
+				<configuration> <!-- If someone else decides to run javadoc:javadoc -->
+					<quiet>true</quiet>
+					<show>public</show>
+					<linksource>true</linksource>
+				</configuration>
 				<executions>
 					<execution>
-						<id>attach-javadocs1</id>
-						<configuration>
-							<quiet>true</quiet>
-							<show>public</show>
-							<outputDirectory>${project.build.directory}/apidocs/${project.version}</outputDirectory>
-						</configuration>
+						<id>javadoc-jar</id>
 						<goals>
 							<goal>jar</goal>
 						</goals>
-					</execution>
-					<execution>
-						<id>attach-javadocs2</id>
 						<configuration>
-							<quiet>true</quiet>
-							<show>public</show>
-							<outputDirectory>${project.build.directory}/apidocs/latest</outputDirectory>
+							<outputDirectory>${project.build.directory}/apidocs/${project.version}/</outputDirectory>
 						</configuration>
-						<goals>
-							<goal>jar</goal>
-						</goals>
 					</execution>
 				</executions>
 			</plugin>
+			<!-- Copy javadoc directory to /apidocs/latest -->
+			<plugin>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>2.6</version>
+				<executions>
+					<execution>
+						<id>copy-javadocs</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/apidocs/latest</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${project.build.directory}/apidocs/${project.version}</directory>
+									<include>**</include>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- PHASE: Deploy -->
+			<!-- Create file version of a maven repository in /mvn-repo -->
 			<plugin>
 				<artifactId>maven-deploy-plugin</artifactId>
 				<version>2.8.1</version>
@@ -114,15 +145,15 @@
 					<altDeploymentRepository>internal.repo::default::file://${project.build.directory}/mvn-repo</altDeploymentRepository>
 				</configuration>
 			</plugin>
+			<!-- Upload first /mvn-repo, then /apidocs to GitHub -->
 			<plugin>
 				<groupId>com.github.github</groupId>
 				<artifactId>site-maven-plugin</artifactId>
 				<version>0.9</version>
 				<executions>
-					<!-- run site-maven-plugin's 'site' target as part of the build's normal 
-						'deploy' phase -->
+					<!-- run site-maven-plugin's 'site' target as part of the build's normal 'deploy' phase -->
 					<execution>
-						<id>execution1</id>
+						<id>deploy-maven-repository</id>
 						<configuration>
 							<message>Maven artifacts for ${project.version}</message>  <!-- git commit message -->
 							<merge>true</merge>
@@ -141,7 +172,7 @@
 						<phase>deploy</phase>
 					</execution>
 					<execution>
-						<id>execution2</id>
+						<id>deploy-javadoc</id>
 						<configuration>
 							<message>Javadoc for ${project.version}</message>  <!-- git commit message -->
 							<merge>true</merge>
@@ -158,28 +189,6 @@
 							<goal>site</goal>
 						</goals>
 						<phase>deploy</phase>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>maven-resources-plugin</artifactId>
-				<version>2.6</version>
-				<executions>
-					<execution>
-						<id>copy-resources</id>
-						<phase>validate</phase>
-						<goals>
-							<goal>copy-resources</goal>
-						</goals>
-						<configuration>
-							<outputDirectory>${project.build.directory}/apidocs</outputDirectory>
-							<resources>
-								<resource>
-									<directory>html</directory>
-									<filtering>true</filtering>
-								</resource>
-							</resources>
-						</configuration>
 					</execution>
 				</executions>
 			</plugin>
