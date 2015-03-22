@@ -1,4 +1,7 @@
 language: java
+sudo: false
+jdk:
+  - oraclejdk7
 notifications:
   email:
     on_success: never
