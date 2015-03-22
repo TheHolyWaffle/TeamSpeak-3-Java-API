@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.github.theholywaffle</groupId>
 	<artifactId>teamspeak3-api</artifactId>
-	<version>1.0.11-SNAPSHOT</version>
+	<version>1.0.12-SNAPSHOT</version>
 
 	<issueManagement>
 		<url>https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/issues</url>
