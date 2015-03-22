@@ -4,8 +4,8 @@
   <artifactId>teamspeak3-api</artifactId>
   <versioning>
     <versions>
-      <version>1.0.11-SNAPSHOT</version>
+      <version>1.0.12-SNAPSHOT</version>
     </versions>
-    <lastUpdated>20150322223514</lastUpdated>
+    <lastUpdated>20150322223732</lastUpdated>
   </versioning>
 </metadata>
