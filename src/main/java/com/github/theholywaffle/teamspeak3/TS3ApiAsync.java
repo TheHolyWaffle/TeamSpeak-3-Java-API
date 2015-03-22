@@ -2978,8 +2978,9 @@ public class TS3ApiAsync {
 	/**
 	 * Registers the server query to receive notifications about a given event type.
 	 * <p>
-	 * This method can not be used for {@link TS3EventType#CHANNEL} or {@link TS3EventType#TEXT_CHANNEL},
-	 * as these methods require a channel ID to be specified.
+	 * If used with {@link TS3EventType#TEXT_CHANNEL}, this will listen to chat events in the current channel.
+	 * If used with {@link TS3EventType#CHANNEL}, this will listen to <b>all</b> channel events.
+	 * To specify a different channel for channel events, use {@link #registerEvent(TS3EventType, int)}.
 	 * </p>
 	 *
 	 * @param eventType
@@ -2992,6 +2993,9 @@ public class TS3ApiAsync {
 	 * @see #registerAllEvents()
 	 */
 	public CommandFuture<Boolean> registerEvent(TS3EventType eventType) {
+		if (eventType == TS3EventType.CHANNEL || eventType == TS3EventType.TEXT_CHANNEL) {
+			return registerEvent(eventType, 0);
+		}
 		return registerEvent(eventType, -1);
 	}
 
@@ -3018,8 +3022,9 @@ public class TS3ApiAsync {
 	/**
 	 * Registers the server query to receive notifications about multiple given event types.
 	 * <p>
-	 * This method can not be used for {@link TS3EventType#CHANNEL} or {@link TS3EventType#TEXT_CHANNEL},
-	 * as these methods require a channel ID to be specified.
+	 * If used with {@link TS3EventType#TEXT_CHANNEL}, this will listen to chat events in the current channel.
+	 * If used with {@link TS3EventType#CHANNEL}, this will listen to <b>all</b> channel events.
+	 * To specify a different channel for channel events, use {@link #registerEvent(TS3EventType, int)}.
 	 * </p>
 	 *
 	 * @param eventTypes
@@ -3040,7 +3045,7 @@ public class TS3ApiAsync {
 
 		final List<CommandFuture<Boolean>> registerFutures = new ArrayList<>(eventTypes.length);
 		for (final TS3EventType type : eventTypes) {
-			registerFutures.add(registerEvent(type, -1));
+			registerFutures.add(registerEvent(type));
 		}
 
 		CommandFuture.awaitAll(registerFutures).onSuccess(new CommandFuture.SuccessListener<Collection<Boolean>>() {
