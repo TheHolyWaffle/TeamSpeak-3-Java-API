@@ -2,6 +2,27 @@ language: java
 sudo: false
 jdk:
   - oraclejdk7
+
+# branches blacklist
+branches:
+  except:
+    - gh-pages
+    - mvn-repo
+
+# custom build script and deployment
+before_install: chmod +x script/buildscript.sh script/deploy.sh
+install: ./scripts/buildscript.sh
+after_success: ./scripts/deploy.sh
+
+deploy:
+  provider: releases
+  api-key: ${OAUTH2_DEPLOY_TOKEN}
+  file-glob: true
+  file: target/teamspeak3-api-*.jar
+  skip_cleanup: true
+  on:
+    tags: true
+
 notifications:
   email:
     on_success: never
