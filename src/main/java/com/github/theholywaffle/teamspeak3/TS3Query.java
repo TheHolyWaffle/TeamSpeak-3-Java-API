@@ -28,6 +28,7 @@ package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.Callback;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
+import com.github.theholywaffle.teamspeak3.commands.CQuit;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 import com.github.theholywaffle.teamspeak3.log.LogHandler;
 
@@ -168,6 +169,10 @@ public class TS3Query {
 	 * Removes and closes all used resources to the teamspeak server.
 	 */
 	public void exit() {
+		// Send a quit command synchronously
+		// This will guarantee that all previously sent commands have been processed
+		doCommand(new CQuit());
+
 		if (keepAlive != null) {
 			keepAlive.interrupt();
 		}
