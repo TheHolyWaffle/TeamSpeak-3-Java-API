@@ -48,6 +48,7 @@ public class KeepAliveThread extends Thread {
 			final long idleTime = writer.getIdleTime();
 			if (idleTime >= SLEEP) {
 				ts3.doCommand(new CWhoAmI());
+				continue;
 			}
 			try {
 				Thread.sleep(SLEEP - idleTime);
