@@ -33,7 +33,7 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * methods for the events they want to take action on.
  * </p>
  */
-public class TS3EventAdapter implements TS3Listener {
+public abstract class TS3EventAdapter implements TS3Listener {
 
 	@Override
 	public void onTextMessage(TextMessageEvent e) {}
