@@ -50,7 +50,7 @@ public class SocketReader extends Thread {
 	public SocketReader(TS3Query ts3) {
 		super("[TeamSpeak-3-Java-API] SocketReader");
 		this.ts3 = ts3;
-		this.userThreadPool = Executors.newScheduledThreadPool(1);
+		this.userThreadPool = Executors.newCachedThreadPool();
 		this.callbackMap = Collections.synchronizedMap(new LinkedHashMap<Command, Callback>());
 		this.lastEvent = "";
 
