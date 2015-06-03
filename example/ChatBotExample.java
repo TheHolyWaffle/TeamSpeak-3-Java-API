@@ -61,17 +61,19 @@ public class ChatBotExample {
 		final TS3Api api = query.getApi();
 		api.selectVirtualServerById(1);
 		api.setNickname("PutPutBot");
+		final int clientId = api.getClientByName("PutPutBot").get(0).getId();
 		api.sendChannelMessage("PutPutBot is online!");
 
 		api.registerAllEvents();
 		api.addTS3Listeners(new TS3Listener() {
 
 			public void onTextMessage(TextMessageEvent e) {
-				if (e.getTargetMode() == TextMessageTargetMode.CHANNEL) {// Only
+				if (e.getTargetMode() == TextMessageTargetMode.CHANNEL && e.getInvokerId() != clientId) {// Only
 																			// react
 																			// to
 																			// channel
 																			// messages
+																			// and other clients
 					if (e.getMessage().equals("!ping")) {
 						api.sendChannelMessage("pong");
 					}
