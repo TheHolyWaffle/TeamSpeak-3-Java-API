@@ -32,6 +32,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -39,48 +40,65 @@ import java.util.logging.LogRecord;
 
 public class LogHandler extends Handler {
 
-	private static final DateFormat format = DateFormat.getInstance();
-	private final boolean debugToFile;
-	private File log;
+	private static final DateFormat format = new SimpleDateFormat("yyyy-MM-ss HH:mm:ss.SSS"); // ISO 8601
+	private final boolean writeToFile;
+	private final PrintWriter fileWriter;
 
-	public LogHandler(boolean debugToFile) {
-		this.debugToFile = debugToFile;
-		if (this.debugToFile) {
-			log = new File("teamspeak.log");
-			if (!log.exists()) {
-				try {
+	public LogHandler(boolean writeToFile) {
+		boolean toFile = writeToFile;
+		PrintWriter out = null;
+
+		if (toFile) {
+			try {
+				File log = new File("teamspeak.log");
+				if (!log.exists()) {
 					log.createNewFile();
-				} catch (final IOException e) {
-					e.printStackTrace();
 				}
+				out = new PrintWriter(new BufferedWriter(new FileWriter(log, true)), true);
+			} catch (IOException io) {
+				System.err.println("Could not set log handler! Using System.out instead");
+				io.printStackTrace();
+				toFile = false;
 			}
 		}
+
+		this.writeToFile = toFile;
+		this.fileWriter = out;
 	}
 
 	@Override
-	public void close() throws SecurityException {
+	public void close() {
+		if (writeToFile) {
+			fileWriter.flush();
+			fileWriter.close();
+		}
 	}
 
 	@Override
 	public void flush() {
+		if (writeToFile) {
+			fileWriter.flush();
+		}
 	}
 
 	@Override
 	public void publish(LogRecord record) {
-		if (record.getLevel().intValue() < Level.WARNING.intValue()) {
-			System.out.println("[DEBUG] " + record.getMessage());
-		} else {
-			System.err.println("[DEBUG] [" + record.getLevel() + "] "
-					+ record.getMessage());
+		StringBuilder logMessage = new StringBuilder();
+
+		// Start the log message with a timestamp
+		logMessage.append("[").append(format.format(new Date())).append("] ");
+
+		// Include the severity if we're dealing with a warning or an error
+		if (record.getLevel().intValue() >= Level.WARNING.intValue()) {
+			logMessage.append(" [").append(record.getLevel()).append("] ");
 		}
-		if (debugToFile) {
-			try (PrintWriter out = new PrintWriter(new BufferedWriter(
-					new FileWriter(log, true)))) {
-				out.println("[" + format.format(new Date()) + "]["
-						+ record.getLevel() + "] " + record.getMessage());
-			} catch (final IOException e) {
-				e.printStackTrace();
-			}
+
+		logMessage.append(record.getMessage());
+
+		// Write to System.out and, if enabled, to a log file
+		System.out.println(logMessage);
+		if (writeToFile) {
+			fileWriter.println(logMessage);
 		}
 	}
 }
