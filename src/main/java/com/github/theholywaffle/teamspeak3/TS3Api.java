@@ -1454,7 +1454,7 @@ public class TS3Api {
 	public ChannelInfo getChannelInfo(int channelId) {
 		final CChannelInfo info = new CChannelInfo(channelId);
 		if (query.doCommand(info)) {
-			return new ChannelInfo(info.getFirstResponse().getMap());
+			return new ChannelInfo(channelId, info.getFirstResponse().getMap());
 		}
 		return null;
 	}
@@ -1597,7 +1597,7 @@ public class TS3Api {
 	public ClientInfo getClientInfo(int clientId) {
 		final CClientInfo info = new CClientInfo(clientId);
 		if (query.doCommand(info)) {
-			return new ClientInfo(info.getFirstResponse().getMap());
+			return new ClientInfo(clientId, info.getFirstResponse().getMap());
 		}
 		return null;
 	}
@@ -2501,7 +2501,7 @@ public class TS3Api {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	public boolean moveClient(Channel channel) {
+	public boolean moveClient(ChannelBase channel) {
 		return moveClient(channel.getId(), null);
 	}
 
@@ -2531,7 +2531,7 @@ public class TS3Api {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	public boolean moveClient(Channel channel, String channelPassword) {
+	public boolean moveClient(ChannelBase channel, String channelPassword) {
 		return moveClient(0, channel.getId(), channelPassword);
 	}
 
@@ -2562,7 +2562,7 @@ public class TS3Api {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	public boolean moveClient(Client client, Channel channel) {
+	public boolean moveClient(Client client, ChannelBase channel) {
 		return moveClient(client.getId(), channel.getId(), null);
 	}
 
@@ -2598,7 +2598,7 @@ public class TS3Api {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	public boolean moveClient(Client client, Channel channel, String channelPassword) {
+	public boolean moveClient(Client client, ChannelBase channel, String channelPassword) {
 		return moveClient(client.getId(), channel.getId(), channelPassword);
 	}
 

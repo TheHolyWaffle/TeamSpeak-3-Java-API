@@ -26,16 +26,15 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.Date;
-import java.util.Map;
-
 import com.github.theholywaffle.teamspeak3.api.CodecEncryptionMode;
 import com.github.theholywaffle.teamspeak3.api.HostBannerMode;
 import com.github.theholywaffle.teamspeak3.api.HostMessageMode;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
-import com.github.theholywaffle.teamspeak3.api.VirtualServerStatus;
 
-public class VirtualServerInfo extends Wrapper {
+import java.util.Date;
+import java.util.Map;
+
+public class VirtualServerInfo extends VirtualServer {
 
 	public VirtualServerInfo(Map<String, String> map) {
 		super(map);
@@ -73,28 +72,25 @@ public class VirtualServerInfo extends Wrapper {
 		return getInt(VirtualServerProperty.VIRTUALSERVER_CHANNELSONLINE);
 	}
 
-	public int getClientsOnline() {
-		return getInt(VirtualServerProperty.VIRTUALSERVER_CLIENTSONLINE);
-	}
-
 	public CodecEncryptionMode getCodecEncryptionMode() {
+		final int encryptionMode = getInt(VirtualServerProperty.VIRTUALSERVER_CODEC_ENCRYPTION_MODE);
 		for (final CodecEncryptionMode m : CodecEncryptionMode.values()) {
-			if (m.getIndex() == getInt(VirtualServerProperty.VIRTUALSERVER_CODEC_ENCRYPTION_MODE)) {
+			if (m.getIndex() == encryptionMode) {
 				return m;
 			}
 		}
-		return CodecEncryptionMode.UNKNOWN; // TODO Replace unknown
+		return CodecEncryptionMode.UNKNOWN;
 	}
 
-	public int getComplainAutobanCount() {
+	public int getComplaintAutobanCount() {
 		return getInt(VirtualServerProperty.VIRTUALSERVER_COMPLAIN_AUTOBAN_COUNT);
 	}
 
-	public long getComplainAutobanTime() {// SEC
+	public long getComplaintAutobanTime() {// SEC
 		return getLong(VirtualServerProperty.VIRTUALSERVER_COMPLAIN_AUTOBAN_TIME);
 	}
 
-	public long getComplainRemoveTime() {
+	public long getComplaintRemoveTime() {
 		return getLong(VirtualServerProperty.VIRTUALSERVER_COMPLAIN_REMOVE_TIME);
 	}
 
@@ -115,8 +111,7 @@ public class VirtualServerInfo extends Wrapper {
 	}
 
 	public Date getCreatedDate() {
-		return new Date(
-				getLong(VirtualServerProperty.VIRTUALSERVER_CREATED) * 1000);
+		return new Date(getLong(VirtualServerProperty.VIRTUALSERVER_CREATED) * 1000);
 	}
 
 	public int getDefaultChannelAdminGroup() {
@@ -164,12 +159,13 @@ public class VirtualServerInfo extends Wrapper {
 	}
 
 	public HostBannerMode getHostbannerMode() {
+		final int hostbannerMode = getInt(VirtualServerProperty.VIRTUALSERVER_HOSTBANNER_MODE);
 		for (final HostBannerMode m : HostBannerMode.values()) {
-			if (m.getIndex() == getInt(VirtualServerProperty.VIRTUALSERVER_HOSTBANNER_MODE)) {
+			if (m.getIndex() == hostbannerMode) {
 				return m;
 			}
 		}
-		return HostBannerMode.UNKNOWN; // TODO Replace unknown
+		return HostBannerMode.UNKNOWN;
 	}
 
 	public String getHostbannerUrl() {
@@ -193,12 +189,13 @@ public class VirtualServerInfo extends Wrapper {
 	}
 
 	public HostMessageMode getHostMessageMode() {
+		final int hostmessageMode = getInt(VirtualServerProperty.VIRTUALSERVER_HOSTMESSAGE_MODE);
 		for (final HostMessageMode m : HostMessageMode.values()) {
-			if (m.getIndex() == getInt(VirtualServerProperty.VIRTUALSERVER_HOSTMESSAGE_MODE)) {
+			if (m.getIndex() == hostmessageMode) {
 				return m;
 			}
 		}
-		return HostMessageMode.UNKNOWN; // TODO Replace unknown
+		return HostMessageMode.UNKNOWN;
 	}
 
 	public int getIconId() {
@@ -229,10 +226,6 @@ public class VirtualServerInfo extends Wrapper {
 		return get(VirtualServerProperty.VIRTUALSERVER_MACHINE_ID);
 	}
 
-	public int getMaxClients() {
-		return getInt(VirtualServerProperty.VIRTUALSERVER_MAXCLIENTS);
-	}
-
 	public long getMaxDownloadBandwidth() {
 		return getLong(VirtualServerProperty.VIRTUALSERVER_MAX_DOWNLOAD_TOTAL_BANDWIDTH);
 	}
@@ -257,10 +250,6 @@ public class VirtualServerInfo extends Wrapper {
 		return getLong(VirtualServerProperty.VIRTUALSERVER_MONTH_BYTES_UPLOADED);
 	}
 
-	public String getName() {
-		return get(VirtualServerProperty.VIRTUALSERVER_NAME);
-	}
-
 	public int getNeededIdentitySecurityLevel() {
 		return getInt(VirtualServerProperty.VIRTUALSERVER_NEEDED_IDENTITY_SECURITY_LEVEL);
 	}
@@ -281,34 +270,12 @@ public class VirtualServerInfo extends Wrapper {
 		return get(VirtualServerProperty.VIRTUALSERVER_PLATFORM);
 	}
 
-	public int getPort() {
-		return getInt(VirtualServerProperty.VIRTUALSERVER_PORT);
-	}
-
 	public double getPrioritySpeakerDimmModificator() {
 		return getDouble(VirtualServerProperty.VIRTUALSERVER_PRIORITY_SPEAKER_DIMM_MODIFICATOR);
 	}
 
-	public int getQueryClientsOnline() {
-		return getInt(VirtualServerProperty.VIRTUALSERVER_QUERYCLIENTSONLINE);
-	}
-
 	public int getReservedSlots() {
 		return getInt(VirtualServerProperty.VIRTUALSERVER_RESERVED_SLOTS);
-	}
-
-	public int getServerId() {
-		return getInt(VirtualServerProperty.VIRTUALSERVER_ID);
-	}
-
-	public VirtualServerStatus getServerStatus() {
-		for (final VirtualServerStatus s : VirtualServerStatus.values()) {
-			if (s.getName().equals(
-					get(VirtualServerProperty.VIRTUALSERVER_STATUS))) {
-				return s;
-			}
-		}
-		return VirtualServerStatus.UNKNOWN;
 	}
 
 	public long getSpeechBytesReceived() {
@@ -375,16 +342,8 @@ public class VirtualServerInfo extends Wrapper {
 		return getDouble(VirtualServerProperty.VIRTUALSERVER_TOTAL_PACKETLOSS_SPEECH);
 	}
 
-	public String getUniqueIdentifier() {
-		return get(VirtualServerProperty.VIRTUALSERVER_UNIQUE_IDENTIFIER);
-	}
-
 	public long getUploadQuota() {
 		return getLong(VirtualServerProperty.VIRTUALSERVER_UPLOAD_QUOTA);
-	}
-
-	public long getUptime() {
-		return getLong(VirtualServerProperty.VIRTUALSERVER_UPTIME);
 	}
 
 	public String getVersion() {
@@ -401,10 +360,6 @@ public class VirtualServerInfo extends Wrapper {
 
 	public boolean isAskingPrivilegeKey() {
 		return getBoolean(VirtualServerProperty.VIRTUALSERVER_ASK_FOR_PRIVILEGEKEY);
-	}
-
-	public boolean isAutoStart() {
-		return getBoolean(VirtualServerProperty.VIRTUALSERVER_AUTOSTART);
 	}
 
 	public boolean isLoggingChannel() {

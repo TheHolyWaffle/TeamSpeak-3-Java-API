@@ -30,22 +30,18 @@ import java.util.Map;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 
-public class ChannelInfo extends Wrapper {
+public class ChannelInfo extends ChannelBase {
 
-	public ChannelInfo(Map<String, String> map) {
+	private final int channelId;
+
+	public ChannelInfo(int channelId, Map<String, String> map) {
 		super(map);
+		this.channelId = channelId;
 	}
 
-	public int getParentChannelId() {
-		return getInt(ChannelProperty.PID);
-	}
-
-	public String getName() {
-		return get(ChannelProperty.CHANNEL_NAME);
-	}
-
-	public String getTopic() {
-		return get(ChannelProperty.CHANNEL_TOPIC);
+	@Override
+	public int getId() {
+		return channelId;
 	}
 
 	public String getDescription() {
@@ -54,42 +50,6 @@ public class ChannelInfo extends Wrapper {
 
 	public String getPassword() {
 		return get(ChannelProperty.CHANNEL_PASSWORD);
-	}
-
-	public int getCodec() {
-		return getInt(ChannelProperty.CHANNEL_CODEC);
-	}
-
-	public int getCodecQuality() {
-		return getInt(ChannelProperty.CHANNEL_CODEC_QUALITY);
-	}
-
-	public int getMaxClients() {
-		return getInt(ChannelProperty.CHANNEL_MAXCLIENTS);
-	}
-
-	public int getMaxFamilyClients() {
-		return getInt(ChannelProperty.CHANNEL_MAXFAMILYCLIENTS);
-	}
-
-	public int getOrder() {
-		return getInt(ChannelProperty.CHANNEL_ORDER);
-	}
-
-	public boolean isPermanent() {
-		return getBoolean(ChannelProperty.CHANNEL_FLAG_PERMANENT);
-	}
-
-	public boolean isSemiPermanent() {
-		return getBoolean(ChannelProperty.CHANNEL_FLAG_SEMI_PERMANENT);
-	}
-
-	public boolean isDefault() {
-		return getBoolean(ChannelProperty.CHANNEL_FLAG_DEFAULT);
-	}
-
-	public boolean hasPassword() {
-		return getBoolean(ChannelProperty.CHANNEL_FLAG_PASSWORD);
 	}
 
 	public int getCodecLatencyFactor() {
@@ -116,10 +76,6 @@ public class ChannelInfo extends Wrapper {
 		return get(ChannelProperty.CHANNEL_FILEPATH);
 	}
 
-	public int getNeededTalkPower() {
-		return getInt(ChannelProperty.CHANNEL_NEEDED_TALK_POWER);
-	}
-
 	public boolean isForcedSilence() {
 		return getBoolean(ChannelProperty.CHANNEL_FORCED_SILENCE);
 	}
@@ -127,9 +83,4 @@ public class ChannelInfo extends Wrapper {
 	public String getPhoneticName() {
 		return get(ChannelProperty.CHANNEL_NAME_PHONETIC);
 	}
-
-	public long getIconId() {
-		return getLong(ChannelProperty.CHANNEL_ICON_ID);
-	}
-
 }

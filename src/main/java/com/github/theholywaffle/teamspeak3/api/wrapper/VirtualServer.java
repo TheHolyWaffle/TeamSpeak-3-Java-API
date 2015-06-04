@@ -48,7 +48,7 @@ public class VirtualServer extends Wrapper {
 	public VirtualServerStatus getStatus() {
 		final String status = get(VirtualServerProperty.VIRTUALSERVER_STATUS);
 		for (final VirtualServerStatus s : VirtualServerStatus.values()) {
-			if (s.getName().equals(status)) {
+			if (status.equals(s.getName())) {
 				return s;
 			}
 		}

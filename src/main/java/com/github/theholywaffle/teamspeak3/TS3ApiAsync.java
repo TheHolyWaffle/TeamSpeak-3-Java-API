@@ -1512,7 +1512,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see ChannelInfo
 	 */
-	public CommandFuture<ChannelInfo> getChannelInfo(int channelId) {
+	public CommandFuture<ChannelInfo> getChannelInfo(final int channelId) {
 		final CChannelInfo info = new CChannelInfo(channelId);
 		final CommandFuture<ChannelInfo> future = new CommandFuture<>();
 
@@ -1520,7 +1520,7 @@ public class TS3ApiAsync {
 			@Override
 			public void handle() {
 				if (hasFailed(info, future)) return;
-				future.set(new ChannelInfo(info.getFirstResponse().getMap()));
+				future.set(new ChannelInfo(channelId, info.getFirstResponse().getMap()));
 			}
 		});
 		return future;
@@ -1706,7 +1706,7 @@ public class TS3ApiAsync {
 			@Override
 			public void handle() {
 				if (hasFailed(info, future)) return;
-				future.set(new ClientInfo(info.getFirstResponse().getMap()));
+				future.set(new ClientInfo(clientId, info.getFirstResponse().getMap()));
 			}
 		});
 		return future;
@@ -2793,7 +2793,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	public CommandFuture<Boolean> moveClient(Channel channel) {
+	public CommandFuture<Boolean> moveClient(ChannelBase channel) {
 		return moveClient(channel.getId(), null);
 	}
 
@@ -2823,7 +2823,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	public CommandFuture<Boolean> moveClient(Channel channel, String channelPassword) {
+	public CommandFuture<Boolean> moveClient(ChannelBase channel, String channelPassword) {
 		return moveClient(0, channel.getId(), channelPassword);
 	}
 
@@ -2854,7 +2854,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	public CommandFuture<Boolean> moveClient(Client client, Channel channel) {
+	public CommandFuture<Boolean> moveClient(Client client, ChannelBase channel) {
 		return moveClient(client.getId(), channel.getId(), null);
 	}
 
@@ -2890,7 +2890,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 */
-	public CommandFuture<Boolean> moveClient(Client client, Channel channel, String channelPassword) {
+	public CommandFuture<Boolean> moveClient(Client client, ChannelBase channel, String channelPassword) {
 		return moveClient(client.getId(), channel.getId(), channelPassword);
 	}
 

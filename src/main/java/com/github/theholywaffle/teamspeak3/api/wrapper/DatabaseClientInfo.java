@@ -26,47 +26,23 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.Date;
-import java.util.Map;
-
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 
-public class DatabaseClientInfo extends Wrapper {
+import java.util.Map;
+
+public class DatabaseClientInfo extends DatabaseClient {
 
 	public DatabaseClientInfo(Map<String, String> map) {
 		super(map);
 	}
 
-	public String getUniqueIdentifier() {
-		return get(ClientProperty.CLIENT_UNIQUE_IDENTIFIER);
-	}
-
-	public String getNickname() {
-		return get(ClientProperty.CLIENT_NICKNAME);
-	}
-
+	@Override
 	public int getDatabaseId() {
 		return getInt(ClientProperty.CLIENT_DATABASE_ID);
 	}
 
-	public Date getCreated() {
-		return new Date(getInt(ClientProperty.CLIENT_CREATED) * 1000);
-	}
-
-	public Date getLastConnected() {
-		return new Date(getInt(ClientProperty.CLIENT_LASTCONNECTED) * 1000);
-	}
-
-	public int getTotalConnections() {
-		return getInt(ClientProperty.CLIENT_TOTALCONNECTIONS);
-	}
-
 	public String getAvatar() {
 		return get(ClientProperty.CLIENT_FLAG_AVATAR);
-	}
-
-	public String getDescription() {
-		return get(ClientProperty.CLIENT_DESCRIPTION);
 	}
 
 	public long getMonthlyBytesUploaded() {
@@ -81,7 +57,7 @@ public class DatabaseClientInfo extends Wrapper {
 		return getLong(ClientProperty.CLIENT_TOTAL_BYTES_UPLOADED);
 	}
 
-	public long getTotalBytseDownloaded() {
+	public long getTotalBytesDownloaded() {
 		return getLong(ClientProperty.CLIENT_TOTAL_BYTES_DOWNLOADED);
 	}
 
@@ -92,9 +68,4 @@ public class DatabaseClientInfo extends Wrapper {
 	public String getBase64HashClientUID() {
 		return get("client_base64HashClientUID");
 	}
-
-	public String getLastIp() {
-		return get("client_lastip");
-	}
-
 }

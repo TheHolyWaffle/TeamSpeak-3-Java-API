@@ -26,10 +26,10 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.ClientProperty;
+
 import java.util.Date;
 import java.util.Map;
-
-import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 
 public class DatabaseClient extends Wrapper {
 
@@ -49,11 +49,11 @@ public class DatabaseClient extends Wrapper {
 		return get(ClientProperty.CLIENT_NICKNAME);
 	}
 
-	public Date getCreated() {
+	public Date getCreatedDate() {
 		return new Date(getLong(ClientProperty.CLIENT_CREATED) * 1000);
 	}
 
-	public Date getLastConnected() {
+	public Date getLastConnectedDate() {
 		return new Date(getLong(ClientProperty.CLIENT_LASTCONNECTED) * 1000);
 	}
 
@@ -68,5 +68,4 @@ public class DatabaseClient extends Wrapper {
 	public String getLastIp() {
 		return get("client_lastip");
 	}
-
 }
