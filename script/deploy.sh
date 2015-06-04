@@ -11,6 +11,9 @@ echo "Project version: $version"
 echo "Writing settings.xml"
 echo "<settings><servers><server><id>github</id><password>${OAUTH2_DEPLOY_TOKEN}</password></server></servers></settings>" > ~/settings.xml
 
+echo "Pulling old artifacts from repository"
+git clone --single-branch -b mvn-repo --depth 1 https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API.git target/mvn-repo
+
 if [[ "$version" == *SNAPSHOT ]]; then
 	echo "Snapshot build, deploying artifacts"
 	echo "Running 'mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V'"
