@@ -30,11 +30,11 @@ public abstract class TS3Exception extends RuntimeException {
 
 	private static final long serialVersionUID = 7167169981592989359L;
 
-	public TS3Exception(String msg) {
+	protected TS3Exception(String msg) {
 		super(msg);
 	}
 
-	public TS3Exception(String msg, Throwable cause) {
+	protected TS3Exception(String msg, Throwable cause) {
 		super(msg, cause);
 	}
 

@@ -42,6 +42,7 @@ public enum VirtualServerStatus implements Property {
 		this.name = name;
 	}
 
+	@Override
 	public String getName() {
 		return name;
 	}
