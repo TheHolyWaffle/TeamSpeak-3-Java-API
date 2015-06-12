@@ -107,7 +107,7 @@ public class SocketReader extends Thread {
 				if (line.startsWith("error")) {
 					c.feedError(line.substring("error ".length()));
 					if (c.getError().getId() != 0) {
-						TS3Query.log.severe("[ERROR] " + c.getError());
+						TS3Query.log.severe("TS3 command error: " + c.getError());
 					}
 					c.setAnswered();
 					ts3.getCommandList().remove(c);

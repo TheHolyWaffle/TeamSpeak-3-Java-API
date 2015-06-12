@@ -90,7 +90,7 @@ public class LogHandler extends Handler {
 
 		// Include the severity if we're dealing with a warning or an error
 		if (record.getLevel().intValue() >= Level.WARNING.intValue()) {
-			logMessage.append(" [").append(record.getLevel()).append("] ");
+			logMessage.append("[").append(record.getLevel()).append("] ");
 		}
 
 		logMessage.append(record.getMessage());
