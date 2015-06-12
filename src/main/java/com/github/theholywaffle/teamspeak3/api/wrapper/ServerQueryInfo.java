@@ -77,21 +77,8 @@ public class ServerQueryInfo extends Wrapper {
 	 *
 	 * @return the server query's client ID
 	 */
-	public int getClientId() {
-		return getInt("client_id");
-	}
-
-	/**
-	 * Gets the client ID of the server query.
-	 *
-	 * @return the server query's client ID
-	 *
-	 * @deprecated {@code getId()} is too unspecific and doesn't fit in the current naming scheme.
-	 * Use {@link #getClientId()} instead.
-	 */
-	@Deprecated
 	public int getId() {
-		return getClientId();
+		return getInt("client_id");
 	}
 
 	/**
