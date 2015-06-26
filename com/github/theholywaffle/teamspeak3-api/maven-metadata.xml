@@ -4,6 +4,9 @@
   <artifactId>teamspeak3-api</artifactId>
   <versioning>
     <versions>
+      <version>1.0.9</version>
+      <version>1.0.10</version>
+      <version>1.0.11</version>
       <version>1.0.12-SNAPSHOT</version>
     </versions>
     <lastUpdated>20150626141845</lastUpdated>
