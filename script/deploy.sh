@@ -13,10 +13,10 @@ echo "<settings><servers><server><id>github</id><password>${OAUTH2_DEPLOY_TOKEN}
 
 if [[ "$version" == *SNAPSHOT ]]; then
 	echo "Snapshot build, deploying artifacts"
-	echo "Running 'mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V'"
-	mvn deploy --settings ~/settings.xml -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+	echo "Running 'mvn deploy --settings ~/settings.xml -DskipTests=true -P snapshot -B -V'"
+	mvn deploy --settings ~/settings.xml -DskipTests=true -P snapshot -B -V
 else
 	echo "Release build, deploying artifacts and publishing javadocs"
-	echo "Running 'mvn install -DskipTests=true -B -V'"
+	echo "Running 'mvn deploy --settings ~/settings.xml -DskipTests=true -B -V'"
 	mvn deploy --settings ~/settings.xml -DskipTests=true -B -V
 fi

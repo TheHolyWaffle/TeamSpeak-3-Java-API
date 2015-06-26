@@ -259,10 +259,7 @@
 		<profile>
 			<id>snapshot</id>
 			<activation>
-				<property>
-					<name>maven.javadoc.skip</name>
-					<value>true</value>
-				</property>
+				<activeByDefault>false</activeByDefault>
 			</activation>
 			<properties>
 				<snapshotBuild>true</snapshotBuild>
