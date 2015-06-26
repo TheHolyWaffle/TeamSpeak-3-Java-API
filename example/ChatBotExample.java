@@ -24,32 +24,24 @@
  * #L%
  */
 
-import java.util.logging.Level;
-
 import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3Config;
 import com.github.theholywaffle.teamspeak3.TS3Query;
 import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
-import com.github.theholywaffle.teamspeak3.api.event.ChannelCreateEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ChannelDeletedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ChannelDescriptionEditedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ChannelEditedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ChannelMovedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ChannelPasswordChangedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ClientMovedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ServerEditedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
+import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
+import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
 
+import java.util.logging.Level;
+
+/**
+ * A simple chat bot that responds to any channel messages starting with "hello"
+ * by greeting the client who sent the message.<br>
+ * This bot also includes a simple ping testing feature.
+ */
 public class ChatBotExample {
 
 	public static void main(String[] args) {
-		new ChatBotExample();
-	}
-
-	public ChatBotExample() {
 		final TS3Config config = new TS3Config();
 		config.setHost("77.77.77.77");
 		config.setDebugLevel(Level.ALL);
@@ -61,69 +53,36 @@ public class ChatBotExample {
 		final TS3Api api = query.getApi();
 		api.selectVirtualServerById(1);
 		api.setNickname("PutPutBot");
-		final int clientId = api.getClientByName("PutPutBot").get(0).getId();
 		api.sendChannelMessage("PutPutBot is online!");
 
-		api.registerAllEvents();
-		api.addTS3Listeners(new TS3Listener() {
+		// Get are own client ID by running the "whoami" command
+		// Our client ID was assigned when we selected the virtual server
+		final int clientId = api.whoAmI().getId();
 
+		// Listen to chat in the channel the query is currently in
+		// As we never changed the channel, this will be the default channel of the server
+		api.registerEvent(TS3EventType.TEXT_CHANNEL, 0);
+		api.registerEvent(TS3EventType.CHANNEL);
+
+		// Register the event listener
+		api.addTS3Listeners(new TS3EventAdapter() {
+
+			@Override
 			public void onTextMessage(TextMessageEvent e) {
-				if (e.getTargetMode() == TextMessageTargetMode.CHANNEL && e.getInvokerId() != clientId) {// Only
-																			// react
-																			// to
-																			// channel
-																			// messages
-																			// and other clients
-					if (e.getMessage().equals("!ping")) {
+				// Only react to channel messages not sent by the query itself
+				if (e.getTargetMode() == TextMessageTargetMode.CHANNEL && e.getInvokerId() != clientId) {
+					String message = e.getMessage().toLowerCase();
+
+					if (message.equals("!ping")) {
+						// Answer "!ping" with "pong"
 						api.sendChannelMessage("pong");
-					}
-					if (e.getMessage().toLowerCase().contains("hello")) {
-						api.sendChannelMessage("Hello " + e.getInvokerName());
+					} else if (message.startsWith("hello")) {
+						// Greet whoever said hello
+						// Message: "Hello <client name>!"
+						api.sendChannelMessage("Hello " + e.getInvokerName() + "!");
 					}
 				}
 			}
-
-			public void onServerEdit(ServerEditedEvent e) {
-
-			}
-
-			public void onClientMoved(ClientMovedEvent e) {
-
-			}
-
-			public void onClientLeave(ClientLeaveEvent e) {
-
-			}
-
-			public void onClientJoin(ClientJoinEvent e) {
-
-			}
-
-			public void onChannelEdit(ChannelEditedEvent e) {
-
-			}
-
-			public void onChannelDescriptionChanged(
-					ChannelDescriptionEditedEvent e) {
-
-			}
-
-			public void onChannelCreate(ChannelCreateEvent e) {
-				
-			}
-
-			public void onChannelDeleted(ChannelDeletedEvent e) {
-				
-			}
-
-			public void onChannelMoved(ChannelMovedEvent e) {
-				
-			}
-
-			public void onChannelPasswordChanged(ChannelPasswordChangedEvent e) {
-				
-			}
 		});
 	}
-
 }

@@ -24,31 +24,20 @@
  * #L%
  */
 
-import java.util.logging.Level;
-
 import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3Config;
 import com.github.theholywaffle.teamspeak3.TS3Query;
-import com.github.theholywaffle.teamspeak3.api.event.ChannelCreateEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ChannelDeletedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ChannelDescriptionEditedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ChannelEditedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ChannelMovedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ChannelPasswordChangedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ClientMovedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.ServerEditedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
-import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
+import com.github.theholywaffle.teamspeak3.api.event.*;
 
+import java.util.logging.Level;
+
+/**
+ * Just an example that shows what kinds of events you can handle
+ * with a TS3 event listener.
+ */
 public class EventListenerExample {
 
 	public static void main(String[] args) {
-		new EventListenerExample();
-	}
-
-	public EventListenerExample() {
 		final TS3Config config = new TS3Config();
 		config.setHost("77.77.77.77");
 		config.setDebugLevel(Level.ALL);
@@ -66,8 +55,7 @@ public class EventListenerExample {
 		api.addTS3Listeners(new TS3Listener() {
 
 			public void onTextMessage(TextMessageEvent e) {
-				System.out.println("Text message received in "
-						+ e.getTargetMode());
+				System.out.println("Text message received in " + e.getTargetMode());
 			}
 
 			public void onServerEdit(ServerEditedEvent e) {
@@ -93,29 +81,25 @@ public class EventListenerExample {
 
 			}
 
-			public void onChannelDescriptionChanged(
-					ChannelDescriptionEditedEvent e) {
+			public void onChannelDescriptionChanged(ChannelDescriptionEditedEvent e) {
 				// ...
-
 			}
 
 			public void onChannelCreate(ChannelCreateEvent e) {
-				
+				// ...
 			}
 
 			public void onChannelDeleted(ChannelDeletedEvent e) {
-				
+				// ...
 			}
 
 			public void onChannelMoved(ChannelMovedEvent e) {
-				
+				// ...
 			}
 
 			public void onChannelPasswordChanged(ChannelPasswordChangedEvent e) {
-				
+				// ...
 			}
 		});
-
 	}
-
 }
