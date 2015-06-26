@@ -20,7 +20,7 @@ if [ "${TRAVIS_PULL_REQUEST}" == "true" ] || [ "${TRAVIS_BRANCH}" != "master" ];
 	exit 0
 fi
 
-version=$(mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version | grep -E '^[0-9]')
+version=$(mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version | grep -Ex '^[[:digit:]][^/]+$')
 echo "Project version: $version"
 
 echo "Writing settings.xml"
