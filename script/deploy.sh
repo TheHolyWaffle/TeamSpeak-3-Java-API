@@ -11,6 +11,9 @@ echo "Project version: $version"
 echo "Writing settings.xml"
 echo "<settings><servers><server><id>github</id><password>${OAUTH2_DEPLOY_TOKEN}</password></server></servers></settings>" > ~/settings.xml
 
+echo "Retrieving maven-metadata.xml"
+wget --no-check-certificate -q -P target/mvn-repo/com/github/theholywaffle/teamspeak3-api raw.githubusercontent.com/TheHolyWaffle/TeamSpeak-3-Java-API/mvn-repo/com/github/theholywaffle/teamspeak3-api/maven-metadata.xml
+
 if [[ "$version" == *SNAPSHOT ]]; then
 	echo "Snapshot build, deploying artifacts"
 	echo "Running 'mvn deploy --settings ~/settings.xml -DskipTests=true -P snapshot -B -V'"
