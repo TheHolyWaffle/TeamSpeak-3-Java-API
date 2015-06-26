@@ -2,14 +2,23 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+
 	<groupId>com.github.theholywaffle</groupId>
 	<artifactId>teamspeak3-api</artifactId>
 	<version>1.0.12-SNAPSHOT</version>
+	<packaging>jar</packaging>
 
-	<issueManagement>
-		<url>https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/issues</url>
-		<system>GitHub Issues</system>
-	</issueManagement>
+	<name>TeamSpeak 3 Java API</name>
+	<url>https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API</url>
+	<description>A Java 7 implementation of the TeamSpeak 3 Server Query API.</description>
+
+	<licenses>
+		<license>
+			<name>MIT</name>
+			<url>http://opensource.org/licenses/MIT</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
 
 	<developers>
 		<developer>
@@ -27,24 +36,27 @@
 		</developer>
 	</developers>
 
-	<licenses>
-		<license>
-			<name>MIT</name>
-			<url>http://opensource.org/licenses/MIT</url>
-			<distribution>repo</distribution>
-		</license>
-	</licenses>
-
 	<scm>
 		<url>scm:git:git@github.com:TheHolyWaffle/TeamSpeak-3-Java-API.git</url>
 		<connection>scm:git:git@github.com:TheHolyWaffle/TeamSpeak-3-Java-API.git</connection>
 		<developerConnection>scm:git:git@github.com:TheHolyWaffle/TeamSpeak-3-Java-API.git</developerConnection>
 	</scm>
 
+	<issueManagement>
+		<url>https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/issues</url>
+		<system>GitHub Issues</system>
+	</issueManagement>
+
+	<properties>
+		<!-- github server corresponds to entry in ~/.m2/settings.xml -->
+		<github.global.server>github</github.global.server>
+		<encoding>UTF-8</encoding>
+	</properties>
+
 	<build>
 		<plugins>
 			<!-- Phase: COMPILE -->
-			<!-- Update license header -->
+			<!-- Update license headers -->
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>license-maven-plugin</artifactId>
@@ -60,13 +72,13 @@
 							<encoding>UTF-8</encoding>
 							<licenseName>mit</licenseName>
 							<inceptionYear>2014</inceptionYear>
-							<organizationName>Bert De Geyter</organizationName>
+							<organizationName>Bert De Geyter, Roger Baumgartner</organizationName>
 							<projectName>TeamSpeak 3 Java API</projectName>
 						</configuration>
 					</execution>
 				</executions>
 			</plugin>
-			<!-- Compile java sources -->
+			<!-- Compile java sources with JDK 1.7 -->
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.1</version>
@@ -84,9 +96,9 @@
 				<version>2.2.1</version>
 				<executions>
 					<execution>
-						<id>attach-sources</id>
+						<id>sources-jar</id>
 						<goals>
-							<goal>jar</goal>
+							<goal>jar-no-fork</goal>
 						</goals>
 					</execution>
 				</executions>
@@ -233,24 +245,6 @@
 			</plugins>
 		</pluginManagement>
 	</build>
-
-	<name>TeamSpeak 3 Java API</name>
-	<url>https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API</url>
-	<description>An Java 7 implementation of TeamSpeak's 3 server query API.</description>
-
-	<distributionManagement>
-		<repository>
-			<id>internal.repo</id>
-			<name>Temporary Staging Repository</name>
-			<url>file://${project.build.directory}/mvn-repo</url>
-		</repository>
-	</distributionManagement>
-
-	<properties>
-		<!-- github server corresponds to entry in ~/.m2/settings.xml -->
-		<github.global.server>github</github.global.server>
-		<encoding>UTF-8</encoding>
-	</properties>
 
 	<profiles>
 		<profile>
