@@ -125,6 +125,7 @@
 					</execution>
 				</executions>
 			</plugin>
+			<!-- PHASE: Deploy -->
 			<!-- Copy javadoc directory to /apidocs/latest -->
 			<plugin>
 				<artifactId>maven-resources-plugin</artifactId>
@@ -132,7 +133,7 @@
 				<executions>
 					<execution>
 						<id>copy-javadocs</id>
-						<phase>package</phase>
+						<phase>deploy</phase>
 						<goals>
 							<goal>copy-resources</goal>
 						</goals>
@@ -148,7 +149,6 @@
 					</execution>
 				</executions>
 			</plugin>
-			<!-- PHASE: Deploy -->
 			<!-- Create file version of a maven repository in /mvn-repo -->
 			<plugin>
 				<artifactId>maven-deploy-plugin</artifactId>
@@ -206,6 +206,7 @@
 				</executions>
 			</plugin>
 		</plugins>
+
 		<pluginManagement>
 			<plugins>
 				<!--This plugin's configuration is used to store Eclipse m2e settings 
