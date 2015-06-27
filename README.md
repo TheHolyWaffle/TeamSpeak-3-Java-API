@@ -2,7 +2,7 @@ TeamSpeak 3 Java API
 ====================
 [![Build Status](https://travis-ci.org/TheHolyWaffle/TeamSpeak-3-Java-API.svg)](https://travis-ci.org/TheHolyWaffle/TeamSpeak-3-Java-API) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/TheHolyWaffle/TeamSpeak-3-Java-API?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-An Java 7 implementation of [TeamSpeak's 3 server query API](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf).
+A Java 7 implementation of the [TeamSpeak 3 Server Query API](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf).
 
 
 ## Features
@@ -11,6 +11,7 @@ An Java 7 implementation of [TeamSpeak's 3 server query API](http://media.teamsp
 - Contains all server query functionality! (see [TeamSpeak 3 Server Query Manual](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf))
 - Built-in keep alive method
 - Threaded event-based system
+- Both [synchronous](src/main/java/com/github/theholywaffle/teamspeak3/TS3Api.java) and [asynchronous](src/main/java/com/github/theholywaffle/teamspeak3/TS3ApiAsync.java) implementations available
 - No extra libraries
 
 ## Getting Started
@@ -88,10 +89,10 @@ api.sendChannelMessage("PutPutBot is online!");
 ### Javadocs
 
 [here](http://theholywaffle.github.io/TeamSpeak-3-Java-API/latest/)
-    
+
 ### Important
 
-Only use `FloodRate.UNLIMITED` if you are sure that your query account is whitelisted. If not, use `FloodRate.DEFAULT`. The server will temporarily ban your account if you send too many commands in a short period of time. For more info on this check [TeamSpeak 3 Server Query Manual, page 6](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf#page=6).
+Only use `FloodRate.UNLIMITED` if you are sure that your query account is whitelisted. If not, use `FloodRate.DEFAULT`. The server will temporarily ban your account if you send too many commands in a short period of time. For more info on this, check the [TeamSpeak 3 Server Query Manual, page 6](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf#page=6).
 
 ### TS3Config Settings
 
@@ -106,10 +107,26 @@ Only use `FloodRate.UNLIMITED` if you are sure that your query account is whitel
 |Debug to file | Write logs to logfile (teamspeak.log). | False | no |
 |Command timeout | Time until a command waiting for a response fails | 4000 (ms) | no |
 
+## Building this project
+
+We're using Maven to automate the build process.
+
+##### Prerequisites:
+- Java Development Kit (JDK) 7 or higher
+- [Maven 2 or 3](https://maven.apache.org/download.cgi)
+
+##### Compiling:
+- Check out this repository
+- Run `mvn clean install` in the project directory
+
+This will create 3 JAR files in the `target` directory: The compiled project, the sources, and the javadocs.
+
 ## TODO
 
 * Add Javadoc to core API and wrapper classes.
 
 ## Questions or bugs?
 
-Please let me know them [here](../../issues). I'll help you out as soon as I can.
+Please let us know [here](../../issues). We'll try to help you as soon as we can.
+
+If you just have a simple question or want to talk to us about something else, feel free to join the [repository chat](https://gitter.im/TheHolyWaffle/TeamSpeak-3-Java-API) on Gitter.
