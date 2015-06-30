@@ -2665,17 +2665,13 @@ public class TS3Api {
 	 */
 	public boolean registerAllEvents() {
 		// No immediate return because even if one registration fails, a following one might still work
-		boolean[] success = new boolean[5];
-		success[0] = registerEvent(TS3EventType.SERVER);
-		success[1] = registerEvent(TS3EventType.TEXT_SERVER);
-		success[2] = registerEvent(TS3EventType.CHANNEL, 0);
-		success[3] = registerEvent(TS3EventType.TEXT_CHANNEL, 0);
-		success[4] = registerEvent(TS3EventType.TEXT_PRIVATE);
+		boolean success = registerEvent(TS3EventType.SERVER);
+		success &= registerEvent(TS3EventType.TEXT_SERVER);
+		success &= registerEvent(TS3EventType.CHANNEL, 0);
+		success &= registerEvent(TS3EventType.TEXT_CHANNEL, 0);
+		success &= registerEvent(TS3EventType.TEXT_PRIVATE);
 
-		for (boolean successful : success) {
-			if (!successful) return false;
-		}
-		return true;
+		return success;
 	}
 
 	/**
