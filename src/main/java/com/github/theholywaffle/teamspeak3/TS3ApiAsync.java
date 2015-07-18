@@ -1858,18 +1858,13 @@ public class TS3ApiAsync {
 				if (hasFailed(find, future)) return;
 
 				final List<Wrapper> responses = find.getResponse();
-				final List<CommandFuture<DatabaseClientInfo>> infoFutures = new ArrayList<>(responses.size());
+				final Collection<CommandFuture<DatabaseClientInfo>> infoFutures = new ArrayList<>(responses.size());
 				for (Wrapper response : responses) {
 					final int databaseId = response.getInt("cldbid");
 					infoFutures.add(getDatabaseClientInfo(databaseId));
 				}
 
-				CommandFuture.awaitAll(infoFutures).onSuccess(new CommandFuture.SuccessListener<Collection<DatabaseClientInfo>>() {
-					@Override
-					public void handleSuccess(Collection<DatabaseClientInfo> result) {
-						future.set(new ArrayList<>(result));
-					}
-				}).forwardFailure(future);
+				CommandFuture.ofAll(infoFutures).forwardResult(future);
 			}
 		});
 		return future;
@@ -1950,14 +1945,14 @@ public class TS3ApiAsync {
 
 				final int count = countList.getFirstResponse().getInt("count");
 				final int futuresCount = ((count - 1) / 200) + 1;
-				final List<CommandFuture<List<DatabaseClient>>> futures = new ArrayList<>(futuresCount);
+				final Collection<CommandFuture<List<DatabaseClient>>> futures = new ArrayList<>(futuresCount);
 				for (int i = 0; i < count; i += 200) {
 					futures.add(getDatabaseClients(i, 200));
 				}
 
-				CommandFuture.awaitAll(futures).onSuccess(new CommandFuture.SuccessListener<Collection<List<DatabaseClient>>>() {
+				CommandFuture.ofAll(futures).onSuccess(new CommandFuture.SuccessListener<List<List<DatabaseClient>>>() {
 					@Override
-					public void handleSuccess(Collection<List<DatabaseClient>> result) {
+					public void handleSuccess(List<List<DatabaseClient>> result) {
 						int total = 0;
 						for (List<DatabaseClient> list : result) {
 							total += list.size();
@@ -2966,9 +2961,9 @@ public class TS3ApiAsync {
 		eventFutures.add(registerEvent(TS3EventType.TEXT_CHANNEL, 0));
 		eventFutures.add(registerEvent(TS3EventType.TEXT_PRIVATE));
 
-		CommandFuture.awaitAll(eventFutures).onSuccess(new CommandFuture.SuccessListener<Collection<Boolean>>() {
+		CommandFuture.ofAll(eventFutures).onSuccess(new CommandFuture.SuccessListener<List<Boolean>>() {
 			@Override
-			public void handleSuccess(Collection<Boolean> result) {
+			public void handleSuccess(List<Boolean> result) {
 				future.set(true);
 			}
 		}).forwardFailure(future);
@@ -3043,14 +3038,14 @@ public class TS3ApiAsync {
 			return future;
 		}
 
-		final List<CommandFuture<Boolean>> registerFutures = new ArrayList<>(eventTypes.length);
+		final Collection<CommandFuture<Boolean>> registerFutures = new ArrayList<>(eventTypes.length);
 		for (final TS3EventType type : eventTypes) {
 			registerFutures.add(registerEvent(type));
 		}
 
-		CommandFuture.awaitAll(registerFutures).onSuccess(new CommandFuture.SuccessListener<Collection<Boolean>>() {
+		CommandFuture.ofAll(registerFutures).onSuccess(new CommandFuture.SuccessListener<List<Boolean>>() {
 			@Override
-			public void handleSuccess(Collection<Boolean> result) {
+			public void handleSuccess(List<Boolean> result) {
 				future.set(true);
 			}
 		}).forwardFailure(future);
@@ -3738,8 +3733,7 @@ public class TS3ApiAsync {
 		final QueryError error = command.getError();
 		if (error.isSuccessful()) return false;
 
-		final TS3CommandFailedException exception = new TS3CommandFailedException(error);
-		future.fail(exception);
+		future.fail(error);
 		return true;
 	}
 }
