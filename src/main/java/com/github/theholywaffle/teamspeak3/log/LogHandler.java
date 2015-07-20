@@ -40,7 +40,7 @@ import java.util.logging.LogRecord;
 
 public class LogHandler extends Handler {
 
-	private static final DateFormat format = new SimpleDateFormat("yyyy-MM-ss HH:mm:ss.SSS"); // ISO 8601
+	private static final DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS"); // ISO 8601
 	private final boolean writeToFile;
 	private final PrintWriter fileWriter;
 
