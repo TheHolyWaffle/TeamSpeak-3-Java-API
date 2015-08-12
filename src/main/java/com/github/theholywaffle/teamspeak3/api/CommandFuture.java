@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Basically, this class is a container for a server response which will
  * arrive at some time in the future. It also accounts for the possibility
  * that a command might fail and that a future might be cancelled by a user.
- * </p><p>
+ * </p>
  * A {@code CommandFuture} can therefore have 4 different states:
  * <ul>
  * <li><b>Waiting</b> - No response from the server has arrived yet</li>
@@ -56,7 +56,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * </ul>
  * You can check the state of the future using the methods {@link #isDone()},
  * {@link #isSuccessful()}, {@link #isFailed()} and {@link #isCancelled()}.
- * </p><p>
+ * <p>
  * A {@code CommandFuture}'s value can be retrieved by calling {@link #get()}
  * or {@link #get(long, TimeUnit)}, which block the current thread until the
  * server response arrives. The method with a timeout should be preferred
@@ -74,7 +74,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * one {@link FailureListener} registered. All {@link TS3ApiAsync} methods are
  * guaranteed to return a {@code CommandFuture} with no listeners registered.
  * </p><p>
- * To set the value of a {@code CommandFuture}, the {@link #set(V)} method is used;
+ * To set the value of a {@code CommandFuture}, the {@link #set(Object)} method is used;
  * to notify it of a failure, {@link #fail(QueryError)} is used. You usually
  * shouldn't call these methods yourself, however. That's the job of the API.
  * </p><p>
@@ -453,7 +453,7 @@ public class CommandFuture<V> implements Future<V> {
 	}
 
 	/**
-	 * Forwards a success to another future by calling {@link #set(V)} on
+	 * Forwards a success to another future by calling {@link #set(Object)} on
 	 * that future with the value this future was set to.
 	 * <p>
 	 * This will register a {@link SuccessListener}, meaning that you will not
@@ -615,7 +615,7 @@ public class CommandFuture<V> implements Future<V> {
 
 	/**
 	 * A listener which will be notified if the {@link CommandFuture} succeeded.
-	 * In that case, {@link #handleSuccess(V)} will be called with the value
+	 * In that case, {@link #handleSuccess(Object)} will be called with the value
 	 * the future has been set to.
 	 * <p>
 	 * A {@code CommandFuture}'s {@code SuccessListener} can be set by calling
