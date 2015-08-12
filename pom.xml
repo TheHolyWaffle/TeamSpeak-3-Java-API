@@ -112,6 +112,13 @@
 					<quiet>true</quiet>
 					<show>public</show>
 					<linksource>true</linksource>
+					<tags>
+						<tag>
+							<name>querycommands</name>
+							<placement>m</placement>
+							<head>Number of query commands sent:</head>
+						</tag>
+					</tags>
 				</configuration>
 				<executions>
 					<execution>

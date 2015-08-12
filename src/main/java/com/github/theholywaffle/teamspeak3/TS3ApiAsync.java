@@ -106,6 +106,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return the ID of the newly created ban entry
 	 *
+	 * @querycommands 1
 	 * @see Pattern RegEx Pattern
 	 * @see Client#getId()
 	 * @see Client#getUniqueIdentifier()
@@ -134,6 +135,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
 	 * @see Permission
@@ -155,6 +157,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return the ID of the newly created channel group
 	 *
+	 * @querycommands 1
 	 * @see ChannelGroup
 	 */
 	public CommandFuture<Integer> addChannelGroup(String name) {
@@ -171,6 +174,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return the ID of the newly created channel group
 	 *
+	 * @querycommands 1
 	 * @see ChannelGroup
 	 */
 	public CommandFuture<Integer> addChannelGroup(String name, PermissionGroupDatabaseType type) {
@@ -190,6 +194,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 * @see Permission
 	 */
@@ -210,6 +215,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Permission
 	 */
@@ -232,6 +238,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see Permission
 	 */
@@ -253,6 +260,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 * @see Client#getDatabaseId()
 	 */
@@ -272,6 +280,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see Complaint#getMessage()
 	 */
@@ -296,6 +305,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see ServerGroupType
 	 * @see Permission
 	 */
@@ -324,6 +334,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return the created token for a client to use
 	 *
+	 * @querycommands 1
 	 * @see TokenType
 	 * @see #addPrivilegeKeyServerGroup(int, String)
 	 * @see #addPrivilegeKeyChannelGroup(int, int, String)
@@ -345,6 +356,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return the created token for a client to use
 	 *
+	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 * @see Channel#getId()
 	 * @see #addPrivilegeKey(TokenType, int, int, String)
@@ -364,6 +376,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return the created token for a client to use
 	 *
+	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 * @see #addPrivilegeKey(TokenType, int, int, String)
 	 * @see #addPrivilegeKeyChannelGroup(int, int, String)
@@ -384,6 +397,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return the ID of the newly created server group
 	 *
+	 * @querycommands 1
 	 * @see ServerGroup
 	 */
 	public CommandFuture<Integer> addServerGroup(String name) {
@@ -400,6 +414,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return the ID of the newly created server group
 	 *
+	 * @querycommands 1
 	 * @see ServerGroup
 	 * @see PermissionGroupDatabaseType
 	 */
@@ -424,6 +439,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 * @see Permission
 	 */
@@ -466,6 +482,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return an array containing the IDs of the first and the second ban entry
 	 *
+	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see #addBan(String, String, String, long, String)
 	 */
@@ -489,6 +506,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return an array containing the IDs of the first and the second ban entry
 	 *
+	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see #addBan(String, String, String, long, String)
 	 */
@@ -524,6 +542,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return an array containing the IDs of the first and the second ban entry
 	 *
+	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see #addBan(String, String, String, long, String)
 	 */
@@ -539,6 +558,8 @@ public class TS3ApiAsync {
 	 * 		the message to be sent
 	 *
 	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<Boolean> broadcast(String message) {
 		final CGM broadcast = new CGM(message);
@@ -561,6 +582,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 */
 	public CommandFuture<Boolean> copyChannelGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
@@ -585,6 +607,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return the ID of the newly created channel group
 	 *
+	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 */
 	public CommandFuture<Integer> copyChannelGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
@@ -608,6 +631,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 */
 	public CommandFuture<Integer> copyServerGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
@@ -632,6 +656,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return the ID of the newly created server group
 	 *
+	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 */
 	public CommandFuture<Integer> copyServerGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
@@ -649,6 +674,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return the ID of the newly created channel
 	 *
+	 * @querycommands 1
 	 * @see Channel
 	 */
 	public CommandFuture<Integer> createChannel(String name, Map<ChannelProperty, String> options) {
@@ -676,6 +702,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return information about the newly created virtual server
 	 *
+	 * @querycommands 1
 	 * @see VirtualServer
 	 */
 	public CommandFuture<CreatedVirtualServer> createServer(String name, Map<VirtualServerProperty, String> options) {
@@ -699,6 +726,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a snapshot of the virtual server
 	 *
+	 * @querycommands 1
 	 * @see #deployServerSnapshot(Snapshot)
 	 */
 	public CommandFuture<Snapshot> createServerSnapshot() {
@@ -719,6 +747,8 @@ public class TS3ApiAsync {
 	 * Deletes all active ban rules from the server. Use with caution.
 	 *
 	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<Boolean> deleteAllBans() {
 		final CBanDelAll del = new CBanDelAll();
@@ -733,6 +763,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see Complaint
 	 */
@@ -749,6 +780,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Ban#getId()
 	 */
 	public CommandFuture<Boolean> deleteBan(int banId) {
@@ -764,6 +796,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see #deleteChannel(int, boolean)
 	 * @see #kickClientFromChannel(String, int...)
@@ -784,6 +817,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see #kickClientFromChannel(String, int...)
 	 */
@@ -804,6 +838,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
 	 * @see Permission#getName()
@@ -821,6 +856,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 */
 	public CommandFuture<Boolean> deleteChannelGroup(int groupId) {
@@ -839,6 +875,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 */
 	public CommandFuture<Boolean> deleteChannelGroup(int groupId, boolean force) {
@@ -856,6 +893,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 * @see Permission#getName()
 	 */
@@ -874,6 +912,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Permission#getName()
 	 */
@@ -892,6 +931,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see Permission#getName()
 	 */
@@ -911,6 +951,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Complaint
 	 * @see Client#getDatabaseId()
 	 */
@@ -931,6 +972,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see #getDatabaseClientInfo(int)
 	 * @see DatabaseClientInfo
@@ -948,6 +990,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Message#getId()
 	 */
 	public CommandFuture<Boolean> deleteOfflineMessage(int messageId) {
@@ -965,6 +1008,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see ServerGroupType
 	 * @see Permission#getName()
 	 */
@@ -981,6 +1025,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see PrivilegeKey
 	 */
 	public CommandFuture<Boolean> deletePrivilegeKey(String token) {
@@ -999,6 +1044,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see VirtualServer#getId()
 	 * @see #stopServer(int)
 	 */
@@ -1015,6 +1061,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 */
 	public CommandFuture<Boolean> deleteServerGroup(int groupId) {
@@ -1035,6 +1082,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 */
 	public CommandFuture<Boolean> deleteServerGroup(int groupId, boolean force) {
@@ -1052,6 +1100,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 * @see Permission#getName()
 	 */
@@ -1069,6 +1118,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see #createServerSnapshot()
 	 */
 	public CommandFuture<Boolean> deployServerSnapshot(Snapshot snapshot) {
@@ -1084,6 +1134,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see #createServerSnapshot()
 	 */
 	public CommandFuture<Boolean> deployServerSnapshot(String snapshot) {
@@ -1101,6 +1152,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Channel#getId()
 	 */
 	public CommandFuture<Boolean> editChannel(int channelId, Map<ChannelProperty, String> options) {
@@ -1122,6 +1174,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see #updateClient(Map)
 	 */
@@ -1140,6 +1193,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see DatabaseClientInfo
 	 * @see Client#getDatabaseId()
 	 */
@@ -1161,6 +1215,7 @@ public class TS3ApiAsync {
 	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code property} is not changeable
+	 * @querycommands 1
 	 * @see ServerInstanceProperty#isChangeable()
 	 */
 	public CommandFuture<Boolean> editInstance(ServerInstanceProperty property, String value) {
@@ -1180,6 +1235,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see VirtualServerProperty
 	 */
 	public CommandFuture<Boolean> editServer(Map<VirtualServerProperty, String> options) {
@@ -1192,6 +1248,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all bans on the virtual server
 	 *
+	 * @querycommands 1
 	 * @see Ban
 	 */
 	public CommandFuture<List<Ban>> getBans() {
@@ -1220,6 +1277,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return the list of bound IP addresses
 	 *
+	 * @querycommands 1
 	 * @see Binding
 	 */
 	public CommandFuture<List<Binding>> getBindings() {
@@ -1253,6 +1311,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return the found channel or {@code null} if no channel was found
 	 *
+	 * @querycommands 1
 	 * @see Channel
 	 * @see #getChannelsByName(String)
 	 */
@@ -1284,6 +1343,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all channels with names matching the search pattern
 	 *
+	 * @querycommands 2
 	 * @see Channel
 	 * @see #getChannelByNameExact(String, boolean)
 	 */
@@ -1329,6 +1389,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of permissions for the user in the specified channel
 	 *
+	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
 	 * @see Permission
@@ -1367,6 +1428,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of combinations of channel ID, client database ID and channel group ID
 	 *
+	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
 	 * @see ChannelGroup#getId()
@@ -1401,6 +1463,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of combinations of channel ID, client database ID and channel group ID
 	 *
+	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 * @see ChannelGroupClient
 	 * @see #getChannelGroupClients(int, int, int)
@@ -1417,6 +1480,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of combinations of channel ID, client database ID and channel group ID
 	 *
+	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see ChannelGroupClient
 	 * @see #getChannelGroupClients(int, int, int)
@@ -1433,6 +1497,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of combinations of channel ID, client database ID and channel group ID
 	 *
+	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see ChannelGroupClient
 	 * @see #getChannelGroupClients(int, int, int)
@@ -1449,6 +1514,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of permissions assigned to the channel group
 	 *
+	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 * @see Permission
 	 */
@@ -1478,6 +1544,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all channel groups on the virtual server
 	 *
+	 * @querycommands 1
 	 * @see ChannelGroup
 	 */
 	public CommandFuture<List<ChannelGroup>> getChannelGroups() {
@@ -1509,6 +1576,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return information about the channel
 	 *
+	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see ChannelInfo
 	 */
@@ -1534,6 +1602,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all permissions assigned to the channel
 	 *
+	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Permission
 	 */
@@ -1563,6 +1632,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all channels on the virtual server
 	 *
+	 * @querycommands 1
 	 * @see Channel
 	 */
 	public CommandFuture<List<Channel>> getChannels() {
@@ -1596,6 +1666,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return the found client or {@code null} if no client was found
 	 *
+	 * @querycommands 1
 	 * @see Client
 	 * @see #getClientsByName(String)
 	 */
@@ -1627,6 +1698,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all clients with nicknames matching the search pattern
 	 *
+	 * @querycommands 2
 	 * @see Client
 	 * @see #getClientByNameExact(String, boolean)
 	 */
@@ -1669,6 +1741,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return the client or {@code null} if no client was found
 	 *
+	 * @querycommands 2
 	 * @see Client#getUniqueIdentifier()
 	 * @see ClientInfo
 	 */
@@ -1695,6 +1768,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return the client or {@code null} if no client was found
 	 *
+	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see ClientInfo
 	 */
@@ -1720,6 +1794,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all permissions assigned to the client
 	 *
+	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see Permission
 	 */
@@ -1749,6 +1824,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all clients on the virtual server
 	 *
+	 * @querycommands 1
 	 * @see Client
 	 */
 	public CommandFuture<List<Client>> getClients() {
@@ -1777,6 +1853,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all complaints on the virtual server
 	 *
+	 * @querycommands 1
 	 * @see Complaint
 	 * @see #getComplaints(int)
 	 */
@@ -1792,6 +1869,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all complaints about the specified client
 	 *
+	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see Complaint
 	 */
@@ -1821,6 +1899,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return connection information about the selected virtual server
 	 *
+	 * @querycommands 1
 	 * @see ConnectionInfo
 	 * @see #getServerInfo()
 	 */
@@ -1846,6 +1925,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all clients with a matching nickname
 	 *
+	 * @querycommands 1 + n,
+	 * where n is the amount of database clients with a matching nickname
 	 * @see Client#getNickname()
 	 */
 	public CommandFuture<List<DatabaseClientInfo>> getDatabaseClientsByName(String name) {
@@ -1878,6 +1959,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return the database client or {@code null} if no client was found
 	 *
+	 * @querycommands 2
 	 * @see Client#getUniqueIdentifier()
 	 * @see DatabaseClientInfo
 	 */
@@ -1904,6 +1986,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return the database client or {@code null} if no client was found
 	 *
+	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see DatabaseClientInfo
 	 */
@@ -1932,6 +2015,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return a {@link List} of all database clients
 	 *
+	 * @querycommands 1 + n,
+	 * where n = Math.ceil([amount of database clients] / 200)
 	 * @see DatabaseClient
 	 */
 	public CommandFuture<List<DatabaseClient>> getDatabaseClients() {
@@ -1982,6 +2067,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a {@link List} of database clients
 	 *
+	 * @querycommands 1
 	 * @see DatabaseClient
 	 */
 	public CommandFuture<List<DatabaseClient>> getDatabaseClients(final int offset, final int count) {
@@ -2007,7 +2093,9 @@ public class TS3ApiAsync {
 	 * Displays detailed configuration information about the server instance including
 	 * uptime, number of virtual servers online, traffic information, etc.
 	 *
-	 * @return information about the
+	 * @return information about the host
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<HostInfo> getHostInfo() {
 		final CHostInfo info = new CHostInfo();
@@ -2028,6 +2116,8 @@ public class TS3ApiAsync {
 	 * the file transfer port, default group IDs, etc.
 	 *
 	 * @return information about the TeamSpeak server instance.
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<InstanceInfo> getInstanceInfo() {
 		final CInstanceInfo info = new CInstanceInfo();
@@ -2051,6 +2141,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return the body of the message with the specified ID or {@code null} if there was no message with that ID
 	 *
+	 * @querycommands 1
 	 * @see Message#getId()
 	 * @see #setMessageRead(int)
 	 */
@@ -2067,6 +2158,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return the body of the message with the specified ID or {@code null} if there was no message with that ID
 	 *
+	 * @querycommands 1
 	 * @see Message#getId()
 	 * @see #setMessageRead(Message)
 	 */
@@ -2080,6 +2172,8 @@ public class TS3ApiAsync {
 	 * To read the actual message, use {@link #getOfflineMessage(int)} or {@link #getOfflineMessage(Message)}.
 	 *
 	 * @return a list of all offline messages this server query has received
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<List<Message>> getOfflineMessages() {
 		final CMessageList list = new CMessageList();
@@ -2112,6 +2206,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of permission assignments
 	 *
+	 * @querycommands 1
 	 * @see #getPermissionOverview(int, int)
 	 */
 	public CommandFuture<List<AdvancedPermission>> getPermissionAssignments(String permName) {
@@ -2146,6 +2241,8 @@ public class TS3ApiAsync {
 	 * 		the name of the permission
 	 *
 	 * @return the numeric ID of the specified permission
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<Integer> getPermissionIdByName(String permName) {
 		final CPermIdGetByName get = new CPermIdGetByName(permName);
@@ -2163,6 +2260,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all permission assignments for the client in the specified channel
 	 *
+	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
 	 */
@@ -2191,6 +2289,8 @@ public class TS3ApiAsync {
 	 * Displays a list of all permissions, including ID, name and description.
 	 *
 	 * @return a list of all permissions
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<List<PermissionInfo>> getPermissions() {
 		final CPermissionList list = new CPermissionList();
@@ -2220,6 +2320,8 @@ public class TS3ApiAsync {
 	 * 		the name of the permission
 	 *
 	 * @return the permission value, usually ranging from 0 to 100
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<Integer> getPermissionValue(String permName) {
 		final CPermGet get = new CPermGet(permName);
@@ -2232,6 +2334,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all generated, but still unclaimed privilege keys
 	 *
+	 * @querycommands 1
 	 * @see #addPrivilegeKey(TokenType, int, int, String)
 	 * @see #usePrivilegeKey(String)
 	 */
@@ -2263,6 +2366,8 @@ public class TS3ApiAsync {
 	 * 		the ID of the server group for which the clients should be looked up
 	 *
 	 * @return a list of all clients in the server group
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<List<ServerGroupClient>> getServerGroupClients(int serverGroupId) {
 		final CServerGroupClientList list = new CServerGroupClientList(serverGroupId);
@@ -2292,6 +2397,8 @@ public class TS3ApiAsync {
 	 * 		the server group for which the clients should be looked up
 	 *
 	 * @return a list of all clients in the server group
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<List<ServerGroupClient>> getServerGroupClients(ServerGroup serverGroup) {
 		return getServerGroupClients(serverGroup.getId());
@@ -2305,6 +2412,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all permissions assigned to the server group
 	 *
+	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 * @see #getServerGroupPermissions(ServerGroup)
 	 */
@@ -2336,6 +2444,8 @@ public class TS3ApiAsync {
 	 * 		the server group for which the permissions should be looked up
 	 *
 	 * @return a list of all permissions assigned to the server group
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<List<Permission>> getServerGroupPermissions(ServerGroup serverGroup) {
 		return getServerGroupPermissions(serverGroup.getId());
@@ -2349,6 +2459,8 @@ public class TS3ApiAsync {
 	 * </p>
 	 *
 	 * @return a list of all server groups
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<List<ServerGroup>> getServerGroups() {
 		final CServerGroupList list = new CServerGroupList();
@@ -2379,6 +2491,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all server groups set for the client
 	 *
+	 * @querycommands 2
 	 * @see Client#getDatabaseId()
 	 * @see #getServerGroupsByClient(Client)
 	 */
@@ -2420,6 +2533,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all server group set for the client
 	 *
+	 * @querycommands 2
 	 * @see #getServerGroupsByClientId(int)
 	 */
 	public CommandFuture<List<ServerGroup>> getServerGroupsByClient(Client client) {
@@ -2434,6 +2548,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return the ID of the virtual server
 	 *
+	 * @querycommands 1
 	 * @see VirtualServer#getPort()
 	 * @see VirtualServer#getId()
 	 */
@@ -2446,6 +2561,8 @@ public class TS3ApiAsync {
 	 * Gets detailed information about the virtual server the server query is currently in.
 	 *
 	 * @return information about the current virtual server
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<VirtualServerInfo> getServerInfo() {
 		final CServerInfo info = new CServerInfo();
@@ -2465,6 +2582,8 @@ public class TS3ApiAsync {
 	 * Gets the version, build number and platform of the TeamSpeak3 server.
 	 *
 	 * @return the version information of the server
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<Version> getVersion() {
 		final CVersion version = new CVersion();
@@ -2484,6 +2603,8 @@ public class TS3ApiAsync {
 	 * Gets a list of all virtual servers including their ID, status, number of clients online, etc.
 	 *
 	 * @return a list of all virtual servers
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<List<VirtualServer>> getVirtualServers() {
 		final CServerList serverList = new CServerList();
@@ -2516,6 +2637,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see #kickClientFromChannel(Client...)
 	 * @see #kickClientFromChannel(String, int...)
 	 */
@@ -2533,6 +2655,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see #kickClientFromChannel(int...)
 	 * @see #kickClientFromChannel(String, Client...)
 	 */
@@ -2552,6 +2675,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see #kickClientFromChannel(int...)
 	 * @see #kickClientFromChannel(String, Client...)
@@ -2572,6 +2696,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see #kickClientFromChannel(Client...)
 	 * @see #kickClientFromChannel(String, int...)
 	 */
@@ -2587,6 +2712,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see #kickClientFromServer(Client...)
 	 * @see #kickClientFromServer(String, int...)
@@ -2603,6 +2729,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see #kickClientFromServer(int...)
 	 * @see #kickClientFromServer(String, Client...)
 	 */
@@ -2620,6 +2747,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see #kickClientFromServer(int...)
 	 * @see #kickClientFromServer(String, Client...)
@@ -2638,6 +2766,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see #kickClientFromServer(Client...)
 	 * @see #kickClientFromServer(String, int...)
 	 */
@@ -2656,6 +2785,8 @@ public class TS3ApiAsync {
 	 * 		the clients to kick
 	 *
 	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
 	 */
 	private CommandFuture<Boolean> kickClients(ReasonIdentifier reason, String message, Client... clients) {
 		int[] clientIds = new int[clients.length];
@@ -2677,6 +2808,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Client#getId()
 	 */
 	private CommandFuture<Boolean> kickClients(ReasonIdentifier reason, String message, int... clientIds) {
@@ -2698,6 +2830,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see TS3Config#setLoginCredentials(String, String)
 	 * @see #logout()
 	 */
@@ -2711,6 +2844,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see #login(String, String)
 	 */
 	public CommandFuture<Boolean> logout() {
@@ -2733,6 +2867,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see #moveChannel(int, int, int)
 	 */
@@ -2758,6 +2893,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see #moveChannel(int, int)
 	 */
@@ -2774,6 +2910,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Channel#getId()
 	 */
 	public CommandFuture<Boolean> moveClient(int channelId) {
@@ -2787,6 +2924,8 @@ public class TS3ApiAsync {
 	 * 		the channel to move the client into
 	 *
 	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<Boolean> moveClient(ChannelBase channel) {
 		return moveClient(channel.getId(), null);
@@ -2802,6 +2941,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Channel#getId()
 	 */
 	public CommandFuture<Boolean> moveClient(int channelId, String channelPassword) {
@@ -2817,6 +2957,8 @@ public class TS3ApiAsync {
 	 * 		the password of the channel
 	 *
 	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<Boolean> moveClient(ChannelBase channel, String channelPassword) {
 		return moveClient(0, channel.getId(), channelPassword);
@@ -2832,6 +2974,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see Channel#getId()
 	 */
@@ -2848,6 +2991,8 @@ public class TS3ApiAsync {
 	 * 		the channel to move the client into
 	 *
 	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<Boolean> moveClient(Client client, ChannelBase channel) {
 		return moveClient(client.getId(), channel.getId(), null);
@@ -2865,6 +3010,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see Channel#getId()
 	 */
@@ -2884,6 +3030,8 @@ public class TS3ApiAsync {
 	 * 		the password of the channel
 	 *
 	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<Boolean> moveClient(Client client, ChannelBase channel, String channelPassword) {
 		return moveClient(client.getId(), channel.getId(), channelPassword);
@@ -2907,6 +3055,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Client#getId()
 	 */
 	public CommandFuture<Boolean> pokeClient(int clientId, String message) {
@@ -2920,6 +3069,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @deprecated This command leaves the query in an undefined state,
 	 * where the connection is closed without the socket being closed and no more command can be executed.
 	 * To terminate a connection, use {@link TS3Query#exit()}.
@@ -2949,6 +3099,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether all commands succeeded or not
 	 *
+	 * @querycommands 5
 	 * @see #addTS3Listeners(TS3Listener...)
 	 */
 	public CommandFuture<Boolean> registerAllEvents() {
@@ -2983,6 +3134,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see #addTS3Listeners(TS3Listener...)
 	 * @see #registerEvent(TS3EventType, int)
 	 * @see #registerAllEvents()
@@ -3005,6 +3157,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see #addTS3Listeners(TS3Listener...)
 	 * @see #registerAllEvents()
@@ -3027,6 +3180,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands n, one command per TS3EventType
 	 * @see #addTS3Listeners(TS3Listener...)
 	 * @see #registerEvent(TS3EventType, int)
 	 * @see #registerAllEvents()
@@ -3062,6 +3216,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 * @see Client#getDatabaseId()
 	 * @see #removeClientFromServerGroup(ServerGroup, Client)
@@ -3081,6 +3236,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see #removeClientFromServerGroup(int, int)
 	 */
 	public CommandFuture<Boolean> removeClientFromServerGroup(ServerGroup serverGroup, Client client) {
@@ -3114,6 +3270,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 * @see #renameChannelGroup(ChannelGroup, String)
 	 */
@@ -3132,6 +3289,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see #renameChannelGroup(int, String)
 	 */
 	public CommandFuture<Boolean> renameChannelGroup(ChannelGroup channelGroup, String name) {
@@ -3148,6 +3306,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 * @see #renameServerGroup(ServerGroup, String)
 	 */
@@ -3166,6 +3325,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see #renameServerGroup(int, String)
 	 */
 	public CommandFuture<Boolean> renameServerGroup(ServerGroup serverGroup, String name) {
@@ -3176,6 +3336,8 @@ public class TS3ApiAsync {
 	 * Resets all permissions and deletes all server / channel groups. Use carefully.
 	 *
 	 * @return a token for a new administrator account
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<String> resetPermissions() {
 		final CPermReset reset = new CPermReset();
@@ -3190,6 +3352,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see VirtualServer#getId()
 	 * @see #selectVirtualServerByPort(int)
 	 * @see #selectVirtualServer(VirtualServer)
@@ -3207,6 +3370,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see VirtualServer#getPort()
 	 * @see #selectVirtualServerById(int)
 	 * @see #selectVirtualServer(VirtualServer)
@@ -3224,6 +3388,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see #selectVirtualServerById(int)
 	 * @see #selectVirtualServerByPort(int)
 	 */
@@ -3247,6 +3412,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Client#getUniqueIdentifier()
 	 * @see Message
 	 */
@@ -3272,6 +3438,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Client#getId()
 	 */
 	public CommandFuture<Boolean> sendTextMessage(TextMessageTargetMode targetMode, int targetId, String message) {
@@ -3294,6 +3461,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see #sendChannelMessage(String)
 	 * @see Channel#getId()
 	 */
@@ -3318,6 +3486,8 @@ public class TS3ApiAsync {
 	 * 		the text message to send
 	 *
 	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<Boolean> sendChannelMessage(String message) {
 		return sendTextMessage(TextMessageTargetMode.CHANNEL, 0, message);
@@ -3338,6 +3508,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see #sendServerMessage(String)
 	 * @see VirtualServer#getId()
 	 */
@@ -3362,6 +3533,8 @@ public class TS3ApiAsync {
 	 * 		the text message to send
 	 *
 	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<Boolean> sendServerMessage(String message) {
 		return sendTextMessage(TextMessageTargetMode.SERVER, 0, message);
@@ -3378,6 +3551,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see Client#getId()
 	 */
 	public CommandFuture<Boolean> sendPrivateMessage(int clientId, String message) {
@@ -3396,6 +3570,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
@@ -3413,6 +3588,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see #setMessageReadFlag(int, boolean)
 	 */
 	public CommandFuture<Boolean> setMessageRead(int messageId) {
@@ -3427,6 +3603,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see #setMessageRead(int)
 	 * @see #setMessageReadFlag(Message, boolean)
 	 * @see #deleteOfflineMessage(int)
@@ -3445,6 +3622,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see #setMessageRead(int)
 	 * @see #setMessageReadFlag(Message, boolean)
 	 * @see #deleteOfflineMessage(int)
@@ -3464,6 +3642,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see #setMessageRead(Message)
 	 * @see #setMessageReadFlag(int, boolean)
 	 * @see #deleteOfflineMessage(int)
@@ -3481,6 +3660,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see #updateClient(Map)
 	 */
 	public CommandFuture<Boolean> setNickname(String nickname) {
@@ -3495,6 +3675,8 @@ public class TS3ApiAsync {
 	 * 		the ID of the virtual server
 	 *
 	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<Boolean> startServer(int serverId) {
 		final CServerStart start = new CServerStart(serverId);
@@ -3508,6 +3690,8 @@ public class TS3ApiAsync {
 	 * 		the virtual server to start
 	 *
 	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<Boolean> startServer(VirtualServer virtualServer) {
 		return startServer(virtualServer.getId());
@@ -3520,6 +3704,8 @@ public class TS3ApiAsync {
 	 * 		the ID of the virtual server
 	 *
 	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<Boolean> stopServer(int serverId) {
 		final CServerStop stop = new CServerStop(serverId);
@@ -3533,6 +3719,8 @@ public class TS3ApiAsync {
 	 * 		the virtual server to stop
 	 *
 	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<Boolean> stopServer(VirtualServer virtualServer) {
 		return stopServer(virtualServer.getId());
@@ -3545,6 +3733,8 @@ public class TS3ApiAsync {
 	 * </p>
 	 *
 	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<Boolean> stopServerProcess() {
 		final CServerProcessStop stop = new CServerProcessStop();
@@ -3555,6 +3745,8 @@ public class TS3ApiAsync {
 	 * Unregisters the server query from receiving any event notifications.
 	 *
 	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<Boolean> unregisterAllEvents() {
 		final CServerNotifyUnregister unr = new CServerNotifyUnregister();
@@ -3569,6 +3761,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see #editClient(int, Map)
 	 */
 	public CommandFuture<Boolean> updateClient(Map<ClientProperty, String> options) {
@@ -3587,6 +3780,8 @@ public class TS3ApiAsync {
 	 * 		the name for the server query login
 	 *
 	 * @return the generated password for the server query login
+	 *
+	 * @querycommands 1
 	 */
 	public CommandFuture<String> updateServerQueryLogin(String loginName) {
 		final CClientSetServerQueryLogin login = new CClientSetServerQueryLogin(loginName);
@@ -3601,6 +3796,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see PrivilegeKey
 	 * @see #addPrivilegeKey(TokenType, int, int, String)
 	 * @see #usePrivilegeKey(PrivilegeKey)
@@ -3618,6 +3814,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @querycommands 1
 	 * @see PrivilegeKey
 	 * @see #addPrivilegeKey(TokenType, int, int, String)
 	 * @see #usePrivilegeKey(String)
@@ -3631,6 +3828,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return information about the server query instance
 	 *
+	 * @querycommands 1
 	 * @see #getClientInfo(int)
 	 */
 	public CommandFuture<ServerQueryInfo> whoAmI() {
