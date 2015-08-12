@@ -151,6 +151,14 @@ public class Client extends Wrapper {
 		return getBoolean(ClientProperty.CLIENT_IS_RECORDING);
 	}
 
+	public boolean isRegularClient() {
+		return getType() == 0;
+	}
+
+	public boolean isServerQueryClient() {
+		return getType() == 1;
+	}
+
 	public boolean isTalking() {
 		return getBoolean("client_flag_talking");
 	}
