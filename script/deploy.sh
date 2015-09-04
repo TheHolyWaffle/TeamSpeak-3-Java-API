@@ -37,5 +37,5 @@ if [[ "$version" == *SNAPSHOT ]]; then
 else
 	echo "Release build, deploying artifacts and publishing javadocs"
 	echo "Running 'mvn deploy --settings ~/settings.xml -DskipTests=true -B -V'"
-	travis_wait mvn deploy --settings ~/settings.xml -DskipTests=true -B -V
+	mvn deploy --settings ~/settings.xml -DskipTests=true -B -V
 fi
