@@ -39,7 +39,7 @@ public class TS3Config {
 	private String username = null;
 	private String password = null;
 	private boolean debugToFile = false;
-	private long commandTimeout = 4000;
+	private int commandTimeout = 4000;
 
 	public TS3Config setHost(String host) {
 		this.host = host;
@@ -112,7 +112,7 @@ public class TS3Config {
 	 * @throws IllegalArgumentException
 	 * 		if the timeout value is smaller than or equal to {@code 0}
 	 */
-	public TS3Config setCommandTimeout(long commandTimeout) {
+	public TS3Config setCommandTimeout(int commandTimeout) {
 		if (commandTimeout <= 0) {
 			throw new IllegalArgumentException("Timeout value must be greater than 0");
 		}
@@ -121,7 +121,7 @@ public class TS3Config {
 		return this;
 	}
 
-	long getCommandTimeout() {
+	int getCommandTimeout() {
 		return commandTimeout;
 	}
 }
