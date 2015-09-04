@@ -5,7 +5,7 @@
 
 	<groupId>com.github.theholywaffle</groupId>
 	<artifactId>teamspeak3-api</artifactId>
-	<version>1.0.12-SNAPSHOT</version>
+	<version>1.0.12</version>
 	<packaging>jar</packaging>
 
 	<name>TeamSpeak 3 Java API</name>
