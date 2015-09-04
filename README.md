@@ -7,7 +7,7 @@ A Java 7 implementation of the [TeamSpeak 3 Server Query API](http://media.teams
 
 ## Features
 
-- [Documented source](http://theholywaffle.github.io/TeamSpeak-3-Java-API/latest/)
+- [Documented source](http://theholywaffle.github.io/TeamSpeak-3-Java-API/)
 - Contains all server query functionality! (see [TeamSpeak 3 Server Query Manual](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf))
 - Built-in keep alive method
 - Threaded event-based system
