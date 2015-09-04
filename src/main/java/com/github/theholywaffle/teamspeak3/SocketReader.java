@@ -116,7 +116,7 @@ public class SocketReader extends Thread {
 					c.feed(line);
 				}
 			} else {
-				TS3Query.log.info("< " + line);
+				TS3Query.log.warning("[UNHANDLED] < " + line);
 			}
 		}
 
