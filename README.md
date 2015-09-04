@@ -20,7 +20,7 @@ A Java 7 implementation of the [TeamSpeak 3 Server Query API](http://media.teams
 
 - **Option 1 (Standalone Jar)**: 
 
-   Download the <a href="http://theholywaffle.github.io/TeamSpeak-3-Java-API/download.html" target="_blank">latest release</a> and add it to the buildpath of your project. 
+   Download the <a href="http://theholywaffle.github.io/TeamSpeak-3-Java-API/download.html" target="_blank">latest release</a> and add it to the buildpath of your project. (<a href="http://theholywaffle.github.io/TeamSpeak-3-Java-API/download-sources.html" target="_blank">sources-jar</a> | <a href="http://theholywaffle.github.io/TeamSpeak-3-Java-API/download-javadoc.html" target="_blank">javadoc-jar</a>)
 
 - **Option 2 (Maven)**: 
 
