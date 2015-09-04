@@ -74,6 +74,9 @@
 							<inceptionYear>2014</inceptionYear>
 							<organizationName>Bert De Geyter, Roger Baumgartner</organizationName>
 							<projectName>TeamSpeak 3 Java API</projectName>
+							<includes>
+								<include>**/*.java</include>
+							</includes>
 						</configuration>
 					</execution>
 				</executions>
@@ -133,23 +136,24 @@
 				</executions>
 			</plugin>
 			<!-- PHASE: Deploy -->
-			<!-- Copy javadoc directory to /apidocs/latest -->
+			<!-- Copy HTML files from /src/site to /target/apidocs -->
 			<plugin>
 				<artifactId>maven-resources-plugin</artifactId>
 				<version>2.6</version>
 				<executions>
 					<execution>
-						<id>copy-javadocs</id>
+						<id>copy-site</id>
 						<phase>deploy</phase>
 						<goals>
 							<goal>copy-resources</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>${project.build.directory}/apidocs/latest</outputDirectory>
+							<outputDirectory>${project.build.directory}/apidocs</outputDirectory>
 							<resources>
 								<resource>
-									<directory>${project.build.directory}/apidocs/${project.version}</directory>
+									<directory>${project.basedir}/src/site</directory>
 									<include>**</include>
+									<filtering>true</filtering>
 								</resource>
 							</resources>
 						</configuration>
