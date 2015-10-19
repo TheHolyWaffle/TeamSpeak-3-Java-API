@@ -28,26 +28,26 @@ package com.github.theholywaffle.teamspeak3.api.event;
 
 public interface TS3Listener {
 
-	public void onTextMessage(TextMessageEvent e);
+	void onTextMessage(TextMessageEvent e);
 
-	public void onClientJoin(ClientJoinEvent e);
+	void onClientJoin(ClientJoinEvent e);
 
-	public void onClientLeave(ClientLeaveEvent e);
+	void onClientLeave(ClientLeaveEvent e);
 
-	public void onServerEdit(ServerEditedEvent e);
+	void onServerEdit(ServerEditedEvent e);
 
-	public void onChannelEdit(ChannelEditedEvent e);
+	void onChannelEdit(ChannelEditedEvent e);
 
-	public void onChannelDescriptionChanged(ChannelDescriptionEditedEvent e);
+	void onChannelDescriptionChanged(ChannelDescriptionEditedEvent e);
 
-	public void onClientMoved(ClientMovedEvent e);
+	void onClientMoved(ClientMovedEvent e);
 
-	public void onChannelCreate(ChannelCreateEvent e);
+	void onChannelCreate(ChannelCreateEvent e);
 
-	public void onChannelDeleted(ChannelDeletedEvent e);
+	void onChannelDeleted(ChannelDeletedEvent e);
 
-	public void onChannelMoved(ChannelMovedEvent e);
+	void onChannelMoved(ChannelMovedEvent e);
 
-	public void onChannelPasswordChanged(ChannelPasswordChangedEvent e);
+	void onChannelPasswordChanged(ChannelPasswordChangedEvent e);
 
 }

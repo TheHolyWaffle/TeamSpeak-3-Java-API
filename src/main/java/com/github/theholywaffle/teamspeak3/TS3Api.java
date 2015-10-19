@@ -26,11 +26,47 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
-import com.github.theholywaffle.teamspeak3.api.*;
+import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
+import com.github.theholywaffle.teamspeak3.api.ClientProperty;
+import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
+import com.github.theholywaffle.teamspeak3.api.ReasonIdentifier;
+import com.github.theholywaffle.teamspeak3.api.ServerGroupType;
+import com.github.theholywaffle.teamspeak3.api.ServerInstanceProperty;
+import com.github.theholywaffle.teamspeak3.api.Snapshot;
+import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
+import com.github.theholywaffle.teamspeak3.api.TokenType;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
-import com.github.theholywaffle.teamspeak3.api.wrapper.*;
+import com.github.theholywaffle.teamspeak3.api.wrapper.AdvancedPermission;
+import com.github.theholywaffle.teamspeak3.api.wrapper.Ban;
+import com.github.theholywaffle.teamspeak3.api.wrapper.Binding;
+import com.github.theholywaffle.teamspeak3.api.wrapper.Channel;
+import com.github.theholywaffle.teamspeak3.api.wrapper.ChannelBase;
+import com.github.theholywaffle.teamspeak3.api.wrapper.ChannelGroup;
+import com.github.theholywaffle.teamspeak3.api.wrapper.ChannelGroupClient;
+import com.github.theholywaffle.teamspeak3.api.wrapper.ChannelInfo;
+import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
+import com.github.theholywaffle.teamspeak3.api.wrapper.ClientInfo;
+import com.github.theholywaffle.teamspeak3.api.wrapper.Complaint;
+import com.github.theholywaffle.teamspeak3.api.wrapper.ConnectionInfo;
+import com.github.theholywaffle.teamspeak3.api.wrapper.CreatedVirtualServer;
+import com.github.theholywaffle.teamspeak3.api.wrapper.DatabaseClient;
+import com.github.theholywaffle.teamspeak3.api.wrapper.DatabaseClientInfo;
+import com.github.theholywaffle.teamspeak3.api.wrapper.HostInfo;
+import com.github.theholywaffle.teamspeak3.api.wrapper.InstanceInfo;
+import com.github.theholywaffle.teamspeak3.api.wrapper.Message;
+import com.github.theholywaffle.teamspeak3.api.wrapper.Permission;
+import com.github.theholywaffle.teamspeak3.api.wrapper.PermissionInfo;
+import com.github.theholywaffle.teamspeak3.api.wrapper.PrivilegeKey;
+import com.github.theholywaffle.teamspeak3.api.wrapper.ServerGroup;
+import com.github.theholywaffle.teamspeak3.api.wrapper.ServerGroupClient;
+import com.github.theholywaffle.teamspeak3.api.wrapper.ServerQueryInfo;
+import com.github.theholywaffle.teamspeak3.api.wrapper.Version;
+import com.github.theholywaffle.teamspeak3.api.wrapper.VirtualServer;
+import com.github.theholywaffle.teamspeak3.api.wrapper.VirtualServerInfo;
+import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.*;
 
 import java.util.ArrayList;
@@ -2695,6 +2731,24 @@ public class TS3Api {
 	}
 
 	/**
+	 * Moves multiple clients into the specified channel.
+	 *
+	 * @param clientIds
+	 * 		collection of client IDs to move
+	 * @param channelId
+	 * 		the ID of the channel to move the clients into
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
+	 * @see Client#getId()
+	 * @see Channel#getId()
+	 */
+	public boolean moveClient(int[] clientIds, int channelId) {
+		return moveClient(clientIds, channelId, null);
+	}
+
+	/**
 	 * Moves a client into the specified channel.
 	 *
 	 * @param client
@@ -2707,7 +2761,23 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public boolean moveClient(Client client, ChannelBase channel) {
-		return moveClient(client.getId(), channel.getId(), null);
+		return moveClient(client, channel, null);
+	}
+
+	/**
+	 * Moves multiple clients into the specified channel.
+	 *
+	 * @param clients
+	 * 		List of clients to move
+	 * @param channel
+	 * 		the channel to move the client into
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
+	 */
+	public boolean moveClient(Client[] clients, ChannelBase channel) {
+		return moveClient(clients, channel, null);
 	}
 
 	/**
@@ -2732,6 +2802,27 @@ public class TS3Api {
 	}
 
 	/**
+	 * Moves multiple clients into the specified channel using the specified password.
+	 *
+	 * @param clientIds
+	 * 		the list of client IDs to move
+	 * @param channelId
+	 * 		the ID of the channel to move the client into
+	 * @param channelPassword
+	 * 		the password of the channel
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
+	 * @see Client#getId()
+	 * @see Channel#getId()
+	 */
+	public boolean moveClient(int[] clientIds, int channelId, String channelPassword) {
+		final CClientMove move = new CClientMove(clientIds, channelId, channelPassword);
+		return query.doCommand(move);
+	}
+
+	/**
 	 * Moves a client into the specified channel using the specified password.
 	 *
 	 * @param client
@@ -2747,6 +2838,29 @@ public class TS3Api {
 	 */
 	public boolean moveClient(Client client, ChannelBase channel, String channelPassword) {
 		return moveClient(client.getId(), channel.getId(), channelPassword);
+	}
+
+	/**
+	 * Moves a list of clients into the specified channel using the specified password.
+	 *
+	 * @param clients
+	 * 		Collection of clients to move.
+	 * @param channel
+	 * 		the channel to move the client into
+	 * @param channelPassword
+	 * 		the password of the channel
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
+	 */
+	public boolean moveClient(Client[] clients, ChannelBase channel, String channelPassword) {
+		int[] clientIds = new int[clients.length];
+		for (int i = 0; i < clients.length; i++) {
+			Client client = clients[i];
+			clientIds[i] = client.getId();
+		}
+		return moveClient(clientIds, channel.getId(), channelPassword);
 	}
 
 	/**
