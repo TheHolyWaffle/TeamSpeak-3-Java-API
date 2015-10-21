@@ -2983,6 +2983,24 @@ public class TS3ApiAsync {
 	}
 
 	/**
+	 * Moves multiple clients into the specified channel.
+	 *
+	 * @param clientIds
+	 * 		Collection of client IDs to move
+	 * @param channelId
+	 * 		the ID of the channel to move the client into
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
+	 * @see Client#getId()
+	 * @see Channel#getId()
+	 */
+	public CommandFuture<Boolean> moveClient(int[] clientIds, int channelId) {
+		return moveClient(clientIds, channelId, null);
+	}
+
+	/**
 	 * Moves a client into the specified channel.
 	 *
 	 * @param client
@@ -2995,7 +3013,23 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 */
 	public CommandFuture<Boolean> moveClient(Client client, ChannelBase channel) {
-		return moveClient(client.getId(), channel.getId(), null);
+		return moveClient(client, channel, null);
+	}
+
+	/**
+	 * Moves multiple clients into the specified channel.
+	 *
+	 * @param clients
+	 * 		Collection of clients to move
+	 * @param channel
+	 * 		the channel to move the client into
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
+	 */
+	public CommandFuture<Boolean> moveClient(Client[] clients, ChannelBase channel) {
+		return moveClient(clients, channel, null);
 	}
 
 	/**
@@ -3020,6 +3054,27 @@ public class TS3ApiAsync {
 	}
 
 	/**
+	 * Moves multiple clients into the specified channel using the specified password.
+	 *
+	 * @param clientIds
+	 * 		Collection of client IDs to move
+	 * @param channelId
+	 * 		the ID of the channel to move the client into
+	 * @param channelPassword
+	 * 		the password of the channel
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
+	 * @see Client#getId()
+	 * @see Channel#getId()
+	 */
+	public CommandFuture<Boolean> moveClient(int[] clientIds, int channelId, String channelPassword) {
+		final CClientMove move = new CClientMove(clientIds, channelId, channelPassword);
+		return executeAndReturnError(move);
+	}
+
+	/**
 	 * Moves a client into the specified channel using the specified password.
 	 *
 	 * @param client
@@ -3035,6 +3090,28 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<Boolean> moveClient(Client client, ChannelBase channel, String channelPassword) {
 		return moveClient(client.getId(), channel.getId(), channelPassword);
+	}
+
+	/**
+	 * Moves a list of clients into the specified channel using the specified password.
+	 *
+	 * @param clients
+	 * 		the list of clients to move.
+	 * @param channel
+	 * 		the channel to move the client into
+	 * @param channelPassword
+	 * 		the password of the channel
+	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
+	 */
+	public CommandFuture<Boolean> moveClient(Client[] clients, ChannelBase channel, String channelPassword) {
+		int[] clientIds = new int[clients.length];
+		for (int i = 0; i < clients.length; i++) {
+			Client client = clients[i];
+			clientIds[i] = client.getId();
+		}
+		return moveClient(clientIds, channel.getId(), channelPassword);
 	}
 
 	/**

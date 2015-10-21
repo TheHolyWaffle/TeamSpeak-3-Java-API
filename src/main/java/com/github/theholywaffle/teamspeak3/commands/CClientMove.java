@@ -26,6 +26,7 @@ package com.github.theholywaffle.teamspeak3.commands;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.commands.parameter.ArrayParameter;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 
 public class CClientMove extends Command {
@@ -33,6 +34,21 @@ public class CClientMove extends Command {
 	public CClientMove(int clientId, int channelId, String channelPassword) {
 		super("clientmove");
 		add(new KeyValueParam("clid", clientId));
+		add(new KeyValueParam("cid", channelId));
+		if (channelPassword != null) {
+			add(new KeyValueParam("cpw", channelPassword));
+		}
+	}
+
+	public CClientMove(int[] clientIds, int channelId, String channelPassword) {
+		super("clientmove");
+
+		final ArrayParameter p = new ArrayParameter();
+		for (final int clientId : clientIds) {
+			p.add(new KeyValueParam("clid", clientId));
+		}
+		add(p);
+
 		add(new KeyValueParam("cid", channelId));
 		if (channelPassword != null) {
 			add(new KeyValueParam("cpw", channelPassword));
