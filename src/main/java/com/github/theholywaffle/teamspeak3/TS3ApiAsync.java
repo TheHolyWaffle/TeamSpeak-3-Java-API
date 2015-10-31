@@ -2903,69 +2903,81 @@ public class TS3ApiAsync {
 	}
 
 	/**
-	 * Moves the server query into the specified channel.
+	 * Moves the server query into a channel.
 	 *
 	 * @param channelId
-	 * 		the ID of the channel to move the client into
+	 * 		the ID of the channel to move the server query into
 	 *
 	 * @return whether the command succeeded or not
 	 *
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Boolean> moveClient(int channelId) {
-		return moveClient(channelId, null);
+	public CommandFuture<Boolean> moveQuery(int channelId) {
+		return moveClient(0, channelId, null);
 	}
 
 	/**
-	 * Moves the server query into the specified channel.
+	 * Moves the server query into a channel.
 	 *
 	 * @param channel
-	 * 		the channel to move the client into
+	 * 		the channel to move the server query into, cannot be {@code null}
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code channel} is {@code null}
 	 * @querycommands 1
 	 */
-	public CommandFuture<Boolean> moveClient(ChannelBase channel) {
-		return moveClient(channel.getId(), null);
+	public CommandFuture<Boolean> moveQuery(ChannelBase channel) {
+		if (channel == null) throw new IllegalArgumentException("channel was null");
+
+		return moveClient(0, channel.getId(), null);
 	}
 
 	/**
-	 * Moves the server query into the specified channel using the specified password.
+	 * Moves the server query into a channel using the specified password.
 	 *
 	 * @param channelId
 	 * 		the ID of the channel to move the client into
 	 * @param channelPassword
-	 * 		the password of the channel
+	 * 		the password of the channel, can be {@code null}
 	 *
 	 * @return whether the command succeeded or not
 	 *
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Boolean> moveClient(int channelId, String channelPassword) {
+	public CommandFuture<Boolean> moveQuery(int channelId, String channelPassword) {
 		return moveClient(0, channelId, channelPassword);
 	}
 
 	/**
-	 * Moves the server query into the specified channel using the specified password.
+	 * Moves the server query into a channel using the specified password.
 	 *
 	 * @param channel
-	 * 		the channel to move the client into
+	 * 		the channel to move the client into, cannot be {@code null}
 	 * @param channelPassword
-	 * 		the password of the channel
+	 * 		the password of the channel, can be {@code null}
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code channel} is {@code null}
 	 * @querycommands 1
 	 */
-	public CommandFuture<Boolean> moveClient(ChannelBase channel, String channelPassword) {
+	public CommandFuture<Boolean> moveQuery(ChannelBase channel, String channelPassword) {
+		if (channel == null) throw new IllegalArgumentException("channel was null");
+
 		return moveClient(0, channel.getId(), channelPassword);
 	}
 
 	/**
-	 * Moves a client into the specified channel.
+	 * Moves a client into a channel.
+	 * <p>
+	 * Consider using {@link #moveClients(int[], int)}
+	 * for moving multiple clients.
+	 * </p>
 	 *
 	 * @param clientId
 	 * 		the ID of the client to move
@@ -2983,33 +2995,46 @@ public class TS3ApiAsync {
 	}
 
 	/**
-	 * Moves multiple clients into the specified channel.
+	 * Moves multiple clients into a channel.
+	 * Immediately returns {@code true} for an empty client ID array.
+	 * <p>
+	 * Use this method instead of {@link #moveClient(int, int)} for moving
+	 * several clients as this will only send 1 command to the server and thus complete faster.
+	 * </p>
 	 *
 	 * @param clientIds
-	 * 		Collection of client IDs to move
+	 * 		the IDs of the clients to move, cannot be {@code null}
 	 * @param channelId
 	 * 		the ID of the channel to move the client into
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code clientIds} is {@code null}
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Boolean> moveClient(int[] clientIds, int channelId) {
-		return moveClient(clientIds, channelId, null);
+	public CommandFuture<Boolean> moveClients(int[] clientIds, int channelId) {
+		return moveClients(clientIds, channelId, null);
 	}
 
 	/**
-	 * Moves a client into the specified channel.
+	 * Moves a client into a channel.
+	 * <p>
+	 * Consider using {@link #moveClients(Client[], ChannelBase)}
+	 * for moving multiple clients.
+	 * </p>
 	 *
 	 * @param client
-	 * 		the client to move
+	 * 		the client to move, cannot be {@code null}
 	 * @param channel
-	 * 		the channel to move the client into
+	 * 		the channel to move the client into, cannot be {@code null}
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code client} or {@code channel} is {@code null}
 	 * @querycommands 1
 	 */
 	public CommandFuture<Boolean> moveClient(Client client, ChannelBase channel) {
@@ -3017,30 +3042,37 @@ public class TS3ApiAsync {
 	}
 
 	/**
-	 * Moves multiple clients into the specified channel.
+	 * Moves multiple clients into a channel.
+	 * Immediately returns {@code true} for an empty client array.
+	 * <p>
+	 * Use this method instead of {@link #moveClient(Client, ChannelBase)} for moving
+	 * several clients as this will only send 1 command to the server and thus complete faster.
+	 * </p>
 	 *
 	 * @param clients
-	 * 		Collection of clients to move
+	 * 		the clients to move, cannot be {@code null}
 	 * @param channel
-	 * 		the channel to move the client into
+	 * 		the channel to move the clients into, cannot be {@code null}
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code clients} or {@code channel} is {@code null}
 	 * @querycommands 1
 	 */
-	public CommandFuture<Boolean> moveClient(Client[] clients, ChannelBase channel) {
-		return moveClient(clients, channel, null);
+	public CommandFuture<Boolean> moveClients(Client[] clients, ChannelBase channel) {
+		return moveClients(clients, channel, null);
 	}
 
 	/**
-	 * Moves a client into the specified channel using the specified password.
+	 * Moves a client into a channel using the specified password.
 	 *
 	 * @param clientId
 	 * 		the ID of the client to move
 	 * @param channelId
 	 * 		the ID of the channel to move the client into
 	 * @param channelPassword
-	 * 		the password of the channel
+	 * 		the password of the channel, can be {@code null}
 	 *
 	 * @return whether the command succeeded or not
 	 *
@@ -3054,64 +3086,94 @@ public class TS3ApiAsync {
 	}
 
 	/**
-	 * Moves multiple clients into the specified channel using the specified password.
+	 * Moves multiple clients into a channel using the specified password.
+	 * Immediately returns {@code true} for an empty client ID array.
+	 * <p>
+	 * Use this method instead of {@link #moveClient(int, int, String)} for moving
+	 * several clients as this will only send 1 command to the server and thus complete faster.
+	 * </p>
 	 *
 	 * @param clientIds
-	 * 		Collection of client IDs to move
+	 * 		the IDs of the clients to move, cannot be {@code null}
 	 * @param channelId
-	 * 		the ID of the channel to move the client into
+	 * 		the ID of the channel to move the clients into
 	 * @param channelPassword
-	 * 		the password of the channel
+	 * 		the password of the channel, can be {@code null}
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code clientIds} is {@code null}
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Boolean> moveClient(int[] clientIds, int channelId, String channelPassword) {
+	public CommandFuture<Boolean> moveClients(int[] clientIds, int channelId, String channelPassword) {
+		if (clientIds == null) throw new IllegalArgumentException("clientIds was null");
+		if (clientIds.length == 0) return CommandFuture.immediate(true);
+
 		final CClientMove move = new CClientMove(clientIds, channelId, channelPassword);
 		return executeAndReturnError(move);
 	}
 
 	/**
-	 * Moves a client into the specified channel using the specified password.
+	 * Moves a client into a channel using the specified password.
+	 * <p>
+	 * Consider using {@link #moveClients(Client[], ChannelBase, String)}
+	 * for moving multiple clients.
+	 * </p>
 	 *
 	 * @param client
-	 * 		the client to move
+	 * 		the client to move, cannot be {@code null}
 	 * @param channel
-	 * 		the channel to move the client into
+	 * 		the channel to move the client into, cannot be {@code null}
 	 * @param channelPassword
-	 * 		the password of the channel
+	 * 		the password of the channel, can be {@code null}
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code client} or {@code channel} is {@code null}
 	 * @querycommands 1
 	 */
 	public CommandFuture<Boolean> moveClient(Client client, ChannelBase channel, String channelPassword) {
+		if (client == null) throw new IllegalArgumentException("client was null");
+		if (channel == null) throw new IllegalArgumentException("channel was null");
+
 		return moveClient(client.getId(), channel.getId(), channelPassword);
 	}
 
 	/**
-	 * Moves a list of clients into the specified channel using the specified password.
+	 * Moves multiple clients into a channel using the specified password.
+	 * Immediately returns {@code true} for an empty client array.
+	 * <p>
+	 * Use this method instead of {@link #moveClient(Client, ChannelBase, String)} for moving
+	 * several clients as this will only send 1 command to the server and thus complete faster.
+	 * </p>
 	 *
 	 * @param clients
-	 * 		the list of clients to move.
+	 * 		the clients to move, cannot be {@code null}
 	 * @param channel
-	 * 		the channel to move the client into
+	 * 		the channel to move the client into, cannot be {@code null}
 	 * @param channelPassword
-	 * 		the password of the channel
+	 * 		the password of the channel, can be {@code null}
+	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code clients} or {@code channel} is {@code null}
 	 * @querycommands 1
 	 */
-	public CommandFuture<Boolean> moveClient(Client[] clients, ChannelBase channel, String channelPassword) {
+	public CommandFuture<Boolean> moveClients(Client[] clients, ChannelBase channel, String channelPassword) {
+		if (clients == null) throw new IllegalArgumentException("clients was null");
+		if (channel == null) throw new IllegalArgumentException("channel was null");
+
 		int[] clientIds = new int[clients.length];
 		for (int i = 0; i < clients.length; i++) {
 			Client client = clients[i];
 			clientIds[i] = client.getId();
 		}
-		return moveClient(clientIds, channel.getId(), channelPassword);
+		return moveClients(clientIds, channel.getId(), channelPassword);
 	}
 
 	/**
@@ -3263,17 +3325,14 @@ public class TS3ApiAsync {
 	 * @see #registerAllEvents()
 	 */
 	public CommandFuture<Boolean> registerEvents(TS3EventType... eventTypes) {
-		final CommandFuture<Boolean> future = new CommandFuture<>();
-		if (eventTypes.length == 0) {
-			future.set(true);
-			return future;
-		}
+		if (eventTypes.length == 0) return CommandFuture.immediate(true);
 
 		final Collection<CommandFuture<Boolean>> registerFutures = new ArrayList<>(eventTypes.length);
 		for (final TS3EventType type : eventTypes) {
 			registerFutures.add(registerEvent(type));
 		}
 
+		final CommandFuture<Boolean> future = new CommandFuture<>();
 		CommandFuture.ofAll(registerFutures).onSuccess(new CommandFuture.SuccessListener<List<Boolean>>() {
 			@Override
 			public void handleSuccess(List<Boolean> result) {
@@ -3545,7 +3604,7 @@ public class TS3ApiAsync {
 	public CommandFuture<Boolean> sendChannelMessage(int channelId, final String message) {
 		final CommandFuture<Boolean> future = new CommandFuture<>();
 
-		moveClient(channelId).onSuccess(new CommandFuture.SuccessListener<Boolean>() {
+		moveQuery(channelId).onSuccess(new CommandFuture.SuccessListener<Boolean>() {
 			@Override
 			public void handleSuccess(Boolean result) {
 				sendTextMessage(TextMessageTargetMode.CHANNEL, 0, message).forwardResult(future);

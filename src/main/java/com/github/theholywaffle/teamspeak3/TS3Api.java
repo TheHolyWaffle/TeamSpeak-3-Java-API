@@ -26,47 +26,11 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
-import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
-import com.github.theholywaffle.teamspeak3.api.ClientProperty;
-import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
-import com.github.theholywaffle.teamspeak3.api.ReasonIdentifier;
-import com.github.theholywaffle.teamspeak3.api.ServerGroupType;
-import com.github.theholywaffle.teamspeak3.api.ServerInstanceProperty;
-import com.github.theholywaffle.teamspeak3.api.Snapshot;
-import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
-import com.github.theholywaffle.teamspeak3.api.TokenType;
-import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
+import com.github.theholywaffle.teamspeak3.api.*;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
-import com.github.theholywaffle.teamspeak3.api.wrapper.AdvancedPermission;
-import com.github.theholywaffle.teamspeak3.api.wrapper.Ban;
-import com.github.theholywaffle.teamspeak3.api.wrapper.Binding;
-import com.github.theholywaffle.teamspeak3.api.wrapper.Channel;
-import com.github.theholywaffle.teamspeak3.api.wrapper.ChannelBase;
-import com.github.theholywaffle.teamspeak3.api.wrapper.ChannelGroup;
-import com.github.theholywaffle.teamspeak3.api.wrapper.ChannelGroupClient;
-import com.github.theholywaffle.teamspeak3.api.wrapper.ChannelInfo;
-import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
-import com.github.theholywaffle.teamspeak3.api.wrapper.ClientInfo;
-import com.github.theholywaffle.teamspeak3.api.wrapper.Complaint;
-import com.github.theholywaffle.teamspeak3.api.wrapper.ConnectionInfo;
-import com.github.theholywaffle.teamspeak3.api.wrapper.CreatedVirtualServer;
-import com.github.theholywaffle.teamspeak3.api.wrapper.DatabaseClient;
-import com.github.theholywaffle.teamspeak3.api.wrapper.DatabaseClientInfo;
-import com.github.theholywaffle.teamspeak3.api.wrapper.HostInfo;
-import com.github.theholywaffle.teamspeak3.api.wrapper.InstanceInfo;
-import com.github.theholywaffle.teamspeak3.api.wrapper.Message;
-import com.github.theholywaffle.teamspeak3.api.wrapper.Permission;
-import com.github.theholywaffle.teamspeak3.api.wrapper.PermissionInfo;
-import com.github.theholywaffle.teamspeak3.api.wrapper.PrivilegeKey;
-import com.github.theholywaffle.teamspeak3.api.wrapper.ServerGroup;
-import com.github.theholywaffle.teamspeak3.api.wrapper.ServerGroupClient;
-import com.github.theholywaffle.teamspeak3.api.wrapper.ServerQueryInfo;
-import com.github.theholywaffle.teamspeak3.api.wrapper.Version;
-import com.github.theholywaffle.teamspeak3.api.wrapper.VirtualServer;
-import com.github.theholywaffle.teamspeak3.api.wrapper.VirtualServerInfo;
-import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
+import com.github.theholywaffle.teamspeak3.api.wrapper.*;
 import com.github.theholywaffle.teamspeak3.commands.*;
 
 import java.util.ArrayList;
@@ -2651,69 +2615,81 @@ public class TS3Api {
 	}
 
 	/**
-	 * Moves the server query into the specified channel.
+	 * Moves the server query into a channel.
 	 *
 	 * @param channelId
-	 * 		the ID of the channel to move the client into
+	 * 		the ID of the channel to move the server query into
 	 *
 	 * @return whether the command succeeded or not
 	 *
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 */
-	public boolean moveClient(int channelId) {
-		return moveClient(channelId, null);
+	public boolean moveQuery(int channelId) {
+		return moveClient(0, channelId, null);
 	}
 
 	/**
-	 * Moves the server query into the specified channel.
+	 * Moves the server query into a channel.
 	 *
 	 * @param channel
-	 * 		the channel to move the client into
+	 * 		the channel to move the server query into, cannot be {@code null}
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code channel} is {@code null}
 	 * @querycommands 1
 	 */
-	public boolean moveClient(ChannelBase channel) {
-		return moveClient(channel.getId(), null);
+	public boolean moveQuery(ChannelBase channel) {
+		if (channel == null) throw new IllegalArgumentException("channel was null");
+
+		return moveClient(0, channel.getId(), null);
 	}
 
 	/**
-	 * Moves the server query into the specified channel using the specified password.
+	 * Moves the server query into a channel using the specified password.
 	 *
 	 * @param channelId
 	 * 		the ID of the channel to move the client into
 	 * @param channelPassword
-	 * 		the password of the channel
+	 * 		the password of the channel, can be {@code null}
 	 *
 	 * @return whether the command succeeded or not
 	 *
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 */
-	public boolean moveClient(int channelId, String channelPassword) {
+	public boolean moveQuery(int channelId, String channelPassword) {
 		return moveClient(0, channelId, channelPassword);
 	}
 
 	/**
-	 * Moves the server query into the specified channel using the specified password.
+	 * Moves the server query into a channel using the specified password.
 	 *
 	 * @param channel
-	 * 		the channel to move the client into
+	 * 		the channel to move the client into, cannot be {@code null}
 	 * @param channelPassword
-	 * 		the password of the channel
+	 * 		the password of the channel, can be {@code null}
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code channel} is {@code null}
 	 * @querycommands 1
 	 */
-	public boolean moveClient(ChannelBase channel, String channelPassword) {
+	public boolean moveQuery(ChannelBase channel, String channelPassword) {
+		if (channel == null) throw new IllegalArgumentException("channel was null");
+
 		return moveClient(0, channel.getId(), channelPassword);
 	}
 
 	/**
-	 * Moves a client into the specified channel.
+	 * Moves a client into a channel.
+	 * <p>
+	 * Consider using {@link #moveClients(int[], int)}
+	 * for moving multiple clients.
+	 * </p>
 	 *
 	 * @param clientId
 	 * 		the ID of the client to move
@@ -2731,33 +2707,46 @@ public class TS3Api {
 	}
 
 	/**
-	 * Moves multiple clients into the specified channel.
+	 * Moves multiple clients into a channel.
+	 * Immediately returns {@code true} for an empty client ID array.
+	 * <p>
+	 * Use this method instead of {@link #moveClient(int, int)} for moving
+	 * several clients as this will only send 1 command to the server and thus complete faster.
+	 * </p>
 	 *
 	 * @param clientIds
-	 * 		collection of client IDs to move
+	 * 		the IDs of the clients to move, cannot be {@code null}
 	 * @param channelId
 	 * 		the ID of the channel to move the clients into
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code clientIds} is {@code null}
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see Channel#getId()
 	 */
-	public boolean moveClient(int[] clientIds, int channelId) {
-		return moveClient(clientIds, channelId, null);
+	public boolean moveClients(int[] clientIds, int channelId) {
+		return moveClients(clientIds, channelId, null);
 	}
 
 	/**
-	 * Moves a client into the specified channel.
+	 * Moves a client into a channel.
+	 * <p>
+	 * Consider using {@link #moveClients(Client[], ChannelBase)}
+	 * for moving multiple clients.
+	 * </p>
 	 *
 	 * @param client
-	 * 		the client to move
+	 * 		the client to move, cannot be {@code null}
 	 * @param channel
-	 * 		the channel to move the client into
+	 * 		the channel to move the client into, cannot be {@code null}
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code client} or {@code channel} is {@code null}
 	 * @querycommands 1
 	 */
 	public boolean moveClient(Client client, ChannelBase channel) {
@@ -2765,30 +2754,41 @@ public class TS3Api {
 	}
 
 	/**
-	 * Moves multiple clients into the specified channel.
+	 * Moves multiple clients into a channel.
+	 * Immediately returns {@code true} for an empty client array.
+	 * <p>
+	 * Use this method instead of {@link #moveClient(Client, ChannelBase)} for moving
+	 * several clients as this will only send 1 command to the server and thus complete faster.
+	 * </p>
 	 *
 	 * @param clients
-	 * 		List of clients to move
+	 * 		the clients to move, cannot be {@code null}
 	 * @param channel
-	 * 		the channel to move the client into
+	 * 		the channel to move the clients into, cannot be {@code null}
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code clients} or {@code channel} is {@code null}
 	 * @querycommands 1
 	 */
-	public boolean moveClient(Client[] clients, ChannelBase channel) {
-		return moveClient(clients, channel, null);
+	public boolean moveClients(Client[] clients, ChannelBase channel) {
+		return moveClients(clients, channel, null);
 	}
 
 	/**
-	 * Moves a client into the specified channel using the specified password.
+	 * Moves a client into a channel using the specified password.
+	 * <p>
+	 * Consider using {@link #moveClients(int[], int, String)}
+	 * for moving multiple clients.
+	 * </p>
 	 *
 	 * @param clientId
 	 * 		the ID of the client to move
 	 * @param channelId
 	 * 		the ID of the channel to move the client into
 	 * @param channelPassword
-	 * 		the password of the channel
+	 * 		the password of the channel, can be {@code null}
 	 *
 	 * @return whether the command succeeded or not
 	 *
@@ -2802,65 +2802,94 @@ public class TS3Api {
 	}
 
 	/**
-	 * Moves multiple clients into the specified channel using the specified password.
+	 * Moves multiple clients into a channel using the specified password.
+	 * Immediately returns {@code true} for an empty client ID array.
+	 * <p>
+	 * Use this method instead of {@link #moveClient(int, int, String)} for moving
+	 * several clients as this will only send 1 command to the server and thus complete faster.
+	 * </p>
 	 *
 	 * @param clientIds
-	 * 		the list of client IDs to move
+	 * 		the IDs of the clients to move, cannot be {@code null}
 	 * @param channelId
-	 * 		the ID of the channel to move the client into
+	 * 		the ID of the channel to move the clients into
 	 * @param channelPassword
-	 * 		the password of the channel
+	 * 		the password of the channel, can be {@code null}
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code clientIds} is {@code null}
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see Channel#getId()
 	 */
-	public boolean moveClient(int[] clientIds, int channelId, String channelPassword) {
+	public boolean moveClients(int[] clientIds, int channelId, String channelPassword) {
+		if (clientIds == null) throw new IllegalArgumentException("clientIds was null");
+		if (clientIds.length == 0) return true;
+
 		final CClientMove move = new CClientMove(clientIds, channelId, channelPassword);
 		return query.doCommand(move);
 	}
 
 	/**
-	 * Moves a client into the specified channel using the specified password.
+	 * Moves a single client into a channel using the specified password.
+	 * <p>
+	 * Consider using {@link #moveClients(Client[], ChannelBase, String)}
+	 * for moving multiple clients.
+	 * </p>
 	 *
 	 * @param client
-	 * 		the client to move
+	 * 		the client to move, cannot be {@code null}
 	 * @param channel
-	 * 		the channel to move the client into
+	 * 		the channel to move the client into, cannot be {@code null}
 	 * @param channelPassword
-	 * 		the password of the channel
+	 * 		the password of the channel, can be {@code null}
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code client} or {@code channel} is {@code null}
 	 * @querycommands 1
 	 */
 	public boolean moveClient(Client client, ChannelBase channel, String channelPassword) {
+		if (client == null) throw new IllegalArgumentException("client was null");
+		if (channel == null) throw new IllegalArgumentException("channel was null");
+
 		return moveClient(client.getId(), channel.getId(), channelPassword);
 	}
 
 	/**
-	 * Moves a list of clients into the specified channel using the specified password.
+	 * Moves multiple clients into a channel using the specified password.
+	 * Immediately returns {@code true} for an empty client array.
+	 * <p>
+	 * Use this method instead of {@link #moveClient(Client, ChannelBase, String)} for moving
+	 * several clients as this will only send 1 command to the server and thus complete faster.
+	 * </p>
 	 *
 	 * @param clients
-	 * 		Collection of clients to move.
+	 * 		the clients to move, cannot be {@code null}
 	 * @param channel
-	 * 		the channel to move the client into
+	 * 		the channel to move the client into, cannot be {@code null}
 	 * @param channelPassword
-	 * 		the password of the channel
+	 * 		the password of the channel, can be {@code null}
 	 *
 	 * @return whether the command succeeded or not
 	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code clients} or {@code channel} is {@code null}
 	 * @querycommands 1
 	 */
-	public boolean moveClient(Client[] clients, ChannelBase channel, String channelPassword) {
+	public boolean moveClients(Client[] clients, ChannelBase channel, String channelPassword) {
+		if (clients == null) throw new IllegalArgumentException("clients was null");
+		if (channel == null) throw new IllegalArgumentException("channel was null");
+
 		int[] clientIds = new int[clients.length];
 		for (int i = 0; i < clients.length; i++) {
 			Client client = clients[i];
 			clientIds[i] = client.getId();
 		}
-		return moveClient(clientIds, channel.getId(), channelPassword);
+		return moveClients(clientIds, channel.getId(), channelPassword);
 	}
 
 	/**
@@ -3272,7 +3301,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 */
 	public boolean sendChannelMessage(int channelId, String message) {
-		return moveClient(channelId) && sendTextMessage(TextMessageTargetMode.CHANNEL, 0, message);
+		return moveQuery(channelId) && sendTextMessage(TextMessageTargetMode.CHANNEL, 0, message);
 	}
 
 	/**
