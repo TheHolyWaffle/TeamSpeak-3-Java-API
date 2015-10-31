@@ -513,6 +513,22 @@ public class CommandFuture<V> implements Future<V> {
 	}
 
 	/**
+	 * Returns a new {@code CommandFuture} that already has a value set.
+	 *
+	 * @param value
+	 * 		the default value for the new {@code CommandFuture}
+	 * @param <V>
+	 * 		the dynamic type of the value, will usually be inferred
+	 *
+	 * @return a new {@code CommandFuture} with a default value
+	 */
+	public static <V> CommandFuture<V> immediate(V value) {
+		final CommandFuture<V> future = new CommandFuture<>();
+		future.set(value);
+		return future;
+	}
+
+	/**
 	 * Combines multiple {@code CommandFuture}s into a single future, which will
 	 * succeed if all futures succeed and fail as soon as one future fails.
 	 *
