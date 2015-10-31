@@ -3005,7 +3005,7 @@ public class TS3ApiAsync {
 	 * @param clientIds
 	 * 		the IDs of the clients to move, cannot be {@code null}
 	 * @param channelId
-	 * 		the ID of the channel to move the client into
+	 * 		the ID of the channel to move the clients into
 	 *
 	 * @return whether the command succeeded or not
 	 *
@@ -3154,7 +3154,7 @@ public class TS3ApiAsync {
 	 * @param clients
 	 * 		the clients to move, cannot be {@code null}
 	 * @param channel
-	 * 		the channel to move the client into, cannot be {@code null}
+	 * 		the channel to move the clients into, cannot be {@code null}
 	 * @param channelPassword
 	 * 		the password of the channel, can be {@code null}
 	 *
