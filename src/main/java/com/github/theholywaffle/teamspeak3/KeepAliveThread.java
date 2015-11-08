@@ -26,41 +26,37 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
-import com.github.theholywaffle.teamspeak3.commands.CWhoAmI;
+import java.util.logging.Level;
 
 public class KeepAliveThread extends Thread {
 
 	private static final int SLEEP = 60_000;
 
-	private final TS3Query ts3;
 	private final SocketWriter writer;
+	private final TS3ApiAsync asyncApi;
 
-	public KeepAliveThread(TS3Query ts3, SocketWriter socketWriter) {
+	public KeepAliveThread(SocketWriter writer, TS3ApiAsync asyncApi) {
 		super("[TeamSpeak-3-Java-API] Keep alive");
-		this.ts3 = ts3;
-		this.writer = socketWriter;
+		this.writer = writer;
+		this.asyncApi = asyncApi;
 	}
 
 	@Override
 	public void run() {
-		while (ts3.getSocket() != null && ts3.getSocket().isConnected()
-				&& ts3.getOut() != null && !isInterrupted()) {
-			final long idleTime = writer.getIdleTime();
-			if (idleTime >= SLEEP) {
-				ts3.doCommand(new CWhoAmI());
-				continue;
+		try {
+			while (!isInterrupted()) {
+				final long idleTime = writer.getIdleTime();
+				if (idleTime >= SLEEP) {
+					// Using the asynchronous API so we get InterruptedExceptions
+					asyncApi.whoAmI().get();
+				} else {
+					Thread.sleep(SLEEP - idleTime);
+				}
 			}
-			try {
-				Thread.sleep(SLEEP - idleTime);
-			} catch (final InterruptedException e) {
-				interrupt();
-				break;
-			}
-		}
-
-		if (!isInterrupted()) {
-			TS3Query.log.warning("KeepAlive thread has stopped!");
+		} catch (final InterruptedException e) {
+			// Thread stopped properly, ignore
+		} catch (final Exception e) {
+			TS3Query.log.log(Level.WARNING, "KeepAlive thread has stopped!", e);
 		}
 	}
-
 }

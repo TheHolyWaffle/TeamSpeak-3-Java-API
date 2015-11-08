@@ -27,6 +27,7 @@ package com.github.theholywaffle.teamspeak3;
  */
 
 import com.github.theholywaffle.teamspeak3.TS3Query.FloodRate;
+import com.github.theholywaffle.teamspeak3.api.ConnectionHandler;
 
 import java.util.logging.Level;
 
@@ -36,10 +37,9 @@ public class TS3Config {
 	private int queryPort = 10011;
 	private FloodRate floodRate = FloodRate.DEFAULT;
 	private Level level = Level.WARNING;
-	private String username = null;
-	private String password = null;
 	private boolean debugToFile = false;
 	private int commandTimeout = 4000;
+	private ConnectionHandler connectionHandler = ConnectionHandler.DISCONNECT;
 
 	public TS3Config setHost(String host) {
 		this.host = host;
@@ -77,20 +77,6 @@ public class TS3Config {
 		return level;
 	}
 
-	public TS3Config setLoginCredentials(String username, String password) {
-		this.username = username;
-		this.password = password;
-		return this;
-	}
-
-	String getUsername() {
-		return username;
-	}
-
-	String getPassword() {
-		return password;
-	}
-
 	public TS3Config setDebugToFile(boolean debugToFile) {
 		this.debugToFile = debugToFile;
 		return this;
@@ -123,5 +109,14 @@ public class TS3Config {
 
 	int getCommandTimeout() {
 		return commandTimeout;
+	}
+
+	public TS3Config setConnectionHandler(ConnectionHandler connectionHandler) {
+		this.connectionHandler = connectionHandler;
+		return this;
+	}
+
+	ConnectionHandler getConnectionHandler() {
+		return connectionHandler;
 	}
 }

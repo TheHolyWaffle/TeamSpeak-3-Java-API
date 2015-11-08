@@ -28,33 +28,38 @@ package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.commands.Command;
 
+import java.io.IOException;
+import java.io.PrintStream;
+
 public class SocketWriter extends Thread {
 
-	private final TS3Query ts3;
+	private final QueryIO io;
 	private final int floodRate;
+	private final PrintStream out;
 	private volatile long lastCommand = System.currentTimeMillis();
 
-	public SocketWriter(TS3Query ts3, int floodRate) {
+	public SocketWriter(QueryIO io, int floodRate) throws IOException {
 		super("[TeamSpeak-3-Java-API] SocketWriter");
-		this.ts3 = ts3;
+		this.io = io;
 		if (floodRate > 50) {
 			this.floodRate = floodRate;
 		} else {
 			this.floodRate = 50;
 		}
+
+		out = new PrintStream(io.getSocket().getOutputStream(), true, "UTF-8");
 	}
 
 	@Override
 	public void run() {
-		while (ts3.getSocket() != null && ts3.getSocket().isConnected()
-				&& ts3.getOut() != null && !isInterrupted()) {
-			final Command c = ts3.getCommandList().peek();
+		while (!isInterrupted()) {
+			final Command c = io.getCommandQueue().peek();
 			if (c != null && !c.isSent()) {
 				final String msg = c.toString();
 				TS3Query.log.info("> " + msg);
 
 				c.setSent();
-				ts3.getOut().println(msg);
+				out.println(msg);
 				lastCommand = System.currentTimeMillis();
 			}
 			try {
@@ -65,6 +70,8 @@ public class SocketWriter extends Thread {
 			}
 		}
 
+		out.close();
+
 		if (!isInterrupted()) {
 			TS3Query.log.warning("SocketWriter has stopped!");
 		}
@@ -73,5 +80,4 @@ public class SocketWriter extends Thread {
 	public long getIdleTime() {
 		return System.currentTimeMillis() - lastCommand;
 	}
-
 }

@@ -35,7 +35,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-public abstract class Command {
+public class Command {
 
 	private final String command;
 	private final List<Parameter> params = new LinkedList<>();
@@ -103,6 +103,12 @@ public abstract class Command {
 
 	public void setSent() {
 		sent = true;
+	}
+
+	public Command reset() {
+		Command c = new Command(this.command);
+		c.params.addAll(this.params);
+		return c;
 	}
 
 	public String toString() {

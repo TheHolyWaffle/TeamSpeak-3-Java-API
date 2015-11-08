@@ -2831,7 +2831,6 @@ public class TS3ApiAsync {
 	 * @return whether the command succeeded or not
 	 *
 	 * @querycommands 1
-	 * @see TS3Config#setLoginCredentials(String, String)
 	 * @see #logout()
 	 */
 	public CommandFuture<Boolean> login(String username, String password) {

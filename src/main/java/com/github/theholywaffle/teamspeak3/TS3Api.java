@@ -2543,7 +2543,6 @@ public class TS3Api {
 	 * @return whether the command succeeded or not
 	 *
 	 * @querycommands 1
-	 * @see TS3Config#setLoginCredentials(String, String)
 	 * @see #logout()
 	 */
 	public boolean login(String username, String password) {
