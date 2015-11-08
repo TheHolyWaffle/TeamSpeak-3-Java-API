@@ -26,34 +26,87 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.PermissionGroupType;
+
 import java.util.Map;
 
 /**
- * Describes a permission that has been assigned to a client,
- * a channel group or a server group.
+ * Describes a single permission that is assigned to a varying target.
  * <p>
+ * This class is used when a lot of permissions are sent at once.
+ * To reduce bandwidth usage, the TS3 server only transmit the numeric
+ * permission ID and not the permission name.
+ * </p><p>
  * For a complete description of the TS3 permission system, refer to
  * <a href="http://forum.teamspeak.com/threads/49581-The-New-Permission-Documentataions">
  * this post</a> on the TeamSpeak forums.
  * </p>
  */
-public class Permission extends Wrapper {
+public class PermissionAssignment extends Wrapper {
 
-	public Permission(Map<String, String> map) {
+	public PermissionAssignment(Map<String, String> map) {
 		super(map);
 	}
 
 	/**
-	 * Gets the name of this permission.
+	 * Where this permission assignment originates from.
+	 *
+	 * @return the type of this permission assignment
+	 */
+	public PermissionGroupType getType() {
+		final int type = getInt("t");
+		for (final PermissionGroupType p : PermissionGroupType.values()) {
+			if (p.getIndex() == type) {
+				return p;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Specifies where this permission assignment originates from,
+	 * depending on the {@linkplain #getType() type} of this assignment.
 	 * <p>
-	 * Boolean permissions are prefixed with {@code b_}<br>
-	 * Integer permissions are prefixed with {@code i_}
+	 * {@code x -> y} := <i>In case {@code type} is {@code x}, {@code majorId} means {@code y}</i>
+	 * </p><p>
+	 * {@linkplain PermissionGroupType#SERVER_GROUP SERVER_GROUP} {@code ->} {@linkplain ServerGroup#getId() Server group ID}<br>
+	 * {@linkplain PermissionGroupType#GLOBAL_CLIENT GLOBAL_CLIENT} {@code ->} {@linkplain Client#getDatabaseId() Client database ID}<br>
+	 * {@linkplain PermissionGroupType#CHANNEL CHANNEL} {@code ->} {@linkplain Channel#getId() Channel ID}<br>
+	 * {@linkplain PermissionGroupType#CHANNEL_GROUP CHANNEL_GROUP} {@code ->} {@linkplain Channel#getId() Channel ID}<br>
+	 * {@linkplain PermissionGroupType#CHANNEL_CLIENT CHANNEL_CLIENT} {@code ->} {@linkplain Channel#getId() Channel ID}
 	 * </p>
 	 *
-	 * @return this permission's name
+	 * @return the major ID of the source of this assignment as described above
 	 */
-	public String getName() {
-		return get("permsid");
+	public int getMajorId() {
+		return getInt("id1");
+	}
+
+	/**
+	 * Specifies where this permission assignment originates from,
+	 * depending on the {@linkplain #getType() type} of this assignment.
+	 * <p>
+	 * {@code x -> y} := <i>In case {@code type} is {@code x}, {@code minorId} means {@code y}</i>
+	 * </p><p>
+	 * {@linkplain PermissionGroupType#CHANNEL_GROUP CHANNEL_GROUP} {@code ->} {@linkplain ChannelGroup#getId() Channel group ID}<br>
+	 * {@linkplain PermissionGroupType#CHANNEL_CLIENT CHANNEL_CLIENT} {@code ->} {@linkplain Client#getDatabaseId() Client database ID}
+	 * </p><p>
+	 * Otherwise {@code getMinorId()} is undefined should return {@code 0}.
+	 * </p>
+	 *
+	 * @return the minor ID of the source of this assignment as described above
+	 */
+	public int getMinorId() {
+		return getInt("id2");
+	}
+
+	/**
+	 * Gets the numerical ID of this permission.
+	 *
+	 * @return this permission's numerical ID
+	 */
+	public int getId() {
+		return getInt("p");
 	}
 
 	/**
@@ -73,7 +126,7 @@ public class Permission extends Wrapper {
 	 * @return the value of this permission assignment
 	 */
 	public int getValue() {
-		return getInt("permvalue");
+		return getInt("v");
 	}
 
 	/**
@@ -86,7 +139,7 @@ public class Permission extends Wrapper {
 	 * @return whether this permission is negated or not
 	 */
 	public boolean isNegated() {
-		return getBoolean("permnegated");
+		return getBoolean("n");
 	}
 
 	/**
@@ -104,7 +157,6 @@ public class Permission extends Wrapper {
 	 * @return whether this permission is negated or not
 	 */
 	public boolean isSkipped() {
-		return getBoolean("permskip");
+		return getBoolean("s");
 	}
-
 }

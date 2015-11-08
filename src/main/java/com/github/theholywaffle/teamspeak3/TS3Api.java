@@ -234,7 +234,7 @@ public class TS3Api {
 	 * @param value
 	 * 		the numeric value of the permission (or for boolean permissions: 1 = true, 0 = false)
 	 * @param skipped
-	 * 		if set to {@code true}, the permission will not be overridden by channel permissions
+	 * 		if set to {@code true}, the permission will not be overridden by channel group permissions
 	 *
 	 * @return whether the command succeeded or not
 	 *
@@ -301,7 +301,7 @@ public class TS3Api {
 	 * @param negated
 	 * 		if set to true, the lowest permission value will be selected instead of the highest
 	 * @param skipped
-	 * 		if set to true, this permission will not be overridden by client of channel permissions
+	 * 		if set to true, this permission will not be overridden by client or channel group permissions
 	 *
 	 * @return whether the command succeeded or not
 	 *
@@ -441,7 +441,7 @@ public class TS3Api {
 	 * @param negated
 	 * 		if set to true, the lowest permission value will be selected instead of the highest
 	 * @param skipped
-	 * 		if set to true, this permission will not be overridden by client of channel permissions
+	 * 		if set to true, this permission will not be overridden by client or channel group permissions
 	 *
 	 * @return whether the command succeeded or not
 	 *
@@ -1991,14 +1991,14 @@ public class TS3Api {
 	 * @querycommands 1
 	 * @see #getPermissionOverview(int, int)
 	 */
-	public List<AdvancedPermission> getPermissionAssignments(String permName) {
+	public List<PermissionAssignment> getPermissionAssignments(String permName) {
 		final CPermFind find = new CPermFind(permName);
 		if (query.doCommand(find)) {
 			final List<Wrapper> responses = find.getResponse();
-			final List<AdvancedPermission> assignments = new ArrayList<>(responses.size());
+			final List<PermissionAssignment> assignments = new ArrayList<>(responses.size());
 
 			for (final Wrapper response : responses) {
-				assignments.add(new AdvancedPermission(response.getMap()));
+				assignments.add(new PermissionAssignment(response.getMap()));
 			}
 			return assignments;
 		}
@@ -2042,14 +2042,14 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
 	 */
-	public List<AdvancedPermission> getPermissionOverview(int channelId, int clientDBId) {
+	public List<PermissionAssignment> getPermissionOverview(int channelId, int clientDBId) {
 		final CPermOverview overview = new CPermOverview(channelId, clientDBId);
 		if (query.doCommand(overview)) {
 			final List<Wrapper> responses = overview.getResponse();
-			final List<AdvancedPermission> permissions = new ArrayList<>(responses.size());
+			final List<PermissionAssignment> permissions = new ArrayList<>(responses.size());
 
 			for (final Wrapper response : responses) {
-				permissions.add(new AdvancedPermission(response.getMap()));
+				permissions.add(new PermissionAssignment(response.getMap()));
 			}
 			return permissions;
 		}

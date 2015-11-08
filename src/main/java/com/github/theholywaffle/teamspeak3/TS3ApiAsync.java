@@ -234,7 +234,7 @@ public class TS3ApiAsync {
 	 * @param value
 	 * 		the numeric value of the permission (or for boolean permissions: 1 = true, 0 = false)
 	 * @param skipped
-	 * 		if set to {@code true}, the permission will not be overridden by channel permissions
+	 * 		if set to {@code true}, the permission will not be overridden by channel group permissions
 	 *
 	 * @return whether the command succeeded or not
 	 *
@@ -301,7 +301,7 @@ public class TS3ApiAsync {
 	 * @param negated
 	 * 		if set to true, the lowest permission value will be selected instead of the highest
 	 * @param skipped
-	 * 		if set to true, this permission will not be overridden by client of channel permissions
+	 * 		if set to true, this permission will not be overridden by client or channel group permissions
 	 *
 	 * @return whether the command succeeded or not
 	 *
@@ -435,7 +435,7 @@ public class TS3ApiAsync {
 	 * @param negated
 	 * 		if set to true, the lowest permission value will be selected instead of the highest
 	 * @param skipped
-	 * 		if set to true, this permission will not be overridden by client of channel permissions
+	 * 		if set to true, this permission will not be overridden by client or channel group permissions
 	 *
 	 * @return whether the command succeeded or not
 	 *
@@ -2209,9 +2209,9 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see #getPermissionOverview(int, int)
 	 */
-	public CommandFuture<List<AdvancedPermission>> getPermissionAssignments(String permName) {
+	public CommandFuture<List<PermissionAssignment>> getPermissionAssignments(String permName) {
 		final CPermFind find = new CPermFind(permName);
-		final CommandFuture<List<AdvancedPermission>> future = new CommandFuture<>();
+		final CommandFuture<List<PermissionAssignment>> future = new CommandFuture<>();
 
 		query.doCommandAsync(find, new Callback() {
 			@Override
@@ -2219,10 +2219,10 @@ public class TS3ApiAsync {
 				if (hasFailed(find, future)) return;
 
 				final List<Wrapper> responses = find.getResponse();
-				final List<AdvancedPermission> assignments = new ArrayList<>(responses.size());
+				final List<PermissionAssignment> assignments = new ArrayList<>(responses.size());
 
 				for (final Wrapper response : responses) {
-					assignments.add(new AdvancedPermission(response.getMap()));
+					assignments.add(new PermissionAssignment(response.getMap()));
 				}
 				future.set(assignments);
 			}
@@ -2264,9 +2264,9 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
 	 */
-	public CommandFuture<List<AdvancedPermission>> getPermissionOverview(int channelId, int clientDBId) {
+	public CommandFuture<List<PermissionAssignment>> getPermissionOverview(int channelId, int clientDBId) {
 		final CPermOverview overview = new CPermOverview(channelId, clientDBId);
-		final CommandFuture<List<AdvancedPermission>> future = new CommandFuture<>();
+		final CommandFuture<List<PermissionAssignment>> future = new CommandFuture<>();
 
 		query.doCommandAsync(overview, new Callback() {
 			@Override
@@ -2274,10 +2274,10 @@ public class TS3ApiAsync {
 				if (hasFailed(overview, future)) return;
 
 				final List<Wrapper> responses = overview.getResponse();
-				final List<AdvancedPermission> permissions = new ArrayList<>(responses.size());
+				final List<PermissionAssignment> permissions = new ArrayList<>(responses.size());
 
 				for (final Wrapper response : responses) {
-					permissions.add(new AdvancedPermission(response.getMap()));
+					permissions.add(new PermissionAssignment(response.getMap()));
 				}
 				future.set(permissions);
 			}

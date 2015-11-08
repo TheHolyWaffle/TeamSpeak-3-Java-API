@@ -26,12 +26,43 @@ package com.github.theholywaffle.teamspeak3.api;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.wrapper.PermissionAssignment;
+
+/**
+ * An enum describing where a {@link PermissionAssignment} originates from.
+ */
 public enum PermissionGroupType {
 
+	/**
+	 * A permission assigned to a server group.
+	 */
 	SERVER_GROUP(0),
+
+	/**
+	 * A permission assigned to a client on a server-wide level.
+	 */
 	GLOBAL_CLIENT(1),
+
+	/**
+	 * A permission requirement for certain actions in a channel.
+	 * <p>
+	 * Examples: Join, talk, subscribe and file upload permission requirements
+	 * </p>
+	 */
 	CHANNEL(2),
+
+	/**
+	 * A permission assigned to a channel group.
+	 */
 	CHANNEL_GROUP(3),
+
+	/**
+	 * A permission assigned to a client in a specific channel.
+	 * <p>
+	 * This is mostly used for the priority speaker feature by granting
+	 * {@code b_client_is_priority_speaker} to a client in a channel.
+	 * </p>
+	 */
 	CHANNEL_CLIENT(4);
 
 	private final int i;
