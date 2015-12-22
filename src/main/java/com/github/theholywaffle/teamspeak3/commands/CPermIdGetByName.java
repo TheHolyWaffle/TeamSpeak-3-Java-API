@@ -26,6 +26,7 @@ package com.github.theholywaffle.teamspeak3.commands;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.commands.parameter.ArrayParameter;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 
 public class CPermIdGetByName extends Command {
@@ -33,6 +34,15 @@ public class CPermIdGetByName extends Command {
 	public CPermIdGetByName(String permName) {
 		super("permidgetbyname");
 		add(new KeyValueParam("permsid", permName));
+	}
+
+	public CPermIdGetByName(String[] permNames) {
+		super("permidgetbyname");
+		final ArrayParameter permissions = new ArrayParameter();
+		for (String p : permNames) {
+			permissions.add(new KeyValueParam("permsid", p));
+		}
+		add(permissions);
 	}
 
 }

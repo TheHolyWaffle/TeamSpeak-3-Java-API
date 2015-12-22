@@ -28,11 +28,35 @@ package com.github.theholywaffle.teamspeak3.commands;
 
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 
+/**
+ * Command to look up the value of a permission for the server query.
+ * <p>
+ * As this command returns both the numerical ID and the name of a permission,
+ * it is also useful for looking up a permission's ID based on its name
+ * and vice versa.
+ * </p>
+ */
 public class CPermGet extends Command {
 
+	/**
+	 * Looks up a permission value based on the permission's name.
+	 *
+	 * @param permName
+	 * 		the name of the permission
+	 */
 	public CPermGet(String permName) {
 		super("permget");
 		add(new KeyValueParam("permsid", permName));
 	}
 
+	/**
+	 * Looks up a permission value based on the permission's numerical ID.
+	 *
+	 * @param permId
+	 * 		the ID of the permission
+	 */
+	public CPermGet(int permId) {
+		super("permget");
+		add(new KeyValueParam("permid", permId));
+	}
 }
