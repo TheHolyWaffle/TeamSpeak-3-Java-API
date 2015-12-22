@@ -27,7 +27,7 @@ package com.github.theholywaffle.teamspeak3;
  */
 
 import com.github.theholywaffle.teamspeak3.TS3Query.FloodRate;
-import com.github.theholywaffle.teamspeak3.api.ConnectionHandler;
+import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 
 import java.util.logging.Level;
 
@@ -42,6 +42,7 @@ public class TS3Config {
 	private ConnectionHandler connectionHandler = ConnectionHandler.DISCONNECT;
 
 	public TS3Config setHost(String host) {
+		if (host == null) throw new NullPointerException("host cannot be null!");
 		this.host = host;
 		return this;
 	}
@@ -60,6 +61,7 @@ public class TS3Config {
 	}
 
 	public TS3Config setFloodRate(FloodRate rate) {
+		if (rate == null) throw new NullPointerException("rate cannot be null!");
 		this.floodRate = rate;
 		return this;
 	}
@@ -69,6 +71,7 @@ public class TS3Config {
 	}
 
 	public TS3Config setDebugLevel(Level level) {
+		if (level == null) throw new NullPointerException("level cannot be null!");
 		this.level = level;
 		return this;
 	}
@@ -112,6 +115,7 @@ public class TS3Config {
 	}
 
 	public TS3Config setConnectionHandler(ConnectionHandler connectionHandler) {
+		if (connectionHandler == null) throw new NullPointerException("connectionHandler cannot be null!");
 		this.connectionHandler = connectionHandler;
 		return this;
 	}
