@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -94,6 +95,14 @@ public class LogHandler extends Handler {
 		}
 
 		logMessage.append(record.getMessage());
+
+		Throwable t = record.getThrown();
+		if (t != null) {
+			logMessage.append("\n");
+			StringWriter stackTrace = new StringWriter();
+			t.printStackTrace(new PrintWriter(stackTrace));
+			logMessage.append(stackTrace.getBuffer());
+		}
 
 		// Write to System.out and, if enabled, to a log file
 		System.out.println(logMessage);
