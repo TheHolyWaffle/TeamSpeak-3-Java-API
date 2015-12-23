@@ -106,9 +106,12 @@ public class Command {
 	}
 
 	public Command reset() {
-		Command c = new Command(this.command);
-		c.params.addAll(this.params);
-		return c;
+		sent = false;
+		answered = false;
+		response = null;
+		error = null;
+		raw = null;
+		return this;
 	}
 
 	public String toString() {
