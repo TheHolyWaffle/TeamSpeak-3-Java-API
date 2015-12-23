@@ -79,7 +79,6 @@ public class TrollExample {
 		final TS3Config config = new TS3Config();
 		config.setHost("77.77.77.77");
 		config.setDebugLevel(Level.ALL);
-		config.setLoginCredentials("serveradmin", "serveradminpassword");
 
 		query = new TS3Query(config);
 		query.connect();
@@ -88,8 +87,9 @@ public class TrollExample {
 		executor = new ScheduledThreadPoolExecutor(1);
 		workers = new HashMap<>();
 
-		// Select the virtual server and set a nickname
+		// Log in, select the virtual server and set a nickname
 		TS3Api api = query.getApi();
+		api.login("serveradmin", "serveradminpassword");
 		api.selectVirtualServerById(1);
 		api.setNickname("Global Server Admin");
 

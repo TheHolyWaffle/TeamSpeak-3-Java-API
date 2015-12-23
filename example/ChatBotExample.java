@@ -27,10 +27,12 @@
 import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3Config;
 import com.github.theholywaffle.teamspeak3.TS3Query;
+import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
+import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectingConnectionHandler;
 
 import java.util.logging.Level;
 
@@ -45,24 +47,22 @@ public class ChatBotExample {
 		final TS3Config config = new TS3Config();
 		config.setHost("77.77.77.77");
 		config.setDebugLevel(Level.ALL);
-		config.setLoginCredentials("serveradmin", "serveradminpassword");
 
 		final TS3Query query = new TS3Query(config);
 		query.connect();
 
 		final TS3Api api = query.getApi();
+		api.login("serveradmin", "serveradminpassword");
 		api.selectVirtualServerById(1);
 		api.setNickname("PutPutBot");
 		api.sendChannelMessage("PutPutBot is online!");
 
-		// Get are own client ID by running the "whoami" command
-		// Our client ID was assigned when we selected the virtual server
+		// Get our own client ID by running the "whoami" command
 		final int clientId = api.whoAmI().getId();
 
 		// Listen to chat in the channel the query is currently in
 		// As we never changed the channel, this will be the default channel of the server
 		api.registerEvent(TS3EventType.TEXT_CHANNEL, 0);
-		api.registerEvent(TS3EventType.CHANNEL);
 
 		// Register the event listener
 		api.addTS3Listeners(new TS3EventAdapter() {
