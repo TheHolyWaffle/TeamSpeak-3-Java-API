@@ -42,7 +42,6 @@ public class TS3Config {
 	private ConnectionHandler connectionHandler = ConnectionHandler.DISCONNECT;
 
 	public TS3Config setHost(String host) {
-		if (host == null) throw new NullPointerException("host cannot be null!");
 		this.host = host;
 		return this;
 	}
