@@ -4,7 +4,7 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * #%L
  * TeamSpeak 3 Java API
  * %%
- * Copyright (C) 2014 Bert De Geyter
+ * Copyright (C) 2016 Bert De Geyter, Roger Baumgartner
  * %%
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,48 +26,50 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * #L%
  */
 
-/**
- * A template class implementing {@link TS3Listener} similar to Swing's event adapters.
- * <p>
- * All method in this class do nothing, so the user only has to override the interface
- * methods for the events they want to take action on.
- * </p>
- */
-public abstract class TS3EventAdapter implements TS3Listener {
+import com.github.theholywaffle.teamspeak3.api.TokenType;
+
+import java.util.Map;
+
+public class PrivilegeKeyUsedEvent extends BaseEvent {
+
+	public PrivilegeKeyUsedEvent(Map<String, String> map) {
+		super(map);
+	}
+
+	public int getClientId() {
+		return getInt("clid");
+	}
+
+	public int getClientDatabaseId() {
+		return getInt("cldbid");
+	}
+
+	public String getClientUniqueIdentifier() {
+		return get("cluid");
+	}
+
+	public String getPrivilegeKey() {
+		return get("token");
+	}
+
+	public TokenType getPrivilegeKeyType() {
+		if (getPrivilegeKeyChannelId() == 0) {
+			return TokenType.SERVER_GROUP;
+		} else {
+			return TokenType.CHANNEL_GROUP;
+		}
+	}
+
+	public int getPrivilegeKeyGroupId() {
+		return getInt("token1");
+	}
+
+	public int getPrivilegeKeyChannelId() {
+		return getInt("token2");
+	}
 
 	@Override
-	public void onTextMessage(TextMessageEvent e) {}
-
-	@Override
-	public void onClientJoin(ClientJoinEvent e) {}
-
-	@Override
-	public void onClientLeave(ClientLeaveEvent e) {}
-
-	@Override
-	public void onServerEdit(ServerEditedEvent e) {}
-
-	@Override
-	public void onChannelEdit(ChannelEditedEvent e) {}
-
-	@Override
-	public void onChannelDescriptionChanged(ChannelDescriptionEditedEvent e) {}
-
-	@Override
-	public void onClientMoved(ClientMovedEvent e) {}
-
-	@Override
-	public void onChannelCreate(ChannelCreateEvent e) {}
-
-	@Override
-	public void onChannelDeleted(ChannelDeletedEvent e) {}
-
-	@Override
-	public void onChannelMoved(ChannelMovedEvent e) {}
-
-	@Override
-	public void onChannelPasswordChanged(ChannelPasswordChangedEvent e) {}
-
-	@Override
-	public void onPrivilegeKeyUsed(PrivilegeKeyUsedEvent e) {}
+	public void fire(TS3Listener listener) {
+		listener.onPrivilegeKeyUsed(this);
+	}
 }

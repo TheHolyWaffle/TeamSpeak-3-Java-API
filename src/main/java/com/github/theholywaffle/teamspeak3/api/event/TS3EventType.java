@@ -32,7 +32,8 @@ public enum TS3EventType {
 	CHANNEL("channel"),
 	TEXT_SERVER("textserver"),
 	TEXT_CHANNEL("textchannel"),
-	TEXT_PRIVATE("textprivate");
+	TEXT_PRIVATE("textprivate"),
+	PRIVILEGE_KEY_USED("tokenused");
 
 	private final String name;
 

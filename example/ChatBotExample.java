@@ -27,12 +27,10 @@
 import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3Config;
 import com.github.theholywaffle.teamspeak3.TS3Query;
-import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
-import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectingConnectionHandler;
 
 import java.util.logging.Level;
 

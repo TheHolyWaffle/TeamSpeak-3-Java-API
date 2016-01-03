@@ -85,6 +85,8 @@ public class EventManager {
 				return new ChannelMovedEvent(eventData);
 			case "notifychannelpasswordchanged":
 				return new ChannelPasswordChangedEvent(eventData);
+			case "notifytokenused":
+				return new PrivilegeKeyUsedEvent(eventData);
 			default:
 				throw new TS3UnknownEventException(notifyName + " " + notifyBody);
 		}

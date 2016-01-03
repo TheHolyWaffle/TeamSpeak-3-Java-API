@@ -2952,7 +2952,7 @@ public class TS3Api {
 	 *
 	 * @return whether all commands succeeded or not
 	 *
-	 * @querycommands 5
+	 * @querycommands 6
 	 * @see #addTS3Listeners(TS3Listener...)
 	 */
 	public boolean registerAllEvents() {
@@ -2962,6 +2962,7 @@ public class TS3Api {
 		success &= registerEvent(TS3EventType.CHANNEL, 0);
 		success &= registerEvent(TS3EventType.TEXT_CHANNEL, 0);
 		success &= registerEvent(TS3EventType.TEXT_PRIVATE);
+		success &= registerEvent(TS3EventType.PRIVILEGE_KEY_USED);
 
 		return success;
 	}

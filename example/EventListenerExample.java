@@ -54,50 +54,63 @@ public class EventListenerExample {
 		api.registerAllEvents();
 		api.addTS3Listeners(new TS3Listener() {
 
+			@Override
 			public void onTextMessage(TextMessageEvent e) {
 				System.out.println("Text message received in " + e.getTargetMode());
 			}
 
+			@Override
 			public void onServerEdit(ServerEditedEvent e) {
 				System.out.println("Server edited by " + e.getInvokerName());
 			}
 
+			@Override
 			public void onClientMoved(ClientMovedEvent e) {
 				System.out.println("Client has been moved " + e.getClientId());
 			}
 
+			@Override
 			public void onClientLeave(ClientLeaveEvent e) {
 				// ...
-
 			}
 
+			@Override
 			public void onClientJoin(ClientJoinEvent e) {
 				// ...
-
 			}
 
+			@Override
 			public void onChannelEdit(ChannelEditedEvent e) {
 				// ...
-
 			}
 
+			@Override
 			public void onChannelDescriptionChanged(ChannelDescriptionEditedEvent e) {
 				// ...
 			}
 
+			@Override
 			public void onChannelCreate(ChannelCreateEvent e) {
 				// ...
 			}
 
+			@Override
 			public void onChannelDeleted(ChannelDeletedEvent e) {
 				// ...
 			}
 
+			@Override
 			public void onChannelMoved(ChannelMovedEvent e) {
 				// ...
 			}
 
+			@Override
 			public void onChannelPasswordChanged(ChannelPasswordChangedEvent e) {
+				// ...
+			}
+
+			@Override
+			public void onPrivilegeKeyUsed(PrivilegeKeyUsedEvent e) {
 				// ...
 			}
 		});

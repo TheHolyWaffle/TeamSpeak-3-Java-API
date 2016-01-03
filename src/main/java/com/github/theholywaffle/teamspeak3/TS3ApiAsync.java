@@ -3237,7 +3237,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether all commands succeeded or not
 	 *
-	 * @querycommands 5
+	 * @querycommands 6
 	 * @see #addTS3Listeners(TS3Listener...)
 	 */
 	public CommandFuture<Boolean> registerAllEvents() {
@@ -3249,6 +3249,7 @@ public class TS3ApiAsync {
 		eventFutures.add(registerEvent(TS3EventType.CHANNEL, 0));
 		eventFutures.add(registerEvent(TS3EventType.TEXT_CHANNEL, 0));
 		eventFutures.add(registerEvent(TS3EventType.TEXT_PRIVATE));
+		eventFutures.add(registerEvent(TS3EventType.PRIVILEGE_KEY_USED));
 
 		CommandFuture.ofAll(eventFutures).onSuccess(new CommandFuture.SuccessListener<List<Boolean>>() {
 			@Override

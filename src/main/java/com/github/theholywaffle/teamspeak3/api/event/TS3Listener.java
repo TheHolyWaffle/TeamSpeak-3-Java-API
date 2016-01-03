@@ -50,4 +50,5 @@ public interface TS3Listener {
 
 	void onChannelPasswordChanged(ChannelPasswordChangedEvent e);
 
+	void onPrivilegeKeyUsed(PrivilegeKeyUsedEvent e);
 }
