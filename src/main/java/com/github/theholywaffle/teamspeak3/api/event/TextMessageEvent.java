@@ -37,8 +37,9 @@ public class TextMessageEvent extends BaseEvent {
 	}
 
 	public TextMessageTargetMode getTargetMode() {
-		for (final TextMessageTargetMode m : TextMessageTargetMode.values()) {
-			if (m.getIndex() == getInt("targetmode")) {
+		int mode = getInt("targetmode");
+		for (TextMessageTargetMode m : TextMessageTargetMode.values()) {
+			if (m.getIndex() == mode) {
 				return m;
 			}
 		}
