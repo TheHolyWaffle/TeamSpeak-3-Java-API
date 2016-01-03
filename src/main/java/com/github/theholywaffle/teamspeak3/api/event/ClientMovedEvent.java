@@ -26,6 +26,8 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.wrapper.Channel;
+
 import java.util.Map;
 
 public class ClientMovedEvent extends BaseEvent {
@@ -34,7 +36,14 @@ public class ClientMovedEvent extends BaseEvent {
 		super(map);
 	}
 
-	public int getClientTargetId() {
+	/**
+	 * Gets the ID of the channel the client has moved to.
+	 *
+	 * @return the ID of the target channel
+	 *
+	 * @see Channel#getId()
+	 */
+	public int getTargetChannelId() {
 		return getInt("ctid");
 	}
 
