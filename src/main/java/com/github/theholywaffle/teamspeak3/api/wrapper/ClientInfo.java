@@ -91,10 +91,6 @@ public class ClientInfo extends Client {
 		return getLong(ClientProperty.CONNECTION_FILETRANSFER_BANDWIDTH_SENT);
 	}
 
-	public String getIp() {
-		return get(ClientProperty.CONNECTION_CLIENT_IP);
-	}
-
 	public String getLoginName() {
 		return get(ClientProperty.CLIENT_LOGIN_NAME);
 	}

@@ -81,6 +81,10 @@ public class Client extends Wrapper {
 		return getInt(ClientProperty.CLIENT_CHANNEL_GROUP_INHERITED_CHANNEL_ID);
 	}
 
+	public String getIp() {
+		return get(ClientProperty.CONNECTION_CLIENT_IP);
+	}
+
 	public Date getLastConnectedDate() {
 		return new Date(getLong(ClientProperty.CLIENT_LASTCONNECTED) * 1000);
 	}

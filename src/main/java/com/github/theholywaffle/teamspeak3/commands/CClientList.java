@@ -40,6 +40,7 @@ public class CClientList extends Command {
 		add(new OptionParam("info"));
 		add(new OptionParam("icon"));
 		add(new OptionParam("country"));
+		add(new OptionParam("ip"));
 	}
 
 }
