@@ -26,7 +26,7 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * #L%
  */
 
-import com.github.theholywaffle.teamspeak3.api.TokenType;
+import com.github.theholywaffle.teamspeak3.api.PrivilegeKeyType;
 
 import java.util.Map;
 
@@ -52,11 +52,11 @@ public class PrivilegeKeyUsedEvent extends BaseEvent {
 		return get("token");
 	}
 
-	public TokenType getPrivilegeKeyType() {
+	public PrivilegeKeyType getPrivilegeKeyType() {
 		if (getPrivilegeKeyChannelId() == 0) {
-			return TokenType.SERVER_GROUP;
+			return PrivilegeKeyType.SERVER_GROUP;
 		} else {
-			return TokenType.CHANNEL_GROUP;
+			return PrivilegeKeyType.CHANNEL_GROUP;
 		}
 	}
 

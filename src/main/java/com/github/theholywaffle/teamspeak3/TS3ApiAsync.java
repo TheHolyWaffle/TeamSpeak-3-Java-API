@@ -317,9 +317,9 @@ public class TS3ApiAsync {
 	/**
 	 * Create a new privilege key that allows one client to join a server or channel group.
 	 * <ul>
-	 * <li>If {@code type} is set to {@linkplain TokenType#SERVER_GROUP SERVER_GROUP},
+	 * <li>If {@code type} is set to {@linkplain PrivilegeKeyType#SERVER_GROUP SERVER_GROUP},
 	 * {@code groupId} is used as a server group ID and {@code channelId} is ignored.</li>
-	 * <li>If {@code type} is set to {@linkplain TokenType#CHANNEL_GROUP CHANNEL_GROUP},
+	 * <li>If {@code type} is set to {@linkplain PrivilegeKeyType#CHANNEL_GROUP CHANNEL_GROUP},
 	 * {@code groupId} is used as a channel group ID and {@code channelId} is used as the channel in which the group should be set.</li>
 	 * </ul>
 	 *
@@ -335,11 +335,11 @@ public class TS3ApiAsync {
 	 * @return the created token for a client to use
 	 *
 	 * @querycommands 1
-	 * @see TokenType
+	 * @see PrivilegeKeyType
 	 * @see #addPrivilegeKeyServerGroup(int, String)
 	 * @see #addPrivilegeKeyChannelGroup(int, int, String)
 	 */
-	public CommandFuture<String> addPrivilegeKey(TokenType type, int groupId, int channelId, String description) {
+	public CommandFuture<String> addPrivilegeKey(PrivilegeKeyType type, int groupId, int channelId, String description) {
 		final CPrivilegeKeyAdd add = new CPrivilegeKeyAdd(type, groupId, channelId, description);
 		return executeAndReturnStringProperty(add, "token");
 	}
@@ -359,11 +359,11 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 * @see Channel#getId()
-	 * @see #addPrivilegeKey(TokenType, int, int, String)
+	 * @see #addPrivilegeKey(PrivilegeKeyType, int, int, String)
 	 * @see #addPrivilegeKeyServerGroup(int, String)
 	 */
 	public CommandFuture<String> addPrivilegeKeyChannelGroup(int channelGroupId, int channelId, String description) {
-		return addPrivilegeKey(TokenType.CHANNEL_GROUP, channelGroupId, channelId, description);
+		return addPrivilegeKey(PrivilegeKeyType.CHANNEL_GROUP, channelGroupId, channelId, description);
 	}
 
 	/**
@@ -378,11 +378,11 @@ public class TS3ApiAsync {
 	 *
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
-	 * @see #addPrivilegeKey(TokenType, int, int, String)
+	 * @see #addPrivilegeKey(PrivilegeKeyType, int, int, String)
 	 * @see #addPrivilegeKeyChannelGroup(int, int, String)
 	 */
 	public CommandFuture<String> addPrivilegeKeyServerGroup(int serverGroupId, String description) {
-		return addPrivilegeKey(TokenType.SERVER_GROUP, serverGroupId, 0, description);
+		return addPrivilegeKey(PrivilegeKeyType.SERVER_GROUP, serverGroupId, 0, description);
 	}
 
 	/**
@@ -2335,7 +2335,7 @@ public class TS3ApiAsync {
 	 * @return a list of all generated, but still unclaimed privilege keys
 	 *
 	 * @querycommands 1
-	 * @see #addPrivilegeKey(TokenType, int, int, String)
+	 * @see #addPrivilegeKey(PrivilegeKeyType, int, int, String)
 	 * @see #usePrivilegeKey(String)
 	 */
 	public CommandFuture<List<PrivilegeKey>> getPrivilegeKeys() {
@@ -3934,7 +3934,7 @@ public class TS3ApiAsync {
 	 *
 	 * @querycommands 1
 	 * @see PrivilegeKey
-	 * @see #addPrivilegeKey(TokenType, int, int, String)
+	 * @see #addPrivilegeKey(PrivilegeKeyType, int, int, String)
 	 * @see #usePrivilegeKey(PrivilegeKey)
 	 */
 	public CommandFuture<Boolean> usePrivilegeKey(String token) {
@@ -3952,7 +3952,7 @@ public class TS3ApiAsync {
 	 *
 	 * @querycommands 1
 	 * @see PrivilegeKey
-	 * @see #addPrivilegeKey(TokenType, int, int, String)
+	 * @see #addPrivilegeKey(PrivilegeKeyType, int, int, String)
 	 * @see #usePrivilegeKey(String)
 	 */
 	public CommandFuture<Boolean> usePrivilegeKey(PrivilegeKey privilegeKey) {
