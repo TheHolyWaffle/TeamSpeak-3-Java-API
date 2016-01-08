@@ -65,8 +65,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * There are also variations of these methods which ignore thread interrupts,
  * {@link #getUninterruptibly()} and {@link #getUninterruptibly(long, TimeUnit)}.
  * </p><p>
- * Note that these methods all wait for the response to arrive and thereby
- * revert to synchronous execution. If you want to handle the server response
+ * Note that <b>these methods</b> all wait for the response to arrive and thereby
+ * <b>revert to synchronous</b> execution. If you want to handle the server response
  * asynchronously, you need to register success and failure listeners.
  * These listeners will be called in a separate thread once a response arrives.
  * </p><p>
@@ -108,13 +108,153 @@ public class CommandFuture<V> implements Future<V> {
 	private volatile FailureListener failureListener = null;
 
 	/**
+	 * Waits indefinitely until the command completes.
+	 * <p>
+	 * If the thread is interrupted while waiting for the command
+	 * to complete, this method will throw an {@code InterruptedException}
+	 * and the thread's interrupt flag will be cleared.
+	 * </p><p><i>
+	 * Please note that this method is blocking and thus negates
+	 * the advantage of the asynchronous nature of this class.
+	 * Consider using {@link #onSuccess(SuccessListener)} and
+	 * {@link #onFailure(FailureListener)} instead.
+	 * </i></p>
+	 *
+	 * @throws InterruptedException
+	 * 		if the method is interrupted by calling {@link Thread#interrupt()}.
+	 * 		The interrupt flag will be cleared
+	 */
+	public void await() throws InterruptedException {
+		while (state == FutureState.WAITING) {
+			synchronized (signal) {
+				signal.wait();
+			}
+		}
+	}
+
+	/**
+	 * Waits for at most the given time until the command completes.
+	 * <p>
+	 * If the thread is interrupted while waiting for the command
+	 * to complete, this method will throw an {@code InterruptedException}
+	 * and the thread's interrupt flag will be cleared.
+	 * </p><p><i>
+	 * Please note that this method is blocking and thus negates
+	 * the advantage of the asynchronous nature of this class.
+	 * Consider using {@link #onSuccess(SuccessListener)} and
+	 * {@link #onFailure(FailureListener)} instead.
+	 * </i></p>
+	 *
+	 * @param timeout
+	 * 		the maximum amount of the given time unit to wait
+	 * @param unit
+	 * 		the time unit of the timeout argument
+	 *
+	 * @throws InterruptedException
+	 * 		if the method is interrupted by calling {@link Thread#interrupt()}.
+	 * 		The interrupt flag will be cleared
+	 * @throws TimeoutException
+	 * 		if the given time elapsed without the command completing
+	 */
+	public void await(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
+		final long end = System.currentTimeMillis() + unit.toMillis(timeout);
+		while (state == FutureState.WAITING && System.currentTimeMillis() < end) {
+			synchronized (signal) {
+				signal.wait(end - System.currentTimeMillis());
+			}
+		}
+
+		if (state == FutureState.WAITING) throw new TimeoutException();
+	}
+
+	/**
+	 * Waits indefinitely until the command completes.
+	 * <p>
+	 * If the thread is interrupted while waiting for the command
+	 * to complete, the interrupt is simply ignored and no
+	 * {@link InterruptedException} is thrown.
+	 * </p><p><i>
+	 * Please note that this method is blocking and thus negates
+	 * the advantage of the asynchronous nature of this class.
+	 * Consider using {@link #onSuccess(SuccessListener)} and
+	 * {@link #onFailure(FailureListener)} instead.
+	 * </i></p>
+	 */
+	public void awaitUninterruptibly() {
+		boolean interrupted = false;
+		while (state == FutureState.WAITING) {
+			synchronized (signal) {
+				try {
+					synchronized (signal) {
+						signal.wait();
+					}
+				} catch (InterruptedException e) {
+					interrupted = true;
+				}
+			}
+		}
+
+		if (interrupted) {
+			// Restore the interrupt for the caller
+			Thread.currentThread().interrupt();
+		}
+	}
+
+	/**
+	 * Waits for at most the given time until the command completes.
+	 * <p>
+	 * If the thread is interrupted while waiting for the command
+	 * to complete, the interrupt is simply ignored and no
+	 * {@link InterruptedException} is thrown.
+	 * </p><p><i>
+	 * Please note that this method is blocking and thus negates
+	 * the advantage of the asynchronous nature of this class.
+	 * Consider using {@link #onSuccess(SuccessListener)} and
+	 * {@link #onFailure(FailureListener)} instead.
+	 * </i></p>
+	 *
+	 * @param timeout
+	 * 		the maximum amount of the given time unit to wait
+	 * @param unit
+	 * 		the time unit of the timeout argument
+	 *
+	 * @throws TimeoutException
+	 * 		if the given time elapsed without the command completing
+	 */
+	public void awaitUninterruptibly(long timeout, TimeUnit unit) throws TimeoutException {
+		final long end = System.currentTimeMillis() + unit.toMillis(timeout);
+		boolean interrupted = false;
+		while (state == FutureState.WAITING && System.currentTimeMillis() < end) {
+			try {
+				synchronized (signal) {
+					signal.wait(end - System.currentTimeMillis());
+				}
+			} catch (InterruptedException e) {
+				interrupted = true;
+			}
+		}
+
+		if (interrupted) {
+			// Restore the interrupt for the caller
+			Thread.currentThread().interrupt();
+		}
+
+		if (state == FutureState.WAITING) throw new TimeoutException();
+	}
+
+	/**
 	 * Waits indefinitely until the command completes
 	 * and returns the result of the command.
 	 * <p>
 	 * If the thread is interrupted while waiting for the command
 	 * to complete, this method will throw an {@code InterruptedException}
 	 * and the thread's interrupt flag will be cleared.
-	 * </p>
+	 * </p><p><i>
+	 * Please note that this method is blocking and thus negates
+	 * the advantage of the asynchronous nature of this class.
+	 * Consider using {@link #onSuccess(SuccessListener)} and
+	 * {@link #onFailure(FailureListener)} instead.
+	 * </i></p>
 	 *
 	 * @return the server response to the command
 	 *
@@ -128,11 +268,7 @@ public class CommandFuture<V> implements Future<V> {
 	 */
 	@Override
 	public V get() throws InterruptedException {
-		while (state == FutureState.WAITING) {
-			synchronized (signal) {
-				signal.wait();
-			}
-		}
+		await();
 
 		checkForFailure();
 		return value;
@@ -145,7 +281,12 @@ public class CommandFuture<V> implements Future<V> {
 	 * If the thread is interrupted while waiting for the command
 	 * to complete, this method will throw an {@code InterruptedException}
 	 * and the thread's interrupt flag will be cleared.
-	 * </p>
+	 * </p><p><i>
+	 * Please note that this method is blocking and thus negates
+	 * the advantage of the asynchronous nature of this class.
+	 * Consider using {@link #onSuccess(SuccessListener)} and
+	 * {@link #onFailure(FailureListener)} instead.
+	 * </i></p>
 	 *
 	 * @param timeout
 	 * 		the maximum amount of the given time unit to wait
@@ -166,14 +307,8 @@ public class CommandFuture<V> implements Future<V> {
 	 */
 	@Override
 	public V get(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
-		final long end = System.currentTimeMillis() + unit.toMillis(timeout);
-		while (state == FutureState.WAITING && System.currentTimeMillis() < end) {
-			synchronized (signal) {
-				signal.wait(end - System.currentTimeMillis());
-			}
-		}
+		await(timeout, unit);
 
-		if (state == FutureState.WAITING) throw new TimeoutException();
 		checkForFailure();
 		return value;
 	}
@@ -185,7 +320,12 @@ public class CommandFuture<V> implements Future<V> {
 	 * If the thread is interrupted while waiting for the command
 	 * to complete, the interrupt is simply ignored and no
 	 * {@link InterruptedException} is thrown.
-	 * </p>
+	 * </p><p><i>
+	 * Please note that this method is blocking and thus negates
+	 * the advantage of the asynchronous nature of this class.
+	 * Consider using {@link #onSuccess(SuccessListener)} and
+	 * {@link #onFailure(FailureListener)} instead.
+	 * </i></p>
 	 *
 	 * @return the server response to the command
 	 *
@@ -195,23 +335,7 @@ public class CommandFuture<V> implements Future<V> {
 	 * 		if the command fails
 	 */
 	public V getUninterruptibly() {
-		boolean interrupted = false;
-		while (state == FutureState.WAITING) {
-			synchronized (signal) {
-				try {
-					synchronized (signal) {
-						signal.wait();
-					}
-				} catch (InterruptedException e) {
-					interrupted = true;
-				}
-			}
-		}
-
-		if (interrupted) {
-			// Restore the interrupt for the caller
-			Thread.currentThread().interrupt();
-		}
+		awaitUninterruptibly();
 
 		checkForFailure();
 		return value;
@@ -224,7 +348,12 @@ public class CommandFuture<V> implements Future<V> {
 	 * If the thread is interrupted while waiting for the command
 	 * to complete, the interrupt is simply ignored and no
 	 * {@link InterruptedException} is thrown.
-	 * </p>
+	 * </p><p><i>
+	 * Please note that this method is blocking and thus negates
+	 * the advantage of the asynchronous nature of this class.
+	 * Consider using {@link #onSuccess(SuccessListener)} and
+	 * {@link #onFailure(FailureListener)} instead.
+	 * </i></p>
 	 *
 	 * @param timeout
 	 * 		the maximum amount of the given time unit to wait
@@ -241,24 +370,8 @@ public class CommandFuture<V> implements Future<V> {
 	 * 		if the command fails
 	 */
 	public V getUninterruptibly(long timeout, TimeUnit unit) throws TimeoutException {
-		final long end = System.currentTimeMillis() + unit.toMillis(timeout);
-		boolean interrupted = false;
-		while (state == FutureState.WAITING && System.currentTimeMillis() < end) {
-			try {
-				synchronized (signal) {
-					signal.wait(end - System.currentTimeMillis());
-				}
-			} catch (InterruptedException e) {
-				interrupted = true;
-			}
-		}
+		awaitUninterruptibly(timeout, unit);
 
-		if (interrupted) {
-			// Restore the interrupt for the caller
-			Thread.currentThread().interrupt();
-		}
-
-		if (state == FutureState.WAITING) throw new TimeoutException();
 		checkForFailure();
 		return value;
 	}
