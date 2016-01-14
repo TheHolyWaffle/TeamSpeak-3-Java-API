@@ -53,6 +53,7 @@ public enum ChannelProperty implements Property {
 	CHANNEL_ORDER(true),
 	CHANNEL_PASSWORD(true),
 	CHANNEL_TOPIC(true),
+	SECONDS_EMPTY(false),
 	CID(false),
 	PID(false),
 	CPID(true);
