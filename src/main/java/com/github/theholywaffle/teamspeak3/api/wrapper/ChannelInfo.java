@@ -84,7 +84,7 @@ public class ChannelInfo extends ChannelBase {
 		return get(ChannelProperty.CHANNEL_NAME_PHONETIC);
 	}
 
-	public long getSecondsEmpty() {
-		return getLong(ChannelProperty.SECONDS_EMPTY);
+	public int getSecondsEmpty() {
+		return getInt(ChannelProperty.SECONDS_EMPTY);
 	}
 }
