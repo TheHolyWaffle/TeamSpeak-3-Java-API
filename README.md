@@ -70,12 +70,12 @@ All functionality is contained in the [TS3Api](src/main/java/com/github/theholyw
 final TS3Config config = new TS3Config();
 config.setHost("77.77.77.77");
 config.setDebugLevel(Level.ALL);
-config.setLoginCredentials("serveradmin", "serveradminpassword");
 
 final TS3Query query = new TS3Query(config);
 query.connect();
-    
+
 final TS3Api api = query.getApi();
+api.login("serveradmin", "serveradminpassword");
 api.selectVirtualServerById(1);
 api.setNickname("PutPutBot");
 api.sendChannelMessage("PutPutBot is online!");
