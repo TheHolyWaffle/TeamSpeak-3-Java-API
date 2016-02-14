@@ -479,6 +479,10 @@ public class TS3Api {
 	 * <p>
 	 * Please note that this will create two separate ban rules,
 	 * one for the targeted client's IP address and their unique identifier.
+	 * </p><p>
+	 * <i>Exception:</i> If the banned client connects via a loopback address
+	 * (i.e. {@code 127.0.0.1} or {@code localhost}), no IP ban is created
+	 * and the returned array will only have 1 entry.
 	 * </p>
 	 *
 	 * @param clientId
@@ -501,6 +505,10 @@ public class TS3Api {
 	 * <p>
 	 * Please note that this will create two separate ban rules,
 	 * one for the targeted client's IP address and their unique identifier.
+	 * </p><p>
+	 * <i>Exception:</i> If the banned client connects via a loopback address
+	 * (i.e. {@code 127.0.0.1} or {@code localhost}), no IP ban is created
+	 * and the returned array will only have 1 entry.
 	 * </p>
 	 *
 	 * @param clientId
@@ -520,9 +528,11 @@ public class TS3Api {
 		final CBanClient client = new CBanClient(clientId, timeInSeconds, reason);
 		if (query.doCommand(client)) {
 			final List<Wrapper> response = client.getResponse();
-			final int banId1 = response.get(0).getInt("banid");
-			final int banId2 = response.get(1).getInt("banid");
-			return new int[] {banId1, banId2};
+			final int[] banIds = new int[response.size()];
+			for (int i = 0; i < banIds.length; ++i) {
+				banIds[i] = response.get(i).getInt("banid");
+			}
+			return banIds;
 		}
 		return null;
 	}
@@ -532,6 +542,10 @@ public class TS3Api {
 	 * <p>
 	 * Please note that this will create two separate ban rules,
 	 * one for the targeted client's IP address and their unique identifier.
+	 * </p><p>
+	 * <i>Exception:</i> If the banned client connects via a loopback address
+	 * (i.e. {@code 127.0.0.1} or {@code localhost}), no IP ban is created
+	 * and the returned array will only have 1 entry.
 	 * </p>
 	 *
 	 * @param clientId

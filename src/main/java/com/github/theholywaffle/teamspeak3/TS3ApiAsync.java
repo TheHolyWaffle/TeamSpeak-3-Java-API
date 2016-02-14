@@ -473,6 +473,10 @@ public class TS3ApiAsync {
 	 * <p>
 	 * Please note that this will create two separate ban rules,
 	 * one for the targeted client's IP address and their unique identifier.
+	 * </p><p>
+	 * <i>Exception:</i> If the banned client connects via a loopback address
+	 * (i.e. {@code 127.0.0.1} or {@code localhost}), no IP ban is created
+	 * and the returned array will only have 1 entry.
 	 * </p>
 	 *
 	 * @param clientId
@@ -486,7 +490,7 @@ public class TS3ApiAsync {
 	 * @see Client#getId()
 	 * @see #addBan(String, String, String, long, String)
 	 */
-	public CommandFuture<Integer[]> banClient(int clientId, long timeInSeconds) {
+	public CommandFuture<int[]> banClient(int clientId, long timeInSeconds) {
 		return banClient(clientId, timeInSeconds, null);
 	}
 
@@ -495,6 +499,10 @@ public class TS3ApiAsync {
 	 * <p>
 	 * Please note that this will create two separate ban rules,
 	 * one for the targeted client's IP address and their unique identifier.
+	 * </p><p>
+	 * <i>Exception:</i> If the banned client connects via a loopback address
+	 * (i.e. {@code 127.0.0.1} or {@code localhost}), no IP ban is created
+	 * and the returned array will only have 1 entry.
 	 * </p>
 	 *
 	 * @param clientId
@@ -510,9 +518,9 @@ public class TS3ApiAsync {
 	 * @see Client#getId()
 	 * @see #addBan(String, String, String, long, String)
 	 */
-	public CommandFuture<Integer[]> banClient(int clientId, long timeInSeconds, String reason) {
+	public CommandFuture<int[]> banClient(int clientId, long timeInSeconds, String reason) {
 		final CBanClient client = new CBanClient(clientId, timeInSeconds, reason);
-		final CommandFuture<Integer[]> future = new CommandFuture<>();
+		final CommandFuture<int[]> future = new CommandFuture<>();
 
 		query.doCommandAsync(client, new Callback() {
 			@Override
@@ -520,9 +528,11 @@ public class TS3ApiAsync {
 				if (hasFailed(client, future)) return;
 
 				final List<Wrapper> response = client.getResponse();
-				final int banId1 = response.get(0).getInt("banid");
-				final int banId2 = response.get(1).getInt("banid");
-				future.set(new Integer[] {banId1, banId2});
+				final int[] banIds = new int[response.size()];
+				for (int i = 0; i < banIds.length; ++i) {
+					banIds[i] = response.get(i).getInt("banid");
+				}
+				future.set(banIds);
 			}
 		});
 		return future;
@@ -533,6 +543,10 @@ public class TS3ApiAsync {
 	 * <p>
 	 * Please note that this will create two separate ban rules,
 	 * one for the targeted client's IP address and their unique identifier.
+	 * </p><p>
+	 * <i>Exception:</i> If the banned client connects via a loopback address
+	 * (i.e. {@code 127.0.0.1} or {@code localhost}), no IP ban is created
+	 * and the returned array will only have 1 entry.
 	 * </p>
 	 *
 	 * @param clientId
@@ -546,7 +560,7 @@ public class TS3ApiAsync {
 	 * @see Client#getId()
 	 * @see #addBan(String, String, String, long, String)
 	 */
-	public CommandFuture<Integer[]> banClient(int clientId, String reason) {
+	public CommandFuture<int[]> banClient(int clientId, String reason) {
 		return banClient(clientId, 0, reason);
 	}
 
