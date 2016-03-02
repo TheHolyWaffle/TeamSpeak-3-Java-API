@@ -158,7 +158,7 @@ public class TrollExample {
 
 				case 3:
 					// Move client into a different channel
-					// Fist, get all channels
+					// First, get all channels
 					// (Using .getChannels every time works on small servers, but might
 					//  not be a good idea on servers with 50+ clients!                )
 					asyncApi.getChannels().onSuccess(new SuccessListener<List<Channel>>() {
