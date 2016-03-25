@@ -134,7 +134,7 @@ public class Wrapper {
 		if (value == null || value.isEmpty()) {
 			return -1L;
 		}
-		return Long.valueOf(value);
+		return Long.parseLong(value);
 	}
 
 	/**
@@ -164,7 +164,7 @@ public class Wrapper {
 		if (value == null || value.isEmpty()) {
 			return -1;
 		}
-		return Integer.valueOf(value);
+		return Integer.parseInt(value);
 	}
 
 	/**

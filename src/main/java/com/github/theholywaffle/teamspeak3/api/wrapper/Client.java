@@ -102,7 +102,7 @@ public class Client extends Wrapper {
 		final String[] arr = str.split(",");
 		final int[] groups = new int[arr.length];
 		for (int i = 0; i < groups.length; i++) {
-			groups[i] = Integer.valueOf(arr[i]);
+			groups[i] = Integer.parseInt(arr[i]);
 		}
 		return groups;
 	}

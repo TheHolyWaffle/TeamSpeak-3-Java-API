@@ -115,11 +115,11 @@ public class Command {
 	}
 
 	public String toString() {
-		String str = command;
+		StringBuilder builder = new StringBuilder(command);
 		for (final Parameter p : params) {
-			str += " " + p;
+			builder.append(" ").append(p);
 		}
-		return str;
+		return builder.toString();
 	}
 
 	public String getRaw() {

@@ -38,12 +38,13 @@ public class CClientDBEdit extends Command {
 		add(new KeyValueParam("cldbid", clientDBId));
 
 		if (options != null) {
-			for (final ClientProperty p : options.keySet()) {
+			for (Map.Entry<ClientProperty, String> option : options.entrySet()) {
+				final ClientProperty p = option.getKey();
 				if (!p.isChangeable()) {
 					throw new IllegalArgumentException("ClientProperty " + p.getName() + " is not changeable!");
 				}
 
-				add(new KeyValueParam(p.getName(), options.get(p)));
+				add(new KeyValueParam(p.getName(), option.getValue()));
 			}
 		}
 	}

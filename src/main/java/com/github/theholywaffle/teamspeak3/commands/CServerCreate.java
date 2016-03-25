@@ -38,12 +38,13 @@ public class CServerCreate extends Command {
 		add(new KeyValueParam(VirtualServerProperty.VIRTUALSERVER_NAME.getName(), name));
 
 		if (map != null) {
-			for (final VirtualServerProperty p : map.keySet()) {
+			for (Map.Entry<VirtualServerProperty, String> option : map.entrySet()) {
+				final VirtualServerProperty p = option.getKey();
 				if (!p.isChangeable()) {
 					throw new IllegalArgumentException("VirtualServerProperty " + p.getName() + " is not changeable!");
 				}
 
-				add(new KeyValueParam(p.getName(), map.get(p)));
+				add(new KeyValueParam(p.getName(), option.getValue()));
 			}
 		}
 
