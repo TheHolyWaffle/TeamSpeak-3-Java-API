@@ -131,6 +131,38 @@ public class Client extends Wrapper {
 		return getBoolean(ClientProperty.CLIENT_IS_CHANNEL_COMMANDER);
 	}
 
+	/**
+	 * Utility method that does a linear search on the array of server group IDs returned
+	 * by {@link #getServerGroups()} and returns {@code true} if that array contains
+	 * the given server group ID.
+	 *
+	 * @param serverGroupId
+	 * 		the ID of the server group to search for
+	 *
+	 * @return whether this client is a member of the given server group
+	 */
+	public boolean isInServerGroup(int serverGroupId) {
+		int[] serverGroupIds = getServerGroups();
+		for (int s : serverGroupIds) {
+			if (s == serverGroupId) return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Utility method that does a linear search on the array of server group IDs returned
+	 * by {@link #getServerGroups()} and returns {@code true} if that array contains
+	 * the ID of the given server group.
+	 *
+	 * @param serverGroup
+	 * 		the server group to search for
+	 *
+	 * @return whether this client is a member of the given server group
+	 */
+	public boolean isInServerGroup(ServerGroup serverGroup) {
+		return isInServerGroup(serverGroup.getId());
+	}
+
 	public boolean isInputHardware() {
 		return getBoolean(ClientProperty.CLIENT_INPUT_HARDWARE);
 	}
