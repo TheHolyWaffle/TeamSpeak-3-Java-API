@@ -83,12 +83,15 @@ public class ChannelInfo extends ChannelBase {
 	public String getPhoneticName() {
 		return get(ChannelProperty.CHANNEL_NAME_PHONETIC);
 	}
-
+	
 	public int getSecondsEmpty() {
 		return getInt(ChannelProperty.SECONDS_EMPTY);
 	}
 
-	public boolean isEmpty() {
-		return (getSecondsEmpty() > 0);
+	/**
+	 * @return {@code true}, if the channel and all child channels are empty, {@code false} otherwise.
+	 */
+	public boolean isFamilyEmpty() {
+		return (getSecondsEmpty() >= 0);
 	}
 }

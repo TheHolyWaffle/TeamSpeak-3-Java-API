@@ -52,4 +52,18 @@ public class Channel extends ChannelBase {
 	public int getNeededSubscribePower() {
 		return getInt(ChannelProperty.CHANNEL_NEEDED_SUBSCRIBE_POWER);
 	}
+
+	/**
+	 * @return {@code true}, if the channel is empty, {@code false} otherwise.
+	 */
+	public boolean isEmpty() {
+		return (getTotalClients() == 0);
+	}
+
+	/**
+	 * @return {@code true}, if the channel and all child channels are empty, {@code false} otherwise.
+	 */
+	public boolean isFamilyEmpty() {
+		return (getTotalClientsFamily() == 0);
+	}
 }
