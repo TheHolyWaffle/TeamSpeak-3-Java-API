@@ -87,4 +87,8 @@ public class ChannelInfo extends ChannelBase {
 	public int getSecondsEmpty() {
 		return getInt(ChannelProperty.SECONDS_EMPTY);
 	}
+
+	public boolean isEmpty() {
+		return (getSecondsEmpty() > 0);
+	}
 }
