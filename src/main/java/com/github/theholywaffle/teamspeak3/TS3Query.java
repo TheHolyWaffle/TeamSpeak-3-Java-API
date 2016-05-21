@@ -120,8 +120,8 @@ public class TS3Query {
 		// This will guarantee that all previously sent commands have been processed
 		doCommand(new CQuit());
 
-		userThreadPool.shutdown();
 		io.disconnect();
+		userThreadPool.shutdown();
 		for (final Handler lh : log.getHandlers()) {
 			log.removeHandler(lh);
 		}

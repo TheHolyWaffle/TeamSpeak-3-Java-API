@@ -27,6 +27,7 @@ package com.github.theholywaffle.teamspeak3;
  */
 
 import com.github.theholywaffle.teamspeak3.api.Callback;
+import com.github.theholywaffle.teamspeak3.commands.CQuit;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 
 import java.io.BufferedReader;
@@ -73,13 +74,15 @@ public class SocketReader extends Thread {
 				line = in.readLine();
 			} catch (IOException io) {
 				if (!isInterrupted()) {
-					io.printStackTrace();
+					TS3Query.log.log(Level.WARNING, "Connection error occurred.", io);
 				}
 				break;
 			}
 
 			if (line == null) {
-				break; // The underlying socket was closed
+				// End of stream: connection terminated by server
+				TS3Query.log.warning("Connection closed by the server.");
+				break;
 			} else if (line.isEmpty()) {
 				continue; // The server is sending garbage
 			}
@@ -102,6 +105,11 @@ public class SocketReader extends Thread {
 			} else if (c != null && c.isSent()) {
 				TS3Query.log.info("[" + c.getName() + "] < " + line);
 				if (line.startsWith("error")) {
+					if (c instanceof CQuit) {
+						// Response to a quit command received, we're done
+						interrupt();
+					}
+
 					c.feedError(line.substring("error ".length()));
 					if (c.getError().getId() != 0) {
 						TS3Query.log.severe("TS3 command error: " + c.getError());
