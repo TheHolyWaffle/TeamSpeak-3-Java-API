@@ -43,7 +43,7 @@ import java.util.logging.Level;
  * <li>maps channel ID -> channel</li>
  * <li>gets a list of all clients</li>
  * <li>prints out the name of each client and the name of the channel they are in</li>
- * <li>and finally, disconnects</li>
+ * <li>and finally, disconnects.</li>
  * </ul>
  */
 public class ClientInfoExample {
@@ -75,7 +75,7 @@ public class ClientInfoExample {
 			Channel channel = channelMap.get(c.getChannelId());
 
 			// Write the client and channel name into the console
-			System.out.println(c.getNickname() + " in channel: " + channel.getName());
+			System.out.println(c.getNickname() + " in channel " + channel.getName());
 		}
 
 		// We're done, disconnect

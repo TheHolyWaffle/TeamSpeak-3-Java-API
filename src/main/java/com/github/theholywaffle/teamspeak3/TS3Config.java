@@ -28,6 +28,7 @@ package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.TS3Query.FloodRate;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
+import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 
 import java.util.logging.Level;
 
@@ -39,7 +40,8 @@ public class TS3Config {
 	private Level level = Level.WARNING;
 	private boolean debugToFile = false;
 	private int commandTimeout = 4000;
-	private ConnectionHandler connectionHandler = ConnectionHandler.DISCONNECT;
+	private ReconnectStrategy reconnectStrategy = ReconnectStrategy.disconnect();
+	private ConnectionHandler connectionHandler = null;
 
 	public TS3Config setHost(String host) {
 		this.host = host;
@@ -113,8 +115,17 @@ public class TS3Config {
 		return commandTimeout;
 	}
 
+	public TS3Config setReconnectStrategy(ReconnectStrategy reconnectStrategy) {
+		if (reconnectStrategy == null) throw new NullPointerException("reconnectStrategy cannot be null!");
+		this.reconnectStrategy = reconnectStrategy;
+		return this;
+	}
+
+	ReconnectStrategy getReconnectStrategy() {
+		return reconnectStrategy;
+	}
+
 	public TS3Config setConnectionHandler(ConnectionHandler connectionHandler) {
-		if (connectionHandler == null) throw new NullPointerException("connectionHandler cannot be null!");
 		this.connectionHandler = connectionHandler;
 		return this;
 	}

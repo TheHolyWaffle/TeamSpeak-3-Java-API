@@ -33,13 +33,4 @@ public interface ConnectionHandler {
 	void onConnect(TS3Query ts3Query);
 
 	void onDisconnect(TS3Query ts3Query);
-
-	ConnectionHandler DISCONNECT = new DisconnectingConnectionHandler();
-
-	ConnectionHandler DEFAULT_RESTART = new ReconnectingConnectionHandler() {
-		@Override
-		public void setUpQuery(TS3Query ts3Query) {
-			// Extend ReconnectingConnectionHandler and set it in config.setConnectionHandler!
-		}
-	};
 }

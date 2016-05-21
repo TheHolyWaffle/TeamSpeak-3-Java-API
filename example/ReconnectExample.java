@@ -34,7 +34,8 @@ import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
-import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectingConnectionHandler;
+import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
+import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -48,18 +49,29 @@ import java.util.logging.Level;
 public class ReconnectExample {
 
 	// Since this ID changes when we reconnect, we need to keep track of it!
-	private static int clientId;
+	// It also needs to be volatile so that any changes are immediately visible
+	// in other threads, like the one executing our event handler.
+	private static volatile int clientId;
 
 	public static void main(String[] args) {
 		final TS3Config config = new TS3Config();
 		config.setHost("77.77.77.77");
 		config.setDebugLevel(Level.ALL);
 
+		// Use default exponential backoff reconnect strategy
+		config.setReconnectStrategy(ReconnectStrategy.exponentialBackoff());
+
 		// Make stuff run every time the query (re)connects
-		config.setConnectionHandler(new ReconnectingConnectionHandler() {
+		config.setConnectionHandler(new ConnectionHandler() {
+
 			@Override
-			public void setUpQuery(TS3Query ts3Query) {
+			public void onConnect(TS3Query ts3Query) {
 				stuffThatNeedsToRunEveryTimeTheQueryConnects(ts3Query.getApi());
+			}
+
+			@Override
+			public void onDisconnect(TS3Query ts3Query) {
+				// Nothing
 			}
 		});
 
@@ -72,6 +84,9 @@ public class ReconnectExample {
 		stuffThatOnlyEverNeedsToBeRunOnce(query.getApi());
 
 		doSomethingThatTakesAReallyLongTime(query.getAsyncApi());
+
+		// Disconnect once we're done
+		query.exit();
 	}
 
 	private static void stuffThatNeedsToRunEveryTimeTheQueryConnects(TS3Api api) {
@@ -79,8 +94,8 @@ public class ReconnectExample {
 		// and setting a nickname needs to be done every time we reconnect
 		api.login("serveradmin", "serveradminpassword");
 		api.selectVirtualServerById(1);
-		api.setNickname("PutPutBot");
 		// api.moveQuery(x);
+		api.setNickname("PutPutBot");
 
 		// What events we listen to also resets
 		api.registerEvent(TS3EventType.TEXT_CHANNEL, 0);
@@ -155,5 +170,7 @@ public class ReconnectExample {
 		for (Integer channelId : createdChannelIds) {
 			api.deleteChannel(channelId, true);
 		}
+
+		api.whoAmI().getUninterruptibly(); // Wait for all previous commands to complete
 	}
 }

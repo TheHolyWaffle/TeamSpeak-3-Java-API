@@ -30,14 +30,26 @@ import com.github.theholywaffle.teamspeak3.TS3Query;
 
 public class DisconnectingConnectionHandler implements ConnectionHandler {
 
+	private final ConnectionHandler userConnectionHandler;
+
+	public DisconnectingConnectionHandler(ConnectionHandler userConnectionHandler) {
+		this.userConnectionHandler = userConnectionHandler;
+	}
+
 	@Override
 	public void onConnect(TS3Query ts3Query) {
-		// Nothing
+		if (userConnectionHandler != null) {
+			userConnectionHandler.onConnect(ts3Query);
+		}
 	}
 
 	@Override
 	public void onDisconnect(TS3Query ts3Query) {
 		TS3Query.log.severe("[Connection] Disconnected from TS3 server");
 		ts3Query.exit();
+
+		if (userConnectionHandler != null) {
+			userConnectionHandler.onDisconnect(ts3Query);
+		}
 	}
 }

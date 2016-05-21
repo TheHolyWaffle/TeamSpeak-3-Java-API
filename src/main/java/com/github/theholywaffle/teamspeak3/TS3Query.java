@@ -28,6 +28,7 @@ package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.Callback;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
+import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import com.github.theholywaffle.teamspeak3.commands.CQuit;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 import com.github.theholywaffle.teamspeak3.log.LogHandler;
@@ -60,6 +61,7 @@ public class TS3Query {
 	private final ExecutorService userThreadPool = Executors.newCachedThreadPool();
 	private final EventManager eventManager = new EventManager();
 	private final TS3Config config;
+	private final ConnectionHandler connectionHandler;
 
 	private QueryIO io;
 	private TS3Api api;
@@ -85,6 +87,7 @@ public class TS3Query {
 		log.addHandler(new LogHandler(config.getDebugToFile()));
 		log.setLevel(config.getDebugLevel());
 		this.config = config;
+		this.connectionHandler = config.getReconnectStrategy().create(config.getConnectionHandler());
 	}
 
 	// PUBLIC
@@ -103,7 +106,7 @@ public class TS3Query {
 		}
 
 		try {
-			config.getConnectionHandler().onConnect(this);
+			connectionHandler.onConnect(this);
 		} catch (Throwable t) {
 			log.log(Level.SEVERE, "ConnectionHandler threw exception in connect handler", t);
 		}
@@ -201,7 +204,7 @@ public class TS3Query {
 			@Override
 			public void run() {
 				try {
-					config.getConnectionHandler().onDisconnect(TS3Query.this);
+					connectionHandler.onDisconnect(TS3Query.this);
 				} catch (Throwable t) {
 					log.log(Level.SEVERE, "ConnectionHandler threw exception in disconnect handler", t);
 				}
