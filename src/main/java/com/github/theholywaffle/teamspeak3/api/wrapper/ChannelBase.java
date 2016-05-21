@@ -100,4 +100,6 @@ public abstract class ChannelBase extends Wrapper {
 	public int getMaxFamilyClients() {
 		return getInt(ChannelProperty.CHANNEL_MAXFAMILYCLIENTS);
 	}
+	
+	abstract public boolean isFamilyEmpty();
 }
