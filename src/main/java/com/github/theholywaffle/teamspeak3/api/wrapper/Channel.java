@@ -60,9 +60,7 @@ public class Channel extends ChannelBase {
 		return (getTotalClients() == 0);
 	}
 
-	/**
-	 * @return {@code true}, if the channel and all child channels are empty, {@code false} otherwise.
-	 */
+	@Override
 	public boolean isFamilyEmpty() {
 		return (getTotalClientsFamily() == 0);
 	}

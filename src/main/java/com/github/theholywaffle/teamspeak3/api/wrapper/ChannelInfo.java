@@ -88,9 +88,7 @@ public class ChannelInfo extends ChannelBase {
 		return getInt(ChannelProperty.SECONDS_EMPTY);
 	}
 
-	/**
-	 * @return {@code true}, if the channel and all child channels are empty, {@code false} otherwise.
-	 */
+	@Override
 	public boolean isFamilyEmpty() {
 		return (getSecondsEmpty() >= 0);
 	}
