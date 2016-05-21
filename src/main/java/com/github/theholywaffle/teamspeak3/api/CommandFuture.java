@@ -96,10 +96,11 @@ public class CommandFuture<V> implements Future<V> {
 	}
 
 	/**
-	 * Just a plain object, used to signal a change to {@link #value} to any
+	 * Just a plain object used for its monitor to synchronize access to the
+	 * critical sections of this future and to signal state changes to any
 	 * threads waiting in {@link #get()} and {@link #getUninterruptibly()} methods.
 	 */
-	private final Object signal = new Object();
+	private final Object monitor = new Object();
 
 	private volatile FutureState state = FutureState.WAITING;
 	private volatile V value = null;
@@ -126,8 +127,8 @@ public class CommandFuture<V> implements Future<V> {
 	 */
 	public void await() throws InterruptedException {
 		while (state == FutureState.WAITING) {
-			synchronized (signal) {
-				signal.wait();
+			synchronized (monitor) {
+				monitor.wait();
 			}
 		}
 	}
@@ -159,8 +160,8 @@ public class CommandFuture<V> implements Future<V> {
 	public void await(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
 		final long end = System.currentTimeMillis() + unit.toMillis(timeout);
 		while (state == FutureState.WAITING && System.currentTimeMillis() < end) {
-			synchronized (signal) {
-				signal.wait(end - System.currentTimeMillis());
+			synchronized (monitor) {
+				monitor.wait(end - System.currentTimeMillis());
 			}
 		}
 
@@ -183,14 +184,12 @@ public class CommandFuture<V> implements Future<V> {
 	public void awaitUninterruptibly() {
 		boolean interrupted = false;
 		while (state == FutureState.WAITING) {
-			synchronized (signal) {
-				try {
-					synchronized (signal) {
-						signal.wait();
-					}
-				} catch (InterruptedException e) {
-					interrupted = true;
+			try {
+				synchronized (monitor) {
+					monitor.wait();
 				}
+			} catch (InterruptedException e) {
+				interrupted = true;
 			}
 		}
 
@@ -226,8 +225,8 @@ public class CommandFuture<V> implements Future<V> {
 		boolean interrupted = false;
 		while (state == FutureState.WAITING && System.currentTimeMillis() < end) {
 			try {
-				synchronized (signal) {
-					signal.wait(end - System.currentTimeMillis());
+				synchronized (monitor) {
+					monitor.wait(end - System.currentTimeMillis());
 				}
 			} catch (InterruptedException e) {
 				interrupted = true;
@@ -437,19 +436,20 @@ public class CommandFuture<V> implements Future<V> {
 	 *
 	 * @return {@code true} if the command was marked as successful
 	 */
-	public synchronized boolean set(V value) {
-		if (isDone()) return false; // Ignore
+	public boolean set(V value) {
+		synchronized (monitor) {
+			if (isDone()) return false; // Ignore
 
-		this.state = FutureState.SUCCEEDED;
-		this.value = value;
-		synchronized (signal) {
-			signal.notifyAll();
+			this.state = FutureState.SUCCEEDED;
+			this.value = value;
+			monitor.notifyAll();
 		}
 
 		if (successListener != null) {
 			try {
 				successListener.handleSuccess(value);
 			} catch (Throwable t) {
+				// Whatever happens, we do not want a user error to leak into our logic
 				t.printStackTrace();
 			}
 		}
@@ -471,13 +471,13 @@ public class CommandFuture<V> implements Future<V> {
 	 *
 	 * @return {@code true} if the command was marked as failed
 	 */
-	public synchronized boolean fail(QueryError error) {
-		if (isDone()) return false; // Ignore
+	public boolean fail(QueryError error) {
+		synchronized (monitor) {
+			if (isDone()) return false; // Ignore
 
-		this.state = FutureState.FAILED;
-		this.queryError = error;
-		synchronized (signal) {
-			signal.notifyAll();
+			this.state = FutureState.FAILED;
+			this.queryError = error;
+			monitor.notifyAll();
 		}
 
 		if (failureListener != null) {
@@ -503,13 +503,14 @@ public class CommandFuture<V> implements Future<V> {
 	 * </p>
 	 */
 	@Override
-	public synchronized boolean cancel(boolean mayInterruptIfRunning) {
-		if (isDone()) return false; // Ignore
+	public boolean cancel(boolean mayInterruptIfRunning) {
+		synchronized (monitor) {
+			if (isDone()) return false; // Ignore
 
-		this.state = FutureState.CANCELLED;
-		synchronized (signal) {
-			signal.notifyAll();
+			this.state = FutureState.CANCELLED;
+			monitor.notifyAll();
 		}
+
 		return true;
 	}
 
@@ -526,12 +527,14 @@ public class CommandFuture<V> implements Future<V> {
 	 *
 	 * @return this object for chaining
 	 */
-	public synchronized CommandFuture<V> onSuccess(SuccessListener<? super V> listener) {
-		if (successListener != null) {
-			throw new IllegalStateException("Listener already set");
+	public CommandFuture<V> onSuccess(SuccessListener<? super V> listener) {
+		synchronized (monitor) {
+			if (successListener != null) {
+				throw new IllegalStateException("Listener already set");
+			}
+			successListener = listener;
 		}
 
-		successListener = listener;
 		if (state == FutureState.SUCCEEDED) {
 			listener.handleSuccess(value);
 		}
@@ -552,12 +555,14 @@ public class CommandFuture<V> implements Future<V> {
 	 *
 	 * @return this object for chaining
 	 */
-	public synchronized CommandFuture<V> onFailure(FailureListener listener) {
-		if (failureListener != null) {
-			throw new IllegalStateException("Listener already set");
+	public CommandFuture<V> onFailure(FailureListener listener) {
+		synchronized (monitor) {
+			if (failureListener != null) {
+				throw new IllegalStateException("Listener already set");
+			}
+			failureListener = listener;
 		}
 
-		failureListener = listener;
 		if (state == FutureState.FAILED) {
 			listener.handleFailure(queryError);
 		}
@@ -578,7 +583,7 @@ public class CommandFuture<V> implements Future<V> {
 	 *
 	 * @return this object for chaining
 	 */
-	public synchronized CommandFuture<V> forwardSuccess(final CommandFuture<? super V> otherFuture) {
+	public CommandFuture<V> forwardSuccess(final CommandFuture<? super V> otherFuture) {
 		return onSuccess(new SuccessListener<V>() {
 			@Override
 			public void handleSuccess(V result) {
@@ -600,7 +605,7 @@ public class CommandFuture<V> implements Future<V> {
 	 *
 	 * @return this object for chaining
 	 */
-	public synchronized CommandFuture<V> forwardFailure(final CommandFuture<?> otherFuture) {
+	public CommandFuture<V> forwardFailure(final CommandFuture<?> otherFuture) {
 		return onFailure(new FailureListener() {
 			@Override
 			public void handleFailure(QueryError error) {
@@ -621,7 +626,7 @@ public class CommandFuture<V> implements Future<V> {
 	 * @param otherFuture
 	 * 		the future which should be notified about
 	 */
-	public synchronized void forwardResult(final CommandFuture<V> otherFuture) {
+	public void forwardResult(final CommandFuture<V> otherFuture) {
 		forwardSuccess(otherFuture).forwardFailure(otherFuture);
 	}
 
