@@ -101,6 +101,10 @@ public abstract class ChannelBase extends Wrapper {
 		return getInt(ChannelProperty.CHANNEL_MAXFAMILYCLIENTS);
 	}
 
+	public int getSecondsEmpty() {
+		return getInt(ChannelProperty.SECONDS_EMPTY);
+	}
+
 	/**
 	 * @return {@code true}, if the channel and all child channels are empty, {@code false} otherwise.
 	 */

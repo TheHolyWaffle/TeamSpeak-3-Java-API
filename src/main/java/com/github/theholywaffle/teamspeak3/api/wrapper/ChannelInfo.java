@@ -84,10 +84,6 @@ public class ChannelInfo extends ChannelBase {
 		return get(ChannelProperty.CHANNEL_NAME_PHONETIC);
 	}
 
-	public int getSecondsEmpty() {
-		return getInt(ChannelProperty.SECONDS_EMPTY);
-	}
-
 	@Override
 	public boolean isFamilyEmpty() {
 		return (getSecondsEmpty() >= 0);
