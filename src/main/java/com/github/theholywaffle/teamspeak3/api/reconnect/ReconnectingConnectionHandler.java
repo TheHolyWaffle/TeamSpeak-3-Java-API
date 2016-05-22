@@ -29,22 +29,32 @@ package com.github.theholywaffle.teamspeak3.api.reconnect;
 import com.github.theholywaffle.teamspeak3.TS3Query;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
 
-public abstract class ReconnectingConnectionHandler implements ConnectionHandler {
+public class ReconnectingConnectionHandler implements ConnectionHandler {
 
-	// Exponential backoff strategy
-	private static final long STARTING_TIMEOUT = 1000;
-	private static final double MULTIPLIER = 1.5;
-	private static final long TIMEOUT_CAP = 30000;
+	private final ConnectionHandler userConnectionHandler;
+	private final int startTimeout;
+	private final int timeoutCap;
+	private final int addend;
+	private final double multiplier;
 
-	private long timeout = -1;
+	private int timeout = -1;
+
+	public ReconnectingConnectionHandler(ConnectionHandler userConnectionHandler, int startTimeout,
+										 int timeoutCap, int addend, double multiplier) {
+		this.userConnectionHandler = userConnectionHandler;
+		this.startTimeout = startTimeout;
+		this.timeoutCap = timeoutCap;
+		this.addend = addend;
+		this.multiplier = multiplier;
+	}
 
 	@Override
 	public void onConnect(TS3Query ts3Query) {
-		timeout = STARTING_TIMEOUT;
-		setUpQuery(ts3Query);
+		timeout = startTimeout;
+		if (userConnectionHandler != null) {
+			userConnectionHandler.onConnect(ts3Query);
+		}
 	}
-
-	public abstract void setUpQuery(TS3Query ts3Query);
 
 	@Override
 	public void onDisconnect(TS3Query ts3Query) {
@@ -53,19 +63,23 @@ public abstract class ReconnectingConnectionHandler implements ConnectionHandler
 			// --> Something is probably not set up correctly
 			// Do not attempt to reconnect
 			return;
-		} else if (timeout == STARTING_TIMEOUT) {
+		} else if (timeout == startTimeout) {
 			// First run, announce disconnect
 			TS3Query.log.info("[Connection] Disconnected from TS3 server");
+
+			if (userConnectionHandler != null) {
+				userConnectionHandler.onDisconnect(ts3Query);
+			}
 		}
+
+		timeout = (int) Math.ceil(timeout * multiplier) + addend;
+		if (timeoutCap > 0) timeout = Math.min(timeout, timeoutCap);
 
 		try {
 			Thread.sleep(timeout);
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			return;
 		}
-
-		timeout *= MULTIPLIER;
-		if (timeout > TIMEOUT_CAP) timeout = TIMEOUT_CAP;
 
 		try {
 			ts3Query.connect();
