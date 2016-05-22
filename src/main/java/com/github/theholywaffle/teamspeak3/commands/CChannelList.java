@@ -37,6 +37,7 @@ public class CChannelList extends Command {
 		add(new OptionParam("voice"));
 		add(new OptionParam("limits"));
 		add(new OptionParam("icon"));
+		add(new OptionParam("secondsempty"));
 	}
 
 }
