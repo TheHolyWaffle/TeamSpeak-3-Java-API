@@ -3,6 +3,10 @@ sudo: false
 jdk:
   - oraclejdk7
 
+cache:
+  directories:
+  - $HOME/.m2
+
 # branches blacklist
 branches:
   except:
