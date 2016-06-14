@@ -26,6 +26,8 @@ package com.github.theholywaffle.teamspeak3.api;
  * #L%
  */
 
+import java.util.Locale;
+
 public enum ClientProperty implements Property {
 
 	CID(false),
@@ -92,7 +94,7 @@ public enum ClientProperty implements Property {
 	}
 
 	public String getName() {
-		return name().toLowerCase();
+		return name().toLowerCase(Locale.ROOT);
 	}
 
 	public boolean isChangeable() {

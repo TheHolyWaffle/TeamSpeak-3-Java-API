@@ -26,6 +26,8 @@ package com.github.theholywaffle.teamspeak3.api;
  * #L%
  */
 
+import java.util.Locale;
+
 public enum ChannelProperty implements Property {
 
 	CHANNEL_CODEC(true),
@@ -66,7 +68,7 @@ public enum ChannelProperty implements Property {
 	}
 
 	public String getName() {
-		return name().toLowerCase();
+		return name().toLowerCase(Locale.ROOT);
 	}
 
 	public boolean isChangeable() {

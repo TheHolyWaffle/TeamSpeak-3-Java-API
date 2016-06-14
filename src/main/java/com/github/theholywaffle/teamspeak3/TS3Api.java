@@ -36,6 +36,7 @@ import com.github.theholywaffle.teamspeak3.commands.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -1312,12 +1313,12 @@ public class TS3Api {
 	 * @see #getChannelsByName(String)
 	 */
 	public Channel getChannelByNameExact(String name, final boolean ignoreCase) {
-		final String caseName = ignoreCase ? name.toLowerCase() : name;
+		final String caseName = ignoreCase ? name.toLowerCase(Locale.ROOT) : name;
 		final List<Channel> allChannels = getChannels();
 		if (allChannels == null) return null;
 
 		for (final Channel channel : allChannels) {
-			final String channelName = ignoreCase ? channel.getName().toLowerCase() : channel.getName();
+			final String channelName = ignoreCase ? channel.getName().toLowerCase(Locale.ROOT) : channel.getName();
 			if (caseName.equals(channelName)) {
 				return channel;
 			}
@@ -1603,12 +1604,12 @@ public class TS3Api {
 	 * @see #getClientsByName(String)
 	 */
 	public Client getClientByNameExact(String name, final boolean ignoreCase) {
-		final String caseName = ignoreCase ? name.toLowerCase() : name;
+		final String caseName = ignoreCase ? name.toLowerCase(Locale.ROOT) : name;
 		final List<Client> allClients = getClients();
 		if (allClients == null) return null;
 
 		for (final Client client : allClients) {
-			final String clientName = ignoreCase ? client.getNickname().toLowerCase() : client.getNickname();
+			final String clientName = ignoreCase ? client.getNickname().toLowerCase(Locale.ROOT) : client.getNickname();
 			if (caseName.equals(clientName)) {
 				return client;
 			}

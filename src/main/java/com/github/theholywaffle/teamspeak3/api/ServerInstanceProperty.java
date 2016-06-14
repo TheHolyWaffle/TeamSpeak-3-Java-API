@@ -26,6 +26,8 @@ package com.github.theholywaffle.teamspeak3.api;
  * #L%
  */
 
+import java.util.Locale;
+
 public enum ServerInstanceProperty implements Property {
 
 	CONNECTION_BANDWIDTH_RECEIVED_LAST_MINUTE_TOTAL(false),
@@ -68,7 +70,7 @@ public enum ServerInstanceProperty implements Property {
 
 	@Override
 	public String getName() {
-		return name().toLowerCase();
+		return name().toLowerCase(Locale.ROOT);
 	}
 
 	public boolean isChangeable() {

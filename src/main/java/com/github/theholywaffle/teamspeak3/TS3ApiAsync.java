@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -1331,13 +1332,13 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<Channel> getChannelByNameExact(String name, final boolean ignoreCase) {
 		final CommandFuture<Channel> future = new CommandFuture<>();
-		final String caseName = ignoreCase ? name.toLowerCase() : name;
+		final String caseName = ignoreCase ? name.toLowerCase(Locale.ROOT) : name;
 
 		getChannels().onSuccess(new CommandFuture.SuccessListener<List<Channel>>() {
 			@Override
 			public void handleSuccess(final List<Channel> allChannels) {
 				for (final Channel c : allChannels) {
-					final String channelName = ignoreCase ? c.getName().toLowerCase() : c.getName();
+					final String channelName = ignoreCase ? c.getName().toLowerCase(Locale.ROOT) : c.getName();
 					if (caseName.equals(channelName)) {
 						future.set(c);
 						return;
@@ -1686,13 +1687,13 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<Client> getClientByNameExact(String name, final boolean ignoreCase) {
 		final CommandFuture<Client> future = new CommandFuture<>();
-		final String caseName = ignoreCase ? name.toLowerCase() : name;
+		final String caseName = ignoreCase ? name.toLowerCase(Locale.ROOT) : name;
 
 		getClients().onSuccess(new CommandFuture.SuccessListener<List<Client>>() {
 			@Override
 			public void handleSuccess(final List<Client> allClients) {
 				for (final Client c : allClients) {
-					final String clientName = ignoreCase ? c.getNickname().toLowerCase() : c.getNickname();
+					final String clientName = ignoreCase ? c.getNickname().toLowerCase(Locale.ROOT) : c.getNickname();
 					if (caseName.equals(clientName)) {
 						future.set(c);
 						return;
