@@ -1,0 +1,214 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="de">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>package com.github.theholywaffle.teamspeak3.api;<a name="line.1"></a>
+<span class="sourceLineNo">002</span><a name="line.2"></a>
+<span class="sourceLineNo">003</span>/*<a name="line.3"></a>
+<span class="sourceLineNo">004</span> * #%L<a name="line.4"></a>
+<span class="sourceLineNo">005</span> * TeamSpeak 3 Java API<a name="line.5"></a>
+<span class="sourceLineNo">006</span> * %%<a name="line.6"></a>
+<span class="sourceLineNo">007</span> * Copyright (C) 2014 Bert De Geyter<a name="line.7"></a>
+<span class="sourceLineNo">008</span> * %%<a name="line.8"></a>
+<span class="sourceLineNo">009</span> * Permission is hereby granted, free of charge, to any person obtaining a copy<a name="line.9"></a>
+<span class="sourceLineNo">010</span> * of this software and associated documentation files (the "Software"), to deal<a name="line.10"></a>
+<span class="sourceLineNo">011</span> * in the Software without restriction, including without limitation the rights<a name="line.11"></a>
+<span class="sourceLineNo">012</span> * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell<a name="line.12"></a>
+<span class="sourceLineNo">013</span> * copies of the Software, and to permit persons to whom the Software is<a name="line.13"></a>
+<span class="sourceLineNo">014</span> * furnished to do so, subject to the following conditions:<a name="line.14"></a>
+<span class="sourceLineNo">015</span> * <a name="line.15"></a>
+<span class="sourceLineNo">016</span> * The above copyright notice and this permission notice shall be included in<a name="line.16"></a>
+<span class="sourceLineNo">017</span> * all copies or substantial portions of the Software.<a name="line.17"></a>
+<span class="sourceLineNo">018</span> * <a name="line.18"></a>
+<span class="sourceLineNo">019</span> * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR<a name="line.19"></a>
+<span class="sourceLineNo">020</span> * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,<a name="line.20"></a>
+<span class="sourceLineNo">021</span> * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE<a name="line.21"></a>
+<span class="sourceLineNo">022</span> * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER<a name="line.22"></a>
+<span class="sourceLineNo">023</span> * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,<a name="line.23"></a>
+<span class="sourceLineNo">024</span> * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN<a name="line.24"></a>
+<span class="sourceLineNo">025</span> * THE SOFTWARE.<a name="line.25"></a>
+<span class="sourceLineNo">026</span> * #L%<a name="line.26"></a>
+<span class="sourceLineNo">027</span> */<a name="line.27"></a>
+<span class="sourceLineNo">028</span><a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.util.Locale;<a name="line.29"></a>
+<span class="sourceLineNo">030</span><a name="line.30"></a>
+<span class="sourceLineNo">031</span>public enum VirtualServerProperty implements Property {<a name="line.31"></a>
+<span class="sourceLineNo">032</span><a name="line.32"></a>
+<span class="sourceLineNo">033</span>        CONNECTION_BANDWIDTH_RECEIVED_LAST_MINUTE_TOTAL(false),<a name="line.33"></a>
+<span class="sourceLineNo">034</span>        CONNECTION_BANDWIDTH_RECEIVED_LAST_SECOND_TOTAL(false),<a name="line.34"></a>
+<span class="sourceLineNo">035</span>        CONNECTION_BANDWIDTH_SENT_LAST_MINUTE_TOTAL(false),<a name="line.35"></a>
+<span class="sourceLineNo">036</span>        CONNECTION_BANDWIDTH_SENT_LAST_SECOND_TOTAL(false),<a name="line.36"></a>
+<span class="sourceLineNo">037</span>        CONNECTION_BYTES_RECEIVED_CONTROL(false),<a name="line.37"></a>
+<span class="sourceLineNo">038</span>        CONNECTION_BYTES_RECEIVED_KEEPALIVE(false),<a name="line.38"></a>
+<span class="sourceLineNo">039</span>        CONNECTION_BYTES_RECEIVED_SPEECH(false),<a name="line.39"></a>
+<span class="sourceLineNo">040</span>        CONNECTION_BYTES_RECEIVED_TOTAL(false),<a name="line.40"></a>
+<span class="sourceLineNo">041</span>        CONNECTION_BYTES_SENT_CONTROL(false),<a name="line.41"></a>
+<span class="sourceLineNo">042</span>        CONNECTION_BYTES_SENT_KEEPALIVE(false),<a name="line.42"></a>
+<span class="sourceLineNo">043</span>        CONNECTION_BYTES_SENT_SPEECH(false),<a name="line.43"></a>
+<span class="sourceLineNo">044</span>        CONNECTION_BYTES_SENT_TOTAL(false),<a name="line.44"></a>
+<span class="sourceLineNo">045</span>        CONNECTION_FILETRANSFER_BANDWIDTH_RECEIVED(false),<a name="line.45"></a>
+<span class="sourceLineNo">046</span>        CONNECTION_FILETRANSFER_BANDWIDTH_SENT(false),<a name="line.46"></a>
+<span class="sourceLineNo">047</span>        CONNECTION_FILETRANSFER_BYTES_RECEIVED_TOTAL(false),<a name="line.47"></a>
+<span class="sourceLineNo">048</span>        CONNECTION_FILETRANSFER_BYTES_SENT_TOTAL(false),<a name="line.48"></a>
+<span class="sourceLineNo">049</span>        CONNECTION_PACKETS_RECEIVED_CONTROL(false),<a name="line.49"></a>
+<span class="sourceLineNo">050</span>        CONNECTION_PACKETS_RECEIVED_KEEPALIVE(false),<a name="line.50"></a>
+<span class="sourceLineNo">051</span>        CONNECTION_PACKETS_RECEIVED_SPEECH(false),<a name="line.51"></a>
+<span class="sourceLineNo">052</span>        CONNECTION_PACKETS_RECEIVED_TOTAL(false),<a name="line.52"></a>
+<span class="sourceLineNo">053</span>        CONNECTION_PACKETS_SENT_CONTROL(false),<a name="line.53"></a>
+<span class="sourceLineNo">054</span>        CONNECTION_PACKETS_SENT_KEEPALIVE(false),<a name="line.54"></a>
+<span class="sourceLineNo">055</span>        CONNECTION_PACKETS_SENT_SPEECH(false),<a name="line.55"></a>
+<span class="sourceLineNo">056</span>        CONNECTION_PACKETS_SENT_TOTAL(false),<a name="line.56"></a>
+<span class="sourceLineNo">057</span>        VIRTUALSERVER_ANTIFLOOD_POINTS_NEEDED_COMMAND_BLOCK(true),<a name="line.57"></a>
+<span class="sourceLineNo">058</span>        VIRTUALSERVER_ANTIFLOOD_POINTS_NEEDED_IP_BLOCK(true),<a name="line.58"></a>
+<span class="sourceLineNo">059</span>        VIRTUALSERVER_ANTIFLOOD_POINTS_TICK_REDUCE(true),<a name="line.59"></a>
+<span class="sourceLineNo">060</span>        VIRTUALSERVER_ASK_FOR_PRIVILEGEKEY(false),<a name="line.60"></a>
+<span class="sourceLineNo">061</span>        VIRTUALSERVER_AUTOSTART(true),<a name="line.61"></a>
+<span class="sourceLineNo">062</span>        VIRTUALSERVER_CHANNELSONLINE(false),<a name="line.62"></a>
+<span class="sourceLineNo">063</span>        VIRTUALSERVER_CLIENT_CONNECTIONS(false),<a name="line.63"></a>
+<span class="sourceLineNo">064</span>        VIRTUALSERVER_CLIENTSONLINE(false),<a name="line.64"></a>
+<span class="sourceLineNo">065</span>        VIRTUALSERVER_CODEC_ENCRYPTION_MODE(true),<a name="line.65"></a>
+<span class="sourceLineNo">066</span>        VIRTUALSERVER_COMPLAIN_AUTOBAN_COUNT(true),<a name="line.66"></a>
+<span class="sourceLineNo">067</span>        VIRTUALSERVER_COMPLAIN_AUTOBAN_TIME(true),<a name="line.67"></a>
+<span class="sourceLineNo">068</span>        VIRTUALSERVER_COMPLAIN_REMOVE_TIME(true),<a name="line.68"></a>
+<span class="sourceLineNo">069</span>        VIRTUALSERVER_CREATED(false),<a name="line.69"></a>
+<span class="sourceLineNo">070</span>        VIRTUALSERVER_DEFAULT_CHANNEL_ADMIN_GROUP(true),<a name="line.70"></a>
+<span class="sourceLineNo">071</span>        VIRTUALSERVER_DEFAULT_CHANNEL_GROUP(true),<a name="line.71"></a>
+<span class="sourceLineNo">072</span>        VIRTUALSERVER_DEFAULT_SERVER_GROUP(true),<a name="line.72"></a>
+<span class="sourceLineNo">073</span>        VIRTUALSERVER_DOWNLOAD_QUOTA(true),<a name="line.73"></a>
+<span class="sourceLineNo">074</span>        VIRTUALSERVER_FILEBASE(false),<a name="line.74"></a>
+<span class="sourceLineNo">075</span>        VIRTUALSERVER_FLAG_PASSWORD(false),<a name="line.75"></a>
+<span class="sourceLineNo">076</span>        VIRTUALSERVER_HOSTBANNER_GFX_INTERVAL(true),<a name="line.76"></a>
+<span class="sourceLineNo">077</span>        VIRTUALSERVER_HOSTBANNER_GFX_URL(true),<a name="line.77"></a>
+<span class="sourceLineNo">078</span>        VIRTUALSERVER_HOSTBANNER_MODE(true),<a name="line.78"></a>
+<span class="sourceLineNo">079</span>        VIRTUALSERVER_HOSTBANNER_URL(true),<a name="line.79"></a>
+<span class="sourceLineNo">080</span>        VIRTUALSERVER_HOSTBUTTON_GFX_URL(true),<a name="line.80"></a>
+<span class="sourceLineNo">081</span>        VIRTUALSERVER_HOSTBUTTON_TOOLTIP(true),<a name="line.81"></a>
+<span class="sourceLineNo">082</span>        VIRTUALSERVER_HOSTBUTTON_URL(true),<a name="line.82"></a>
+<span class="sourceLineNo">083</span>        VIRTUALSERVER_HOSTMESSAGE(true),<a name="line.83"></a>
+<span class="sourceLineNo">084</span>        VIRTUALSERVER_HOSTMESSAGE_MODE(true),<a name="line.84"></a>
+<span class="sourceLineNo">085</span>        VIRTUALSERVER_ICON_ID(true),<a name="line.85"></a>
+<span class="sourceLineNo">086</span>        VIRTUALSERVER_ID(false),<a name="line.86"></a>
+<span class="sourceLineNo">087</span>        VIRTUALSERVER_IP(false),<a name="line.87"></a>
+<span class="sourceLineNo">088</span>        VIRTUALSERVER_LOG_CHANNEL(true),<a name="line.88"></a>
+<span class="sourceLineNo">089</span>        VIRTUALSERVER_LOG_CLIENT(true),<a name="line.89"></a>
+<span class="sourceLineNo">090</span>        VIRTUALSERVER_LOG_FILETRANSFER(true),<a name="line.90"></a>
+<span class="sourceLineNo">091</span>        VIRTUALSERVER_LOG_PERMISSIONS(true),<a name="line.91"></a>
+<span class="sourceLineNo">092</span>        VIRTUALSERVER_LOG_QUERY(true),<a name="line.92"></a>
+<span class="sourceLineNo">093</span>        VIRTUALSERVER_LOG_SERVER(true),<a name="line.93"></a>
+<span class="sourceLineNo">094</span>        VIRTUALSERVER_MACHINE_ID(true),<a name="line.94"></a>
+<span class="sourceLineNo">095</span>        VIRTUALSERVER_MAX_DOWNLOAD_TOTAL_BANDWIDTH(true),<a name="line.95"></a>
+<span class="sourceLineNo">096</span>        VIRTUALSERVER_MAX_UPLOAD_TOTAL_BANDWIDTH(true),<a name="line.96"></a>
+<span class="sourceLineNo">097</span>        VIRTUALSERVER_MAXCLIENTS(true),<a name="line.97"></a>
+<span class="sourceLineNo">098</span>        VIRTUALSERVER_MIN_CLIENT_VERSION(true),<a name="line.98"></a>
+<span class="sourceLineNo">099</span>        VIRTUALSERVER_MIN_CLIENTS_IN_CHANNEL_BEFORE_FORCED_SILENCE(true),<a name="line.99"></a>
+<span class="sourceLineNo">100</span>        VIRTUALSERVER_MONTH_BYTES_DOWNLOADED(false),<a name="line.100"></a>
+<span class="sourceLineNo">101</span>        VIRTUALSERVER_MONTH_BYTES_UPLOADED(false),<a name="line.101"></a>
+<span class="sourceLineNo">102</span>        VIRTUALSERVER_NAME(true),<a name="line.102"></a>
+<span class="sourceLineNo">103</span>        VIRTUALSERVER_NAME_PHONETIC(true),<a name="line.103"></a>
+<span class="sourceLineNo">104</span>        VIRTUALSERVER_NEEDED_IDENTITY_SECURITY_LEVEL(true),<a name="line.104"></a>
+<span class="sourceLineNo">105</span>        VIRTUALSERVER_PASSWORD(true),<a name="line.105"></a>
+<span class="sourceLineNo">106</span>        VIRTUALSERVER_PLATFORM(false),<a name="line.106"></a>
+<span class="sourceLineNo">107</span>        VIRTUALSERVER_PORT(true),<a name="line.107"></a>
+<span class="sourceLineNo">108</span>        VIRTUALSERVER_PRIORITY_SPEAKER_DIMM_MODIFICATOR(true),<a name="line.108"></a>
+<span class="sourceLineNo">109</span>        VIRTUALSERVER_QUERY_CLIENT_CONNECTIONS(false),<a name="line.109"></a>
+<span class="sourceLineNo">110</span>        VIRTUALSERVER_QUERYCLIENTSONLINE(false),<a name="line.110"></a>
+<span class="sourceLineNo">111</span>        VIRTUALSERVER_RESERVED_SLOTS(true),<a name="line.111"></a>
+<span class="sourceLineNo">112</span>        VIRTUALSERVER_STATUS(true),<a name="line.112"></a>
+<span class="sourceLineNo">113</span>        VIRTUALSERVER_TOTAL_BYTES_DOWNLOADED(false),<a name="line.113"></a>
+<span class="sourceLineNo">114</span>        VIRTUALSERVER_TOTAL_BYTES_UPLOADED(false),<a name="line.114"></a>
+<span class="sourceLineNo">115</span>        VIRTUALSERVER_TOTAL_PACKETLOSS_CONTROL(false),<a name="line.115"></a>
+<span class="sourceLineNo">116</span>        VIRTUALSERVER_TOTAL_PACKETLOSS_KEEPALIVE(false),<a name="line.116"></a>
+<span class="sourceLineNo">117</span>        VIRTUALSERVER_TOTAL_PACKETLOSS_SPEECH(false),<a name="line.117"></a>
+<span class="sourceLineNo">118</span>        VIRTUALSERVER_TOTAL_PACKETLOSS_TOTAL(false),<a name="line.118"></a>
+<span class="sourceLineNo">119</span>        VIRTUALSERVER_TOTAL_PING(false),<a name="line.119"></a>
+<span class="sourceLineNo">120</span>        VIRTUALSERVER_UNIQUE_IDENTIFIER(false),<a name="line.120"></a>
+<span class="sourceLineNo">121</span>        VIRTUALSERVER_UPLOAD_QUOTA(true),<a name="line.121"></a>
+<span class="sourceLineNo">122</span>        VIRTUALSERVER_UPTIME(false),<a name="line.122"></a>
+<span class="sourceLineNo">123</span>        VIRTUALSERVER_VERSION(false),<a name="line.123"></a>
+<span class="sourceLineNo">124</span>        VIRTUALSERVER_WEBLIST_ENABLED(true),<a name="line.124"></a>
+<span class="sourceLineNo">125</span>        VIRTUALSERVER_WELCOMEMESSAGE(true);<a name="line.125"></a>
+<span class="sourceLineNo">126</span><a name="line.126"></a>
+<span class="sourceLineNo">127</span>        private final boolean changeable;<a name="line.127"></a>
+<span class="sourceLineNo">128</span><a name="line.128"></a>
+<span class="sourceLineNo">129</span>        VirtualServerProperty(boolean changeable) {<a name="line.129"></a>
+<span class="sourceLineNo">130</span>                this.changeable = changeable;<a name="line.130"></a>
+<span class="sourceLineNo">131</span>        }<a name="line.131"></a>
+<span class="sourceLineNo">132</span><a name="line.132"></a>
+<span class="sourceLineNo">133</span>        @Override<a name="line.133"></a>
+<span class="sourceLineNo">134</span>        public String getName() {<a name="line.134"></a>
+<span class="sourceLineNo">135</span>                return name().toLowerCase(Locale.ROOT);<a name="line.135"></a>
+<span class="sourceLineNo">136</span>        }<a name="line.136"></a>
+<span class="sourceLineNo">137</span><a name="line.137"></a>
+<span class="sourceLineNo">138</span>        public boolean isChangeable() {<a name="line.138"></a>
+<span class="sourceLineNo">139</span>                return changeable;<a name="line.139"></a>
+<span class="sourceLineNo">140</span>        }<a name="line.140"></a>
+<span class="sourceLineNo">141</span><a name="line.141"></a>
+<span class="sourceLineNo">142</span>}<a name="line.142"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>
