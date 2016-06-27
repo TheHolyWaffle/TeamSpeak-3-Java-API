@@ -16,7 +16,7 @@ branches:
 # custom build script and deployment
 before_install: chmod +x script/deploy.sh
 install: mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
-after_success: ./script/deploy.sh
+after_success: travis_wait 60 ./script/deploy.sh
 
 deploy:
   provider: releases
