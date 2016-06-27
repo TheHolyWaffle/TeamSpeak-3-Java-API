@@ -8,10 +8,11 @@ A Java 7 implementation of the [TeamSpeak 3 Server Query API](http://media.teams
 ## Features
 
 - [Documented source](http://theholywaffle.github.io/TeamSpeak-3-Java-API/)
-- Contains all server query functionality! (see [TeamSpeak 3 Server Query Manual](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf))
+- Contains almost all server query functionality! (see [TeamSpeak 3 Server Query Manual](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf))
 - Built-in keep alive method
 - Threaded event-based system
 - Both [synchronous](src/main/java/com/github/theholywaffle/teamspeak3/TS3Api.java) and [asynchronous](src/main/java/com/github/theholywaffle/teamspeak3/TS3ApiAsync.java) implementations available
+- Can be set up to reconnect and automatically resume execution after a connection problem
 - No extra libraries
 
 ## Getting Started
@@ -27,10 +28,10 @@ A Java 7 implementation of the [TeamSpeak 3 Server Query API](http://media.teams
    Add the following to your pom.xml
 
 ```xml
-<project>	
-	
+<project>
+
 	<!-- other settings -->
-	
+
 	<repositories>
 		<repository>
 			<id>TeamSpeak-3-Java-API-mvn-repo</id>
@@ -41,13 +42,13 @@ A Java 7 implementation of the [TeamSpeak 3 Server Query API](http://media.teams
 			</snapshots>
 		</repository>
 	</repositories>
-	
+
 	<dependencies>
 		<dependency>
 			<groupId>com.github.theholywaffle</groupId>
 			<artifactId>teamspeak3-api</artifactId>
 			<version>[1.0.0,2.0.0)</version>
-		</dependency>		
+		</dependency>
 	</dependencies>
 
 </project>
@@ -81,14 +82,14 @@ api.setNickname("PutPutBot");
 api.sendChannelMessage("PutPutBot is online!");
 ...
 ```
-    
+
 ### More examples
 
 [here](example)
 
 ### Javadocs
 
-[here](http://theholywaffle.github.io/TeamSpeak-3-Java-API/latest/)
+[here](http://theholywaffle.github.io/TeamSpeak-3-Java-API/)
 
 ### Important
 
