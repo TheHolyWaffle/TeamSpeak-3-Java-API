@@ -3461,10 +3461,7 @@ public class TS3Api {
 	 */
 	public boolean setMessageReadFlag(int messageId, boolean read) {
 		final CMessageUpdateFlag flag = new CMessageUpdateFlag(messageId, read);
-		if (query.doCommand(flag)) {
-			return flag.getError().isSuccessful();
-		}
-		return read;
+		return query.doCommand(flag);
 	}
 
 	/**
