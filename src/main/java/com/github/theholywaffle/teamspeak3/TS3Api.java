@@ -2583,7 +2583,7 @@ public class TS3Api {
 	 * To move a channel to root level, set {@code channelTargetId} to {@code 0}.
 	 * <p>
 	 * This will move the channel right below the specified parent channel, above all other child channels.
-	 * This command will fail if the channel already has the specified target channel as the parent channel.
+	 * The command will fail if the channel already has the specified target channel as the parent channel.
 	 * </p>
 	 *
 	 * @param channelId
@@ -2607,7 +2607,9 @@ public class TS3Api {
 	 * <p>
 	 * The channel will be ordered below the channel with the ID specified by {@code order}.
 	 * To move the channel right below the parent channel, set {@code order} to {@code 0}.
-	 * Also note that a channel cannot be re-ordered without also changing its parent channel.
+	 * </p><p>
+	 * Note that re-ordering a channel without also changing its parent channel cannot be done with this method.
+	 * Use {@link #editChannel(int, Map)} to change {@link ChannelProperty#CHANNEL_ORDER} instead.
 	 * </p>
 	 *
 	 * @param channelId
