@@ -198,6 +198,10 @@ public class TS3Query {
 	EventManager getEventManager() {
 		return eventManager;
 	}
+	
+	TS3Config getConfig() {
+		return config;
+	}
 
 	void fireDisconnect() {
 		userThreadPool.submit(new Runnable() {

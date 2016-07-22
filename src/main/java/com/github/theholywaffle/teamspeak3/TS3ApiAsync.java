@@ -33,6 +33,13 @@ import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedExcepti
 import com.github.theholywaffle.teamspeak3.api.wrapper.*;
 import com.github.theholywaffle.teamspeak3.commands.*;
 
+import lombok.NonNull;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -3995,7 +4002,163 @@ public class TS3ApiAsync {
 		});
 		return future;
 	}
-
+	
+	public CommandFuture<FileList> listFiles(String path){
+		return listFiles(path, null);
+	}
+	
+	public CommandFuture<FileList> listFiles(@NonNull String path, Channel channel){
+		final CFtGetFilelist command = new CFtGetFilelist(path, channel);
+		final CommandFuture<FileList> future = new CommandFuture<>();
+		query.doCommandAsync(command, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(command, future)) return;
+				future.set(new FileList(command.getResponse()));
+			}
+		});
+		return future;
+	}
+	
+	public CommandFuture<FileTransfare> initFileUpload(String name, int size){
+		return initFileUpload(name, size, null, true);
+	}
+	
+	public CommandFuture<FileTransfare> initFileUpload(@NonNull String name, int size, Channel channel, boolean overwrite){
+		final CFtInitUpload command = new CFtInitUpload(name, 0, size, overwrite, channel);
+		final CommandFuture<FileTransfare> future = new CommandFuture<>();
+		query.doCommandAsync(command, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(command, future)) return;
+				future.set(new FileTransfare(command));
+			}
+		});
+		return future;
+	}
+	
+	public CommandFuture<Integer> uploadFile(@NonNull final FileTransfare transfare,@NonNull final byte[] data){
+		final CommandFuture<Integer> future = new CommandFuture<>();
+		new Thread(){
+			public void run() {
+				if(transfare.getSize() != data.length){
+					future.set(new Integer(-1));
+					return;
+				}
+				if(transfare.getPort() == -1){
+					future.set(new Integer(-3));
+					return;
+				}
+				
+				Socket socket = null;
+				OutputStream os = null;
+				try{
+					socket = new Socket(query.getConfig().getHost(), transfare.getPort());
+					os = socket.getOutputStream();
+					os.write(transfare.getFileKey());
+					os.write(data);
+					os.flush();
+					future.set(new Integer(0));
+					return;
+				}catch(Exception e){
+					e.printStackTrace();
+					future.set(new Integer(-4));
+					return;
+				}finally {
+					try {
+						os.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					try {
+						socket.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+		}.start();
+		return future;
+	}
+	
+	public CommandFuture<FileTransfare> initFileDownload(String name){
+		return initFileDownload(name, null);
+	}
+	
+	public CommandFuture<FileTransfare> initFileDownload(@NonNull String name, Channel channel){
+		final CFtInitDownload command = new CFtInitDownload(name, 0, channel);
+		final CommandFuture<FileTransfare> future = new CommandFuture<>();
+		query.doCommandAsync(command, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(command, future)) return;
+				future.set(new FileTransfare(command));
+			}
+		});
+		return future;
+	}
+	
+	public CommandFuture<byte[]> downloadFile(@NonNull final FileTransfare transfare){
+		final CommandFuture<byte[]> future = new CommandFuture<>();
+		
+		new Thread(){
+			public void run() {
+				if(transfare.getPort() == -1){
+					future.set(null);
+					return;
+				}
+				
+				Socket socket = null;
+				OutputStream os = null;
+				InputStream is = null;
+				
+				try{
+					socket = new Socket(query.getConfig().getHost(), transfare.getPort());
+					os = socket.getOutputStream();
+					os.write(transfare.getFileKey());
+					os.flush();
+					
+					ByteArrayOutputStream dataOutput = new ByteArrayOutputStream();
+					int readed;
+					byte[] buffer = new byte[1024];
+					
+					is = socket.getInputStream();
+					
+					while(true){
+						readed = is.read(buffer, 0, buffer.length);
+						if(readed <= 0)
+							break;
+						dataOutput.write(buffer, 0, readed);
+					}
+					
+					future.set(dataOutput.toByteArray());
+					return;
+				}catch(Exception e){
+					e.printStackTrace();
+					future.set(null);
+					return;
+				}finally {
+					try {
+						os.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					try {
+						is.close();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+					try {
+						socket.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+		}.start();
+		return future;
+	}
+	
 	/**
 	 * Executes a command, checking for failure and returning true if the command succeeded.
 	 *
