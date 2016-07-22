@@ -35,194 +35,185 @@ import java.util.Map;
 
 public class Client extends Wrapper {
 
-    public Client(Map<String, String> map) {
-        super(map);
-    }
+	public Client(Map<String, String> map) {
+		super(map);
+	}
 
-    public boolean canTalk() {
-        return getBoolean(ClientProperty.CLIENT_IS_TALKER);
-    }
+	public boolean canTalk() {
+		return getBoolean(ClientProperty.CLIENT_IS_TALKER);
+	}
 
-    public String getAwayMessage() {
-        return get(ClientProperty.CLIENT_AWAY_MESSAGE);
-    }
+	public String getAwayMessage() {
+		return get(ClientProperty.CLIENT_AWAY_MESSAGE);
+	}
 
-    public int getChannelGroupId() {
-        return getInt(ClientProperty.CLIENT_CHANNEL_GROUP_ID);
-    }
+	public int getChannelGroupId() {
+		return getInt(ClientProperty.CLIENT_CHANNEL_GROUP_ID);
+	}
 
-    public int getChannelId() {
-        return getInt(ClientProperty.CID);
-    }
+	public int getChannelId() {
+		return getInt(ClientProperty.CID);
+	}
 
-    /**
-     * Utility method. This method will return a client uri.
-     * A client uri can be used to reference a client.
-     * Example: [URL=client://5/thisisanuid=~Jesus]Jesus[/URL]
-     *
-     * @return clientUri
-     */
-    public String getClientUri() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("[URL=client://");
-        sb.append(getId());
-        sb.append("/");
-        sb.append(getUniqueIdentifier());
-        sb.append("~");
-        String encodedNick;
-        try {
-            //We will encode the nickname, because there are people, that are using incompatible chars in names.
-            encodedNick = URLEncoder.encode(getNickname(), "UTF-8"); //"The World Wide Web Consortium Recommendation states that UTF-8 should be used. Not doing so may introduce incompatibilites." Source: https://docs.oracle.com/javase/7/docs/api/java/net/URLEncoder.html#encode(java.lang.String,%20java.lang.String)
-        } catch (UnsupportedEncodingException e) {
-            encodedNick = getNickname();
-            //Won't ever happen, but why not?
-        }
-        sb.append(encodedNick);
-        sb.append("]");
-        sb.append(getNickname()); //Because it is not an uri
-        sb.append("[/URL]");
-        return sb.toString();
-    }
+	/**
+	 * Utility method. This method will return a client URI.
+	 * A client URI can be used to reference a client in descriptions or just via chat.
+	 * Example: {@code client://<clientId>/<clientUId>~<clientNickname>}
+	 *
+	 * @return Client's URI
+	 */
+	public String getClientURI() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("client://").append(getId()).append("/");
+		sb.append(getUniqueIdentifier()).append("~");
+		try {
+			// We will encode the nickname, so characters like spaces work with this.
+			sb.append(URLEncoder.encode(getNickname(), "UTF-8"));
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
+		return sb.toString();
+	}
 
-    public String getCountry() {
-        return get(ClientProperty.CLIENT_COUNTRY);
-    }
+	public String getCountry() {
+		return get(ClientProperty.CLIENT_COUNTRY);
+	}
 
-    public Date getCreatedDate() {
-        return new Date(getLong(ClientProperty.CLIENT_CREATED) * 1000);
-    }
+	public Date getCreatedDate() {
+		return new Date(getLong(ClientProperty.CLIENT_CREATED) * 1000);
+	}
 
-    public int getDatabaseId() {
-        return getInt(ClientProperty.CLIENT_DATABASE_ID);
-    }
+	public int getDatabaseId() {
+		return getInt(ClientProperty.CLIENT_DATABASE_ID);
+	}
 
-    public long getIconId() {
-        return getLong(ClientProperty.CLIENT_ICON_ID);
-    }
+	public long getIconId() {
+		return getLong(ClientProperty.CLIENT_ICON_ID);
+	}
 
-    public int getId() {
-        return getInt("clid");
-    }
+	public int getId() {
+		return getInt("clid");
+	}
 
-    public long getIdleTime() {
-        return getLong(ClientProperty.CLIENT_IDLE_TIME);
-    }
+	public long getIdleTime() {
+		return getLong(ClientProperty.CLIENT_IDLE_TIME);
+	}
 
-    public int getInheritedChannelGroupId() {
-        return getInt(ClientProperty.CLIENT_CHANNEL_GROUP_INHERITED_CHANNEL_ID);
-    }
+	public int getInheritedChannelGroupId() {
+		return getInt(ClientProperty.CLIENT_CHANNEL_GROUP_INHERITED_CHANNEL_ID);
+	}
 
-    public String getIp() {
-        return get(ClientProperty.CONNECTION_CLIENT_IP);
-    }
+	public String getIp() {
+		return get(ClientProperty.CONNECTION_CLIENT_IP);
+	}
 
-    public Date getLastConnectedDate() {
-        return new Date(getLong(ClientProperty.CLIENT_LASTCONNECTED) * 1000);
-    }
+	public Date getLastConnectedDate() {
+		return new Date(getLong(ClientProperty.CLIENT_LASTCONNECTED) * 1000);
+	}
 
-    public String getNickname() {
-        return get(ClientProperty.CLIENT_NICKNAME);
-    }
+	public String getNickname() {
+		return get(ClientProperty.CLIENT_NICKNAME);
+	}
 
-    public String getPlatform() {
-        return get(ClientProperty.CLIENT_PLATFORM);
-    }
+	public String getPlatform() {
+		return get(ClientProperty.CLIENT_PLATFORM);
+	}
 
-    public int[] getServerGroups() {
-        final String str = get(ClientProperty.CLIENT_SERVERGROUPS);
-        final String[] arr = str.split(",");
-        final int[] groups = new int[arr.length];
-        for (int i = 0; i < groups.length; i++) {
-            groups[i] = Integer.parseInt(arr[i]);
-        }
-        return groups;
-    }
+	public int[] getServerGroups() {
+		final String str = get(ClientProperty.CLIENT_SERVERGROUPS);
+		final String[] arr = str.split(",");
+		final int[] groups = new int[arr.length];
+		for (int i = 0; i < groups.length; i++) {
+			groups[i] = Integer.parseInt(arr[i]);
+		}
+		return groups;
+	}
 
-    public int getTalkPower() {
-        return getInt(ClientProperty.CLIENT_TALK_POWER);
-    }
+	public int getTalkPower() {
+		return getInt(ClientProperty.CLIENT_TALK_POWER);
+	}
 
-    public int getType() {
-        return getInt(ClientProperty.CLIENT_TYPE);
-    }
+	public int getType() {
+		return getInt(ClientProperty.CLIENT_TYPE);
+	}
 
-    public String getUniqueIdentifier() {
-        return get(ClientProperty.CLIENT_UNIQUE_IDENTIFIER);
-    }
+	public String getUniqueIdentifier() {
+		return get(ClientProperty.CLIENT_UNIQUE_IDENTIFIER);
+	}
 
-    public String getVersion() {
-        return get(ClientProperty.CLIENT_VERSION);
-    }
+	public String getVersion() {
+		return get(ClientProperty.CLIENT_VERSION);
+	}
 
-    public boolean isAway() {
-        return getBoolean(ClientProperty.CLIENT_AWAY);
-    }
+	public boolean isAway() {
+		return getBoolean(ClientProperty.CLIENT_AWAY);
+	}
 
-    public boolean isChannelCommander() {
-        return getBoolean(ClientProperty.CLIENT_IS_CHANNEL_COMMANDER);
-    }
+	public boolean isChannelCommander() {
+		return getBoolean(ClientProperty.CLIENT_IS_CHANNEL_COMMANDER);
+	}
 
-    /**
-     * Utility method that does a linear search on the array of server group IDs returned
-     * by {@link #getServerGroups()} and returns {@code true} if that array contains
-     * the given server group ID.
-     *
-     * @param serverGroupId the ID of the server group to search for
-     * @return whether this client is a member of the given server group
-     */
-    public boolean isInServerGroup(int serverGroupId) {
-        int[] serverGroupIds = getServerGroups();
-        for (int s : serverGroupIds) {
-            if (s == serverGroupId) return true;
-        }
-        return false;
-    }
+	/**
+	 * Utility method that does a linear search on the array of server group IDs returned
+	 * by {@link #getServerGroups()} and returns {@code true} if that array contains
+	 * the given server group ID.
+	 *
+	 * @param serverGroupId the ID of the server group to search for
+	 * @return whether this client is a member of the given server group
+	 */
+	public boolean isInServerGroup(int serverGroupId) {
+		int[] serverGroupIds = getServerGroups();
+		for (int s : serverGroupIds) {
+			if (s == serverGroupId) return true;
+		}
+		return false;
+	}
 
-    /**
-     * Utility method that does a linear search on the array of server group IDs returned
-     * by {@link #getServerGroups()} and returns {@code true} if that array contains
-     * the ID of the given server group.
-     *
-     * @param serverGroup the server group to search for
-     * @return whether this client is a member of the given server group
-     */
-    public boolean isInServerGroup(ServerGroup serverGroup) {
-        return isInServerGroup(serverGroup.getId());
-    }
+	/**
+	 * Utility method that does a linear search on the array of server group IDs returned
+	 * by {@link #getServerGroups()} and returns {@code true} if that array contains
+	 * the ID of the given server group.
+	 *
+	 * @param serverGroup the server group to search for
+	 * @return whether this client is a member of the given server group
+	 */
+	public boolean isInServerGroup(ServerGroup serverGroup) {
+		return isInServerGroup(serverGroup.getId());
+	}
 
-    public boolean isInputHardware() {
-        return getBoolean(ClientProperty.CLIENT_INPUT_HARDWARE);
-    }
+	public boolean isInputHardware() {
+		return getBoolean(ClientProperty.CLIENT_INPUT_HARDWARE);
+	}
 
-    public boolean isInputMuted() {
-        return getBoolean(ClientProperty.CLIENT_INPUT_MUTED);
-    }
+	public boolean isInputMuted() {
+		return getBoolean(ClientProperty.CLIENT_INPUT_MUTED);
+	}
 
-    public boolean isOutputHardware() {
-        return getBoolean(ClientProperty.CLIENT_OUTPUT_HARDWARE);
-    }
+	public boolean isOutputHardware() {
+		return getBoolean(ClientProperty.CLIENT_OUTPUT_HARDWARE);
+	}
 
-    public boolean isOutputMuted() {
-        return getBoolean(ClientProperty.CLIENT_OUTPUT_MUTED);
-    }
+	public boolean isOutputMuted() {
+		return getBoolean(ClientProperty.CLIENT_OUTPUT_MUTED);
+	}
 
-    public boolean isPrioritySpeaker() {
-        return getBoolean(ClientProperty.CLIENT_IS_PRIORITY_SPEAKER);
-    }
+	public boolean isPrioritySpeaker() {
+		return getBoolean(ClientProperty.CLIENT_IS_PRIORITY_SPEAKER);
+	}
 
-    public boolean isRecording() {
-        return getBoolean(ClientProperty.CLIENT_IS_RECORDING);
-    }
+	public boolean isRecording() {
+		return getBoolean(ClientProperty.CLIENT_IS_RECORDING);
+	}
 
-    public boolean isRegularClient() {
-        return getType() == 0;
-    }
+	public boolean isRegularClient() {
+		return getType() == 0;
+	}
 
-    public boolean isServerQueryClient() {
-        return getType() == 1;
-    }
+	public boolean isServerQueryClient() {
+		return getType() == 1;
+	}
 
-    public boolean isTalking() {
-        return getBoolean("client_flag_talking");
-    }
+	public boolean isTalking() {
+		return getBoolean("client_flag_talking");
+	}
 }
