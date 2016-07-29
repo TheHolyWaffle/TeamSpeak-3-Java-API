@@ -57,6 +57,7 @@ public class TestFileUpload {
 		api.selectVirtualServerById(Integer.getInteger("tsServerId", 1));
 		api.setNickname(System.getProperty("tsNickname", "FileTest [WolverinDEV]"));
 		
+		
 		byte[] data = getFileBytes(new File("/home/wolverindev/Downloads/teamspeaklogo.png"));
 		FileTransfare trans = api.initFileUpload("/icon_100001", data.length);
 		api.uploadFile(trans, data);

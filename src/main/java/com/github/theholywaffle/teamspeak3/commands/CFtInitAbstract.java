@@ -29,7 +29,7 @@ package com.github.theholywaffle.teamspeak3.commands;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Channel;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 
-public class CFtInitAbstract extends Command{
+public abstract class CFtInitAbstract extends Command{
 	public CFtInitAbstract(String command, int clientftfid, String name, Channel channel) {
 		super(command);
 		add(new KeyValueParam("cid", channel == null ? 0 : channel.getId()));

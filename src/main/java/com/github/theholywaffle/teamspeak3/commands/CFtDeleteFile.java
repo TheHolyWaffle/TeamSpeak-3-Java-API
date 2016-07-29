@@ -26,19 +26,17 @@ package com.github.theholywaffle.teamspeak3.commands;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Channel;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 
-import lombok.Getter;
-
-public class CFtInitUpload extends CFtInitAbstract{
-	@Getter
-	private int size;
-	
-	public CFtInitUpload(String name,int clientftid,int size,boolean overwrite, Channel channel) {
-		super("ftinitupload", clientftid, name, channel);
-		add(new KeyValueParam("size", this.size = size));
-		add(new KeyValueParam("overwrite", overwrite));
-		add(new KeyValueParam("resume", false));
+//ftdeletefile cid={Channel-ID} cpw={Channel-Passwort} name={Dateipfad}
+public class CFtDeleteFile extends Command{
+	public CFtDeleteFile(Channel channel, String name) {
+		super("ftdeletefile");
+		add(new KeyValueParam("cid", channel == null ? 0 : channel.getId()));
+		add(new KeyValueParam("cpw", channel == null ? "" : channel.get(ChannelProperty.CHANNEL_PASSWORD)));
+		add(new KeyValueParam("name", name));
 	}
+
 }

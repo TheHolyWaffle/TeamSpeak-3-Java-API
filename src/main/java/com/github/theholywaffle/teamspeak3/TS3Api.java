@@ -3698,6 +3698,14 @@ public class TS3Api {
 		return null;
 	}
 	
+	public boolean deleteFile(String name){
+		return deleteFile(null, name);
+	}
+	
+	public boolean deleteFile(Channel channel, String name){
+		return query.doCommand(new CFtDeleteFile(channel, name));
+	}
+	
 	public FileTransfare initFileUpload(String name, int size){
 		return initFileUpload(name, size, null, true);
 	}
