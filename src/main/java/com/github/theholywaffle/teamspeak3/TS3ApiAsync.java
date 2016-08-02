@@ -4078,7 +4078,7 @@ public class TS3ApiAsync {
 	 *
 	 * @see Command
 	 */
-	private boolean hasFailed(Command command, CommandFuture<?> future) {
+	private static boolean hasFailed(Command command, CommandFuture<?> future) {
 		final QueryError error = command.getError();
 		if (error.isSuccessful()) return false;
 

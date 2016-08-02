@@ -54,7 +54,7 @@ public class DefaultArrayResponse {
 		}
 	}
 
-	private Map<String, String> parse(String raw) {
+	private static Map<String, String> parse(String raw) {
 		final StringTokenizer st = new StringTokenizer(raw, " ", false);
 		final Map<String, String> options = new HashMap<>();
 

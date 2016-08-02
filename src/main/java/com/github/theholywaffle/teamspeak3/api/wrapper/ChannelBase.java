@@ -33,7 +33,7 @@ import java.util.Map;
 
 public abstract class ChannelBase extends Wrapper {
 
-	public ChannelBase(Map<String, String> map) {
+	protected ChannelBase(Map<String, String> map) {
 		super(map);
 	}
 

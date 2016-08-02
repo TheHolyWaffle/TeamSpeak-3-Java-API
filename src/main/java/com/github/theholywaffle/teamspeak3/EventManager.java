@@ -30,24 +30,22 @@ import com.github.theholywaffle.teamspeak3.api.event.*;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3UnknownEventException;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class EventManager {
 
-	private final List<TS3Listener> listeners = new LinkedList<>();
+	// CopyOnWriteArrayList for thread safety
+	private final Collection<TS3Listener> listeners = new CopyOnWriteArrayList<>();
 
 	public void addListeners(TS3Listener... listeners) {
-		for (final TS3Listener l : listeners) {
-			this.listeners.add(l);
-		}
+		this.listeners.addAll(Arrays.asList(listeners));
 	}
 
 	public void removeListeners(TS3Listener... listeners) {
-		for (final TS3Listener l : listeners) {
-			this.listeners.remove(l);
-		}
+		this.listeners.removeAll(Arrays.asList(listeners));
 	}
 
 	public void fireEvent(String notifyName, String notifyBody) {
@@ -58,7 +56,7 @@ public class EventManager {
 		}
 	}
 
-	private TS3Event createEvent(String notifyName, String notifyBody) {
+	private static TS3Event createEvent(String notifyName, String notifyBody) {
 		final DefaultArrayResponse response = new DefaultArrayResponse(notifyBody);
 		final Map<String, String> eventData = response.getFirstResponse().getMap();
 

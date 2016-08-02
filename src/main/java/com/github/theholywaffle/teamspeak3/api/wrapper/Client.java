@@ -158,7 +158,9 @@ public class Client extends Wrapper {
 	 * by {@link #getServerGroups()} and returns {@code true} if that array contains
 	 * the given server group ID.
 	 *
-	 * @param serverGroupId the ID of the server group to search for
+	 * @param serverGroupId
+	 * 		the ID of the server group to search for
+	 *
 	 * @return whether this client is a member of the given server group
 	 */
 	public boolean isInServerGroup(int serverGroupId) {
@@ -174,7 +176,9 @@ public class Client extends Wrapper {
 	 * by {@link #getServerGroups()} and returns {@code true} if that array contains
 	 * the ID of the given server group.
 	 *
-	 * @param serverGroup the server group to search for
+	 * @param serverGroup
+	 * 		the server group to search for
+	 *
 	 * @return whether this client is a member of the given server group
 	 */
 	public boolean isInServerGroup(ServerGroup serverGroup) {

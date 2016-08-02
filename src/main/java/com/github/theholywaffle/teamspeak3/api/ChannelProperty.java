@@ -67,6 +67,7 @@ public enum ChannelProperty implements Property {
 		this.changeable = changeable;
 	}
 
+	@Override
 	public String getName() {
 		return name().toLowerCase(Locale.ROOT);
 	}
