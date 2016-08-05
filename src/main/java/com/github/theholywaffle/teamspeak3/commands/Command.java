@@ -31,20 +31,23 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.parameter.Parameter;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 
-import java.util.Collections;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class Command {
 
+	private static final int EMPTY_RESULT_SET_ERROR_ID = 1281;
+
 	private final String command;
-	private final List<Parameter> params = new LinkedList<>();
+	private final Collection<Parameter> params = new LinkedList<>();
 
 	private boolean sent = false;
 	private boolean answered = false;
 	private DefaultArrayResponse response;
 	private QueryError error;
-	private String raw;
 
 	protected Command(String command) {
 		this.command = command;
@@ -55,16 +58,29 @@ public class Command {
 	}
 
 	public void feed(String str) {
-		raw = str;
-		if (response == null) {
-			response = new DefaultArrayResponse(str);
-		}
+		if (response != null) throw new IllegalStateException("Multiple responses to one command");
+		response = new DefaultArrayResponse(str);
 	}
 
 	public void feedError(String err) {
-		if (error == null) {
-			final DefaultArrayResponse errorResponse = new DefaultArrayResponse(err);
-			error = new QueryError(errorResponse.getFirstResponse().getMap());
+		if (error != null) throw new IllegalStateException("Multiple errors for one command");
+
+		final DefaultArrayResponse errorResponse = new DefaultArrayResponse(err);
+		QueryError parsed = new QueryError(errorResponse.getFirstResponse().getMap());
+
+		if (parsed.getId() == EMPTY_RESULT_SET_ERROR_ID) {
+			if (response != null) throw new IllegalStateException("Got empty result set despite proper response");
+
+			// Set empty response instead
+			response = new DefaultArrayResponse();
+
+			// Fake an ok-error
+			Map<String, String> errorMap = new HashMap<>(2);
+			errorMap.put("id", "0");
+			errorMap.put("msg", "ok");
+			error = new QueryError(errorMap);
+		} else {
+			error = parsed;
 		}
 	}
 
@@ -77,16 +93,15 @@ public class Command {
 	}
 
 	public Wrapper getFirstResponse() {
-		if (response == null || response.getArray().isEmpty()) {
-			return new Wrapper(Collections.<String, String>emptyMap());
-		}
-
 		return response.getFirstResponse();
 	}
 
 	public List<Wrapper> getResponse() {
-		if (response == null) return Collections.emptyList();
 		return response.getArray();
+	}
+
+	public String getRawResponse() {
+		return response.getRawResponse();
 	}
 
 	public boolean isAnswered() {
@@ -110,7 +125,6 @@ public class Command {
 		answered = false;
 		response = null;
 		error = null;
-		raw = null;
 		return this;
 	}
 
@@ -121,9 +135,4 @@ public class Command {
 		}
 		return builder.toString();
 	}
-
-	public String getRaw() {
-		return raw;
-	}
-
 }

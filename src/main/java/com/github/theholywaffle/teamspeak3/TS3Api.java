@@ -749,7 +749,7 @@ public class TS3Api {
 	public Snapshot createServerSnapshot() {
 		final CServerSnapshotCreate create = new CServerSnapshotCreate();
 		if (query.doCommand(create)) {
-			return new Snapshot(create.getRaw());
+			return new Snapshot(create.getRawResponse());
 		}
 		return null;
 	}

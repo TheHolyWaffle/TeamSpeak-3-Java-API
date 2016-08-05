@@ -28,6 +28,7 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
 
 import com.github.theholywaffle.teamspeak3.api.Property;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -42,6 +43,8 @@ import java.util.Map;
  * </ul>
  */
 public class Wrapper {
+
+	public static final Wrapper EMPTY = new Wrapper(Collections.<String, String>emptyMap());
 
 	private final Map<String, String> map;
 

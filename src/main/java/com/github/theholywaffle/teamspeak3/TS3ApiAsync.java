@@ -752,7 +752,7 @@ public class TS3ApiAsync {
 			@Override
 			public void handle() {
 				if (hasFailed(create, future)) return;
-				future.set(new Snapshot(create.getRaw()));
+				future.set(new Snapshot(create.getRawResponse()));
 			}
 		});
 		return future;

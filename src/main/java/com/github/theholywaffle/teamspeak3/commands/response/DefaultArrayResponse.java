@@ -38,16 +38,19 @@ import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 
 public class DefaultArrayResponse {
 
+	private final String rawResponse;
 	private final List<Wrapper> array;
 
 	public DefaultArrayResponse() {
+		rawResponse = "";
 		array = Collections.emptyList();
 	}
 
 	public DefaultArrayResponse(String raw) {
-		final StringTokenizer tkn = new StringTokenizer(raw, "|", false);
+		rawResponse = raw;
 		array = new LinkedList<>();
 
+		final StringTokenizer tkn = new StringTokenizer(raw, "|", false);
 		while (tkn.hasMoreTokens()) {
 			final Wrapper wrapper = new Wrapper(parse(tkn.nextToken()));
 			array.add(wrapper);
@@ -79,8 +82,12 @@ public class DefaultArrayResponse {
 	}
 
 	public Wrapper getFirstResponse() {
-		if (array.size() == 0) return null;
+		if (array.size() == 0) return Wrapper.EMPTY;
 		return array.get(0);
+	}
+
+	public String getRawResponse() {
+		return rawResponse;
 	}
 
 	public String toString() {
