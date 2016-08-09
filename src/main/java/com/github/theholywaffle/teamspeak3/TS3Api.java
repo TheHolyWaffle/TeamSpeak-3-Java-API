@@ -33,6 +33,16 @@ import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedExce
 import com.github.theholywaffle.teamspeak3.api.wrapper.*;
 import com.github.theholywaffle.teamspeak3.commands.*;
 
+import lombok.NonNull;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.nio.channels.NetworkChannel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -3672,6 +3682,163 @@ public class TS3Api {
 		final CWhoAmI whoAmI = new CWhoAmI();
 		if (query.doCommand(whoAmI)) {
 			return new ServerQueryInfo(whoAmI.getFirstResponse().getMap());
+		}
+		return null;
+	}
+
+	public FileList listFiles(String path){
+		return listFiles(path, null);
+	}
+	
+	public FileList listFiles(@NonNull String path, Channel channel){
+		CFtGetFilelist command = new CFtGetFilelist(path, channel);
+		if(query.doCommand(command)){
+			return new FileList(command.getResponse());
+		}
+		return null;
+	}
+	
+	public boolean deleteFile(String name){
+		return deleteFile(null, name);
+	}
+	
+	public boolean deleteFile(Channel channel, String name){
+		return query.doCommand(new CFtDeleteFile(channel, name));
+	}
+	
+	public FileTransfare initFileUpload(String name, int size){
+		return initFileUpload(name, size, null, true);
+	}
+	
+	public FileTransfare initFileUpload(@NonNull String name, int size, Channel channel, boolean overwrite){
+		CFtInitUpload command = new CFtInitUpload(name, 0, size, overwrite, channel);
+		if(query.doCommand(command))
+			return new FileTransfare(command);
+		return null;
+	}
+	
+	public int uploadFile(@NonNull FileTransfare transfare,@NonNull byte[] data){
+		if(transfare.getSize() != data.length)
+			return -2;
+		if(transfare.getPort() == -1)
+			return -3;
+		
+		Socket socket = null;
+		OutputStream os = null;
+		try{
+			socket = new Socket(query.getConfig().getHost(), transfare.getPort());
+			os = socket.getOutputStream();
+			os.write(transfare.getFileKey());
+			os.write(data);
+			os.flush();
+			return 0;
+		}catch(Exception e){
+			e.printStackTrace();
+			return -4;
+		}finally {
+			try {
+				os.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			try {
+				socket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public FileTransfare initFileDownload(String name){
+		return initFileDownload(name, null);
+	}
+	
+	public FileTransfare initFileDownload(@NonNull String name, Channel channel){
+		CFtInitDownload command = new CFtInitDownload(name, 0, channel);
+		if(query.doCommand(command))
+			return new FileTransfare(command);
+		return null;
+	}
+	
+	public byte[] downloadFile(@NonNull FileTransfare transfare){
+		if(transfare.getPort() == -1)
+			return null;
+		
+		Socket socket = null;
+		OutputStream os = null;
+		InputStream is = null;
+		
+		try{
+			socket = new Socket(query.getConfig().getHost(), transfare.getPort());
+			os = socket.getOutputStream();
+			os.write(transfare.getFileKey());
+			os.flush();
+			
+			ByteArrayOutputStream dataOutput = new ByteArrayOutputStream();
+			int readed;
+			byte[] buffer = new byte[1024];
+			
+			is = socket.getInputStream();
+			
+			while(true){
+				readed = is.read(buffer, 0, buffer.length);
+				if(readed <= 0)
+					break;
+				dataOutput.write(buffer, 0, readed);
+			}
+			
+			return dataOutput.toByteArray();
+		}catch(Exception e){
+			e.printStackTrace();
+			return null;
+		}finally {
+			try {
+				os.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			try {
+				is.close();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			try {
+				socket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private byte[] getFileBytes(File file){
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		FileInputStream is = null;
+		try{
+			is = new FileInputStream(file);
+			byte[] buffer = new byte[1024];
+			int readed = 0;
+			while (true) {
+				readed = is.read(buffer);
+				if(readed == -1)
+					break;
+				os.write(buffer, 0, readed);
+			}
+			return os.toByteArray();
+		}catch(Exception e){
+			e.printStackTrace();
+		}finally {
+			try {
+				if(is != null)
+					is.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			try {
+				if(os != null)
+					os.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		return null;
 	}
