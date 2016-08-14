@@ -30,44 +30,41 @@ import com.github.theholywaffle.teamspeak3.commands.Command;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.concurrent.BlockingQueue;
 
 public class SocketWriter extends Thread {
 
-	private final QueryIO io;
+	private final BlockingQueue<Command> sendQueue;
+	private final BlockingQueue<Command> receiveQueue;
 	private final int floodRate;
 	private final PrintStream out;
 	private volatile long lastCommand = System.currentTimeMillis();
 
-	public SocketWriter(QueryIO io, int floodRate) throws IOException {
+	public SocketWriter(QueryIO io, TS3Config config) throws IOException {
 		super("[TeamSpeak-3-Java-API] SocketWriter");
-		this.io = io;
-		if (floodRate > 50) {
-			this.floodRate = floodRate;
-		} else {
-			this.floodRate = 50;
-		}
-
-		out = new PrintStream(io.getSocket().getOutputStream(), true, "UTF-8");
+		this.sendQueue = io.getSendQueue();
+		this.receiveQueue = io.getReceiveQueue();
+		this.floodRate = config.getFloodRate().getMs();
+		this.out = new PrintStream(io.getSocket().getOutputStream(), true, "UTF-8");
 	}
 
 	@Override
 	public void run() {
-		while (!isInterrupted()) {
-			final Command c = io.getCommandQueue().peek();
-			if (c != null && !c.isSent()) {
+		try {
+			while (!isInterrupted()) {
+				final Command c = sendQueue.take();
 				final String msg = c.toString();
-				TS3Query.log.info("> " + msg);
 
-				c.setSent();
+				receiveQueue.put(c);
+				TS3Query.log.info("> " + msg);
 				out.println(msg);
+
 				lastCommand = System.currentTimeMillis();
+				if (floodRate > 0) Thread.sleep(floodRate);
 			}
-			try {
-				Thread.sleep(floodRate);
-			} catch (final InterruptedException e) {
-				interrupt();
-				break;
-			}
+		} catch (final InterruptedException e) {
+			// Regular shutdown
+			interrupt();
 		}
 
 		out.close();
@@ -77,7 +74,7 @@ public class SocketWriter extends Thread {
 		}
 	}
 
-	public long getIdleTime() {
+	long getIdleTime() {
 		return System.currentTimeMillis() - lastCommand;
 	}
 }

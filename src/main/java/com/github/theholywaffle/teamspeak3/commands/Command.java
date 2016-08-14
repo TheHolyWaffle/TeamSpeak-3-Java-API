@@ -26,6 +26,7 @@ package com.github.theholywaffle.teamspeak3.commands;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.Callback;
 import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.parameter.Parameter;
@@ -44,8 +45,7 @@ public class Command {
 	private final String command;
 	private final Collection<Parameter> params = new LinkedList<>();
 
-	private boolean sent = false;
-	private boolean answered = false;
+	private Callback callback;
 	private DefaultArrayResponse response;
 	private QueryError error;
 
@@ -105,29 +105,19 @@ public class Command {
 	}
 
 	public boolean isAnswered() {
-		return answered;
+		return (error != null);
 	}
 
-	public boolean isSent() {
-		return sent;
+	public Callback getCallback() {
+		return callback;
 	}
 
-	public void setAnswered() {
-		answered = true;
+	public void setCallback(Callback callback) {
+		if (this.callback != null) throw new IllegalArgumentException("Callback already set");
+		this.callback = callback;
 	}
 
-	public void setSent() {
-		sent = true;
-	}
-
-	public Command reset() {
-		sent = false;
-		answered = false;
-		response = null;
-		error = null;
-		return this;
-	}
-
+	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder(command);
 		for (final Parameter p : params) {

@@ -41,13 +41,19 @@ import java.util.logging.Logger;
 
 public class TS3Query {
 
-	public enum FloodRate {
-		DEFAULT(350),
-		UNLIMITED(0);
+	public static class FloodRate {
+
+		public static final FloodRate DEFAULT = new FloodRate(350);
+		public static final FloodRate UNLIMITED = new FloodRate(0);
+
+		public static final FloodRate custom(int milliseconds) {
+			if (milliseconds < 0) throw new IllegalArgumentException("Timeout must be positive");
+			return new FloodRate(milliseconds);
+		}
 
 		private final int ms;
 
-		FloodRate(int ms) {
+		private FloodRate(int ms) {
 			this.ms = ms;
 		}
 
@@ -149,16 +155,16 @@ public class TS3Query {
 	boolean doCommand(Command c) {
 		final long end = System.currentTimeMillis() + config.getCommandTimeout();
 		final Object signal = new Object();
-		final Callback callback = new Callback() {
+		c.setCallback(new Callback() {
 			@Override
 			public void handle() {
 				synchronized (signal) {
 					signal.notifyAll();
 				}
 			}
-		};
+		});
 
-		io.queueCommand(c, callback);
+		io.enqueueCommand(c);
 
 		boolean interrupted = false;
 		while (!c.isAnswered() && System.currentTimeMillis() < end) {
@@ -183,12 +189,9 @@ public class TS3Query {
 		return c.getError().isSuccessful();
 	}
 
-	void doCommandAsync(Command c) {
-		doCommandAsync(c, null);
-	}
-
 	void doCommandAsync(Command c, Callback callback) {
-		io.queueCommand(c, callback);
+		if (callback != null) c.setCallback(callback);
+		io.enqueueCommand(c);
 	}
 
 	void submitUserTask(Runnable task) {

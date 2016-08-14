@@ -26,17 +26,14 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
-import com.github.theholywaffle.teamspeak3.api.Callback;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class QueryIO {
 
@@ -45,19 +42,27 @@ public class QueryIO {
 	private final SocketWriter socketWriter;
 	private final KeepAliveThread keepAlive;
 
-	private final Queue<Command> commandQueue;
-	private final Map<Command, Callback> callbackMap;
+	private final BlockingQueue<Command> sendQueue;
+	private final BlockingQueue<Command> receiveQueue;
 
 	QueryIO(TS3Query query, TS3Config config) {
-		commandQueue = new ConcurrentLinkedQueue<>();
-		callbackMap = Collections.synchronizedMap(new LinkedHashMap<Command, Callback>(16));
+		sendQueue = new LinkedBlockingQueue<>();
+		if (config.getFloodRate() == TS3Query.FloodRate.UNLIMITED) {
+			// Don't wait for the last response before sending more commands
+			receiveQueue = new LinkedBlockingQueue<>();
+		} else {
+			// Wait for the response to the last command to arrive before sending the next one
+			receiveQueue = new ArrayBlockingQueue<>(1);
+		}
 
 		Socket tmpSocket = null;
 		try {
 			tmpSocket = new Socket(config.getHost(), config.getQueryPort());
 			socket = tmpSocket;
-			socketReader = new SocketReader(query, this);
-			socketWriter = new SocketWriter(this, config.getFloodRate().getMs());
+			socket.setTcpNoDelay(true);
+
+			socketReader = new SocketReader(this, query);
+			socketWriter = new SocketWriter(this, config);
 			keepAlive = new KeepAliveThread(socketWriter, query.getAsyncApi());
 		} catch (IOException e) {
 			// Clean up resources and fail
@@ -78,15 +83,15 @@ public class QueryIO {
 	}
 
 	public void continueFrom(QueryIO io) {
-		if (io == null || io.commandQueue.isEmpty()) return;
+		if (io == null) return;
+		if (io.sendQueue.isEmpty() && io.receiveQueue.isEmpty()) return;
 
-		callbackMap.putAll(io.callbackMap);
-		Command lastSent = io.commandQueue.poll();
-		commandQueue.add(lastSent.reset());
-		commandQueue.addAll(io.commandQueue);
+		// Resend commands which remained unanswered first
+		sendQueue.addAll(io.receiveQueue);
+		sendQueue.addAll(io.sendQueue);
 
-		io.commandQueue.clear();
-		io.callbackMap.clear();
+		io.receiveQueue.clear();
+		io.sendQueue.clear();
 	}
 
 	public void disconnect() {
@@ -109,24 +114,22 @@ public class QueryIO {
 		}
 	}
 
-	public void queueCommand(Command command, Callback callback) {
+	public void enqueueCommand(Command command) {
 		if (command == null) throw new NullPointerException("Command cannot be null!");
-
-		if (callback != null) {
-			callbackMap.put(command, callback);
-		}
-		commandQueue.add(command);
+		sendQueue.add(command);
 	}
 
-	public Socket getSocket() {
+	// Internals for communication with other IO classes
+
+	Socket getSocket() {
 		return socket;
 	}
 
-	public Map<Command, Callback> getCallbackMap() {
-		return callbackMap;
+	BlockingQueue<Command> getSendQueue() {
+		return sendQueue;
 	}
 
-	public Queue<Command> getCommandQueue() {
-		return commandQueue;
+	BlockingQueue<Command> getReceiveQueue() {
+		return receiveQueue;
 	}
 }
