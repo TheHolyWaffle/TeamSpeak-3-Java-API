@@ -35,15 +35,15 @@ public class CClientKick extends Command {
 	public CClientKick(ReasonIdentifier reason, String reasonMessage, int... clientIds) {
 		super("clientkick");
 
+		add(new KeyValueParam("reasonid", reason.getIndex()));
+		if (reasonMessage != null) {
+			add(new KeyValueParam("reasonmsg", reasonMessage));
+		}
+
 		final ArrayParameter p = new ArrayParameter();
 		for (final int id : clientIds) {
 			p.add(new KeyValueParam("clid", id));
 		}
 		add(p);
-
-		add(new KeyValueParam("reasonid", reason.getIndex()));
-		if (reasonMessage != null) {
-			add(new KeyValueParam("reasonmsg", reasonMessage));
-		}
 	}
 }
