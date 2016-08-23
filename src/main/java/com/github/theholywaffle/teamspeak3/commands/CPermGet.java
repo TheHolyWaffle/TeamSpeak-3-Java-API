@@ -26,6 +26,7 @@ package com.github.theholywaffle.teamspeak3.commands;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.commands.parameter.ArrayParameter;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 
 /**
@@ -39,24 +40,32 @@ import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 public class CPermGet extends Command {
 
 	/**
-	 * Looks up a permission value based on the permission's name.
+	 * Looks up one or more permission values based on the permissions' names.
 	 *
-	 * @param permName
-	 * 		the name of the permission
+	 * @param permNames
+	 * 		the names of the permissions
 	 */
-	public CPermGet(String permName) {
+	public CPermGet(String... permNames) {
 		super("permget");
-		add(new KeyValueParam("permsid", permName));
+		final ArrayParameter p = new ArrayParameter(permNames.length);
+		for (String permName : permNames) {
+			p.add(new KeyValueParam("permsid", permName));
+		}
+		add(p);
 	}
 
 	/**
-	 * Looks up a permission value based on the permission's numerical ID.
+	 * Looks up one or more permission values based on the permissions' numerical IDs.
 	 *
-	 * @param permId
-	 * 		the ID of the permission
+	 * @param permIds
+	 * 		the IDs of the permissions
 	 */
-	public CPermGet(int permId) {
+	public CPermGet(int... permIds) {
 		super("permget");
-		add(new KeyValueParam("permid", permId));
+		final ArrayParameter p = new ArrayParameter(permIds.length);
+		for (int permId : permIds) {
+			p.add(new KeyValueParam("permid", permId));
+		}
+		add(p);
 	}
 }

@@ -2043,6 +2043,37 @@ public class TS3Api {
 	}
 
 	/**
+	 * Gets the IDs of the permissions specified by {@code permNames}.
+	 * <p>
+	 * Note that the use of numeric permission IDs is deprecated
+	 * and that this API only uses the string variant of the IDs.
+	 * </p>
+	 *
+	 * @param permNames
+	 * 		the names of the permissions
+	 *
+	 * @return the numeric IDs of the specified permission
+	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code permNames} is {@code null}
+	 * @querycommands 1
+	 */
+	public int[] getPermissionIdsByName(String[] permNames) {
+		if (permNames == null) throw new IllegalArgumentException("permNames was null");
+
+		final CPermIdGetByName get = new CPermIdGetByName(permNames);
+		if (query.doCommand(get)) {
+			int[] ids = new int[get.getResponse().size()];
+			int i = 0;
+			for (Wrapper response : get.getResponse()) {
+				ids[i++] = response.getInt("permid");
+			}
+			return ids;
+		}
+		return null;
+	}
+
+	/**
 	 * Gets a list of all assigned permissions for a client in a specified channel.
 	 * If you do not care about channel permissions, set {@code channelId} to {@code -1}.
 	 *
@@ -2108,6 +2139,33 @@ public class TS3Api {
 			return get.getFirstResponse().getInt("permvalue");
 		}
 		return -1;
+	}
+
+	/**
+	 * Displays the current values of the specified permissions for this server query instance.
+	 *
+	 * @param permNames
+	 * 		the names of the permissions
+	 *
+	 * @return the permission values, usually ranging from 0 to 100
+	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code permNames} is {@code null}
+	 * @querycommands 1
+	 */
+	public int[] getPermissionValues(String[] permNames) {
+		if (permNames == null) throw new IllegalArgumentException("permNames was null");
+
+		final CPermGet get = new CPermGet(permNames);
+		if (query.doCommand(get)) {
+			int[] values = new int[get.getResponse().size()];
+			int i = 0;
+			for (Wrapper response : get.getResponse()) {
+				values[i++] = response.getInt("permvalue");
+			}
+			return values;
+		}
+		return null;
 	}
 
 	/**

@@ -2265,6 +2265,45 @@ public class TS3ApiAsync {
 	}
 
 	/**
+	 * Gets the IDs of the permissions specified by {@code permNames}.
+	 * <p>
+	 * Note that the use of numeric permission IDs is deprecated
+	 * and that this API only uses the string variant of the IDs.
+	 * </p>
+	 *
+	 * @param permNames
+	 * 		the names of the permissions
+	 *
+	 * @return the numeric IDs of the specified permission
+	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code permNames} is {@code null}
+	 * @querycommands 1
+	 */
+	public CommandFuture<int[]> getPermissionIdsByName(String[] permNames) {
+		if (permNames == null) throw new IllegalArgumentException("permNames was null");
+
+		final CPermIdGetByName get = new CPermIdGetByName(permNames);
+		final CommandFuture<int[]> future = new CommandFuture<>();
+
+		query.doCommandAsync(get, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(get, future)) return;
+
+				final List<Wrapper> responses = get.getResponse();
+				int[] ids = new int[responses.size()];
+				int i = 0;
+				for (final Wrapper response : get.getResponse()) {
+					ids[i++] = response.getInt("permid");
+				}
+				future.set(ids);
+			}
+		});
+		return future;
+	}
+
+	/**
 	 * Gets a list of all assigned permissions for a client in a specified channel.
 	 * If you do not care about channel permissions, set {@code channelId} to {@code -1}.
 	 *
@@ -2341,6 +2380,41 @@ public class TS3ApiAsync {
 	public CommandFuture<Integer> getPermissionValue(String permName) {
 		final CPermGet get = new CPermGet(permName);
 		return executeAndReturnIntProperty(get, "permvalue");
+	}
+
+	/**
+	 * Displays the current values of the specified permissions for this server query instance.
+	 *
+	 * @param permNames
+	 * 		the names of the permissions
+	 *
+	 * @return the permission values, usually ranging from 0 to 100
+	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code permNames} is {@code null}
+	 * @querycommands 1
+	 */
+	public CommandFuture<int[]> getPermissionValues(String[] permNames) {
+		if (permNames == null) throw new IllegalArgumentException("permNames was null");
+
+		final CPermGet get = new CPermGet(permNames);
+		final CommandFuture<int[]> future = new CommandFuture<>();
+
+		query.doCommandAsync(get, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(get, future)) return;
+
+				final List<Wrapper> responses = get.getResponse();
+				int[] values = new int[responses.size()];
+				int i = 0;
+				for (final Wrapper response : get.getResponse()) {
+					values[i++] = response.getInt("permvalue");
+				}
+				future.set(values);
+			}
+		});
+		return future;
 	}
 
 	/**
