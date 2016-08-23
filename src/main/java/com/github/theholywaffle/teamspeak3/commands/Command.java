@@ -58,8 +58,11 @@ public class Command {
 	}
 
 	public void feed(String str) {
-		if (response != null) throw new IllegalStateException("Multiple responses to one command");
-		response = new DefaultArrayResponse(str);
+		if (response == null) {
+			response = new DefaultArrayResponse(str);
+		} else {
+			response.appendResponse(str);
+		}
 	}
 
 	public void feedError(String err) {
