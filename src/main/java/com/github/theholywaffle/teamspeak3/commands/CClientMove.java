@@ -48,11 +48,10 @@ public class CClientMove extends Command {
 			add(new KeyValueParam("cpw", channelPassword));
 		}
 
-		final ArrayParameter p = new ArrayParameter();
+		final ArrayParameter p = new ArrayParameter(clientIds.length);
 		for (final int clientId : clientIds) {
 			p.add(new KeyValueParam("clid", clientId));
 		}
 		add(p);
 	}
-
 }

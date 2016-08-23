@@ -38,11 +38,10 @@ public class CPermIdGetByName extends Command {
 
 	public CPermIdGetByName(String[] permNames) {
 		super("permidgetbyname");
-		final ArrayParameter permissions = new ArrayParameter();
+		final ArrayParameter permissions = new ArrayParameter(permNames.length);
 		for (String p : permNames) {
 			permissions.add(new KeyValueParam("permsid", p));
 		}
 		add(permissions);
 	}
-
 }

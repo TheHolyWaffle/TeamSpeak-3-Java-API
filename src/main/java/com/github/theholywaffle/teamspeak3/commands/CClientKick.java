@@ -40,7 +40,7 @@ public class CClientKick extends Command {
 			add(new KeyValueParam("reasonmsg", reasonMessage));
 		}
 
-		final ArrayParameter p = new ArrayParameter();
+		final ArrayParameter p = new ArrayParameter(clientIds.length);
 		for (final int id : clientIds) {
 			p.add(new KeyValueParam("clid", id));
 		}

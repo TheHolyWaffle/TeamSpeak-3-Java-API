@@ -26,20 +26,21 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
  * #L%
  */
 
-import java.util.Arrays;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ArrayParameter extends Parameter {
 
+	private final int parametersPerEntry;
 	private final List<Parameter> parameters;
 
-	public ArrayParameter() {
-		parameters = new LinkedList<>();
+	public ArrayParameter(int numberOfEntries) {
+		this(numberOfEntries, 1);
 	}
 
-	public ArrayParameter(Parameter... parameters) {
-		this.parameters = new LinkedList<>(Arrays.asList(parameters));
+	public ArrayParameter(int numberOfEntries, int parametersPerEntry) {
+		this.parametersPerEntry = parametersPerEntry;
+		this.parameters = new ArrayList<>(numberOfEntries * parametersPerEntry);
 	}
 
 	public ArrayParameter add(Parameter p) {
@@ -49,12 +50,24 @@ public class ArrayParameter extends Parameter {
 
 	@Override
 	public String build() {
+		if (parameters.isEmpty()) return "";
+
 		StringBuilder str = new StringBuilder();
-		for (Parameter parameter : parameters) {
-			str.append(parameter.build()).append("|");
+
+		// First entry without |
+		str.append(parameters.get(0).build());
+		for (int i = 1; i < parametersPerEntry; ++i) {
+			str.append(" ").append(parameters.get(i).build());
 		}
-		str.setLength(str.length() - 1);
+
+		// Remaining entries separated with |
+		for (int offset = parametersPerEntry; offset < parameters.size(); offset += parametersPerEntry) {
+			str.append("|").append(parameters.get(offset).build());
+			for (int i = 1; i < parametersPerEntry; ++i) {
+				str.append(" ").append(parameters.get(offset + i).build());
+			}
+		}
+
 		return str.toString();
 	}
-
 }
