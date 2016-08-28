@@ -27,8 +27,7 @@ package com.github.theholywaffle.teamspeak3.api;
  */
 
 import com.github.theholywaffle.teamspeak3.TS3ApiAsync;
-import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
-import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -55,7 +54,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <li><b>Succeeded</b> - The server successfully processed the command and sent back a result</li>
  * </ul>
  * You can check the state of the future using the methods {@link #isDone()},
- * {@link #isSuccessful()}, {@link #isFailed()} and {@link #isCancelled()}.
+ * {@link #isSuccessful()}, {@link #hasFailed()} and {@link #isCancelled()}.
  * <p>
  * A {@code CommandFuture}'s value can be retrieved by calling {@link #get()}
  * or {@link #get(long, TimeUnit)}, which block the current thread until the
@@ -75,7 +74,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * guaranteed to return a {@code CommandFuture} with no listeners registered.
  * </p><p>
  * To set the value of a {@code CommandFuture}, the {@link #set(Object)} method is used;
- * to notify it of a failure, {@link #fail(QueryError)} is used. You usually
+ * to notify it of a failure, {@link #fail(TS3Exception)} is used. You usually
  * shouldn't call these methods yourself, however. That's the job of the API.
  * </p><p>
  * {@code CommandFuture}s are thread-safe. All state-changing methods are synchronized.
@@ -104,7 +103,7 @@ public class CommandFuture<V> implements Future<V> {
 
 	private volatile FutureState state = FutureState.WAITING;
 	private volatile V value = null;
-	private volatile QueryError queryError = null;
+	private volatile TS3Exception exception = null;
 	private volatile SuccessListener<? super V> successListener = null;
 	private volatile FailureListener failureListener = null;
 
@@ -262,7 +261,7 @@ public class CommandFuture<V> implements Future<V> {
 	 * 		The interrupt flag will be cleared
 	 * @throws CancellationException
 	 * 		if the {@code CommandFuture} was cancelled before the command completed
-	 * @throws TS3CommandFailedException
+	 * @throws TS3Exception
 	 * 		if the command fails
 	 */
 	@Override
@@ -301,7 +300,7 @@ public class CommandFuture<V> implements Future<V> {
 	 * 		if the given time elapsed without the command completing
 	 * @throws CancellationException
 	 * 		if the {@code CommandFuture} was cancelled before the command completed
-	 * @throws TS3CommandFailedException
+	 * @throws TS3Exception
 	 * 		if the command fails
 	 */
 	@Override
@@ -330,7 +329,7 @@ public class CommandFuture<V> implements Future<V> {
 	 *
 	 * @throws CancellationException
 	 * 		if the {@code CommandFuture} was cancelled before the command completed
-	 * @throws TS3CommandFailedException
+	 * @throws TS3Exception
 	 * 		if the command fails
 	 */
 	public V getUninterruptibly() {
@@ -365,7 +364,7 @@ public class CommandFuture<V> implements Future<V> {
 	 * 		if the given time elapsed without the command completing
 	 * @throws CancellationException
 	 * 		if the {@code CommandFuture} was cancelled before the command completed
-	 * @throws TS3CommandFailedException
+	 * @throws TS3Exception
 	 * 		if the command fails
 	 */
 	public V getUninterruptibly(long timeout, TimeUnit unit) throws TimeoutException {
@@ -380,14 +379,14 @@ public class CommandFuture<V> implements Future<V> {
 	 *
 	 * @throws CancellationException
 	 * 		if the future was cancelled
-	 * @throws TS3CommandFailedException
+	 * @throws TS3Exception
 	 * 		if the command failed
 	 */
 	private void checkForFailure() {
 		if (state == FutureState.CANCELLED) {
 			throw new CancellationException();
 		} else if (state == FutureState.FAILED) {
-			throw new TS3CommandFailedException(queryError);
+			throw new TS3Exception("Unhandled exception", exception);
 		}
 	}
 
@@ -412,11 +411,11 @@ public class CommandFuture<V> implements Future<V> {
 	}
 
 	/**
-	 * Returns {@code true} if the command failed and threw a {@link TS3CommandFailedException}.
+	 * Returns {@code true} if the command failed and threw a {@link TS3Exception}.
 	 *
 	 * @return {@code true} if the command failed
 	 */
-	public boolean isFailed() {
+	public boolean hasFailed() {
 		return state == FutureState.FAILED;
 	}
 
@@ -466,23 +465,23 @@ public class CommandFuture<V> implements Future<V> {
 	 * Note that a future can only fail once. Subsequent calls to this method will be ignored.
 	 * </p>
 	 *
-	 * @param error
-	 * 		the error that was returned from the server
+	 * @param exception
+	 * 		the exception that occurred while executing this command
 	 *
 	 * @return {@code true} if the command was marked as failed
 	 */
-	public boolean fail(QueryError error) {
+	public boolean fail(TS3Exception exception) {
 		synchronized (monitor) {
 			if (isDone()) return false; // Ignore
 
 			this.state = FutureState.FAILED;
-			this.queryError = error;
+			this.exception = exception;
 			monitor.notifyAll();
 		}
 
 		if (failureListener != null) {
 			try {
-				failureListener.handleFailure(queryError);
+				failureListener.handleFailure(exception);
 			} catch (Throwable t) {
 				// Whatever happens, we do not want a user error to leak into our logic
 				t.printStackTrace();
@@ -564,7 +563,7 @@ public class CommandFuture<V> implements Future<V> {
 		}
 
 		if (state == FutureState.FAILED) {
-			listener.handleFailure(queryError);
+			listener.handleFailure(exception);
 		}
 
 		return this;
@@ -593,7 +592,7 @@ public class CommandFuture<V> implements Future<V> {
 	}
 
 	/**
-	 * Forwards a failure to another future by calling {@link #fail(QueryError)}
+	 * Forwards a failure to another future by calling {@link #fail(TS3Exception)}
 	 * on that future with the error that caused this future to fail.
 	 * <p>
 	 * This will register a {@link FailureListener}, meaning that you will not
@@ -608,8 +607,8 @@ public class CommandFuture<V> implements Future<V> {
 	public CommandFuture<V> forwardFailure(final CommandFuture<?> otherFuture) {
 		return onFailure(new FailureListener() {
 			@Override
-			public void handleFailure(QueryError error) {
-				otherFuture.fail(error);
+			public void handleFailure(TS3Exception exception) {
+				otherFuture.fail(exception);
 			}
 		});
 	}
@@ -736,9 +735,9 @@ public class CommandFuture<V> implements Future<V> {
 		for (CommandFuture<F> future : futures) {
 			future.forwardSuccess(any).onFailure(new FailureListener() {
 				@Override
-				public void handleFailure(QueryError error) {
+				public void handleFailure(TS3Exception exception) {
 					if (failureCounter.decrementAndGet() == 0) {
-						any.fail(error);
+						any.fail(exception);
 					}
 				}
 			});
@@ -772,8 +771,8 @@ public class CommandFuture<V> implements Future<V> {
 
 	/**
 	 * A listener which will be notified if the {@link CommandFuture} failed.
-	 * In that case, {@link #handleFailure(QueryError)} will be called with
-	 * the error sent by the TeamSpeak server.
+	 * In that case, {@link #handleFailure(TS3Exception)} will be called with
+	 * the exception that occurred while executing this command.
 	 * <p>
 	 * A {@code CommandFuture}'s {@code FailureListener} can be set by calling
 	 * {@link #onFailure(FailureListener)}.
@@ -784,9 +783,9 @@ public class CommandFuture<V> implements Future<V> {
 		/**
 		 * The method to be executed when the command failed.
 		 *
-		 * @param error
-		 * 		the error that was sent back from the TeamSpeak server.
+		 * @param exception
+		 * 		the exception that occurred while executing this command
 		 */
-		void handleFailure(QueryError error);
+		void handleFailure(TS3Exception exception);
 	}
 }

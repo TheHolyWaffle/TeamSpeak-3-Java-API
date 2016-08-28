@@ -4156,7 +4156,7 @@ public class TS3ApiAsync {
 		final QueryError error = command.getError();
 		if (error.isSuccessful()) return false;
 
-		future.fail(error);
+		future.fail(new TS3CommandFailedException(error));
 		return true;
 	}
 }
