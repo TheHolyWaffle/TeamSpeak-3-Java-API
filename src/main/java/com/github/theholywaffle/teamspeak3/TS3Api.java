@@ -1903,6 +1903,33 @@ public class TS3Api {
 	}
 
 	/**
+	 * Gets information about a set number of clients in the server database, starting at {@code offset}.
+	 *
+	 * @param offset
+	 * 		the index of the first database client to be returned.
+	 * 		Note that this is <b>not</b> a database ID, but an arbitrary, 0-based index.
+	 * @param count
+	 * 		the number of database clients that should be returned.
+	 * 		Any integer greater than 200 might cause problems with the connection
+	 *
+	 * @return a {@link List} of database clients
+	 *
+	 * @querycommands 1
+	 * @see DatabaseClient
+	 */
+	public List<DatabaseClient> getDatabaseClients(final int offset, final int count) {
+		final CClientDBList list = new CClientDBList(offset, count, false);
+		if (query.doCommand(list)) {
+			final List<DatabaseClient> clients = new ArrayList<>(count);
+			for (final Wrapper response : list.getResponse()) {
+				clients.add(new DatabaseClient(response.getMap()));
+			}
+			return clients;
+		}
+		return null;
+	}
+
+	/**
 	 * Displays detailed configuration information about the server instance including
 	 * uptime, number of virtual servers online, traffic information, etc.
 	 *
