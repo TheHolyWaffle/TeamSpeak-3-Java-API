@@ -156,8 +156,8 @@ public class ClientJoinEvent extends BaseEvent {
 		return getInt(ClientProperty.CLIENT_NEEDED_SERVERQUERY_VIEW_POWER);
 	}
 
-	public int getClientIconId() {
-		return getInt(ClientProperty.CLIENT_ICON_ID);
+	public long getClientIconId() {
+		return getLong(ClientProperty.CLIENT_ICON_ID);
 	}
 
 	public boolean isClientChannelCommander() {

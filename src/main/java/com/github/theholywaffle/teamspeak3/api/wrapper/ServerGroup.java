@@ -54,8 +54,8 @@ public class ServerGroup extends Wrapper {
 		return null;
 	}
 
-	public int getIconId() {
-		return getInt("iconid");
+	public long getIconId() {
+		return getLong("iconid");
 	}
 
 	public int getSaveDb() {

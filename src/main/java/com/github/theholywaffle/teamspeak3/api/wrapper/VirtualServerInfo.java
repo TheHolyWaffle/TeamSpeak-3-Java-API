@@ -198,8 +198,8 @@ public class VirtualServerInfo extends VirtualServer {
 		return HostMessageMode.UNKNOWN;
 	}
 
-	public int getIconId() {
-		return getInt(VirtualServerProperty.VIRTUALSERVER_ICON_ID);
+	public long getIconId() {
+		return getLong(VirtualServerProperty.VIRTUALSERVER_ICON_ID);
 	}
 
 	public String getIp() {
