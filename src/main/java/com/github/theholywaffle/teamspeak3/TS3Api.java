@@ -30,9 +30,15 @@ import com.github.theholywaffle.teamspeak3.api.*;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3FileTransferFailedException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.*;
 import com.github.theholywaffle.teamspeak3.commands.*;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -706,6 +712,45 @@ public class TS3Api {
 	}
 
 	/**
+	 * Creates a new directory on the file repository in the specified channel.
+	 *
+	 * @param directoryPath
+	 * 		the path to the directory that should be created
+	 * @param channelId
+	 * 		the ID of the channel the directory should be created in
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 */
+	public boolean createFileDirectory(String directoryPath, int channelId) {
+		return createFileDirectory(directoryPath, channelId, null);
+	}
+
+	/**
+	 * Creates a new directory on the file repository in the specified channel.
+	 *
+	 * @param directoryPath
+	 * 		the path to the directory that should be created
+	 * @param channelId
+	 * 		the ID of the channel the directory should be created in
+	 * @param channelPassword
+	 * 		the password of that channel
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 */
+	public boolean createFileDirectory(String directoryPath, int channelId, String channelPassword) {
+		final CFtCreateDir create = new CFtCreateDir(directoryPath, channelId, channelPassword);
+		return query.doCommand(create);
+	}
+
+	/**
 	 * Creates a new virtual server with the given name and returns an object containing the ID of the newly
 	 * created virtual server, the default server admin token and the virtual server's voice port. Usually,
 	 * the virtual server is also automatically started. This can be turned off on the TS3 server, though.
@@ -994,6 +1039,119 @@ public class TS3Api {
 	}
 
 	/**
+	 * Deletes a file or directory from the file repository in the specified channel.
+	 *
+	 * @param filePath
+	 * 		the path to the file or directory
+	 * @param channelId
+	 * 		the ID of the channel the file or directory resides in
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 */
+	public boolean deleteFile(String filePath, int channelId) {
+		return deleteFile(filePath, channelId, null);
+	}
+
+	/**
+	 * Deletes a file or directory from the file repository in the specified channel.
+	 *
+	 * @param filePath
+	 * 		the path to the file or directory
+	 * @param channelId
+	 * 		the ID of the channel the file or directory resides in
+	 * @param channelPassword
+	 * 		the password of that channel
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 */
+	public boolean deleteFile(String filePath, int channelId, String channelPassword) {
+		final CFtDeleteFile delete = new CFtDeleteFile(channelId, channelPassword, filePath);
+		return query.doCommand(delete);
+	}
+
+	/**
+	 * Deletes multiple files or directories from the file repository in the specified channel.
+	 *
+	 * @param filePaths
+	 * 		the paths to the files or directories
+	 * @param channelId
+	 * 		the ID of the channel the file or directory resides in
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 */
+	public boolean deleteFiles(String[] filePaths, int channelId) {
+		return deleteFiles(filePaths, channelId, null);
+	}
+
+	/**
+	 * Deletes multiple files or directories from the file repository in the specified channel.
+	 *
+	 * @param filePaths
+	 * 		the paths to the files or directories
+	 * @param channelId
+	 * 		the ID of the channel the file or directory resides in
+	 * @param channelPassword
+	 * 		the password of that channel
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 */
+	public boolean deleteFiles(String[] filePaths, int channelId, String channelPassword) {
+		final CFtDeleteFile delete = new CFtDeleteFile(channelId, channelPassword, filePaths);
+		return query.doCommand(delete);
+	}
+
+	/**
+	 * Deletes an icon from the icon directory in the file repository.
+	 *
+	 * @param iconId
+	 * 		the ID of the icon to delete
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
+	 * @see IconFile#getIconId()
+	 */
+	public boolean deleteIcon(long iconId) {
+		final String iconPath = "/icon_" + iconId;
+		return deleteFile(iconPath, 0);
+	}
+
+	/**
+	 * Deletes multiple icons from the icon directory in the file repository.
+	 *
+	 * @param iconIds
+	 * 		the IDs of the icons to delete
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
+	 * @see IconFile#getIconId()
+	 */
+	public boolean deleteIcons(long[] iconIds) {
+		final String[] iconPaths = new String[iconIds.length];
+		for (int i = 0; i < iconIds.length; ++i) {
+			iconPaths[i] = "/icon_" + iconIds[i];
+		}
+		return deleteFiles(iconPaths, 0);
+	}
+
+	/**
 	 * Deletes the offline message with the specified ID.
 	 *
 	 * @param messageId
@@ -1151,6 +1309,210 @@ public class TS3Api {
 	public boolean deployServerSnapshot(String snapshot) {
 		final CServerSnapshotDeploy deploy = new CServerSnapshotDeploy(snapshot);
 		return query.doCommand(deploy);
+	}
+
+	/**
+	 * Downloads a file from the file repository at a given path and channel
+	 * and writes the file's bytes to an open {@link OutputStream}.
+	 * <p>
+	 * It is the user's responsibility to ensure that the given {@code OutputStream} is
+	 * open and to close the stream again once the download has finished.
+	 * </p><p>
+	 * Note that this method will not read the entire file to memory and can thus
+	 * download arbitrarily sized files from the file repository.
+	 * </p>
+	 *
+	 * @param dataOut
+	 * 		a stream that the downloaded data should be written to
+	 * @param filePath
+	 * 		the path of the file on the file repository
+	 * @param channelId
+	 * 		the ID of the channel to download the file from
+	 *
+	 * @return how many bytes were downloaded
+	 *
+	 * @throws TS3FileTransferFailedException
+	 * 		if the file transfer fails for any reason
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 * @see #downloadFileDirect(String, int)
+	 */
+	public long downloadFile(OutputStream dataOut, String filePath, int channelId) {
+		return downloadFile(dataOut, filePath, channelId, null);
+	}
+
+	/**
+	 * Downloads a file from the file repository at a given path and channel
+	 * and writes the file's bytes to an open {@link OutputStream}.
+	 * <p>
+	 * It is the user's responsibility to ensure that the given {@code OutputStream} is
+	 * open and to close the stream again once the download has finished.
+	 * </p><p>
+	 * Note that this method will not read the entire file to memory and can thus
+	 * download arbitrarily sized files from the file repository.
+	 * </p>
+	 *
+	 * @param dataOut
+	 * 		a stream that the downloaded data should be written to
+	 * @param filePath
+	 * 		the path of the file on the file repository
+	 * @param channelId
+	 * 		the ID of the channel to download the file from
+	 * @param channelPassword
+	 * 		that channel's password
+	 *
+	 * @return how many bytes were downloaded
+	 *
+	 * @throws TS3FileTransferFailedException
+	 * 		if the file transfer fails for any reason
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 * @see #downloadFileDirect(String, int, String)
+	 */
+	public long downloadFile(OutputStream dataOut, String filePath, int channelId, String channelPassword) {
+		final FileTransferHelper helper = query.getFileTransferHelper();
+		final int transferId = helper.getClientTransferId();
+		final CFtInitDownload download = new CFtInitDownload(transferId, filePath, channelId, channelPassword);
+
+		if (!query.doCommand(download)) return -1L;
+		FileTransferParameters params = new FileTransferParameters(download.getFirstResponse().getMap());
+		QueryError error = params.getQueryError();
+		if (!error.isSuccessful()) return -1L;
+
+		try {
+			query.getFileTransferHelper().downloadFile(dataOut, params);
+		} catch (IOException e) {
+			throw new TS3FileTransferFailedException("Download failed", e);
+		}
+		return params.getFileSize();
+	}
+
+	/**
+	 * Downloads a file from the file repository at a given path and channel
+	 * and returns the file's bytes as a byte array.
+	 * <p>
+	 * Note that this method <strong>will read the entire file to memory</strong>.
+	 * That means that if a file is larger than 2<sup>31</sup>-1 bytes in size,
+	 * the download will fail.
+	 * </p>
+	 *
+	 * @param filePath
+	 * 		the path of the file on the file repository
+	 * @param channelId
+	 * 		the ID of the channel to download the file from
+	 *
+	 * @return a byte array containing the file's data
+	 *
+	 * @throws TS3FileTransferFailedException
+	 * 		if the file transfer fails for any reason
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 * @see #downloadFile(OutputStream, String, int)
+	 */
+	public byte[] downloadFileDirect(String filePath, int channelId) {
+		return downloadFileDirect(filePath, channelId, null);
+	}
+
+	/**
+	 * Downloads a file from the file repository at a given path and channel
+	 * and returns the file's bytes as a byte array.
+	 * <p>
+	 * Note that this method <strong>will read the entire file to memory</strong>.
+	 * That means that if a file is larger than 2<sup>31</sup>-1 bytes in size,
+	 * the download will fail.
+	 * </p>
+	 *
+	 * @param filePath
+	 * 		the path of the file on the file repository
+	 * @param channelId
+	 * 		the ID of the channel to download the file from
+	 * @param channelPassword
+	 * 		that channel's password
+	 *
+	 * @return a byte array containing the file's data
+	 *
+	 * @throws TS3FileTransferFailedException
+	 * 		if the file transfer fails for any reason
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 * @see #downloadFile(OutputStream, String, int, String)
+	 */
+	public byte[] downloadFileDirect(String filePath, int channelId, String channelPassword) {
+		final FileTransferHelper helper = query.getFileTransferHelper();
+		final int transferId = helper.getClientTransferId();
+		final CFtInitDownload download = new CFtInitDownload(transferId, filePath, channelId, channelPassword);
+
+		if (!query.doCommand(download)) return null;
+		FileTransferParameters params = new FileTransferParameters(download.getFirstResponse().getMap());
+		QueryError error = params.getQueryError();
+		if (!error.isSuccessful()) return null;
+
+		long fileSize = params.getFileSize();
+		if (fileSize > Integer.MAX_VALUE) throw new TS3FileTransferFailedException("File too big for byte array");
+		ByteArrayOutputStream dataOut = new ByteArrayOutputStream((int) fileSize);
+
+		try {
+			query.getFileTransferHelper().downloadFile(dataOut, params);
+		} catch (IOException e) {
+			throw new TS3FileTransferFailedException("Download failed", e);
+		}
+
+		return dataOut.toByteArray();
+	}
+
+	/**
+	 * Downloads an icon from the icon directory in the file repository
+	 * and writes the file's bytes to an open {@link OutputStream}.
+	 * <p>
+	 * It is the user's responsibility to ensure that the given {@code OutputStream} is
+	 * open and to close the stream again once the download has finished.
+	 * </p>
+	 *
+	 * @param dataOut
+	 * 		a stream that the downloaded data should be written to
+	 * @param iconId
+	 * 		the ID of the icon that should be downloaded
+	 *
+	 * @return a byte array containing the icon file's data
+	 *
+	 * @throws TS3FileTransferFailedException
+	 * 		if the file transfer fails for any reason
+	 * @querycommands 1
+	 * @see IconFile#getIconId()
+	 * @see #downloadIconDirect(long)
+	 * @see #uploadIcon(InputStream, long)
+	 */
+	public long downloadIcon(OutputStream dataOut, long iconId) {
+		final String iconPath = "/icon_" + iconId;
+		return downloadFile(dataOut, iconPath, 0);
+	}
+
+	/**
+	 * Downloads an icon from the icon directory in the file repository
+	 * and returns the file's bytes as a byte array.
+	 * <p>
+	 * Note that this method <strong>will read the entire file to memory</strong>.
+	 * </p>
+	 *
+	 * @param iconId
+	 * 		the ID of the icon that should be downloaded
+	 *
+	 * @return a byte array containing the icon file's data
+	 *
+	 * @throws TS3FileTransferFailedException
+	 * 		if the file transfer fails for any reason
+	 * @querycommands 1
+	 * @see IconFile#getIconId()
+	 * @see #downloadIcon(OutputStream, long)
+	 * @see #uploadIconDirect(byte[])
+	 */
+	public byte[] downloadIconDirect(long iconId) {
+		final String iconPath = "/icon_" + iconId;
+		return downloadFileDirect(iconPath, 0);
 	}
 
 	/**
@@ -1930,6 +2292,215 @@ public class TS3Api {
 	}
 
 	/**
+	 * Gets information about a file on the file repository in the specified channel.
+	 * <p>
+	 * Note that this method does not work on directories and the information returned by this
+	 * method is identical to the one returned by {@link #getFileList(String, int, String)}
+	 * </p>
+	 *
+	 * @param filePath
+	 * 		the path to the file
+	 * @param channelId
+	 * 		the ID of the channel the file resides in
+	 *
+	 * @return some information about the file
+	 *
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 */
+	public FileInfo getFileInfo(String filePath, int channelId) {
+		return getFileInfo(filePath, channelId, null);
+	}
+
+	/**
+	 * Gets information about a file on the file repository in the specified channel.
+	 * <p>
+	 * Note that this method does not work on directories and the information returned by this
+	 * method is identical to the one returned by {@link #getFileList(String, int, String)}
+	 * </p>
+	 *
+	 * @param filePath
+	 * 		the path to the file
+	 * @param channelId
+	 * 		the ID of the channel the file resides in
+	 * @param channelPassword
+	 * 		the password of that channel
+	 *
+	 * @return some information about the file
+	 *
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 */
+	public FileInfo getFileInfo(String filePath, int channelId, String channelPassword) {
+		final CFtGetFileInfo info = new CFtGetFileInfo(channelId, channelPassword, filePath);
+		if (query.doCommand(info)) {
+			return new FileInfo(info.getFirstResponse().getMap());
+		}
+		return null;
+	}
+
+	/**
+	 * Gets information about multiple files on the file repository in the specified channel.
+	 * <p>
+	 * Note that this method does not work on directories and the information returned by this
+	 * method is identical to the one returned by {@link #getFileList(String, int, String)}
+	 * </p>
+	 *
+	 * @param filePaths
+	 * 		the paths to the files
+	 * @param channelId
+	 * 		the ID of the channel the file resides in
+	 *
+	 * @return some information about the file
+	 *
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 */
+	public List<FileInfo> getFileInfos(String filePaths[], int channelId) {
+		return getFileInfos(filePaths, channelId, null);
+	}
+
+	/**
+	 * Gets information about multiple files on the file repository in the specified channel.
+	 * <p>
+	 * Note that this method does not work on directories and the information returned by this
+	 * method is identical to the one returned by {@link #getFileList(String, int, String)}
+	 * </p>
+	 *
+	 * @param filePaths
+	 * 		the paths to the files
+	 * @param channelId
+	 * 		the ID of the channel the file resides in
+	 * @param channelPassword
+	 * 		the password of that channel
+	 *
+	 * @return some information about the file
+	 *
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 */
+	public List<FileInfo> getFileInfos(String filePaths[], int channelId, String channelPassword) {
+		final CFtGetFileInfo info = new CFtGetFileInfo(channelId, channelPassword, filePaths);
+		if (query.doCommand(info)) {
+			final List<Wrapper> responses = info.getResponse();
+			final List<FileInfo> files = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				files.add(new FileInfo(response.getMap()));
+			}
+			return files;
+		}
+		return null;
+	}
+
+	/**
+	 * Gets information about multiple files on the file repository in multiple channels.
+	 * <p>
+	 * Note that this method does not work on directories and the information returned by this
+	 * method is identical to the one returned by {@link #getFileList(String, int, String)}
+	 * </p>
+	 *
+	 * @param filePaths
+	 * 		the paths to the files, may not be {@code null} and may not contain {@code null} elements
+	 * @param channelIds
+	 * 		the IDs of the channels the file resides in, may not be {@code null}
+	 * @param channelPasswords
+	 * 		the passwords of those channels, may be {@code null} and may contain {@code null} elements
+	 *
+	 * @return some information about the files
+	 *
+	 * @throws IllegalArgumentException
+	 * 		if the dimensions of {@code filePaths}, {@code channelIds} and {@code channelPasswords} don't match
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 */
+	public List<FileInfo> getFileInfos(String filePaths[], int[] channelIds, String[] channelPasswords) {
+		final CFtGetFileInfo info = new CFtGetFileInfo(channelIds, channelPasswords, filePaths);
+		if (query.doCommand(info)) {
+			final List<Wrapper> responses = info.getResponse();
+			final List<FileInfo> files = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				files.add(new FileInfo(response.getMap()));
+			}
+			return files;
+		}
+		return null;
+	}
+
+	/**
+	 * Gets a list of files and directories in the specified parent directory and channel.
+	 *
+	 * @param directoryPath
+	 * 		the path to the parent directory
+	 * @param channelId
+	 * 		the ID of the channel the directory resides in
+	 *
+	 * @return the files and directories in the parent directory
+	 *
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 */
+	public List<FileListEntry> getFileList(String directoryPath, int channelId) {
+		return getFileList(directoryPath, channelId, null);
+	}
+
+	/**
+	 * Gets a list of files and directories in the specified parent directory and channel.
+	 *
+	 * @param directoryPath
+	 * 		the path to the parent directory
+	 * @param channelId
+	 * 		the ID of the channel the directory resides in
+	 * @param channelPassword
+	 * 		the password of that channel
+	 *
+	 * @return the files and directories in the parent directory
+	 *
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 */
+	public List<FileListEntry> getFileList(String directoryPath, int channelId, String channelPassword) {
+		final CFtGetFileList list = new CFtGetFileList(directoryPath, channelId, channelPassword);
+		if (query.doCommand(list)) {
+			final List<Wrapper> responses = list.getResponse();
+			final List<FileListEntry> files = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				files.add(new FileListEntry(response.getMap(), channelId, directoryPath));
+			}
+			return files;
+		}
+		return null;
+	}
+
+	/**
+	 * Gets a list of active or recently active file transfers.
+	 *
+	 * @return a list of file transfers
+	 */
+	public List<FileTransfer> getFileTransfers() {
+		final CFtList list = new CFtList();
+		if (query.doCommand(list)) {
+			final List<Wrapper> responses = list.getResponse();
+			final List<FileTransfer> transfers = new ArrayList<>(responses.size());
+
+			for (final Wrapper response : responses) {
+				transfers.add(new FileTransfer(response.getMap()));
+			}
+			return transfers;
+		}
+		return null;
+	}
+
+	/**
 	 * Displays detailed configuration information about the server instance including
 	 * uptime, number of virtual servers online, traffic information, etc.
 	 *
@@ -1943,6 +2514,22 @@ public class TS3Api {
 			return new HostInfo(info.getFirstResponse().getMap());
 		}
 		return null;
+	}
+
+	/**
+	 * Gets a list of all icon files on this virtual server.
+	 *
+	 * @return a list of all icons
+	 */
+	public List<IconFile> getIconList() {
+		List<FileListEntry> files = getFileList("/icons/", 0);
+		if (files == null) return null;
+		List<IconFile> icons = new ArrayList<>(files.size());
+		for (FileListEntry file : files) {
+			if (file.isDirectory() || file.isStillUploading()) continue;
+			icons.add(new IconFile(file.getMap(), 0, "/icons/"));
+		}
+		return icons;
 	}
 
 	/**
@@ -2716,76 +3303,6 @@ public class TS3Api {
 	}
 
 	/**
-	 * Moves the server query into a channel.
-	 *
-	 * @param channelId
-	 * 		the ID of the channel to move the server query into
-	 *
-	 * @return whether the command succeeded or not
-	 *
-	 * @querycommands 1
-	 * @see Channel#getId()
-	 */
-	public boolean moveQuery(int channelId) {
-		return moveClient(0, channelId, null);
-	}
-
-	/**
-	 * Moves the server query into a channel.
-	 *
-	 * @param channel
-	 * 		the channel to move the server query into, cannot be {@code null}
-	 *
-	 * @return whether the command succeeded or not
-	 *
-	 * @throws IllegalArgumentException
-	 * 		if {@code channel} is {@code null}
-	 * @querycommands 1
-	 */
-	public boolean moveQuery(ChannelBase channel) {
-		if (channel == null) throw new IllegalArgumentException("channel was null");
-
-		return moveClient(0, channel.getId(), null);
-	}
-
-	/**
-	 * Moves the server query into a channel using the specified password.
-	 *
-	 * @param channelId
-	 * 		the ID of the channel to move the client into
-	 * @param channelPassword
-	 * 		the password of the channel, can be {@code null}
-	 *
-	 * @return whether the command succeeded or not
-	 *
-	 * @querycommands 1
-	 * @see Channel#getId()
-	 */
-	public boolean moveQuery(int channelId, String channelPassword) {
-		return moveClient(0, channelId, channelPassword);
-	}
-
-	/**
-	 * Moves the server query into a channel using the specified password.
-	 *
-	 * @param channel
-	 * 		the channel to move the client into, cannot be {@code null}
-	 * @param channelPassword
-	 * 		the password of the channel, can be {@code null}
-	 *
-	 * @return whether the command succeeded or not
-	 *
-	 * @throws IllegalArgumentException
-	 * 		if {@code channel} is {@code null}
-	 * @querycommands 1
-	 */
-	public boolean moveQuery(ChannelBase channel, String channelPassword) {
-		if (channel == null) throw new IllegalArgumentException("channel was null");
-
-		return moveClient(0, channel.getId(), channelPassword);
-	}
-
-	/**
 	 * Moves a client into a channel.
 	 * <p>
 	 * Consider using {@link #moveClients(int[], int)}
@@ -2991,6 +3508,172 @@ public class TS3Api {
 			clientIds[i] = client.getId();
 		}
 		return moveClients(clientIds, channel.getId(), channelPassword);
+	}
+
+	/**
+	 * Moves and renames a file on the file repository within the same channel.
+	 *
+	 * @param oldPath
+	 * 		the current path to the file
+	 * @param newPath
+	 * 		the desired new path
+	 * @param channelId
+	 * 		the ID of the channel the file resides in
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 * @see #moveFile(String, String, int, int) moveFile to a different channel
+	 */
+	public boolean moveFile(String oldPath, String newPath, int channelId) {
+		return moveFile(oldPath, newPath, channelId, null);
+	}
+
+	/**
+	 * Renames a file on the file repository and moves it to a new path in a different channel.
+	 *
+	 * @param oldPath
+	 * 		the current path to the file
+	 * @param newPath
+	 * 		the desired new path
+	 * @param oldChannelId
+	 * 		the ID of the channel the file currently resides in
+	 * @param newChannelId
+	 * 		the ID of the channel the file should be moved to
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 * @see #moveFile(String, String, int) moveFile within the same channel
+	 */
+	public boolean moveFile(String oldPath, String newPath, int oldChannelId, int newChannelId) {
+		return moveFile(oldPath, newPath, oldChannelId, null, newChannelId, null);
+	}
+
+	/**
+	 * Moves and renames a file on the file repository within the same channel.
+	 *
+	 * @param oldPath
+	 * 		the current path to the file
+	 * @param newPath
+	 * 		the desired new path
+	 * @param channelId
+	 * 		the ID of the channel the file resides in
+	 * @param channelPassword
+	 * 		the password of the channel
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 * @see #moveFile(String, String, int, String, int, String) moveFile to a different channel
+	 */
+	public boolean moveFile(String oldPath, String newPath, int channelId, String channelPassword) {
+		final CFtRenameFile rename = new CFtRenameFile(oldPath, newPath, channelId, channelPassword);
+		return query.doCommand(rename);
+	}
+
+	/**
+	 * Renames a file on the file repository and moves it to a new path in a different channel.
+	 *
+	 * @param oldPath
+	 * 		the current path to the file
+	 * @param newPath
+	 * 		the desired new path
+	 * @param oldChannelId
+	 * 		the ID of the channel the file currently resides in
+	 * @param oldPassword
+	 * 		the password of the current channel
+	 * @param newChannelId
+	 * 		the ID of the channel the file should be moved to
+	 * @param newPassword
+	 * 		the password of the new channel
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 * @see #moveFile(String, String, int, String) moveFile within the same channel
+	 */
+	public boolean moveFile(String oldPath, String newPath, int oldChannelId, String oldPassword, int newChannelId, String newPassword) {
+		final CFtRenameFile rename = new CFtRenameFile(oldPath, newPath, oldChannelId, oldPassword, newChannelId, newPassword);
+		return query.doCommand(rename);
+	}
+
+	/**
+	 * Moves the server query into a channel.
+	 *
+	 * @param channelId
+	 * 		the ID of the channel to move the server query into
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
+	 * @see Channel#getId()
+	 */
+	public boolean moveQuery(int channelId) {
+		return moveClient(0, channelId, null);
+	}
+
+	/**
+	 * Moves the server query into a channel.
+	 *
+	 * @param channel
+	 * 		the channel to move the server query into, cannot be {@code null}
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code channel} is {@code null}
+	 * @querycommands 1
+	 */
+	public boolean moveQuery(ChannelBase channel) {
+		if (channel == null) throw new IllegalArgumentException("channel was null");
+
+		return moveClient(0, channel.getId(), null);
+	}
+
+	/**
+	 * Moves the server query into a channel using the specified password.
+	 *
+	 * @param channelId
+	 * 		the ID of the channel to move the client into
+	 * @param channelPassword
+	 * 		the password of the channel, can be {@code null}
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @querycommands 1
+	 * @see Channel#getId()
+	 */
+	public boolean moveQuery(int channelId, String channelPassword) {
+		return moveClient(0, channelId, channelPassword);
+	}
+
+	/**
+	 * Moves the server query into a channel using the specified password.
+	 *
+	 * @param channel
+	 * 		the channel to move the client into, cannot be {@code null}
+	 * @param channelPassword
+	 * 		the password of the channel, can be {@code null}
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @throws IllegalArgumentException
+	 * 		if {@code channel} is {@code null}
+	 * @querycommands 1
+	 */
+	public boolean moveQuery(ChannelBase channel, String channelPassword) {
+		if (channel == null) throw new IllegalArgumentException("channel was null");
+
+		return moveClient(0, channel.getId(), channelPassword);
 	}
 
 	/**
@@ -3708,6 +4391,222 @@ public class TS3Api {
 			return login.getFirstResponse().get("client_login_password");
 		}
 		return null;
+	}
+
+	/**
+	 * Uploads a file to the file repository at a given path and channel
+	 * by reading {@code dataLength} bytes from an open {@link InputStream}.
+	 * <p>
+	 * It is the user's responsibility to ensure that the given {@code InputStream} is
+	 * open and that {@code dataLength} bytes can eventually be read from it. The user is
+	 * also responsible for closing the stream once the upload has finished.
+	 * </p><p>
+	 * Note that this method will not read the entire file to memory and can thus
+	 * upload arbitrarily sized files to the file repository.
+	 * </p>
+	 *
+	 * @param dataIn
+	 * 		a stream that contains the data that should be uploaded
+	 * @param dataLength
+	 * 		how many bytes should be read from the stream
+	 * @param filePath
+	 * 		the path the file should have after being uploaded
+	 * @param overwrite
+	 * 		if {@code false}, fails if there's already a file at {@code filePath}
+	 * @param channelId
+	 * 		the ID of the channel to upload the file to
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @throws TS3FileTransferFailedException
+	 * 		if the file transfer fails for any reason
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 * @see #uploadFileDirect(byte[], String, boolean, int, String)
+	 */
+	public boolean uploadFile(InputStream dataIn, long dataLength, String filePath, boolean overwrite, int channelId) {
+		return uploadFile(dataIn, dataLength, filePath, overwrite, channelId, null);
+	}
+
+	/**
+	 * Uploads a file to the file repository at a given path and channel
+	 * by reading {@code dataLength} bytes from an open {@link InputStream}.
+	 * <p>
+	 * It is the user's responsibility to ensure that the given {@code InputStream} is
+	 * open and that {@code dataLength} bytes can eventually be read from it. The user is
+	 * also responsible for closing the stream once the upload has finished.
+	 * </p><p>
+	 * Note that this method will not read the entire file to memory and can thus
+	 * upload arbitrarily sized files to the file repository.
+	 * </p>
+	 *
+	 * @param dataIn
+	 * 		a stream that contains the data that should be uploaded
+	 * @param dataLength
+	 * 		how many bytes should be read from the stream
+	 * @param filePath
+	 * 		the path the file should have after being uploaded
+	 * @param overwrite
+	 * 		if {@code false}, fails if there's already a file at {@code filePath}
+	 * @param channelId
+	 * 		the ID of the channel to upload the file to
+	 * @param channelPassword
+	 * 		that channel's password
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @throws TS3FileTransferFailedException
+	 * 		if the file transfer fails for any reason
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 * @see #uploadFileDirect(byte[], String, boolean, int, String)
+	 */
+	public boolean uploadFile(InputStream dataIn, long dataLength, String filePath, boolean overwrite, int channelId, String channelPassword) {
+		final FileTransferHelper helper = query.getFileTransferHelper();
+		final int transferId = helper.getClientTransferId();
+		final CFtInitUpload upload = new CFtInitUpload(transferId, filePath, channelId, channelPassword, dataLength, overwrite);
+
+		if (!query.doCommand(upload)) return false;
+		FileTransferParameters params = new FileTransferParameters(upload.getFirstResponse().getMap());
+		QueryError error = params.getQueryError();
+		if (!error.isSuccessful()) return false;
+
+		try {
+			query.getFileTransferHelper().uploadFile(dataIn, dataLength, params);
+		} catch (IOException e) {
+			throw new TS3FileTransferFailedException("Upload failed", e);
+		}
+		return true;
+	}
+
+	/**
+	 * Uploads a file that is already stored in memory to the file repository
+	 * at a given path and channel.
+	 *
+	 * @param data
+	 * 		the file's data as a byte array
+	 * @param filePath
+	 * 		the path the file should have after being uploaded
+	 * @param overwrite
+	 * 		if {@code false}, fails if there's already a file at {@code filePath}
+	 * @param channelId
+	 * 		the ID of the channel to upload the file to
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @throws TS3FileTransferFailedException
+	 * 		if the file transfer fails for any reason
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 * @see #uploadFile(InputStream, long, String, boolean, int)
+	 */
+	public boolean uploadFileDirect(byte[] data, String filePath, boolean overwrite, int channelId) {
+		return uploadFileDirect(data, filePath, overwrite, channelId, null);
+	}
+
+	/**
+	 * Uploads a file that is already stored in memory to the file repository
+	 * at a given path and channel.
+	 *
+	 * @param data
+	 * 		the file's data as a byte array
+	 * @param filePath
+	 * 		the path the file should have after being uploaded
+	 * @param overwrite
+	 * 		if {@code false}, fails if there's already a file at {@code filePath}
+	 * @param channelId
+	 * 		the ID of the channel to upload the file to
+	 * @param channelPassword
+	 * 		that channel's password
+	 *
+	 * @return whether the command succeeded or not
+	 *
+	 * @throws TS3FileTransferFailedException
+	 * 		if the file transfer fails for any reason
+	 * @querycommands 1
+	 * @see FileInfo#getPath()
+	 * @see Channel#getId()
+	 * @see #uploadFile(InputStream, long, String, boolean, int, String)
+	 */
+	public boolean uploadFileDirect(byte[] data, String filePath, boolean overwrite, int channelId, String channelPassword) {
+		return uploadFile(new ByteArrayInputStream(data), data.length, filePath, overwrite, channelId, channelPassword);
+	}
+
+	/**
+	 * Uploads an icon to the icon directory in the file repository
+	 * by reading {@code dataLength} bytes from an open {@link InputStream}.
+	 * <p>
+	 * It is the user's responsibility to ensure that the given {@code InputStream} is
+	 * open and that {@code dataLength} bytes can eventually be read from it. The user is
+	 * also responsible for closing the stream once the upload has finished.
+	 * </p><p>
+	 * Note that unlike the file upload methods, this <strong>will read the entire file to memory</strong>.
+	 * This is because the CRC32 hash must be calculated before the icon can be uploaded.
+	 * That means that all icon files must be less than 2<sup>31</sup>-1 bytes in size.
+	 * </p>
+	 * Uploads  that is already stored in memory to the icon directory
+	 * in the file repository. If this icon has already been uploaded or
+	 * if a hash collision occurs (CRC32), this command will fail.
+	 *
+	 * @param dataIn
+	 * 		a stream that contains the data that should be uploaded
+	 * @param dataLength
+	 * 		how many bytes should be read from the stream
+	 *
+	 * @return the ID of the uploaded icon
+	 *
+	 * @throws TS3FileTransferFailedException
+	 * 		if the file transfer fails for any reason
+	 * @querycommands 1
+	 * @see IconFile#getIconId()
+	 * @see #uploadIconDirect(byte[])
+	 * @see #downloadIcon(OutputStream, long)
+	 */
+	public long uploadIcon(InputStream dataIn, long dataLength) {
+		final FileTransferHelper helper = query.getFileTransferHelper();
+		final byte[] data;
+		try {
+			data = helper.readFully(dataIn, dataLength);
+		} catch (IOException e) {
+			throw new TS3FileTransferFailedException("Reading stream failed", e);
+		}
+		return uploadIconDirect(data);
+	}
+
+	/**
+	 * Uploads an icon that is already stored in memory to the icon directory
+	 * in the file repository. If this icon has already been uploaded or
+	 * if a CRC32 hash collision occurs, this command will fail.
+	 *
+	 * @param data
+	 * 		the icon's data as a byte array
+	 *
+	 * @return the ID of the uploaded icon
+	 *
+	 * @throws TS3FileTransferFailedException
+	 * 		if the file transfer fails for any reason
+	 * @querycommands 1
+	 * @see IconFile#getIconId()
+	 * @see #uploadIcon(InputStream, long)
+	 * @see #downloadIconDirect(long)
+	 */
+	public long uploadIconDirect(byte[] data) {
+		final FileTransferHelper helper = query.getFileTransferHelper();
+		final long iconId;
+		try {
+			iconId = helper.getIconId(data);
+		} catch (IOException e) {
+			throw new TS3FileTransferFailedException("Reading stream failed", e);
+		}
+
+		final String path = "/icon_" + iconId;
+		if (uploadFileDirect(data, path, false, 0)) {
+			return iconId;
+		}
+		return -1L;
 	}
 
 	/**

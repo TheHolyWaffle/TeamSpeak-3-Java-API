@@ -66,6 +66,7 @@ public class TS3Query {
 
 	private final ExecutorService userThreadPool = Executors.newCachedThreadPool();
 	private final EventManager eventManager = new EventManager();
+	private final FileTransferHelper fileTransferHelper;
 	private final TS3Config config;
 	private final ConnectionHandler connectionHandler;
 
@@ -93,6 +94,7 @@ public class TS3Query {
 		log.addHandler(new LogHandler(config.getDebugToFile()));
 		log.setLevel(config.getDebugLevel());
 		this.config = config;
+		this.fileTransferHelper = new FileTransferHelper(config.getHost());
 		this.connectionHandler = config.getReconnectStrategy().create(config.getConnectionHandler());
 	}
 
@@ -200,6 +202,10 @@ public class TS3Query {
 
 	EventManager getEventManager() {
 		return eventManager;
+	}
+
+	FileTransferHelper getFileTransferHelper() {
+		return fileTransferHelper;
 	}
 
 	void fireDisconnect() {
