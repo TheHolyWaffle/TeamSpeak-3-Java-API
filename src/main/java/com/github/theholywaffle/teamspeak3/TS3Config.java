@@ -53,6 +53,9 @@ public class TS3Config {
 	}
 
 	public TS3Config setQueryPort(int queryPort) {
+		if (queryPort < 0 || queryPort > 65535)
+			throw new IllegalArgumentException("port out of range!");
+
 		this.queryPort = queryPort;
 		return this;
 	}
