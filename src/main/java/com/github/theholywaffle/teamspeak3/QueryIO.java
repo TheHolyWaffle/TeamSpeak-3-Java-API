@@ -28,6 +28,8 @@ package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.Callback;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
+import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
+import com.github.theholywaffle.teamspeak3.api.reconnect.DisconnectingConnectionHandler;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 
 import java.io.IOException;
@@ -53,7 +55,8 @@ public class QueryIO {
 	QueryIO(TS3Query query, TS3Config config) {
 		commandTimeout = config.getCommandTimeout();
 		sendQueue = new LinkedBlockingQueue<>();
-		if (config.getFloodRate() == TS3Query.FloodRate.UNLIMITED) {
+		ConnectionHandler handler = config.getReconnectStrategy().create(null);
+		if (config.getFloodRate() == TS3Query.FloodRate.UNLIMITED && handler instanceof DisconnectingConnectionHandler) {
 			// Don't wait for the last response before sending more commands
 			receiveQueue = new LinkedBlockingQueue<>();
 		} else {
