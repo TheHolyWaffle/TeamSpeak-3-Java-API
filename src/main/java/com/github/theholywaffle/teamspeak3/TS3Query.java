@@ -46,7 +46,7 @@ public class TS3Query {
 		public static final FloodRate DEFAULT = new FloodRate(350);
 		public static final FloodRate UNLIMITED = new FloodRate(0);
 
-		public static final FloodRate custom(int milliseconds) {
+		public static FloodRate custom(int milliseconds) {
 			if (milliseconds < 0) throw new IllegalArgumentException("Timeout must be positive");
 			return new FloodRate(milliseconds);
 		}
@@ -155,33 +155,8 @@ public class TS3Query {
 	// INTERNAL
 
 	boolean doCommand(Command c) {
-		final long end = System.currentTimeMillis() + config.getCommandTimeout();
-		final Object signal = new Object();
-		c.setCallback(new Callback() {
-			@Override
-			public void handle() {
-				synchronized (signal) {
-					signal.notifyAll();
-				}
-			}
-		});
-
 		io.enqueueCommand(c);
-
-		boolean interrupted = false;
-		while (!c.isAnswered() && System.currentTimeMillis() < end) {
-			try {
-				synchronized (signal) {
-					signal.wait(end - System.currentTimeMillis());
-				}
-			} catch (final InterruptedException e) {
-				interrupted = true;
-			}
-		}
-		if (interrupted) {
-			// Restore the interrupt
-			Thread.currentThread().interrupt();
-		}
+		io.awaitCommand(c);
 
 		if (!c.isAnswered()) {
 			log.severe("Command " + c.getName() + " was not answered in time.");
