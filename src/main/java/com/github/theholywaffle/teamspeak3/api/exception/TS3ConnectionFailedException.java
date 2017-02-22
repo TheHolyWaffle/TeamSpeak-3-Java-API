@@ -31,7 +31,7 @@ public class TS3ConnectionFailedException extends TS3Exception {
 	private static final long serialVersionUID = 6849777544299282019L;
 
 	public TS3ConnectionFailedException(Throwable c) {
-		super("An error occurred while connecting to the TeamSpeak3 server", c);
+		super("Could not connect to the TeamSpeak3 server", c);
 	}
 
 }
