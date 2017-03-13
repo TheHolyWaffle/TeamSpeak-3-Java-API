@@ -100,7 +100,7 @@ Only use `FloodRate.UNLIMITED` if you are sure that your query account is whitel
 |Option | Description | Default value | Required |
 |--- | --- |:---:|:---:|
 |Host/IP | IP/Host of TeamSpeak 3 server.|  | yes |
-|QueryPort | Query port of TeamSpeak 3 server. | 10011 | yes |
+|QueryPort | Query port of TeamSpeak 3 server. | 10011 | no |
 |FloodRate | Prevents possible spam to the server. | `FloodRate.DEFAULT` | no |
 |DebugLevel | Determines how much will be logged. | `Level.WARNING` | no |
 |Debug to file | Write logs to logfile (teamspeak.log). | False | no |
