@@ -1,33 +1,19 @@
 language: java
-sudo: false
-jdk:
-  - oraclejdk7
-
+jdk: openjdk7
+branches: 
+only:
+- master
 cache:
   directories:
-  - $HOME/.m2
-
-# branches blacklist
-branches:
-  except:
-    - gh-pages
-    - mvn-repo
-
-# custom build script and deployment
-before_install: chmod +x script/deploy.sh
-install: mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
-after_success: travis_wait 60 ./script/deploy.sh
-
-deploy:
-  provider: releases
-  api-key: ${OAUTH2_DEPLOY_TOKEN}
-  file-glob: true
-  file: target/teamspeak3-api-*.jar
-  skip_cleanup: true
-  on:
-    tags: true
-
+  - "$HOME/.m2"
+env:
+  global:
+  - GPG_DIR="`pwd`/deploy"
 notifications:
   email:
     on_success: never
     on_failure: always
+after_success:
+- openssl aes-256-cbc -K $encrypted_37c44ba70a11_key -iv $encrypted_37c44ba70a11_iv -in $GPG_DIR/secring.gpg.enc -out $GPG_DIR/secring.gpg -d
+- openssl aes-256-cbc -K $encrypted_37c44ba70a11_key -iv $encrypted_37c44ba70a11_iv -in $GPG_DIR/pubring.gpg.enc -out $GPG_DIR/pubring.gpg -d
+- "$GPG_DIR/publish.sh"
