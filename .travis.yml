@@ -14,6 +14,6 @@ notifications:
     on_success: never
     on_failure: always
 after_success:
-- openssl aes-256-cbc -K $encrypted_37c44ba70a11_key -iv $encrypted_37c44ba70a11_iv -in $GPG_DIR/secring.gpg.enc -out $GPG_DIR/secring.gpg -d
-- openssl aes-256-cbc -K $encrypted_37c44ba70a11_key -iv $encrypted_37c44ba70a11_iv -in $GPG_DIR/pubring.gpg.enc -out $GPG_DIR/pubring.gpg -d
+- openssl aes-256-cbc -K $encrypted_37c44ba70a11_key -iv $encrypted_37c44ba70a11_iv -in $GPG_DIR/secrets.tar.enc -out $GPG_DIR/secrets.tar -d
+- tar xvf $GPG_DIR/secrets.tar
 - "$GPG_DIR/publish.sh"
