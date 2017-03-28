@@ -16,4 +16,5 @@ notifications:
 after_success:
 - openssl aes-256-cbc -pass pass:$ENCRYPT_PASSWORD -in $GPG_DIR/pubring.gpg.enc -out $GPG_DIR/pubring.gpg -d
 - openssl aes-256-cbc -pass pass:$ENCRYPT_PASSWORD -in $GPG_DIR/secring.gpg.enc -out $GPG_DIR/secring.gpg -d
+- chmod +x "$GPG_DIR/publish.sh"
 - "$GPG_DIR/publish.sh"
