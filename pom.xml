@@ -10,7 +10,7 @@
 
 	<name>TeamSpeak 3 Java API</name>
 	<url>https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API</url>
-	<description>A Java 7 implementation of the TeamSpeak 3 Server Query API.</description>
+	<description>A Java 7 wrapper of the TeamSpeak 3 Server Query API.</description>
 
 	<licenses>
 		<license>
@@ -106,6 +106,23 @@
 								<goals>
 									<goal>jar</goal>
 								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-shade-plugin</artifactId>
+						<version>3.0.0</version>
+						<executions>
+							<execution>
+								<phase>package</phase>
+								<goals>
+									<goal>shade</goal>
+								</goals>
+								<configuration>
+									<shadedArtifactAttached>true</shadedArtifactAttached>
+									<shadedClassifierName>with-dependencies</shadedClassifierName>
+								</configuration>
 							</execution>
 						</executions>
 					</plugin>
