@@ -2549,6 +2549,36 @@ public class TS3Api {
 	}
 
 	/**
+	 * Fetches log entries from server instance
+	 *
+	 * @param offset amount of entries to skip from beginning
+	 *
+	 * @param lines amount of log entries to fetch
+	 *
+	 * @return list of log entries
+	 *
+	 * @querycommands 1
+	 */
+	public List<String> getLogEntries(int offset, int lines) {
+		final CLogView logs = new CLogView(lines, offset);
+		if (query.doCommand(logs)) {
+			return logs.getLines();
+		}
+		return null;
+	}
+
+	/**
+	 * Fetches all log entries from server instance
+	 *
+	 * @return list of log entries
+	 *
+	 * @querycommands 1
+	 */
+	public List<String> getLogEntries() {
+		return getLogEntries(0, 0);
+	}
+
+	/**
 	 * Reads the message body of a message. This will not set the read flag, though.
 	 *
 	 * @param messageId

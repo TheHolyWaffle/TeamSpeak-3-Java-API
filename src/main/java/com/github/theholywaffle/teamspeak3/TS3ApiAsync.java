@@ -2803,6 +2803,42 @@ public class TS3ApiAsync {
 	}
 
 	/**
+	 * Fetches log entries from server instance
+	 *
+	 * @param offset amount of entries to skip from beginning
+	 *
+	 * @param lines amount of log entries to fetch
+	 *
+	 * @return list of log entries
+	 *
+	 * @querycommands 1
+	 */
+	public CommandFuture<List<String>> getLogEntries(int offset, int lines) {
+		final CLogView logs = new CLogView(lines, offset);
+		final CommandFuture<List<String>> future = new CommandFuture<>();
+
+		query.doCommandAsync(logs, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(logs, future)) return;
+				future.set(logs.getLines());
+			}
+		});
+		return null;
+	}
+
+	/**
+	 * Fetches all log entries from server instance
+	 *
+	 * @return list of log entries
+	 *
+	 * @querycommands 1
+	 */
+	public CommandFuture<List<String>> getLogEntries() {
+		return getLogEntries(0, 0);
+	}
+
+	/**
 	 * Reads the message body of a message. This will not set the read flag, though.
 	 *
 	 * @param messageId
