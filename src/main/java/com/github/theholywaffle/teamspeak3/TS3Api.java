@@ -2579,6 +2579,7 @@ public class TS3Api {
 	 * Fetches last log entries from selected virtual server instance.
 	 * If there is no virtual server selected, then log lines from master file will be returned.
 	 *
+	 * @param lines amount of log entries to fetch in range 1-100. Returns 100 lines if entered number is not in range.
 	 * @return list of log entries
 	 *
 	 * @querycommands 1
