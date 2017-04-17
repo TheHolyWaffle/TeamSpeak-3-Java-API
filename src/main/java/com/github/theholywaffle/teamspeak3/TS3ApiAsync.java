@@ -2803,18 +2803,16 @@ public class TS3ApiAsync {
 	}
 
 	/**
-	 * Fetches log entries from server instance
+	 * Fetches log entries from server
 	 *
-	 * @param offset amount of entries to skip from beginning
-	 *
-	 * @param lines amount of log entries to fetch
+	 * @param lines amount of log entries to fetch in range 1-100. Returns 100 lines if entered number is not in range.
 	 *
 	 * @return list of log entries
 	 *
 	 * @querycommands 1
 	 */
-	public CommandFuture<List<String>> getLogEntries(int offset, int lines) {
-		final CLogView logs = new CLogView(lines, offset);
+	public CommandFuture<List<String>> getLogEntries(int lines) {
+		final CLogView logs = new CLogView(lines, false);
 		final CommandFuture<List<String>> future = new CommandFuture<>();
 
 		query.doCommandAsync(logs, new Callback() {
@@ -2824,18 +2822,55 @@ public class TS3ApiAsync {
 				future.set(logs.getLines());
 			}
 		});
-		return null;
+
+		return future;
 	}
 
 	/**
-	 * Fetches all log entries from server instance
+	 * Fetches 100 last log entries from server instance
 	 *
 	 * @return list of log entries
 	 *
 	 * @querycommands 1
 	 */
 	public CommandFuture<List<String>> getLogEntries() {
-		return getLogEntries(0, 0);
+		return getLogEntries(100);
+	}
+
+	/**
+	 * Fetches last log entries from selected virtual server instance.
+	 * If there is no virtual server selected, then log lines from master file will be returned.
+	 *
+	 * @param lines amount of log entries to fetch in range 1-100. Returns 100 lines if entered number is not in range.
+	 * @return list of log entries
+	 *
+	 * @querycommands 1
+	 */
+	public CommandFuture<List<String>> getVirtualLogEntries(int lines) {
+		final CLogView logs = new CLogView(lines, true);
+		final CommandFuture<List<String>> future = new CommandFuture<>();
+
+		query.doCommandAsync(logs, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(logs, future)) return;
+				future.set(logs.getLines());
+			}
+		});
+
+		return future;
+	}
+
+	/**
+	 * Fetches 100 last log entries from virtual server instance
+	 * If there is no virtual server selected, then log lines from master file will be returned.
+	 *
+	 * @return list of log entries
+	 *
+	 * @querycommands 1
+	 */
+	public CommandFuture<List<String>> getVirtualLogEntries() {
+		return getVirtualLogEntries(100);
 	}
 
 	/**

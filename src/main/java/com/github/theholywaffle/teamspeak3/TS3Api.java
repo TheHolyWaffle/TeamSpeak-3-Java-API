@@ -2549,18 +2549,15 @@ public class TS3Api {
 	}
 
 	/**
-	 * Fetches log entries from server instance
+	 * Fetches log entries from server
 	 *
-	 * @param offset amount of entries to skip from beginning
-	 *
-	 * @param lines amount of log entries to fetch
 	 *
 	 * @return list of log entries
 	 *
 	 * @querycommands 1
 	 */
-	public List<String> getLogEntries(int offset, int lines) {
-		final CLogView logs = new CLogView(lines, offset);
+	public List<String> getLogEntries(int lines) {
+		final CLogView logs = new CLogView(lines, false);
 		if (query.doCommand(logs)) {
 			return logs.getLines();
 		}
@@ -2568,14 +2565,42 @@ public class TS3Api {
 	}
 
 	/**
-	 * Fetches all log entries from server instance
+	 * Fetches 100 last log entries from server instance
 	 *
 	 * @return list of log entries
 	 *
 	 * @querycommands 1
 	 */
 	public List<String> getLogEntries() {
-		return getLogEntries(0, 0);
+		return getLogEntries(100);
+	}
+
+	/**
+	 * Fetches last log entries from selected virtual server instance.
+	 * If there is no virtual server selected, then log lines from master file will be returned.
+	 *
+	 * @return list of log entries
+	 *
+	 * @querycommands 1
+	 */
+	public List<String> getVirtualLogEntries(int lines) {
+		final CLogView logs = new CLogView(lines, true);
+		if (query.doCommand(logs)) {
+			return logs.getLines();
+		}
+		return null;
+	}
+
+	/**
+	 * Fetches 100 last log entries from virtual server instance
+	 * If there is no virtual server selected, then log lines from master file will be returned.
+	 *
+	 * @return list of log entries
+	 *
+	 * @querycommands 1
+	 */
+	public List<String> getVirtualLogEntries() {
+		return getVirtualLogEntries(100);
 	}
 
 	/**
