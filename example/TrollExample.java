@@ -41,7 +41,6 @@ import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 /**
  * A more advanced example of a query which trolls clients on a server
@@ -78,7 +77,6 @@ public class TrollExample {
 		// Start the query
 		final TS3Config config = new TS3Config();
 		config.setHost("77.77.77.77");
-		config.setDebugLevel(Level.ALL);
 
 		query = new TS3Query(config);
 		query.connect();

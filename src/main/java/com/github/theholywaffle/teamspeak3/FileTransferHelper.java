@@ -27,6 +27,8 @@ package com.github.theholywaffle.teamspeak3;
  */
 
 import com.github.theholywaffle.teamspeak3.api.wrapper.FileTransferParameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,6 +39,7 @@ import java.util.zip.CRC32;
 
 public class FileTransferHelper {
 
+	private static final Logger log = LoggerFactory.getLogger(FileTransferHelper.class);
 	private static final int BUFFER_SIZE = 16_384; // 16 kB
 
 	// Can only be in the range 0 - 65535
@@ -53,9 +56,9 @@ public class FileTransferHelper {
 		final String host = getHostFromResponse(params.getFileServerHost());
 		final int port = params.getFileServerPort();
 		final long dataLength = params.getFileSize();
-		final String prefix = "[Download " + (params.getClientTransferId() + 1) + "] ";
+		final int downloadId = params.getClientTransferId() + 1;
 
-		TS3Query.log.info(prefix + "Download started");
+		log.info("[Download {}] Download started", downloadId);
 		try (Socket socket = new Socket(host, port)) {
 			socket.setReceiveBufferSize(BUFFER_SIZE);
 			int actualSize = socket.getReceiveBufferSize();
@@ -74,10 +77,10 @@ public class FileTransferHelper {
 				if (total > dataLength) throw new IOException("Server response contained more data than specified");
 				dataOut.write(buffer, 0, read);
 			}
-			TS3Query.log.info(prefix + "Download finished");
+			log.info("[Download {}] Download finished", downloadId);
 		} catch (IOException e) {
 			// Log and re-throw
-			TS3Query.log.warning(prefix + "Download failed: " + e.getMessage());
+			log.warn("[Download {}] Download failed: {}", downloadId, e.getMessage());
 			throw e;
 		}
 	}
@@ -85,9 +88,9 @@ public class FileTransferHelper {
 	public void uploadFile(InputStream dataIn, long dataLength, FileTransferParameters params) throws IOException {
 		final String host = getHostFromResponse(params.getFileServerHost());
 		final int port = params.getFileServerPort();
-		final String prefix = "[Upload " + (params.getClientTransferId() + 1) + "] ";
+		final int uploadId = params.getClientTransferId() + 1;
 
-		TS3Query.log.info(prefix + "Upload started");
+		log.info("[Upload {}] Upload started", uploadId);
 		try (Socket socket = new Socket(host, port)) {
 			socket.setSendBufferSize(BUFFER_SIZE);
 			int actualSize = socket.getSendBufferSize();
@@ -105,10 +108,10 @@ public class FileTransferHelper {
 				total += read;
 				out.write(buffer, 0, read);
 			}
-			TS3Query.log.info(prefix + "Upload finished");
+			log.info("[Upload {}] Upload finished", uploadId);
 		} catch (IOException e) {
 			// Log and re-throw
-			TS3Query.log.warning(prefix + "Upload failed: " + e.getMessage());
+			log.warn("[Upload {}] Upload failed: {}", uploadId, e.getMessage());
 			throw e;
 		}
 	}

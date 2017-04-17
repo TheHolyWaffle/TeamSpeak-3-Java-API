@@ -26,10 +26,12 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
-import java.util.logging.Level;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class KeepAliveThread extends Thread {
 
+	private static final Logger log = LoggerFactory.getLogger(KeepAliveThread.class);
 	private static final int SLEEP = 60_000;
 
 	private final SocketWriter writer;
@@ -56,7 +58,7 @@ public class KeepAliveThread extends Thread {
 		} catch (final InterruptedException e) {
 			// Thread stopped properly, ignore
 		} catch (final Exception e) {
-			TS3Query.log.log(Level.WARNING, "KeepAlive thread has stopped!", e);
+			log.warn("KeepAlive thread has stopped!", e);
 		}
 	}
 }

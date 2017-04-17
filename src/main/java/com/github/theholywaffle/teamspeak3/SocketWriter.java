@@ -27,12 +27,16 @@ package com.github.theholywaffle.teamspeak3;
  */
 
 import com.github.theholywaffle.teamspeak3.commands.Command;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.concurrent.BlockingQueue;
 
 public class SocketWriter extends Thread {
+
+	private static final Logger log = LoggerFactory.getLogger(SocketWriter.class);
 
 	private final BlockingQueue<Command> sendQueue;
 	private final BlockingQueue<Command> receiveQueue;
@@ -56,7 +60,7 @@ public class SocketWriter extends Thread {
 				final String msg = c.toString();
 
 				receiveQueue.put(c);
-				TS3Query.log.info("> " + msg);
+				log.debug("> {}", msg);
 				out.println(msg);
 
 				lastCommand = System.currentTimeMillis();
@@ -70,7 +74,7 @@ public class SocketWriter extends Thread {
 		out.close();
 
 		if (!isInterrupted()) {
-			TS3Query.log.warning("SocketWriter has stopped!");
+			log.warn("SocketWriter has stopped!");
 		}
 	}
 

@@ -33,7 +33,6 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 
 /**
  * A server query program which
@@ -51,7 +50,6 @@ public class ClientInfoExample {
 	public static void main(String[] args) {
 		final TS3Config config = new TS3Config();
 		config.setHost("77.77.77.77");
-		config.setDebugLevel(Level.ALL);
 
 		final TS3Query query = new TS3Query(config);
 		query.connect();
