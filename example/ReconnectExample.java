@@ -41,7 +41,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.logging.Level;
 
 /**
  * An example demonstrating the reconnect feature, based on the already present ChatBotExample.
@@ -56,7 +55,6 @@ public class ReconnectExample {
 	public static void main(String[] args) {
 		final TS3Config config = new TS3Config();
 		config.setHost("77.77.77.77");
-		config.setDebugLevel(Level.ALL);
 
 		// Use default exponential backoff reconnect strategy
 		config.setReconnectStrategy(ReconnectStrategy.exponentialBackoff());

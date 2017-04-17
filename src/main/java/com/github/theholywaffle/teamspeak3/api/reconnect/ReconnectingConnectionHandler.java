@@ -28,8 +28,12 @@ package com.github.theholywaffle.teamspeak3.api.reconnect;
 
 import com.github.theholywaffle.teamspeak3.TS3Query;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ReconnectingConnectionHandler implements ConnectionHandler {
+
+	private static final Logger log = LoggerFactory.getLogger(ReconnectingConnectionHandler.class);
 
 	private final ConnectionHandler userConnectionHandler;
 	private final int startTimeout;
@@ -56,7 +60,7 @@ public class ReconnectingConnectionHandler implements ConnectionHandler {
 	@Override
 	public void onDisconnect(TS3Query ts3Query) {
 		// Announce disconnect and run user connection handler
-		TS3Query.log.info("[Connection] Disconnected from TS3 server - reconnecting in " + startTimeout + "ms");
+		log.info("[Connection] Disconnected from TS3 server - reconnecting in " + startTimeout + "ms");
 		if (userConnectionHandler != null) {
 			userConnectionHandler.onDisconnect(ts3Query);
 		}
@@ -78,7 +82,7 @@ public class ReconnectingConnectionHandler implements ConnectionHandler {
 				return; // Successfully reconnected, return
 			} catch (TS3ConnectionFailedException conFailed) {
 				// Ignore exception, announce reconnect failure
-				TS3Query.log.fine("[Connection] Failed to reconnect - waiting " + timeout + "ms until next attempt");
+				log.debug("[Connection] Failed to reconnect - waiting {}ms until next attempt", timeout);
 			}
 		}
 	}
