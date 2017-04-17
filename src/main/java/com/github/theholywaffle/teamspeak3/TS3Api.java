@@ -2551,6 +2551,7 @@ public class TS3Api {
 	/**
 	 * Fetches log entries from server
 	 *
+	 * @param lines amount of log entries to fetch in range 1-100. Returns 100 lines if entered number is not in range.
 	 *
 	 * @return list of log entries
 	 *
