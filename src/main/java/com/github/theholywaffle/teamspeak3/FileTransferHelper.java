@@ -56,9 +56,9 @@ public class FileTransferHelper {
 		final String host = getHostFromResponse(params.getFileServerHost());
 		final int port = params.getFileServerPort();
 		final long dataLength = params.getFileSize();
-		final String prefix = "[Download " + (params.getClientTransferId() + 1) + "] ";
+		final int downloadId = params.getClientTransferId() + 1;
 
-		log.info("{}Download started", prefix);
+		log.info("[Download {}] Download started", downloadId);
 		try (Socket socket = new Socket(host, port)) {
 			socket.setReceiveBufferSize(BUFFER_SIZE);
 			int actualSize = socket.getReceiveBufferSize();
@@ -77,10 +77,10 @@ public class FileTransferHelper {
 				if (total > dataLength) throw new IOException("Server response contained more data than specified");
 				dataOut.write(buffer, 0, read);
 			}
-			log.info("{}Download finished", prefix);
+			log.info("[Download {}] Download finished", downloadId);
 		} catch (IOException e) {
 			// Log and re-throw
-			log.warn("{}Download failed: {}", prefix, e.getMessage());
+			log.warn("[Download {}] Download failed: {}", downloadId, e.getMessage());
 			throw e;
 		}
 	}
@@ -88,9 +88,9 @@ public class FileTransferHelper {
 	public void uploadFile(InputStream dataIn, long dataLength, FileTransferParameters params) throws IOException {
 		final String host = getHostFromResponse(params.getFileServerHost());
 		final int port = params.getFileServerPort();
-		final String prefix = "[Upload " + (params.getClientTransferId() + 1) + "] ";
+		final int uploadId = params.getClientTransferId() + 1;
 
-		log.info("{}Upload started", prefix);
+		log.info("[Upload {}] Upload started", uploadId);
 		try (Socket socket = new Socket(host, port)) {
 			socket.setSendBufferSize(BUFFER_SIZE);
 			int actualSize = socket.getSendBufferSize();
@@ -108,10 +108,10 @@ public class FileTransferHelper {
 				total += read;
 				out.write(buffer, 0, read);
 			}
-			log.info("{}Upload finished", prefix);
+			log.info("[Upload {}] Upload finished", uploadId);
 		} catch (IOException e) {
 			// Log and re-throw
-			log.warn("{}Upload failed: {}", prefix, e.getMessage());
+			log.warn("[Upload {}] Upload failed: {}", uploadId, e.getMessage());
 			throw e;
 		}
 	}

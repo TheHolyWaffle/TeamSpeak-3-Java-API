@@ -60,7 +60,7 @@ public class TS3Query {
 		}
 	}
 
-	public static final Logger log = LoggerFactory.getLogger(TS3Query.class);
+	private static final Logger log = LoggerFactory.getLogger(TS3Query.class);
 
 	private final ConnectionHandler connectionHandler;
 	private final EventManager eventManager = new EventManager();
