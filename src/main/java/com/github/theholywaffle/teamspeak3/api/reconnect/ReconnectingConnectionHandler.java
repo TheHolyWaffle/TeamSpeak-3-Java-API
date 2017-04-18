@@ -60,7 +60,7 @@ public class ReconnectingConnectionHandler implements ConnectionHandler {
 	@Override
 	public void onDisconnect(TS3Query ts3Query) {
 		// Announce disconnect and run user connection handler
-		log.info("[Connection] Disconnected from TS3 server - reconnecting in " + startTimeout + "ms");
+		log.info("[Connection] Disconnected from TS3 server - reconnecting in {}ms", startTimeout);
 		if (userConnectionHandler != null) {
 			userConnectionHandler.onDisconnect(ts3Query);
 		}
