@@ -33,14 +33,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CLogView extends Command {
+	private static final int MIN_LINES = 1;
+	private static final int MAX_LINES = 100;
+
 	public CLogView(int lines, boolean virtual) {
 		super("logview");
 
-		if(lines > 0 && lines <= 100) {
+		if (lines >= MIN_LINES && lines <= MAX_LINES) {
 			add(new KeyValueParam("lines", lines));
 		}
 
-		if(!virtual) {
+		if (!virtual) {
 			add(new KeyValueParam("instance", 1));
 		}
 	}
@@ -49,7 +52,7 @@ public class CLogView extends Command {
 		List<Wrapper> responses = getResponse();
 		List<String> lines = new ArrayList<>(responses.size());
 
-		for(Wrapper r : responses) {
+		for (Wrapper r : responses) {
 			lines.add(r.getMap().get("l"));
 		}
 
