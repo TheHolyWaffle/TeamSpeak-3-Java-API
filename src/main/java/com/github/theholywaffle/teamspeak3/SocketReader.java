@@ -75,14 +75,14 @@ public class SocketReader extends Thread {
 				line = in.readLine();
 			} catch (IOException io) {
 				if (!isInterrupted()) {
-					log.warn("Connection error occurred.", io);
+					log.error("Connection error occurred.", io);
 				}
 				break;
 			}
 
 			if (line == null) {
 				// End of stream: connection terminated by server
-				log.warn("Connection closed by the server.");
+				log.error("Connection closed by the server.");
 				break;
 			} else if (line.isEmpty()) {
 				continue; // The server is sending garbage
