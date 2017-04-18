@@ -2549,43 +2549,17 @@ public class TS3Api {
 	}
 
 	/**
-	 * Fetches log entries from server
+	 * Fetches the specified amount of log entries from the server log.
 	 *
-	 * @param lines amount of log entries to fetch in range 1-100. Returns 100 lines if entered number is not in range.
+	 * @param lines
+	 * 		the amount of log entries to fetch, in the range between 1 and 100.
+	 * 		Returns 100 entries if the argument is not in range
 	 *
-	 * @return list of log entries
-	 *
-	 * @querycommands 1
-	 */
-	public List<String> getLogEntries(int lines) {
-		final CLogView logs = new CLogView(lines, false);
-		if (query.doCommand(logs)) {
-			return logs.getLines();
-		}
-		return null;
-	}
-
-	/**
-	 * Fetches 100 last log entries from server instance
-	 *
-	 * @return list of log entries
+	 * @return a list of the latest log entries
 	 *
 	 * @querycommands 1
 	 */
-	public List<String> getLogEntries() {
-		return getLogEntries(100);
-	}
-
-	/**
-	 * Fetches last log entries from selected virtual server instance.
-	 * If there is no virtual server selected, then log lines from master file will be returned.
-	 *
-	 * @param lines amount of log entries to fetch in range 1-100. Returns 100 lines if entered number is not in range.
-	 * @return list of log entries
-	 *
-	 * @querycommands 1
-	 */
-	public List<String> getVirtualLogEntries(int lines) {
+	public List<String> getInstanceLogEntries(int lines) {
 		final CLogView logs = new CLogView(lines, true);
 		if (query.doCommand(logs)) {
 			return logs.getLines();
@@ -2594,15 +2568,14 @@ public class TS3Api {
 	}
 
 	/**
-	 * Fetches 100 last log entries from virtual server instance
-	 * If there is no virtual server selected, then log lines from master file will be returned.
+	 * Fetches the last 100 log entries from the server log.
 	 *
-	 * @return list of log entries
+	 * @return a list of up to 100 log entries
 	 *
 	 * @querycommands 1
 	 */
-	public List<String> getVirtualLogEntries() {
-		return getVirtualLogEntries(100);
+	public List<String> getInstanceLogEntries() {
+		return getInstanceLogEntries(100);
 	}
 
 	/**
@@ -3081,6 +3054,38 @@ public class TS3Api {
 			return servers;
 		}
 		return null;
+	}
+
+	/**
+	 * Fetches the specified amount of log entries from the currently selected virtual server.
+	 * If no virtual server is selected, the entries will be read from the server log instead.
+	 *
+	 * @param lines
+	 * 		the amount of log entries to fetch, in the range between 1 and 100.
+	 * 		Returns 100 entries if the argument is not in range
+	 *
+	 * @return a list of the latest log entries
+	 *
+	 * @querycommands 1
+	 */
+	public List<String> getVirtualServerLogEntries(int lines) {
+		final CLogView logs = new CLogView(lines, false);
+		if (query.doCommand(logs)) {
+			return logs.getLines();
+		}
+		return null;
+	}
+
+	/**
+	 * Fetches the last 100 log entries from the currently selected virtual server.
+	 * If no virtual server is selected, the entries will be read from the server log instead.
+	 *
+	 * @return a list of up to 100 log entries
+	 *
+	 * @querycommands 1
+	 */
+	public List<String> getVirtualServerLogEntries() {
+		return getVirtualServerLogEntries(100);
 	}
 
 	/**

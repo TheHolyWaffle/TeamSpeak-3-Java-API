@@ -33,17 +33,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CLogView extends Command {
+
 	private static final int MIN_LINES = 1;
 	private static final int MAX_LINES = 100;
 
-	public CLogView(int lines, boolean virtual) {
+	public CLogView(int lines, boolean instance) {
 		super("logview");
 
 		if (lines >= MIN_LINES && lines <= MAX_LINES) {
 			add(new KeyValueParam("lines", lines));
 		}
-
-		if (!virtual) {
+		if (instance) {
 			add(new KeyValueParam("instance", 1));
 		}
 	}

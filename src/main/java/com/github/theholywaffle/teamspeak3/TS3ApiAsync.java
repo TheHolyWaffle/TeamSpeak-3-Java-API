@@ -2803,50 +2803,17 @@ public class TS3ApiAsync {
 	}
 
 	/**
-	 * Fetches log entries from server
+	 * Fetches the specified amount of log entries from the server log.
 	 *
-	 * @param lines amount of log entries to fetch in range 1-100. Returns 100 lines if entered number is not in range.
+	 * @param lines
+	 * 		the amount of log entries to fetch, in the range between 1 and 100.
+	 * 		Returns 100 entries if the argument is not in range
 	 *
-	 * @return list of log entries
-	 *
-	 * @querycommands 1
-	 */
-	public CommandFuture<List<String>> getLogEntries(int lines) {
-		final CLogView logs = new CLogView(lines, false);
-		final CommandFuture<List<String>> future = new CommandFuture<>();
-
-		query.doCommandAsync(logs, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(logs, future)) return;
-				future.set(logs.getLines());
-			}
-		});
-
-		return future;
-	}
-
-	/**
-	 * Fetches 100 last log entries from server instance
-	 *
-	 * @return list of log entries
+	 * @return a list of the latest log entries
 	 *
 	 * @querycommands 1
 	 */
-	public CommandFuture<List<String>> getLogEntries() {
-		return getLogEntries(100);
-	}
-
-	/**
-	 * Fetches last log entries from selected virtual server instance.
-	 * If there is no virtual server selected, then log lines from master file will be returned.
-	 *
-	 * @param lines amount of log entries to fetch in range 1-100. Returns 100 lines if entered number is not in range.
-	 * @return list of log entries
-	 *
-	 * @querycommands 1
-	 */
-	public CommandFuture<List<String>> getVirtualLogEntries(int lines) {
+	public CommandFuture<List<String>> getInstanceLogEntries(int lines) {
 		final CLogView logs = new CLogView(lines, true);
 		final CommandFuture<List<String>> future = new CommandFuture<>();
 
@@ -2862,15 +2829,14 @@ public class TS3ApiAsync {
 	}
 
 	/**
-	 * Fetches 100 last log entries from virtual server instance
-	 * If there is no virtual server selected, then log lines from master file will be returned.
+	 * Fetches the last 100 log entries from the server log.
 	 *
-	 * @return list of log entries
+	 * @return a list of up to 100 log entries
 	 *
 	 * @querycommands 1
 	 */
-	public CommandFuture<List<String>> getVirtualLogEntries() {
-		return getVirtualLogEntries(100);
+	public CommandFuture<List<String>> getInstanceLogEntries() {
+		return getInstanceLogEntries(100);
 	}
 
 	/**
@@ -3439,6 +3405,45 @@ public class TS3ApiAsync {
 			}
 		});
 		return future;
+	}
+
+	/**
+	 * Fetches the specified amount of log entries from the currently selected virtual server.
+	 * If no virtual server is selected, the entries will be read from the server log instead.
+	 *
+	 * @param lines
+	 * 		the amount of log entries to fetch, in the range between 1 and 100.
+	 * 		Returns 100 entries if the argument is not in range
+	 *
+	 * @return a list of the latest log entries
+	 *
+	 * @querycommands 1
+	 */
+	public CommandFuture<List<String>> getVirtualServerLogEntries(int lines) {
+		final CLogView logs = new CLogView(lines, false);
+		final CommandFuture<List<String>> future = new CommandFuture<>();
+
+		query.doCommandAsync(logs, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(logs, future)) return;
+				future.set(logs.getLines());
+			}
+		});
+
+		return future;
+	}
+
+	/**
+	 * Fetches the last 100 log entries from the currently selected virtual server.
+	 * If no virtual server is selected, the entries will be read from the server log instead.
+	 *
+	 * @return a list of up to 100 log entries
+	 *
+	 * @querycommands 1
+	 */
+	public CommandFuture<List<String>> getVirtualServerLogEntries() {
+		return getVirtualServerLogEntries(100);
 	}
 
 	/**
