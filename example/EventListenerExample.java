@@ -29,8 +29,6 @@ import com.github.theholywaffle.teamspeak3.TS3Config;
 import com.github.theholywaffle.teamspeak3.TS3Query;
 import com.github.theholywaffle.teamspeak3.api.event.*;
 
-import java.util.logging.Level;
-
 /**
  * Just an example that shows what kinds of events you can handle
  * with a TS3 event listener.
@@ -40,7 +38,6 @@ public class EventListenerExample {
 	public static void main(String[] args) {
 		final TS3Config config = new TS3Config();
 		config.setHost("77.77.77.77");
-		config.setDebugLevel(Level.ALL);
 
 		final TS3Query query = new TS3Query(config);
 		query.connect();

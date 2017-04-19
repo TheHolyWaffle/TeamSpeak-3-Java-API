@@ -30,15 +30,11 @@ import com.github.theholywaffle.teamspeak3.TS3Query.FloodRate;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 
-import java.util.logging.Level;
-
 public class TS3Config {
 
 	private String host = null;
 	private int queryPort = 10011;
 	private FloodRate floodRate = FloodRate.DEFAULT;
-	private Level level = Level.WARNING;
-	private boolean debugToFile = false;
 	private int commandTimeout = 4000;
 	private ReconnectStrategy reconnectStrategy = ReconnectStrategy.disconnect();
 	private ConnectionHandler connectionHandler = null;
@@ -72,25 +68,6 @@ public class TS3Config {
 
 	FloodRate getFloodRate() {
 		return floodRate;
-	}
-
-	public TS3Config setDebugLevel(Level level) {
-		if (level == null) throw new NullPointerException("level cannot be null!");
-		this.level = level;
-		return this;
-	}
-
-	Level getDebugLevel() {
-		return level;
-	}
-
-	public TS3Config setDebugToFile(boolean debugToFile) {
-		this.debugToFile = debugToFile;
-		return this;
-	}
-
-	boolean getDebugToFile() {
-		return debugToFile;
 	}
 
 	/**

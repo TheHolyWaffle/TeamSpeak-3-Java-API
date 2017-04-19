@@ -32,8 +32,6 @@ import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
 
-import java.util.logging.Level;
-
 /**
  * A simple chat bot that responds to any channel messages starting with "hello"
  * by greeting the client who sent the message.<br>
@@ -44,7 +42,6 @@ public class ChatBotExample {
 	public static void main(String[] args) {
 		final TS3Config config = new TS3Config();
 		config.setHost("77.77.77.77");
-		config.setDebugLevel(Level.ALL);
 
 		final TS3Query query = new TS3Query(config);
 		query.connect();

@@ -29,14 +29,17 @@ package com.github.theholywaffle.teamspeak3;
 import com.github.theholywaffle.teamspeak3.api.Callback;
 import com.github.theholywaffle.teamspeak3.commands.CQuit;
 import com.github.theholywaffle.teamspeak3.commands.Command;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Queue;
-import java.util.logging.Level;
 
 public class SocketReader extends Thread {
+
+	private static final Logger log = LoggerFactory.getLogger(SocketReader.class);
 
 	private final TS3Query ts3;
 	private final Queue<Command> receiveQueue;
@@ -51,14 +54,10 @@ public class SocketReader extends Thread {
 
 		// Connect
 		this.in = new BufferedReader(new InputStreamReader(io.getSocket().getInputStream(), "UTF-8"));
-		try {
-			int i = 0;
-			while (i < 4 || in.ready()) {
-				TS3Query.log.info("< " + in.readLine());
-				i++;
-			}
-		} catch (final IOException e) {
-			e.printStackTrace();
+		int i = 0;
+		while (i < 4 || in.ready()) {
+			log.debug("< {}", in.readLine());
+			i++;
 		}
 	}
 
@@ -72,14 +71,14 @@ public class SocketReader extends Thread {
 				line = in.readLine();
 			} catch (IOException io) {
 				if (!isInterrupted()) {
-					TS3Query.log.log(Level.WARNING, "Connection error occurred.", io);
+					log.error("Connection error occurred.", io);
 				}
 				break;
 			}
 
 			if (line == null) {
 				// End of stream: connection terminated by server
-				TS3Query.log.warning("Connection closed by the server.");
+				log.error("Connection closed by the server.");
 				break;
 			} else if (line.isEmpty()) {
 				continue; // The server is sending garbage
@@ -87,7 +86,7 @@ public class SocketReader extends Thread {
 
 			if (line.startsWith("notify")) {
 				// Handle event
-				TS3Query.log.info("< [event] " + line);
+				log.debug("< [event] {}", line);
 
 				// Filter out duplicate events for join, quit and channel move events
 				if (isDuplicate(line)) continue;
@@ -103,11 +102,11 @@ public class SocketReader extends Thread {
 				// Handle response to a command
 				final Command c = receiveQueue.peek();
 				if (c == null) {
-					TS3Query.log.warning("[UNHANDLED] < " + line);
+					log.warn("[UNHANDLED] < {}", line);
 					return;
 				}
 
-				TS3Query.log.info("[" + c.getName() + "] < " + line);
+				log.debug("[{}] < {}", c.getName(), line);
 				if (line.startsWith("error")) {
 					if (c instanceof CQuit) {
 						// Response to a quit command received, we're done
@@ -116,7 +115,7 @@ public class SocketReader extends Thread {
 
 					c.feedError(line.substring("error ".length()));
 					if (c.getError().getId() != 0) {
-						TS3Query.log.severe("TS3 command error: " + c.getError());
+						log.warn("TS3 command error: {}", c.getError());
 					}
 					receiveQueue.remove();
 
@@ -128,7 +127,7 @@ public class SocketReader extends Thread {
 								try {
 									callback.handle();
 								} catch (Throwable t) {
-									TS3Query.log.log(Level.WARNING, "User callback threw exception", t);
+									log.warn("User callback threw exception", t);
 								}
 							}
 						});
@@ -146,7 +145,7 @@ public class SocketReader extends Thread {
 		}
 
 		if (!isInterrupted()) {
-			TS3Query.log.warning("SocketReader has stopped!");
+			log.warn("SocketReader has stopped!");
 			ts3.fireDisconnect();
 		}
 	}

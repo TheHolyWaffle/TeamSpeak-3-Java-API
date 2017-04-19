@@ -49,7 +49,6 @@ All functionality is contained in the [TS3Api](src/main/java/com/github/theholyw
 ```java
 final TS3Config config = new TS3Config();
 config.setHost("77.77.77.77");
-config.setDebugLevel(Level.ALL);
 
 final TS3Query query = new TS3Query(config);
 query.connect();
@@ -79,8 +78,6 @@ Only use `FloodRate.UNLIMITED` if you are sure that your query account is whitel
 |Host/IP | IP/Host of TeamSpeak 3 server.|  | yes |
 |QueryPort | Query port of TeamSpeak 3 server. | 10011 | no |
 |FloodRate | Prevents possible spam to the server. | `FloodRate.DEFAULT` | no |
-|DebugLevel | Determines how much will be logged. | `Level.WARNING` | no |
-|Debug to file | Write logs to logfile (teamspeak.log). | False | no |
 |Command timeout | Time until a command waiting for a response fails | 4000 (ms) | no |
 
 ## Questions or bugs?

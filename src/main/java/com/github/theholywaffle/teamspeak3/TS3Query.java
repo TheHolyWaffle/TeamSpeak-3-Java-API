@@ -32,15 +32,15 @@ import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 import com.github.theholywaffle.teamspeak3.commands.CQuit;
 import com.github.theholywaffle.teamspeak3.commands.Command;
-import com.github.theholywaffle.teamspeak3.log.LogHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class TS3Query {
+
+	private static final Logger log = LoggerFactory.getLogger(TS3Query.class);
 
 	public static class FloodRate {
 
@@ -62,8 +62,6 @@ public class TS3Query {
 			return ms;
 		}
 	}
-
-	public static final Logger log = Logger.getLogger(TS3Query.class.getName());
 
 	private final ConnectionHandler connectionHandler;
 	private final EventManager eventManager = new EventManager();
@@ -93,9 +91,6 @@ public class TS3Query {
 	 * 		configuration for this TS3Query
 	 */
 	public TS3Query(TS3Config config) {
-		log.setUseParentHandlers(false);
-		log.addHandler(new LogHandler(config.getDebugToFile()));
-		log.setLevel(config.getDebugLevel());
 		this.config = config;
 		this.fileTransferHelper = new FileTransferHelper(config.getHost());
 		this.connectionHandler = config.getReconnectStrategy().create(config.getConnectionHandler());
@@ -127,7 +122,7 @@ public class TS3Query {
 		try {
 			connectionHandler.onConnect(this);
 		} catch (Throwable t) {
-			log.log(Level.SEVERE, "ConnectionHandler threw exception in connect handler", t);
+			log.error("ConnectionHandler threw exception in connect handler", t);
 		}
 		io.continueFrom(oldIO);
 	}
@@ -148,9 +143,6 @@ public class TS3Query {
 
 		connected = false;
 		userThreadPool.shutdown();
-		for (final Handler lh : log.getHandlers()) {
-			log.removeHandler(lh);
-		}
 	}
 
 	/**
@@ -190,7 +182,7 @@ public class TS3Query {
 		io.awaitCommand(c);
 
 		if (!c.isAnswered()) {
-			log.severe("Command " + c.getName() + " was not answered in time.");
+			log.error("Command {} was not answered in time.", c.getName());
 			return false;
 		}
 
@@ -223,7 +215,7 @@ public class TS3Query {
 				try {
 					connectionHandler.onDisconnect(TS3Query.this);
 				} catch (Throwable t) {
-					log.log(Level.SEVERE, "ConnectionHandler threw exception in disconnect handler", t);
+					log.error("ConnectionHandler threw exception in disconnect handler", t);
 				}
 
 				if (!connected) {

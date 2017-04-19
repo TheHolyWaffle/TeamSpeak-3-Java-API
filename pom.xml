@@ -49,9 +49,18 @@
 
 	<properties>
 		<encoding>UTF-8</encoding>
+		<slf4j.version>1.7.25</slf4j.version>
 	</properties>
 
 	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<excludes>
+					<exclude>simplelogger.properties</exclude>
+				</excludes>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -112,6 +121,13 @@
 						<configuration>
 							<shadedArtifactAttached>true</shadedArtifactAttached>
 							<shadedClassifierName>with-dependencies</shadedClassifierName>
+							<transformers>
+								<transformer
+										implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+									<resource>simplelogger.properties</resource>
+									<file>src/main/resources/simplelogger.properties</file>
+								</transformer>
+							</transformers>
 						</configuration>
 					</execution>
 				</executions>
@@ -136,6 +152,13 @@
 					<value>true</value>
 				</property>
 			</activation>
+			<dependencies>
+				<dependency>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-simple</artifactId>
+					<version>${slf4j.version}</version>
+				</dependency>
+			</dependencies>
 			<build>
 				<plugins>
 					<plugin>
@@ -178,4 +201,12 @@
 			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 	</distributionManagement>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>${slf4j.version}</version>
+		</dependency>
+	</dependencies>
 </project>

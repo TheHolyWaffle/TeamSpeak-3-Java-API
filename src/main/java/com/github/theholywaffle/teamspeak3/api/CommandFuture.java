@@ -28,6 +28,8 @@ package com.github.theholywaffle.teamspeak3.api;
 
 import com.github.theholywaffle.teamspeak3.TS3ApiAsync;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -86,6 +88,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @see TS3ApiAsync
  */
 public class CommandFuture<V> implements Future<V> {
+
+	private static final Logger log = LoggerFactory.getLogger(CommandFuture.class);
 
 	private enum FutureState {
 		WAITING,
@@ -447,9 +451,9 @@ public class CommandFuture<V> implements Future<V> {
 		if (successListener != null) {
 			try {
 				successListener.handleSuccess(value);
-			} catch (Throwable t) {
+			} catch (Exception e) {
 				// Whatever happens, we do not want a user error to leak into our logic
-				t.printStackTrace();
+				log.error("User SuccessListener threw an exception", e);
 			}
 		}
 		return true;
@@ -482,9 +486,9 @@ public class CommandFuture<V> implements Future<V> {
 		if (failureListener != null) {
 			try {
 				failureListener.handleFailure(exception);
-			} catch (Throwable t) {
+			} catch (Exception e) {
 				// Whatever happens, we do not want a user error to leak into our logic
-				t.printStackTrace();
+				log.error("User FailureListener threw an exception", e);
 			}
 		}
 		return true;
