@@ -29,6 +29,7 @@ package com.github.theholywaffle.teamspeak3;
 import com.github.theholywaffle.teamspeak3.api.Callback;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
+import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 import com.github.theholywaffle.teamspeak3.commands.CQuit;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 import com.github.theholywaffle.teamspeak3.log.LogHandler;
@@ -145,10 +146,33 @@ public class TS3Query {
 			io.disconnect();
 		}
 
+		connected = false;
 		userThreadPool.shutdown();
 		for (final Handler lh : log.getHandlers()) {
 			log.removeHandler(lh);
 		}
+	}
+
+	/**
+	 * Returns {@code true} if the query is likely connected,
+	 * {@code false} if the query is disconnected or currently trying to reconnect.
+	 * <p>
+	 * Note that the only way to really determine whether the query is connected or not
+	 * is to send a command and check whether it succeeds.
+	 * Thus this method could return {@code true} almost a minute after the connection
+	 * has been lost, when the last keep-alive command was sent.
+	 * </p><p>
+	 * Please do not use this method to write your own connection handler.
+	 * Instead, use the built-in classes in the {@code api.reconnect} package.
+	 * </p>
+	 *
+	 * @return whether the query is connected or not
+	 *
+	 * @see TS3Config#setReconnectStrategy(ReconnectStrategy)
+	 * @see TS3Config#setConnectionHandler(ConnectionHandler)
+	 */
+	public boolean isConnected() {
+		return connected;
 	}
 
 	public TS3Api getApi() {
