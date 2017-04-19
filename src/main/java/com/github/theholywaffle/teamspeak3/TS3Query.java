@@ -107,6 +107,10 @@ public class TS3Query {
 	// PUBLIC
 
 	public void connect() {
+		if (userThreadPool.isShutdown()) {
+			throw new IllegalStateException("The query has already been shut down");
+		}
+
 		QueryIO oldIO = io;
 		if (oldIO != null) {
 			oldIO.disconnect();
@@ -128,7 +132,7 @@ public class TS3Query {
 	}
 
 	/**
-	 * Removes and closes all used resources to the teamspeak server.
+	 * Removes and closes all used resources to the TeamSpeak server.
 	 */
 	public void exit() {
 		if (connected) {
@@ -137,7 +141,10 @@ public class TS3Query {
 			doCommand(new CQuit());
 		}
 
-		io.disconnect();
+		if (io != null) {
+			io.disconnect();
+		}
+
 		userThreadPool.shutdown();
 		for (final Handler lh : log.getHandlers()) {
 			log.removeHandler(lh);
