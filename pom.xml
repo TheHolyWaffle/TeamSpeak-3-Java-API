@@ -5,7 +5,7 @@
 
 	<groupId>com.github.theholywaffle</groupId>
 	<artifactId>teamspeak3-api</artifactId>
-	<version>2.0.0-SNAPSHOT</version>
+	<version>1.0.15-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>TeamSpeak 3 Java API</name>
@@ -49,6 +49,7 @@
 
 	<properties>
 		<encoding>UTF-8</encoding>
+		<slf4j.version>1.7.25</slf4j.version>
 	</properties>
 
 	<build>
@@ -151,11 +152,13 @@
 					<value>true</value>
 				</property>
 			</activation>
-			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-simple</artifactId>
-				<version>1.7.25</version>
-			</dependency>
+			<dependencies>
+				<dependency>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-simple</artifactId>
+					<version>${slf4j.version}</version>
+				</dependency>
+			</dependencies>
 			<build>
 				<plugins>
 					<plugin>
@@ -203,7 +206,7 @@
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>1.7.24</version>
+			<version>${slf4j.version}</version>
 		</dependency>
 	</dependencies>
 </project>
