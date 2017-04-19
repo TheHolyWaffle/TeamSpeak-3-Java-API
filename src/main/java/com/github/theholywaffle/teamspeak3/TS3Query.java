@@ -39,6 +39,8 @@ import java.util.concurrent.Executors;
 
 public class TS3Query {
 
+	private static final Logger log = LoggerFactory.getLogger(TS3Query.class);
+
 	public static class FloodRate {
 
 		public static final FloodRate DEFAULT = new FloodRate(350);
@@ -59,8 +61,6 @@ public class TS3Query {
 			return ms;
 		}
 	}
-
-	private static final Logger log = LoggerFactory.getLogger(TS3Query.class);
 
 	private final ConnectionHandler connectionHandler;
 	private final EventManager eventManager = new EventManager();

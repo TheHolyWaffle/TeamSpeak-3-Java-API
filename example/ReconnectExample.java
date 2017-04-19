@@ -162,8 +162,8 @@ public class ReconnectExample {
 		api.whoAmI().getUninterruptibly(); // Wait for all previous commands to complete
 		try {
 			Thread.sleep(5000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+		} catch (InterruptedException ignored) {
+			// No need to handle an interrupt
 		}
 		for (Integer channelId : createdChannelIds) {
 			api.deleteChannel(channelId, true);

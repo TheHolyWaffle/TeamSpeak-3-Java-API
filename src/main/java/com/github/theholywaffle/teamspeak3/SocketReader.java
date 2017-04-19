@@ -54,14 +54,10 @@ public class SocketReader extends Thread {
 
 		// Connect
 		this.in = new BufferedReader(new InputStreamReader(io.getSocket().getInputStream(), "UTF-8"));
-		try {
-			int i = 0;
-			while (i < 4 || in.ready()) {
-				log.debug("< {}", in.readLine());
-				i++;
-			}
-		} catch (final IOException e) {
-			e.printStackTrace();
+		int i = 0;
+		while (i < 4 || in.ready()) {
+			log.debug("< {}", in.readLine());
+			i++;
 		}
 	}
 
