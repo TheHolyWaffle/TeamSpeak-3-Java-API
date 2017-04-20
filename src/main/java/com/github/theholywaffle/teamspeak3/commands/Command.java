@@ -124,7 +124,7 @@ public class Command {
 	public String toString() {
 		StringBuilder builder = new StringBuilder(command);
 		for (final Parameter p : params) {
-			builder.append(" ").append(p);
+			builder.append(' ').append(p);
 		}
 		return builder.toString();
 	}

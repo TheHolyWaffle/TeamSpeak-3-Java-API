@@ -114,17 +114,13 @@ public class TS3Query {
 			oldIO.disconnect();
 		}
 
-		try {
-			io = new QueryIO(this, config);
-			connected = true;
-		} catch (TS3ConnectionFailedException conFailed) {
-			throw conFailed;
-		}
+		io = new QueryIO(this, config);
+		connected = true;
 
 		try {
 			connectionHandler.onConnect(this);
-		} catch (Throwable t) {
-			log.error("ConnectionHandler threw exception in connect handler", t);
+		} catch (Exception e) {
+			log.error("ConnectionHandler threw exception in connect handler", e);
 		}
 		io.continueFrom(oldIO);
 	}
@@ -238,8 +234,8 @@ public class TS3Query {
 			public void run() {
 				try {
 					connectionHandler.onDisconnect(TS3Query.this);
-				} catch (Throwable t) {
-					log.error("ConnectionHandler threw exception in disconnect handler", t);
+				} catch (Exception e) {
+					log.error("ConnectionHandler threw exception in disconnect handler", e);
 				}
 
 				if (!connected) {

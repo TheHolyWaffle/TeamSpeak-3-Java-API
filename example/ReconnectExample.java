@@ -55,6 +55,7 @@ public class ReconnectExample {
 	public static void main(String[] args) {
 		final TS3Config config = new TS3Config();
 		config.setHost("77.77.77.77");
+		config.setEnableCommunicationsLogging(true);
 
 		// Use default exponential backoff reconnect strategy
 		config.setReconnectStrategy(ReconnectStrategy.exponentialBackoff());

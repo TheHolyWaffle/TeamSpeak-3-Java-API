@@ -30,8 +30,8 @@ import java.util.Map;
 
 public class IconFile extends FileListEntry {
 
-	public IconFile(Map<String, String> map, int channelId, String path) {
-		super(map, channelId, path);
+	public IconFile(Map<String, String> map) {
+		super(map);
 	}
 
 	/**

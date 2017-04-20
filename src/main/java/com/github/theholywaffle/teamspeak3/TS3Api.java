@@ -2474,7 +2474,7 @@ public class TS3Api {
 			final List<FileListEntry> files = new ArrayList<>(responses.size());
 
 			for (final Wrapper response : responses) {
-				files.add(new FileListEntry(response.getMap(), channelId, directoryPath));
+				files.add(new FileListEntry(response.getMap()));
 			}
 			return files;
 		}
@@ -2527,7 +2527,7 @@ public class TS3Api {
 		List<IconFile> icons = new ArrayList<>(files.size());
 		for (FileListEntry file : files) {
 			if (file.isDirectory() || file.isStillUploading()) continue;
-			icons.add(new IconFile(file.getMap(), 0, "/icons/"));
+			icons.add(new IconFile(file.getMap()));
 		}
 		return icons;
 	}

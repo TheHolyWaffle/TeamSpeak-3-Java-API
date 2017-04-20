@@ -88,56 +88,9 @@ public class SocketReader extends Thread {
 			}
 
 			if (line.startsWith("notify")) {
-				// Handle event
-				if (logComms) log.debug("< [event] {}", line);
-
-				// Filter out duplicate events for join, quit and channel move events
-				if (isDuplicate(line)) continue;
-
-				ts3.submitUserTask(new Runnable() {
-					@Override
-					public void run() {
-						final String arr[] = line.split(" ", 2);
-						ts3.getEventManager().fireEvent(arr[0], arr[1]);
-					}
-				});
+				handleEvent(line);
 			} else {
-				// Handle response to a command
-				final Command c = receiveQueue.peek();
-				if (c == null) {
-					log.warn("[UNHANDLED] < {}", line);
-					return;
-				}
-
-				if (logComms) log.debug("[{}] < {}", c.getName(), line);
-				if (line.startsWith("error")) {
-					if (c instanceof CQuit) {
-						// Response to a quit command received, we're done
-						interrupt();
-					}
-
-					c.feedError(line.substring("error ".length()));
-					if (c.getError().getId() != 0) {
-						log.warn("TS3 command error: {}", c.getError());
-					}
-					receiveQueue.remove();
-
-					final Callback callback = c.getCallback();
-					if (callback != null) {
-						ts3.submitUserTask(new Runnable() {
-							@Override
-							public void run() {
-								try {
-									callback.handle();
-								} catch (Throwable t) {
-									log.warn("User callback threw exception", t);
-								}
-							}
-						});
-					}
-				} else {
-					c.feed(line);
-				}
+				handleCommandResponse(line);
 			}
 		}
 
@@ -150,6 +103,64 @@ public class SocketReader extends Thread {
 		if (!isInterrupted()) {
 			log.warn("SocketReader has stopped!");
 			ts3.fireDisconnect();
+		}
+	}
+
+	private void handleEvent(final String event) {
+		if (logComms) log.debug("< [event] {}", event);
+
+		// Filter out duplicate events for join, quit and channel move events
+		if (!isDuplicate(event)) {
+			ts3.submitUserTask(new Runnable() {
+				@Override
+				public void run() {
+					final String arr[] = event.split(" ", 2);
+					ts3.getEventManager().fireEvent(arr[0], arr[1]);
+				}
+			});
+		}
+	}
+
+	private void handleCommandResponse(final String response) {
+		final Command command = receiveQueue.peek();
+		if (command == null) {
+			log.warn("[UNHANDLED] < {}", response);
+			return;
+		}
+
+		if (logComms) log.debug("[{}] < {}", command.getName(), response);
+
+		if (response.startsWith("error ")) {
+			handleCommandError(command, response);
+		} else {
+			command.feed(response);
+		}
+	}
+
+	private void handleCommandError(Command command, final String error) {
+		if (command instanceof CQuit) {
+			// Response to a quit command received, we're done
+			interrupt();
+		}
+
+		command.feedError(error.substring("error ".length()));
+		if (command.getError().getId() != 0) {
+			log.warn("TS3 command error: {}", command.getError());
+		}
+		receiveQueue.remove();
+
+		final Callback callback = command.getCallback();
+		if (callback != null) {
+			ts3.submitUserTask(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						callback.handle();
+					} catch (Exception e) {
+						log.warn("User callback threw exception", e);
+					}
+				}
+			});
 		}
 	}
 

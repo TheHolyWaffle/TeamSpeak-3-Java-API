@@ -30,18 +30,8 @@ import java.util.Map;
 
 public class FileListEntry extends FileInfo {
 
-	private final int channelId;
-	private final String path;
-
-	public FileListEntry(Map<String, String> map, int channelId, String path) {
+	public FileListEntry(Map<String, String> map) {
 		super(map);
-		this.channelId = channelId;
-		this.path = path.endsWith("/") ? path : path + "/";
-	}
-
-	@Override
-	public int getChannelId() {
-		return channelId;
 	}
 
 	@Override
@@ -56,7 +46,7 @@ public class FileListEntry extends FileInfo {
 
 	@Override
 	public String getParentPath() {
-		return path;
+		return get("path");
 	}
 
 	@Override

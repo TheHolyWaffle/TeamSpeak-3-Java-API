@@ -26,7 +26,6 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
-import com.github.theholywaffle.teamspeak3.api.Callback;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.reconnect.DisconnectingConnectionHandler;
@@ -36,9 +35,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 public class QueryIO {
 
@@ -121,7 +118,7 @@ public class QueryIO {
 	}
 
 	public void enqueueCommand(Command command) {
-		if (command == null) throw new NullPointerException("Command cannot be null!");
+		if (command == null) throw new IllegalArgumentException("Command cannot be null!");
 		sendQueue.add(command);
 	}
 

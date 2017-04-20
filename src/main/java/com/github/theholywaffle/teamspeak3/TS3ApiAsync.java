@@ -2701,7 +2701,7 @@ public class TS3ApiAsync {
 				final List<FileListEntry> files = new ArrayList<>(responses.size());
 
 				for (final Wrapper response : responses) {
-					files.add(new FileListEntry(response.getMap(), channelId, directoryPath));
+					files.add(new FileListEntry(response.getMap()));
 				}
 				future.set(files);
 			}
@@ -2771,7 +2771,7 @@ public class TS3ApiAsync {
 				List<IconFile> icons = new ArrayList<>(result.size());
 				for (FileListEntry file : result) {
 					if (file.isDirectory() || file.isStillUploading()) continue;
-					icons.add(new IconFile(file.getMap(), 0, "/icons/"));
+					icons.add(new IconFile(file.getMap()));
 				}
 				future.set(icons);
 			}

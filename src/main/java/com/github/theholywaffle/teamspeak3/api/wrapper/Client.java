@@ -64,13 +64,13 @@ public class Client extends Wrapper {
 	 */
 	public String getClientURI() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("client://").append(getId()).append("/");
-		sb.append(getUniqueIdentifier()).append("~");
+		sb.append("client://").append(getId()).append('/');
+		sb.append(getUniqueIdentifier()).append('~');
 		try {
 			// We will encode the nickname, so characters like spaces work with this.
 			sb.append(URLEncoder.encode(getNickname(), "UTF-8"));
 		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
+			throw new IllegalStateException("JVM doesn't support UTF-8", e);
 		}
 		return sb.toString();
 	}

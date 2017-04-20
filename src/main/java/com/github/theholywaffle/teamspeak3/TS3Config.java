@@ -62,7 +62,7 @@ public class TS3Config {
 	}
 
 	public TS3Config setFloodRate(FloodRate rate) {
-		if (rate == null) throw new NullPointerException("rate cannot be null!");
+		if (rate == null) throw new IllegalArgumentException("rate cannot be null!");
 		this.floodRate = rate;
 		return this;
 	}
@@ -119,7 +119,7 @@ public class TS3Config {
 	}
 
 	public TS3Config setReconnectStrategy(ReconnectStrategy reconnectStrategy) {
-		if (reconnectStrategy == null) throw new NullPointerException("reconnectStrategy cannot be null!");
+		if (reconnectStrategy == null) throw new IllegalArgumentException("reconnectStrategy cannot be null!");
 		this.reconnectStrategy = reconnectStrategy;
 		return this;
 	}

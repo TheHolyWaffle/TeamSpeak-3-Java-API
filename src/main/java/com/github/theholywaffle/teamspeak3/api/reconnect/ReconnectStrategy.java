@@ -83,7 +83,7 @@ public abstract class ReconnectStrategy {
 		@Override
 		public ConnectionHandler create(ConnectionHandler userConnectionHandler) {
 			String message = "userConnectionHandler cannot be null when using strategy UserControlled!";
-			if (userConnectionHandler == null) throw new NullPointerException(message);
+			if (userConnectionHandler == null) throw new IllegalArgumentException(message);
 			return userConnectionHandler;
 		}
 	}

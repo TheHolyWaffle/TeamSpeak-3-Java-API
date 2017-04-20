@@ -57,14 +57,14 @@ public class ArrayParameter extends Parameter {
 		// First entry without |
 		str.append(parameters.get(0).build());
 		for (int i = 1; i < parametersPerEntry; ++i) {
-			str.append(" ").append(parameters.get(i).build());
+			str.append(' ').append(parameters.get(i).build());
 		}
 
 		// Remaining entries separated with |
 		for (int offset = parametersPerEntry; offset < parameters.size(); offset += parametersPerEntry) {
-			str.append("|").append(parameters.get(offset).build());
+			str.append('|').append(parameters.get(offset).build());
 			for (int i = 1; i < parametersPerEntry; ++i) {
-				str.append(" ").append(parameters.get(offset + i).build());
+				str.append(' ').append(parameters.get(offset + i).build());
 			}
 		}
 
