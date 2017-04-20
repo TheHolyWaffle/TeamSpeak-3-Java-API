@@ -26,15 +26,15 @@ package com.github.theholywaffle.teamspeak3.commands.response;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
+import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
-
-import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
-import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 
 public class DefaultArrayResponse {
 
@@ -49,20 +49,30 @@ public class DefaultArrayResponse {
 	public DefaultArrayResponse(String raw) {
 		rawResponse = raw;
 		array = new LinkedList<>();
-
-		final StringTokenizer tkn = new StringTokenizer(raw, "|", false);
-		while (tkn.hasMoreTokens()) {
-			final Wrapper wrapper = new Wrapper(parse(tkn.nextToken()));
-			array.add(wrapper);
-		}
+		appendWrappers(raw);
 	}
 
 	public void appendResponse(String raw) {
 		rawResponse += "|" + raw;
+		appendWrappers(raw);
+	}
 
+	private void appendWrappers(String raw) {
 		final StringTokenizer tkn = new StringTokenizer(raw, "|", false);
 		while (tkn.hasMoreTokens()) {
-			final Wrapper wrapper = new Wrapper(parse(tkn.nextToken()));
+			final Map<String, String> responseMap;
+			final Map<String, String> parsedTokens = parse(tkn.nextToken());
+
+			if (array.isEmpty()) {
+				// First response, just use the parsed tokens
+				responseMap = parsedTokens;
+			} else {
+				// Array response: use "default" values from the first response
+				responseMap = new HashMap<>(array.get(0).getMap());
+				responseMap.putAll(parsedTokens);
+			}
+
+			final Wrapper wrapper = new Wrapper(responseMap);
 			array.add(wrapper);
 		}
 	}

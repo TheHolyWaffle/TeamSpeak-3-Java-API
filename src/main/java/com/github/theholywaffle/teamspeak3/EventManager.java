@@ -28,6 +28,7 @@ package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.event.*;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3UnknownEventException;
+import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 
 import java.util.Arrays;
@@ -49,17 +50,23 @@ public class EventManager {
 	}
 
 	public void fireEvent(String notifyName, String notifyBody) {
-		TS3Event event = createEvent(notifyName, notifyBody);
+		final DefaultArrayResponse response = new DefaultArrayResponse(notifyBody);
 
-		for (final TS3Listener listener : listeners) {
+		for (Wrapper dataWrapper : response.getArray()) {
+			Map<String, String> eventData = dataWrapper.getMap();
+			TS3Event event = createEvent(notifyName, eventData);
+
+			fireEvent(event);
+		}
+	}
+
+	public void fireEvent(TS3Event event) {
+		for (TS3Listener listener : listeners) {
 			event.fire(listener);
 		}
 	}
 
-	private static TS3Event createEvent(String notifyName, String notifyBody) {
-		final DefaultArrayResponse response = new DefaultArrayResponse(notifyBody);
-		final Map<String, String> eventData = response.getFirstResponse().getMap();
-
+	private static TS3Event createEvent(String notifyName, Map<String, String> eventData) {
 		switch (notifyName) {
 			case "notifytextmessage":
 				return new TextMessageEvent(eventData);
@@ -86,7 +93,7 @@ public class EventManager {
 			case "notifytokenused":
 				return new PrivilegeKeyUsedEvent(eventData);
 			default:
-				throw new TS3UnknownEventException(notifyName + " " + notifyBody);
+				throw new TS3UnknownEventException(notifyName + " " + eventData);
 		}
 	}
 }
