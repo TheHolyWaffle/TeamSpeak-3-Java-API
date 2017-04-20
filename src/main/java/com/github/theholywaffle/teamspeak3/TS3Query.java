@@ -35,8 +35,10 @@ import com.github.theholywaffle.teamspeak3.commands.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class TS3Query {
 
@@ -178,8 +180,16 @@ public class TS3Query {
 	// INTERNAL
 
 	boolean doCommand(Command c) {
+		final CountDownLatch latch = new CountDownLatch(1);
+		c.setCallback(new Callback() {
+			@Override
+			public void handle() {
+				latch.countDown();
+			}
+		});
+
 		io.enqueueCommand(c);
-		io.awaitCommand(c);
+		awaitCommand(latch);
 
 		if (!c.isAnswered()) {
 			log.error("Command {} was not answered in time.", c.getName());
@@ -187,6 +197,20 @@ public class TS3Query {
 		}
 
 		return c.getError().isSuccessful();
+	}
+
+	private void awaitCommand(CountDownLatch latch) {
+		boolean interrupted = false;
+		try {
+			latch.await(config.getCommandTimeout(), TimeUnit.MILLISECONDS);
+		} catch (final InterruptedException e) {
+			interrupted = true;
+		}
+
+		if (interrupted) {
+			// Restore the interrupt
+			Thread.currentThread().interrupt();
+		}
 	}
 
 	void doCommandAsync(Command c, Callback callback) {
