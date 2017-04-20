@@ -67,7 +67,7 @@ public class QueryIO {
 			socket = tmpSocket;
 			socket.setTcpNoDelay(true);
 
-			socketReader = new SocketReader(this, query);
+			socketReader = new SocketReader(this, query, config);
 			socketWriter = new SocketWriter(this, config);
 			keepAlive = new KeepAliveThread(socketWriter, query.getAsyncApi());
 		} catch (IOException e) {

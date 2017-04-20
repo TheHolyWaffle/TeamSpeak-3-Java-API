@@ -35,6 +35,7 @@ public class TS3Config {
 	private String host = null;
 	private int queryPort = 10011;
 	private FloodRate floodRate = FloodRate.DEFAULT;
+	private boolean enableCommunicationsLogging = false;
 	private int commandTimeout = 4000;
 	private ReconnectStrategy reconnectStrategy = ReconnectStrategy.disconnect();
 	private ConnectionHandler connectionHandler = null;
@@ -68,6 +69,28 @@ public class TS3Config {
 
 	FloodRate getFloodRate() {
 		return floodRate;
+	}
+
+	/**
+	 * Setting this value to {@code true} will log the communication between the
+	 * query client and the TS3 server at the {@code DEBUG} level.
+	 * <p>
+	 * By default, this is turned off to prevent leaking IPs, tokens, passwords, etc.
+	 * into the console and / or log files.
+	 * </p>
+	 *
+	 * @param enable
+	 * 		whether to log query commands
+	 *
+	 * @return this TS3Config object for chaining
+	 */
+	public TS3Config setEnableCommunicationsLogging(boolean enable) {
+		enableCommunicationsLogging = enable;
+		return this;
+	}
+
+	boolean getEnableCommunicationsLogging() {
+		return enableCommunicationsLogging;
 	}
 
 	/**

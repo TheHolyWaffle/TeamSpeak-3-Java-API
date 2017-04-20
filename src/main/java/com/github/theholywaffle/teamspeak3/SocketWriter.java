@@ -41,6 +41,7 @@ public class SocketWriter extends Thread {
 	private final BlockingQueue<Command> sendQueue;
 	private final BlockingQueue<Command> receiveQueue;
 	private final int floodRate;
+	private final boolean logComms;
 	private final PrintStream out;
 	private volatile long lastCommand = System.currentTimeMillis();
 
@@ -49,6 +50,7 @@ public class SocketWriter extends Thread {
 		this.sendQueue = io.getSendQueue();
 		this.receiveQueue = io.getReceiveQueue();
 		this.floodRate = config.getFloodRate().getMs();
+		this.logComms = config.getEnableCommunicationsLogging();
 		this.out = new PrintStream(io.getSocket().getOutputStream(), true, "UTF-8");
 	}
 
@@ -60,7 +62,7 @@ public class SocketWriter extends Thread {
 				final String msg = c.toString();
 
 				receiveQueue.put(c);
-				log.debug("> {}", msg);
+				if (logComms) log.debug("> {}", msg);
 				out.println(msg);
 
 				lastCommand = System.currentTimeMillis();

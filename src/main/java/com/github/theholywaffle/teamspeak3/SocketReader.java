@@ -44,19 +44,22 @@ public class SocketReader extends Thread {
 	private final TS3Query ts3;
 	private final Queue<Command> receiveQueue;
 	private final BufferedReader in;
+	private final boolean logComms;
 
 	private String lastEvent = "";
 
-	public SocketReader(QueryIO io, TS3Query ts3Query) throws IOException {
+	public SocketReader(QueryIO io, TS3Query ts3Query, TS3Config config) throws IOException {
 		super("[TeamSpeak-3-Java-API] SocketReader");
 		this.receiveQueue = io.getReceiveQueue();
 		this.ts3 = ts3Query;
+		this.logComms = config.getEnableCommunicationsLogging();
 
 		// Connect
 		this.in = new BufferedReader(new InputStreamReader(io.getSocket().getInputStream(), "UTF-8"));
 		int i = 0;
 		while (i < 4 || in.ready()) {
-			log.debug("< {}", in.readLine());
+			String welcomeMessage = in.readLine();
+			if (logComms) log.debug("< {}", welcomeMessage);
 			i++;
 		}
 	}
@@ -86,7 +89,7 @@ public class SocketReader extends Thread {
 
 			if (line.startsWith("notify")) {
 				// Handle event
-				log.debug("< [event] {}", line);
+				if (logComms) log.debug("< [event] {}", line);
 
 				// Filter out duplicate events for join, quit and channel move events
 				if (isDuplicate(line)) continue;
@@ -106,7 +109,7 @@ public class SocketReader extends Thread {
 					return;
 				}
 
-				log.debug("[{}] < {}", c.getName(), line);
+				if (logComms) log.debug("[{}] < {}", c.getName(), line);
 				if (line.startsWith("error")) {
 					if (c instanceof CQuit) {
 						// Response to a quit command received, we're done
