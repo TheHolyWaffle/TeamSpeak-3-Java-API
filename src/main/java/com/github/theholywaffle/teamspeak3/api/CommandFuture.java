@@ -390,7 +390,10 @@ public class CommandFuture<V> implements Future<V> {
 		if (state == FutureState.CANCELLED) {
 			throw new CancellationException();
 		} else if (state == FutureState.FAILED) {
-			throw new TS3Exception("Unhandled exception", exception);
+			// Make the stack trace of the exception point to this method and not
+			// SocketReader#run -> TS3ApiAsync#hasFailed, which wouldn't be helpful
+			exception.fillInStackTrace();
+			throw exception;
 		}
 	}
 

@@ -41,7 +41,7 @@ public class TS3CommandFailedException extends TS3Exception {
 
 	private static String buildMessage(QueryError error) {
 		final StringBuilder msg = new StringBuilder("A command returned with a server error.\n");
-		msg.append(error.getMessage()).append(" (ID ").append(error.getId()).append(')');
+		msg.append(">> ").append(error.getMessage()).append(" (ID ").append(error.getId()).append(')');
 
 		final String extra = error.getExtraMessage();
 		if (extra != null && !extra.isEmpty()) {
