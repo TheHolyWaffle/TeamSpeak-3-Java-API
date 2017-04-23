@@ -34,8 +34,10 @@ public class KeyValueParam extends Parameter {
 	private final String value;
 
 	public KeyValueParam(String key, String value) {
+		if (key == null) throw new IllegalArgumentException("Key was null");
+
 		this.key = key;
-		this.value = value;
+		this.value = (value != null) ? value : "";
 	}
 
 	public KeyValueParam(String key, int value) {
@@ -54,5 +56,4 @@ public class KeyValueParam extends Parameter {
 	public String build() {
 		return CommandEncoding.encode(key) + "=" + CommandEncoding.encode(value);
 	}
-
 }
