@@ -35,6 +35,6 @@ public interface Callback {
 	/**
 	 * This method will be executed when a command is answered by the server.
 	 */
-	public void handle();
+	void handle();
 
 }

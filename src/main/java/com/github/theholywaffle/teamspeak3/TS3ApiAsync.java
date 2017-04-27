@@ -5057,11 +5057,7 @@ public class TS3ApiAsync {
 		final CommandFuture<Long> future = new CommandFuture<>();
 
 		final long iconId;
-		try {
-			iconId = helper.getIconId(data);
-		} catch (IOException e) {
-			throw new TS3FileTransferFailedException("Reading stream failed", e);
-		}
+		iconId = helper.getIconId(data);
 
 		final String path = "/icon_" + iconId;
 		uploadFileDirect(data, path, false, 0).onSuccess(new CommandFuture.SuccessListener<Boolean>() {

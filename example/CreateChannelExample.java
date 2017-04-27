@@ -25,6 +25,7 @@
  */
 
 import java.util.HashMap;
+import java.util.Map;
 
 import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3Config;
@@ -51,7 +52,7 @@ public class CreateChannelExample {
 		api.sendChannelMessage("PutPutBot is online!");
 
 		// Let's customize our channel
-		final HashMap<ChannelProperty, String> properties = new HashMap<>();
+		final Map<ChannelProperty, String> properties = new HashMap<>();
 		// Make it a permanent channel
 		properties.put(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1");
 		// Make it a subchannel of the default channel

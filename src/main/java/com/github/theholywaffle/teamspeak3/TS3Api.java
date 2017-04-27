@@ -4658,11 +4658,7 @@ public class TS3Api {
 	public long uploadIconDirect(byte[] data) {
 		final FileTransferHelper helper = query.getFileTransferHelper();
 		final long iconId;
-		try {
-			iconId = helper.getIconId(data);
-		} catch (IOException e) {
-			throw new TS3FileTransferFailedException("Reading stream failed", e);
-		}
+		iconId = helper.getIconId(data);
 
 		final String path = "/icon_" + iconId;
 		if (uploadFileDirect(data, path, false, 0)) {

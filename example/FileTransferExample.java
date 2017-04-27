@@ -95,7 +95,7 @@ public class FileTransferExample {
 		api.sendChannelMessage("PutPutBot is online!");
 
 		// Set up properties for our test channels
-		final HashMap<ChannelProperty, String> properties = new HashMap<>();
+		final Map<ChannelProperty, String> properties = new HashMap<>();
 		properties.put(ChannelProperty.CHANNEL_FLAG_SEMI_PERMANENT, "1"); // Stay until restart
 		int defaultChannelId = api.whoAmI().getChannelId();
 		properties.put(ChannelProperty.CPID, String.valueOf(defaultChannelId));

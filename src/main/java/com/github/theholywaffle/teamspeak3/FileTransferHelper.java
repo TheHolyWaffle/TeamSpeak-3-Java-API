@@ -118,7 +118,7 @@ public class FileTransferHelper {
 
 	// ICONS
 
-	public long getIconId(byte[] data) throws IOException {
+	public long getIconId(byte[] data) {
 		final CRC32 crc32 = new CRC32();
 		crc32.update(data);
 		return crc32.getValue();
