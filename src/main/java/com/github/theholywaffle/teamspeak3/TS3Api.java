@@ -4701,6 +4701,18 @@ public class TS3Api {
 	public boolean usePrivilegeKey(PrivilegeKey privilegeKey) {
 		return usePrivilegeKey(privilegeKey.getToken());
 	}
+	
+	
+	public int getServerGroupByName(String name) {
+		int groupidfound = 0;
+		List<ServerGroup> groups = api.getServerGroups();
+        for (ServerGroup group : groups) {
+        	if (group.getName().equalsIgnoreCase(name)) {
+        	groupidfound = group.getId();
+        	}
+        }
+        return groupidfound;
+	}
 
 	/**
 	 * Gets information about the current server query instance.
