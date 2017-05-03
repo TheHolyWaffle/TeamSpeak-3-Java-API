@@ -43,6 +43,11 @@ public class Client extends Wrapper {
 		return getBoolean(ClientProperty.CLIENT_IS_TALKER);
 	}
 
+	public void CommandFuture<Boolean> addToServerGroup(int groupId){
+		final CServerGroupAddClient add = new CServerGroupAddClient(groupId, this.getDatabaseId());
+		return executeAndReturnError(add);
+	}
+
 	public String getAwayMessage() {
 		return get(ClientProperty.CLIENT_AWAY_MESSAGE);
 	}
