@@ -62,7 +62,7 @@ public class SocketWriter extends Thread {
 				final String msg = c.toString();
 
 				receiveQueue.put(c);
-				if (logComms) log.debug("> {}", msg);
+				if (logComms) log.debug("[{}] > {}", c.getName(), msg);
 				out.println(msg);
 
 				lastCommand = System.currentTimeMillis();
