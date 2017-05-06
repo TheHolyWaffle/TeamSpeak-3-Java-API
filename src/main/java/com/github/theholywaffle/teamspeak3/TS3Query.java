@@ -27,17 +27,15 @@ package com.github.theholywaffle.teamspeak3;
  */
 
 import com.github.theholywaffle.teamspeak3.api.Callback;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
-import com.github.theholywaffle.teamspeak3.commands.CQuit;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public class TS3Query {
 
@@ -97,8 +95,8 @@ public class TS3Query {
 		this.connectionHandler = config.getReconnectStrategy().create(config.getConnectionHandler());
 		this.connected = false;
 
-		this.api = new TS3Api(this);
 		this.asyncApi = new TS3ApiAsync(this);
+		this.api = new TS3Api(asyncApi);
 	}
 
 	// PUBLIC
@@ -129,9 +127,12 @@ public class TS3Query {
 	 */
 	public void exit() {
 		if (connected) {
-			// Send a quit command synchronously
-			// This will guarantee that all previously sent commands have been processed
-			doCommand(new CQuit());
+			// Sending this command will guarantee that all previously sent commands have been processed
+			try {
+				api.quit();
+			} catch (TS3Exception e) {
+				log.warn("Could not send a quit command to terminate the connection", e);
+			}
 		}
 
 		if (io != null) {
@@ -173,40 +174,6 @@ public class TS3Query {
 	}
 
 	// INTERNAL
-
-	boolean doCommand(Command c) {
-		final CountDownLatch latch = new CountDownLatch(1);
-		c.setCallback(new Callback() {
-			@Override
-			public void handle() {
-				latch.countDown();
-			}
-		});
-
-		io.enqueueCommand(c);
-		awaitCommand(latch);
-
-		if (!c.isAnswered()) {
-			log.error("Command {} was not answered in time.", c.getName());
-			return false;
-		}
-
-		return c.getError().isSuccessful();
-	}
-
-	private void awaitCommand(CountDownLatch latch) {
-		boolean interrupted = false;
-		try {
-			latch.await(config.getCommandTimeout(), TimeUnit.MILLISECONDS);
-		} catch (final InterruptedException e) {
-			interrupted = true;
-		}
-
-		if (interrupted) {
-			// Restore the interrupt
-			Thread.currentThread().interrupt();
-		}
-	}
 
 	void doCommandAsync(Command c, Callback callback) {
 		if (callback != null) c.setCallback(callback);
