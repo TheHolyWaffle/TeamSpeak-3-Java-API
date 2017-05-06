@@ -39,6 +39,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -823,16 +826,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<CreatedVirtualServer> createServer(String name, Map<VirtualServerProperty, String> options) {
 		final CServerCreate create = new CServerCreate(name, options);
-		final CommandFuture<CreatedVirtualServer> future = new CommandFuture<>();
-
-		query.doCommandAsync(create, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(create, future)) return;
-				future.set(new CreatedVirtualServer(create.getFirstResponse().getMap()));
-			}
-		});
-		return future;
+		return executeAndTransformFirst(create, Transformer.CREATED_VIRTUAL_SERVER /* CreatedVirtualServer::new */);
 	}
 
 	/**
@@ -1794,23 +1788,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<Ban>> getBans() {
 		final CBanList list = new CBanList();
-		final CommandFuture<List<Ban>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<Ban> bans = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					bans.add(new Ban(response.getMap()));
-				}
-				future.set(bans);
-			}
-		});
-		return future;
+		return executeAndTransform(list, Transformer.BAN /* Ban::new */);
 	}
 
 	/**
@@ -1825,23 +1803,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<Binding>> getBindings() {
 		final CBindingList list = new CBindingList();
-		final CommandFuture<List<Binding>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<Binding> bindings = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					bindings.add(new Binding(response.getMap()));
-				}
-				future.set(bindings);
-			}
-		});
-		return future;
+		return executeAndTransform(list, Transformer.BINDING /* Binding::new */);
 	}
 
 	/**
@@ -1945,23 +1907,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<Permission>> getChannelClientPermissions(int channelId, int clientDBId) {
 		final CChannelClientPermList list = new CChannelClientPermList(channelId, clientDBId);
-		final CommandFuture<List<Permission>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<Permission> permissions = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					permissions.add(new Permission(response.getMap()));
-				}
-				future.set(permissions);
-			}
-		});
-		return future;
+		return executeAndTransform(list, Transformer.PERMISSION /* Permission::new */);
 	}
 
 	/**
@@ -1987,23 +1933,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<ChannelGroupClient>> getChannelGroupClients(int channelId, int clientDBId, int groupId) {
 		final CChannelGroupClientList list = new CChannelGroupClientList(channelId, clientDBId, groupId);
-		final CommandFuture<List<ChannelGroupClient>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<ChannelGroupClient> clients = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					clients.add(new ChannelGroupClient(response.getMap()));
-				}
-				future.set(clients);
-			}
-		});
-		return future;
+		return executeAndTransform(list, Transformer.CHANNEL_GROUP_CLIENT /* ChannelGroupClient::new */);
 	}
 
 	/**
@@ -2079,23 +2009,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<Permission>> getChannelGroupPermissions(int groupId) {
 		final CChannelGroupPermList list = new CChannelGroupPermList(groupId);
-		final CommandFuture<List<Permission>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<Permission> permissions = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					permissions.add(new Permission(response.getMap()));
-				}
-				future.set(permissions);
-			}
-		});
-		return future;
+		return executeAndTransform(list, Transformer.PERMISSION /* Permission::new */);
 	}
 
 	/**
@@ -2110,23 +2024,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<ChannelGroup>> getChannelGroups() {
 		final CChannelGroupList list = new CChannelGroupList();
-		final CommandFuture<List<ChannelGroup>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<ChannelGroup> groups = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					groups.add(new ChannelGroup(response.getMap()));
-				}
-				future.set(groups);
-			}
-		});
-		return future;
+		return executeAndTransform(list, Transformer.CHANNEL_GROUP /* ChannelGroup::new */);
 	}
 
 	/**
@@ -2173,23 +2071,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<Permission>> getChannelPermissions(int channelId) {
 		final CChannelPermList list = new CChannelPermList(channelId);
-		final CommandFuture<List<Permission>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<Permission> permissions = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					permissions.add(new Permission(response.getMap()));
-				}
-				future.set(permissions);
-			}
-		});
-		return future;
+		return executeAndTransform(list, Transformer.PERMISSION /* Permission::new */);
 	}
 
 	/**
@@ -2204,23 +2086,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<Channel>> getChannels() {
 		final CChannelList list = new CChannelList();
-		final CommandFuture<List<Channel>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<Channel> channels = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					channels.add(new Channel(response.getMap()));
-				}
-				future.set(channels);
-			}
-		});
-		return future;
+		return executeAndTransform(list, Transformer.CHANNEL /* Channel::new */);
 	}
 
 	/**
@@ -2377,23 +2243,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<Permission>> getClientPermissions(int clientDBId) {
 		final CClientPermList list = new CClientPermList(clientDBId);
-		final CommandFuture<List<Permission>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<Permission> permissions = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					permissions.add(new Permission(response.getMap()));
-				}
-				future.set(permissions);
-			}
-		});
-		return future;
+		return executeAndTransform(list, Transformer.PERMISSION /* Permission::new */);
 	}
 
 	/**
@@ -2408,23 +2258,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<Client>> getClients() {
 		final CClientList list = new CClientList();
-		final CommandFuture<List<Client>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<Client> clients = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					clients.add(new Client(response.getMap()));
-				}
-				future.set(clients);
-			}
-		});
-		return future;
+		return executeAndTransform(list, Transformer.CLIENT /* Client::new */);
 	}
 
 	/**
@@ -2458,23 +2292,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<Complaint>> getComplaints(int clientDBId) {
 		final CComplainList list = new CComplainList(clientDBId);
-		final CommandFuture<List<Complaint>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<Complaint> complaints = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					complaints.add(new Complaint(response.getMap()));
-				}
-				future.set(complaints);
-			}
-		});
-		return future;
+		return executeAndTransform(list, Transformer.COMPLAINT /* Complaint::new */);
 	}
 
 	/**
@@ -2490,16 +2308,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<ConnectionInfo> getConnectionInfo() {
 		final CServerRequestConnectionInfo info = new CServerRequestConnectionInfo();
-		final CommandFuture<ConnectionInfo> future = new CommandFuture<>();
-
-		query.doCommandAsync(info, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(info, future)) return;
-				future.set(new ConnectionInfo(info.getFirstResponse().getMap()));
-			}
-		});
-		return future;
+		return executeAndTransformFirst(info, Transformer.CONNECTION_INFO /* ConnectionInfo::new */);
 	}
 
 	/**
@@ -2583,16 +2392,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<DatabaseClientInfo> getDatabaseClientInfo(int clientDBId) {
 		final CClientDBInfo info = new CClientDBInfo(clientDBId);
-		final CommandFuture<DatabaseClientInfo> future = new CommandFuture<>();
-
-		query.doCommandAsync(info, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(info, future)) return;
-				future.set(new DatabaseClientInfo(info.getFirstResponse().getMap()));
-			}
-		});
-		return future;
+		return executeAndTransformFirst(info, Transformer.DATABASE_CLIENT_INFO /* DatabaseClientInfo::new */);
 	}
 
 	/**
@@ -2667,21 +2467,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<DatabaseClient>> getDatabaseClients(final int offset, final int count) {
 		final CClientDBList list = new CClientDBList(offset, count, false);
-		final CommandFuture<List<DatabaseClient>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<DatabaseClient> clients = new ArrayList<>(count);
-				for (final Wrapper response : list.getResponse()) {
-					clients.add(new DatabaseClient(response.getMap()));
-				}
-				future.set(clients);
-			}
-		});
-		return future;
+		return executeAndTransform(list, Transformer.DATABASE_CLIENT /* DatabaseClient::new */);
 	}
 
 	/**
@@ -2732,16 +2518,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<FileInfo> getFileInfo(String filePath, int channelId, String channelPassword) {
 		final CFtGetFileInfo info = new CFtGetFileInfo(channelId, channelPassword, filePath);
-		final CommandFuture<FileInfo> future = new CommandFuture<>();
-
-		query.doCommandAsync(info, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(info, future)) return;
-				future.set(new FileInfo(info.getFirstResponse().getMap()));
-			}
-		});
-		return future;
+		return executeAndTransformFirst(info, Transformer.FILE_INFO /* FileInfo::new */);
 	}
 
 	/**
@@ -2792,23 +2569,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<FileInfo>> getFileInfos(String filePaths[], int channelId, String channelPassword) {
 		final CFtGetFileInfo info = new CFtGetFileInfo(channelId, channelPassword, filePaths);
-		final CommandFuture<List<FileInfo>> future = new CommandFuture<>();
-
-		query.doCommandAsync(info, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(info, future)) return;
-
-				final List<Wrapper> responses = info.getResponse();
-				final List<FileInfo> files = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					files.add(new FileInfo(response.getMap()));
-				}
-				future.set(files);
-			}
-		});
-		return future;
+		return executeAndTransform(info, Transformer.FILE_INFO /* FileInfo::new */);
 	}
 
 	/**
@@ -2837,23 +2598,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<FileInfo>> getFileInfos(String filePaths[], int[] channelIds, String[] channelPasswords) {
 		final CFtGetFileInfo info = new CFtGetFileInfo(channelIds, channelPasswords, filePaths);
-		final CommandFuture<List<FileInfo>> future = new CommandFuture<>();
-
-		query.doCommandAsync(info, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(info, future)) return;
-
-				final List<Wrapper> responses = info.getResponse();
-				final List<FileInfo> files = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					files.add(new FileInfo(response.getMap()));
-				}
-				future.set(files);
-			}
-		});
-		return future;
+		return executeAndTransform(info, Transformer.FILE_INFO /* FileInfo::new */);
 	}
 
 	/**
@@ -2896,23 +2641,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<FileListEntry>> getFileList(final String directoryPath, final int channelId, String channelPassword) {
 		final CFtGetFileList list = new CFtGetFileList(directoryPath, channelId, channelPassword);
-		final CommandFuture<List<FileListEntry>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<FileListEntry> files = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					files.add(new FileListEntry(response.getMap()));
-				}
-				future.set(files);
-			}
-		});
-		return future;
+		return executeAndTransform(list, Transformer.FILE_LIST_ENTRY /* FileListEntry::new */);
 	}
 
 	/**
@@ -2926,23 +2655,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<FileTransfer>> getFileTransfers() {
 		final CFtList list = new CFtList();
-		final CommandFuture<List<FileTransfer>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<FileTransfer> transfers = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					transfers.add(new FileTransfer(response.getMap()));
-				}
-				future.set(transfers);
-			}
-		});
-		return future;
+		return executeAndTransform(list, Transformer.FILE_TRANSFER /* FileTransfer::new */);
 	}
 
 	/**
@@ -2957,16 +2670,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<HostInfo> getHostInfo() {
 		final CHostInfo info = new CHostInfo();
-		final CommandFuture<HostInfo> future = new CommandFuture<>();
-
-		query.doCommandAsync(info, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(info, future)) return;
-				future.set(new HostInfo(info.getFirstResponse().getMap()));
-			}
-		});
-		return future;
+		return executeAndTransformFirst(info, Transformer.HOST_INFO /* HostInfo::new */);
 	}
 
 	/**
@@ -3004,16 +2708,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<InstanceInfo> getInstanceInfo() {
 		final CInstanceInfo info = new CInstanceInfo();
-		final CommandFuture<InstanceInfo> future = new CommandFuture<>();
-
-		query.doCommandAsync(info, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(info, future)) return;
-				future.set(new InstanceInfo(info.getFirstResponse().getMap()));
-			}
-		});
-		return future;
+		return executeAndTransformFirst(info, Transformer.INSTANCE_INFO /* InstanceInfo::new */);
 	}
 
 	/**
@@ -3107,23 +2802,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<Message>> getOfflineMessages() {
 		final CMessageList list = new CMessageList();
-		final CommandFuture<List<Message>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<Message> msg = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					msg.add(new Message(response.getMap()));
-				}
-				future.set(msg);
-			}
-		});
-		return future;
+		return executeAndTransform(list, Transformer.MESSAGE /* Message::new */);
 	}
 
 	/**
@@ -3143,23 +2822,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<PermissionAssignment>> getPermissionAssignments(String permName) {
 		final CPermFind find = new CPermFind(permName);
-		final CommandFuture<List<PermissionAssignment>> future = new CommandFuture<>();
-
-		query.doCommandAsync(find, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(find, future)) return;
-
-				final List<Wrapper> responses = find.getResponse();
-				final List<PermissionAssignment> assignments = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					assignments.add(new PermissionAssignment(response.getMap()));
-				}
-				future.set(assignments);
-			}
-		});
-		return future;
+		return executeAndTransform(find, Transformer.PERMISSION_ASSIGNMENT /* PermissionAssignment::new */);
 	}
 
 	/**
@@ -3243,23 +2906,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<PermissionAssignment>> getPermissionOverview(int channelId, int clientDBId) {
 		final CPermOverview overview = new CPermOverview(channelId, clientDBId);
-		final CommandFuture<List<PermissionAssignment>> future = new CommandFuture<>();
-
-		query.doCommandAsync(overview, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(overview, future)) return;
-
-				final List<Wrapper> responses = overview.getResponse();
-				final List<PermissionAssignment> permissions = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					permissions.add(new PermissionAssignment(response.getMap()));
-				}
-				future.set(permissions);
-			}
-		});
-		return future;
+		return executeAndTransform(overview, Transformer.PERMISSION_ASSIGNMENT /* PermissionAssignment::new */);
 	}
 
 	/**
@@ -3273,23 +2920,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<PermissionInfo>> getPermissions() {
 		final CPermissionList list = new CPermissionList();
-		final CommandFuture<List<PermissionInfo>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<PermissionInfo> permissions = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					permissions.add(new PermissionInfo(response.getMap()));
-				}
-				future.set(permissions);
-			}
-		});
-		return future;
+		return executeAndTransform(list, Transformer.PERMISSION_INFO /* PermissionInfo::new */);
 	}
 
 	/**
@@ -3360,23 +2991,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<PrivilegeKey>> getPrivilegeKeys() {
 		final CPrivilegeKeyList list = new CPrivilegeKeyList();
-		final CommandFuture<List<PrivilegeKey>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<PrivilegeKey> keys = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					keys.add(new PrivilegeKey(response.getMap()));
-				}
-				future.set(keys);
-			}
-		});
-		return future;
+		return executeAndTransform(list, Transformer.PRIVILEGE_KEY /* PrivilegeKey::new */);
 	}
 
 	/**
@@ -3393,23 +3008,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<ServerGroupClient>> getServerGroupClients(int serverGroupId) {
 		final CServerGroupClientList list = new CServerGroupClientList(serverGroupId);
-		final CommandFuture<List<ServerGroupClient>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<ServerGroupClient> clients = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					clients.add(new ServerGroupClient(response.getMap()));
-				}
-				future.set(clients);
-			}
-		});
-		return future;
+		return executeAndTransform(list, Transformer.SERVER_GROUP_CLIENT /* ServerGroupClient::new */);
 	}
 
 	/**
@@ -3444,23 +3043,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<Permission>> getServerGroupPermissions(int serverGroupId) {
 		final CServerGroupPermList list = new CServerGroupPermList(serverGroupId);
-		final CommandFuture<List<Permission>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<Permission> permissions = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					permissions.add(new Permission(response.getMap()));
-				}
-				future.set(permissions);
-			}
-		});
-		return future;
+		return executeAndTransform(list, Transformer.PERMISSION /* Permission::new */);
 	}
 
 	/**
@@ -3494,23 +3077,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<ServerGroup>> getServerGroups() {
 		final CServerGroupList list = new CServerGroupList();
-		final CommandFuture<List<ServerGroup>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<ServerGroup> groups = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					groups.add(new ServerGroup(response.getMap()));
-				}
-				future.set(groups);
-			}
-		});
-		return future;
+		return executeAndTransform(list, Transformer.SERVER_GROUP /* ServerGroup::new */);
 	}
 
 	/**
@@ -3604,16 +3171,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<VirtualServerInfo> getServerInfo() {
 		final CServerInfo info = new CServerInfo();
-		final CommandFuture<VirtualServerInfo> future = new CommandFuture<>();
-
-		query.doCommandAsync(info, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(info, future)) return;
-				future.set(new VirtualServerInfo(info.getFirstResponse().getMap()));
-			}
-		});
-		return future;
+		return executeAndTransformFirst(info, Transformer.VIRTUAL_SERVER_INFO /* VirtualServerInfo::new */);
 	}
 
 	/**
@@ -3627,16 +3185,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<Version> getVersion() {
 		final CVersion version = new CVersion();
-		final CommandFuture<Version> future = new CommandFuture<>();
-
-		query.doCommandAsync(version, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(version, future)) return;
-				future.set(new Version(version.getFirstResponse().getMap()));
-			}
-		});
-		return future;
+		return executeAndTransformFirst(version, Transformer.VERSION /* Version::new */);
 	}
 
 	/**
@@ -3650,23 +3199,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<VirtualServer>> getVirtualServers() {
 		final CServerList serverList = new CServerList();
-		final CommandFuture<List<VirtualServer>> future = new CommandFuture<>();
-
-		query.doCommandAsync(serverList, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(serverList, future)) return;
-
-				final List<Wrapper> responses = serverList.getResponse();
-				final List<VirtualServer> servers = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					servers.add((new VirtualServer(response.getMap())));
-				}
-				future.set(servers);
-			}
-		});
-		return future;
+		return executeAndTransform(serverList, Transformer.VIRTUAL_SERVER /* VirtualServer::new */);
 	}
 
 	/**
@@ -5532,16 +5065,28 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<ServerQueryInfo> whoAmI() {
 		final CWhoAmI whoAmI = new CWhoAmI();
-		final CommandFuture<ServerQueryInfo> future = new CommandFuture<>();
+		return executeAndTransformFirst(whoAmI, Transformer.SERVER_QUERY_INFO /* ServerQueryInfo::new */);
+	}
 
-		query.doCommandAsync(whoAmI, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(whoAmI, future)) return;
-				future.set(new ServerQueryInfo(whoAmI.getFirstResponse().getMap()));
-			}
-		});
-		return future;
+	/**
+	 * If a command has failed (i.e. the error ID is not 0),
+	 * the future will be marked as failed and true will be returned.
+	 *
+	 * @param command
+	 * 		the command to be checked for failure
+	 * @param future
+	 * 		the future to be notified in case of a failure
+	 *
+	 * @return true if the command has failed
+	 *
+	 * @see Command
+	 */
+	private static boolean hasFailed(Command command, CommandFuture<?> future) {
+		final QueryError error = command.getError();
+		if (error.isSuccessful()) return false;
+
+		future.fail(new TS3CommandFailedException(error));
+		return true;
 	}
 
 	/**
@@ -5614,23 +5159,144 @@ public class TS3ApiAsync {
 	}
 
 	/**
-	 * If a command has failed (i.e. the error ID is not 0),
-	 * the future will be marked as failed and true will be returned.
+	 * Executes a command, checks for failure and transforms the first
+	 * response map by invoking {@code transformer}.
 	 *
 	 * @param command
-	 * 		the command to be checked for failure
-	 * @param future
-	 * 		the future to be notified in case of a failure
+	 * 		the command to execute
+	 * @param transformer
+	 * 		the function that creates a new wrapper of type {@code T}
+	 * @param <T>
+	 * 		the wrapper class the map should be wrapped with
 	 *
-	 * @return true if the command has failed
-	 *
-	 * @see Command
+	 * @return a wrapped version of the first response map
 	 */
-	private static boolean hasFailed(Command command, CommandFuture<?> future) {
-		final QueryError error = command.getError();
-		if (error.isSuccessful()) return false;
+	private <T extends Wrapper> CommandFuture<T> executeAndTransformFirst(final Command command, final Transformer<T> transformer) {
+		final CommandFuture<T> future = new CommandFuture<>();
 
-		future.fail(new TS3CommandFailedException(error));
-		return true;
+		query.doCommandAsync(command, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(command, future)) return;
+
+				Wrapper firstResponse = command.getFirstResponse();
+				T transformed = transformer.apply(firstResponse.getMap());
+				future.set(transformed);
+			}
+		});
+		return future;
+	}
+
+	/**
+	 * Executes a command, checks for failure and transforms all
+	 * response maps by invoking {@code transformer} on each one.
+	 *
+	 * @param command
+	 * 		the command to execute
+	 * @param transformer
+	 * 		the function that creates the new wrappers of type {@code T}
+	 * @param <T>
+	 * 		the wrapper class the maps should be wrapped with
+	 *
+	 * @return a list of wrapped response maps
+	 */
+	private <T extends Wrapper> CommandFuture<List<T>> executeAndTransform(final Command command, final Transformer<T> transformer) {
+		final CommandFuture<List<T>> future = new CommandFuture<>();
+
+		query.doCommandAsync(command, new Callback() {
+			@Override
+			public void handle() {
+				if (hasFailed(command, future)) return;
+
+				List<Wrapper> response = command.getResponse();
+				List<T> transformed = new ArrayList<>(response.size());
+				for (Wrapper wrapper : response) {
+					transformed.add(transformer.apply(wrapper.getMap()));
+				}
+
+				future.set(transformed);
+			}
+		});
+		return future;
+	}
+
+	/**
+	 * This interface directly corresponds to {@code java.util.function.Function<Map<String, String>, T>}
+	 * and only exists because we're still using Java 7 instead of Java 8.
+	 * <p>
+	 * All uses of this interface can be replaced by a method reference to the constructor of the wrapper class
+	 * if and when we switch to using Java 8.
+	 * </p>
+	 *
+	 * @param <T>
+	 * 		the type of the wrapper class to transform maps to
+	 */
+	private interface Transformer<T extends Wrapper> /* extends Function<Map<String, String>, T> */ {
+
+		Transformer<Ban> BAN = new ReflectiveTransformer<>(Ban.class);
+		Transformer<Binding> BINDING = new ReflectiveTransformer<>(Binding.class);
+		Transformer<Channel> CHANNEL = new ReflectiveTransformer<>(Channel.class);
+		Transformer<ChannelGroup> CHANNEL_GROUP = new ReflectiveTransformer<>(ChannelGroup.class);
+		Transformer<ChannelGroupClient> CHANNEL_GROUP_CLIENT = new ReflectiveTransformer<>(ChannelGroupClient.class);
+		Transformer<Client> CLIENT = new ReflectiveTransformer<>(Client.class);
+		Transformer<Complaint> COMPLAINT = new ReflectiveTransformer<>(Complaint.class);
+		Transformer<ConnectionInfo> CONNECTION_INFO = new ReflectiveTransformer<>(ConnectionInfo.class);
+		Transformer<CreatedVirtualServer> CREATED_VIRTUAL_SERVER = new ReflectiveTransformer<>(CreatedVirtualServer.class);
+		Transformer<DatabaseClient> DATABASE_CLIENT = new ReflectiveTransformer<>(DatabaseClient.class);
+		Transformer<DatabaseClientInfo> DATABASE_CLIENT_INFO = new ReflectiveTransformer<>(DatabaseClientInfo.class);
+		Transformer<FileInfo> FILE_INFO = new ReflectiveTransformer<>(FileInfo.class);
+		Transformer<FileListEntry> FILE_LIST_ENTRY = new ReflectiveTransformer<>(FileListEntry.class);
+		Transformer<FileTransfer> FILE_TRANSFER = new ReflectiveTransformer<>(FileTransfer.class);
+		Transformer<HostInfo> HOST_INFO = new ReflectiveTransformer<>(HostInfo.class);
+		Transformer<InstanceInfo> INSTANCE_INFO = new ReflectiveTransformer<>(InstanceInfo.class);
+		Transformer<Message> MESSAGE = new ReflectiveTransformer<>(Message.class);
+		Transformer<Permission> PERMISSION = new ReflectiveTransformer<>(Permission.class);
+		Transformer<PermissionAssignment> PERMISSION_ASSIGNMENT = new ReflectiveTransformer<>(PermissionAssignment.class);
+		Transformer<PermissionInfo> PERMISSION_INFO = new ReflectiveTransformer<>(PermissionInfo.class);
+		Transformer<PrivilegeKey> PRIVILEGE_KEY = new ReflectiveTransformer<>(PrivilegeKey.class);
+		Transformer<ServerGroup> SERVER_GROUP = new ReflectiveTransformer<>(ServerGroup.class);
+		Transformer<ServerGroupClient> SERVER_GROUP_CLIENT = new ReflectiveTransformer<>(ServerGroupClient.class);
+		Transformer<ServerQueryInfo> SERVER_QUERY_INFO = new ReflectiveTransformer<>(ServerQueryInfo.class);
+		Transformer<Version> VERSION = new ReflectiveTransformer<>(Version.class);
+		Transformer<VirtualServer> VIRTUAL_SERVER = new ReflectiveTransformer<>(VirtualServer.class);
+		Transformer<VirtualServerInfo> VIRTUAL_SERVER_INFO = new ReflectiveTransformer<>(VirtualServerInfo.class);
+
+		T apply(Map<String, String> map);
+	}
+
+	/**
+	 * This implementation of Transformer uses MethodHandles because creating an anonymous class
+	 * for each of the about 30 instances of Transformer would significantly increase the class loading time
+	 * and would also necessitate around 150 more lines of boilerplate code.
+	 *
+	 * @param <T>
+	 * 		the type of the wrapper class to transform maps to
+	 */
+	private static class ReflectiveTransformer<T extends Wrapper> implements Transformer<T> {
+
+		private final Class<T> wrapperClass;
+		private final MethodHandle constructor;
+
+		public ReflectiveTransformer(Class<T> wrapperClass) {
+			this.wrapperClass = wrapperClass;
+
+			try {
+				MethodType type = MethodType.methodType(void.class, Map.class);
+				constructor = MethodHandles.publicLookup()
+						.in(wrapperClass)
+						.findConstructor(wrapperClass, type);
+			} catch (NoSuchMethodException | IllegalAccessException e) {
+				throw new Error("Missing public constructor of wrapper class " + wrapperClass.getSimpleName(), e);
+			}
+		}
+
+		@Override
+		public T apply(Map<String, String> map) {
+			try {
+				return wrapperClass.cast(constructor.invoke(map));
+			} catch (Throwable t) {
+				throw new Error("Method handle error", t);
+			}
+		}
 	}
 }
