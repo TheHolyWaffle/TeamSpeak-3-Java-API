@@ -30,8 +30,8 @@
 		<developer>
 			<email>rogermarcbaumgartner@hotmail.com</email>
 			<name>Roger Baumgartner</name>
-			<url>https://github.com/Firedroide</url>
-			<id>Firedroide</id>
+			<url>https://github.com/rogermb</url>
+			<id>rogermb</id>
 			<timezone>+1</timezone>
 		</developer>
 	</developers>
@@ -145,6 +145,29 @@
 				<plugins>
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-shade-plugin</artifactId>
+						<version>3.0.0</version>
+						<executions>
+							<execution>
+								<phase>package</phase>
+								<goals>
+									<goal>shade</goal>
+								</goals>
+								<configuration>
+									<shadedArtifactAttached>true</shadedArtifactAttached>
+									<shadedClassifierName>with-dependencies</shadedClassifierName>
+									<transformers>
+										<transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+											<resource>simplelogger.properties</resource>
+											<file>src/main/resources/simplelogger.properties</file>
+										</transformer>
+									</transformers>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-source-plugin</artifactId>
 						<version>3.0.1</version>
 						<executions>
@@ -178,29 +201,6 @@
 								<goals>
 									<goal>jar</goal>
 								</goals>
-							</execution>
-						</executions>
-					</plugin>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-shade-plugin</artifactId>
-						<version>3.0.0</version>
-						<executions>
-							<execution>
-								<phase>package</phase>
-								<goals>
-									<goal>shade</goal>
-								</goals>
-								<configuration>
-									<shadedArtifactAttached>true</shadedArtifactAttached>
-									<shadedClassifierName>with-dependencies</shadedClassifierName>
-									<transformers>
-										<transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
-											<resource>simplelogger.properties</resource>
-											<file>src/main/resources/simplelogger.properties</file>
-										</transformer>
-									</transformers>
-								</configuration>
 							</execution>
 						</executions>
 					</plugin>
