@@ -200,8 +200,8 @@ public class TS3Query {
 			public void run() {
 				try {
 					connectionHandler.onDisconnect(TS3Query.this);
-				} catch (Exception e) {
-					log.error("ConnectionHandler threw exception in disconnect handler", e);
+				} catch (Throwable t) {
+					log.error("ConnectionHandler threw exception in disconnect handler", t);
 				}
 
 				if (!connected) {

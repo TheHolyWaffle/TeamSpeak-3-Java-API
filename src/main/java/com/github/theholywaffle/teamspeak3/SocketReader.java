@@ -156,8 +156,8 @@ public class SocketReader extends Thread {
 				public void run() {
 					try {
 						callback.handle();
-					} catch (Exception e) {
-						log.warn("User callback threw exception", e);
+					} catch (Throwable t) {
+						log.error("Callback threw an exception", t);
 					}
 				}
 			});
