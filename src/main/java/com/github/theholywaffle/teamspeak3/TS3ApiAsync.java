@@ -1686,10 +1686,37 @@ public class TS3ApiAsync {
 	}
 
 	/**
+	 * Changes a single property of the given channel.
+	 * <p>
+	 * Note that one can set many properties at once with the overloaded method that
+	 * takes a map of channel properties and strings.
+	 * </p>
+	 *
+	 * @param channelId
+	 * 		the ID of the channel to edit
+	 * @param property
+	 * 		the channel property to modify, make sure it is editable
+	 * @param value
+	 * 		the new value of the property
+	 *
+	 * @return a future to track the progress of this command
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Channel#getId()
+	 * @see #editChannel(int, Map)
+	 */
+	public CommandFuture<Void> editChannel(int channelId, ChannelProperty property, String value) {
+		return editChannel(channelId, Collections.singletonMap(property, value));
+	}
+
+	/**
 	 * Changes a client's configuration using given properties.
 	 * <p>
 	 * Only {@link ClientProperty#CLIENT_DESCRIPTION} can be changed for other clients.
-	 * To update the current client's properties, use {@link #updateClient(Map)}.
+	 * To update the current client's properties, use {@link #updateClient(Map)}
+	 * or {@link #updateClient(ClientProperty, String)}.
 	 * </p>
 	 *
 	 * @param clientId
@@ -1708,6 +1735,34 @@ public class TS3ApiAsync {
 	public CommandFuture<Void> editClient(int clientId, Map<ClientProperty, String> options) {
 		final CClientEdit edit = new CClientEdit(clientId, options);
 		return executeAndReturnError(edit);
+	}
+
+	/**
+	 * Changes a single property of the given client.
+	 * <p>
+	 * Only {@link ClientProperty#CLIENT_DESCRIPTION} can be changed for other clients.
+	 * To update the current client's properties, use {@link #updateClient(Map)}
+	 * or {@link #updateClient(ClientProperty, String)}.
+	 * </p>
+	 *
+	 * @param clientId
+	 * 		the ID of the client to edit
+	 * @param property
+	 * 		the client property to modify, make sure it is editable
+	 * @param value
+	 * 		the new value of the property
+	 *
+	 * @return a future to track the progress of this command
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Client#getId()
+	 * @see #editClient(int, Map)
+	 * @see #updateClient(Map)
+	 */
+	public CommandFuture<Void> editClient(int clientId, ClientProperty property, String value) {
+		return editClient(clientId, Collections.singletonMap(property, value));
 	}
 
 	/**
@@ -4748,6 +4803,30 @@ public class TS3ApiAsync {
 	public CommandFuture<Void> updateClient(Map<ClientProperty, String> options) {
 		final CClientUpdate update = new CClientUpdate(options);
 		return executeAndReturnError(update);
+	}
+
+	/**
+	 * Changes a single client property for this server query instance.
+	 * <p>
+	 * Note that one can set many properties at once with the overloaded method that
+	 * takes a map of client properties and strings.
+	 * </p>
+	 *
+	 * @param property
+	 * 		the client property to modify, make sure it is editable
+	 * @param value
+	 * 		the new value of the property
+	 *
+	 * @return a future to track the progress of this command
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see #updateClient(Map)
+	 * @see #editClient(int, Map)
+	 */
+	public CommandFuture<Void> updateClient(ClientProperty property, String value) {
+		return updateClient(Collections.singletonMap(property, value));
 	}
 
 	/**
