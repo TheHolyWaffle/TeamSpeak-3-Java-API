@@ -47,6 +47,17 @@ public class Client extends Wrapper {
 		return get(ClientProperty.CLIENT_AWAY_MESSAGE);
 	}
 
+	public String[] getBadgeGUIDs() {
+		String raw = get(ClientProperty.CLIENT_BADGES);
+		String[] properties = raw.split("[\\s:;]");
+		for (String property : properties) {
+			if (!property.startsWith("badges=")) continue;
+			String commaSepBadges = property.substring("badges=".length());
+			return commaSepBadges.split(",");
+		}
+		return new String[0];
+	}
+
 	public int getChannelGroupId() {
 		return getInt(ClientProperty.CLIENT_CHANNEL_GROUP_ID);
 	}
@@ -143,6 +154,17 @@ public class Client extends Wrapper {
 
 	public String getVersion() {
 		return get(ClientProperty.CLIENT_VERSION);
+	}
+
+	public boolean hasOverwolf() {
+		String raw = get(ClientProperty.CLIENT_BADGES);
+		String[] properties = raw.split("[\\s:;]");
+		for (String property : properties) {
+			if (!(property.startsWith("overwolf=") || property.startsWith("Overwolf="))) continue;
+			String overwolfValue = property.substring("overwolf=".length());
+			return overwolfValue.equals("1");
+		}
+		return false;
 	}
 
 	public boolean isAway() {
