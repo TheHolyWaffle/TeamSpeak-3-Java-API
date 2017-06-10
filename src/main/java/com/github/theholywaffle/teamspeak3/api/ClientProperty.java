@@ -55,6 +55,7 @@ public enum ClientProperty implements Property {
 	CLIENT_DEFAULT_TOKEN(false),
 	CLIENT_DESCRIPTION(true),
 	CLIENT_FLAG_AVATAR(false),
+	CLIENT_FLAG_TALKING(false),
 	CLIENT_ICON_ID(true),
 	CLIENT_IDLE_TIME(false),
 	CLIENT_INPUT_HARDWARE(false),

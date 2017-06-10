@@ -240,6 +240,6 @@ public class Client extends Wrapper {
 	}
 
 	public boolean isTalking() {
-		return getBoolean("client_flag_talking");
+		return getBoolean(ClientProperty.CLIENT_FLAG_TALKING);
 	}
 }
