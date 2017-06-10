@@ -63,7 +63,7 @@ public class TS3Query {
 	}
 
 	private final ConnectionHandler connectionHandler;
-	private final EventManager eventManager = new EventManager();
+	private final EventManager eventManager = new EventManager(this);
 	private final ExecutorService userThreadPool = Executors.newCachedThreadPool();
 	private final FileTransferHelper fileTransferHelper;
 	private final TS3Api api;

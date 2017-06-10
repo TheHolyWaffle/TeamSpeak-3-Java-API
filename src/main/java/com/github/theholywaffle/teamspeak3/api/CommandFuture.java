@@ -456,7 +456,7 @@ public class CommandFuture<V> implements Future<V> {
 				successListener.handleSuccess(value);
 			} catch (Exception e) {
 				// Whatever happens, we do not want a user error to leak into our logic
-				log.error("User SuccessListener threw an exception", e);
+				log.error("SuccessListener threw an exception", e);
 			}
 		}
 		return true;
@@ -491,7 +491,7 @@ public class CommandFuture<V> implements Future<V> {
 				failureListener.handleFailure(exception);
 			} catch (Exception e) {
 				// Whatever happens, we do not want a user error to leak into our logic
-				log.error("User FailureListener threw an exception", e);
+				log.error("FailureListener threw an exception", e);
 			}
 		}
 		return true;

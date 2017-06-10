@@ -30,6 +30,8 @@ import com.github.theholywaffle.teamspeak3.api.event.*;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3UnknownEventException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -38,8 +40,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class EventManager {
 
+	private static final Logger log = LoggerFactory.getLogger(EventManager.class);
+
 	// CopyOnWriteArrayList for thread safety
 	private final Collection<TS3Listener> listeners = new CopyOnWriteArrayList<>();
+	private final TS3Query ts3;
+
+	EventManager(TS3Query query) {
+		ts3 = query;
+	}
 
 	public void addListeners(TS3Listener... listeners) {
 		this.listeners.addAll(Arrays.asList(listeners));
@@ -60,9 +69,18 @@ public class EventManager {
 		}
 	}
 
-	public void fireEvent(TS3Event event) {
-		for (TS3Listener listener : listeners) {
-			event.fire(listener);
+	public void fireEvent(final TS3Event event) {
+		for (final TS3Listener listener : listeners) {
+			ts3.submitUserTask(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						event.fire(listener);
+					} catch (Throwable throwable) {
+						log.error("Event listener threw an exception", throwable);
+					}
+				}
+			});
 		}
 	}
 

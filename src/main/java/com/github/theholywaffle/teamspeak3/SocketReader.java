@@ -107,17 +107,12 @@ public class SocketReader extends Thread {
 	}
 
 	private void handleEvent(final String event) {
-		if (logComms) log.debug("< [event] {}", event);
+		if (logComms) log.debug("[event] < {}", event);
 
 		// Filter out duplicate events for join, quit and channel move events
 		if (!isDuplicate(event)) {
-			ts3.submitUserTask(new Runnable() {
-				@Override
-				public void run() {
-					final String arr[] = event.split(" ", 2);
-					ts3.getEventManager().fireEvent(arr[0], arr[1]);
-				}
-			});
+			final String arr[] = event.split(" ", 2);
+			ts3.getEventManager().fireEvent(arr[0], arr[1]);
 		}
 	}
 
