@@ -140,7 +140,7 @@ public class SocketReader extends Thread {
 
 		command.feedError(error.substring("error ".length()));
 		if (command.getError().getId() != 0) {
-			log.warn("TS3 command error: {}", command.getError());
+			log.debug("TS3 command error: {}", command.getError());
 		}
 		receiveQueue.remove();
 
