@@ -10,6 +10,10 @@ cache:
 # Give up sudo to enable container-based builds
 sudo: false
 
+# Prevent separate install step
+# (Travis would run mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V prior to the test build)
+install: true
+
 # Only send mails if a build fails
 notifications:
   email:
