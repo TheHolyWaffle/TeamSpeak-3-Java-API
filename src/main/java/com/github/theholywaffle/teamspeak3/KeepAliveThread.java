@@ -50,7 +50,7 @@ public class KeepAliveThread extends Thread {
 				final long idleTime = writer.getIdleTime();
 				if (idleTime >= SLEEP) {
 					// Using the asynchronous API so we get InterruptedExceptions
-					asyncApi.updateClient(null).get();
+					asyncApi.updateClient(null).await();
 				} else {
 					Thread.sleep(SLEEP - idleTime);
 				}
