@@ -33,9 +33,11 @@ import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayRespons
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class EventManager {
@@ -43,7 +45,7 @@ public class EventManager {
 	private static final Logger log = LoggerFactory.getLogger(EventManager.class);
 
 	// CopyOnWriteArrayList for thread safety
-	private final Collection<TS3Listener> listeners = new CopyOnWriteArrayList<>();
+	private final Collection<ListenerTask> tasks = new CopyOnWriteArrayList<>();
 	private final TS3Query ts3;
 
 	EventManager(TS3Query query) {
@@ -51,11 +53,27 @@ public class EventManager {
 	}
 
 	public void addListeners(TS3Listener... listeners) {
-		this.listeners.addAll(Arrays.asList(listeners));
+		for (TS3Listener listener : listeners) {
+			if (listener == null) throw new IllegalArgumentException("A listener was null");
+			ListenerTask task = new ListenerTask(listener);
+			tasks.add(task);
+		}
 	}
 
 	public void removeListeners(TS3Listener... listeners) {
-		this.listeners.removeAll(Arrays.asList(listeners));
+		// Bad performance (O(n*m)), but this method is rarely if ever used
+		Iterator<ListenerTask> taskIterator = tasks.iterator();
+		while (taskIterator.hasNext()) {
+			ListenerTask task = taskIterator.next();
+			TS3Listener taskListener = task.getListener();
+
+			for (TS3Listener listener : listeners) {
+				if (taskListener.equals(listener)) {
+					taskIterator.remove();
+					break;
+				}
+			}
+		}
 	}
 
 	public void fireEvent(String notifyName, String notifyBody) {
@@ -69,18 +87,10 @@ public class EventManager {
 		}
 	}
 
-	public void fireEvent(final TS3Event event) {
-		for (final TS3Listener listener : listeners) {
-			ts3.submitUserTask(new Runnable() {
-				@Override
-				public void run() {
-					try {
-						event.fire(listener);
-					} catch (Throwable throwable) {
-						log.error("Event listener threw an exception", throwable);
-					}
-				}
-			});
+	public void fireEvent(TS3Event event) {
+		if (event == null) throw new IllegalArgumentException("TS3Event was null");
+		for (ListenerTask task : tasks) {
+			task.enqueueEvent(event);
 		}
 	}
 
@@ -112,6 +122,60 @@ public class EventManager {
 				return new PrivilegeKeyUsedEvent(eventData);
 			default:
 				throw new TS3UnknownEventException(notifyName + " " + eventData);
+		}
+	}
+
+	/*
+	 * Do not synchronize on instances of this class from outside the class itself!
+	 */
+	private class ListenerTask implements Runnable {
+
+		private static final int START_QUEUE_SIZE = 16;
+
+		private final TS3Listener listener;
+		private final Queue<TS3Event> eventQueue;
+
+		ListenerTask(TS3Listener ts3Listener) {
+			listener = ts3Listener;
+			eventQueue = new ArrayDeque<>(START_QUEUE_SIZE);
+		}
+
+		TS3Listener getListener() {
+			return listener;
+		}
+
+		synchronized void enqueueEvent(TS3Event event) {
+			if (eventQueue.isEmpty()) {
+				// Add the event to the queue and start a task to process this event and any events
+				// that might be enqueued before the last event is removed from the queue
+				eventQueue.add(event);
+				ts3.submitUserTask(this);
+			} else {
+				// Just add the event to the queue, the running task will pick it up
+				eventQueue.add(event);
+			}
+		}
+
+		@Override
+		public void run() {
+			TS3Event currentEvent;
+			synchronized (this) {
+				currentEvent = eventQueue.peek();
+				if (currentEvent == null) throw new IllegalStateException("Task started without events");
+			}
+
+			do {
+				try {
+					currentEvent.fire(listener);
+				} catch (Throwable throwable) {
+					log.error("Event listener threw an exception", throwable);
+				}
+
+				synchronized (this) {
+					eventQueue.remove();
+					currentEvent = eventQueue.peek();
+				}
+			} while (currentEvent != null);
 		}
 	}
 }
