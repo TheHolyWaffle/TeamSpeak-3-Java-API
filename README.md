@@ -94,13 +94,13 @@ Only use `FloodRate.UNLIMITED` if you are sure that your query account is whitel
 
 ### TS3Config Settings
 
-|Option | Description | Default value | Required |
-|--- | --- |:---:|:---:|
-|Host/IP | IP/Host of TeamSpeak 3 server.|  | yes |
-|QueryPort | Query port of TeamSpeak 3 server. | 10011 | no |
-|FloodRate | Prevents possible spam to the server. | `FloodRate.DEFAULT` | no |
-|Communications logging | Log client-server communication. | false | no |
-|Command timeout | Time until a command waiting for a response fails | 4000 (ms) | no |
+| Option | Description | Method signature | Default value | Required |
+| --- | --- | --- | :---: | :---: |
+|Host/IP | IP/Host of TeamSpeak 3 server.| ``setHost(String)`` |  | yes |
+|QueryPort | Query port of TeamSpeak 3 server. | ``setQueryPort(int)`` | 10011 | no |
+|FloodRate | Prevents possible spam to the server. | ``setFloodRate(FloodRate)`` | `FloodRate.DEFAULT` | no |
+|Communications logging | Log client-server communication. | ``setEnableCommunicationsLogging(boolean)`` | false | no |
+|Command timeout | Time until a command waiting for a response fails | ``setCommandTimeout(int)`` | 4000 (ms) | no |
 
 ## Questions or bugs?
 
