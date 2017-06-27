@@ -106,4 +106,4 @@ Only use `FloodRate.UNLIMITED` if you are sure that your query account is whitel
 
 Please let us know [here](../../issues). We'll try to help you as soon as we can.
 
-If you just have a simple question or want to talk to us about something else, feel free to join the [repository chat](https://gitter.im/TheHolyWaffle/TeamSpeak-3-Java-API) on Gitter.
+If you just have a simple question or want to talk to us about something else, please join the [repository chat](https://gitter.im/TheHolyWaffle/TeamSpeak-3-Java-API) on Gitter.
