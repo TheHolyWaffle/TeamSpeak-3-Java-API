@@ -111,8 +111,8 @@ public enum ClientProperty implements Property {
 		return name().toLowerCase(Locale.ROOT);
 	}
 
+	@Override
 	public boolean isChangeable() {
 		return changeable;
 	}
-
 }
