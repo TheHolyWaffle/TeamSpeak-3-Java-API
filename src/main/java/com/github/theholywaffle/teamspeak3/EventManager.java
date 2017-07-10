@@ -149,7 +149,7 @@ public class EventManager {
 				// Add the event to the queue and start a task to process this event and any events
 				// that might be enqueued before the last event is removed from the queue
 				eventQueue.add(event);
-				ts3.submitUserTask(this);
+				ts3.submitUserTask("Event listener task", this);
 			} else {
 				// Just add the event to the queue, the running task will pick it up
 				eventQueue.add(event);

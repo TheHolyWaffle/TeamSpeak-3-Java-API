@@ -178,8 +178,17 @@ public class TS3Query {
 		io.enqueueCommand(c);
 	}
 
-	void submitUserTask(Runnable task) {
-		userThreadPool.submit(task);
+	void submitUserTask(final String name, final Runnable task) {
+		userThreadPool.submit(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					task.run();
+				} catch (Throwable throwable) {
+					log.error(name + " threw an exception", throwable);
+				}
+			}
+		});
 	}
 
 	EventManager getEventManager() {
@@ -193,17 +202,15 @@ public class TS3Query {
 	void fireDisconnect() {
 		connected = false;
 
-		userThreadPool.submit(new Runnable() {
+		submitUserTask("ConnectionHandler disconnect task", new Runnable() {
 			@Override
 			public void run() {
 				try {
 					connectionHandler.onDisconnect(TS3Query.this);
-				} catch (Throwable t) {
-					log.error("ConnectionHandler threw exception in disconnect handler", t);
-				}
-
-				if (!connected) {
-					exit();
+				} finally {
+					if (!connected) {
+						exit();
+					}
 				}
 			}
 		});
