@@ -37,8 +37,7 @@ public class ValueParam extends Parameter {
 	}
 
 	@Override
-	public String build() {
-		return CommandEncoding.encode(value);
+	public void appendTo(StringBuilder str) {
+		str.append(CommandEncoding.encode(value));
 	}
-
 }

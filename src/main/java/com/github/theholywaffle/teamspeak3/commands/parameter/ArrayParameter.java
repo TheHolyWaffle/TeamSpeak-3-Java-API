@@ -49,25 +49,24 @@ public class ArrayParameter extends Parameter {
 	}
 
 	@Override
-	public String build() {
-		if (parameters.isEmpty()) return "";
-
-		StringBuilder str = new StringBuilder();
+	public void appendTo(StringBuilder str) {
+		if (parameters.isEmpty()) return;
 
 		// First entry without |
-		str.append(parameters.get(0).build());
+		parameters.get(0).appendTo(str);
 		for (int i = 1; i < parametersPerEntry; ++i) {
-			str.append(' ').append(parameters.get(i).build());
+			str.append(' ');
+			parameters.get(i).appendTo(str);
 		}
 
 		// Remaining entries separated with |
 		for (int offset = parametersPerEntry; offset < parameters.size(); offset += parametersPerEntry) {
-			str.append('|').append(parameters.get(offset).build());
+			str.append('|');
+			parameters.get(offset).appendTo(str);
 			for (int i = 1; i < parametersPerEntry; ++i) {
-				str.append(' ').append(parameters.get(offset + i).build());
+				str.append(' ');
+				parameters.get(offset + i).appendTo(str);
 			}
 		}
-
-		return str.toString();
 	}
 }

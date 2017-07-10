@@ -56,7 +56,8 @@ public class Command {
 	public String toString() {
 		StringBuilder builder = new StringBuilder(name);
 		for (Parameter param : parameters) {
-			builder.append(' ').append(param);
+			builder.append(' ');
+			param.appendTo(builder);
 		}
 		return builder.toString();
 	}

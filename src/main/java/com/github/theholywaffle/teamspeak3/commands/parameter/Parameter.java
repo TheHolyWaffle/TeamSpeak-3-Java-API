@@ -28,11 +28,12 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
 
 public abstract class Parameter {
 
-	public abstract String build();
+	public abstract void appendTo(StringBuilder str);
 
 	@Override
 	public String toString() {
-		return build();
+		StringBuilder stringBuilder = new StringBuilder();
+		appendTo(stringBuilder);
+		return stringBuilder.toString();
 	}
-
 }

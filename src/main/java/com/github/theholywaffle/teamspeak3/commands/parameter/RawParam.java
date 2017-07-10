@@ -35,8 +35,7 @@ public class RawParam extends Parameter {
 	}
 
 	@Override
-	public String build() {
-		return raw;
+	public void appendTo(StringBuilder str) {
+		str.append(raw);
 	}
-
 }
