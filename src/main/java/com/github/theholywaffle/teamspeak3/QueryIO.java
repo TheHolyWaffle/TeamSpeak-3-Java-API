@@ -30,6 +30,7 @@ import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedExce
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.reconnect.DisconnectingConnectionHandler;
 import com.github.theholywaffle.teamspeak3.commands.Command;
+import com.github.theholywaffle.teamspeak3.commands.response.ResponseBuilder;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -45,7 +46,7 @@ public class QueryIO {
 	private final KeepAliveThread keepAlive;
 
 	private final BlockingQueue<Command> sendQueue;
-	private final BlockingQueue<Command> receiveQueue;
+	private final BlockingQueue<ResponseBuilder> receiveQueue;
 
 	QueryIO(TS3Query query, TS3Config config) {
 		sendQueue = new LinkedBlockingQueue<>();
@@ -90,7 +91,9 @@ public class QueryIO {
 		if (io.sendQueue.isEmpty() && io.receiveQueue.isEmpty()) return;
 
 		// Resend commands which remained unanswered first
-		sendQueue.addAll(io.receiveQueue);
+		for (ResponseBuilder responseBuilder : io.receiveQueue) {
+			sendQueue.add(responseBuilder.getCommand());
+		}
 		sendQueue.addAll(io.sendQueue);
 
 		io.receiveQueue.clear();
@@ -132,7 +135,7 @@ public class QueryIO {
 		return sendQueue;
 	}
 
-	BlockingQueue<Command> getReceiveQueue() {
+	BlockingQueue<ResponseBuilder> getReceiveQueue() {
 		return receiveQueue;
 	}
 }

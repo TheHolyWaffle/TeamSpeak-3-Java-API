@@ -26,7 +26,6 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
-import com.github.theholywaffle.teamspeak3.api.Callback;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
@@ -175,8 +174,7 @@ public class TS3Query {
 
 	// INTERNAL
 
-	void doCommandAsync(Command c, Callback callback) {
-		if (callback != null) c.setCallback(callback);
+	void doCommandAsync(Command c) {
 		io.enqueueCommand(c);
 	}
 

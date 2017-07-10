@@ -26,9 +26,12 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
-import com.github.theholywaffle.teamspeak3.api.Callback;
-import com.github.theholywaffle.teamspeak3.commands.CQuit;
+import com.github.theholywaffle.teamspeak3.api.CommandFuture;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
+import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
 import com.github.theholywaffle.teamspeak3.commands.Command;
+import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
+import com.github.theholywaffle.teamspeak3.commands.response.ResponseBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +45,7 @@ public class SocketReader extends Thread {
 	private static final Logger log = LoggerFactory.getLogger(SocketReader.class);
 
 	private final TS3Query ts3;
-	private final Queue<Command> receiveQueue;
+	private final Queue<ResponseBuilder> receiveQueue;
 	private final BufferedReader in;
 	private final boolean logComms;
 
@@ -117,42 +120,56 @@ public class SocketReader extends Thread {
 	}
 
 	private void handleCommandResponse(final String response) {
-		final Command command = receiveQueue.peek();
-		if (command == null) {
+		final ResponseBuilder responseBuilder = receiveQueue.peek();
+		if (responseBuilder == null) {
 			log.warn("[UNHANDLED] < {}", response);
 			return;
 		}
 
-		if (logComms) log.debug("[{}] < {}", command.getName(), response);
+		if (logComms) log.debug("[{}] < {}", responseBuilder.getCommand().getName(), response);
 
 		if (response.startsWith("error ")) {
-			handleCommandError(command, response);
+			handleCommandError(responseBuilder, response);
 		} else {
-			command.feed(response);
+			responseBuilder.appendResponse(response);
 		}
 	}
 
-	private void handleCommandError(Command command, final String error) {
-		if (command instanceof CQuit) {
+	private void handleCommandError(ResponseBuilder responseBuilder, final String error) {
+		final Command command = responseBuilder.getCommand();
+		if (command.getName().equals("quit")) {
 			// Response to a quit command received, we're done
 			interrupt();
 		}
 
-		command.feedError(error.substring("error ".length()));
-		if (command.getError().getId() != 0) {
-			log.debug("TS3 command error: {}", command.getError());
-		}
 		receiveQueue.remove();
 
-		final Callback callback = command.getCallback();
-		if (callback != null) {
+		final QueryError queryError = DefaultArrayResponse.parseError(error);
+		final CommandFuture<DefaultArrayResponse> future = command.getFuture();
+
+		if (queryError.isSuccessful()) {
+			final DefaultArrayResponse response = responseBuilder.buildResponse();
+
 			ts3.submitUserTask(new Runnable() {
 				@Override
 				public void run() {
 					try {
-						callback.handle();
+						future.set(response);
 					} catch (Throwable t) {
-						log.error("Callback threw an exception", t);
+						log.error("Future SuccessListener (" + command.getName() + ") threw an exception", t);
+					}
+				}
+			});
+		} else {
+			log.debug("TS3 command error: {}", queryError);
+
+			ts3.submitUserTask(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						future.fail(new TS3CommandFailedException(queryError));
+					} catch (Throwable t) {
+						log.error("Future FailureListener (" + command.getName() + ") threw an exception", t);
 					}
 				}
 			});

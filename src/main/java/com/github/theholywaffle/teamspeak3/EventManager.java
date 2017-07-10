@@ -77,9 +77,9 @@ public class EventManager {
 	}
 
 	public void fireEvent(String notifyName, String notifyBody) {
-		final DefaultArrayResponse response = new DefaultArrayResponse(notifyBody);
+		final DefaultArrayResponse response = DefaultArrayResponse.parse(notifyBody);
 
-		for (Wrapper dataWrapper : response.getArray()) {
+		for (Wrapper dataWrapper : response.getResponses()) {
 			Map<String, String> eventData = dataWrapper.getMap();
 			TS3Event event = createEvent(notifyName, eventData);
 

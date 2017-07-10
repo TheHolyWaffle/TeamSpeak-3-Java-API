@@ -27,6 +27,7 @@ package com.github.theholywaffle.teamspeak3;
  */
 
 import com.github.theholywaffle.teamspeak3.commands.Command;
+import com.github.theholywaffle.teamspeak3.commands.response.ResponseBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +40,7 @@ public class SocketWriter extends Thread {
 	private static final Logger log = LoggerFactory.getLogger(SocketWriter.class);
 
 	private final BlockingQueue<Command> sendQueue;
-	private final BlockingQueue<Command> receiveQueue;
+	private final BlockingQueue<ResponseBuilder> receiveQueue;
 	private final int floodRate;
 	private final boolean logComms;
 	private final PrintStream out;
@@ -61,7 +62,7 @@ public class SocketWriter extends Thread {
 				final Command c = sendQueue.take();
 				final String msg = c.toString();
 
-				receiveQueue.put(c);
+				receiveQueue.put(new ResponseBuilder(c));
 				if (logComms) log.debug("[{}] > {}", c.getName(), msg);
 				out.println(msg);
 

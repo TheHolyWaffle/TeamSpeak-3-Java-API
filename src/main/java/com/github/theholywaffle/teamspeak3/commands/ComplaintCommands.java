@@ -26,38 +26,33 @@ package com.github.theholywaffle.teamspeak3.commands;
  * #L%
  */
 
-import com.github.theholywaffle.teamspeak3.api.CommandFuture;
-import com.github.theholywaffle.teamspeak3.commands.parameter.Parameter;
-import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
+import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 
-import java.util.Collection;
+public final class ComplaintCommands {
 
-public class Command {
-
-	private final String name;
-	private final Collection<Parameter> parameters;
-	private final CommandFuture<DefaultArrayResponse> future;
-
-	Command(String commandName, Collection<Parameter> parameters) {
-		this.name = commandName;
-		this.parameters = parameters;
-		this.future = new CommandFuture<>();
+	private ComplaintCommands() {
+		throw new Error("No instances");
 	}
 
-	public String getName() {
-		return name;
+	public static Command complainAdd(int clientDBId, String message) {
+		CommandBuilder builder = new CommandBuilder("complainadd", 2);
+		builder.add(new KeyValueParam("tcldbid", clientDBId));
+		builder.add(new KeyValueParam("message", message));
+		return builder.build();
 	}
 
-	public CommandFuture<DefaultArrayResponse> getFuture() {
-		return future;
+	public static Command complainDel(int clientDBId, int fromClientDBId) {
+		CommandBuilder builder = new CommandBuilder("complaindel", 2);
+		builder.add(new KeyValueParam("tcldbid", clientDBId));
+		builder.add(new KeyValueParam("fcldbid", fromClientDBId));
+		return builder.build();
 	}
 
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder(name);
-		for (Parameter param : parameters) {
-			builder.append(' ').append(param);
-		}
-		return builder.toString();
+	public static Command complainDelAll(int clientDBId) {
+		return new CommandBuilder("complaindelall", 1).add(new KeyValueParam("tcldbid", clientDBId)).build();
+	}
+
+	public static Command complainList(int clientDBId) {
+		return new CommandBuilder("complainlist", 1).addIf(clientDBId > 0, new KeyValueParam("tcldbid", clientDBId)).build();
 	}
 }

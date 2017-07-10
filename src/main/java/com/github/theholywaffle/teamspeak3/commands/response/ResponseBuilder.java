@@ -1,10 +1,10 @@
-package com.github.theholywaffle.teamspeak3.api.wrapper;
+package com.github.theholywaffle.teamspeak3.commands.response;
 
 /*
  * #%L
  * TeamSpeak 3 Java API
  * %%
- * Copyright (C) 2014 Bert De Geyter
+ * Copyright (C) 2017 Bert De Geyter, Roger Baumgartner
  * %%
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,35 +26,32 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.Map;
+import com.github.theholywaffle.teamspeak3.commands.Command;
 
-public class QueryError extends Wrapper {
+public class ResponseBuilder {
 
-	private static final int ERROR_ID_OK = 0;
-	private static final int ERROR_ID_EMPTY_RESULT_SET = 1281;
+	private final Command command;
+	private final StringBuilder rawResponseBuilder;
 
-	public QueryError(Map<String, String> map) {
-		super(map);
+	public ResponseBuilder(Command command) {
+		this.command = command;
+		this.rawResponseBuilder = new StringBuilder();
 	}
 
-	public int getId() {
-		return getInt("id");
+	public Command getCommand() {
+		return command;
 	}
 
-	public String getMessage() {
-		return get("msg");
+	public DefaultArrayResponse buildResponse() {
+		// Erase trailing '|'
+		if (rawResponseBuilder.length() > 0) {
+			rawResponseBuilder.setLength(rawResponseBuilder.length() - 1);
+		}
+
+		return DefaultArrayResponse.parse(rawResponseBuilder.toString());
 	}
 
-	public String getExtraMessage() {
-		return get("extra_msg");
-	}
-
-	public int getFailedPermissionId() {
-		return getInt("failed_permid");
-	}
-
-	public boolean isSuccessful() {
-		final int id = getId();
-		return (id == ERROR_ID_OK || id == ERROR_ID_EMPTY_RESULT_SET);
+	public void appendResponse(String rawArrayResponse) {
+		rawResponseBuilder.append(rawArrayResponse).append('|');
 	}
 }
