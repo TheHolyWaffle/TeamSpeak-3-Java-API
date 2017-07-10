@@ -100,7 +100,7 @@ public class TS3Query {
 
 	// PUBLIC
 
-	public void connect() {
+	public synchronized void connect() {
 		if (userThreadPool.isShutdown()) {
 			throw new IllegalStateException("The query has already been shut down");
 		}
@@ -124,7 +124,7 @@ public class TS3Query {
 	/**
 	 * Removes and closes all used resources to the TeamSpeak server.
 	 */
-	public void exit() {
+	public synchronized void exit() {
 		if (connected) {
 			// Sending this command will guarantee that all previously sent commands have been processed
 			try {
@@ -174,7 +174,7 @@ public class TS3Query {
 
 	// INTERNAL
 
-	void doCommandAsync(Command c) {
+	synchronized void doCommandAsync(Command c) {
 		io.enqueueCommand(c);
 	}
 
