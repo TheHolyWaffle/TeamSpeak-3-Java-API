@@ -2241,7 +2241,12 @@ public class TS3ApiAsync {
 		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
 			public void handleSuccess(DefaultArrayResponse result) {
-				getClientInfo(result.getFirstResponse().getInt("clid")).forwardResult(future);
+				if (result.getResponses().isEmpty()) {
+					future.set(null);
+				} else {
+					final int clientId = result.getFirstResponse().getInt("clid");
+					getClientInfo(clientId).forwardResult(future);
+				}
 			}
 		}).forwardFailure(future);
 
@@ -2419,7 +2424,12 @@ public class TS3ApiAsync {
 		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
 			public void handleSuccess(DefaultArrayResponse result) {
-				getDatabaseClientInfo(result.getFirstResponse().getInt("cldbid")).forwardResult(future);
+				if (result.getResponses().isEmpty()) {
+					future.set(null);
+				} else {
+					final int databaseId = result.getFirstResponse().getInt("cldbid");
+					getDatabaseClientInfo(databaseId).forwardResult(future);
+				}
 			}
 		}).forwardFailure(future);
 
