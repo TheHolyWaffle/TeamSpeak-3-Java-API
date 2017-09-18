@@ -50,6 +50,20 @@ public class TextMessageEvent extends BaseEvent {
 		return get("msg");
 	}
 
+	/**
+	 * Gets the client ID of the recipient of a private message.
+	 * <ul>
+	 * <li>If the private message was sent <b>to</b> the query, the target ID will be the query's client ID</li>
+	 * <li>If the private message was sent <b>by</b> the query, the target ID will be the recipient's client ID</li>
+	 * <li>If this is not an event for a private message, this method will return {@code -1}</li>
+	 * </ul>
+	 *
+	 * @return the client ID of the recipient
+	 */
+	public int getTargetClientId() {
+		return getInt("target");
+	}
+
 	@Override
 	public void fire(TS3Listener listener) {
 		listener.onTextMessage(this);
