@@ -2418,7 +2418,7 @@ public class TS3ApiAsync {
 	 * @see DatabaseClientInfo
 	 */
 	public CommandFuture<DatabaseClientInfo> getDatabaseClientByUId(String clientUId) {
-		final Command cmd = ClientCommands.clientGetDBIdFromUId(clientUId);
+		final Command cmd = DatabaseClientCommands.clientDBFind(clientUId, true);
 		final CommandFuture<DatabaseClientInfo> future = new CommandFuture<>();
 
 		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
