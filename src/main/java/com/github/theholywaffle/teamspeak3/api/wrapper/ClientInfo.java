@@ -151,6 +151,10 @@ public class ClientInfo extends Client {
 		return getLong(ClientProperty.CONNECTION_PACKETS_SENT_TOTAL);
 	}
 
+	public String getUniqueIdentifier() {
+		return get(ClientProperty.CLIENT_UNIQUE_IDENTIFIER);
+	}
+
 	public int getUnreadMessages() {
 		return getInt(ClientProperty.CLIENT_UNREAD_MESSAGES);
 	}
