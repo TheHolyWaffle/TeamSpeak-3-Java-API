@@ -4,6 +4,9 @@ TeamSpeak 3 Java API
 
 A Java 7 wrapper of the [TeamSpeak 3](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf)  Server Query API
 
+<a target='_blank' rel='nofollow' href='https://app.codesponsor.io/link/sCywAjA9UJZXFdDf3QeuU2Sp/TheHolyWaffle/TeamSpeak-3-Java-API'>
+  <img alt='Sponsor' width='888' height='68' src='https://app.codesponsor.io/embed/sCywAjA9UJZXFdDf3QeuU2Sp/TheHolyWaffle/TeamSpeak-3-Java-API.svg' />
+</a>
 
 ## Features
 
