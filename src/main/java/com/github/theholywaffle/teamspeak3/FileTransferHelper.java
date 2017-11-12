@@ -127,7 +127,7 @@ public class FileTransferHelper {
 	// UTIL
 
 	public byte[] readFully(InputStream dataIn, long dataLength) throws IOException {
-		if (dataLength > Integer.MAX_VALUE) throw new IOException("File too large");
+		if (dataLength > Integer.MAX_VALUE - 64) throw new IOException("File too large");
 
 		final int len = (int) dataLength;
 		byte[] data = new byte[len];
