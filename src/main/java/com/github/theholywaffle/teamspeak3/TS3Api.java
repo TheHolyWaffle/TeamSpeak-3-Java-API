@@ -2012,6 +2012,60 @@ public class TS3Api {
 		}
 		return null;
 	}
+	
+	 /**
+         *  Gets information about the clients in the specified server group id.
+         * @param serverGroupId
+         *               the id of the server group
+         * @return the list of clients in the server group
+         */
+        public List<Client> getClientsInServerGroup(int serverGroupId) {
+            List<Client> clients = getClients();
+            List<Client> serverGroupClients = getClients();
+            serverGroupClients.clear();
+            int[] cg;
+            for (Client client : clients) {
+                cg = client.getServerGroups();
+                for (int g : cg) {
+                    if (g == serverGroupId) {
+                        serverGroupClients.add(client);
+                    }
+                }
+            }
+            return serverGroupClients;
+        }
+        
+        /**
+         *  Gets information about the clients in the specified server group
+         * @param serverGroupName
+         *                  the name of the server group
+         * @return the list of clients in the specified server group
+         */
+        public List<Client> getClientsInServerGroup(String serverGroupName) {
+            List<Client> clients = getClients();
+            List<ServerGroup> groups = getServerGroups();
+            List<Client> serverGroupClients = getClients();
+            serverGroupClients.clear();
+            int[] cg;
+            for (Client client : clients) {
+                cg = client.getServerGroups();
+                for (int g : cg) {
+                    System.out.println(client.getNickname() + " is in Server Group: " + getServerGroups().get(g).getName());
+                }
+                for (ServerGroup group : groups) {
+                    if (group.getName().equals(serverGroupName)) {
+                        for (int g : cg) {
+                            if (group.getId() == g) {
+                                serverGroupClients.add(client);
+                                System.out.println("Client added: " + client.getNickname());
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return serverGroupClients;
+        }
 
 	/**
 	 * Gets information about the client with the specified unique identifier.
