@@ -30,6 +30,7 @@ import com.github.theholywaffle.teamspeak3.api.*;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3FileTransferFailedException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.*;
 import com.github.theholywaffle.teamspeak3.commands.*;
@@ -2193,12 +2194,12 @@ public class TS3ApiAsync {
 		final Command cmd = ClientCommands.clientFind(name);
 		final CommandFuture<List<Client>> future = new CommandFuture<>();
 
-		getClients().onSuccess(new CommandFuture.SuccessListener<List<Client>>() {
+		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
-			public void handleSuccess(final List<Client> allClients) {
-				cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
+			public void handleSuccess(final DefaultArrayResponse result) {
+				getClients().onSuccess(new CommandFuture.SuccessListener<List<Client>>() {
 					@Override
-					public void handleSuccess(DefaultArrayResponse result) {
+					public void handleSuccess(List<Client> allClients) {
 						final List<Wrapper> responses = result.getResponses();
 						final List<Client> clients = new ArrayList<>(responses.size());
 
@@ -2213,10 +2214,21 @@ public class TS3ApiAsync {
 						future.set(clients);
 					}
 				}).forwardFailure(future);
-
-				query.doCommandAsync(cmd);
 			}
-		}).forwardFailure(future);
+		}).onFailure(new CommandFuture.FailureListener() {
+			@Override
+			public void handleFailure(TS3Exception e) {
+				if (e instanceof TS3CommandFailedException
+						&& ((TS3CommandFailedException) e).getError().getId() == 512) {
+					// clientfind returns error 512 if no clients with a matching pattern were found.
+					future.set(Collections.<Client>emptyList());
+				} else {
+					future.fail(e);
+				}
+			}
+		});
+
+		query.doCommandAsync(cmd);
 		return future;
 	}
 
