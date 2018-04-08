@@ -30,4 +30,5 @@ public interface Property {
 
 	String getName();
 
+	boolean isChangeable();
 }

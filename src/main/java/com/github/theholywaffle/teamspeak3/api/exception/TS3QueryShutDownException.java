@@ -1,10 +1,10 @@
-package com.github.theholywaffle.teamspeak3.commands.parameter;
+package com.github.theholywaffle.teamspeak3.api.exception;
 
 /*
  * #%L
  * TeamSpeak 3 Java API
  * %%
- * Copyright (C) 2014 Bert De Geyter
+ * Copyright (C) 2018 Bert De Geyter, Roger Baumgartner
  * %%
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,14 +26,11 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
  * #L%
  */
 
-public abstract class Parameter {
+public class TS3QueryShutDownException extends TS3Exception {
 
-	public abstract void appendTo(StringBuilder str);
+	private static final long serialVersionUID = -6727279731231409306L;
 
-	@Override
-	public String toString() {
-		StringBuilder stringBuilder = new StringBuilder();
-		appendTo(stringBuilder);
-		return stringBuilder.toString();
+	public TS3QueryShutDownException() {
+		super("The query was shut down or disconnected.");
 	}
 }

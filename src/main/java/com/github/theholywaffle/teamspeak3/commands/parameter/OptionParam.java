@@ -37,8 +37,7 @@ public class OptionParam extends Parameter {
 	}
 
 	@Override
-	public String build() {
-		return "-" + CommandEncoding.encode(option);
+	public void appendTo(StringBuilder str) {
+		str.append('-').append(CommandEncoding.encode(option));
 	}
-
 }

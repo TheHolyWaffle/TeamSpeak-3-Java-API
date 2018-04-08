@@ -29,20 +29,14 @@ package com.github.theholywaffle.teamspeak3;
 import com.github.theholywaffle.teamspeak3.api.*;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3FileTransferFailedException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.*;
-import com.github.theholywaffle.teamspeak3.commands.*;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -72,10 +66,7 @@ import java.util.regex.Pattern;
  */
 public class TS3Api {
 
-	/**
-	 * The TS3 query to which this API sends its commands.
-	 */
-	private final TS3Query query;
+	private final TS3ApiAsync asyncApi;
 
 	/**
 	 * Creates a new synchronous API object for the given {@code TS3Query}.
@@ -83,11 +74,11 @@ public class TS3Api {
 	 * <b>Usually, this constructor should not be called.</b> Use {@link TS3Query#getApi()} instead.
 	 * </p>
 	 *
-	 * @param query
-	 * 		the TS3Query to call
+	 * @param asyncApi
+	 * 		the asynchronous version of the API this class routes its method calls through
 	 */
-	public TS3Api(TS3Query query) {
-		this.query = query;
+	public TS3Api(TS3ApiAsync asyncApi) {
+		this.asyncApi = asyncApi;
 	}
 
 	/**
@@ -107,6 +98,8 @@ public class TS3Api {
 	 *
 	 * @return the ID of the newly created ban entry
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Pattern RegEx Pattern
 	 * @see Client#getId()
@@ -114,15 +107,7 @@ public class TS3Api {
 	 * @see ClientInfo#getIp()
 	 */
 	public int addBan(String ip, String name, String uid, long timeInSeconds, String reason) {
-		if (ip == null && name == null && uid == null) {
-			throw new IllegalArgumentException("Either IP, Name or UID must be set");
-		}
-
-		final CBanAdd add = new CBanAdd(ip, name, uid, timeInSeconds, reason);
-		if (query.doCommand(add)) {
-			return add.getFirstResponse().getInt("banid");
-		}
-		return -1;
+		return asyncApi.addBan(ip, name, uid, timeInSeconds, reason).getUninterruptibly();
 	}
 
 	/**
@@ -137,16 +122,15 @@ public class TS3Api {
 	 * @param permValue
 	 * 		the numeric value of the permission (or for boolean permissions: 1 = true, 0 = false)
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
 	 * @see Permission
 	 */
-	public boolean addChannelClientPermission(int channelId, int clientDBId, String permName, int permValue) {
-		final CChannelClientAddPerm add = new CChannelClientAddPerm(channelId, clientDBId, permName, permValue);
-		return query.doCommand(add);
+	public void addChannelClientPermission(int channelId, int clientDBId, String permName, int permValue) {
+		asyncApi.addChannelClientPermission(channelId, clientDBId, permName, permValue).getUninterruptibly();
 	}
 
 	/**
@@ -161,11 +145,13 @@ public class TS3Api {
 	 *
 	 * @return the ID of the newly created channel group
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup
 	 */
 	public int addChannelGroup(String name) {
-		return addChannelGroup(name, null);
+		return asyncApi.addChannelGroup(name).getUninterruptibly();
 	}
 
 	/**
@@ -178,15 +164,13 @@ public class TS3Api {
 	 *
 	 * @return the ID of the newly created channel group
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup
 	 */
 	public int addChannelGroup(String name, PermissionGroupDatabaseType type) {
-		final CChannelGroupAdd add = new CChannelGroupAdd(name, type);
-		if (query.doCommand(add)) {
-			return add.getFirstResponse().getInt("cgid");
-		}
-		return -1;
+		return asyncApi.addChannelGroup(name, type).getUninterruptibly();
 	}
 
 	/**
@@ -199,15 +183,14 @@ public class TS3Api {
 	 * @param permValue
 	 * 		the numeric value of the permission (or for boolean permissions: 1 = true, 0 = false)
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 * @see Permission
 	 */
-	public boolean addChannelGroupPermission(int groupId, String permName, int permValue) {
-		final CChannelGroupAddPerm add = new CChannelGroupAddPerm(groupId, permName, permValue);
-		return query.doCommand(add);
+	public void addChannelGroupPermission(int groupId, String permName, int permValue) {
+		asyncApi.addChannelGroupPermission(groupId, permName, permValue).getUninterruptibly();
 	}
 
 	/**
@@ -220,15 +203,14 @@ public class TS3Api {
 	 * @param permValue
 	 * 		the numeric value of the permission (or for boolean permissions: 1 = true, 0 = false)
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Permission
 	 */
-	public boolean addChannelPermission(int channelId, String permName, int permValue) {
-		final CChannelAddPerm perm = new CChannelAddPerm(channelId, permName, permValue);
-		return query.doCommand(perm);
+	public void addChannelPermission(int channelId, String permName, int permValue) {
+		asyncApi.addChannelPermission(channelId, permName, permValue).getUninterruptibly();
 	}
 
 	/**
@@ -243,15 +225,14 @@ public class TS3Api {
 	 * @param skipped
 	 * 		if set to {@code true}, the permission will not be overridden by channel group permissions
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see Permission
 	 */
-	public boolean addClientPermission(int clientDBId, String permName, int value, boolean skipped) {
-		final CClientAddPerm add = new CClientAddPerm(clientDBId, permName, value, skipped);
-		return query.doCommand(add);
+	public void addClientPermission(int clientDBId, String permName, int value, boolean skipped) {
+		asyncApi.addClientPermission(clientDBId, permName, value, skipped).getUninterruptibly();
 	}
 
 	/**
@@ -265,15 +246,14 @@ public class TS3Api {
 	 * @param clientDatabaseId
 	 * 		the database ID of the client to add
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 * @see Client#getDatabaseId()
 	 */
-	public boolean addClientToServerGroup(int groupId, int clientDatabaseId) {
-		final CServerGroupAddClient add = new CServerGroupAddClient(groupId, clientDatabaseId);
-		return query.doCommand(add);
+	public void addClientToServerGroup(int groupId, int clientDatabaseId) {
+		asyncApi.addClientToServerGroup(groupId, clientDatabaseId).getUninterruptibly();
 	}
 
 	/**
@@ -285,15 +265,14 @@ public class TS3Api {
 	 * @param message
 	 * 		the message of the complaint, may not contain BB codes
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see Complaint#getMessage()
 	 */
-	public boolean addComplaint(int clientDBId, String message) {
-		final CComplainAdd add = new CComplainAdd(clientDBId, message);
-		return query.doCommand(add);
+	public void addComplaint(int clientDBId, String message) {
+		asyncApi.addComplaint(clientDBId, message).getUninterruptibly();
 	}
 
 	/**
@@ -310,15 +289,14 @@ public class TS3Api {
 	 * @param skipped
 	 * 		if set to true, this permission will not be overridden by client or channel group permissions
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroupType
 	 * @see Permission
 	 */
-	public boolean addPermissionToAllServerGroups(ServerGroupType type, String permName, int value, boolean negated, boolean skipped) {
-		final CServerGroupAutoAddPerm add = new CServerGroupAutoAddPerm(type, permName, value, negated, skipped);
-		return query.doCommand(add);
+	public void addPermissionToAllServerGroups(ServerGroupType type, String permName, int value, boolean negated, boolean skipped) {
+		asyncApi.addPermissionToAllServerGroups(type, permName, value, negated, skipped).getUninterruptibly();
 	}
 
 	/**
@@ -341,17 +319,15 @@ public class TS3Api {
 	 *
 	 * @return the created token for a client to use
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see PrivilegeKeyType
 	 * @see #addPrivilegeKeyServerGroup(int, String)
 	 * @see #addPrivilegeKeyChannelGroup(int, int, String)
 	 */
 	public String addPrivilegeKey(PrivilegeKeyType type, int groupId, int channelId, String description) {
-		final CPrivilegeKeyAdd add = new CPrivilegeKeyAdd(type, groupId, channelId, description);
-		if (query.doCommand(add)) {
-			return add.getFirstResponse().get("token");
-		}
-		return null;
+		return asyncApi.addPrivilegeKey(type, groupId, channelId, description).getUninterruptibly();
 	}
 
 	/**
@@ -366,6 +342,8 @@ public class TS3Api {
 	 *
 	 * @return the created token for a client to use
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 * @see Channel#getId()
@@ -373,7 +351,7 @@ public class TS3Api {
 	 * @see #addPrivilegeKeyServerGroup(int, String)
 	 */
 	public String addPrivilegeKeyChannelGroup(int channelGroupId, int channelId, String description) {
-		return addPrivilegeKey(PrivilegeKeyType.CHANNEL_GROUP, channelGroupId, channelId, description);
+		return asyncApi.addPrivilegeKeyChannelGroup(channelGroupId, channelId, description).getUninterruptibly();
 	}
 
 	/**
@@ -386,13 +364,15 @@ public class TS3Api {
 	 *
 	 * @return the created token for a client to use
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 * @see #addPrivilegeKey(PrivilegeKeyType, int, int, String)
 	 * @see #addPrivilegeKeyChannelGroup(int, int, String)
 	 */
 	public String addPrivilegeKeyServerGroup(int serverGroupId, String description) {
-		return addPrivilegeKey(PrivilegeKeyType.SERVER_GROUP, serverGroupId, 0, description);
+		return asyncApi.addPrivilegeKeyServerGroup(serverGroupId, description).getUninterruptibly();
 	}
 
 	/**
@@ -407,11 +387,13 @@ public class TS3Api {
 	 *
 	 * @return the ID of the newly created server group
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup
 	 */
 	public int addServerGroup(String name) {
-		return addServerGroup(name, PermissionGroupDatabaseType.REGULAR);
+		return asyncApi.addServerGroup(name).getUninterruptibly();
 	}
 
 	/**
@@ -424,16 +406,14 @@ public class TS3Api {
 	 *
 	 * @return the ID of the newly created server group
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup
 	 * @see PermissionGroupDatabaseType
 	 */
 	public int addServerGroup(String name, PermissionGroupDatabaseType type) {
-		final CServerGroupAdd add = new CServerGroupAdd(name, type);
-		if (query.doCommand(add)) {
-			return add.getFirstResponse().getInt("sgid");
-		}
-		return -1;
+		return asyncApi.addServerGroup(name, type).getUninterruptibly();
 	}
 
 	/**
@@ -450,15 +430,14 @@ public class TS3Api {
 	 * @param skipped
 	 * 		if set to true, this permission will not be overridden by client or channel group permissions
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 * @see Permission
 	 */
-	public boolean addServerGroupPermission(int groupId, String permName, int value, boolean negated, boolean skipped) {
-		final CServerGroupAddPerm add = new CServerGroupAddPerm(groupId, permName, value, negated, skipped);
-		return query.doCommand(add);
+	public void addServerGroupPermission(int groupId, String permName, int value, boolean negated, boolean skipped) {
+		asyncApi.addServerGroupPermission(groupId, permName, value, negated, skipped).getUninterruptibly();
 	}
 
 	/**
@@ -478,7 +457,7 @@ public class TS3Api {
 	 * @see TS3EventType
 	 */
 	public void addTS3Listeners(TS3Listener... listeners) {
-		query.getEventManager().addListeners(listeners);
+		asyncApi.addTS3Listeners(listeners);
 	}
 
 	/**
@@ -499,12 +478,14 @@ public class TS3Api {
 	 *
 	 * @return an array containing the IDs of the first and the second ban entry
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see #addBan(String, String, String, long, String)
 	 */
 	public int[] banClient(int clientId, long timeInSeconds) {
-		return banClient(clientId, timeInSeconds, null);
+		return asyncApi.banClient(clientId, timeInSeconds).getUninterruptibly();
 	}
 
 	/**
@@ -527,21 +508,14 @@ public class TS3Api {
 	 *
 	 * @return an array containing the IDs of the first and the second ban entry
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see #addBan(String, String, String, long, String)
 	 */
 	public int[] banClient(int clientId, long timeInSeconds, String reason) {
-		final CBanClient client = new CBanClient(clientId, timeInSeconds, reason);
-		if (query.doCommand(client)) {
-			final List<Wrapper> response = client.getResponse();
-			final int[] banIds = new int[response.size()];
-			for (int i = 0; i < banIds.length; ++i) {
-				banIds[i] = response.get(i).getInt("banid");
-			}
-			return banIds;
-		}
-		return null;
+		return asyncApi.banClient(clientId, timeInSeconds, reason).getUninterruptibly();
 	}
 
 	/**
@@ -562,12 +536,14 @@ public class TS3Api {
 	 *
 	 * @return an array containing the IDs of the first and the second ban entry
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see #addBan(String, String, String, long, String)
 	 */
 	public int[] banClient(int clientId, String reason) {
-		return banClient(clientId, 0, reason);
+		return asyncApi.banClient(clientId, reason).getUninterruptibly();
 	}
 
 	/**
@@ -577,13 +553,12 @@ public class TS3Api {
 	 * @param message
 	 * 		the message to be sent
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public boolean broadcast(String message) {
-		final CGM broadcast = new CGM(message);
-		return query.doCommand(broadcast);
+	public void broadcast(String message) {
+		asyncApi.broadcast(message).getUninterruptibly();
 	}
 
 	/**
@@ -600,18 +575,13 @@ public class TS3Api {
 	 * @param type
 	 * 		the desired type of channel group
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 */
-	public boolean copyChannelGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
-		if (targetGroupId <= 0) {
-			throw new IllegalArgumentException("To create a new channel group, use the method with a String argument");
-		}
-
-		final CChannelGroupCopy copy = new CChannelGroupCopy(sourceGroupId, targetGroupId, type);
-		return query.doCommand(copy);
+	public void copyChannelGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
+		asyncApi.copyChannelGroup(sourceGroupId, targetGroupId, type).getUninterruptibly();
 	}
 
 	/**
@@ -627,15 +597,13 @@ public class TS3Api {
 	 *
 	 * @return the ID of the newly created channel group
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 */
 	public int copyChannelGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
-		final CChannelGroupCopy copy = new CChannelGroupCopy(sourceGroupId, targetName, type);
-		if (query.doCommand(copy)) {
-			return copy.getFirstResponse().getInt("cgid");
-		}
-		return -1;
+		return asyncApi.copyChannelGroup(sourceGroupId, targetName, type).getUninterruptibly();
 	}
 
 	/**
@@ -652,18 +620,13 @@ public class TS3Api {
 	 * @param type
 	 * 		the desired type of server group
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 */
-	public boolean copyServerGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
-		if (targetGroupId <= 0) {
-			throw new IllegalArgumentException("To create a new server group, use the method with a String argument");
-		}
-
-		final CServerGroupCopy copy = new CServerGroupCopy(sourceGroupId, targetGroupId, type);
-		return query.doCommand(copy);
+	public void copyServerGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
+		asyncApi.copyServerGroup(sourceGroupId, targetGroupId, type).getUninterruptibly();
 	}
 
 	/**
@@ -679,15 +642,13 @@ public class TS3Api {
 	 *
 	 * @return the ID of the newly created server group
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 */
 	public int copyServerGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
-		final CServerGroupCopy copy = new CServerGroupCopy(sourceGroupId, targetName, type);
-		if (query.doCommand(copy)) {
-			return copy.getFirstResponse().getInt("sgid");
-		}
-		return -1;
+		return asyncApi.copyServerGroup(sourceGroupId, targetName, type).getUninterruptibly();
 	}
 
 	/**
@@ -700,15 +661,13 @@ public class TS3Api {
 	 *
 	 * @return the ID of the newly created channel
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel
 	 */
 	public int createChannel(String name, Map<ChannelProperty, String> options) {
-		final CChannelCreate create = new CChannelCreate(name, options);
-		if (query.doCommand(create)) {
-			return create.getFirstResponse().getInt("cid");
-		}
-		return -1;
+		return asyncApi.createChannel(name, options).getUninterruptibly();
 	}
 
 	/**
@@ -719,14 +678,14 @@ public class TS3Api {
 	 * @param channelId
 	 * 		the ID of the channel the directory should be created in
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public boolean createFileDirectory(String directoryPath, int channelId) {
-		return createFileDirectory(directoryPath, channelId, null);
+	public void createFileDirectory(String directoryPath, int channelId) {
+		asyncApi.createFileDirectory(directoryPath, channelId).getUninterruptibly();
 	}
 
 	/**
@@ -739,15 +698,14 @@ public class TS3Api {
 	 * @param channelPassword
 	 * 		the password of that channel
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public boolean createFileDirectory(String directoryPath, int channelId, String channelPassword) {
-		final CFtCreateDir create = new CFtCreateDir(directoryPath, channelId, channelPassword);
-		return query.doCommand(create);
+	public void createFileDirectory(String directoryPath, int channelId, String channelPassword) {
+		asyncApi.createFileDirectory(directoryPath, channelId, channelPassword).getUninterruptibly();
 	}
 
 	/**
@@ -770,15 +728,13 @@ public class TS3Api {
 	 *
 	 * @return information about the newly created virtual server
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see VirtualServer
 	 */
 	public CreatedVirtualServer createServer(String name, Map<VirtualServerProperty, String> options) {
-		final CServerCreate create = new CServerCreate(name, options);
-		if (query.doCommand(create)) {
-			return new CreatedVirtualServer(create.getFirstResponse().getMap());
-		}
-		return null;
+		return asyncApi.createServer(name, options).getUninterruptibly();
 	}
 
 	/**
@@ -788,27 +744,24 @@ public class TS3Api {
 	 *
 	 * @return a snapshot of the virtual server
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #deployServerSnapshot(Snapshot)
 	 */
 	public Snapshot createServerSnapshot() {
-		final CServerSnapshotCreate create = new CServerSnapshotCreate();
-		if (query.doCommand(create)) {
-			return new Snapshot(create.getRawResponse());
-		}
-		return null;
+		return asyncApi.createServerSnapshot().getUninterruptibly();
 	}
 
 	/**
 	 * Deletes all active ban rules from the server. Use with caution.
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public boolean deleteAllBans() {
-		final CBanDelAll del = new CBanDelAll();
-		return query.doCommand(del);
+	public void deleteAllBans() {
+		asyncApi.deleteAllBans().getUninterruptibly();
 	}
 
 	/**
@@ -817,15 +770,14 @@ public class TS3Api {
 	 * @param clientDBId
 	 * 		the database ID of the client
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see Complaint
 	 */
-	public boolean deleteAllComplaints(int clientDBId) {
-		final CComplainDelAll del = new CComplainDelAll(clientDBId);
-		return query.doCommand(del);
+	public void deleteAllComplaints(int clientDBId) {
+		asyncApi.deleteAllComplaints(clientDBId).getUninterruptibly();
 	}
 
 	/**
@@ -834,14 +786,13 @@ public class TS3Api {
 	 * @param banId
 	 * 		the ID of the ban to delete
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Ban#getId()
 	 */
-	public boolean deleteBan(int banId) {
-		final CBanDel del = new CBanDel(banId);
-		return query.doCommand(del);
+	public void deleteBan(int banId) {
+		asyncApi.deleteBan(banId).getUninterruptibly();
 	}
 
 	/**
@@ -850,15 +801,15 @@ public class TS3Api {
 	 * @param channelId
 	 * 		the ID of the channel to delete
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see #deleteChannel(int, boolean)
 	 * @see #kickClientFromChannel(String, int...)
 	 */
-	public boolean deleteChannel(int channelId) {
-		return deleteChannel(channelId, true);
+	public void deleteChannel(int channelId) {
+		asyncApi.deleteChannel(channelId).getUninterruptibly();
 	}
 
 	/**
@@ -871,15 +822,14 @@ public class TS3Api {
 	 * @param force
 	 * 		whether clients should be kicked out of the channel
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see #kickClientFromChannel(String, int...)
 	 */
-	public boolean deleteChannel(int channelId, boolean force) {
-		final CChannelDelete del = new CChannelDelete(channelId, force);
-		return query.doCommand(del);
+	public void deleteChannel(int channelId, boolean force) {
+		asyncApi.deleteChannel(channelId, force).getUninterruptibly();
 	}
 
 	/**
@@ -892,16 +842,15 @@ public class TS3Api {
 	 * @param permName
 	 * 		the name of the permission to revoke
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
 	 * @see Permission#getName()
 	 */
-	public boolean deleteChannelClientPermission(int channelId, int clientDBId, String permName) {
-		final CChannelClientDelPerm del = new CChannelClientDelPerm(channelId, clientDBId, permName);
-		return query.doCommand(del);
+	public void deleteChannelClientPermission(int channelId, int clientDBId, String permName) {
+		asyncApi.deleteChannelClientPermission(channelId, clientDBId, permName).getUninterruptibly();
 	}
 
 	/**
@@ -910,13 +859,13 @@ public class TS3Api {
 	 * @param groupId
 	 * 		the ID of the channel group
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 */
-	public boolean deleteChannelGroup(int groupId) {
-		return deleteChannelGroup(groupId, true);
+	public void deleteChannelGroup(int groupId) {
+		asyncApi.deleteChannelGroup(groupId).getUninterruptibly();
 	}
 
 	/**
@@ -929,14 +878,13 @@ public class TS3Api {
 	 * @param force
 	 * 		whether the channel group should be deleted even if it still contains clients
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 */
-	public boolean deleteChannelGroup(int groupId, boolean force) {
-		final CChannelGroupDel del = new CChannelGroupDel(groupId, force);
-		return query.doCommand(del);
+	public void deleteChannelGroup(int groupId, boolean force) {
+		asyncApi.deleteChannelGroup(groupId, force).getUninterruptibly();
 	}
 
 	/**
@@ -947,15 +895,14 @@ public class TS3Api {
 	 * @param permName
 	 * 		the name of the permission to revoke
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 * @see Permission#getName()
 	 */
-	public boolean deleteChannelGroupPermission(int groupId, String permName) {
-		final CChannelGroupDelPerm del = new CChannelGroupDelPerm(groupId, permName);
-		return query.doCommand(del);
+	public void deleteChannelGroupPermission(int groupId, String permName) {
+		asyncApi.deleteChannelGroupPermission(groupId, permName).getUninterruptibly();
 	}
 
 	/**
@@ -966,15 +913,14 @@ public class TS3Api {
 	 * @param permName
 	 * 		the name of the permission to revoke
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Permission#getName()
 	 */
-	public boolean deleteChannelPermission(int channelId, String permName) {
-		final CChannelDelPerm del = new CChannelDelPerm(channelId, permName);
-		return query.doCommand(del);
+	public void deleteChannelPermission(int channelId, String permName) {
+		asyncApi.deleteChannelPermission(channelId, permName).getUninterruptibly();
 	}
 
 	/**
@@ -985,15 +931,14 @@ public class TS3Api {
 	 * @param permName
 	 * 		the name of the permission to revoke
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see Permission#getName()
 	 */
-	public boolean deleteClientPermission(int clientDBId, String permName) {
-		final CClientDelPerm del = new CClientDelPerm(clientDBId, permName);
-		return query.doCommand(del);
+	public void deleteClientPermission(int clientDBId, String permName) {
+		asyncApi.deleteClientPermission(clientDBId, permName).getUninterruptibly();
 	}
 
 	/**
@@ -1005,15 +950,14 @@ public class TS3Api {
 	 * @param fromClientDBId
 	 * 		the database ID of the client who added the complaint
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Complaint
 	 * @see Client#getDatabaseId()
 	 */
-	public boolean deleteComplaint(int targetClientDBId, int fromClientDBId) {
-		final CComplainDel del = new CComplainDel(targetClientDBId, fromClientDBId);
-		return query.doCommand(del);
+	public void deleteComplaint(int targetClientDBId, int fromClientDBId) {
+		asyncApi.deleteComplaint(targetClientDBId, fromClientDBId).getUninterruptibly();
 	}
 
 	/**
@@ -1026,16 +970,15 @@ public class TS3Api {
 	 * @param clientDBId
 	 * 		the database ID of the client
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see #getDatabaseClientInfo(int)
 	 * @see DatabaseClientInfo
 	 */
-	public boolean deleteDatabaseClientProperties(int clientDBId) {
-		final CClientDBDelete del = new CClientDBDelete(clientDBId);
-		return query.doCommand(del);
+	public void deleteDatabaseClientProperties(int clientDBId) {
+		asyncApi.deleteDatabaseClientProperties(clientDBId).getUninterruptibly();
 	}
 
 	/**
@@ -1046,14 +989,14 @@ public class TS3Api {
 	 * @param channelId
 	 * 		the ID of the channel the file or directory resides in
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public boolean deleteFile(String filePath, int channelId) {
-		return deleteFile(filePath, channelId, null);
+	public void deleteFile(String filePath, int channelId) {
+		asyncApi.deleteFile(filePath, channelId).getUninterruptibly();
 	}
 
 	/**
@@ -1066,15 +1009,14 @@ public class TS3Api {
 	 * @param channelPassword
 	 * 		the password of that channel
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public boolean deleteFile(String filePath, int channelId, String channelPassword) {
-		final CFtDeleteFile delete = new CFtDeleteFile(channelId, channelPassword, filePath);
-		return query.doCommand(delete);
+	public void deleteFile(String filePath, int channelId, String channelPassword) {
+		asyncApi.deleteFile(filePath, channelId, channelPassword).getUninterruptibly();
 	}
 
 	/**
@@ -1085,14 +1027,14 @@ public class TS3Api {
 	 * @param channelId
 	 * 		the ID of the channel the file or directory resides in
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public boolean deleteFiles(String[] filePaths, int channelId) {
-		return deleteFiles(filePaths, channelId, null);
+	public void deleteFiles(String[] filePaths, int channelId) {
+		asyncApi.deleteFiles(filePaths, channelId).getUninterruptibly();
 	}
 
 	/**
@@ -1105,15 +1047,14 @@ public class TS3Api {
 	 * @param channelPassword
 	 * 		the password of that channel
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public boolean deleteFiles(String[] filePaths, int channelId, String channelPassword) {
-		final CFtDeleteFile delete = new CFtDeleteFile(channelId, channelPassword, filePaths);
-		return query.doCommand(delete);
+	public void deleteFiles(String[] filePaths, int channelId, String channelPassword) {
+		asyncApi.deleteFiles(filePaths, channelId, channelPassword).getUninterruptibly();
 	}
 
 	/**
@@ -1122,14 +1063,13 @@ public class TS3Api {
 	 * @param iconId
 	 * 		the ID of the icon to delete
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see IconFile#getIconId()
 	 */
-	public boolean deleteIcon(long iconId) {
-		final String iconPath = "/icon_" + iconId;
-		return deleteFile(iconPath, 0);
+	public void deleteIcon(long iconId) {
+		asyncApi.deleteIcon(iconId).getUninterruptibly();
 	}
 
 	/**
@@ -1138,17 +1078,13 @@ public class TS3Api {
 	 * @param iconIds
 	 * 		the IDs of the icons to delete
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see IconFile#getIconId()
 	 */
-	public boolean deleteIcons(long[] iconIds) {
-		final String[] iconPaths = new String[iconIds.length];
-		for (int i = 0; i < iconIds.length; ++i) {
-			iconPaths[i] = "/icon_" + iconIds[i];
-		}
-		return deleteFiles(iconPaths, 0);
+	public void deleteIcons(long... iconIds) {
+		asyncApi.deleteIcons(iconIds).getUninterruptibly();
 	}
 
 	/**
@@ -1157,14 +1093,13 @@ public class TS3Api {
 	 * @param messageId
 	 * 		the ID of the offline message to delete
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Message#getId()
 	 */
-	public boolean deleteOfflineMessage(int messageId) {
-		final CMessageDel del = new CMessageDel(messageId);
-		return query.doCommand(del);
+	public void deleteOfflineMessage(int messageId) {
+		asyncApi.deleteOfflineMessage(messageId).getUninterruptibly();
 	}
 
 	/**
@@ -1175,15 +1110,14 @@ public class TS3Api {
 	 * @param permName
 	 * 		the name of the permission to remove
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroupType
 	 * @see Permission#getName()
 	 */
-	public boolean deletePermissionFromAllServerGroups(ServerGroupType type, String permName) {
-		final CServerGroupAutoDelPerm del = new CServerGroupAutoDelPerm(type, permName);
-		return query.doCommand(del);
+	public void deletePermissionFromAllServerGroups(ServerGroupType type, String permName) {
+		asyncApi.deletePermissionFromAllServerGroups(type, permName).getUninterruptibly();
 	}
 
 	/**
@@ -1192,14 +1126,13 @@ public class TS3Api {
 	 * @param token
 	 * 		the token of the privilege key
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see PrivilegeKey
 	 */
-	public boolean deletePrivilegeKey(String token) {
-		final CPrivilegeKeyDelete del = new CPrivilegeKeyDelete(token);
-		return query.doCommand(del);
+	public void deletePrivilegeKey(String token) {
+		asyncApi.deletePrivilegeKey(token).getUninterruptibly();
 	}
 
 	/**
@@ -1211,15 +1144,14 @@ public class TS3Api {
 	 * @param serverId
 	 * 		the ID of the virtual server
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see VirtualServer#getId()
 	 * @see #stopServer(int)
 	 */
-	public boolean deleteServer(int serverId) {
-		final CServerDelete delete = new CServerDelete(serverId);
-		return query.doCommand(delete);
+	public void deleteServer(int serverId) {
+		asyncApi.deleteServer(serverId).getUninterruptibly();
 	}
 
 	/**
@@ -1228,13 +1160,13 @@ public class TS3Api {
 	 * @param groupId
 	 * 		the ID of the server group
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 */
-	public boolean deleteServerGroup(int groupId) {
-		return deleteServerGroup(groupId, true);
+	public void deleteServerGroup(int groupId) {
+		asyncApi.deleteServerGroup(groupId).getUninterruptibly();
 	}
 
 	/**
@@ -1249,14 +1181,13 @@ public class TS3Api {
 	 * @param force
 	 * 		whether the server group should be deleted if it still contains clients
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 */
-	public boolean deleteServerGroup(int groupId, boolean force) {
-		final CServerGroupDel del = new CServerGroupDel(groupId, force);
-		return query.doCommand(del);
+	public void deleteServerGroup(int groupId, boolean force) {
+		asyncApi.deleteServerGroup(groupId, force).getUninterruptibly();
 	}
 
 	/**
@@ -1267,15 +1198,14 @@ public class TS3Api {
 	 * @param permName
 	 * 		the name of the permission to revoke
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 * @see Permission#getName()
 	 */
-	public boolean deleteServerGroupPermission(int groupId, String permName) {
-		final CServerGroupDelPerm del = new CServerGroupDelPerm(groupId, permName);
-		return query.doCommand(del);
+	public void deleteServerGroupPermission(int groupId, String permName) {
+		asyncApi.deleteServerGroupPermission(groupId, permName).getUninterruptibly();
 	}
 
 	/**
@@ -1285,13 +1215,13 @@ public class TS3Api {
 	 * @param snapshot
 	 * 		the snapshot to restore
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #createServerSnapshot()
 	 */
-	public boolean deployServerSnapshot(Snapshot snapshot) {
-		return deployServerSnapshot(snapshot.get());
+	public void deployServerSnapshot(Snapshot snapshot) {
+		asyncApi.deployServerSnapshot(snapshot).getUninterruptibly();
 	}
 
 	/**
@@ -1301,14 +1231,13 @@ public class TS3Api {
 	 * @param snapshot
 	 * 		the snapshot to restore
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #createServerSnapshot()
 	 */
-	public boolean deployServerSnapshot(String snapshot) {
-		final CServerSnapshotDeploy deploy = new CServerSnapshotDeploy(snapshot);
-		return query.doCommand(deploy);
+	public void deployServerSnapshot(String snapshot) {
+		asyncApi.deployServerSnapshot(snapshot).getUninterruptibly();
 	}
 
 	/**
@@ -1331,6 +1260,8 @@ public class TS3Api {
 	 *
 	 * @return how many bytes were downloaded
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -1339,7 +1270,7 @@ public class TS3Api {
 	 * @see #downloadFileDirect(String, int)
 	 */
 	public long downloadFile(OutputStream dataOut, String filePath, int channelId) {
-		return downloadFile(dataOut, filePath, channelId, null);
+		return asyncApi.downloadFile(dataOut, filePath, channelId).getUninterruptibly();
 	}
 
 	/**
@@ -1364,6 +1295,8 @@ public class TS3Api {
 	 *
 	 * @return how many bytes were downloaded
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -1372,21 +1305,7 @@ public class TS3Api {
 	 * @see #downloadFileDirect(String, int, String)
 	 */
 	public long downloadFile(OutputStream dataOut, String filePath, int channelId, String channelPassword) {
-		final FileTransferHelper helper = query.getFileTransferHelper();
-		final int transferId = helper.getClientTransferId();
-		final CFtInitDownload download = new CFtInitDownload(transferId, filePath, channelId, channelPassword);
-
-		if (!query.doCommand(download)) return -1L;
-		FileTransferParameters params = new FileTransferParameters(download.getFirstResponse().getMap());
-		QueryError error = params.getQueryError();
-		if (!error.isSuccessful()) return -1L;
-
-		try {
-			query.getFileTransferHelper().downloadFile(dataOut, params);
-		} catch (IOException e) {
-			throw new TS3FileTransferFailedException("Download failed", e);
-		}
-		return params.getFileSize();
+		return asyncApi.downloadFile(dataOut, filePath, channelId, channelPassword).getUninterruptibly();
 	}
 
 	/**
@@ -1405,6 +1324,8 @@ public class TS3Api {
 	 *
 	 * @return a byte array containing the file's data
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -1413,7 +1334,7 @@ public class TS3Api {
 	 * @see #downloadFile(OutputStream, String, int)
 	 */
 	public byte[] downloadFileDirect(String filePath, int channelId) {
-		return downloadFileDirect(filePath, channelId, null);
+		return asyncApi.downloadFileDirect(filePath, channelId).getUninterruptibly();
 	}
 
 	/**
@@ -1434,6 +1355,8 @@ public class TS3Api {
 	 *
 	 * @return a byte array containing the file's data
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -1442,26 +1365,7 @@ public class TS3Api {
 	 * @see #downloadFile(OutputStream, String, int, String)
 	 */
 	public byte[] downloadFileDirect(String filePath, int channelId, String channelPassword) {
-		final FileTransferHelper helper = query.getFileTransferHelper();
-		final int transferId = helper.getClientTransferId();
-		final CFtInitDownload download = new CFtInitDownload(transferId, filePath, channelId, channelPassword);
-
-		if (!query.doCommand(download)) return null;
-		FileTransferParameters params = new FileTransferParameters(download.getFirstResponse().getMap());
-		QueryError error = params.getQueryError();
-		if (!error.isSuccessful()) return null;
-
-		long fileSize = params.getFileSize();
-		if (fileSize > Integer.MAX_VALUE) throw new TS3FileTransferFailedException("File too big for byte array");
-		ByteArrayOutputStream dataOut = new ByteArrayOutputStream((int) fileSize);
-
-		try {
-			query.getFileTransferHelper().downloadFile(dataOut, params);
-		} catch (IOException e) {
-			throw new TS3FileTransferFailedException("Download failed", e);
-		}
-
-		return dataOut.toByteArray();
+		return asyncApi.downloadFileDirect(filePath, channelId, channelPassword).getUninterruptibly();
 	}
 
 	/**
@@ -1479,6 +1383,8 @@ public class TS3Api {
 	 *
 	 * @return a byte array containing the icon file's data
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -1487,8 +1393,7 @@ public class TS3Api {
 	 * @see #uploadIcon(InputStream, long)
 	 */
 	public long downloadIcon(OutputStream dataOut, long iconId) {
-		final String iconPath = "/icon_" + iconId;
-		return downloadFile(dataOut, iconPath, 0);
+		return asyncApi.downloadIcon(dataOut, iconId).getUninterruptibly();
 	}
 
 	/**
@@ -1503,6 +1408,8 @@ public class TS3Api {
 	 *
 	 * @return a byte array containing the icon file's data
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -1511,8 +1418,7 @@ public class TS3Api {
 	 * @see #uploadIconDirect(byte[])
 	 */
 	public byte[] downloadIconDirect(long iconId) {
-		final String iconPath = "/icon_" + iconId;
-		return downloadFileDirect(iconPath, 0);
+		return asyncApi.downloadIconDirect(iconId).getUninterruptibly();
 	}
 
 	/**
@@ -1523,21 +1429,45 @@ public class TS3Api {
 	 * @param options
 	 * 		the map of properties to modify
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 */
-	public boolean editChannel(int channelId, Map<ChannelProperty, String> options) {
-		final CChannelEdit edit = new CChannelEdit(channelId, options);
-		return query.doCommand(edit);
+	public void editChannel(int channelId, Map<ChannelProperty, String> options) {
+		asyncApi.editChannel(channelId, options).getUninterruptibly();
+	}
+
+	/**
+	 * Changes a single property of the given channel.
+	 * <p>
+	 * Note that one can set many properties at once with the overloaded method that
+	 * takes a map of channel properties and strings.
+	 * </p>
+	 *
+	 * @param channelId
+	 * 		the ID of the channel to edit
+	 * @param property
+	 * 		the channel property to modify, make sure it is editable
+	 * @param value
+	 * 		the new value of the property
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Channel#getId()
+	 * @see #editChannel(int, Map)
+	 */
+	public void editChannel(int channelId, ChannelProperty property, String value) {
+		asyncApi.editChannel(channelId, property, value).getUninterruptibly();
 	}
 
 	/**
 	 * Changes a client's configuration using given properties.
 	 * <p>
 	 * Only {@link ClientProperty#CLIENT_DESCRIPTION} can be changed for other clients.
-	 * To update the current client's properties, use {@link #updateClient(Map)}.
+	 * To update the current client's properties, use {@link #updateClient(Map)}
+	 * or {@link #updateClient(ClientProperty, String)}.
 	 * </p>
 	 *
 	 * @param clientId
@@ -1545,15 +1475,40 @@ public class TS3Api {
 	 * @param options
 	 * 		the map of properties to modify
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see #updateClient(Map)
 	 */
-	public boolean editClient(int clientId, Map<ClientProperty, String> options) {
-		final CClientEdit edit = new CClientEdit(clientId, options);
-		return query.doCommand(edit);
+	public void editClient(int clientId, Map<ClientProperty, String> options) {
+		asyncApi.editClient(clientId, options).getUninterruptibly();
+	}
+
+	/**
+	 * Changes a single property of the given client.
+	 * <p>
+	 * Only {@link ClientProperty#CLIENT_DESCRIPTION} can be changed for other clients.
+	 * To update the current client's properties, use {@link #updateClient(Map)}
+	 * or {@link #updateClient(ClientProperty, String)}.
+	 * </p>
+	 *
+	 * @param clientId
+	 * 		the ID of the client to edit
+	 * @param property
+	 * 		the client property to modify, make sure it is editable
+	 * @param value
+	 * 		the new value of the property
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Client#getId()
+	 * @see #editClient(int, Map)
+	 * @see #updateClient(Map)
+	 */
+	public void editClient(int clientId, ClientProperty property, String value) {
+		asyncApi.editClient(clientId, property, value).getUninterruptibly();
 	}
 
 	/**
@@ -1564,15 +1519,14 @@ public class TS3Api {
 	 * @param options
 	 * 		the map of properties to modify
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see DatabaseClientInfo
 	 * @see Client#getDatabaseId()
 	 */
-	public boolean editDatabaseClient(int clientDBId, Map<ClientProperty, String> options) {
-		final CClientDBEdit edit = new CClientDBEdit(clientDBId, options);
-		return query.doCommand(edit);
+	public void editDatabaseClient(int clientDBId, Map<ClientProperty, String> options) {
+		asyncApi.editDatabaseClient(clientDBId, options).getUninterruptibly();
 	}
 
 	/**
@@ -1584,20 +1538,15 @@ public class TS3Api {
 	 * @param value
 	 * 		the new value for the edit
 	 *
-	 * @return whether the command succeeded or not
-	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code property} is not changeable
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerInstanceProperty#isChangeable()
 	 */
-	public boolean editInstance(ServerInstanceProperty property, String value) {
-		if (!property.isChangeable()) {
-			throw new IllegalArgumentException("Property is not changeable");
-		}
-
-		final CInstanceEdit edit = new CInstanceEdit(property, value);
-		return query.doCommand(edit);
+	public void editInstance(ServerInstanceProperty property, String value) {
+		asyncApi.editInstance(property, value).getUninterruptibly();
 	}
 
 	/**
@@ -1606,14 +1555,13 @@ public class TS3Api {
 	 * @param options
 	 * 		the map of properties to edit
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see VirtualServerProperty
 	 */
-	public boolean editServer(Map<VirtualServerProperty, String> options) {
-		final CServerEdit edit = new CServerEdit(options);
-		return query.doCommand(edit);
+	public void editServer(Map<VirtualServerProperty, String> options) {
+		asyncApi.editServer(options).getUninterruptibly();
 	}
 
 	/**
@@ -1621,21 +1569,13 @@ public class TS3Api {
 	 *
 	 * @return a list of all bans on the virtual server
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Ban
 	 */
 	public List<Ban> getBans() {
-		final CBanList list = new CBanList();
-		if (query.doCommand(list)) {
-			final List<Wrapper> responses = list.getResponse();
-			final List<Ban> bans = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				bans.add(new Ban(response.getMap()));
-			}
-			return bans;
-		}
-		return null;
+		return asyncApi.getBans().getUninterruptibly();
 	}
 
 	/**
@@ -1643,21 +1583,13 @@ public class TS3Api {
 	 *
 	 * @return the list of bound IP addresses
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Binding
 	 */
 	public List<Binding> getBindings() {
-		final CBindingList list = new CBindingList();
-		if (query.doCommand(list)) {
-			final List<Wrapper> responses = list.getResponse();
-			final List<Binding> bindings = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				bindings.add(new Binding(response.getMap()));
-			}
-			return bindings;
-		}
-		return null;
+		return asyncApi.getBindings().getUninterruptibly();
 	}
 
 	/**
@@ -1670,22 +1602,14 @@ public class TS3Api {
 	 *
 	 * @return the found channel or {@code null} if no channel was found
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel
 	 * @see #getChannelsByName(String)
 	 */
-	public Channel getChannelByNameExact(String name, final boolean ignoreCase) {
-		final String caseName = ignoreCase ? name.toLowerCase(Locale.ROOT) : name;
-		final List<Channel> allChannels = getChannels();
-		if (allChannels == null) return null;
-
-		for (final Channel channel : allChannels) {
-			final String channelName = ignoreCase ? channel.getName().toLowerCase(Locale.ROOT) : channel.getName();
-			if (caseName.equals(channelName)) {
-				return channel;
-			}
-		}
-		return null; // Not found
+	public Channel getChannelByNameExact(String name, boolean ignoreCase) {
+		return asyncApi.getChannelByNameExact(name, ignoreCase).getUninterruptibly();
 	}
 
 	/**
@@ -1696,31 +1620,14 @@ public class TS3Api {
 	 *
 	 * @return a list of all channels with names matching the search pattern
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 2
 	 * @see Channel
 	 * @see #getChannelByNameExact(String, boolean)
 	 */
 	public List<Channel> getChannelsByName(String name) {
-		final CChannelFind find = new CChannelFind(name);
-		final List<Channel> allChannels = getChannels();
-		if (allChannels == null) return null;
-
-		if (query.doCommand(find)) {
-			final List<Wrapper> responses = find.getResponse();
-			final List<Channel> channels = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				final int channelId = response.getInt("cid");
-				for (final Channel channel : allChannels) {
-					if (channel.getId() == channelId) {
-						channels.add(channel);
-						break;
-					}
-				}
-			}
-			return channels;
-		}
-		return null;
+		return asyncApi.getChannelsByName(name).getUninterruptibly();
 	}
 
 	/**
@@ -1733,23 +1640,15 @@ public class TS3Api {
 	 *
 	 * @return a list of permissions for the user in the specified channel
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
 	 * @see Permission
 	 */
 	public List<Permission> getChannelClientPermissions(int channelId, int clientDBId) {
-		final CChannelClientPermList list = new CChannelClientPermList(channelId, clientDBId);
-		if (query.doCommand(list)) {
-			final List<Wrapper> responses = list.getResponse();
-			final List<Permission> permissions = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				permissions.add(new Permission(response.getMap()));
-			}
-			return permissions;
-		}
-		return null;
+		return asyncApi.getChannelClientPermissions(channelId, clientDBId).getUninterruptibly();
 	}
 
 	/**
@@ -1765,6 +1664,8 @@ public class TS3Api {
 	 *
 	 * @return a list of combinations of channel ID, client database ID and channel group ID
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
@@ -1772,17 +1673,7 @@ public class TS3Api {
 	 * @see ChannelGroupClient
 	 */
 	public List<ChannelGroupClient> getChannelGroupClients(int channelId, int clientDBId, int groupId) {
-		final CChannelGroupClientList list = new CChannelGroupClientList(channelId, clientDBId, groupId);
-		if (query.doCommand(list)) {
-			final List<Wrapper> responses = list.getResponse();
-			final List<ChannelGroupClient> clients = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				clients.add(new ChannelGroupClient(response.getMap()));
-			}
-			return clients;
-		}
-		return null;
+		return asyncApi.getChannelGroupClients(channelId, clientDBId, groupId).getUninterruptibly();
 	}
 
 	/**
@@ -1793,13 +1684,15 @@ public class TS3Api {
 	 *
 	 * @return a list of combinations of channel ID, client database ID and channel group ID
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 * @see ChannelGroupClient
 	 * @see #getChannelGroupClients(int, int, int)
 	 */
 	public List<ChannelGroupClient> getChannelGroupClientsByChannelGroupId(int groupId) {
-		return getChannelGroupClients(-1, -1, groupId);
+		return asyncApi.getChannelGroupClientsByChannelGroupId(groupId).getUninterruptibly();
 	}
 
 	/**
@@ -1810,13 +1703,15 @@ public class TS3Api {
 	 *
 	 * @return a list of combinations of channel ID, client database ID and channel group ID
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see ChannelGroupClient
 	 * @see #getChannelGroupClients(int, int, int)
 	 */
 	public List<ChannelGroupClient> getChannelGroupClientsByChannelId(int channelId) {
-		return getChannelGroupClients(channelId, -1, -1);
+		return asyncApi.getChannelGroupClientsByChannelId(channelId).getUninterruptibly();
 	}
 
 	/**
@@ -1827,13 +1722,15 @@ public class TS3Api {
 	 *
 	 * @return a list of combinations of channel ID, client database ID and channel group ID
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see ChannelGroupClient
 	 * @see #getChannelGroupClients(int, int, int)
 	 */
 	public List<ChannelGroupClient> getChannelGroupClientsByClientDBId(int clientDBId) {
-		return getChannelGroupClients(-1, clientDBId, -1);
+		return asyncApi.getChannelGroupClientsByClientDBId(clientDBId).getUninterruptibly();
 	}
 
 	/**
@@ -1844,22 +1741,14 @@ public class TS3Api {
 	 *
 	 * @return a list of permissions assigned to the channel group
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 * @see Permission
 	 */
 	public List<Permission> getChannelGroupPermissions(int groupId) {
-		final CChannelGroupPermList list = new CChannelGroupPermList(groupId);
-		if (query.doCommand(list)) {
-			final List<Wrapper> responses = list.getResponse();
-			final List<Permission> permissions = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				permissions.add(new Permission(response.getMap()));
-			}
-			return permissions;
-		}
-		return null;
+		return asyncApi.getChannelGroupPermissions(groupId).getUninterruptibly();
 	}
 
 	/**
@@ -1867,21 +1756,13 @@ public class TS3Api {
 	 *
 	 * @return a list of all channel groups on the virtual server
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup
 	 */
 	public List<ChannelGroup> getChannelGroups() {
-		final CChannelGroupList list = new CChannelGroupList();
-		if (query.doCommand(list)) {
-			final List<Wrapper> responses = list.getResponse();
-			final List<ChannelGroup> groups = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				groups.add(new ChannelGroup(response.getMap()));
-			}
-			return groups;
-		}
-		return null;
+		return asyncApi.getChannelGroups().getUninterruptibly();
 	}
 
 	/**
@@ -1892,16 +1773,14 @@ public class TS3Api {
 	 *
 	 * @return information about the channel
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see ChannelInfo
 	 */
 	public ChannelInfo getChannelInfo(int channelId) {
-		final CChannelInfo info = new CChannelInfo(channelId);
-		if (query.doCommand(info)) {
-			return new ChannelInfo(channelId, info.getFirstResponse().getMap());
-		}
-		return null;
+		return asyncApi.getChannelInfo(channelId).getUninterruptibly();
 	}
 
 	/**
@@ -1912,22 +1791,14 @@ public class TS3Api {
 	 *
 	 * @return a list of all permissions assigned to the channel
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Permission
 	 */
 	public List<Permission> getChannelPermissions(int channelId) {
-		final CChannelPermList list = new CChannelPermList(channelId);
-		if (query.doCommand(list)) {
-			final List<Wrapper> responses = list.getResponse();
-			final List<Permission> permissions = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				permissions.add(new Permission(response.getMap()));
-			}
-			return permissions;
-		}
-		return null;
+		return asyncApi.getChannelPermissions(channelId).getUninterruptibly();
 	}
 
 	/**
@@ -1935,20 +1806,13 @@ public class TS3Api {
 	 *
 	 * @return a list of all channels on the virtual server
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel
 	 */
 	public List<Channel> getChannels() {
-		final CChannelList list = new CChannelList();
-		if (query.doCommand(list)) {
-			final List<Wrapper> responses = list.getResponse();
-			final List<Channel> channels = new ArrayList<>(responses.size());
-			for (final Wrapper response : responses) {
-				channels.add(new Channel(response.getMap()));
-			}
-			return channels;
-		}
-		return null;
+		return asyncApi.getChannels().getUninterruptibly();
 	}
 
 	/**
@@ -1961,22 +1825,14 @@ public class TS3Api {
 	 *
 	 * @return the found client or {@code null} if no client was found
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client
 	 * @see #getClientsByName(String)
 	 */
-	public Client getClientByNameExact(String name, final boolean ignoreCase) {
-		final String caseName = ignoreCase ? name.toLowerCase(Locale.ROOT) : name;
-		final List<Client> allClients = getClients();
-		if (allClients == null) return null;
-
-		for (final Client client : allClients) {
-			final String clientName = ignoreCase ? client.getNickname().toLowerCase(Locale.ROOT) : client.getNickname();
-			if (caseName.equals(clientName)) {
-				return client;
-			}
-		}
-		return null; // Not found
+	public Client getClientByNameExact(String name, boolean ignoreCase) {
+		return asyncApi.getClientByNameExact(name, ignoreCase).getUninterruptibly();
 	}
 
 	/**
@@ -1987,30 +1843,14 @@ public class TS3Api {
 	 *
 	 * @return a list of all clients with nicknames matching the search pattern
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 2
 	 * @see Client
 	 * @see #getClientByNameExact(String, boolean)
 	 */
 	public List<Client> getClientsByName(String name) {
-		final CClientFind find = new CClientFind(name);
-		final List<Client> allClients = getClients();
-		if (allClients == null) return null;
-
-		if (query.doCommand(find)) {
-			final List<Wrapper> responses = find.getResponse();
-			final List<Client> clients = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				for (final Client client : allClients) {
-					if (client.getId() == response.getInt("clid")) {
-						clients.add(client);
-						break;
-					}
-				}
-			}
-			return clients;
-		}
-		return null;
+		return asyncApi.getClientsByName(name).getUninterruptibly();
 	}
 
 	/**
@@ -2019,18 +1859,16 @@ public class TS3Api {
 	 * @param clientUId
 	 * 		the unique identifier of the client
 	 *
-	 * @return the client or {@code null} if no client was found
+	 * @return information about the client
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 2
 	 * @see Client#getUniqueIdentifier()
 	 * @see ClientInfo
 	 */
 	public ClientInfo getClientByUId(String clientUId) {
-		final CClientGetIds get = new CClientGetIds(clientUId);
-		if (query.doCommand(get)) {
-			return getClientInfo(get.getFirstResponse().getInt("clid"));
-		}
-		return null;
+		return asyncApi.getClientByUId(clientUId).getUninterruptibly();
 	}
 
 	/**
@@ -2039,18 +1877,16 @@ public class TS3Api {
 	 * @param clientId
 	 * 		the client ID of the client
 	 *
-	 * @return the client or {@code null} if no client was found
+	 * @return information about the client
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see ClientInfo
 	 */
 	public ClientInfo getClientInfo(int clientId) {
-		final CClientInfo info = new CClientInfo(clientId);
-		if (query.doCommand(info)) {
-			return new ClientInfo(clientId, info.getFirstResponse().getMap());
-		}
-		return null;
+		return asyncApi.getClientInfo(clientId).getUninterruptibly();
 	}
 
 	/**
@@ -2061,22 +1897,14 @@ public class TS3Api {
 	 *
 	 * @return a list of all permissions assigned to the client
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see Permission
 	 */
 	public List<Permission> getClientPermissions(int clientDBId) {
-		final CClientPermList list = new CClientPermList(clientDBId);
-		if (query.doCommand(list)) {
-			final List<Wrapper> responses = list.getResponse();
-			final List<Permission> permissions = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				permissions.add(new Permission(response.getMap()));
-			}
-			return permissions;
-		}
-		return null;
+		return asyncApi.getClientPermissions(clientDBId).getUninterruptibly();
 	}
 
 	/**
@@ -2084,21 +1912,13 @@ public class TS3Api {
 	 *
 	 * @return a list of all clients on the virtual server
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client
 	 */
 	public List<Client> getClients() {
-		final CClientList list = new CClientList();
-		if (query.doCommand(list)) {
-			final List<Wrapper> responses = list.getResponse();
-			final List<Client> clients = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				clients.add(new Client(response.getMap()));
-			}
-			return clients;
-		}
-		return null;
+		return asyncApi.getClients().getUninterruptibly();
 	}
 
 	/**
@@ -2106,12 +1926,14 @@ public class TS3Api {
 	 *
 	 * @return a list of all complaints on the virtual server
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Complaint
 	 * @see #getComplaints(int)
 	 */
 	public List<Complaint> getComplaints() {
-		return getComplaints(-1);
+		return asyncApi.getComplaints().getUninterruptibly();
 	}
 
 	/**
@@ -2122,22 +1944,14 @@ public class TS3Api {
 	 *
 	 * @return a list of all complaints about the specified client
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see Complaint
 	 */
 	public List<Complaint> getComplaints(int clientDBId) {
-		final CComplainList list = new CComplainList(clientDBId);
-		if (query.doCommand(list)) {
-			final List<Wrapper> responses = list.getResponse();
-			final List<Complaint> complaints = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				complaints.add(new Complaint(response.getMap()));
-			}
-			return complaints;
-		}
-		return null;
+		return asyncApi.getComplaints(clientDBId).getUninterruptibly();
 	}
 
 	/**
@@ -2145,16 +1959,14 @@ public class TS3Api {
 	 *
 	 * @return connection information about the selected virtual server
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ConnectionInfo
 	 * @see #getServerInfo()
 	 */
 	public ConnectionInfo getConnectionInfo() {
-		final CServerRequestConnectionInfo info = new CServerRequestConnectionInfo();
-		if (query.doCommand(info)) {
-			return new ConnectionInfo(info.getFirstResponse().getMap());
-		}
-		return null;
+		return asyncApi.getConnectionInfo().getUninterruptibly();
 	}
 
 	/**
@@ -2165,27 +1977,14 @@ public class TS3Api {
 	 *
 	 * @return a list of all clients with a matching nickname
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1 + n,
 	 * where n is the amount of database clients with a matching nickname
 	 * @see Client#getNickname()
 	 */
 	public List<DatabaseClientInfo> getDatabaseClientsByName(String name) {
-		final CClientDBFind find = new CClientDBFind(name, false);
-
-		if (query.doCommand(find)) {
-			final List<Wrapper> responses = find.getResponse();
-			final List<DatabaseClientInfo> clients = new ArrayList<>(responses.size());
-
-			for (Wrapper response : responses) {
-				final int databaseId = response.getInt("cldbid");
-				final DatabaseClientInfo clientInfo = getDatabaseClientInfo(databaseId);
-				if (clientInfo != null) {
-					clients.add(clientInfo);
-				}
-			}
-			return clients;
-		}
-		return null;
+		return asyncApi.getDatabaseClientsByName(name).getUninterruptibly();
 	}
 
 	/**
@@ -2196,16 +1995,14 @@ public class TS3Api {
 	 *
 	 * @return the database client or {@code null} if no client was found
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 2
 	 * @see Client#getUniqueIdentifier()
 	 * @see DatabaseClientInfo
 	 */
 	public DatabaseClientInfo getDatabaseClientByUId(String clientUId) {
-		final CClientGetDBIdFromUId get = new CClientGetDBIdFromUId(clientUId);
-		if (query.doCommand(get)) {
-			return getDatabaseClientInfo(get.getFirstResponse().getInt("cldbid"));
-		}
-		return null;
+		return asyncApi.getDatabaseClientByUId(clientUId).getUninterruptibly();
 	}
 
 	/**
@@ -2216,16 +2013,14 @@ public class TS3Api {
 	 *
 	 * @return the database client or {@code null} if no client was found
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see DatabaseClientInfo
 	 */
 	public DatabaseClientInfo getDatabaseClientInfo(int clientDBId) {
-		final CClientDBInfo info = new CClientDBInfo(clientDBId);
-		if (query.doCommand(info)) {
-			return new DatabaseClientInfo(info.getFirstResponse().getMap());
-		}
-		return null;
+		return asyncApi.getDatabaseClientInfo(clientDBId).getUninterruptibly();
 	}
 
 	/**
@@ -2239,29 +2034,14 @@ public class TS3Api {
 	 *
 	 * @return a {@link List} of all database clients
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1 + n,
 	 * where n = Math.ceil([amount of database clients] / 200)
 	 * @see DatabaseClient
 	 */
 	public List<DatabaseClient> getDatabaseClients() {
-		final CClientDBList countList = new CClientDBList(0, 1, true);
-		if (query.doCommand(countList)) {
-			final int count = countList.getFirstResponse().getInt("count");
-			final List<DatabaseClient> clients = new ArrayList<>(count);
-
-			int i = 0;
-			while (i < count) {
-				final CClientDBList list = new CClientDBList(i, 200, false);
-				if (query.doCommand(list)) {
-					for (final Wrapper response : list.getResponse()) {
-						clients.add(new DatabaseClient(response.getMap()));
-					}
-				}
-				i += 200;
-			}
-			return clients;
-		}
-		return null;
+		return asyncApi.getDatabaseClients().getUninterruptibly();
 	}
 
 	/**
@@ -2276,19 +2056,13 @@ public class TS3Api {
 	 *
 	 * @return a {@link List} of database clients
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see DatabaseClient
 	 */
-	public List<DatabaseClient> getDatabaseClients(final int offset, final int count) {
-		final CClientDBList list = new CClientDBList(offset, count, false);
-		if (query.doCommand(list)) {
-			final List<DatabaseClient> clients = new ArrayList<>(count);
-			for (final Wrapper response : list.getResponse()) {
-				clients.add(new DatabaseClient(response.getMap()));
-			}
-			return clients;
-		}
-		return null;
+	public List<DatabaseClient> getDatabaseClients(int offset, int count) {
+		return asyncApi.getDatabaseClients(offset, count).getUninterruptibly();
 	}
 
 	/**
@@ -2305,12 +2079,14 @@ public class TS3Api {
 	 *
 	 * @return some information about the file
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
 	public FileInfo getFileInfo(String filePath, int channelId) {
-		return getFileInfo(filePath, channelId, null);
+		return asyncApi.getFileInfo(filePath, channelId).getUninterruptibly();
 	}
 
 	/**
@@ -2329,16 +2105,14 @@ public class TS3Api {
 	 *
 	 * @return some information about the file
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
 	public FileInfo getFileInfo(String filePath, int channelId, String channelPassword) {
-		final CFtGetFileInfo info = new CFtGetFileInfo(channelId, channelPassword, filePath);
-		if (query.doCommand(info)) {
-			return new FileInfo(info.getFirstResponse().getMap());
-		}
-		return null;
+		return asyncApi.getFileInfo(filePath, channelId, channelPassword).getUninterruptibly();
 	}
 
 	/**
@@ -2355,12 +2129,14 @@ public class TS3Api {
 	 *
 	 * @return some information about the file
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
 	public List<FileInfo> getFileInfos(String filePaths[], int channelId) {
-		return getFileInfos(filePaths, channelId, null);
+		return asyncApi.getFileInfos(filePaths, channelId).getUninterruptibly();
 	}
 
 	/**
@@ -2379,22 +2155,14 @@ public class TS3Api {
 	 *
 	 * @return some information about the file
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
 	public List<FileInfo> getFileInfos(String filePaths[], int channelId, String channelPassword) {
-		final CFtGetFileInfo info = new CFtGetFileInfo(channelId, channelPassword, filePaths);
-		if (query.doCommand(info)) {
-			final List<Wrapper> responses = info.getResponse();
-			final List<FileInfo> files = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				files.add(new FileInfo(response.getMap()));
-			}
-			return files;
-		}
-		return null;
+		return asyncApi.getFileInfos(filePaths, channelId, channelPassword).getUninterruptibly();
 	}
 
 	/**
@@ -2415,22 +2183,14 @@ public class TS3Api {
 	 *
 	 * @throws IllegalArgumentException
 	 * 		if the dimensions of {@code filePaths}, {@code channelIds} and {@code channelPasswords} don't match
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
 	public List<FileInfo> getFileInfos(String filePaths[], int[] channelIds, String[] channelPasswords) {
-		final CFtGetFileInfo info = new CFtGetFileInfo(channelIds, channelPasswords, filePaths);
-		if (query.doCommand(info)) {
-			final List<Wrapper> responses = info.getResponse();
-			final List<FileInfo> files = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				files.add(new FileInfo(response.getMap()));
-			}
-			return files;
-		}
-		return null;
+		return asyncApi.getFileInfos(filePaths, channelIds, channelPasswords).getUninterruptibly();
 	}
 
 	/**
@@ -2443,12 +2203,14 @@ public class TS3Api {
 	 *
 	 * @return the files and directories in the parent directory
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
 	public List<FileListEntry> getFileList(String directoryPath, int channelId) {
-		return getFileList(directoryPath, channelId, null);
+		return asyncApi.getFileList(directoryPath, channelId).getUninterruptibly();
 	}
 
 	/**
@@ -2463,41 +2225,27 @@ public class TS3Api {
 	 *
 	 * @return the files and directories in the parent directory
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
 	public List<FileListEntry> getFileList(String directoryPath, int channelId, String channelPassword) {
-		final CFtGetFileList list = new CFtGetFileList(directoryPath, channelId, channelPassword);
-		if (query.doCommand(list)) {
-			final List<Wrapper> responses = list.getResponse();
-			final List<FileListEntry> files = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				files.add(new FileListEntry(response.getMap()));
-			}
-			return files;
-		}
-		return null;
+		return asyncApi.getFileList(directoryPath, channelId, channelPassword).getUninterruptibly();
 	}
 
 	/**
 	 * Gets a list of active or recently active file transfers.
 	 *
 	 * @return a list of file transfers
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
 	 */
 	public List<FileTransfer> getFileTransfers() {
-		final CFtList list = new CFtList();
-		if (query.doCommand(list)) {
-			final List<Wrapper> responses = list.getResponse();
-			final List<FileTransfer> transfers = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				transfers.add(new FileTransfer(response.getMap()));
-			}
-			return transfers;
-		}
-		return null;
+		return asyncApi.getFileTransfers().getUninterruptibly();
 	}
 
 	/**
@@ -2506,14 +2254,12 @@ public class TS3Api {
 	 *
 	 * @return information about the host
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public HostInfo getHostInfo() {
-		final CHostInfo info = new CHostInfo();
-		if (query.doCommand(info)) {
-			return new HostInfo(info.getFirstResponse().getMap());
-		}
-		return null;
+		return asyncApi.getHostInfo().getUninterruptibly();
 	}
 
 	/**
@@ -2522,14 +2268,7 @@ public class TS3Api {
 	 * @return a list of all icons
 	 */
 	public List<IconFile> getIconList() {
-		List<FileListEntry> files = getFileList("/icons/", 0);
-		if (files == null) return null;
-		List<IconFile> icons = new ArrayList<>(files.size());
-		for (FileListEntry file : files) {
-			if (file.isDirectory() || file.isStillUploading()) continue;
-			icons.add(new IconFile(file.getMap()));
-		}
-		return icons;
+		return asyncApi.getIconList().getUninterruptibly();
 	}
 
 	/**
@@ -2538,14 +2277,12 @@ public class TS3Api {
 	 *
 	 * @return information about the TeamSpeak server instance.
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public InstanceInfo getInstanceInfo() {
-		final CInstanceInfo info = new CInstanceInfo();
-		if (query.doCommand(info)) {
-			return new InstanceInfo(info.getFirstResponse().getMap());
-		}
-		return null;
+		return asyncApi.getInstanceInfo().getUninterruptibly();
 	}
 
 	/**
@@ -2557,14 +2294,12 @@ public class TS3Api {
 	 *
 	 * @return a list of the latest log entries
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public List<String> getInstanceLogEntries(int lines) {
-		final CLogView logs = new CLogView(lines, true);
-		if (query.doCommand(logs)) {
-			return logs.getLines();
-		}
-		return null;
+		return asyncApi.getInstanceLogEntries(lines).getUninterruptibly();
 	}
 
 	/**
@@ -2572,10 +2307,12 @@ public class TS3Api {
 	 *
 	 * @return a list of up to 100 log entries
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public List<String> getInstanceLogEntries() {
-		return getInstanceLogEntries(100);
+		return asyncApi.getInstanceLogEntries().getUninterruptibly();
 	}
 
 	/**
@@ -2586,16 +2323,14 @@ public class TS3Api {
 	 *
 	 * @return the body of the message with the specified ID or {@code null} if there was no message with that ID
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Message#getId()
 	 * @see #setMessageRead(int)
 	 */
 	public String getOfflineMessage(int messageId) {
-		final CMessageGet get = new CMessageGet(messageId);
-		if (query.doCommand(get)) {
-			return get.getFirstResponse().get("message");
-		}
-		return null;
+		return asyncApi.getOfflineMessage(messageId).getUninterruptibly();
 	}
 
 	/**
@@ -2606,12 +2341,14 @@ public class TS3Api {
 	 *
 	 * @return the body of the message with the specified ID or {@code null} if there was no message with that ID
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Message#getId()
 	 * @see #setMessageRead(Message)
 	 */
 	public String getOfflineMessage(Message message) {
-		return getOfflineMessage(message.getId());
+		return asyncApi.getOfflineMessage(message).getUninterruptibly();
 	}
 
 	/**
@@ -2621,20 +2358,12 @@ public class TS3Api {
 	 *
 	 * @return a list of all offline messages this server query has received
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public List<Message> getOfflineMessages() {
-		final CMessageList list = new CMessageList();
-		if (query.doCommand(list)) {
-			final List<Wrapper> responses = list.getResponse();
-			final List<Message> msg = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				msg.add(new Message(response.getMap()));
-			}
-			return msg;
-		}
-		return null;
+		return asyncApi.getOfflineMessages().getUninterruptibly();
 	}
 
 	/**
@@ -2647,21 +2376,13 @@ public class TS3Api {
 	 *
 	 * @return a list of permission assignments
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #getPermissionOverview(int, int)
 	 */
 	public List<PermissionAssignment> getPermissionAssignments(String permName) {
-		final CPermFind find = new CPermFind(permName);
-		if (query.doCommand(find)) {
-			final List<Wrapper> responses = find.getResponse();
-			final List<PermissionAssignment> assignments = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				assignments.add(new PermissionAssignment(response.getMap()));
-			}
-			return assignments;
-		}
-		return null;
+		return asyncApi.getPermissionAssignments(permName).getUninterruptibly();
 	}
 
 	/**
@@ -2676,14 +2397,12 @@ public class TS3Api {
 	 *
 	 * @return the numeric ID of the specified permission
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public int getPermissionIdByName(String permName) {
-		final CPermIdGetByName get = new CPermIdGetByName(permName);
-		if (query.doCommand(get)) {
-			return get.getFirstResponse().getInt("permid");
-		}
-		return -1;
+		return asyncApi.getPermissionIdByName(permName).getUninterruptibly();
 	}
 
 	/**
@@ -2700,21 +2419,12 @@ public class TS3Api {
 	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code permNames} is {@code null}
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public int[] getPermissionIdsByName(String[] permNames) {
-		if (permNames == null) throw new IllegalArgumentException("permNames was null");
-
-		final CPermIdGetByName get = new CPermIdGetByName(permNames);
-		if (query.doCommand(get)) {
-			int[] ids = new int[get.getResponse().size()];
-			int i = 0;
-			for (Wrapper response : get.getResponse()) {
-				ids[i++] = response.getInt("permid");
-			}
-			return ids;
-		}
-		return null;
+	public int[] getPermissionIdsByName(String... permNames) {
+		return asyncApi.getPermissionIdsByName(permNames).getUninterruptibly();
 	}
 
 	/**
@@ -2728,22 +2438,14 @@ public class TS3Api {
 	 *
 	 * @return a list of all permission assignments for the client in the specified channel
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
 	 */
 	public List<PermissionAssignment> getPermissionOverview(int channelId, int clientDBId) {
-		final CPermOverview overview = new CPermOverview(channelId, clientDBId);
-		if (query.doCommand(overview)) {
-			final List<Wrapper> responses = overview.getResponse();
-			final List<PermissionAssignment> permissions = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				permissions.add(new PermissionAssignment(response.getMap()));
-			}
-			return permissions;
-		}
-		return null;
+		return asyncApi.getPermissionOverview(channelId, clientDBId).getUninterruptibly();
 	}
 
 	/**
@@ -2751,20 +2453,12 @@ public class TS3Api {
 	 *
 	 * @return a list of all permissions
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public List<PermissionInfo> getPermissions() {
-		final CPermissionList list = new CPermissionList();
-		if (query.doCommand(list)) {
-			final List<Wrapper> responses = list.getResponse();
-			final List<PermissionInfo> permissions = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				permissions.add(new PermissionInfo(response.getMap()));
-			}
-			return permissions;
-		}
-		return null;
+		return asyncApi.getPermissions().getUninterruptibly();
 	}
 
 	/**
@@ -2775,14 +2469,12 @@ public class TS3Api {
 	 *
 	 * @return the permission value, usually ranging from 0 to 100
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public int getPermissionValue(String permName) {
-		final CPermGet get = new CPermGet(permName);
-		if (query.doCommand(get)) {
-			return get.getFirstResponse().getInt("permvalue");
-		}
-		return -1;
+		return asyncApi.getPermissionValue(permName).getUninterruptibly();
 	}
 
 	/**
@@ -2795,21 +2487,12 @@ public class TS3Api {
 	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code permNames} is {@code null}
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public int[] getPermissionValues(String[] permNames) {
-		if (permNames == null) throw new IllegalArgumentException("permNames was null");
-
-		final CPermGet get = new CPermGet(permNames);
-		if (query.doCommand(get)) {
-			int[] values = new int[get.getResponse().size()];
-			int i = 0;
-			for (Wrapper response : get.getResponse()) {
-				values[i++] = response.getInt("permvalue");
-			}
-			return values;
-		}
-		return null;
+	public int[] getPermissionValues(String... permNames) {
+		return asyncApi.getPermissionValues(permNames).getUninterruptibly();
 	}
 
 	/**
@@ -2818,22 +2501,14 @@ public class TS3Api {
 	 *
 	 * @return a list of all generated, but still unclaimed privilege keys
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #addPrivilegeKey(PrivilegeKeyType, int, int, String)
 	 * @see #usePrivilegeKey(String)
 	 */
 	public List<PrivilegeKey> getPrivilegeKeys() {
-		final CPrivilegeKeyList list = new CPrivilegeKeyList();
-		if (query.doCommand(list)) {
-			final List<Wrapper> responses = list.getResponse();
-			final List<PrivilegeKey> keys = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				keys.add(new PrivilegeKey(response.getMap()));
-			}
-			return keys;
-		}
-		return null;
+		return asyncApi.getPrivilegeKeys().getUninterruptibly();
 	}
 
 	/**
@@ -2844,20 +2519,12 @@ public class TS3Api {
 	 *
 	 * @return a list of all clients in the server group
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public List<ServerGroupClient> getServerGroupClients(int serverGroupId) {
-		final CServerGroupClientList list = new CServerGroupClientList(serverGroupId);
-		if (query.doCommand(list)) {
-			final List<Wrapper> responses = list.getResponse();
-			final List<ServerGroupClient> clients = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				clients.add(new ServerGroupClient(response.getMap()));
-			}
-			return clients;
-		}
-		return null;
+		return asyncApi.getServerGroupClients(serverGroupId).getUninterruptibly();
 	}
 
 	/**
@@ -2868,10 +2535,12 @@ public class TS3Api {
 	 *
 	 * @return a list of all clients in the server group
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public List<ServerGroupClient> getServerGroupClients(ServerGroup serverGroup) {
-		return getServerGroupClients(serverGroup.getId());
+		return asyncApi.getServerGroupClients(serverGroup).getUninterruptibly();
 	}
 
 	/**
@@ -2882,22 +2551,14 @@ public class TS3Api {
 	 *
 	 * @return a list of all permissions assigned to the server group
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 * @see #getServerGroupPermissions(ServerGroup)
 	 */
 	public List<Permission> getServerGroupPermissions(int serverGroupId) {
-		final CServerGroupPermList list = new CServerGroupPermList(serverGroupId);
-		if (query.doCommand(list)) {
-			final List<Wrapper> responses = list.getResponse();
-			final List<Permission> permissions = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				permissions.add(new Permission(response.getMap()));
-			}
-			return permissions;
-		}
-		return null;
+		return asyncApi.getServerGroupPermissions(serverGroupId).getUninterruptibly();
 	}
 
 	/**
@@ -2908,10 +2569,12 @@ public class TS3Api {
 	 *
 	 * @return a list of all permissions assigned to the server group
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public List<Permission> getServerGroupPermissions(ServerGroup serverGroup) {
-		return getServerGroupPermissions(serverGroup.getId());
+		return asyncApi.getServerGroupPermissions(serverGroup).getUninterruptibly();
 	}
 
 	/**
@@ -2923,20 +2586,12 @@ public class TS3Api {
 	 *
 	 * @return a list of all server groups
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public List<ServerGroup> getServerGroups() {
-		final CServerGroupList list = new CServerGroupList();
-		if (query.doCommand(list)) {
-			final List<Wrapper> responses = list.getResponse();
-			final List<ServerGroup> groups = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				groups.add(new ServerGroup(response.getMap()));
-			}
-			return groups;
-		}
-		return null;
+		return asyncApi.getServerGroups().getUninterruptibly();
 	}
 
 	/**
@@ -2947,27 +2602,14 @@ public class TS3Api {
 	 *
 	 * @return a list of all server groups set for the client
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 2
 	 * @see Client#getDatabaseId()
 	 * @see #getServerGroupsByClient(Client)
 	 */
 	public List<ServerGroup> getServerGroupsByClientId(int clientDatabaseId) {
-		final CServerGroupsByClientId client = new CServerGroupsByClientId(clientDatabaseId);
-		if (query.doCommand(client)) {
-			final List<Wrapper> responses = client.getResponse();
-			final List<ServerGroup> list = new ArrayList<>(responses.size());
-			final List<ServerGroup> allGroups = getServerGroups();
-
-			for (final Wrapper response : responses) {
-				for (final ServerGroup s : allGroups) {
-					if (s.getId() == response.getInt("sgid")) {
-						list.add(s);
-					}
-				}
-			}
-			return list;
-		}
-		return null;
+		return asyncApi.getServerGroupsByClientId(clientDatabaseId).getUninterruptibly();
 	}
 
 	/**
@@ -2978,11 +2620,13 @@ public class TS3Api {
 	 *
 	 * @return a list of all server group set for the client
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 2
 	 * @see #getServerGroupsByClientId(int)
 	 */
 	public List<ServerGroup> getServerGroupsByClient(Client client) {
-		return getServerGroupsByClientId(client.getDatabaseId());
+		return asyncApi.getServerGroupsByClient(client).getUninterruptibly();
 	}
 
 	/**
@@ -2993,16 +2637,14 @@ public class TS3Api {
 	 *
 	 * @return the ID of the virtual server
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see VirtualServer#getPort()
 	 * @see VirtualServer#getId()
 	 */
 	public int getServerIdByPort(int port) {
-		final CServerIdGetByPort s = new CServerIdGetByPort(port);
-		if (query.doCommand(s)) {
-			return s.getFirstResponse().getInt("server_id");
-		}
-		return -1;
+		return asyncApi.getServerIdByPort(port).getUninterruptibly();
 	}
 
 	/**
@@ -3010,14 +2652,12 @@ public class TS3Api {
 	 *
 	 * @return information about the current virtual server
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public VirtualServerInfo getServerInfo() {
-		final CServerInfo info = new CServerInfo();
-		if (query.doCommand(info)) {
-			return new VirtualServerInfo(info.getFirstResponse().getMap());
-		}
-		return null;
+		return asyncApi.getServerInfo().getUninterruptibly();
 	}
 
 	/**
@@ -3025,14 +2665,12 @@ public class TS3Api {
 	 *
 	 * @return the version information of the server
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public Version getVersion() {
-		final CVersion version = new CVersion();
-		if (query.doCommand(version)) {
-			return new Version(version.getFirstResponse().getMap());
-		}
-		return null;
+		return asyncApi.getVersion().getUninterruptibly();
 	}
 
 	/**
@@ -3040,20 +2678,12 @@ public class TS3Api {
 	 *
 	 * @return a list of all virtual servers
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public List<VirtualServer> getVirtualServers() {
-		final CServerList serverList = new CServerList();
-		if (query.doCommand(serverList)) {
-			final List<Wrapper> responses = serverList.getResponse();
-			final List<VirtualServer> servers = new ArrayList<>(responses.size());
-
-			for (final Wrapper response : responses) {
-				servers.add((new VirtualServer(response.getMap())));
-			}
-			return servers;
-		}
-		return null;
+		return asyncApi.getVirtualServers().getUninterruptibly();
 	}
 
 	/**
@@ -3066,14 +2696,12 @@ public class TS3Api {
 	 *
 	 * @return a list of the latest log entries
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public List<String> getVirtualServerLogEntries(int lines) {
-		final CLogView logs = new CLogView(lines, false);
-		if (query.doCommand(logs)) {
-			return logs.getLines();
-		}
-		return null;
+		return asyncApi.getVirtualServerLogEntries(lines).getUninterruptibly();
 	}
 
 	/**
@@ -3082,10 +2710,50 @@ public class TS3Api {
 	 *
 	 * @return a list of up to 100 log entries
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public List<String> getVirtualServerLogEntries() {
-		return getVirtualServerLogEntries(100);
+		return asyncApi.getVirtualServerLogEntries().getUninterruptibly();
+	}
+
+	/**
+	 * Checks whether the client with the specified client ID is online.
+	 * <p>
+	 * Please note that there is no guarantee that the client will still be
+	 * online by the time the next command is executed.
+	 * </p>
+	 *
+	 * @param clientId
+	 * 		the ID of the client
+	 *
+	 * @return {@code true} if the client is online, {@code false} otherwise
+	 *
+	 * @querycommands 1
+	 * @see #getClientInfo(int)
+	 */
+	public boolean isClientOnline(int clientId) {
+		return asyncApi.isClientOnline(clientId).getUninterruptibly();
+	}
+
+	/**
+	 * Checks whether the client with the specified unique identifier is online.
+	 * <p>
+	 * Please note that there is no guarantee that the client will still be
+	 * online by the time the next command is executed.
+	 * </p>
+	 *
+	 * @param clientUId
+	 * 		the unique ID of the client
+	 *
+	 * @return {@code true} if the client is online, {@code false} otherwise
+	 *
+	 * @querycommands 1
+	 * @see #getClientByUId(String)
+	 */
+	public boolean isClientOnline(String clientUId) {
+		return asyncApi.isClientOnline(clientUId).getUninterruptibly();
 	}
 
 	/**
@@ -3096,14 +2764,14 @@ public class TS3Api {
 	 * @param clientIds
 	 * 		the IDs of the clients to kick
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #kickClientFromChannel(Client...)
 	 * @see #kickClientFromChannel(String, int...)
 	 */
-	public boolean kickClientFromChannel(int... clientIds) {
-		return kickClients(ReasonIdentifier.REASON_KICK_CHANNEL, null, clientIds);
+	public void kickClientFromChannel(int... clientIds) {
+		asyncApi.kickClientFromChannel(clientIds).getUninterruptibly();
 	}
 
 	/**
@@ -3114,14 +2782,14 @@ public class TS3Api {
 	 * @param clients
 	 * 		the clients to kick
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #kickClientFromChannel(int...)
 	 * @see #kickClientFromChannel(String, Client...)
 	 */
-	public boolean kickClientFromChannel(Client... clients) {
-		return kickClients(ReasonIdentifier.REASON_KICK_CHANNEL, null, clients);
+	public void kickClientFromChannel(Client... clients) {
+		asyncApi.kickClientFromChannel(clients).getUninterruptibly();
 	}
 
 	/**
@@ -3134,15 +2802,15 @@ public class TS3Api {
 	 * @param clientIds
 	 * 		the IDs of the clients to kick
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see #kickClientFromChannel(int...)
 	 * @see #kickClientFromChannel(String, Client...)
 	 */
-	public boolean kickClientFromChannel(String message, int... clientIds) {
-		return kickClients(ReasonIdentifier.REASON_KICK_CHANNEL, message, clientIds);
+	public void kickClientFromChannel(String message, int... clientIds) {
+		asyncApi.kickClientFromChannel(message, clientIds).getUninterruptibly();
 	}
 
 	/**
@@ -3155,14 +2823,14 @@ public class TS3Api {
 	 * @param clients
 	 * 		the clients to kick
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #kickClientFromChannel(Client...)
 	 * @see #kickClientFromChannel(String, int...)
 	 */
-	public boolean kickClientFromChannel(String message, Client... clients) {
-		return kickClients(ReasonIdentifier.REASON_KICK_CHANNEL, message, clients);
+	public void kickClientFromChannel(String message, Client... clients) {
+		asyncApi.kickClientFromChannel(message, clients).getUninterruptibly();
 	}
 
 	/**
@@ -3171,15 +2839,15 @@ public class TS3Api {
 	 * @param clientIds
 	 * 		the IDs of the clients to kick
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see #kickClientFromServer(Client...)
 	 * @see #kickClientFromServer(String, int...)
 	 */
-	public boolean kickClientFromServer(int... clientIds) {
-		return kickClients(ReasonIdentifier.REASON_KICK_SERVER, null, clientIds);
+	public void kickClientFromServer(int... clientIds) {
+		asyncApi.kickClientFromServer(clientIds).getUninterruptibly();
 	}
 
 	/**
@@ -3188,14 +2856,14 @@ public class TS3Api {
 	 * @param clients
 	 * 		the clients to kick
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #kickClientFromServer(int...)
 	 * @see #kickClientFromServer(String, Client...)
 	 */
-	public boolean kickClientFromServer(Client... clients) {
-		return kickClients(ReasonIdentifier.REASON_KICK_SERVER, null, clients);
+	public void kickClientFromServer(Client... clients) {
+		asyncApi.kickClientFromServer(clients).getUninterruptibly();
 	}
 
 	/**
@@ -3206,15 +2874,15 @@ public class TS3Api {
 	 * @param clientIds
 	 * 		the IDs of the clients to kick
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see #kickClientFromServer(int...)
 	 * @see #kickClientFromServer(String, Client...)
 	 */
-	public boolean kickClientFromServer(String message, int... clientIds) {
-		return kickClients(ReasonIdentifier.REASON_KICK_SERVER, message, clientIds);
+	public void kickClientFromServer(String message, int... clientIds) {
+		asyncApi.kickClientFromServer(message, clientIds).getUninterruptibly();
 	}
 
 	/**
@@ -3225,56 +2893,14 @@ public class TS3Api {
 	 * @param clients
 	 * 		the clients to kick
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #kickClientFromServer(Client...)
 	 * @see #kickClientFromServer(String, int...)
 	 */
-	public boolean kickClientFromServer(String message, Client... clients) {
-		return kickClients(ReasonIdentifier.REASON_KICK_SERVER, message, clients);
-	}
-
-	/**
-	 * Kicks a list of clients from either the channel or the server for a given reason.
-	 *
-	 * @param reason
-	 * 		where to kick the clients from
-	 * @param message
-	 * 		the reason message to display to the clients
-	 * @param clients
-	 * 		the clients to kick
-	 *
-	 * @return whether the command succeeded or not
-	 *
-	 * @querycommands 1
-	 */
-	private boolean kickClients(ReasonIdentifier reason, String message, Client... clients) {
-		int[] clientIds = new int[clients.length];
-		for (int i = 0; i < clients.length; ++i) {
-			clientIds[i] = clients[i].getId();
-		}
-		return kickClients(reason, message, clientIds);
-	}
-
-	/**
-	 * Kicks a list of clients from either the channel or the server for a given reason.
-	 *
-	 * @param reason
-	 * 		where to kick the clients from
-	 * @param message
-	 * 		the reason message to display to the clients
-	 * @param clientIds
-	 * 		the IDs of the clients to kick
-	 *
-	 * @return whether the command succeeded or not
-	 *
-	 * @querycommands 1
-	 * @see Client#getId()
-	 */
-	private boolean kickClients(ReasonIdentifier reason, String message, int... clientIds) {
-		final CClientKick kick = new CClientKick(reason, message, clientIds);
-		return query.doCommand(kick);
+	public void kickClientFromServer(String message, Client... clients) {
+		asyncApi.kickClientFromServer(message, clients).getUninterruptibly();
 	}
 
 	/**
@@ -3289,27 +2915,25 @@ public class TS3Api {
 	 * @param password
 	 * 		the password to use
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #logout()
 	 */
-	public boolean login(String username, String password) {
-		final CLogin login = new CLogin(username, password);
-		return query.doCommand(login);
+	public void login(String username, String password) {
+		asyncApi.login(username, password).getUninterruptibly();
 	}
 
 	/**
 	 * Logs the server query out and deselects the current virtual server.
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #login(String, String)
 	 */
-	public boolean logout() {
-		final CLogout logout = new CLogout();
-		return query.doCommand(logout);
+	public void logout() {
+		asyncApi.logout().getUninterruptibly();
 	}
 
 	/**
@@ -3325,14 +2949,14 @@ public class TS3Api {
 	 * @param channelTargetId
 	 * 		the new parent channel for the specified channel
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see #moveChannel(int, int, int)
 	 */
-	public boolean moveChannel(int channelId, int channelTargetId) {
-		return moveChannel(channelId, channelTargetId, 0);
+	public void moveChannel(int channelId, int channelTargetId) {
+		asyncApi.moveChannel(channelId, channelTargetId).getUninterruptibly();
 	}
 
 	/**
@@ -3353,15 +2977,14 @@ public class TS3Api {
 	 * @param order
 	 * 		the channel to sort the specified channel below
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see #moveChannel(int, int)
 	 */
-	public boolean moveChannel(int channelId, int channelTargetId, int order) {
-		final CChannelMove move = new CChannelMove(channelId, channelTargetId, order);
-		return query.doCommand(move);
+	public void moveChannel(int channelId, int channelTargetId, int order) {
+		asyncApi.moveChannel(channelId, channelTargetId, order).getUninterruptibly();
 	}
 
 	/**
@@ -3376,14 +2999,14 @@ public class TS3Api {
 	 * @param channelId
 	 * 		the ID of the channel to move the client into
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see Channel#getId()
 	 */
-	public boolean moveClient(int clientId, int channelId) {
-		return moveClient(clientId, channelId, null);
+	public void moveClient(int clientId, int channelId) {
+		asyncApi.moveClient(clientId, channelId).getUninterruptibly();
 	}
 
 	/**
@@ -3399,16 +3022,16 @@ public class TS3Api {
 	 * @param channelId
 	 * 		the ID of the channel to move the clients into
 	 *
-	 * @return whether the command succeeded or not
-	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code clientIds} is {@code null}
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see Channel#getId()
 	 */
-	public boolean moveClients(int[] clientIds, int channelId) {
-		return moveClients(clientIds, channelId, null);
+	public void moveClients(int[] clientIds, int channelId) {
+		asyncApi.moveClients(clientIds, channelId).getUninterruptibly();
 	}
 
 	/**
@@ -3423,14 +3046,14 @@ public class TS3Api {
 	 * @param channel
 	 * 		the channel to move the client into, cannot be {@code null}
 	 *
-	 * @return whether the command succeeded or not
-	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code client} or {@code channel} is {@code null}
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public boolean moveClient(Client client, ChannelBase channel) {
-		return moveClient(client, channel, null);
+	public void moveClient(Client client, ChannelBase channel) {
+		asyncApi.moveClient(client, channel).getUninterruptibly();
 	}
 
 	/**
@@ -3446,14 +3069,14 @@ public class TS3Api {
 	 * @param channel
 	 * 		the channel to move the clients into, cannot be {@code null}
 	 *
-	 * @return whether the command succeeded or not
-	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code clients} or {@code channel} is {@code null}
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public boolean moveClients(Client[] clients, ChannelBase channel) {
-		return moveClients(clients, channel, null);
+	public void moveClients(Client[] clients, ChannelBase channel) {
+		asyncApi.moveClients(clients, channel).getUninterruptibly();
 	}
 
 	/**
@@ -3470,15 +3093,14 @@ public class TS3Api {
 	 * @param channelPassword
 	 * 		the password of the channel, can be {@code null}
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see Channel#getId()
 	 */
-	public boolean moveClient(int clientId, int channelId, String channelPassword) {
-		final CClientMove move = new CClientMove(clientId, channelId, channelPassword);
-		return query.doCommand(move);
+	public void moveClient(int clientId, int channelId, String channelPassword) {
+		asyncApi.moveClient(clientId, channelId, channelPassword).getUninterruptibly();
 	}
 
 	/**
@@ -3496,20 +3118,16 @@ public class TS3Api {
 	 * @param channelPassword
 	 * 		the password of the channel, can be {@code null}
 	 *
-	 * @return whether the command succeeded or not
-	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code clientIds} is {@code null}
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see Channel#getId()
 	 */
-	public boolean moveClients(int[] clientIds, int channelId, String channelPassword) {
-		if (clientIds == null) throw new IllegalArgumentException("clientIds was null");
-		if (clientIds.length == 0) return true;
-
-		final CClientMove move = new CClientMove(clientIds, channelId, channelPassword);
-		return query.doCommand(move);
+	public void moveClients(int[] clientIds, int channelId, String channelPassword) {
+		asyncApi.moveClients(clientIds, channelId, channelPassword).getUninterruptibly();
 	}
 
 	/**
@@ -3526,17 +3144,14 @@ public class TS3Api {
 	 * @param channelPassword
 	 * 		the password of the channel, can be {@code null}
 	 *
-	 * @return whether the command succeeded or not
-	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code client} or {@code channel} is {@code null}
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public boolean moveClient(Client client, ChannelBase channel, String channelPassword) {
-		if (client == null) throw new IllegalArgumentException("client was null");
-		if (channel == null) throw new IllegalArgumentException("channel was null");
-
-		return moveClient(client.getId(), channel.getId(), channelPassword);
+	public void moveClient(Client client, ChannelBase channel, String channelPassword) {
+		asyncApi.moveClient(client, channel, channelPassword).getUninterruptibly();
 	}
 
 	/**
@@ -3554,22 +3169,14 @@ public class TS3Api {
 	 * @param channelPassword
 	 * 		the password of the channel, can be {@code null}
 	 *
-	 * @return whether the command succeeded or not
-	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code clients} or {@code channel} is {@code null}
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public boolean moveClients(Client[] clients, ChannelBase channel, String channelPassword) {
-		if (clients == null) throw new IllegalArgumentException("clients was null");
-		if (channel == null) throw new IllegalArgumentException("channel was null");
-
-		int[] clientIds = new int[clients.length];
-		for (int i = 0; i < clients.length; i++) {
-			Client client = clients[i];
-			clientIds[i] = client.getId();
-		}
-		return moveClients(clientIds, channel.getId(), channelPassword);
+	public void moveClients(Client[] clients, ChannelBase channel, String channelPassword) {
+		asyncApi.moveClients(clients, channel, channelPassword).getUninterruptibly();
 	}
 
 	/**
@@ -3582,15 +3189,15 @@ public class TS3Api {
 	 * @param channelId
 	 * 		the ID of the channel the file resides in
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 * @see #moveFile(String, String, int, int) moveFile to a different channel
 	 */
-	public boolean moveFile(String oldPath, String newPath, int channelId) {
-		return moveFile(oldPath, newPath, channelId, null);
+	public void moveFile(String oldPath, String newPath, int channelId) {
+		asyncApi.moveFile(oldPath, newPath, channelId).getUninterruptibly();
 	}
 
 	/**
@@ -3605,15 +3212,15 @@ public class TS3Api {
 	 * @param newChannelId
 	 * 		the ID of the channel the file should be moved to
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 * @see #moveFile(String, String, int) moveFile within the same channel
 	 */
-	public boolean moveFile(String oldPath, String newPath, int oldChannelId, int newChannelId) {
-		return moveFile(oldPath, newPath, oldChannelId, null, newChannelId, null);
+	public void moveFile(String oldPath, String newPath, int oldChannelId, int newChannelId) {
+		asyncApi.moveFile(oldPath, newPath, oldChannelId, newChannelId).getUninterruptibly();
 	}
 
 	/**
@@ -3628,16 +3235,15 @@ public class TS3Api {
 	 * @param channelPassword
 	 * 		the password of the channel
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 * @see #moveFile(String, String, int, String, int, String) moveFile to a different channel
 	 */
-	public boolean moveFile(String oldPath, String newPath, int channelId, String channelPassword) {
-		final CFtRenameFile rename = new CFtRenameFile(oldPath, newPath, channelId, channelPassword);
-		return query.doCommand(rename);
+	public void moveFile(String oldPath, String newPath, int channelId, String channelPassword) {
+		asyncApi.moveFile(oldPath, newPath, channelId, channelPassword).getUninterruptibly();
 	}
 
 	/**
@@ -3656,16 +3262,15 @@ public class TS3Api {
 	 * @param newPassword
 	 * 		the password of the new channel
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 * @see #moveFile(String, String, int, String) moveFile within the same channel
 	 */
-	public boolean moveFile(String oldPath, String newPath, int oldChannelId, String oldPassword, int newChannelId, String newPassword) {
-		final CFtRenameFile rename = new CFtRenameFile(oldPath, newPath, oldChannelId, oldPassword, newChannelId, newPassword);
-		return query.doCommand(rename);
+	public void moveFile(String oldPath, String newPath, int oldChannelId, String oldPassword, int newChannelId, String newPassword) {
+		asyncApi.moveFile(oldPath, newPath, oldChannelId, oldPassword, newChannelId, newPassword).getUninterruptibly();
 	}
 
 	/**
@@ -3674,13 +3279,13 @@ public class TS3Api {
 	 * @param channelId
 	 * 		the ID of the channel to move the server query into
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 */
-	public boolean moveQuery(int channelId) {
-		return moveClient(0, channelId, null);
+	public void moveQuery(int channelId) {
+		asyncApi.moveQuery(channelId).getUninterruptibly();
 	}
 
 	/**
@@ -3689,16 +3294,14 @@ public class TS3Api {
 	 * @param channel
 	 * 		the channel to move the server query into, cannot be {@code null}
 	 *
-	 * @return whether the command succeeded or not
-	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code channel} is {@code null}
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public boolean moveQuery(ChannelBase channel) {
-		if (channel == null) throw new IllegalArgumentException("channel was null");
-
-		return moveClient(0, channel.getId(), null);
+	public void moveQuery(ChannelBase channel) {
+		asyncApi.moveQuery(channel).getUninterruptibly();
 	}
 
 	/**
@@ -3709,13 +3312,13 @@ public class TS3Api {
 	 * @param channelPassword
 	 * 		the password of the channel, can be {@code null}
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 */
-	public boolean moveQuery(int channelId, String channelPassword) {
-		return moveClient(0, channelId, channelPassword);
+	public void moveQuery(int channelId, String channelPassword) {
+		asyncApi.moveQuery(channelId, channelPassword).getUninterruptibly();
 	}
 
 	/**
@@ -3726,16 +3329,14 @@ public class TS3Api {
 	 * @param channelPassword
 	 * 		the password of the channel, can be {@code null}
 	 *
-	 * @return whether the command succeeded or not
-	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code channel} is {@code null}
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public boolean moveQuery(ChannelBase channel, String channelPassword) {
-		if (channel == null) throw new IllegalArgumentException("channel was null");
-
-		return moveClient(0, channel.getId(), channelPassword);
+	public void moveQuery(ChannelBase channel, String channelPassword) {
+		asyncApi.moveQuery(channel, channelPassword).getUninterruptibly();
 	}
 
 	/**
@@ -3754,30 +3355,29 @@ public class TS3Api {
 	 * @param message
 	 * 		the message to send, may contain BB codes
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 */
-	public boolean pokeClient(int clientId, String message) {
-		final CClientPoke poke = new CClientPoke(clientId, message);
-		return query.doCommand(poke);
+	public void pokeClient(int clientId, String message) {
+		asyncApi.pokeClient(clientId, message).getUninterruptibly();
 	}
 
 	/**
 	 * Terminates the connection with the TeamSpeak3 server.
-	 * This command should never be executed manually.
+	 * <p>
+	 * This command should never be executed by a user of this API,
+	 * as it leaves the query in an undefined state. To terminate
+	 * a connection regularly, use {@link TS3Query#exit()}.
+	 * </p>
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
-	 * @deprecated This command leaves the query in an undefined state,
-	 * where the connection is closed without the socket being closed and no more command can be executed.
-	 * To terminate a connection, use {@link TS3Query#exit()}.
 	 */
-	@Deprecated
-	public boolean quit() {
-		return query.doCommand(new CQuit());
+	void quit() {
+		asyncApi.quit().getUninterruptibly();
 	}
 
 	/**
@@ -3790,28 +3390,21 @@ public class TS3Api {
 	 * <li>A client switches channels</li>
 	 * <li>A client sends a server message</li>
 	 * <li>A client sends a channel message <b>in the channel the query is in</b></li>
-	 * <li>A client sends <b>the server query</b> a private message or a response to a private message</li>
+	 * <li>A client sends a private message to <b>the server query</b></li>
+	 * <li>A client uses a privilege key</li>
 	 * </ul>
 	 * <p>
 	 * The limitations to when the query receives notifications about chat events cannot be circumvented.
 	 * </p>
 	 * To be able to process these events in your application, register an event listener.
 	 *
-	 * @return whether all commands succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 6
 	 * @see #addTS3Listeners(TS3Listener...)
 	 */
-	public boolean registerAllEvents() {
-		// No immediate return because even if one registration fails, a following one might still work
-		boolean success = registerEvent(TS3EventType.SERVER);
-		success &= registerEvent(TS3EventType.TEXT_SERVER);
-		success &= registerEvent(TS3EventType.CHANNEL, 0);
-		success &= registerEvent(TS3EventType.TEXT_CHANNEL, 0);
-		success &= registerEvent(TS3EventType.TEXT_PRIVATE);
-		success &= registerEvent(TS3EventType.PRIVILEGE_KEY_USED);
-
-		return success;
+	public void registerAllEvents() {
+		asyncApi.registerAllEvents().getUninterruptibly();
 	}
 
 	/**
@@ -3825,18 +3418,15 @@ public class TS3Api {
 	 * @param eventType
 	 * 		the event type to be notified about
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #addTS3Listeners(TS3Listener...)
 	 * @see #registerEvent(TS3EventType, int)
 	 * @see #registerAllEvents()
 	 */
-	public boolean registerEvent(TS3EventType eventType) {
-		if (eventType == TS3EventType.CHANNEL || eventType == TS3EventType.TEXT_CHANNEL) {
-			return registerEvent(eventType, 0);
-		}
-		return registerEvent(eventType, -1);
+	public void registerEvent(TS3EventType eventType) {
+		asyncApi.registerEvent(eventType).getUninterruptibly();
 	}
 
 	/**
@@ -3848,16 +3438,15 @@ public class TS3Api {
 	 * 		the ID of the channel to listen to, will be ignored if set to {@code -1}.
 	 * 		Can be set to {@code 0} for {@link TS3EventType#CHANNEL} to receive notifications about all channel switches.
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see #addTS3Listeners(TS3Listener...)
 	 * @see #registerAllEvents()
 	 */
-	public boolean registerEvent(TS3EventType eventType, int channelId) {
-		final CServerNotifyRegister register = new CServerNotifyRegister(eventType, channelId);
-		return query.doCommand(register);
+	public void registerEvent(TS3EventType eventType, int channelId) {
+		asyncApi.registerEvent(eventType, channelId).getUninterruptibly();
 	}
 
 	/**
@@ -3871,18 +3460,15 @@ public class TS3Api {
 	 * @param eventTypes
 	 * 		the event types to be notified about
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands n, one command per TS3EventType
 	 * @see #addTS3Listeners(TS3Listener...)
 	 * @see #registerEvent(TS3EventType, int)
 	 * @see #registerAllEvents()
 	 */
-	public boolean registerEvents(TS3EventType... eventTypes) {
-		for (final TS3EventType type : eventTypes) {
-			if (!registerEvent(type)) return false;
-		}
-		return true;
+	public void registerEvents(TS3EventType... eventTypes) {
+		asyncApi.registerEvents(eventTypes).getUninterruptibly();
 	}
 
 	/**
@@ -3893,16 +3479,15 @@ public class TS3Api {
 	 * @param clientDatabaseId
 	 * 		the database ID of the client
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 * @see Client#getDatabaseId()
 	 * @see #removeClientFromServerGroup(ServerGroup, Client)
 	 */
-	public boolean removeClientFromServerGroup(int serverGroupId, int clientDatabaseId) {
-		final CServerGroupDelClient del = new CServerGroupDelClient(serverGroupId, clientDatabaseId);
-		return query.doCommand(del);
+	public void removeClientFromServerGroup(int serverGroupId, int clientDatabaseId) {
+		asyncApi.removeClientFromServerGroup(serverGroupId, clientDatabaseId).getUninterruptibly();
 	}
 
 	/**
@@ -3913,13 +3498,13 @@ public class TS3Api {
 	 * @param client
 	 * 		the client to remove from the server group
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #removeClientFromServerGroup(int, int)
 	 */
-	public boolean removeClientFromServerGroup(ServerGroup serverGroup, Client client) {
-		return removeClientFromServerGroup(serverGroup.getId(), client.getDatabaseId());
+	public void removeClientFromServerGroup(ServerGroup serverGroup, Client client) {
+		asyncApi.removeClientFromServerGroup(serverGroup, client).getUninterruptibly();
 	}
 
 	/**
@@ -3936,7 +3521,7 @@ public class TS3Api {
 	 * @see TS3EventType
 	 */
 	public void removeTS3Listeners(TS3Listener... listeners) {
-		query.getEventManager().removeListeners(listeners);
+		asyncApi.removeTS3Listeners(listeners);
 	}
 
 	/**
@@ -3947,15 +3532,14 @@ public class TS3Api {
 	 * @param name
 	 * 		the new name for the channel group
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 * @see #renameChannelGroup(ChannelGroup, String)
 	 */
-	public boolean renameChannelGroup(int channelGroupId, String name) {
-		final CChannelGroupRename rename = new CChannelGroupRename(channelGroupId, name);
-		return query.doCommand(rename);
+	public void renameChannelGroup(int channelGroupId, String name) {
+		asyncApi.renameChannelGroup(channelGroupId, name).getUninterruptibly();
 	}
 
 	/**
@@ -3966,13 +3550,13 @@ public class TS3Api {
 	 * @param name
 	 * 		the new name for the channel group
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #renameChannelGroup(int, String)
 	 */
-	public boolean renameChannelGroup(ChannelGroup channelGroup, String name) {
-		return renameChannelGroup(channelGroup.getId(), name);
+	public void renameChannelGroup(ChannelGroup channelGroup, String name) {
+		asyncApi.renameChannelGroup(channelGroup, name).getUninterruptibly();
 	}
 
 	/**
@@ -3983,15 +3567,14 @@ public class TS3Api {
 	 * @param name
 	 * 		the new name for the server group
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 * @see #renameServerGroup(ServerGroup, String)
 	 */
-	public boolean renameServerGroup(int serverGroupId, String name) {
-		final CServerGroupRename rename = new CServerGroupRename(serverGroupId, name);
-		return query.doCommand(rename);
+	public void renameServerGroup(int serverGroupId, String name) {
+		asyncApi.renameServerGroup(serverGroupId, name).getUninterruptibly();
 	}
 
 	/**
@@ -4002,13 +3585,13 @@ public class TS3Api {
 	 * @param name
 	 * 		the new name for the server group
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #renameServerGroup(int, String)
 	 */
-	public boolean renameServerGroup(ServerGroup serverGroup, String name) {
-		return renameChannelGroup(serverGroup.getId(), name);
+	public void renameServerGroup(ServerGroup serverGroup, String name) {
+		asyncApi.renameServerGroup(serverGroup, name).getUninterruptibly();
 	}
 
 	/**
@@ -4016,14 +3599,12 @@ public class TS3Api {
 	 *
 	 * @return a token for a new administrator account
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public String resetPermissions() {
-		final CPermReset reset = new CPermReset();
-		if (query.doCommand(reset)) {
-			return reset.getFirstResponse().get("token");
-		}
-		return null;
+		return asyncApi.resetPermissions().getUninterruptibly();
 	}
 
 	/**
@@ -4032,16 +3613,15 @@ public class TS3Api {
 	 * @param id
 	 * 		the ID of the virtual server
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see VirtualServer#getId()
 	 * @see #selectVirtualServerByPort(int)
 	 * @see #selectVirtualServer(VirtualServer)
 	 */
-	public boolean selectVirtualServerById(int id) {
-		final CUse use = new CUse(id, -1);
-		return query.doCommand(use);
+	public void selectVirtualServerById(int id) {
+		asyncApi.selectVirtualServerById(id).getUninterruptibly();
 	}
 
 	/**
@@ -4050,16 +3630,15 @@ public class TS3Api {
 	 * @param port
 	 * 		the voice port of the virtual server
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see VirtualServer#getPort()
 	 * @see #selectVirtualServerById(int)
 	 * @see #selectVirtualServer(VirtualServer)
 	 */
-	public boolean selectVirtualServerByPort(int port) {
-		final CUse use = new CUse(-1, port);
-		return query.doCommand(use);
+	public void selectVirtualServerByPort(int port) {
+		asyncApi.selectVirtualServerByPort(port).getUninterruptibly();
 	}
 
 	/**
@@ -4068,14 +3647,14 @@ public class TS3Api {
 	 * @param server
 	 * 		the virtual server to move into
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #selectVirtualServerById(int)
 	 * @see #selectVirtualServerByPort(int)
 	 */
-	public boolean selectVirtualServer(VirtualServer server) {
-		return selectVirtualServerById(server.getId());
+	public void selectVirtualServer(VirtualServer server) {
+		asyncApi.selectVirtualServer(server).getUninterruptibly();
 	}
 
 	/**
@@ -4092,15 +3671,14 @@ public class TS3Api {
 	 * @param message
 	 * 		the actual message body, may contain BB codes
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getUniqueIdentifier()
 	 * @see Message
 	 */
-	public boolean sendOfflineMessage(String clientUId, String subject, String message) {
-		final CMessageAdd add = new CMessageAdd(clientUId, subject, message);
-		return query.doCommand(add);
+	public void sendOfflineMessage(String clientUId, String subject, String message) {
+		asyncApi.sendOfflineMessage(clientUId, subject, message).getUninterruptibly();
 	}
 
 	/**
@@ -4118,14 +3696,13 @@ public class TS3Api {
 	 * @param message
 	 * 		the text message to send
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 */
-	public boolean sendTextMessage(TextMessageTargetMode targetMode, int targetId, String message) {
-		final CSendTextMessage msg = new CSendTextMessage(targetMode.getIndex(), targetId, message);
-		return query.doCommand(msg);
+	public void sendTextMessage(TextMessageTargetMode targetMode, int targetId, String message) {
+		asyncApi.sendTextMessage(targetMode, targetId, message).getUninterruptibly();
 	}
 
 	/**
@@ -4141,14 +3718,14 @@ public class TS3Api {
 	 * @param message
 	 * 		the text message to send
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #sendChannelMessage(String)
 	 * @see Channel#getId()
 	 */
-	public boolean sendChannelMessage(int channelId, String message) {
-		return moveQuery(channelId) && sendTextMessage(TextMessageTargetMode.CHANNEL, 0, message);
+	public void sendChannelMessage(int channelId, String message) {
+		asyncApi.sendChannelMessage(channelId, message).getUninterruptibly();
 	}
 
 	/**
@@ -4158,12 +3735,12 @@ public class TS3Api {
 	 * @param message
 	 * 		the text message to send
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public boolean sendChannelMessage(String message) {
-		return sendTextMessage(TextMessageTargetMode.CHANNEL, 0, message);
+	public void sendChannelMessage(String message) {
+		asyncApi.sendChannelMessage(message).getUninterruptibly();
 	}
 
 	/**
@@ -4179,14 +3756,14 @@ public class TS3Api {
 	 * @param message
 	 * 		the text message to send
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #sendServerMessage(String)
 	 * @see VirtualServer#getId()
 	 */
-	public boolean sendServerMessage(int serverId, String message) {
-		return selectVirtualServerById(serverId) && sendTextMessage(TextMessageTargetMode.SERVER, 0, message);
+	public void sendServerMessage(int serverId, String message) {
+		asyncApi.sendServerMessage(serverId, message).getUninterruptibly();
 	}
 
 	/**
@@ -4196,12 +3773,12 @@ public class TS3Api {
 	 * @param message
 	 * 		the text message to send
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public boolean sendServerMessage(String message) {
-		return sendTextMessage(TextMessageTargetMode.SERVER, 0, message);
+	public void sendServerMessage(String message) {
+		asyncApi.sendServerMessage(message).getUninterruptibly();
 	}
 
 	/**
@@ -4213,13 +3790,13 @@ public class TS3Api {
 	 * @param message
 	 * 		the text message to send
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 */
-	public boolean sendPrivateMessage(int clientId, String message) {
-		return sendTextMessage(TextMessageTargetMode.CLIENT, clientId, message);
+	public void sendPrivateMessage(int clientId, String message) {
+		asyncApi.sendPrivateMessage(clientId, message).getUninterruptibly();
 	}
 
 	/**
@@ -4232,48 +3809,47 @@ public class TS3Api {
 	 * @param clientDBId
 	 * 		the database ID of the client for which the channel group should be set
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
 	 */
-	public boolean setClientChannelGroup(int groupId, int channelId, int clientDBId) {
-		final CSetClientChannelGroup group = new CSetClientChannelGroup(groupId, channelId, clientDBId);
-		return query.doCommand(group);
+	public void setClientChannelGroup(int groupId, int channelId, int clientDBId) {
+		asyncApi.setClientChannelGroup(groupId, channelId, clientDBId).getUninterruptibly();
 	}
 
 	/**
-	 * Sets the read flag to true for a given message. This will not delete the message.
+	 * Sets the read flag to {@code true} for a given message. This will not delete the message.
 	 *
 	 * @param messageId
 	 * 		the ID of the message for which the read flag should be set
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #setMessageReadFlag(int, boolean)
 	 */
-	public boolean setMessageRead(int messageId) {
-		return setMessageReadFlag(messageId, true);
+	public void setMessageRead(int messageId) {
+		asyncApi.setMessageRead(messageId).getUninterruptibly();
 	}
 
 	/**
-	 * Sets the read flag to true for a given message. This will not delete the message.
+	 * Sets the read flag to {@code true} for a given message. This will not delete the message.
 	 *
 	 * @param message
 	 * 		the message for which the read flag should be set
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #setMessageRead(int)
 	 * @see #setMessageReadFlag(Message, boolean)
 	 * @see #deleteOfflineMessage(int)
 	 */
-	public boolean setMessageRead(Message message) {
-		return setMessageReadFlag(message.getId(), true);
+	public void setMessageRead(Message message) {
+		asyncApi.setMessageRead(message).getUninterruptibly();
 	}
 
 	/**
@@ -4284,16 +3860,15 @@ public class TS3Api {
 	 * @param read
 	 * 		the boolean value to which the read flag should be set
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #setMessageRead(int)
 	 * @see #setMessageReadFlag(Message, boolean)
 	 * @see #deleteOfflineMessage(int)
 	 */
-	public boolean setMessageReadFlag(int messageId, boolean read) {
-		final CMessageUpdateFlag flag = new CMessageUpdateFlag(messageId, read);
-		return query.doCommand(flag);
+	public void setMessageReadFlag(int messageId, boolean read) {
+		asyncApi.setMessageReadFlag(messageId, read).getUninterruptibly();
 	}
 
 	/**
@@ -4304,15 +3879,15 @@ public class TS3Api {
 	 * @param read
 	 * 		the boolean value to which the read flag should be set
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #setMessageRead(Message)
 	 * @see #setMessageReadFlag(int, boolean)
 	 * @see #deleteOfflineMessage(int)
 	 */
-	public boolean setMessageReadFlag(Message message, boolean read) {
-		return setMessageReadFlag(message.getId(), read);
+	public void setMessageReadFlag(Message message, boolean read) {
+		asyncApi.setMessageReadFlag(message, read).getUninterruptibly();
 	}
 
 	/**
@@ -4322,14 +3897,13 @@ public class TS3Api {
 	 * @param nickname
 	 * 		the new nickname, may not contain any BB codes and may not be {@code null}
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #updateClient(Map)
 	 */
-	public boolean setNickname(String nickname) {
-		final Map<ClientProperty, String> options = Collections.singletonMap(ClientProperty.CLIENT_NICKNAME, nickname);
-		return updateClient(options);
+	public void setNickname(String nickname) {
+		asyncApi.setNickname(nickname).getUninterruptibly();
 	}
 
 	/**
@@ -4338,13 +3912,12 @@ public class TS3Api {
 	 * @param serverId
 	 * 		the ID of the virtual server
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public boolean startServer(int serverId) {
-		final CServerStart start = new CServerStart(serverId);
-		return query.doCommand(start);
+	public void startServer(int serverId) {
+		asyncApi.startServer(serverId).getUninterruptibly();
 	}
 
 	/**
@@ -4353,12 +3926,12 @@ public class TS3Api {
 	 * @param virtualServer
 	 * 		the virtual server to start
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public boolean startServer(VirtualServer virtualServer) {
-		return startServer(virtualServer.getId());
+	public void startServer(VirtualServer virtualServer) {
+		asyncApi.startServer(virtualServer).getUninterruptibly();
 	}
 
 	/**
@@ -4367,13 +3940,12 @@ public class TS3Api {
 	 * @param serverId
 	 * 		the ID of the virtual server
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public boolean stopServer(int serverId) {
-		final CServerStop stop = new CServerStop(serverId);
-		return query.doCommand(stop);
+	public void stopServer(int serverId) {
+		asyncApi.stopServer(serverId).getUninterruptibly();
 	}
 
 	/**
@@ -4382,12 +3954,12 @@ public class TS3Api {
 	 * @param virtualServer
 	 * 		the virtual server to stop
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public boolean stopServer(VirtualServer virtualServer) {
-		return stopServer(virtualServer.getId());
+	public void stopServer(VirtualServer virtualServer) {
+		asyncApi.stopServer(virtualServer).getUninterruptibly();
 	}
 
 	/**
@@ -4396,25 +3968,23 @@ public class TS3Api {
 	 * To have permission to use this command, you need to use the server query admin login.
 	 * </p>
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public boolean stopServerProcess() {
-		final CServerProcessStop stop = new CServerProcessStop();
-		return query.doCommand(stop);
+	public void stopServerProcess() {
+		asyncApi.stopServerProcess().getUninterruptibly();
 	}
 
 	/**
 	 * Unregisters the server query from receiving any event notifications.
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public boolean unregisterAllEvents() {
-		final CServerNotifyUnregister unr = new CServerNotifyUnregister();
-		return query.doCommand(unr);
+	public void unregisterAllEvents() {
+		asyncApi.unregisterAllEvents().getUninterruptibly();
 	}
 
 	/**
@@ -4423,14 +3993,36 @@ public class TS3Api {
 	 * @param options
 	 * 		the map of properties to update
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
+	 * @see #updateClient(ClientProperty, String)
 	 * @see #editClient(int, Map)
 	 */
-	public boolean updateClient(Map<ClientProperty, String> options) {
-		final CClientUpdate update = new CClientUpdate(options);
-		return query.doCommand(update);
+	public void updateClient(Map<ClientProperty, String> options) {
+		asyncApi.updateClient(options).getUninterruptibly();
+	}
+
+	/**
+	 * Changes a single client property for this server query instance.
+	 * <p>
+	 * Note that one can set many properties at once with the overloaded method that
+	 * takes a map of client properties and strings.
+	 * </p>
+	 *
+	 * @param property
+	 * 		the client property to modify, make sure it is editable
+	 * @param value
+	 * 		the new value of the property
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see #updateClient(Map)
+	 * @see #editClient(int, Map)
+	 */
+	public void updateClient(ClientProperty property, String value) {
+		asyncApi.updateClient(property, value).getUninterruptibly();
 	}
 
 	/**
@@ -4445,14 +4037,12 @@ public class TS3Api {
 	 *
 	 * @return the generated password for the server query login
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public String updateServerQueryLogin(String loginName) {
-		final CClientSetServerQueryLogin login = new CClientSetServerQueryLogin(loginName);
-		if (query.doCommand(login)) {
-			return login.getFirstResponse().get("client_login_password");
-		}
-		return null;
+		return asyncApi.updateServerQueryLogin(loginName).getUninterruptibly();
 	}
 
 	/**
@@ -4478,8 +4068,8 @@ public class TS3Api {
 	 * @param channelId
 	 * 		the ID of the channel to upload the file to
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -4487,8 +4077,8 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 * @see #uploadFileDirect(byte[], String, boolean, int, String)
 	 */
-	public boolean uploadFile(InputStream dataIn, long dataLength, String filePath, boolean overwrite, int channelId) {
-		return uploadFile(dataIn, dataLength, filePath, overwrite, channelId, null);
+	public void uploadFile(InputStream dataIn, long dataLength, String filePath, boolean overwrite, int channelId) {
+		asyncApi.uploadFile(dataIn, dataLength, filePath, overwrite, channelId).getUninterruptibly();
 	}
 
 	/**
@@ -4516,8 +4106,8 @@ public class TS3Api {
 	 * @param channelPassword
 	 * 		that channel's password
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -4525,22 +4115,8 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 * @see #uploadFileDirect(byte[], String, boolean, int, String)
 	 */
-	public boolean uploadFile(InputStream dataIn, long dataLength, String filePath, boolean overwrite, int channelId, String channelPassword) {
-		final FileTransferHelper helper = query.getFileTransferHelper();
-		final int transferId = helper.getClientTransferId();
-		final CFtInitUpload upload = new CFtInitUpload(transferId, filePath, channelId, channelPassword, dataLength, overwrite);
-
-		if (!query.doCommand(upload)) return false;
-		FileTransferParameters params = new FileTransferParameters(upload.getFirstResponse().getMap());
-		QueryError error = params.getQueryError();
-		if (!error.isSuccessful()) return false;
-
-		try {
-			query.getFileTransferHelper().uploadFile(dataIn, dataLength, params);
-		} catch (IOException e) {
-			throw new TS3FileTransferFailedException("Upload failed", e);
-		}
-		return true;
+	public void uploadFile(InputStream dataIn, long dataLength, String filePath, boolean overwrite, int channelId, String channelPassword) {
+		asyncApi.uploadFile(dataIn, dataLength, filePath, overwrite, channelId, channelPassword).getUninterruptibly();
 	}
 
 	/**
@@ -4556,8 +4132,8 @@ public class TS3Api {
 	 * @param channelId
 	 * 		the ID of the channel to upload the file to
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -4565,8 +4141,8 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 * @see #uploadFile(InputStream, long, String, boolean, int)
 	 */
-	public boolean uploadFileDirect(byte[] data, String filePath, boolean overwrite, int channelId) {
-		return uploadFileDirect(data, filePath, overwrite, channelId, null);
+	public void uploadFileDirect(byte[] data, String filePath, boolean overwrite, int channelId) {
+		asyncApi.uploadFileDirect(data, filePath, overwrite, channelId).getUninterruptibly();
 	}
 
 	/**
@@ -4584,8 +4160,8 @@ public class TS3Api {
 	 * @param channelPassword
 	 * 		that channel's password
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -4593,8 +4169,8 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 * @see #uploadFile(InputStream, long, String, boolean, int, String)
 	 */
-	public boolean uploadFileDirect(byte[] data, String filePath, boolean overwrite, int channelId, String channelPassword) {
-		return uploadFile(new ByteArrayInputStream(data), data.length, filePath, overwrite, channelId, channelPassword);
+	public void uploadFileDirect(byte[] data, String filePath, boolean overwrite, int channelId, String channelPassword) {
+		asyncApi.uploadFileDirect(data, filePath, overwrite, channelId, channelPassword).getUninterruptibly();
 	}
 
 	/**
@@ -4620,6 +4196,8 @@ public class TS3Api {
 	 *
 	 * @return the ID of the uploaded icon
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -4628,14 +4206,7 @@ public class TS3Api {
 	 * @see #downloadIcon(OutputStream, long)
 	 */
 	public long uploadIcon(InputStream dataIn, long dataLength) {
-		final FileTransferHelper helper = query.getFileTransferHelper();
-		final byte[] data;
-		try {
-			data = helper.readFully(dataIn, dataLength);
-		} catch (IOException e) {
-			throw new TS3FileTransferFailedException("Reading stream failed", e);
-		}
-		return uploadIconDirect(data);
+		return asyncApi.uploadIcon(dataIn, dataLength).getUninterruptibly();
 	}
 
 	/**
@@ -4648,6 +4219,8 @@ public class TS3Api {
 	 *
 	 * @return the ID of the uploaded icon
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -4656,15 +4229,7 @@ public class TS3Api {
 	 * @see #downloadIconDirect(long)
 	 */
 	public long uploadIconDirect(byte[] data) {
-		final FileTransferHelper helper = query.getFileTransferHelper();
-		final long iconId;
-		iconId = helper.getIconId(data);
-
-		final String path = "/icon_" + iconId;
-		if (uploadFileDirect(data, path, false, 0)) {
-			return iconId;
-		}
-		return -1L;
+		return asyncApi.uploadIconDirect(data).getUninterruptibly();
 	}
 
 	/**
@@ -4673,16 +4238,15 @@ public class TS3Api {
 	 * @param token
 	 * 		the privilege key to use
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see PrivilegeKey
 	 * @see #addPrivilegeKey(PrivilegeKeyType, int, int, String)
 	 * @see #usePrivilegeKey(PrivilegeKey)
 	 */
-	public boolean usePrivilegeKey(String token) {
-		final CPrivilegeKeyUse use = new CPrivilegeKeyUse(token);
-		return query.doCommand(use);
+	public void usePrivilegeKey(String token) {
+		asyncApi.usePrivilegeKey(token).getUninterruptibly();
 	}
 
 	/**
@@ -4691,15 +4255,15 @@ public class TS3Api {
 	 * @param privilegeKey
 	 * 		the privilege key to use
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see PrivilegeKey
 	 * @see #addPrivilegeKey(PrivilegeKeyType, int, int, String)
 	 * @see #usePrivilegeKey(String)
 	 */
-	public boolean usePrivilegeKey(PrivilegeKey privilegeKey) {
-		return usePrivilegeKey(privilegeKey.getToken());
+	public void usePrivilegeKey(PrivilegeKey privilegeKey) {
+		asyncApi.usePrivilegeKey(privilegeKey).getUninterruptibly();
 	}
 
 	/**
@@ -4707,14 +4271,12 @@ public class TS3Api {
 	 *
 	 * @return information about the server query instance
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #getClientInfo(int)
 	 */
 	public ServerQueryInfo whoAmI() {
-		final CWhoAmI whoAmI = new CWhoAmI();
-		if (query.doCommand(whoAmI)) {
-			return new ServerQueryInfo(whoAmI.getFirstResponse().getMap());
-		}
-		return null;
+		return asyncApi.whoAmI().getUninterruptibly();
 	}
 }

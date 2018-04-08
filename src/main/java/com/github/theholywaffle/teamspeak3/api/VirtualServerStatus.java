@@ -26,7 +26,7 @@ package com.github.theholywaffle.teamspeak3.api;
  * #L%
  */
 
-public enum VirtualServerStatus implements Property {
+public enum VirtualServerStatus {
 
 	ONLINE("online"),
 	OFFLINE("offline"),
@@ -42,9 +42,7 @@ public enum VirtualServerStatus implements Property {
 		this.name = name;
 	}
 
-	@Override
 	public String getName() {
 		return name;
 	}
-
 }

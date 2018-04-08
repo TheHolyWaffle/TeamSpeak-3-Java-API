@@ -27,9 +27,11 @@ package com.github.theholywaffle.teamspeak3;
  */
 
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3QueryShutDownException;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.reconnect.DisconnectingConnectionHandler;
 import com.github.theholywaffle.teamspeak3.commands.Command;
+import com.github.theholywaffle.teamspeak3.commands.response.ResponseBuilder;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -45,7 +47,7 @@ public class QueryIO {
 	private final KeepAliveThread keepAlive;
 
 	private final BlockingQueue<Command> sendQueue;
-	private final BlockingQueue<Command> receiveQueue;
+	private final BlockingQueue<ResponseBuilder> receiveQueue;
 
 	QueryIO(TS3Query query, TS3Config config) {
 		sendQueue = new LinkedBlockingQueue<>();
@@ -63,9 +65,10 @@ public class QueryIO {
 			tmpSocket = new Socket(config.getHost(), config.getQueryPort());
 			socket = tmpSocket;
 			socket.setTcpNoDelay(true);
+			socket.setSoTimeout(config.getCommandTimeout());
 
-			socketReader = new SocketReader(this, query, config);
 			socketWriter = new SocketWriter(this, config);
+			socketReader = new SocketReader(this, socketWriter, query, config);
 			keepAlive = new KeepAliveThread(socketWriter, query.getAsyncApi());
 		} catch (IOException e) {
 			// Clean up resources and fail
@@ -90,7 +93,9 @@ public class QueryIO {
 		if (io.sendQueue.isEmpty() && io.receiveQueue.isEmpty()) return;
 
 		// Resend commands which remained unanswered first
-		sendQueue.addAll(io.receiveQueue);
+		for (ResponseBuilder responseBuilder : io.receiveQueue) {
+			sendQueue.add(responseBuilder.getCommand());
+		}
 		sendQueue.addAll(io.sendQueue);
 
 		io.receiveQueue.clear();
@@ -117,6 +122,15 @@ public class QueryIO {
 		}
 	}
 
+	void failRemainingCommands() {
+		for (ResponseBuilder toReceive : receiveQueue) {
+			toReceive.getCommand().getFuture().fail(new TS3QueryShutDownException());
+		}
+		for (Command toSend : sendQueue) {
+			toSend.getFuture().fail(new TS3QueryShutDownException());
+		}
+	}
+
 	public void enqueueCommand(Command command) {
 		if (command == null) throw new IllegalArgumentException("Command cannot be null!");
 		sendQueue.add(command);
@@ -132,7 +146,7 @@ public class QueryIO {
 		return sendQueue;
 	}
 
-	BlockingQueue<Command> getReceiveQueue() {
+	BlockingQueue<ResponseBuilder> getReceiveQueue() {
 		return receiveQueue;
 	}
 }

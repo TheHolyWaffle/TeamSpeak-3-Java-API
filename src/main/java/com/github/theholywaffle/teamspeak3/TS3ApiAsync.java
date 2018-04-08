@@ -30,15 +30,20 @@ import com.github.theholywaffle.teamspeak3.api.*;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3FileTransferFailedException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.*;
 import com.github.theholywaffle.teamspeak3.commands.*;
+import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -113,6 +118,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return the ID of the newly created ban entry
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Pattern RegEx Pattern
 	 * @see Client#getId()
@@ -120,12 +127,8 @@ public class TS3ApiAsync {
 	 * @see ClientInfo#getIp()
 	 */
 	public CommandFuture<Integer> addBan(String ip, String name, String uid, long timeInSeconds, String reason) {
-		if (ip == null && name == null && uid == null) {
-			throw new IllegalArgumentException("Either IP, Name or UID must be set");
-		}
-
-		final CBanAdd add = new CBanAdd(ip, name, uid, timeInSeconds, reason);
-		return executeAndReturnIntProperty(add, "banid");
+		final Command cmd = BanCommands.banAdd(ip, name, uid, timeInSeconds, reason);
+		return executeAndReturnIntProperty(cmd, "banid");
 	}
 
 	/**
@@ -140,16 +143,18 @@ public class TS3ApiAsync {
 	 * @param permValue
 	 * 		the numeric value of the permission (or for boolean permissions: 1 = true, 0 = false)
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
 	 * @see Permission
 	 */
-	public CommandFuture<Boolean> addChannelClientPermission(int channelId, int clientDBId, String permName, int permValue) {
-		final CChannelClientAddPerm add = new CChannelClientAddPerm(channelId, clientDBId, permName, permValue);
-		return executeAndReturnError(add);
+	public CommandFuture<Void> addChannelClientPermission(int channelId, int clientDBId, String permName, int permValue) {
+		final Command cmd = PermissionCommands.channelClientAddPerm(channelId, clientDBId, permName, permValue);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -164,6 +169,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return the ID of the newly created channel group
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup
 	 */
@@ -181,12 +188,14 @@ public class TS3ApiAsync {
 	 *
 	 * @return the ID of the newly created channel group
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup
 	 */
 	public CommandFuture<Integer> addChannelGroup(String name, PermissionGroupDatabaseType type) {
-		final CChannelGroupAdd add = new CChannelGroupAdd(name, type);
-		return executeAndReturnIntProperty(add, "cgid");
+		final Command cmd = ChannelGroupCommands.channelGroupAdd(name, type);
+		return executeAndReturnIntProperty(cmd, "cgid");
 	}
 
 	/**
@@ -199,15 +208,17 @@ public class TS3ApiAsync {
 	 * @param permValue
 	 * 		the numeric value of the permission (or for boolean permissions: 1 = true, 0 = false)
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 * @see Permission
 	 */
-	public CommandFuture<Boolean> addChannelGroupPermission(int groupId, String permName, int permValue) {
-		final CChannelGroupAddPerm add = new CChannelGroupAddPerm(groupId, permName, permValue);
-		return executeAndReturnError(add);
+	public CommandFuture<Void> addChannelGroupPermission(int groupId, String permName, int permValue) {
+		final Command cmd = PermissionCommands.channelGroupAddPerm(groupId, permName, permValue);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -220,15 +231,17 @@ public class TS3ApiAsync {
 	 * @param permValue
 	 * 		the numeric value of the permission (or for boolean permissions: 1 = true, 0 = false)
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Permission
 	 */
-	public CommandFuture<Boolean> addChannelPermission(int channelId, String permName, int permValue) {
-		final CChannelAddPerm perm = new CChannelAddPerm(channelId, permName, permValue);
-		return executeAndReturnError(perm);
+	public CommandFuture<Void> addChannelPermission(int channelId, String permName, int permValue) {
+		final Command cmd = PermissionCommands.channelAddPerm(channelId, permName, permValue);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -243,15 +256,17 @@ public class TS3ApiAsync {
 	 * @param skipped
 	 * 		if set to {@code true}, the permission will not be overridden by channel group permissions
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see Permission
 	 */
-	public CommandFuture<Boolean> addClientPermission(int clientDBId, String permName, int value, boolean skipped) {
-		final CClientAddPerm add = new CClientAddPerm(clientDBId, permName, value, skipped);
-		return executeAndReturnError(add);
+	public CommandFuture<Void> addClientPermission(int clientDBId, String permName, int value, boolean skipped) {
+		final Command cmd = PermissionCommands.clientAddPerm(clientDBId, permName, value, skipped);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -265,15 +280,17 @@ public class TS3ApiAsync {
 	 * @param clientDatabaseId
 	 * 		the database ID of the client to add
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 * @see Client#getDatabaseId()
 	 */
-	public CommandFuture<Boolean> addClientToServerGroup(int groupId, int clientDatabaseId) {
-		final CServerGroupAddClient add = new CServerGroupAddClient(groupId, clientDatabaseId);
-		return executeAndReturnError(add);
+	public CommandFuture<Void> addClientToServerGroup(int groupId, int clientDatabaseId) {
+		final Command cmd = ServerGroupCommands.serverGroupAddClient(groupId, clientDatabaseId);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -285,15 +302,17 @@ public class TS3ApiAsync {
 	 * @param message
 	 * 		the message of the complaint, may not contain BB codes
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see Complaint#getMessage()
 	 */
-	public CommandFuture<Boolean> addComplaint(int clientDBId, String message) {
-		final CComplainAdd add = new CComplainAdd(clientDBId, message);
-		return executeAndReturnError(add);
+	public CommandFuture<Void> addComplaint(int clientDBId, String message) {
+		final Command cmd = ComplaintCommands.complainAdd(clientDBId, message);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -310,15 +329,17 @@ public class TS3ApiAsync {
 	 * @param skipped
 	 * 		if set to true, this permission will not be overridden by client or channel group permissions
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroupType
 	 * @see Permission
 	 */
-	public CommandFuture<Boolean> addPermissionToAllServerGroups(ServerGroupType type, String permName, int value, boolean negated, boolean skipped) {
-		final CServerGroupAutoAddPerm add = new CServerGroupAutoAddPerm(type, permName, value, negated, skipped);
-		return executeAndReturnError(add);
+	public CommandFuture<Void> addPermissionToAllServerGroups(ServerGroupType type, String permName, int value, boolean negated, boolean skipped) {
+		final Command cmd = PermissionCommands.serverGroupAutoAddPerm(type, permName, value, negated, skipped);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -341,14 +362,16 @@ public class TS3ApiAsync {
 	 *
 	 * @return the created token for a client to use
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see PrivilegeKeyType
 	 * @see #addPrivilegeKeyServerGroup(int, String)
 	 * @see #addPrivilegeKeyChannelGroup(int, int, String)
 	 */
 	public CommandFuture<String> addPrivilegeKey(PrivilegeKeyType type, int groupId, int channelId, String description) {
-		final CPrivilegeKeyAdd add = new CPrivilegeKeyAdd(type, groupId, channelId, description);
-		return executeAndReturnStringProperty(add, "token");
+		final Command cmd = PrivilegeKeyCommands.privilegeKeyAdd(type, groupId, channelId, description);
+		return executeAndReturnStringProperty(cmd, "token");
 	}
 
 	/**
@@ -363,6 +386,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return the created token for a client to use
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 * @see Channel#getId()
@@ -383,6 +408,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return the created token for a client to use
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 * @see #addPrivilegeKey(PrivilegeKeyType, int, int, String)
@@ -404,6 +431,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return the ID of the newly created server group
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup
 	 */
@@ -421,13 +450,15 @@ public class TS3ApiAsync {
 	 *
 	 * @return the ID of the newly created server group
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup
 	 * @see PermissionGroupDatabaseType
 	 */
 	public CommandFuture<Integer> addServerGroup(String name, PermissionGroupDatabaseType type) {
-		final CServerGroupAdd add = new CServerGroupAdd(name, type);
-		return executeAndReturnIntProperty(add, "sgid");
+		final Command cmd = ServerGroupCommands.serverGroupAdd(name, type);
+		return executeAndReturnIntProperty(cmd, "sgid");
 	}
 
 	/**
@@ -444,15 +475,17 @@ public class TS3ApiAsync {
 	 * @param skipped
 	 * 		if set to true, this permission will not be overridden by client or channel group permissions
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 * @see Permission
 	 */
-	public CommandFuture<Boolean> addServerGroupPermission(int groupId, String permName, int value, boolean negated, boolean skipped) {
-		final CServerGroupAddPerm add = new CServerGroupAddPerm(groupId, permName, value, negated, skipped);
-		return executeAndReturnError(add);
+	public CommandFuture<Void> addServerGroupPermission(int groupId, String permName, int value, boolean negated, boolean skipped) {
+		final Command cmd = PermissionCommands.serverGroupAddPerm(groupId, permName, value, negated, skipped);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -493,6 +526,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return an array containing the IDs of the first and the second ban entry
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see #addBan(String, String, String, long, String)
@@ -521,27 +556,29 @@ public class TS3ApiAsync {
 	 *
 	 * @return an array containing the IDs of the first and the second ban entry
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see #addBan(String, String, String, long, String)
 	 */
 	public CommandFuture<int[]> banClient(int clientId, long timeInSeconds, String reason) {
-		final CBanClient client = new CBanClient(clientId, timeInSeconds, reason);
+		final Command cmd = BanCommands.banClient(clientId, timeInSeconds, reason);
 		final CommandFuture<int[]> future = new CommandFuture<>();
 
-		query.doCommandAsync(client, new Callback() {
+		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
-			public void handle() {
-				if (hasFailed(client, future)) return;
-
-				final List<Wrapper> response = client.getResponse();
+			public void handleSuccess(DefaultArrayResponse result) {
+				final List<Wrapper> response = result.getResponses();
 				final int[] banIds = new int[response.size()];
 				for (int i = 0; i < banIds.length; ++i) {
 					banIds[i] = response.get(i).getInt("banid");
 				}
 				future.set(banIds);
 			}
-		});
+		}).forwardFailure(future);
+
+		query.doCommandAsync(cmd);
 		return future;
 	}
 
@@ -563,6 +600,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return an array containing the IDs of the first and the second ban entry
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see #addBan(String, String, String, long, String)
@@ -578,13 +617,15 @@ public class TS3ApiAsync {
 	 * @param message
 	 * 		the message to be sent
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Boolean> broadcast(String message) {
-		final CGM broadcast = new CGM(message);
-		return executeAndReturnError(broadcast);
+	public CommandFuture<Void> broadcast(String message) {
+		final Command cmd = ServerCommands.gm(message);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -601,18 +642,20 @@ public class TS3ApiAsync {
 	 * @param type
 	 * 		the desired type of channel group
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 */
-	public CommandFuture<Boolean> copyChannelGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
+	public CommandFuture<Void> copyChannelGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
 		if (targetGroupId <= 0) {
 			throw new IllegalArgumentException("To create a new channel group, use the method with a String argument");
 		}
 
-		final CChannelGroupCopy copy = new CChannelGroupCopy(sourceGroupId, targetGroupId, type);
-		return executeAndReturnError(copy);
+		final Command cmd = ChannelGroupCommands.channelGroupCopy(sourceGroupId, targetGroupId, type);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -628,12 +671,14 @@ public class TS3ApiAsync {
 	 *
 	 * @return the ID of the newly created channel group
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 */
 	public CommandFuture<Integer> copyChannelGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
-		final CChannelGroupCopy copy = new CChannelGroupCopy(sourceGroupId, targetName, type);
-		return executeAndReturnIntProperty(copy, "cgid");
+		final Command cmd = ChannelGroupCommands.channelGroupCopy(sourceGroupId, targetName, type);
+		return executeAndReturnIntProperty(cmd, "cgid");
 	}
 
 	/**
@@ -650,8 +695,10 @@ public class TS3ApiAsync {
 	 * @param type
 	 * 		the desired type of server group
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 */
@@ -660,8 +707,8 @@ public class TS3ApiAsync {
 			throw new IllegalArgumentException("To create a new server group, use the method with a String argument");
 		}
 
-		final CServerGroupCopy copy = new CServerGroupCopy(sourceGroupId, targetGroupId, type);
-		return executeAndReturnIntProperty(copy, "sgid");
+		final Command cmd = ServerGroupCommands.serverGroupCopy(sourceGroupId, targetGroupId, type);
+		return executeAndReturnIntProperty(cmd, "sgid");
 	}
 
 	/**
@@ -677,12 +724,14 @@ public class TS3ApiAsync {
 	 *
 	 * @return the ID of the newly created server group
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 */
 	public CommandFuture<Integer> copyServerGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
-		final CServerGroupCopy copy = new CServerGroupCopy(sourceGroupId, targetName, type);
-		return executeAndReturnIntProperty(copy, "sgid");
+		final Command cmd = ServerGroupCommands.serverGroupCopy(sourceGroupId, targetName, type);
+		return executeAndReturnIntProperty(cmd, "sgid");
 	}
 
 	/**
@@ -695,12 +744,14 @@ public class TS3ApiAsync {
 	 *
 	 * @return the ID of the newly created channel
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel
 	 */
 	public CommandFuture<Integer> createChannel(String name, Map<ChannelProperty, String> options) {
-		final CChannelCreate create = new CChannelCreate(name, options);
-		return executeAndReturnIntProperty(create, "cid");
+		final Command cmd = ChannelCommands.channelCreate(name, options);
+		return executeAndReturnIntProperty(cmd, "cid");
 	}
 
 	/**
@@ -711,13 +762,15 @@ public class TS3ApiAsync {
 	 * @param channelId
 	 * 		the ID of the channel the directory should be created in
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Boolean> createFileDirectory(String directoryPath, int channelId) {
+	public CommandFuture<Void> createFileDirectory(String directoryPath, int channelId) {
 		return createFileDirectory(directoryPath, channelId, null);
 	}
 
@@ -731,15 +784,17 @@ public class TS3ApiAsync {
 	 * @param channelPassword
 	 * 		the password of that channel
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Boolean> createFileDirectory(String directoryPath, int channelId, String channelPassword) {
-		final CFtCreateDir create = new CFtCreateDir(directoryPath, channelId, channelPassword);
-		return executeAndReturnError(create);
+	public CommandFuture<Void> createFileDirectory(String directoryPath, int channelId, String channelPassword) {
+		final Command cmd = FileCommands.ftCreateDir(directoryPath, channelId, channelPassword);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -762,21 +817,14 @@ public class TS3ApiAsync {
 	 *
 	 * @return information about the newly created virtual server
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see VirtualServer
 	 */
 	public CommandFuture<CreatedVirtualServer> createServer(String name, Map<VirtualServerProperty, String> options) {
-		final CServerCreate create = new CServerCreate(name, options);
-		final CommandFuture<CreatedVirtualServer> future = new CommandFuture<>();
-
-		query.doCommandAsync(create, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(create, future)) return;
-				future.set(new CreatedVirtualServer(create.getFirstResponse().getMap()));
-			}
-		});
-		return future;
+		final Command cmd = VirtualServerCommands.serverCreate(name, options);
+		return executeAndTransformFirst(cmd, Transformer.CREATED_VIRTUAL_SERVER /* CreatedVirtualServer::new */);
 	}
 
 	/**
@@ -786,33 +834,38 @@ public class TS3ApiAsync {
 	 *
 	 * @return a snapshot of the virtual server
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #deployServerSnapshot(Snapshot)
 	 */
 	public CommandFuture<Snapshot> createServerSnapshot() {
-		final CServerSnapshotCreate create = new CServerSnapshotCreate();
+		final Command cmd = VirtualServerCommands.serverSnapshotCreate();
 		final CommandFuture<Snapshot> future = new CommandFuture<>();
 
-		query.doCommandAsync(create, new Callback() {
+		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
-			public void handle() {
-				if (hasFailed(create, future)) return;
-				future.set(new Snapshot(create.getRawResponse()));
+			public void handleSuccess(DefaultArrayResponse result) {
+				future.set(new Snapshot(result.getRawResponse()));
 			}
-		});
+		}).forwardFailure(future);
+
+		query.doCommandAsync(cmd);
 		return future;
 	}
 
 	/**
 	 * Deletes all active ban rules from the server. Use with caution.
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Boolean> deleteAllBans() {
-		final CBanDelAll del = new CBanDelAll();
-		return executeAndReturnError(del);
+	public CommandFuture<Void> deleteAllBans() {
+		final Command cmd = BanCommands.banDelAll();
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -821,15 +874,17 @@ public class TS3ApiAsync {
 	 * @param clientDBId
 	 * 		the database ID of the client
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see Complaint
 	 */
-	public CommandFuture<Boolean> deleteAllComplaints(int clientDBId) {
-		final CComplainDelAll del = new CComplainDelAll(clientDBId);
-		return executeAndReturnError(del);
+	public CommandFuture<Void> deleteAllComplaints(int clientDBId) {
+		final Command cmd = ComplaintCommands.complainDelAll(clientDBId);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -838,14 +893,16 @@ public class TS3ApiAsync {
 	 * @param banId
 	 * 		the ID of the ban to delete
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Ban#getId()
 	 */
-	public CommandFuture<Boolean> deleteBan(int banId) {
-		final CBanDel del = new CBanDel(banId);
-		return executeAndReturnError(del);
+	public CommandFuture<Void> deleteBan(int banId) {
+		final Command cmd = BanCommands.banDel(banId);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -854,14 +911,16 @@ public class TS3ApiAsync {
 	 * @param channelId
 	 * 		the ID of the channel to delete
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see #deleteChannel(int, boolean)
 	 * @see #kickClientFromChannel(String, int...)
 	 */
-	public CommandFuture<Boolean> deleteChannel(int channelId) {
+	public CommandFuture<Void> deleteChannel(int channelId) {
 		return deleteChannel(channelId, true);
 	}
 
@@ -875,15 +934,17 @@ public class TS3ApiAsync {
 	 * @param force
 	 * 		whether clients should be kicked out of the channel
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see #kickClientFromChannel(String, int...)
 	 */
-	public CommandFuture<Boolean> deleteChannel(int channelId, boolean force) {
-		final CChannelDelete del = new CChannelDelete(channelId, force);
-		return executeAndReturnError(del);
+	public CommandFuture<Void> deleteChannel(int channelId, boolean force) {
+		final Command cmd = ChannelCommands.channelDelete(channelId, force);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -896,16 +957,18 @@ public class TS3ApiAsync {
 	 * @param permName
 	 * 		the name of the permission to revoke
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
 	 * @see Permission#getName()
 	 */
-	public CommandFuture<Boolean> deleteChannelClientPermission(int channelId, int clientDBId, String permName) {
-		final CChannelClientDelPerm del = new CChannelClientDelPerm(channelId, clientDBId, permName);
-		return executeAndReturnError(del);
+	public CommandFuture<Void> deleteChannelClientPermission(int channelId, int clientDBId, String permName) {
+		final Command cmd = PermissionCommands.channelClientDelPerm(channelId, clientDBId, permName);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -914,12 +977,14 @@ public class TS3ApiAsync {
 	 * @param groupId
 	 * 		the ID of the channel group
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 */
-	public CommandFuture<Boolean> deleteChannelGroup(int groupId) {
+	public CommandFuture<Void> deleteChannelGroup(int groupId) {
 		return deleteChannelGroup(groupId, true);
 	}
 
@@ -933,14 +998,16 @@ public class TS3ApiAsync {
 	 * @param force
 	 * 		whether the channel group should be deleted even if it still contains clients
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 */
-	public CommandFuture<Boolean> deleteChannelGroup(int groupId, boolean force) {
-		final CChannelGroupDel del = new CChannelGroupDel(groupId, force);
-		return executeAndReturnError(del);
+	public CommandFuture<Void> deleteChannelGroup(int groupId, boolean force) {
+		final Command cmd = ChannelGroupCommands.channelGroupDel(groupId, force);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -951,15 +1018,17 @@ public class TS3ApiAsync {
 	 * @param permName
 	 * 		the name of the permission to revoke
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 * @see Permission#getName()
 	 */
-	public CommandFuture<Boolean> deleteChannelGroupPermission(int groupId, String permName) {
-		final CChannelGroupDelPerm del = new CChannelGroupDelPerm(groupId, permName);
-		return executeAndReturnError(del);
+	public CommandFuture<Void> deleteChannelGroupPermission(int groupId, String permName) {
+		final Command cmd = PermissionCommands.channelGroupDelPerm(groupId, permName);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -970,15 +1039,17 @@ public class TS3ApiAsync {
 	 * @param permName
 	 * 		the name of the permission to revoke
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Permission#getName()
 	 */
-	public CommandFuture<Boolean> deleteChannelPermission(int channelId, String permName) {
-		final CChannelDelPerm del = new CChannelDelPerm(channelId, permName);
-		return executeAndReturnError(del);
+	public CommandFuture<Void> deleteChannelPermission(int channelId, String permName) {
+		final Command cmd = PermissionCommands.channelDelPerm(channelId, permName);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -989,15 +1060,17 @@ public class TS3ApiAsync {
 	 * @param permName
 	 * 		the name of the permission to revoke
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see Permission#getName()
 	 */
-	public CommandFuture<Boolean> deleteClientPermission(int clientDBId, String permName) {
-		final CClientDelPerm del = new CClientDelPerm(clientDBId, permName);
-		return executeAndReturnError(del);
+	public CommandFuture<Void> deleteClientPermission(int clientDBId, String permName) {
+		final Command cmd = PermissionCommands.clientDelPerm(clientDBId, permName);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -1009,15 +1082,17 @@ public class TS3ApiAsync {
 	 * @param fromClientDBId
 	 * 		the database ID of the client who added the complaint
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Complaint
 	 * @see Client#getDatabaseId()
 	 */
-	public CommandFuture<Boolean> deleteComplaint(int targetClientDBId, int fromClientDBId) {
-		final CComplainDel del = new CComplainDel(targetClientDBId, fromClientDBId);
-		return executeAndReturnError(del);
+	public CommandFuture<Void> deleteComplaint(int targetClientDBId, int fromClientDBId) {
+		final Command cmd = ComplaintCommands.complainDel(targetClientDBId, fromClientDBId);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -1030,16 +1105,18 @@ public class TS3ApiAsync {
 	 * @param clientDBId
 	 * 		the database ID of the client
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see #getDatabaseClientInfo(int)
 	 * @see DatabaseClientInfo
 	 */
-	public CommandFuture<Boolean> deleteDatabaseClientProperties(int clientDBId) {
-		final CClientDBDelete del = new CClientDBDelete(clientDBId);
-		return executeAndReturnError(del);
+	public CommandFuture<Void> deleteDatabaseClientProperties(int clientDBId) {
+		final Command cmd = DatabaseClientCommands.clientDBDelete(clientDBId);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -1050,13 +1127,15 @@ public class TS3ApiAsync {
 	 * @param channelId
 	 * 		the ID of the channel the file or directory resides in
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Boolean> deleteFile(String filePath, int channelId) {
+	public CommandFuture<Void> deleteFile(String filePath, int channelId) {
 		return deleteFile(filePath, channelId, null);
 	}
 
@@ -1070,15 +1149,17 @@ public class TS3ApiAsync {
 	 * @param channelPassword
 	 * 		the password of that channel
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Boolean> deleteFile(String filePath, int channelId, String channelPassword) {
-		final CFtDeleteFile delete = new CFtDeleteFile(channelId, channelPassword, filePath);
-		return executeAndReturnError(delete);
+	public CommandFuture<Void> deleteFile(String filePath, int channelId, String channelPassword) {
+		final Command cmd = FileCommands.ftDeleteFile(channelId, channelPassword, filePath);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -1089,13 +1170,15 @@ public class TS3ApiAsync {
 	 * @param channelId
 	 * 		the ID of the channel the file or directory resides in
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Boolean> deleteFiles(String[] filePaths, int channelId) {
+	public CommandFuture<Void> deleteFiles(String[] filePaths, int channelId) {
 		return deleteFiles(filePaths, channelId, null);
 	}
 
@@ -1109,15 +1192,17 @@ public class TS3ApiAsync {
 	 * @param channelPassword
 	 * 		the password of that channel
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Boolean> deleteFiles(String[] filePaths, int channelId, String channelPassword) {
-		final CFtDeleteFile delete = new CFtDeleteFile(channelId, channelPassword, filePaths);
-		return executeAndReturnError(delete);
+	public CommandFuture<Void> deleteFiles(String[] filePaths, int channelId, String channelPassword) {
+		final Command cmd = FileCommands.ftDeleteFile(channelId, channelPassword, filePaths);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -1126,12 +1211,14 @@ public class TS3ApiAsync {
 	 * @param iconId
 	 * 		the ID of the icon to delete
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see IconFile#getIconId()
 	 */
-	public CommandFuture<Boolean> deleteIcon(long iconId) {
+	public CommandFuture<Void> deleteIcon(long iconId) {
 		final String iconPath = "/icon_" + iconId;
 		return deleteFile(iconPath, 0);
 	}
@@ -1142,12 +1229,14 @@ public class TS3ApiAsync {
 	 * @param iconIds
 	 * 		the IDs of the icons to delete
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see IconFile#getIconId()
 	 */
-	public CommandFuture<Boolean> deleteIcons(long[] iconIds) {
+	public CommandFuture<Void> deleteIcons(long... iconIds) {
 		final String[] iconPaths = new String[iconIds.length];
 		for (int i = 0; i < iconIds.length; ++i) {
 			iconPaths[i] = "/icon_" + iconIds[i];
@@ -1161,14 +1250,16 @@ public class TS3ApiAsync {
 	 * @param messageId
 	 * 		the ID of the offline message to delete
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Message#getId()
 	 */
-	public CommandFuture<Boolean> deleteOfflineMessage(int messageId) {
-		final CMessageDel del = new CMessageDel(messageId);
-		return executeAndReturnError(del);
+	public CommandFuture<Void> deleteOfflineMessage(int messageId) {
+		final Command cmd = MessageCommands.messageDel(messageId);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -1179,15 +1270,17 @@ public class TS3ApiAsync {
 	 * @param permName
 	 * 		the name of the permission to remove
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroupType
 	 * @see Permission#getName()
 	 */
-	public CommandFuture<Boolean> deletePermissionFromAllServerGroups(ServerGroupType type, String permName) {
-		final CServerGroupAutoDelPerm del = new CServerGroupAutoDelPerm(type, permName);
-		return executeAndReturnError(del);
+	public CommandFuture<Void> deletePermissionFromAllServerGroups(ServerGroupType type, String permName) {
+		final Command cmd = PermissionCommands.serverGroupAutoDelPerm(type, permName);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -1196,14 +1289,16 @@ public class TS3ApiAsync {
 	 * @param token
 	 * 		the token of the privilege key
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see PrivilegeKey
 	 */
-	public CommandFuture<Boolean> deletePrivilegeKey(String token) {
-		final CPrivilegeKeyDelete del = new CPrivilegeKeyDelete(token);
-		return executeAndReturnError(del);
+	public CommandFuture<Void> deletePrivilegeKey(String token) {
+		final Command cmd = PrivilegeKeyCommands.privilegeKeyDelete(token);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -1215,15 +1310,17 @@ public class TS3ApiAsync {
 	 * @param serverId
 	 * 		the ID of the virtual server
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see VirtualServer#getId()
 	 * @see #stopServer(int)
 	 */
-	public CommandFuture<Boolean> deleteServer(int serverId) {
-		final CServerDelete delete = new CServerDelete(serverId);
-		return executeAndReturnError(delete);
+	public CommandFuture<Void> deleteServer(int serverId) {
+		final Command cmd = VirtualServerCommands.serverDelete(serverId);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -1232,12 +1329,14 @@ public class TS3ApiAsync {
 	 * @param groupId
 	 * 		the ID of the server group
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 */
-	public CommandFuture<Boolean> deleteServerGroup(int groupId) {
+	public CommandFuture<Void> deleteServerGroup(int groupId) {
 		return deleteServerGroup(groupId, true);
 	}
 
@@ -1253,14 +1352,16 @@ public class TS3ApiAsync {
 	 * @param force
 	 * 		whether the server group should be deleted if it still contains clients
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 */
-	public CommandFuture<Boolean> deleteServerGroup(int groupId, boolean force) {
-		final CServerGroupDel del = new CServerGroupDel(groupId, force);
-		return executeAndReturnError(del);
+	public CommandFuture<Void> deleteServerGroup(int groupId, boolean force) {
+		final Command cmd = ServerGroupCommands.serverGroupDel(groupId, force);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -1271,15 +1372,17 @@ public class TS3ApiAsync {
 	 * @param permName
 	 * 		the name of the permission to revoke
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 * @see Permission#getName()
 	 */
-	public CommandFuture<Boolean> deleteServerGroupPermission(int groupId, String permName) {
-		final CServerGroupDelPerm del = new CServerGroupDelPerm(groupId, permName);
-		return executeAndReturnError(del);
+	public CommandFuture<Void> deleteServerGroupPermission(int groupId, String permName) {
+		final Command cmd = PermissionCommands.serverGroupDelPerm(groupId, permName);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -1289,12 +1392,14 @@ public class TS3ApiAsync {
 	 * @param snapshot
 	 * 		the snapshot to restore
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #createServerSnapshot()
 	 */
-	public CommandFuture<Boolean> deployServerSnapshot(Snapshot snapshot) {
+	public CommandFuture<Void> deployServerSnapshot(Snapshot snapshot) {
 		return deployServerSnapshot(snapshot.get());
 	}
 
@@ -1305,14 +1410,16 @@ public class TS3ApiAsync {
 	 * @param snapshot
 	 * 		the snapshot to restore
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #createServerSnapshot()
 	 */
-	public CommandFuture<Boolean> deployServerSnapshot(String snapshot) {
-		final CServerSnapshotDeploy deploy = new CServerSnapshotDeploy(snapshot);
-		return executeAndReturnError(deploy);
+	public CommandFuture<Void> deployServerSnapshot(String snapshot) {
+		final Command cmd = VirtualServerCommands.serverSnapshotDeploy(snapshot);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -1335,6 +1442,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return how many bytes were downloaded
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -1368,6 +1477,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return how many bytes were downloaded
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -1378,15 +1489,13 @@ public class TS3ApiAsync {
 	public CommandFuture<Long> downloadFile(final OutputStream dataOut, String filePath, int channelId, String channelPassword) {
 		final FileTransferHelper helper = query.getFileTransferHelper();
 		final int transferId = helper.getClientTransferId();
-		final CFtInitDownload download = new CFtInitDownload(transferId, filePath, channelId, channelPassword);
+		final Command cmd = FileCommands.ftInitDownload(transferId, filePath, channelId, channelPassword);
 		final CommandFuture<Long> future = new CommandFuture<>();
 
-		query.doCommandAsync(download, new Callback() {
+		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
-			public void handle() {
-				if (hasFailed(download, future)) return;
-
-				FileTransferParameters params = new FileTransferParameters(download.getFirstResponse().getMap());
+			public void handleSuccess(DefaultArrayResponse result) {
+				FileTransferParameters params = new FileTransferParameters(result.getFirstResponse().getMap());
 				QueryError error = params.getQueryError();
 				if (!error.isSuccessful()) {
 					future.fail(new TS3CommandFailedException(error));
@@ -1401,7 +1510,9 @@ public class TS3ApiAsync {
 				}
 				future.set(params.getFileSize());
 			}
-		});
+		}).forwardFailure(future);
+
+		query.doCommandAsync(cmd);
 		return future;
 	}
 
@@ -1421,6 +1532,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return a byte array containing the file's data
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -1450,6 +1563,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return a byte array containing the file's data
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -1460,15 +1575,13 @@ public class TS3ApiAsync {
 	public CommandFuture<byte[]> downloadFileDirect(String filePath, int channelId, String channelPassword) {
 		final FileTransferHelper helper = query.getFileTransferHelper();
 		final int transferId = helper.getClientTransferId();
-		final CFtInitDownload download = new CFtInitDownload(transferId, filePath, channelId, channelPassword);
+		final Command cmd = FileCommands.ftInitDownload(transferId, filePath, channelId, channelPassword);
 		final CommandFuture<byte[]> future = new CommandFuture<>();
 
-		query.doCommandAsync(download, new Callback() {
+		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
-			public void handle() {
-				if (hasFailed(download, future)) return;
-
-				FileTransferParameters params = new FileTransferParameters(download.getFirstResponse().getMap());
+			public void handleSuccess(DefaultArrayResponse result) {
+				FileTransferParameters params = new FileTransferParameters(result.getFirstResponse().getMap());
 				QueryError error = params.getQueryError();
 				if (!error.isSuccessful()) {
 					future.fail(new TS3CommandFailedException(error));
@@ -1490,7 +1603,9 @@ public class TS3ApiAsync {
 				}
 				future.set(dataOut.toByteArray());
 			}
-		});
+		}).forwardFailure(future);
+
+		query.doCommandAsync(cmd);
 		return future;
 	}
 
@@ -1509,6 +1624,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return a byte array containing the icon file's data
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -1533,6 +1650,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return a byte array containing the icon file's data
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -1553,21 +1672,50 @@ public class TS3ApiAsync {
 	 * @param options
 	 * 		the map of properties to modify
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Boolean> editChannel(int channelId, Map<ChannelProperty, String> options) {
-		final CChannelEdit edit = new CChannelEdit(channelId, options);
-		return executeAndReturnError(edit);
+	public CommandFuture<Void> editChannel(int channelId, Map<ChannelProperty, String> options) {
+		final Command cmd = ChannelCommands.channelEdit(channelId, options);
+		return executeAndReturnError(cmd);
+	}
+
+	/**
+	 * Changes a single property of the given channel.
+	 * <p>
+	 * Note that one can set many properties at once with the overloaded method that
+	 * takes a map of channel properties and strings.
+	 * </p>
+	 *
+	 * @param channelId
+	 * 		the ID of the channel to edit
+	 * @param property
+	 * 		the channel property to modify, make sure it is editable
+	 * @param value
+	 * 		the new value of the property
+	 *
+	 * @return a future to track the progress of this command
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Channel#getId()
+	 * @see #editChannel(int, Map)
+	 */
+	public CommandFuture<Void> editChannel(int channelId, ChannelProperty property, String value) {
+		return editChannel(channelId, Collections.singletonMap(property, value));
 	}
 
 	/**
 	 * Changes a client's configuration using given properties.
 	 * <p>
 	 * Only {@link ClientProperty#CLIENT_DESCRIPTION} can be changed for other clients.
-	 * To update the current client's properties, use {@link #updateClient(Map)}.
+	 * To update the current client's properties, use {@link #updateClient(Map)}
+	 * or {@link #updateClient(ClientProperty, String)}.
 	 * </p>
 	 *
 	 * @param clientId
@@ -1575,15 +1723,45 @@ public class TS3ApiAsync {
 	 * @param options
 	 * 		the map of properties to modify
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see #updateClient(Map)
 	 */
-	public CommandFuture<Boolean> editClient(int clientId, Map<ClientProperty, String> options) {
-		final CClientEdit edit = new CClientEdit(clientId, options);
-		return executeAndReturnError(edit);
+	public CommandFuture<Void> editClient(int clientId, Map<ClientProperty, String> options) {
+		final Command cmd = ClientCommands.clientEdit(clientId, options);
+		return executeAndReturnError(cmd);
+	}
+
+	/**
+	 * Changes a single property of the given client.
+	 * <p>
+	 * Only {@link ClientProperty#CLIENT_DESCRIPTION} can be changed for other clients.
+	 * To update the current client's properties, use {@link #updateClient(Map)}
+	 * or {@link #updateClient(ClientProperty, String)}.
+	 * </p>
+	 *
+	 * @param clientId
+	 * 		the ID of the client to edit
+	 * @param property
+	 * 		the client property to modify, make sure it is editable
+	 * @param value
+	 * 		the new value of the property
+	 *
+	 * @return a future to track the progress of this command
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Client#getId()
+	 * @see #editClient(int, Map)
+	 * @see #updateClient(Map)
+	 */
+	public CommandFuture<Void> editClient(int clientId, ClientProperty property, String value) {
+		return editClient(clientId, Collections.singletonMap(property, value));
 	}
 
 	/**
@@ -1594,15 +1772,17 @@ public class TS3ApiAsync {
 	 * @param options
 	 * 		the map of properties to modify
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see DatabaseClientInfo
 	 * @see Client#getDatabaseId()
 	 */
-	public CommandFuture<Boolean> editDatabaseClient(int clientDBId, Map<ClientProperty, String> options) {
-		final CClientDBEdit edit = new CClientDBEdit(clientDBId, options);
-		return executeAndReturnError(edit);
+	public CommandFuture<Void> editDatabaseClient(int clientDBId, Map<ClientProperty, String> options) {
+		final Command cmd = DatabaseClientCommands.clientDBEdit(clientDBId, options);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -1614,20 +1794,18 @@ public class TS3ApiAsync {
 	 * @param value
 	 * 		the new value for the edit
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code property} is not changeable
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerInstanceProperty#isChangeable()
 	 */
-	public CommandFuture<Boolean> editInstance(ServerInstanceProperty property, String value) {
-		if (!property.isChangeable()) {
-			throw new IllegalArgumentException("Property is not changeable");
-		}
-
-		final CInstanceEdit edit = new CInstanceEdit(property, value);
-		return executeAndReturnError(edit);
+	public CommandFuture<Void> editInstance(ServerInstanceProperty property, String value) {
+		final Command cmd = ServerCommands.instanceEdit(Collections.singletonMap(property, value));
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -1636,14 +1814,16 @@ public class TS3ApiAsync {
 	 * @param options
 	 * 		the map of properties to edit
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see VirtualServerProperty
 	 */
-	public CommandFuture<Boolean> editServer(Map<VirtualServerProperty, String> options) {
-		final CServerEdit edit = new CServerEdit(options);
-		return executeAndReturnError(edit);
+	public CommandFuture<Void> editServer(Map<VirtualServerProperty, String> options) {
+		final Command cmd = VirtualServerCommands.serverEdit(options);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -1651,28 +1831,14 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all bans on the virtual server
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Ban
 	 */
 	public CommandFuture<List<Ban>> getBans() {
-		final CBanList list = new CBanList();
-		final CommandFuture<List<Ban>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<Ban> bans = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					bans.add(new Ban(response.getMap()));
-				}
-				future.set(bans);
-			}
-		});
-		return future;
+		final Command cmd = BanCommands.banList();
+		return executeAndTransform(cmd, Transformer.BAN /* Ban::new */);
 	}
 
 	/**
@@ -1680,28 +1846,14 @@ public class TS3ApiAsync {
 	 *
 	 * @return the list of bound IP addresses
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Binding
 	 */
 	public CommandFuture<List<Binding>> getBindings() {
-		final CBindingList list = new CBindingList();
-		final CommandFuture<List<Binding>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<Binding> bindings = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					bindings.add(new Binding(response.getMap()));
-				}
-				future.set(bindings);
-			}
-		});
-		return future;
+		final Command cmd = ServerCommands.bindingList();
+		return executeAndTransform(cmd, Transformer.BINDING /* Binding::new */);
 	}
 
 	/**
@@ -1714,6 +1866,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return the found channel or {@code null} if no channel was found
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel
 	 * @see #getChannelsByName(String)
@@ -1746,23 +1900,23 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all channels with names matching the search pattern
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 2
 	 * @see Channel
 	 * @see #getChannelByNameExact(String, boolean)
 	 */
 	public CommandFuture<List<Channel>> getChannelsByName(String name) {
-		final CChannelFind find = new CChannelFind(name);
+		final Command cmd = ChannelCommands.channelFind(name);
 		final CommandFuture<List<Channel>> future = new CommandFuture<>();
 
 		getChannels().onSuccess(new CommandFuture.SuccessListener<List<Channel>>() {
 			@Override
 			public void handleSuccess(final List<Channel> allChannels) {
-				query.doCommandAsync(find, new Callback() {
+				cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 					@Override
-					public void handle() {
-						if (hasFailed(find, future)) return;
-
-						final List<Wrapper> responses = find.getResponse();
+					public void handleSuccess(DefaultArrayResponse result) {
+						final List<Wrapper> responses = result.getResponses();
 						final List<Channel> channels = new ArrayList<>(responses.size());
 
 						for (final Wrapper response : responses) {
@@ -1776,7 +1930,9 @@ public class TS3ApiAsync {
 						}
 						future.set(channels);
 					}
-				});
+				}).forwardFailure(future);
+
+				query.doCommandAsync(cmd);
 			}
 		}).forwardFailure(future);
 		return future;
@@ -1792,30 +1948,16 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of permissions for the user in the specified channel
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
 	 * @see Permission
 	 */
 	public CommandFuture<List<Permission>> getChannelClientPermissions(int channelId, int clientDBId) {
-		final CChannelClientPermList list = new CChannelClientPermList(channelId, clientDBId);
-		final CommandFuture<List<Permission>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<Permission> permissions = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					permissions.add(new Permission(response.getMap()));
-				}
-				future.set(permissions);
-			}
-		});
-		return future;
+		final Command cmd = PermissionCommands.channelClientPermList(channelId, clientDBId);
+		return executeAndTransform(cmd, Transformer.PERMISSION /* Permission::new */);
 	}
 
 	/**
@@ -1831,6 +1973,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of combinations of channel ID, client database ID and channel group ID
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
@@ -1838,24 +1982,8 @@ public class TS3ApiAsync {
 	 * @see ChannelGroupClient
 	 */
 	public CommandFuture<List<ChannelGroupClient>> getChannelGroupClients(int channelId, int clientDBId, int groupId) {
-		final CChannelGroupClientList list = new CChannelGroupClientList(channelId, clientDBId, groupId);
-		final CommandFuture<List<ChannelGroupClient>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<ChannelGroupClient> clients = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					clients.add(new ChannelGroupClient(response.getMap()));
-				}
-				future.set(clients);
-			}
-		});
-		return future;
+		final Command cmd = ChannelGroupCommands.channelGroupClientList(channelId, clientDBId, groupId);
+		return executeAndTransform(cmd, Transformer.CHANNEL_GROUP_CLIENT /* ChannelGroupClient::new */);
 	}
 
 	/**
@@ -1866,6 +1994,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of combinations of channel ID, client database ID and channel group ID
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 * @see ChannelGroupClient
@@ -1883,6 +2013,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of combinations of channel ID, client database ID and channel group ID
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see ChannelGroupClient
@@ -1900,6 +2032,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of combinations of channel ID, client database ID and channel group ID
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see ChannelGroupClient
@@ -1917,29 +2051,15 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of permissions assigned to the channel group
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 * @see Permission
 	 */
 	public CommandFuture<List<Permission>> getChannelGroupPermissions(int groupId) {
-		final CChannelGroupPermList list = new CChannelGroupPermList(groupId);
-		final CommandFuture<List<Permission>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<Permission> permissions = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					permissions.add(new Permission(response.getMap()));
-				}
-				future.set(permissions);
-			}
-		});
-		return future;
+		final Command cmd = PermissionCommands.channelGroupPermList(groupId);
+		return executeAndTransform(cmd, Transformer.PERMISSION /* Permission::new */);
 	}
 
 	/**
@@ -1947,28 +2067,14 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all channel groups on the virtual server
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup
 	 */
 	public CommandFuture<List<ChannelGroup>> getChannelGroups() {
-		final CChannelGroupList list = new CChannelGroupList();
-		final CommandFuture<List<ChannelGroup>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<ChannelGroup> groups = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					groups.add(new ChannelGroup(response.getMap()));
-				}
-				future.set(groups);
-			}
-		});
-		return future;
+		final Command cmd = ChannelGroupCommands.channelGroupList();
+		return executeAndTransform(cmd, Transformer.CHANNEL_GROUP /* ChannelGroup::new */);
 	}
 
 	/**
@@ -1979,21 +2085,24 @@ public class TS3ApiAsync {
 	 *
 	 * @return information about the channel
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see ChannelInfo
 	 */
 	public CommandFuture<ChannelInfo> getChannelInfo(final int channelId) {
-		final CChannelInfo info = new CChannelInfo(channelId);
+		final Command cmd = ChannelCommands.channelInfo(channelId);
 		final CommandFuture<ChannelInfo> future = new CommandFuture<>();
 
-		query.doCommandAsync(info, new Callback() {
+		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
-			public void handle() {
-				if (hasFailed(info, future)) return;
-				future.set(new ChannelInfo(channelId, info.getFirstResponse().getMap()));
+			public void handleSuccess(DefaultArrayResponse result) {
+				future.set(new ChannelInfo(channelId, result.getFirstResponse().getMap()));
 			}
-		});
+		}).forwardFailure(future);
+
+		query.doCommandAsync(cmd);
 		return future;
 	}
 
@@ -2005,29 +2114,15 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all permissions assigned to the channel
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Permission
 	 */
 	public CommandFuture<List<Permission>> getChannelPermissions(int channelId) {
-		final CChannelPermList list = new CChannelPermList(channelId);
-		final CommandFuture<List<Permission>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<Permission> permissions = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					permissions.add(new Permission(response.getMap()));
-				}
-				future.set(permissions);
-			}
-		});
-		return future;
+		final Command cmd = PermissionCommands.channelPermList(channelId);
+		return executeAndTransform(cmd, Transformer.PERMISSION /* Permission::new */);
 	}
 
 	/**
@@ -2035,28 +2130,14 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all channels on the virtual server
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel
 	 */
 	public CommandFuture<List<Channel>> getChannels() {
-		final CChannelList list = new CChannelList();
-		final CommandFuture<List<Channel>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<Channel> channels = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					channels.add(new Channel(response.getMap()));
-				}
-				future.set(channels);
-			}
-		});
-		return future;
+		final Command cmd = ChannelCommands.channelList();
+		return executeAndTransform(cmd, Transformer.CHANNEL /* Channel::new */);
 	}
 
 	/**
@@ -2069,6 +2150,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return the found client or {@code null} if no client was found
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client
 	 * @see #getClientsByName(String)
@@ -2101,23 +2184,23 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all clients with nicknames matching the search pattern
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 2
 	 * @see Client
 	 * @see #getClientByNameExact(String, boolean)
 	 */
 	public CommandFuture<List<Client>> getClientsByName(String name) {
-		final CClientFind find = new CClientFind(name);
+		final Command cmd = ClientCommands.clientFind(name);
 		final CommandFuture<List<Client>> future = new CommandFuture<>();
 
-		getClients().onSuccess(new CommandFuture.SuccessListener<List<Client>>() {
+		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
-			public void handleSuccess(final List<Client> allClients) {
-				query.doCommandAsync(find, new Callback() {
+			public void handleSuccess(final DefaultArrayResponse result) {
+				getClients().onSuccess(new CommandFuture.SuccessListener<List<Client>>() {
 					@Override
-					public void handle() {
-						if (hasFailed(find, future)) return;
-
-						final List<Wrapper> responses = find.getResponse();
+					public void handleSuccess(List<Client> allClients) {
+						final List<Wrapper> responses = result.getResponses();
 						final List<Client> clients = new ArrayList<>(responses.size());
 
 						for (final Wrapper response : responses) {
@@ -2130,9 +2213,21 @@ public class TS3ApiAsync {
 						}
 						future.set(clients);
 					}
-				});
+				}).forwardFailure(future);
 			}
-		}).forwardFailure(future);
+		}).onFailure(new CommandFuture.FailureListener() {
+			@Override
+			public void handleFailure(TS3Exception exception) {
+				if (isQueryError(exception, 512)) {
+					// clientfind returns error 512 if no clients with a matching pattern were found.
+					future.set(Collections.<Client>emptyList());
+				} else {
+					future.fail(exception);
+				}
+			}
+		});
+
+		query.doCommandAsync(cmd);
 		return future;
 	}
 
@@ -2142,24 +2237,27 @@ public class TS3ApiAsync {
 	 * @param clientUId
 	 * 		the unique identifier of the client
 	 *
-	 * @return the client or {@code null} if no client was found
+	 * @return information about the client
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 2
 	 * @see Client#getUniqueIdentifier()
 	 * @see ClientInfo
 	 */
 	public CommandFuture<ClientInfo> getClientByUId(String clientUId) {
-		final CClientGetIds get = new CClientGetIds(clientUId);
+		final Command cmd = ClientCommands.clientGetIds(clientUId);
 		final CommandFuture<ClientInfo> future = new CommandFuture<>();
 
-		query.doCommandAsync(get, new Callback() {
+		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
-			public void handle() {
-				if (hasFailed(get, future)) return;
-
-				getClientInfo(get.getFirstResponse().getInt("clid")).forwardResult(future);
+			public void handleSuccess(DefaultArrayResponse result) {
+				final int clientId = result.getFirstResponse().getInt("clid");
+				getClientInfo(clientId).forwardResult(future);
 			}
-		});
+		}).forwardFailure(future);
+
+		query.doCommandAsync(cmd);
 		return future;
 	}
 
@@ -2169,23 +2267,26 @@ public class TS3ApiAsync {
 	 * @param clientId
 	 * 		the client ID of the client
 	 *
-	 * @return the client or {@code null} if no client was found
+	 * @return information about the client
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see ClientInfo
 	 */
 	public CommandFuture<ClientInfo> getClientInfo(final int clientId) {
-		final CClientInfo info = new CClientInfo(clientId);
+		final Command cmd = ClientCommands.clientInfo(clientId);
 		final CommandFuture<ClientInfo> future = new CommandFuture<>();
 
-		query.doCommandAsync(info, new Callback() {
+		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
-			public void handle() {
-				if (hasFailed(info, future)) return;
-				future.set(new ClientInfo(clientId, info.getFirstResponse().getMap()));
+			public void handleSuccess(DefaultArrayResponse result) {
+				future.set(new ClientInfo(clientId, result.getFirstResponse().getMap()));
 			}
-		});
+		}).forwardFailure(future);
+
+		query.doCommandAsync(cmd);
 		return future;
 	}
 
@@ -2197,29 +2298,15 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all permissions assigned to the client
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see Permission
 	 */
 	public CommandFuture<List<Permission>> getClientPermissions(int clientDBId) {
-		final CClientPermList list = new CClientPermList(clientDBId);
-		final CommandFuture<List<Permission>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<Permission> permissions = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					permissions.add(new Permission(response.getMap()));
-				}
-				future.set(permissions);
-			}
-		});
-		return future;
+		final Command cmd = PermissionCommands.clientPermList(clientDBId);
+		return executeAndTransform(cmd, Transformer.PERMISSION /* Permission::new */);
 	}
 
 	/**
@@ -2227,28 +2314,14 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all clients on the virtual server
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client
 	 */
 	public CommandFuture<List<Client>> getClients() {
-		final CClientList list = new CClientList();
-		final CommandFuture<List<Client>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<Client> clients = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					clients.add(new Client(response.getMap()));
-				}
-				future.set(clients);
-			}
-		});
-		return future;
+		final Command cmd = ClientCommands.clientList();
+		return executeAndTransform(cmd, Transformer.CLIENT /* Client::new */);
 	}
 
 	/**
@@ -2256,6 +2329,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all complaints on the virtual server
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Complaint
 	 * @see #getComplaints(int)
@@ -2272,29 +2347,15 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all complaints about the specified client
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see Complaint
 	 */
 	public CommandFuture<List<Complaint>> getComplaints(int clientDBId) {
-		final CComplainList list = new CComplainList(clientDBId);
-		final CommandFuture<List<Complaint>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<Complaint> complaints = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					complaints.add(new Complaint(response.getMap()));
-				}
-				future.set(complaints);
-			}
-		});
-		return future;
+		final Command cmd = ComplaintCommands.complainList(clientDBId);
+		return executeAndTransform(cmd, Transformer.COMPLAINT /* Complaint::new */);
 	}
 
 	/**
@@ -2302,22 +2363,15 @@ public class TS3ApiAsync {
 	 *
 	 * @return connection information about the selected virtual server
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ConnectionInfo
 	 * @see #getServerInfo()
 	 */
 	public CommandFuture<ConnectionInfo> getConnectionInfo() {
-		final CServerRequestConnectionInfo info = new CServerRequestConnectionInfo();
-		final CommandFuture<ConnectionInfo> future = new CommandFuture<>();
-
-		query.doCommandAsync(info, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(info, future)) return;
-				future.set(new ConnectionInfo(info.getFirstResponse().getMap()));
-			}
-		});
-		return future;
+		final Command cmd = VirtualServerCommands.serverRequestConnectionInfo();
+		return executeAndTransformFirst(cmd, Transformer.CONNECTION_INFO /* ConnectionInfo::new */);
 	}
 
 	/**
@@ -2328,20 +2382,20 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all clients with a matching nickname
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1 + n,
 	 * where n is the amount of database clients with a matching nickname
 	 * @see Client#getNickname()
 	 */
 	public CommandFuture<List<DatabaseClientInfo>> getDatabaseClientsByName(String name) {
-		final CClientDBFind find = new CClientDBFind(name, false);
+		final Command cmd = DatabaseClientCommands.clientDBFind(name, false);
 		final CommandFuture<List<DatabaseClientInfo>> future = new CommandFuture<>();
 
-		query.doCommandAsync(find, new Callback() {
+		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
-			public void handle() {
-				if (hasFailed(find, future)) return;
-
-				final List<Wrapper> responses = find.getResponse();
+			public void handleSuccess(DefaultArrayResponse result) {
+				final List<Wrapper> responses = result.getResponses();
 				final Collection<CommandFuture<DatabaseClientInfo>> infoFutures = new ArrayList<>(responses.size());
 				for (Wrapper response : responses) {
 					final int databaseId = response.getInt("cldbid");
@@ -2350,7 +2404,9 @@ public class TS3ApiAsync {
 
 				CommandFuture.ofAll(infoFutures).forwardResult(future);
 			}
-		});
+		}).forwardFailure(future);
+
+		query.doCommandAsync(cmd);
 		return future;
 	}
 
@@ -2362,22 +2418,29 @@ public class TS3ApiAsync {
 	 *
 	 * @return the database client or {@code null} if no client was found
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 2
 	 * @see Client#getUniqueIdentifier()
 	 * @see DatabaseClientInfo
 	 */
 	public CommandFuture<DatabaseClientInfo> getDatabaseClientByUId(String clientUId) {
-		final CClientGetDBIdFromUId get = new CClientGetDBIdFromUId(clientUId);
+		final Command cmd = DatabaseClientCommands.clientDBFind(clientUId, true);
 		final CommandFuture<DatabaseClientInfo> future = new CommandFuture<>();
 
-		query.doCommandAsync(get, new Callback() {
+		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
-			public void handle() {
-				if (hasFailed(get, future)) return;
-
-				getDatabaseClientInfo(get.getFirstResponse().getInt("cldbid")).forwardResult(future);
+			public void handleSuccess(DefaultArrayResponse result) {
+				if (result.getResponses().isEmpty()) {
+					future.set(null);
+				} else {
+					final int databaseId = result.getFirstResponse().getInt("cldbid");
+					getDatabaseClientInfo(databaseId).forwardResult(future);
+				}
 			}
-		});
+		}).forwardFailure(future);
+
+		query.doCommandAsync(cmd);
 		return future;
 	}
 
@@ -2389,22 +2452,15 @@ public class TS3ApiAsync {
 	 *
 	 * @return the database client or {@code null} if no client was found
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 * @see DatabaseClientInfo
 	 */
 	public CommandFuture<DatabaseClientInfo> getDatabaseClientInfo(int clientDBId) {
-		final CClientDBInfo info = new CClientDBInfo(clientDBId);
-		final CommandFuture<DatabaseClientInfo> future = new CommandFuture<>();
-
-		query.doCommandAsync(info, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(info, future)) return;
-				future.set(new DatabaseClientInfo(info.getFirstResponse().getMap()));
-			}
-		});
-		return future;
+		final Command cmd = DatabaseClientCommands.clientDBInfo(clientDBId);
+		return executeAndTransformFirst(cmd, Transformer.DATABASE_CLIENT_INFO /* DatabaseClientInfo::new */);
 	}
 
 	/**
@@ -2418,20 +2474,20 @@ public class TS3ApiAsync {
 	 *
 	 * @return a {@link List} of all database clients
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1 + n,
 	 * where n = Math.ceil([amount of database clients] / 200)
 	 * @see DatabaseClient
 	 */
 	public CommandFuture<List<DatabaseClient>> getDatabaseClients() {
-		final CClientDBList countList = new CClientDBList(0, 1, true);
+		final Command cmd = DatabaseClientCommands.clientDBList(0, 1, true);
 		final CommandFuture<List<DatabaseClient>> future = new CommandFuture<>();
 
-		query.doCommandAsync(countList, new Callback() {
+		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
-			public void handle() {
-				if (hasFailed(countList, future)) return;
-
-				final int count = countList.getFirstResponse().getInt("count");
+			public void handleSuccess(DefaultArrayResponse result) {
+				final int count = result.getFirstResponse().getInt("count");
 				final int futuresCount = ((count - 1) / 200) + 1;
 				final Collection<CommandFuture<List<DatabaseClient>>> futures = new ArrayList<>(futuresCount);
 				for (int i = 0; i < count; i += 200) {
@@ -2454,7 +2510,9 @@ public class TS3ApiAsync {
 					}
 				}).forwardFailure(future);
 			}
-		});
+		}).forwardFailure(future);
+
+		query.doCommandAsync(cmd);
 		return future;
 	}
 
@@ -2470,26 +2528,14 @@ public class TS3ApiAsync {
 	 *
 	 * @return a {@link List} of database clients
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see DatabaseClient
 	 */
 	public CommandFuture<List<DatabaseClient>> getDatabaseClients(final int offset, final int count) {
-		final CClientDBList list = new CClientDBList(offset, count, false);
-		final CommandFuture<List<DatabaseClient>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<DatabaseClient> clients = new ArrayList<>(count);
-				for (final Wrapper response : list.getResponse()) {
-					clients.add(new DatabaseClient(response.getMap()));
-				}
-				future.set(clients);
-			}
-		});
-		return future;
+		final Command cmd = DatabaseClientCommands.clientDBList(offset, count, false);
+		return executeAndTransform(cmd, Transformer.DATABASE_CLIENT /* DatabaseClient::new */);
 	}
 
 	/**
@@ -2506,6 +2552,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return some information about the file
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
@@ -2530,22 +2578,15 @@ public class TS3ApiAsync {
 	 *
 	 * @return some information about the file
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
 	public CommandFuture<FileInfo> getFileInfo(String filePath, int channelId, String channelPassword) {
-		final CFtGetFileInfo info = new CFtGetFileInfo(channelId, channelPassword, filePath);
-		final CommandFuture<FileInfo> future = new CommandFuture<>();
-
-		query.doCommandAsync(info, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(info, future)) return;
-				future.set(new FileInfo(info.getFirstResponse().getMap()));
-			}
-		});
-		return future;
+		final Command cmd = FileCommands.ftGetFileInfo(channelId, channelPassword, filePath);
+		return executeAndTransformFirst(cmd, Transformer.FILE_INFO /* FileInfo::new */);
 	}
 
 	/**
@@ -2562,6 +2603,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return some information about the file
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
@@ -2586,29 +2629,15 @@ public class TS3ApiAsync {
 	 *
 	 * @return some information about the file
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
 	public CommandFuture<List<FileInfo>> getFileInfos(String filePaths[], int channelId, String channelPassword) {
-		final CFtGetFileInfo info = new CFtGetFileInfo(channelId, channelPassword, filePaths);
-		final CommandFuture<List<FileInfo>> future = new CommandFuture<>();
-
-		query.doCommandAsync(info, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(info, future)) return;
-
-				final List<Wrapper> responses = info.getResponse();
-				final List<FileInfo> files = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					files.add(new FileInfo(response.getMap()));
-				}
-				future.set(files);
-			}
-		});
-		return future;
+		final Command cmd = FileCommands.ftGetFileInfo(channelId, channelPassword, filePaths);
+		return executeAndTransform(cmd, Transformer.FILE_INFO /* FileInfo::new */);
 	}
 
 	/**
@@ -2629,29 +2658,15 @@ public class TS3ApiAsync {
 	 *
 	 * @throws IllegalArgumentException
 	 * 		if the dimensions of {@code filePaths}, {@code channelIds} and {@code channelPasswords} don't match
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
 	public CommandFuture<List<FileInfo>> getFileInfos(String filePaths[], int[] channelIds, String[] channelPasswords) {
-		final CFtGetFileInfo info = new CFtGetFileInfo(channelIds, channelPasswords, filePaths);
-		final CommandFuture<List<FileInfo>> future = new CommandFuture<>();
-
-		query.doCommandAsync(info, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(info, future)) return;
-
-				final List<Wrapper> responses = info.getResponse();
-				final List<FileInfo> files = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					files.add(new FileInfo(response.getMap()));
-				}
-				future.set(files);
-			}
-		});
-		return future;
+		final Command cmd = FileCommands.ftGetFileInfo(channelIds, channelPasswords, filePaths);
+		return executeAndTransform(cmd, Transformer.FILE_INFO /* FileInfo::new */);
 	}
 
 	/**
@@ -2664,6 +2679,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return the files and directories in the parent directory
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
@@ -2684,55 +2701,29 @@ public class TS3ApiAsync {
 	 *
 	 * @return the files and directories in the parent directory
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
 	public CommandFuture<List<FileListEntry>> getFileList(final String directoryPath, final int channelId, String channelPassword) {
-		final CFtGetFileList list = new CFtGetFileList(directoryPath, channelId, channelPassword);
-		final CommandFuture<List<FileListEntry>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<FileListEntry> files = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					files.add(new FileListEntry(response.getMap()));
-				}
-				future.set(files);
-			}
-		});
-		return future;
+		final Command cmd = FileCommands.ftGetFileList(directoryPath, channelId, channelPassword);
+		return executeAndTransform(cmd, Transformer.FILE_LIST_ENTRY /* FileListEntry::new */);
 	}
 
 	/**
 	 * Gets a list of active or recently active file transfers.
 	 *
 	 * @return a list of file transfers
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
 	 */
 	public CommandFuture<List<FileTransfer>> getFileTransfers() {
-		final CFtList list = new CFtList();
-		final CommandFuture<List<FileTransfer>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<FileTransfer> transfers = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					transfers.add(new FileTransfer(response.getMap()));
-				}
-				future.set(transfers);
-			}
-		});
-		return future;
+		final Command cmd = FileCommands.ftList();
+		return executeAndTransform(cmd, Transformer.FILE_TRANSFER /* FileTransfer::new */);
 	}
 
 	/**
@@ -2741,20 +2732,13 @@ public class TS3ApiAsync {
 	 *
 	 * @return information about the host
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public CommandFuture<HostInfo> getHostInfo() {
-		final CHostInfo info = new CHostInfo();
-		final CommandFuture<HostInfo> future = new CommandFuture<>();
-
-		query.doCommandAsync(info, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(info, future)) return;
-				future.set(new HostInfo(info.getFirstResponse().getMap()));
-			}
-		});
-		return future;
+		final Command cmd = ServerCommands.hostInfo();
+		return executeAndTransformFirst(cmd, Transformer.HOST_INFO /* HostInfo::new */);
 	}
 
 	/**
@@ -2786,20 +2770,13 @@ public class TS3ApiAsync {
 	 *
 	 * @return information about the TeamSpeak server instance.
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public CommandFuture<InstanceInfo> getInstanceInfo() {
-		final CInstanceInfo info = new CInstanceInfo();
-		final CommandFuture<InstanceInfo> future = new CommandFuture<>();
-
-		query.doCommandAsync(info, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(info, future)) return;
-				future.set(new InstanceInfo(info.getFirstResponse().getMap()));
-			}
-		});
-		return future;
+		final Command cmd = ServerCommands.instanceInfo();
+		return executeAndTransformFirst(cmd, Transformer.INSTANCE_INFO /* InstanceInfo::new */);
 	}
 
 	/**
@@ -2811,21 +2788,13 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of the latest log entries
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public CommandFuture<List<String>> getInstanceLogEntries(int lines) {
-		final CLogView logs = new CLogView(lines, true);
-		final CommandFuture<List<String>> future = new CommandFuture<>();
-
-		query.doCommandAsync(logs, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(logs, future)) return;
-				future.set(logs.getLines());
-			}
-		});
-
-		return future;
+		final Command cmd = ServerCommands.logView(lines, true);
+		return executeAndReturnLogLines(cmd);
 	}
 
 	/**
@@ -2833,6 +2802,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of up to 100 log entries
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public CommandFuture<List<String>> getInstanceLogEntries() {
@@ -2847,13 +2818,15 @@ public class TS3ApiAsync {
 	 *
 	 * @return the body of the message with the specified ID or {@code null} if there was no message with that ID
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Message#getId()
 	 * @see #setMessageRead(int)
 	 */
 	public CommandFuture<String> getOfflineMessage(int messageId) {
-		final CMessageGet get = new CMessageGet(messageId);
-		return executeAndReturnStringProperty(get, "message");
+		final Command cmd = MessageCommands.messageGet(messageId);
+		return executeAndReturnStringProperty(cmd, "message");
 	}
 
 	/**
@@ -2864,6 +2837,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return the body of the message with the specified ID or {@code null} if there was no message with that ID
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Message#getId()
 	 * @see #setMessageRead(Message)
@@ -2879,27 +2854,13 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all offline messages this server query has received
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public CommandFuture<List<Message>> getOfflineMessages() {
-		final CMessageList list = new CMessageList();
-		final CommandFuture<List<Message>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<Message> msg = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					msg.add(new Message(response.getMap()));
-				}
-				future.set(msg);
-			}
-		});
-		return future;
+		final Command cmd = MessageCommands.messageList();
+		return executeAndTransform(cmd, Transformer.MESSAGE /* Message::new */);
 	}
 
 	/**
@@ -2912,28 +2873,14 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of permission assignments
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #getPermissionOverview(int, int)
 	 */
 	public CommandFuture<List<PermissionAssignment>> getPermissionAssignments(String permName) {
-		final CPermFind find = new CPermFind(permName);
-		final CommandFuture<List<PermissionAssignment>> future = new CommandFuture<>();
-
-		query.doCommandAsync(find, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(find, future)) return;
-
-				final List<Wrapper> responses = find.getResponse();
-				final List<PermissionAssignment> assignments = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					assignments.add(new PermissionAssignment(response.getMap()));
-				}
-				future.set(assignments);
-			}
-		});
-		return future;
+		final Command cmd = PermissionCommands.permFind(permName);
+		return executeAndTransform(cmd, Transformer.PERMISSION_ASSIGNMENT /* PermissionAssignment::new */);
 	}
 
 	/**
@@ -2948,11 +2895,13 @@ public class TS3ApiAsync {
 	 *
 	 * @return the numeric ID of the specified permission
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public CommandFuture<Integer> getPermissionIdByName(String permName) {
-		final CPermIdGetByName get = new CPermIdGetByName(permName);
-		return executeAndReturnIntProperty(get, "permid");
+		final Command cmd = PermissionCommands.permIdGetByName(permName);
+		return executeAndReturnIntProperty(cmd, "permid");
 	}
 
 	/**
@@ -2969,28 +2918,28 @@ public class TS3ApiAsync {
 	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code permNames} is {@code null}
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<int[]> getPermissionIdsByName(String[] permNames) {
-		if (permNames == null) throw new IllegalArgumentException("permNames was null");
-
-		final CPermIdGetByName get = new CPermIdGetByName(permNames);
+	public CommandFuture<int[]> getPermissionIdsByName(String... permNames) {
+		final Command cmd = PermissionCommands.permIdGetByName(permNames);
 		final CommandFuture<int[]> future = new CommandFuture<>();
 
-		query.doCommandAsync(get, new Callback() {
+		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
-			public void handle() {
-				if (hasFailed(get, future)) return;
-
-				final List<Wrapper> responses = get.getResponse();
+			public void handleSuccess(DefaultArrayResponse result) {
+				final List<Wrapper> responses = result.getResponses();
 				int[] ids = new int[responses.size()];
 				int i = 0;
-				for (final Wrapper response : get.getResponse()) {
+				for (final Wrapper response : responses) {
 					ids[i++] = response.getInt("permid");
 				}
 				future.set(ids);
 			}
-		});
+		}).forwardFailure(future);
+
+		query.doCommandAsync(cmd);
 		return future;
 	}
 
@@ -3005,29 +2954,15 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all permission assignments for the client in the specified channel
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
 	 */
 	public CommandFuture<List<PermissionAssignment>> getPermissionOverview(int channelId, int clientDBId) {
-		final CPermOverview overview = new CPermOverview(channelId, clientDBId);
-		final CommandFuture<List<PermissionAssignment>> future = new CommandFuture<>();
-
-		query.doCommandAsync(overview, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(overview, future)) return;
-
-				final List<Wrapper> responses = overview.getResponse();
-				final List<PermissionAssignment> permissions = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					permissions.add(new PermissionAssignment(response.getMap()));
-				}
-				future.set(permissions);
-			}
-		});
-		return future;
+		final Command cmd = PermissionCommands.permOverview(channelId, clientDBId);
+		return executeAndTransform(cmd, Transformer.PERMISSION_ASSIGNMENT /* PermissionAssignment::new */);
 	}
 
 	/**
@@ -3035,27 +2970,13 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all permissions
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public CommandFuture<List<PermissionInfo>> getPermissions() {
-		final CPermissionList list = new CPermissionList();
-		final CommandFuture<List<PermissionInfo>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<PermissionInfo> permissions = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					permissions.add(new PermissionInfo(response.getMap()));
-				}
-				future.set(permissions);
-			}
-		});
-		return future;
+		final Command cmd = PermissionCommands.permissionList();
+		return executeAndTransform(cmd, Transformer.PERMISSION_INFO /* PermissionInfo::new */);
 	}
 
 	/**
@@ -3066,11 +2987,13 @@ public class TS3ApiAsync {
 	 *
 	 * @return the permission value, usually ranging from 0 to 100
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public CommandFuture<Integer> getPermissionValue(String permName) {
-		final CPermGet get = new CPermGet(permName);
-		return executeAndReturnIntProperty(get, "permvalue");
+		final Command cmd = PermissionCommands.permGet(permName);
+		return executeAndReturnIntProperty(cmd, "permvalue");
 	}
 
 	/**
@@ -3083,28 +3006,28 @@ public class TS3ApiAsync {
 	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code permNames} is {@code null}
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<int[]> getPermissionValues(String[] permNames) {
-		if (permNames == null) throw new IllegalArgumentException("permNames was null");
-
-		final CPermGet get = new CPermGet(permNames);
+	public CommandFuture<int[]> getPermissionValues(String... permNames) {
+		final Command cmd = PermissionCommands.permGet(permNames);
 		final CommandFuture<int[]> future = new CommandFuture<>();
 
-		query.doCommandAsync(get, new Callback() {
+		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
-			public void handle() {
-				if (hasFailed(get, future)) return;
-
-				final List<Wrapper> responses = get.getResponse();
+			public void handleSuccess(DefaultArrayResponse result) {
+				final List<Wrapper> responses = result.getResponses();
 				int[] values = new int[responses.size()];
 				int i = 0;
-				for (final Wrapper response : get.getResponse()) {
+				for (final Wrapper response : responses) {
 					values[i++] = response.getInt("permvalue");
 				}
 				future.set(values);
 			}
-		});
+		}).forwardFailure(future);
+
+		query.doCommandAsync(cmd);
 		return future;
 	}
 
@@ -3114,29 +3037,15 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all generated, but still unclaimed privilege keys
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #addPrivilegeKey(PrivilegeKeyType, int, int, String)
 	 * @see #usePrivilegeKey(String)
 	 */
 	public CommandFuture<List<PrivilegeKey>> getPrivilegeKeys() {
-		final CPrivilegeKeyList list = new CPrivilegeKeyList();
-		final CommandFuture<List<PrivilegeKey>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<PrivilegeKey> keys = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					keys.add(new PrivilegeKey(response.getMap()));
-				}
-				future.set(keys);
-			}
-		});
-		return future;
+		final Command cmd = PrivilegeKeyCommands.privilegeKeyList();
+		return executeAndTransform(cmd, Transformer.PRIVILEGE_KEY /* PrivilegeKey::new */);
 	}
 
 	/**
@@ -3147,27 +3056,13 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all clients in the server group
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public CommandFuture<List<ServerGroupClient>> getServerGroupClients(int serverGroupId) {
-		final CServerGroupClientList list = new CServerGroupClientList(serverGroupId);
-		final CommandFuture<List<ServerGroupClient>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<ServerGroupClient> clients = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					clients.add(new ServerGroupClient(response.getMap()));
-				}
-				future.set(clients);
-			}
-		});
-		return future;
+		final Command cmd = ServerGroupCommands.serverGroupClientList(serverGroupId);
+		return executeAndTransform(cmd, Transformer.SERVER_GROUP_CLIENT /* ServerGroupClient::new */);
 	}
 
 	/**
@@ -3178,6 +3073,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all clients in the server group
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public CommandFuture<List<ServerGroupClient>> getServerGroupClients(ServerGroup serverGroup) {
@@ -3192,29 +3089,15 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all permissions assigned to the server group
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 * @see #getServerGroupPermissions(ServerGroup)
 	 */
 	public CommandFuture<List<Permission>> getServerGroupPermissions(int serverGroupId) {
-		final CServerGroupPermList list = new CServerGroupPermList(serverGroupId);
-		final CommandFuture<List<Permission>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<Permission> permissions = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					permissions.add(new Permission(response.getMap()));
-				}
-				future.set(permissions);
-			}
-		});
-		return future;
+		final Command cmd = PermissionCommands.serverGroupPermList(serverGroupId);
+		return executeAndTransform(cmd, Transformer.PERMISSION /* Permission::new */);
 	}
 
 	/**
@@ -3225,6 +3108,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all permissions assigned to the server group
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public CommandFuture<List<Permission>> getServerGroupPermissions(ServerGroup serverGroup) {
@@ -3240,27 +3125,13 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all server groups
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public CommandFuture<List<ServerGroup>> getServerGroups() {
-		final CServerGroupList list = new CServerGroupList();
-		final CommandFuture<List<ServerGroup>> future = new CommandFuture<>();
-
-		query.doCommandAsync(list, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(list, future)) return;
-
-				final List<Wrapper> responses = list.getResponse();
-				final List<ServerGroup> groups = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					groups.add(new ServerGroup(response.getMap()));
-				}
-				future.set(groups);
-			}
-		});
-		return future;
+		final Command cmd = ServerGroupCommands.serverGroupList();
+		return executeAndTransform(cmd, Transformer.SERVER_GROUP /* ServerGroup::new */);
 	}
 
 	/**
@@ -3271,23 +3142,23 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all server groups set for the client
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 2
 	 * @see Client#getDatabaseId()
 	 * @see #getServerGroupsByClient(Client)
 	 */
 	public CommandFuture<List<ServerGroup>> getServerGroupsByClientId(int clientDatabaseId) {
-		final CServerGroupsByClientId client = new CServerGroupsByClientId(clientDatabaseId);
+		final Command cmd = ServerGroupCommands.serverGroupsByClientId(clientDatabaseId);
 		final CommandFuture<List<ServerGroup>> future = new CommandFuture<>();
 
 		getServerGroups().onSuccess(new CommandFuture.SuccessListener<List<ServerGroup>>() {
 			@Override
 			public void handleSuccess(final List<ServerGroup> allServerGroups) {
-				query.doCommandAsync(client, new Callback() {
+				cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 					@Override
-					public void handle() {
-						if (hasFailed(client, future)) return;
-
-						final List<Wrapper> responses = client.getResponse();
+					public void handleSuccess(DefaultArrayResponse result) {
+						final List<Wrapper> responses = result.getResponses();
 						final List<ServerGroup> list = new ArrayList<>(responses.size());
 
 						for (final Wrapper response : responses) {
@@ -3299,7 +3170,9 @@ public class TS3ApiAsync {
 						}
 						future.set(list);
 					}
-				});
+				}).forwardFailure(future);
+
+				query.doCommandAsync(cmd);
 			}
 		}).forwardFailure(future);
 		return future;
@@ -3313,6 +3186,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all server group set for the client
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 2
 	 * @see #getServerGroupsByClientId(int)
 	 */
@@ -3328,13 +3203,15 @@ public class TS3ApiAsync {
 	 *
 	 * @return the ID of the virtual server
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see VirtualServer#getPort()
 	 * @see VirtualServer#getId()
 	 */
 	public CommandFuture<Integer> getServerIdByPort(int port) {
-		final CServerIdGetByPort s = new CServerIdGetByPort(port);
-		return executeAndReturnIntProperty(s, "server_id");
+		final Command cmd = VirtualServerCommands.serverIdGetByPort(port);
+		return executeAndReturnIntProperty(cmd, "server_id");
 	}
 
 	/**
@@ -3342,20 +3219,13 @@ public class TS3ApiAsync {
 	 *
 	 * @return information about the current virtual server
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public CommandFuture<VirtualServerInfo> getServerInfo() {
-		final CServerInfo info = new CServerInfo();
-		final CommandFuture<VirtualServerInfo> future = new CommandFuture<>();
-
-		query.doCommandAsync(info, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(info, future)) return;
-				future.set(new VirtualServerInfo(info.getFirstResponse().getMap()));
-			}
-		});
-		return future;
+		final Command cmd = VirtualServerCommands.serverInfo();
+		return executeAndTransformFirst(cmd, Transformer.VIRTUAL_SERVER_INFO /* VirtualServerInfo::new */);
 	}
 
 	/**
@@ -3363,20 +3233,13 @@ public class TS3ApiAsync {
 	 *
 	 * @return the version information of the server
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public CommandFuture<Version> getVersion() {
-		final CVersion version = new CVersion();
-		final CommandFuture<Version> future = new CommandFuture<>();
-
-		query.doCommandAsync(version, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(version, future)) return;
-				future.set(new Version(version.getFirstResponse().getMap()));
-			}
-		});
-		return future;
+		final Command cmd = ServerCommands.version();
+		return executeAndTransformFirst(cmd, Transformer.VERSION /* Version::new */);
 	}
 
 	/**
@@ -3384,27 +3247,13 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all virtual servers
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public CommandFuture<List<VirtualServer>> getVirtualServers() {
-		final CServerList serverList = new CServerList();
-		final CommandFuture<List<VirtualServer>> future = new CommandFuture<>();
-
-		query.doCommandAsync(serverList, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(serverList, future)) return;
-
-				final List<Wrapper> responses = serverList.getResponse();
-				final List<VirtualServer> servers = new ArrayList<>(responses.size());
-
-				for (final Wrapper response : responses) {
-					servers.add((new VirtualServer(response.getMap())));
-				}
-				future.set(servers);
-			}
-		});
-		return future;
+		final Command cmd = VirtualServerCommands.serverList();
+		return executeAndTransform(cmd, Transformer.VIRTUAL_SERVER /* VirtualServer::new */);
 	}
 
 	/**
@@ -3417,21 +3266,13 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of the latest log entries
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public CommandFuture<List<String>> getVirtualServerLogEntries(int lines) {
-		final CLogView logs = new CLogView(lines, false);
-		final CommandFuture<List<String>> future = new CommandFuture<>();
-
-		query.doCommandAsync(logs, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(logs, future)) return;
-				future.set(logs.getLines());
-			}
-		});
-
-		return future;
+		final Command cmd = ServerCommands.logView(lines, false);
+		return executeAndReturnLogLines(cmd);
 	}
 
 	/**
@@ -3440,10 +3281,81 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of up to 100 log entries
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public CommandFuture<List<String>> getVirtualServerLogEntries() {
 		return getVirtualServerLogEntries(100);
+	}
+
+	/**
+	 * Checks whether the client with the specified client ID is online.
+	 * <p>
+	 * Please note that there is no guarantee that the client will still be
+	 * online by the time the next command is executed.
+	 * </p>
+	 *
+	 * @param clientId
+	 * 		the ID of the client
+	 *
+	 * @return {@code true} if the client is online, {@code false} otherwise
+	 *
+	 * @querycommands 1
+	 * @see #getClientInfo(int)
+	 */
+	public CommandFuture<Boolean> isClientOnline(int clientId) {
+		final Command cmd = ClientCommands.clientInfo(clientId);
+		final CommandFuture<Boolean> future = new CommandFuture<>();
+
+		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
+			@Override
+			public void handleSuccess(DefaultArrayResponse result) {
+				future.set(true);
+			}
+		}).onFailure(new CommandFuture.FailureListener() {
+			@Override
+			public void handleFailure(TS3Exception exception) {
+				if (isQueryError(exception, 512)) {
+					future.set(false);
+				} else {
+					future.fail(exception);
+				}
+			}
+		});
+
+		query.doCommandAsync(cmd);
+		return future;
+	}
+
+	/**
+	 * Checks whether the client with the specified unique identifier is online.
+	 * <p>
+	 * Please note that there is no guarantee that the client will still be
+	 * online by the time the next command is executed.
+	 * </p>
+	 *
+	 * @param clientUId
+	 * 		the unique ID of the client
+	 *
+	 * @return {@code true} if the client is online, {@code false} otherwise
+	 *
+	 * @querycommands 1
+	 * @see #getClientByUId(String)
+	 */
+	public CommandFuture<Boolean> isClientOnline(String clientUId) {
+		final Command cmd = ClientCommands.clientGetIds(clientUId);
+		final CommandFuture<Boolean> future = new CommandFuture<>();
+
+		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
+			@Override
+			public void handleSuccess(DefaultArrayResponse result) {
+				future.set(!result.getResponses().isEmpty());
+			}
+		}).forwardFailure(future);
+
+		query.doCommandAsync(cmd);
+		return future;
 	}
 
 	/**
@@ -3454,13 +3366,15 @@ public class TS3ApiAsync {
 	 * @param clientIds
 	 * 		the IDs of the clients to kick
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #kickClientFromChannel(Client...)
 	 * @see #kickClientFromChannel(String, int...)
 	 */
-	public CommandFuture<Boolean> kickClientFromChannel(int... clientIds) {
+	public CommandFuture<Void> kickClientFromChannel(int... clientIds) {
 		return kickClients(ReasonIdentifier.REASON_KICK_CHANNEL, null, clientIds);
 	}
 
@@ -3472,13 +3386,15 @@ public class TS3ApiAsync {
 	 * @param clients
 	 * 		the clients to kick
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #kickClientFromChannel(int...)
 	 * @see #kickClientFromChannel(String, Client...)
 	 */
-	public CommandFuture<Boolean> kickClientFromChannel(Client... clients) {
+	public CommandFuture<Void> kickClientFromChannel(Client... clients) {
 		return kickClients(ReasonIdentifier.REASON_KICK_CHANNEL, null, clients);
 	}
 
@@ -3492,14 +3408,16 @@ public class TS3ApiAsync {
 	 * @param clientIds
 	 * 		the IDs of the clients to kick
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see #kickClientFromChannel(int...)
 	 * @see #kickClientFromChannel(String, Client...)
 	 */
-	public CommandFuture<Boolean> kickClientFromChannel(String message, int... clientIds) {
+	public CommandFuture<Void> kickClientFromChannel(String message, int... clientIds) {
 		return kickClients(ReasonIdentifier.REASON_KICK_CHANNEL, message, clientIds);
 	}
 
@@ -3513,13 +3431,15 @@ public class TS3ApiAsync {
 	 * @param clients
 	 * 		the clients to kick
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #kickClientFromChannel(Client...)
 	 * @see #kickClientFromChannel(String, int...)
 	 */
-	public CommandFuture<Boolean> kickClientFromChannel(String message, Client... clients) {
+	public CommandFuture<Void> kickClientFromChannel(String message, Client... clients) {
 		return kickClients(ReasonIdentifier.REASON_KICK_CHANNEL, message, clients);
 	}
 
@@ -3529,14 +3449,16 @@ public class TS3ApiAsync {
 	 * @param clientIds
 	 * 		the IDs of the clients to kick
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see #kickClientFromServer(Client...)
 	 * @see #kickClientFromServer(String, int...)
 	 */
-	public CommandFuture<Boolean> kickClientFromServer(int... clientIds) {
+	public CommandFuture<Void> kickClientFromServer(int... clientIds) {
 		return kickClients(ReasonIdentifier.REASON_KICK_SERVER, null, clientIds);
 	}
 
@@ -3546,13 +3468,15 @@ public class TS3ApiAsync {
 	 * @param clients
 	 * 		the clients to kick
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #kickClientFromServer(int...)
 	 * @see #kickClientFromServer(String, Client...)
 	 */
-	public CommandFuture<Boolean> kickClientFromServer(Client... clients) {
+	public CommandFuture<Void> kickClientFromServer(Client... clients) {
 		return kickClients(ReasonIdentifier.REASON_KICK_SERVER, null, clients);
 	}
 
@@ -3564,14 +3488,16 @@ public class TS3ApiAsync {
 	 * @param clientIds
 	 * 		the IDs of the clients to kick
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see #kickClientFromServer(int...)
 	 * @see #kickClientFromServer(String, Client...)
 	 */
-	public CommandFuture<Boolean> kickClientFromServer(String message, int... clientIds) {
+	public CommandFuture<Void> kickClientFromServer(String message, int... clientIds) {
 		return kickClients(ReasonIdentifier.REASON_KICK_SERVER, message, clientIds);
 	}
 
@@ -3583,13 +3509,15 @@ public class TS3ApiAsync {
 	 * @param clients
 	 * 		the clients to kick
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #kickClientFromServer(Client...)
 	 * @see #kickClientFromServer(String, int...)
 	 */
-	public CommandFuture<Boolean> kickClientFromServer(String message, Client... clients) {
+	public CommandFuture<Void> kickClientFromServer(String message, Client... clients) {
 		return kickClients(ReasonIdentifier.REASON_KICK_SERVER, message, clients);
 	}
 
@@ -3603,11 +3531,13 @@ public class TS3ApiAsync {
 	 * @param clients
 	 * 		the clients to kick
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	private CommandFuture<Boolean> kickClients(ReasonIdentifier reason, String message, Client... clients) {
+	private CommandFuture<Void> kickClients(ReasonIdentifier reason, String message, Client... clients) {
 		int[] clientIds = new int[clients.length];
 		for (int i = 0; i < clients.length; ++i) {
 			clientIds[i] = clients[i].getId();
@@ -3625,14 +3555,16 @@ public class TS3ApiAsync {
 	 * @param clientIds
 	 * 		the IDs of the clients to kick
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 */
-	private CommandFuture<Boolean> kickClients(ReasonIdentifier reason, String message, int... clientIds) {
-		final CClientKick kick = new CClientKick(reason, message, clientIds);
-		return executeAndReturnError(kick);
+	private CommandFuture<Void> kickClients(ReasonIdentifier reason, String message, int... clientIds) {
+		final Command cmd = ClientCommands.clientKick(reason, message, clientIds);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -3647,27 +3579,31 @@ public class TS3ApiAsync {
 	 * @param password
 	 * 		the password to use
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #logout()
 	 */
-	public CommandFuture<Boolean> login(String username, String password) {
-		final CLogin login = new CLogin(username, password);
-		return executeAndReturnError(login);
+	public CommandFuture<Void> login(String username, String password) {
+		final Command cmd = QueryCommands.logIn(username, password);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
 	 * Logs the server query out and deselects the current virtual server.
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #login(String, String)
 	 */
-	public CommandFuture<Boolean> logout() {
-		final CLogout logout = new CLogout();
-		return executeAndReturnError(logout);
+	public CommandFuture<Void> logout() {
+		final Command cmd = QueryCommands.logOut();
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -3683,13 +3619,15 @@ public class TS3ApiAsync {
 	 * @param channelTargetId
 	 * 		the new parent channel for the specified channel
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see #moveChannel(int, int, int)
 	 */
-	public CommandFuture<Boolean> moveChannel(int channelId, int channelTargetId) {
+	public CommandFuture<Void> moveChannel(int channelId, int channelTargetId) {
 		return moveChannel(channelId, channelTargetId, 0);
 	}
 
@@ -3709,15 +3647,17 @@ public class TS3ApiAsync {
 	 * @param order
 	 * 		the channel to sort the specified channel below
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see #moveChannel(int, int)
 	 */
-	public CommandFuture<Boolean> moveChannel(int channelId, int channelTargetId, int order) {
-		final CChannelMove move = new CChannelMove(channelId, channelTargetId, order);
-		return executeAndReturnError(move);
+	public CommandFuture<Void> moveChannel(int channelId, int channelTargetId, int order) {
+		final Command cmd = ChannelCommands.channelMove(channelId, channelTargetId, order);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -3732,13 +3672,15 @@ public class TS3ApiAsync {
 	 * @param channelId
 	 * 		the ID of the channel to move the client into
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Boolean> moveClient(int clientId, int channelId) {
+	public CommandFuture<Void> moveClient(int clientId, int channelId) {
 		return moveClient(clientId, channelId, null);
 	}
 
@@ -3755,15 +3697,17 @@ public class TS3ApiAsync {
 	 * @param channelId
 	 * 		the ID of the channel to move the clients into
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code clientIds} is {@code null}
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Boolean> moveClients(int[] clientIds, int channelId) {
+	public CommandFuture<Void> moveClients(int[] clientIds, int channelId) {
 		return moveClients(clientIds, channelId, null);
 	}
 
@@ -3779,13 +3723,15 @@ public class TS3ApiAsync {
 	 * @param channel
 	 * 		the channel to move the client into, cannot be {@code null}
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code client} or {@code channel} is {@code null}
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Boolean> moveClient(Client client, ChannelBase channel) {
+	public CommandFuture<Void> moveClient(Client client, ChannelBase channel) {
 		return moveClient(client, channel, null);
 	}
 
@@ -3802,13 +3748,15 @@ public class TS3ApiAsync {
 	 * @param channel
 	 * 		the channel to move the clients into, cannot be {@code null}
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code clients} or {@code channel} is {@code null}
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Boolean> moveClients(Client[] clients, ChannelBase channel) {
+	public CommandFuture<Void> moveClients(Client[] clients, ChannelBase channel) {
 		return moveClients(clients, channel, null);
 	}
 
@@ -3822,15 +3770,17 @@ public class TS3ApiAsync {
 	 * @param channelPassword
 	 * 		the password of the channel, can be {@code null}
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Boolean> moveClient(int clientId, int channelId, String channelPassword) {
-		final CClientMove move = new CClientMove(clientId, channelId, channelPassword);
-		return executeAndReturnError(move);
+	public CommandFuture<Void> moveClient(int clientId, int channelId, String channelPassword) {
+		final Command cmd = ClientCommands.clientMove(clientId, channelId, channelPassword);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -3848,20 +3798,22 @@ public class TS3ApiAsync {
 	 * @param channelPassword
 	 * 		the password of the channel, can be {@code null}
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code clientIds} is {@code null}
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Boolean> moveClients(int[] clientIds, int channelId, String channelPassword) {
-		if (clientIds == null) throw new IllegalArgumentException("clientIds was null");
-		if (clientIds.length == 0) return CommandFuture.immediate(true);
+	public CommandFuture<Void> moveClients(int[] clientIds, int channelId, String channelPassword) {
+		if (clientIds == null) throw new IllegalArgumentException("Client ID array was null");
+		if (clientIds.length == 0) return CommandFuture.immediate(null); // Success
 
-		final CClientMove move = new CClientMove(clientIds, channelId, channelPassword);
-		return executeAndReturnError(move);
+		final Command cmd = ClientCommands.clientMove(clientIds, channelId, channelPassword);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -3878,15 +3830,17 @@ public class TS3ApiAsync {
 	 * @param channelPassword
 	 * 		the password of the channel, can be {@code null}
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code client} or {@code channel} is {@code null}
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Boolean> moveClient(Client client, ChannelBase channel, String channelPassword) {
-		if (client == null) throw new IllegalArgumentException("client was null");
-		if (channel == null) throw new IllegalArgumentException("channel was null");
+	public CommandFuture<Void> moveClient(Client client, ChannelBase channel, String channelPassword) {
+		if (client == null) throw new IllegalArgumentException("Client cannot be null");
+		if (channel == null) throw new IllegalArgumentException("Channel cannot be null");
 
 		return moveClient(client.getId(), channel.getId(), channelPassword);
 	}
@@ -3906,15 +3860,17 @@ public class TS3ApiAsync {
 	 * @param channelPassword
 	 * 		the password of the channel, can be {@code null}
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code clients} or {@code channel} is {@code null}
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Boolean> moveClients(Client[] clients, ChannelBase channel, String channelPassword) {
-		if (clients == null) throw new IllegalArgumentException("clients was null");
-		if (channel == null) throw new IllegalArgumentException("channel was null");
+	public CommandFuture<Void> moveClients(Client[] clients, ChannelBase channel, String channelPassword) {
+		if (clients == null) throw new IllegalArgumentException("Client array cannot be null");
+		if (channel == null) throw new IllegalArgumentException("Channel cannot be null");
 
 		int[] clientIds = new int[clients.length];
 		for (int i = 0; i < clients.length; i++) {
@@ -3934,14 +3890,16 @@ public class TS3ApiAsync {
 	 * @param channelId
 	 * 		the ID of the channel the file resides in
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 * @see #moveFile(String, String, int, int) moveFile to a different channel
 	 */
-	public CommandFuture<Boolean> moveFile(String oldPath, String newPath, int channelId) {
+	public CommandFuture<Void> moveFile(String oldPath, String newPath, int channelId) {
 		return moveFile(oldPath, newPath, channelId, null);
 	}
 
@@ -3957,14 +3915,16 @@ public class TS3ApiAsync {
 	 * @param newChannelId
 	 * 		the ID of the channel the file should be moved to
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 * @see #moveFile(String, String, int) moveFile within the same channel
 	 */
-	public CommandFuture<Boolean> moveFile(String oldPath, String newPath, int oldChannelId, int newChannelId) {
+	public CommandFuture<Void> moveFile(String oldPath, String newPath, int oldChannelId, int newChannelId) {
 		return moveFile(oldPath, newPath, oldChannelId, null, newChannelId, null);
 	}
 
@@ -3980,16 +3940,18 @@ public class TS3ApiAsync {
 	 * @param channelPassword
 	 * 		the password of the channel
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 * @see #moveFile(String, String, int, String, int, String) moveFile to a different channel
 	 */
-	public CommandFuture<Boolean> moveFile(String oldPath, String newPath, int channelId, String channelPassword) {
-		final CFtRenameFile rename = new CFtRenameFile(oldPath, newPath, channelId, channelPassword);
-		return executeAndReturnError(rename);
+	public CommandFuture<Void> moveFile(String oldPath, String newPath, int channelId, String channelPassword) {
+		final Command cmd = FileCommands.ftRenameFile(oldPath, newPath, channelId, channelPassword);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -4008,16 +3970,18 @@ public class TS3ApiAsync {
 	 * @param newPassword
 	 * 		the password of the new channel
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 * @see #moveFile(String, String, int, String) moveFile within the same channel
 	 */
-	public CommandFuture<Boolean> moveFile(String oldPath, String newPath, int oldChannelId, String oldPassword, int newChannelId, String newPassword) {
-		final CFtRenameFile rename = new CFtRenameFile(oldPath, newPath, oldChannelId, oldPassword, newChannelId, newPassword);
-		return executeAndReturnError(rename);
+	public CommandFuture<Void> moveFile(String oldPath, String newPath, int oldChannelId, String oldPassword, int newChannelId, String newPassword) {
+		final Command cmd = FileCommands.ftRenameFile(oldPath, newPath, oldChannelId, oldPassword, newChannelId, newPassword);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -4026,12 +3990,14 @@ public class TS3ApiAsync {
 	 * @param channelId
 	 * 		the ID of the channel to move the server query into
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Boolean> moveQuery(int channelId) {
+	public CommandFuture<Void> moveQuery(int channelId) {
 		return moveClient(0, channelId, null);
 	}
 
@@ -4041,14 +4007,16 @@ public class TS3ApiAsync {
 	 * @param channel
 	 * 		the channel to move the server query into, cannot be {@code null}
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code channel} is {@code null}
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Boolean> moveQuery(ChannelBase channel) {
-		if (channel == null) throw new IllegalArgumentException("channel was null");
+	public CommandFuture<Void> moveQuery(ChannelBase channel) {
+		if (channel == null) throw new IllegalArgumentException("Channel cannot be null");
 
 		return moveClient(0, channel.getId(), null);
 	}
@@ -4061,12 +4029,14 @@ public class TS3ApiAsync {
 	 * @param channelPassword
 	 * 		the password of the channel, can be {@code null}
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Boolean> moveQuery(int channelId, String channelPassword) {
+	public CommandFuture<Void> moveQuery(int channelId, String channelPassword) {
 		return moveClient(0, channelId, channelPassword);
 	}
 
@@ -4078,14 +4048,16 @@ public class TS3ApiAsync {
 	 * @param channelPassword
 	 * 		the password of the channel, can be {@code null}
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
 	 * @throws IllegalArgumentException
 	 * 		if {@code channel} is {@code null}
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Boolean> moveQuery(ChannelBase channel, String channelPassword) {
-		if (channel == null) throw new IllegalArgumentException("channel was null");
+	public CommandFuture<Void> moveQuery(ChannelBase channel, String channelPassword) {
+		if (channel == null) throw new IllegalArgumentException("Channel cannot be null");
 
 		return moveClient(0, channel.getId(), channelPassword);
 	}
@@ -4106,31 +4078,33 @@ public class TS3ApiAsync {
 	 * @param message
 	 * 		the message to send, may contain BB codes
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 */
-	public CommandFuture<Boolean> pokeClient(int clientId, String message) {
-		final CClientPoke poke = new CClientPoke(clientId, message);
-		return executeAndReturnError(poke);
+	public CommandFuture<Void> pokeClient(int clientId, String message) {
+		final Command cmd = ClientCommands.clientPoke(clientId, message);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
 	 * Terminates the connection with the TeamSpeak3 server.
-	 * This command should never be executed manually.
+	 * <p>
+	 * This command should never be executed by a user of this API,
+	 * as it leaves the query in an undefined state. To terminate
+	 * a connection regularly, use {@link TS3Query#exit()}.
+	 * </p>
 	 *
-	 * @return whether the command succeeded or not
-	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
-	 * @deprecated This command leaves the query in an undefined state,
-	 * where the connection is closed without the socket being closed and no more command can be executed.
-	 * To terminate a connection, use {@link TS3Query#exit()}.
 	 */
-	@Deprecated
-	public CommandFuture<Boolean> quit() {
-		final CQuit quit = new CQuit();
-		return executeAndReturnError(quit);
+	CommandFuture<Void> quit() {
+		final Command cmd = QueryCommands.quit();
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -4143,7 +4117,8 @@ public class TS3ApiAsync {
 	 * <li>A client switches channels</li>
 	 * <li>A client sends a server message</li>
 	 * <li>A client sends a channel message <b>in the channel the query is in</b></li>
-	 * <li>A client sends <b>the server query</b> a private message or a response to a private message</li>
+	 * <li>A client sends a private message to <b>the server query</b></li>
+	 * <li>A client uses a privilege key</li>
 	 * </ul>
 	 * <p>
 	 * The limitations to when the query receives notifications about chat events cannot be circumvented.
@@ -4152,12 +4127,14 @@ public class TS3ApiAsync {
 	 *
 	 * @return whether all commands succeeded or not
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 6
 	 * @see #addTS3Listeners(TS3Listener...)
 	 */
-	public CommandFuture<Boolean> registerAllEvents() {
-		final CommandFuture<Boolean> future = new CommandFuture<>();
-		final Collection<CommandFuture<Boolean>> eventFutures = new ArrayList<>(5);
+	public CommandFuture<Void> registerAllEvents() {
+		final CommandFuture<Void> future = new CommandFuture<>();
+		final Collection<CommandFuture<Void>> eventFutures = new ArrayList<>(5);
 
 		eventFutures.add(registerEvent(TS3EventType.SERVER));
 		eventFutures.add(registerEvent(TS3EventType.TEXT_SERVER));
@@ -4166,10 +4143,10 @@ public class TS3ApiAsync {
 		eventFutures.add(registerEvent(TS3EventType.TEXT_PRIVATE));
 		eventFutures.add(registerEvent(TS3EventType.PRIVILEGE_KEY_USED));
 
-		CommandFuture.ofAll(eventFutures).onSuccess(new CommandFuture.SuccessListener<List<Boolean>>() {
+		CommandFuture.ofAll(eventFutures).onSuccess(new CommandFuture.SuccessListener<List<Void>>() {
 			@Override
-			public void handleSuccess(List<Boolean> result) {
-				future.set(true);
+			public void handleSuccess(List<Void> ignored) {
+				future.set(null); // Mark as successful
 			}
 		}).forwardFailure(future);
 		return future;
@@ -4186,14 +4163,16 @@ public class TS3ApiAsync {
 	 * @param eventType
 	 * 		the event type to be notified about
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #addTS3Listeners(TS3Listener...)
 	 * @see #registerEvent(TS3EventType, int)
 	 * @see #registerAllEvents()
 	 */
-	public CommandFuture<Boolean> registerEvent(TS3EventType eventType) {
+	public CommandFuture<Void> registerEvent(TS3EventType eventType) {
 		if (eventType == TS3EventType.CHANNEL || eventType == TS3EventType.TEXT_CHANNEL) {
 			return registerEvent(eventType, 0);
 		}
@@ -4209,16 +4188,18 @@ public class TS3ApiAsync {
 	 * 		the ID of the channel to listen to, will be ignored if set to {@code -1}.
 	 * 		Can be set to {@code 0} for {@link TS3EventType#CHANNEL} to receive notifications about all channel switches.
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 * @see #addTS3Listeners(TS3Listener...)
 	 * @see #registerAllEvents()
 	 */
-	public CommandFuture<Boolean> registerEvent(TS3EventType eventType, int channelId) {
-		final CServerNotifyRegister register = new CServerNotifyRegister(eventType, channelId);
-		return executeAndReturnError(register);
+	public CommandFuture<Void> registerEvent(TS3EventType eventType, int channelId) {
+		final Command cmd = QueryCommands.serverNotifyRegister(eventType, channelId);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -4232,26 +4213,28 @@ public class TS3ApiAsync {
 	 * @param eventTypes
 	 * 		the event types to be notified about
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands n, one command per TS3EventType
 	 * @see #addTS3Listeners(TS3Listener...)
 	 * @see #registerEvent(TS3EventType, int)
 	 * @see #registerAllEvents()
 	 */
-	public CommandFuture<Boolean> registerEvents(TS3EventType... eventTypes) {
-		if (eventTypes.length == 0) return CommandFuture.immediate(true);
+	public CommandFuture<Void> registerEvents(TS3EventType... eventTypes) {
+		if (eventTypes.length == 0) return CommandFuture.immediate(null); // Success
 
-		final Collection<CommandFuture<Boolean>> registerFutures = new ArrayList<>(eventTypes.length);
+		final Collection<CommandFuture<Void>> registerFutures = new ArrayList<>(eventTypes.length);
 		for (final TS3EventType type : eventTypes) {
 			registerFutures.add(registerEvent(type));
 		}
 
-		final CommandFuture<Boolean> future = new CommandFuture<>();
-		CommandFuture.ofAll(registerFutures).onSuccess(new CommandFuture.SuccessListener<List<Boolean>>() {
+		final CommandFuture<Void> future = new CommandFuture<>();
+		CommandFuture.ofAll(registerFutures).onSuccess(new CommandFuture.SuccessListener<List<Void>>() {
 			@Override
-			public void handleSuccess(List<Boolean> result) {
-				future.set(true);
+			public void handleSuccess(List<Void> ignored) {
+				future.set(null); // Mark as successful
 			}
 		}).forwardFailure(future);
 		return future;
@@ -4265,16 +4248,18 @@ public class TS3ApiAsync {
 	 * @param clientDatabaseId
 	 * 		the database ID of the client
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 * @see Client#getDatabaseId()
 	 * @see #removeClientFromServerGroup(ServerGroup, Client)
 	 */
-	public CommandFuture<Boolean> removeClientFromServerGroup(int serverGroupId, int clientDatabaseId) {
-		final CServerGroupDelClient del = new CServerGroupDelClient(serverGroupId, clientDatabaseId);
-		return executeAndReturnError(del);
+	public CommandFuture<Void> removeClientFromServerGroup(int serverGroupId, int clientDatabaseId) {
+		final Command cmd = ServerGroupCommands.serverGroupDelClient(serverGroupId, clientDatabaseId);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -4285,12 +4270,14 @@ public class TS3ApiAsync {
 	 * @param client
 	 * 		the client to remove from the server group
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #removeClientFromServerGroup(int, int)
 	 */
-	public CommandFuture<Boolean> removeClientFromServerGroup(ServerGroup serverGroup, Client client) {
+	public CommandFuture<Void> removeClientFromServerGroup(ServerGroup serverGroup, Client client) {
 		return removeClientFromServerGroup(serverGroup.getId(), client.getDatabaseId());
 	}
 
@@ -4319,15 +4306,17 @@ public class TS3ApiAsync {
 	 * @param name
 	 * 		the new name for the channel group
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 * @see #renameChannelGroup(ChannelGroup, String)
 	 */
-	public CommandFuture<Boolean> renameChannelGroup(int channelGroupId, String name) {
-		final CChannelGroupRename rename = new CChannelGroupRename(channelGroupId, name);
-		return executeAndReturnError(rename);
+	public CommandFuture<Void> renameChannelGroup(int channelGroupId, String name) {
+		final Command cmd = ChannelGroupCommands.channelGroupRename(channelGroupId, name);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -4338,12 +4327,14 @@ public class TS3ApiAsync {
 	 * @param name
 	 * 		the new name for the channel group
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #renameChannelGroup(int, String)
 	 */
-	public CommandFuture<Boolean> renameChannelGroup(ChannelGroup channelGroup, String name) {
+	public CommandFuture<Void> renameChannelGroup(ChannelGroup channelGroup, String name) {
 		return renameChannelGroup(channelGroup.getId(), name);
 	}
 
@@ -4355,15 +4346,17 @@ public class TS3ApiAsync {
 	 * @param name
 	 * 		the new name for the server group
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 * @see #renameServerGroup(ServerGroup, String)
 	 */
-	public CommandFuture<Boolean> renameServerGroup(int serverGroupId, String name) {
-		final CServerGroupRename rename = new CServerGroupRename(serverGroupId, name);
-		return executeAndReturnError(rename);
+	public CommandFuture<Void> renameServerGroup(int serverGroupId, String name) {
+		final Command cmd = ServerGroupCommands.serverGroupRename(serverGroupId, name);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -4374,12 +4367,14 @@ public class TS3ApiAsync {
 	 * @param name
 	 * 		the new name for the server group
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #renameServerGroup(int, String)
 	 */
-	public CommandFuture<Boolean> renameServerGroup(ServerGroup serverGroup, String name) {
+	public CommandFuture<Void> renameServerGroup(ServerGroup serverGroup, String name) {
 		return renameChannelGroup(serverGroup.getId(), name);
 	}
 
@@ -4388,11 +4383,13 @@ public class TS3ApiAsync {
 	 *
 	 * @return a token for a new administrator account
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public CommandFuture<String> resetPermissions() {
-		final CPermReset reset = new CPermReset();
-		return executeAndReturnStringProperty(reset, "token");
+		final Command cmd = PermissionCommands.permReset();
+		return executeAndReturnStringProperty(cmd, "token");
 	}
 
 	/**
@@ -4401,16 +4398,18 @@ public class TS3ApiAsync {
 	 * @param id
 	 * 		the ID of the virtual server
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see VirtualServer#getId()
 	 * @see #selectVirtualServerByPort(int)
 	 * @see #selectVirtualServer(VirtualServer)
 	 */
-	public CommandFuture<Boolean> selectVirtualServerById(int id) {
-		final CUse use = new CUse(id, -1);
-		return executeAndReturnError(use);
+	public CommandFuture<Void> selectVirtualServerById(int id) {
+		final Command cmd = QueryCommands.useId(id);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -4419,16 +4418,18 @@ public class TS3ApiAsync {
 	 * @param port
 	 * 		the voice port of the virtual server
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see VirtualServer#getPort()
 	 * @see #selectVirtualServerById(int)
 	 * @see #selectVirtualServer(VirtualServer)
 	 */
-	public CommandFuture<Boolean> selectVirtualServerByPort(int port) {
-		final CUse use = new CUse(-1, port);
-		return executeAndReturnError(use);
+	public CommandFuture<Void> selectVirtualServerByPort(int port) {
+		final Command cmd = QueryCommands.usePort(port);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -4437,13 +4438,15 @@ public class TS3ApiAsync {
 	 * @param server
 	 * 		the virtual server to move into
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #selectVirtualServerById(int)
 	 * @see #selectVirtualServerByPort(int)
 	 */
-	public CommandFuture<Boolean> selectVirtualServer(VirtualServer server) {
+	public CommandFuture<Void> selectVirtualServer(VirtualServer server) {
 		return selectVirtualServerById(server.getId());
 	}
 
@@ -4461,15 +4464,17 @@ public class TS3ApiAsync {
 	 * @param message
 	 * 		the actual message body, may contain BB codes
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getUniqueIdentifier()
 	 * @see Message
 	 */
-	public CommandFuture<Boolean> sendOfflineMessage(String clientUId, String subject, String message) {
-		final CMessageAdd add = new CMessageAdd(clientUId, subject, message);
-		return executeAndReturnError(add);
+	public CommandFuture<Void> sendOfflineMessage(String clientUId, String subject, String message) {
+		final Command cmd = MessageCommands.messageAdd(clientUId, subject, message);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -4487,14 +4492,16 @@ public class TS3ApiAsync {
 	 * @param message
 	 * 		the text message to send
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 */
-	public CommandFuture<Boolean> sendTextMessage(TextMessageTargetMode targetMode, int targetId, String message) {
-		final CSendTextMessage msg = new CSendTextMessage(targetMode.getIndex(), targetId, message);
-		return executeAndReturnError(msg);
+	public CommandFuture<Void> sendTextMessage(TextMessageTargetMode targetMode, int targetId, String message) {
+		final Command cmd = ClientCommands.sendTextMessage(targetMode.getIndex(), targetId, message);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -4510,18 +4517,20 @@ public class TS3ApiAsync {
 	 * @param message
 	 * 		the text message to send
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #sendChannelMessage(String)
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Boolean> sendChannelMessage(int channelId, final String message) {
-		final CommandFuture<Boolean> future = new CommandFuture<>();
+	public CommandFuture<Void> sendChannelMessage(int channelId, final String message) {
+		final CommandFuture<Void> future = new CommandFuture<>();
 
-		moveQuery(channelId).onSuccess(new CommandFuture.SuccessListener<Boolean>() {
+		moveQuery(channelId).onSuccess(new CommandFuture.SuccessListener<Void>() {
 			@Override
-			public void handleSuccess(Boolean result) {
+			public void handleSuccess(Void ignored) {
 				sendTextMessage(TextMessageTargetMode.CHANNEL, 0, message).forwardResult(future);
 			}
 		}).forwardFailure(future);
@@ -4536,11 +4545,13 @@ public class TS3ApiAsync {
 	 * @param message
 	 * 		the text message to send
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Boolean> sendChannelMessage(String message) {
+	public CommandFuture<Void> sendChannelMessage(String message) {
 		return sendTextMessage(TextMessageTargetMode.CHANNEL, 0, message);
 	}
 
@@ -4557,18 +4568,20 @@ public class TS3ApiAsync {
 	 * @param message
 	 * 		the text message to send
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #sendServerMessage(String)
 	 * @see VirtualServer#getId()
 	 */
-	public CommandFuture<Boolean> sendServerMessage(int serverId, final String message) {
-		final CommandFuture<Boolean> future = new CommandFuture<>();
+	public CommandFuture<Void> sendServerMessage(int serverId, final String message) {
+		final CommandFuture<Void> future = new CommandFuture<>();
 
-		selectVirtualServerById(serverId).onSuccess(new CommandFuture.SuccessListener<Boolean>() {
+		selectVirtualServerById(serverId).onSuccess(new CommandFuture.SuccessListener<Void>() {
 			@Override
-			public void handleSuccess(Boolean result) {
+			public void handleSuccess(Void ignored) {
 				sendTextMessage(TextMessageTargetMode.SERVER, 0, message).forwardResult(future);
 			}
 		}).forwardFailure(future);
@@ -4583,11 +4596,13 @@ public class TS3ApiAsync {
 	 * @param message
 	 * 		the text message to send
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Boolean> sendServerMessage(String message) {
+	public CommandFuture<Void> sendServerMessage(String message) {
 		return sendTextMessage(TextMessageTargetMode.SERVER, 0, message);
 	}
 
@@ -4600,12 +4615,14 @@ public class TS3ApiAsync {
 	 * @param message
 	 * 		the text message to send
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see Client#getId()
 	 */
-	public CommandFuture<Boolean> sendPrivateMessage(int clientId, String message) {
+	public CommandFuture<Void> sendPrivateMessage(int clientId, String message) {
 		return sendTextMessage(TextMessageTargetMode.CLIENT, clientId, message);
 	}
 
@@ -4619,16 +4636,18 @@ public class TS3ApiAsync {
 	 * @param clientDBId
 	 * 		the database ID of the client for which the channel group should be set
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
 	 */
-	public CommandFuture<Boolean> setClientChannelGroup(int groupId, int channelId, int clientDBId) {
-		final CSetClientChannelGroup group = new CSetClientChannelGroup(groupId, channelId, clientDBId);
-		return executeAndReturnError(group);
+	public CommandFuture<Void> setClientChannelGroup(int groupId, int channelId, int clientDBId) {
+		final Command cmd = ChannelGroupCommands.setClientChannelGroup(groupId, channelId, clientDBId);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -4637,12 +4656,14 @@ public class TS3ApiAsync {
 	 * @param messageId
 	 * 		the ID of the message for which the read flag should be set
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #setMessageReadFlag(int, boolean)
 	 */
-	public CommandFuture<Boolean> setMessageRead(int messageId) {
+	public CommandFuture<Void> setMessageRead(int messageId) {
 		return setMessageReadFlag(messageId, true);
 	}
 
@@ -4652,14 +4673,16 @@ public class TS3ApiAsync {
 	 * @param message
 	 * 		the message for which the read flag should be set
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #setMessageRead(int)
 	 * @see #setMessageReadFlag(Message, boolean)
 	 * @see #deleteOfflineMessage(int)
 	 */
-	public CommandFuture<Boolean> setMessageRead(Message message) {
+	public CommandFuture<Void> setMessageRead(Message message) {
 		return setMessageReadFlag(message.getId(), true);
 	}
 
@@ -4671,16 +4694,18 @@ public class TS3ApiAsync {
 	 * @param read
 	 * 		the boolean value to which the read flag should be set
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #setMessageRead(int)
 	 * @see #setMessageReadFlag(Message, boolean)
 	 * @see #deleteOfflineMessage(int)
 	 */
-	public CommandFuture<Boolean> setMessageReadFlag(int messageId, boolean read) {
-		final CMessageUpdateFlag flag = new CMessageUpdateFlag(messageId, read);
-		return executeAndReturnError(flag);
+	public CommandFuture<Void> setMessageReadFlag(int messageId, boolean read) {
+		final Command cmd = MessageCommands.messageUpdateFlag(messageId, read);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -4691,14 +4716,16 @@ public class TS3ApiAsync {
 	 * @param read
 	 * 		the boolean value to which the read flag should be set
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #setMessageRead(Message)
 	 * @see #setMessageReadFlag(int, boolean)
 	 * @see #deleteOfflineMessage(int)
 	 */
-	public CommandFuture<Boolean> setMessageReadFlag(Message message, boolean read) {
+	public CommandFuture<Void> setMessageReadFlag(Message message, boolean read) {
 		return setMessageReadFlag(message.getId(), read);
 	}
 
@@ -4709,12 +4736,14 @@ public class TS3ApiAsync {
 	 * @param nickname
 	 * 		the new nickname, may not contain any BB codes and may not be {@code null}
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #updateClient(Map)
 	 */
-	public CommandFuture<Boolean> setNickname(String nickname) {
+	public CommandFuture<Void> setNickname(String nickname) {
 		final Map<ClientProperty, String> options = Collections.singletonMap(ClientProperty.CLIENT_NICKNAME, nickname);
 		return updateClient(options);
 	}
@@ -4725,13 +4754,15 @@ public class TS3ApiAsync {
 	 * @param serverId
 	 * 		the ID of the virtual server
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Boolean> startServer(int serverId) {
-		final CServerStart start = new CServerStart(serverId);
-		return executeAndReturnError(start);
+	public CommandFuture<Void> startServer(int serverId) {
+		final Command cmd = VirtualServerCommands.serverStart(serverId);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -4740,11 +4771,13 @@ public class TS3ApiAsync {
 	 * @param virtualServer
 	 * 		the virtual server to start
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Boolean> startServer(VirtualServer virtualServer) {
+	public CommandFuture<Void> startServer(VirtualServer virtualServer) {
 		return startServer(virtualServer.getId());
 	}
 
@@ -4754,13 +4787,15 @@ public class TS3ApiAsync {
 	 * @param serverId
 	 * 		the ID of the virtual server
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Boolean> stopServer(int serverId) {
-		final CServerStop stop = new CServerStop(serverId);
-		return executeAndReturnError(stop);
+	public CommandFuture<Void> stopServer(int serverId) {
+		final Command cmd = VirtualServerCommands.serverStop(serverId);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -4769,11 +4804,13 @@ public class TS3ApiAsync {
 	 * @param virtualServer
 	 * 		the virtual server to stop
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Boolean> stopServer(VirtualServer virtualServer) {
+	public CommandFuture<Void> stopServer(VirtualServer virtualServer) {
 		return stopServer(virtualServer.getId());
 	}
 
@@ -4783,25 +4820,29 @@ public class TS3ApiAsync {
 	 * To have permission to use this command, you need to use the server query admin login.
 	 * </p>
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Boolean> stopServerProcess() {
-		final CServerProcessStop stop = new CServerProcessStop();
-		return executeAndReturnError(stop);
+	public CommandFuture<Void> stopServerProcess() {
+		final Command cmd = ServerCommands.serverProcessStop();
+		return executeAndReturnError(cmd);
 	}
 
 	/**
 	 * Unregisters the server query from receiving any event notifications.
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Boolean> unregisterAllEvents() {
-		final CServerNotifyUnregister unr = new CServerNotifyUnregister();
-		return executeAndReturnError(unr);
+	public CommandFuture<Void> unregisterAllEvents() {
+		final Command cmd = QueryCommands.serverNotifyUnregister();
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -4810,14 +4851,40 @@ public class TS3ApiAsync {
 	 * @param options
 	 * 		the map of properties to update
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #editClient(int, Map)
 	 */
-	public CommandFuture<Boolean> updateClient(Map<ClientProperty, String> options) {
-		final CClientUpdate update = new CClientUpdate(options);
-		return executeAndReturnError(update);
+	public CommandFuture<Void> updateClient(Map<ClientProperty, String> options) {
+		final Command cmd = ClientCommands.clientUpdate(options);
+		return executeAndReturnError(cmd);
+	}
+
+	/**
+	 * Changes a single client property for this server query instance.
+	 * <p>
+	 * Note that one can set many properties at once with the overloaded method that
+	 * takes a map of client properties and strings.
+	 * </p>
+	 *
+	 * @param property
+	 * 		the client property to modify, make sure it is editable
+	 * @param value
+	 * 		the new value of the property
+	 *
+	 * @return a future to track the progress of this command
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see #updateClient(Map)
+	 * @see #editClient(int, Map)
+	 */
+	public CommandFuture<Void> updateClient(ClientProperty property, String value) {
+		return updateClient(Collections.singletonMap(property, value));
 	}
 
 	/**
@@ -4832,11 +4899,13 @@ public class TS3ApiAsync {
 	 *
 	 * @return the generated password for the server query login
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
 	public CommandFuture<String> updateServerQueryLogin(String loginName) {
-		final CClientSetServerQueryLogin login = new CClientSetServerQueryLogin(loginName);
-		return executeAndReturnStringProperty(login, "client_login_password");
+		final Command cmd = ClientCommands.clientSetServerQueryLogin(loginName);
+		return executeAndReturnStringProperty(cmd, "client_login_password");
 	}
 
 	/**
@@ -4862,8 +4931,10 @@ public class TS3ApiAsync {
 	 * @param channelId
 	 * 		the ID of the channel to upload the file to
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -4871,7 +4942,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see #uploadFileDirect(byte[], String, boolean, int, String)
 	 */
-	public CommandFuture<Boolean> uploadFile(InputStream dataIn, long dataLength, String filePath, boolean overwrite, int channelId) {
+	public CommandFuture<Void> uploadFile(InputStream dataIn, long dataLength, String filePath, boolean overwrite, int channelId) {
 		return uploadFile(dataIn, dataLength, filePath, overwrite, channelId, null);
 	}
 
@@ -4900,8 +4971,10 @@ public class TS3ApiAsync {
 	 * @param channelPassword
 	 * 		that channel's password
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -4909,18 +4982,16 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see #uploadFileDirect(byte[], String, boolean, int, String)
 	 */
-	public CommandFuture<Boolean> uploadFile(final InputStream dataIn, final long dataLength, String filePath, boolean overwrite, int channelId, String channelPassword) {
+	public CommandFuture<Void> uploadFile(final InputStream dataIn, final long dataLength, String filePath, boolean overwrite, int channelId, String channelPassword) {
 		final FileTransferHelper helper = query.getFileTransferHelper();
 		final int transferId = helper.getClientTransferId();
-		final CFtInitUpload upload = new CFtInitUpload(transferId, filePath, channelId, channelPassword, dataLength, overwrite);
-		final CommandFuture<Boolean> future = new CommandFuture<>();
+		final Command cmd = FileCommands.ftInitUpload(transferId, filePath, channelId, channelPassword, dataLength, overwrite);
+		final CommandFuture<Void> future = new CommandFuture<>();
 
-		query.doCommandAsync(upload, new Callback() {
+		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
-			public void handle() {
-				if (hasFailed(upload, future)) return;
-
-				FileTransferParameters params = new FileTransferParameters(upload.getFirstResponse().getMap());
+			public void handleSuccess(DefaultArrayResponse result) {
+				FileTransferParameters params = new FileTransferParameters(result.getFirstResponse().getMap());
 				QueryError error = params.getQueryError();
 				if (!error.isSuccessful()) {
 					future.fail(new TS3CommandFailedException(error));
@@ -4933,10 +5004,11 @@ public class TS3ApiAsync {
 					future.fail(new TS3FileTransferFailedException("Upload failed", e));
 					return;
 				}
-				future.set(true);
+				future.set(null); // Mark as successful
 			}
-		});
+		}).forwardFailure(future);
 
+		query.doCommandAsync(cmd);
 		return future;
 	}
 
@@ -4953,8 +5025,10 @@ public class TS3ApiAsync {
 	 * @param channelId
 	 * 		the ID of the channel to upload the file to
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -4962,7 +5036,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see #uploadFile(InputStream, long, String, boolean, int)
 	 */
-	public CommandFuture<Boolean> uploadFileDirect(byte[] data, String filePath, boolean overwrite, int channelId) {
+	public CommandFuture<Void> uploadFileDirect(byte[] data, String filePath, boolean overwrite, int channelId) {
 		return uploadFileDirect(data, filePath, overwrite, channelId, null);
 	}
 
@@ -4981,8 +5055,10 @@ public class TS3ApiAsync {
 	 * @param channelPassword
 	 * 		that channel's password
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -4990,7 +5066,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see #uploadFile(InputStream, long, String, boolean, int, String)
 	 */
-	public CommandFuture<Boolean> uploadFileDirect(byte[] data, String filePath, boolean overwrite, int channelId, String channelPassword) {
+	public CommandFuture<Void> uploadFileDirect(byte[] data, String filePath, boolean overwrite, int channelId, String channelPassword) {
 		return uploadFile(new ByteArrayInputStream(data), data.length, filePath, overwrite, channelId, channelPassword);
 	}
 
@@ -5017,6 +5093,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return the ID of the uploaded icon
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -5045,6 +5123,8 @@ public class TS3ApiAsync {
 	 *
 	 * @return the ID of the uploaded icon
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @throws TS3FileTransferFailedException
 	 * 		if the file transfer fails for any reason
 	 * @querycommands 1
@@ -5060,9 +5140,9 @@ public class TS3ApiAsync {
 		iconId = helper.getIconId(data);
 
 		final String path = "/icon_" + iconId;
-		uploadFileDirect(data, path, false, 0).onSuccess(new CommandFuture.SuccessListener<Boolean>() {
+		uploadFileDirect(data, path, false, 0).onSuccess(new CommandFuture.SuccessListener<Void>() {
 			@Override
-			public void handleSuccess(Boolean result) {
+			public void handleSuccess(Void ignored) {
 				future.set(iconId);
 			}
 		}).forwardFailure(future);
@@ -5076,16 +5156,18 @@ public class TS3ApiAsync {
 	 * @param token
 	 * 		the privilege key to use
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see PrivilegeKey
 	 * @see #addPrivilegeKey(PrivilegeKeyType, int, int, String)
 	 * @see #usePrivilegeKey(PrivilegeKey)
 	 */
-	public CommandFuture<Boolean> usePrivilegeKey(String token) {
-		final CPrivilegeKeyUse use = new CPrivilegeKeyUse(token);
-		return executeAndReturnError(use);
+	public CommandFuture<Void> usePrivilegeKey(String token) {
+		final Command cmd = PrivilegeKeyCommands.privilegeKeyUse(token);
+		return executeAndReturnError(cmd);
 	}
 
 	/**
@@ -5094,14 +5176,16 @@ public class TS3ApiAsync {
 	 * @param privilegeKey
 	 * 		the privilege key to use
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see PrivilegeKey
 	 * @see #addPrivilegeKey(PrivilegeKeyType, int, int, String)
 	 * @see #usePrivilegeKey(String)
 	 */
-	public CommandFuture<Boolean> usePrivilegeKey(PrivilegeKey privilegeKey) {
+	public CommandFuture<Void> usePrivilegeKey(PrivilegeKey privilegeKey) {
 		return usePrivilegeKey(privilegeKey.getToken());
 	}
 
@@ -5110,41 +5194,54 @@ public class TS3ApiAsync {
 	 *
 	 * @return information about the server query instance
 	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see #getClientInfo(int)
 	 */
 	public CommandFuture<ServerQueryInfo> whoAmI() {
-		final CWhoAmI whoAmI = new CWhoAmI();
-		final CommandFuture<ServerQueryInfo> future = new CommandFuture<>();
-
-		query.doCommandAsync(whoAmI, new Callback() {
-			@Override
-			public void handle() {
-				if (hasFailed(whoAmI, future)) return;
-				future.set(new ServerQueryInfo(whoAmI.getFirstResponse().getMap()));
-			}
-		});
-		return future;
+		final Command cmd = QueryCommands.whoAmI();
+		return executeAndTransformFirst(cmd, Transformer.SERVER_QUERY_INFO /* ServerQueryInfo::new */);
 	}
 
 	/**
-	 * Executes a command, checking for failure and returning true if the command succeeded.
+	 * Checks whether a given {@link TS3Exception} is a {@link TS3CommandFailedException} with the
+	 * specified error ID.
+	 *
+	 * @param exception
+	 * 		the exception to check
+	 * @param errorId
+	 * 		the error ID to match
+	 *
+	 * @return whether {@code exception} is a {@code TS3CommandFailedException} with error ID {@code errorId}.
+	 */
+	private static boolean isQueryError(TS3Exception exception, int errorId) {
+		if (exception instanceof TS3CommandFailedException) {
+			TS3CommandFailedException cfe = (TS3CommandFailedException) exception;
+			return (cfe.getError().getId() == errorId);
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Executes a command and sets the returned future to true if the command succeeded.
 	 *
 	 * @param command
 	 * 		the command to execute
 	 *
-	 * @return whether the command succeeded or not
+	 * @return a future to track the progress of this command
 	 */
-	private CommandFuture<Boolean> executeAndReturnError(final Command command) {
-		final CommandFuture<Boolean> future = new CommandFuture<>();
-
-		query.doCommandAsync(command, new Callback() {
+	private CommandFuture<Void> executeAndReturnError(final Command command) {
+		final CommandFuture<Void> future = new CommandFuture<>();
+		command.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
-			public void handle() {
-				if (hasFailed(command, future)) return;
-				future.set(true);
+			public void handleSuccess(DefaultArrayResponse result) {
+				future.set(null); // Mark as successful
 			}
-		});
+		}).forwardFailure(future);
+
+		query.doCommandAsync(command);
 		return future;
 	}
 
@@ -5161,20 +5258,19 @@ public class TS3ApiAsync {
 	 */
 	private CommandFuture<String> executeAndReturnStringProperty(final Command command, final String property) {
 		final CommandFuture<String> future = new CommandFuture<>();
-
-		query.doCommandAsync(command, new Callback() {
+		command.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
-			public void handle() {
-				if (hasFailed(command, future)) return;
-				future.set(command.getFirstResponse().get(property));
+			public void handleSuccess(DefaultArrayResponse result) {
+				future.set(result.getFirstResponse().get(property));
 			}
-		});
+		}).forwardFailure(future);
+
+		query.doCommandAsync(command);
 		return future;
 	}
 
 	/**
-	 * Executes a command, checking for failure and returning a single
-	 * {@code Integer} property from the first response map.
+	 * Executes a command and returns a single {@code Integer} property from the first response map.
 	 *
 	 * @param command
 	 * 		the command to execute
@@ -5185,35 +5281,183 @@ public class TS3ApiAsync {
 	 */
 	private CommandFuture<Integer> executeAndReturnIntProperty(final Command command, final String property) {
 		final CommandFuture<Integer> future = new CommandFuture<>();
-
-		query.doCommandAsync(command, new Callback() {
+		command.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
-			public void handle() {
-				if (hasFailed(command, future)) return;
-				future.set(command.getFirstResponse().getInt(property));
+			public void handleSuccess(DefaultArrayResponse result) {
+				future.set(result.getFirstResponse().getInt(property));
 			}
-		});
+		}).forwardFailure(future);
+
+		query.doCommandAsync(command);
 		return future;
 	}
 
 	/**
-	 * If a command has failed (i.e. the error ID is not 0),
-	 * the future will be marked as failed and true will be returned.
+	 * Executes a command and returns the log lines contained in the response.
 	 *
 	 * @param command
-	 * 		the command to be checked for failure
-	 * @param future
-	 * 		the future to be notified in case of a failure
+	 * 		the command to execute
 	 *
-	 * @return true if the command has failed
-	 *
-	 * @see Command
+	 * @return the lines from the log file
 	 */
-	private static boolean hasFailed(Command command, CommandFuture<?> future) {
-		final QueryError error = command.getError();
-		if (error.isSuccessful()) return false;
+	private CommandFuture<List<String>> executeAndReturnLogLines(final Command command) {
+		final CommandFuture<List<String>> future = new CommandFuture<>();
+		command.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
+			@Override
+			public void handleSuccess(DefaultArrayResponse result) {
+				List<Wrapper> responses = result.getResponses();
+				List<String> lines = new ArrayList<>(responses.size());
 
-		future.fail(new TS3CommandFailedException(error));
-		return true;
+				for (Wrapper r : result.getResponses()) {
+					lines.add(r.getMap().get("l"));
+				}
+
+				future.set(lines);
+			}
+		}).forwardFailure(future);
+
+		query.doCommandAsync(command);
+		return future;
+	}
+
+	/**
+	 * Executes a command, checks for failure and transforms the first
+	 * response map by invoking {@code transformer}.
+	 *
+	 * @param command
+	 * 		the command to execute
+	 * @param transformer
+	 * 		the function that creates a new wrapper of type {@code T}
+	 * @param <T>
+	 * 		the wrapper class the map should be wrapped with
+	 *
+	 * @return a wrapped version of the first response map
+	 */
+	private <T extends Wrapper> CommandFuture<T> executeAndTransformFirst(final Command command, final Transformer<T> transformer) {
+		final CommandFuture<T> future = new CommandFuture<>();
+		command.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
+			@Override
+			public void handleSuccess(DefaultArrayResponse result) {
+				Wrapper firstResponse = result.getFirstResponse();
+				T transformed = transformer.apply(firstResponse.getMap());
+				future.set(transformed);
+			}
+		}).forwardFailure(future);
+
+		query.doCommandAsync(command);
+		return future;
+	}
+
+	/**
+	 * Executes a command, checks for failure and transforms all
+	 * response maps by invoking {@code transformer} on each one.
+	 *
+	 * @param command
+	 * 		the command to execute
+	 * @param transformer
+	 * 		the function that creates the new wrappers of type {@code T}
+	 * @param <T>
+	 * 		the wrapper class the maps should be wrapped with
+	 *
+	 * @return a list of wrapped response maps
+	 */
+	private <T extends Wrapper> CommandFuture<List<T>> executeAndTransform(final Command command, final Transformer<T> transformer) {
+		final CommandFuture<List<T>> future = new CommandFuture<>();
+
+		command.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
+			@Override
+			public void handleSuccess(DefaultArrayResponse result) {
+				List<Wrapper> response = result.getResponses();
+				List<T> transformed = new ArrayList<>(response.size());
+				for (Wrapper wrapper : response) {
+					transformed.add(transformer.apply(wrapper.getMap()));
+				}
+
+				future.set(transformed);
+			}
+		}).forwardFailure(future);
+
+		query.doCommandAsync(command);
+		return future;
+	}
+
+	/**
+	 * This interface directly corresponds to {@code java.util.function.Function<Map<String, String>, T>}
+	 * and only exists because we're still using Java 7 instead of Java 8.
+	 * <p>
+	 * All uses of this interface can be replaced by a method reference to the constructor of the wrapper class
+	 * if and when we switch to using Java 8.
+	 * </p>
+	 *
+	 * @param <T>
+	 * 		the type of the wrapper class to transform maps to
+	 */
+	private interface Transformer<T extends Wrapper> /* extends Function<Map<String, String>, T> */ {
+
+		Transformer<Ban> BAN = new ReflectiveTransformer<>(Ban.class);
+		Transformer<Binding> BINDING = new ReflectiveTransformer<>(Binding.class);
+		Transformer<Channel> CHANNEL = new ReflectiveTransformer<>(Channel.class);
+		Transformer<ChannelGroup> CHANNEL_GROUP = new ReflectiveTransformer<>(ChannelGroup.class);
+		Transformer<ChannelGroupClient> CHANNEL_GROUP_CLIENT = new ReflectiveTransformer<>(ChannelGroupClient.class);
+		Transformer<Client> CLIENT = new ReflectiveTransformer<>(Client.class);
+		Transformer<Complaint> COMPLAINT = new ReflectiveTransformer<>(Complaint.class);
+		Transformer<ConnectionInfo> CONNECTION_INFO = new ReflectiveTransformer<>(ConnectionInfo.class);
+		Transformer<CreatedVirtualServer> CREATED_VIRTUAL_SERVER = new ReflectiveTransformer<>(CreatedVirtualServer.class);
+		Transformer<DatabaseClient> DATABASE_CLIENT = new ReflectiveTransformer<>(DatabaseClient.class);
+		Transformer<DatabaseClientInfo> DATABASE_CLIENT_INFO = new ReflectiveTransformer<>(DatabaseClientInfo.class);
+		Transformer<FileInfo> FILE_INFO = new ReflectiveTransformer<>(FileInfo.class);
+		Transformer<FileListEntry> FILE_LIST_ENTRY = new ReflectiveTransformer<>(FileListEntry.class);
+		Transformer<FileTransfer> FILE_TRANSFER = new ReflectiveTransformer<>(FileTransfer.class);
+		Transformer<HostInfo> HOST_INFO = new ReflectiveTransformer<>(HostInfo.class);
+		Transformer<InstanceInfo> INSTANCE_INFO = new ReflectiveTransformer<>(InstanceInfo.class);
+		Transformer<Message> MESSAGE = new ReflectiveTransformer<>(Message.class);
+		Transformer<Permission> PERMISSION = new ReflectiveTransformer<>(Permission.class);
+		Transformer<PermissionAssignment> PERMISSION_ASSIGNMENT = new ReflectiveTransformer<>(PermissionAssignment.class);
+		Transformer<PermissionInfo> PERMISSION_INFO = new ReflectiveTransformer<>(PermissionInfo.class);
+		Transformer<PrivilegeKey> PRIVILEGE_KEY = new ReflectiveTransformer<>(PrivilegeKey.class);
+		Transformer<ServerGroup> SERVER_GROUP = new ReflectiveTransformer<>(ServerGroup.class);
+		Transformer<ServerGroupClient> SERVER_GROUP_CLIENT = new ReflectiveTransformer<>(ServerGroupClient.class);
+		Transformer<ServerQueryInfo> SERVER_QUERY_INFO = new ReflectiveTransformer<>(ServerQueryInfo.class);
+		Transformer<Version> VERSION = new ReflectiveTransformer<>(Version.class);
+		Transformer<VirtualServer> VIRTUAL_SERVER = new ReflectiveTransformer<>(VirtualServer.class);
+		Transformer<VirtualServerInfo> VIRTUAL_SERVER_INFO = new ReflectiveTransformer<>(VirtualServerInfo.class);
+
+		T apply(Map<String, String> map);
+	}
+
+	/**
+	 * This implementation of Transformer uses MethodHandles because creating an anonymous class
+	 * for each of the about 30 instances of Transformer would significantly increase the class loading time
+	 * and would also necessitate around 150 more lines of boilerplate code.
+	 *
+	 * @param <T>
+	 * 		the type of the wrapper class to transform maps to
+	 */
+	private static class ReflectiveTransformer<T extends Wrapper> implements Transformer<T> {
+
+		private final Class<T> wrapperClass;
+		private final MethodHandle constructor;
+
+		public ReflectiveTransformer(Class<T> wrapperClass) {
+			this.wrapperClass = wrapperClass;
+
+			try {
+				MethodType type = MethodType.methodType(void.class, Map.class);
+				constructor = MethodHandles.publicLookup()
+						.in(wrapperClass)
+						.findConstructor(wrapperClass, type);
+			} catch (NoSuchMethodException | IllegalAccessException e) {
+				throw new Error("Missing public constructor of wrapper class " + wrapperClass.getSimpleName(), e);
+			}
+		}
+
+		@Override
+		public T apply(Map<String, String> map) {
+			try {
+				return wrapperClass.cast(constructor.invoke(map));
+			} catch (Throwable t) {
+				throw new Error("Method handle error", t);
+			}
+		}
 	}
 }

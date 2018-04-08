@@ -30,6 +30,9 @@ import java.util.Map;
 
 public class QueryError extends Wrapper {
 
+	private static final int ERROR_ID_OK = 0;
+	private static final int ERROR_ID_EMPTY_RESULT_SET = 1281;
+
 	public QueryError(Map<String, String> map) {
 		super(map);
 	}
@@ -51,7 +54,7 @@ public class QueryError extends Wrapper {
 	}
 
 	public boolean isSuccessful() {
-		return getId() == 0;
+		final int id = getId();
+		return (id == ERROR_ID_OK || id == ERROR_ID_EMPTY_RESULT_SET);
 	}
-
 }

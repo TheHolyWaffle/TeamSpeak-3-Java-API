@@ -4,7 +4,7 @@ package com.github.theholywaffle.teamspeak3.commands.response;
  * #%L
  * TeamSpeak 3 Java API
  * %%
- * Copyright (C) 2014 Bert De Geyter
+ * Copyright (C) 2017 Bert De Geyter, Roger Baumgartner
  * %%
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,84 +26,87 @@ package com.github.theholywaffle.teamspeak3.commands.response;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.StringTokenizer;
 
 public class DefaultArrayResponse {
 
-	private final List<Wrapper> array;
-	private String rawResponse;
+	public static DefaultArrayResponse parse(String rawResponse) {
+		if (rawResponse == null || rawResponse.isEmpty()) return EMPTY;
 
-	public DefaultArrayResponse() {
-		rawResponse = "";
-		array = Collections.emptyList();
-	}
+		String[] rawMaps = rawResponse.split("\\|");
+		List<Wrapper> responses = new ArrayList<>(rawMaps.length);
+		if (rawMaps.length == 0) return new DefaultArrayResponse(responses, rawResponse);
 
-	public DefaultArrayResponse(String raw) {
-		rawResponse = raw;
-		array = new LinkedList<>();
-		appendWrappers(raw);
-	}
+		// First response, just use the parsed map
+		Map<String, String> firstResponse = parseMap(rawMaps[0]);
+		responses.add(new Wrapper(firstResponse));
 
-	public void appendResponse(String raw) {
-		rawResponse += "|" + raw;
-		appendWrappers(raw);
-	}
+		// Array response: use "default" values from the first response, then add the parsed map
+		for (int i = 1; i < rawMaps.length; ++i) {
+			final Map<String, String> responseMap = new HashMap<>(firstResponse);
+			final Map<String, String> ithResponse = parseMap(rawMaps[i]);
+			responseMap.putAll(ithResponse);
 
-	private void appendWrappers(String raw) {
-		final StringTokenizer tkn = new StringTokenizer(raw, "|", false);
-		while (tkn.hasMoreTokens()) {
-			final Map<String, String> responseMap;
-			final Map<String, String> parsedTokens = parse(tkn.nextToken());
-
-			if (array.isEmpty()) {
-				// First response, just use the parsed tokens
-				responseMap = parsedTokens;
-			} else {
-				// Array response: use "default" values from the first response
-				responseMap = new HashMap<>(array.get(0).getMap());
-				responseMap.putAll(parsedTokens);
-			}
-
-			final Wrapper wrapper = new Wrapper(responseMap);
-			array.add(wrapper);
+			responses.add(new Wrapper(responseMap));
 		}
+
+		return new DefaultArrayResponse(responses, rawResponse);
 	}
 
-	private static Map<String, String> parse(String raw) {
-		final StringTokenizer st = new StringTokenizer(raw, " ", false);
-		final Map<String, String> options = new HashMap<>();
+	public static QueryError parseError(String rawError) {
+		String error = rawError.substring("error ".length());
+		Map<String, String> errorMap = parseMap(error);
+		return new QueryError(errorMap);
+	}
 
-		while (st.hasMoreTokens()) {
-			final String tmp = st.nextToken();
-			final int pos = tmp.indexOf("=");
+	private static Map<String, String> parseMap(String rawMap) {
+		if (rawMap == null || rawMap.isEmpty()) return Collections.emptyMap();
+
+		final String[] parameters = rawMap.split(" ");
+		final Map<String, String> map = new HashMap<>(parameters.length);
+
+		for (String param : parameters) {
+			if (param.isEmpty()) continue;
+			final int pos = param.indexOf("=");
 
 			if (pos == -1) {
-				final String valuelessKey = CommandEncoding.decode(tmp);
-				options.put(valuelessKey, "");
+				final String valuelessKey = CommandEncoding.decode(param);
+				map.put(valuelessKey, "");
 			} else {
-				final String key = CommandEncoding.decode(tmp.substring(0, pos));
-				final String value = CommandEncoding.decode(tmp.substring(pos + 1));
-				options.put(key, value);
+				final String key = CommandEncoding.decode(param.substring(0, pos));
+				final String value = CommandEncoding.decode(param.substring(pos + 1));
+				map.put(key, value);
 			}
 		}
-		return options;
+
+		return map;
 	}
 
-	public List<Wrapper> getArray() {
-		return array;
+	private static final DefaultArrayResponse EMPTY = new DefaultArrayResponse(new ArrayList<Wrapper>(0), "");
+
+	private final List<Wrapper> responses;
+	private final String rawResponse;
+
+	private DefaultArrayResponse(List<Wrapper> responses, String rawResponse) {
+		this.responses = Collections.unmodifiableList(responses);
+		this.rawResponse = rawResponse;
+	}
+
+	public List<Wrapper> getResponses() {
+		return responses;
 	}
 
 	public Wrapper getFirstResponse() {
-		if (array.size() == 0) return Wrapper.EMPTY;
-		return array.get(0);
+		if (responses.isEmpty()) return Wrapper.EMPTY;
+		return responses.get(0);
 	}
 
 	public String getRawResponse() {
@@ -112,13 +115,6 @@ public class DefaultArrayResponse {
 
 	@Override
 	public String toString() {
-		StringBuilder str = new StringBuilder();
-
-		for (final Wrapper wrapper : array) {
-			str.append(wrapper.getMap()).append(" | ");
-		}
-
-		str.setLength(str.length() - " | ".length());
-		return str.toString();
+		return rawResponse;
 	}
 }

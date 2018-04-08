@@ -1,10 +1,10 @@
-package com.github.theholywaffle.teamspeak3.commands.parameter;
+package com.github.theholywaffle.teamspeak3.commands.response;
 
 /*
  * #%L
  * TeamSpeak 3 Java API
  * %%
- * Copyright (C) 2014 Bert De Geyter
+ * Copyright (C) 2017 Bert De Geyter, Roger Baumgartner
  * %%
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,14 +26,32 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
  * #L%
  */
 
-public abstract class Parameter {
+import com.github.theholywaffle.teamspeak3.commands.Command;
 
-	public abstract void appendTo(StringBuilder str);
+public class ResponseBuilder {
 
-	@Override
-	public String toString() {
-		StringBuilder stringBuilder = new StringBuilder();
-		appendTo(stringBuilder);
-		return stringBuilder.toString();
+	private final Command command;
+	private final StringBuilder rawResponseBuilder;
+
+	public ResponseBuilder(Command command) {
+		this.command = command;
+		this.rawResponseBuilder = new StringBuilder();
+	}
+
+	public Command getCommand() {
+		return command;
+	}
+
+	public DefaultArrayResponse buildResponse() {
+		// Erase trailing '|'
+		if (rawResponseBuilder.length() > 0) {
+			rawResponseBuilder.setLength(rawResponseBuilder.length() - 1);
+		}
+
+		return DefaultArrayResponse.parse(rawResponseBuilder.toString());
+	}
+
+	public void appendResponse(String rawArrayResponse) {
+		rawResponseBuilder.append(rawArrayResponse).append('|');
 	}
 }

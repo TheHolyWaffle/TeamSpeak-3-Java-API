@@ -26,13 +26,25 @@ package com.github.theholywaffle.teamspeak3.api;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.TS3Api;
+
 import java.util.Locale;
+import java.util.Map;
 
 public enum ClientProperty implements Property {
 
 	CID(false),
 	CLIENT_AWAY(false),
 	CLIENT_AWAY_MESSAGE(false),
+	/**
+	 * Property for the Overwolf badge and any myTeamSpeak badges.
+	 * Can be changed only for the own client by using {@link TS3Api#updateClient(Map)}.
+	 * <p>
+	 * String format: {@code overwolf=n:badges=guid,guid,guid(,guid...)}<br>
+	 * where {@code n} is 0 or 1 and {@code guid} is 128-bit badge GUIDs
+	 * </p>
+	 */
+	CLIENT_BADGES(true),
 	CLIENT_BASE64HASHCLIENTUID(false),
 	CLIENT_CHANNEL_GROUP_ID(false),
 	CLIENT_CHANNEL_GROUP_INHERITED_CHANNEL_ID(false),
@@ -43,6 +55,7 @@ public enum ClientProperty implements Property {
 	CLIENT_DEFAULT_TOKEN(false),
 	CLIENT_DESCRIPTION(true),
 	CLIENT_FLAG_AVATAR(false),
+	CLIENT_FLAG_TALKING(false),
 	CLIENT_ICON_ID(true),
 	CLIENT_IDLE_TIME(false),
 	CLIENT_INPUT_HARDWARE(false),
@@ -98,8 +111,8 @@ public enum ClientProperty implements Property {
 		return name().toLowerCase(Locale.ROOT);
 	}
 
+	@Override
 	public boolean isChangeable() {
 		return changeable;
 	}
-
 }

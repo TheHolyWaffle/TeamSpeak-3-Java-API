@@ -26,18 +26,17 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
-import com.github.theholywaffle.teamspeak3.api.Callback;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3QueryShutDownException;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
-import com.github.theholywaffle.teamspeak3.commands.CQuit;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TS3Query {
 
@@ -65,16 +64,17 @@ public class TS3Query {
 	}
 
 	private final ConnectionHandler connectionHandler;
-	private final EventManager eventManager = new EventManager();
+	private final EventManager eventManager = new EventManager(this);
 	private final ExecutorService userThreadPool = Executors.newCachedThreadPool();
 	private final FileTransferHelper fileTransferHelper;
 	private final TS3Api api;
 	private final TS3ApiAsync asyncApi;
 	private final TS3Config config;
 
-	private QueryIO io;
+	private final AtomicBoolean connected = new AtomicBoolean(false);
+	private final AtomicBoolean shuttingDown = new AtomicBoolean(false);
 
-	private volatile boolean connected;
+	private QueryIO io;
 
 	/**
 	 * Creates a TS3Query that connects to a TS3 server at
@@ -95,15 +95,14 @@ public class TS3Query {
 		this.config = config;
 		this.fileTransferHelper = new FileTransferHelper(config.getHost());
 		this.connectionHandler = config.getReconnectStrategy().create(config.getConnectionHandler());
-		this.connected = false;
 
-		this.api = new TS3Api(this);
 		this.asyncApi = new TS3ApiAsync(this);
+		this.api = new TS3Api(asyncApi);
 	}
 
 	// PUBLIC
 
-	public void connect() {
+	public synchronized void connect() {
 		if (userThreadPool.isShutdown()) {
 			throw new IllegalStateException("The query has already been shut down");
 		}
@@ -114,7 +113,7 @@ public class TS3Query {
 		}
 
 		io = new QueryIO(this, config);
-		connected = true;
+		connected.set(true);
 
 		try {
 			connectionHandler.onConnect(this);
@@ -128,18 +127,41 @@ public class TS3Query {
 	 * Removes and closes all used resources to the TeamSpeak server.
 	 */
 	public void exit() {
-		if (connected) {
-			// Send a quit command synchronously
-			// This will guarantee that all previously sent commands have been processed
-			doCommand(new CQuit());
+		if (shuttingDown.compareAndSet(false, true)) {
+			try {
+				// Sending this command will guarantee that all previously sent commands have been processed
+				api.quit();
+			} catch (TS3Exception e) {
+				log.warn("Could not send a quit command to terminate the connection", e);
+			} finally {
+				shutDown();
+			}
+		} else {
+			// Only 1 thread shall ever send quit, the rest of the threads wait for the first thread to finish
+			try {
+				synchronized (this) {
+					while (connected.get()) {
+						wait();
+					}
+				}
+			} catch (InterruptedException e) {
+				// Restore interrupt, then bail out
+				Thread.currentThread().interrupt();
+			}
 		}
+	}
+
+	private synchronized void shutDown() {
+		if (userThreadPool.isShutdown()) return;
 
 		if (io != null) {
 			io.disconnect();
+			io.failRemainingCommands();
 		}
 
-		connected = false;
 		userThreadPool.shutdown();
+		connected.set(false);
+		notifyAll();
 	}
 
 	/**
@@ -161,7 +183,7 @@ public class TS3Query {
 	 * @see TS3Config#setConnectionHandler(ConnectionHandler)
 	 */
 	public boolean isConnected() {
-		return connected;
+		return connected.get();
 	}
 
 	public TS3Api getApi() {
@@ -174,47 +196,26 @@ public class TS3Query {
 
 	// INTERNAL
 
-	boolean doCommand(Command c) {
-		final CountDownLatch latch = new CountDownLatch(1);
-		c.setCallback(new Callback() {
+	synchronized void doCommandAsync(Command c) {
+		if (userThreadPool.isShutdown()) {
+			c.getFuture().fail(new TS3QueryShutDownException());
+			return;
+		}
+
+		io.enqueueCommand(c);
+	}
+
+	void submitUserTask(final String name, final Runnable task) {
+		userThreadPool.submit(new Runnable() {
 			@Override
-			public void handle() {
-				latch.countDown();
+			public void run() {
+				try {
+					task.run();
+				} catch (Throwable throwable) {
+					log.error(name + " threw an exception", throwable);
+				}
 			}
 		});
-
-		io.enqueueCommand(c);
-		awaitCommand(latch);
-
-		if (!c.isAnswered()) {
-			log.error("Command {} was not answered in time.", c.getName());
-			return false;
-		}
-
-		return c.getError().isSuccessful();
-	}
-
-	private void awaitCommand(CountDownLatch latch) {
-		boolean interrupted = false;
-		try {
-			latch.await(config.getCommandTimeout(), TimeUnit.MILLISECONDS);
-		} catch (final InterruptedException e) {
-			interrupted = true;
-		}
-
-		if (interrupted) {
-			// Restore the interrupt
-			Thread.currentThread().interrupt();
-		}
-	}
-
-	void doCommandAsync(Command c, Callback callback) {
-		if (callback != null) c.setCallback(callback);
-		io.enqueueCommand(c);
-	}
-
-	void submitUserTask(Runnable task) {
-		userThreadPool.submit(task);
 	}
 
 	EventManager getEventManager() {
@@ -226,21 +227,24 @@ public class TS3Query {
 	}
 
 	void fireDisconnect() {
-		connected = false;
+		connected.set(false);
 
-		userThreadPool.submit(new Runnable() {
+		submitUserTask("ConnectionHandler disconnect task", new Runnable() {
 			@Override
 			public void run() {
-				try {
-					connectionHandler.onDisconnect(TS3Query.this);
-				} catch (Exception e) {
-					log.error("ConnectionHandler threw exception in disconnect handler", e);
-				}
-
-				if (!connected) {
-					exit();
-				}
+				handleDisconnect();
 			}
 		});
+	}
+
+	private synchronized void handleDisconnect() {
+		try {
+			connectionHandler.onDisconnect(this);
+		} finally {
+			if (!connected.get()) {
+				shuttingDown.set(true); // Try to prevent extraneous exit commands
+				shutDown();
+			}
+		}
 	}
 }

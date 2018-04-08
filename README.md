@@ -11,6 +11,7 @@ A Java 7 wrapper of the [TeamSpeak 3](http://media.teamspeak.com/ts3_literature/
 - Threaded event-based system
 - Both [synchronous](src/main/java/com/github/theholywaffle/teamspeak3/TS3Api.java) and [asynchronous](src/main/java/com/github/theholywaffle/teamspeak3/TS3ApiAsync.java) implementations available
 - Can be set up to reconnect and automatically resume execution after a connection problem
+- Utilizes [SLF4J](https://www.slf4j.org/) for logging abstraction and integrates with your logging configuration
 
 ## Getting Started
 
@@ -18,19 +19,39 @@ A Java 7 wrapper of the [TeamSpeak 3](http://media.teamspeak.com/ts3_literature/
 
 - **Option 1 (Standalone Jar)**: 
 
-   Download the [latest release](https://search.maven.org/remote_content?g=com.github.theholywaffle&a=teamspeak3-api&v=LATEST&c=with-dependencies) and add this jar to the buildpath of your project.
+    Download the [latest release](https://search.maven.org/remote_content?g=com.github.theholywaffle&a=teamspeak3-api&v=LATEST&c=with-dependencies) and add this jar to the buildpath of your project.
 
 - **Option 2 (Maven)**: 
 
-   Add the following to your pom.xml
+    Add the following to your pom.xml:
 
-```xml
-<dependency>
-	<groupId>com.github.theholywaffle</groupId>
-	<artifactId>teamspeak3-api</artifactId>
-	<version>...</version>
-</dependency>
-```
+    ```xml
+    <dependency>
+	    <groupId>com.github.theholywaffle</groupId>
+	    <artifactId>teamspeak3-api</artifactId>
+	    <version>...</version>
+    </dependency>
+    ```
+
+    This API utilizes [SLF4J](https://www.slf4j.org/) for logging purposes and doesn't come shipped with a default logging implementation, if you use Maven instead of the standalone jar.
+    You will manually have to add one via Maven to get any logging going, if you don't have one already. 
+    
+    The easiest way to do so is to just add SimpleLogger to your project, which also supports configuration via
+    config file (needs to be shipped as a resource with your jar), if you want to log ```DEBUG``` messages for instance (e.g. raw client-server communication). 
+
+    See this [configuration example](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/blob/master/src/main/resources/simplelogger.properties) for SimpleLogger.
+    Add the following to your pom.xml to get started:
+
+    ```xml
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>1.7.25</version>
+    </dependency>
+    ```
+
+    You can however choose whichever logging framework suits your needs best. Just add your logging framework and the
+    corresponding [binding](https://mvnrepository.com/artifact/org.slf4j) to your pom.xml.
 
 ### Usage
 
@@ -68,19 +89,20 @@ api.sendChannelMessage("PutPutBot is online!");
 
 ### FloodRate
 
-Only use `FloodRate.UNLIMITED` if you are sure that your query account is whitelisted. If not, use `FloodRate.DEFAULT`. The server will temporarily ban your account if you send too many commands in a short period of time. For more info on this, check the [TeamSpeak 3 Server Query Manual, page 6](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf#page=6).
+Only use `FloodRate.UNLIMITED` if you are sure that your query account is whitelisted (query_ip_whitelist.txt in Teamspeak server folder). If not, use `FloodRate.DEFAULT`. The server will temporarily ban your account if you send too many commands in a short period of time. For more info on this, check the [TeamSpeak 3 Server Query Manual, page 6](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf#page=6).
 
 ### TS3Config Settings
 
-|Option | Description | Default value | Required |
-|--- | --- |:---:|:---:|
-|Host/IP | IP/Host of TeamSpeak 3 server.|  | yes |
-|QueryPort | Query port of TeamSpeak 3 server. | 10011 | no |
-|FloodRate | Prevents possible spam to the server. | `FloodRate.DEFAULT` | no |
-|Command timeout | Time until a command waiting for a response fails | 4000 (ms) | no |
+| Option | Description | Method signature | Default value | Required |
+| --- | --- | --- | :---: | :---: |
+|Host/IP | IP/Host of TeamSpeak 3 server.| ``setHost(String)`` |  | yes |
+|QueryPort | Query port of TeamSpeak 3 server. | ``setQueryPort(int)`` | 10011 | no |
+|FloodRate | Prevents possible spam to the server. | ``setFloodRate(FloodRate)`` | `FloodRate.DEFAULT` | no |
+|Communications logging | Log client-server communication. | ``setEnableCommunicationsLogging(boolean)`` | false | no |
+|Command timeout | Time until a command waiting for a response fails | ``setCommandTimeout(int)`` | 4000 (ms) | no |
 
 ## Questions or bugs?
 
 Please let us know [here](../../issues). We'll try to help you as soon as we can.
 
-If you just have a simple question or want to talk to us about something else, feel free to join the [repository chat](https://gitter.im/TheHolyWaffle/TeamSpeak-3-Java-API) on Gitter.
+If you just have a simple question or want to talk to us about something else, please join the [repository chat](https://gitter.im/TheHolyWaffle/TeamSpeak-3-Java-API) on Gitter.

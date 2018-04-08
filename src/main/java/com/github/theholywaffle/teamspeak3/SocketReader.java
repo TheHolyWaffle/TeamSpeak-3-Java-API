@@ -26,15 +26,19 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
-import com.github.theholywaffle.teamspeak3.api.Callback;
-import com.github.theholywaffle.teamspeak3.commands.CQuit;
+import com.github.theholywaffle.teamspeak3.api.CommandFuture;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
+import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
 import com.github.theholywaffle.teamspeak3.commands.Command;
+import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
+import com.github.theholywaffle.teamspeak3.commands.response.ResponseBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.SocketTimeoutException;
 import java.util.Queue;
 
 public class SocketReader extends Thread {
@@ -42,15 +46,19 @@ public class SocketReader extends Thread {
 	private static final Logger log = LoggerFactory.getLogger(SocketReader.class);
 
 	private final TS3Query ts3;
-	private final Queue<Command> receiveQueue;
+	private final Queue<ResponseBuilder> receiveQueue;
 	private final BufferedReader in;
+	private final SocketWriter writer;
+	private final long commandTimeout;
 	private final boolean logComms;
 
 	private String lastEvent = "";
 
-	public SocketReader(QueryIO io, TS3Query ts3Query, TS3Config config) throws IOException {
+	public SocketReader(QueryIO io, SocketWriter writer, TS3Query ts3Query, TS3Config config) throws IOException {
 		super("[TeamSpeak-3-Java-API] SocketReader");
 		this.receiveQueue = io.getReceiveQueue();
+		this.writer = writer;
+		this.commandTimeout = config.getCommandTimeout();
 		this.ts3 = ts3Query;
 		this.logComms = config.getEnableCommunicationsLogging();
 
@@ -72,6 +80,14 @@ public class SocketReader extends Thread {
 			try {
 				// Will block until a full line of text could be read.
 				line = in.readLine();
+			} catch (SocketTimeoutException socketTimeout) {
+				// Really disconnected or just no data transferred for <commandTimeout> milliseconds?
+				if (receiveQueue.isEmpty() || writer.getIdleTime() < commandTimeout) {
+					continue;
+				} else {
+					log.error("Connection timed out.", socketTimeout);
+					break;
+				}
 			} catch (IOException io) {
 				if (!isInterrupted()) {
 					log.error("Connection error occurred.", io);
@@ -101,64 +117,64 @@ public class SocketReader extends Thread {
 		}
 
 		if (!isInterrupted()) {
-			log.warn("SocketReader has stopped!");
 			ts3.fireDisconnect();
 		}
 	}
 
 	private void handleEvent(final String event) {
-		if (logComms) log.debug("< [event] {}", event);
+		if (logComms) log.debug("[event] < {}", event);
 
 		// Filter out duplicate events for join, quit and channel move events
 		if (!isDuplicate(event)) {
-			ts3.submitUserTask(new Runnable() {
-				@Override
-				public void run() {
-					final String arr[] = event.split(" ", 2);
-					ts3.getEventManager().fireEvent(arr[0], arr[1]);
-				}
-			});
+			final String arr[] = event.split(" ", 2);
+			ts3.getEventManager().fireEvent(arr[0], arr[1]);
 		}
 	}
 
 	private void handleCommandResponse(final String response) {
-		final Command command = receiveQueue.peek();
-		if (command == null) {
+		final ResponseBuilder responseBuilder = receiveQueue.peek();
+		if (responseBuilder == null) {
 			log.warn("[UNHANDLED] < {}", response);
 			return;
 		}
 
-		if (logComms) log.debug("[{}] < {}", command.getName(), response);
+		if (logComms) log.debug("[{}] < {}", responseBuilder.getCommand().getName(), response);
 
 		if (response.startsWith("error ")) {
-			handleCommandError(command, response);
+			handleCommandError(responseBuilder, response);
 		} else {
-			command.feed(response);
+			responseBuilder.appendResponse(response);
 		}
 	}
 
-	private void handleCommandError(Command command, final String error) {
-		if (command instanceof CQuit) {
+	private void handleCommandError(ResponseBuilder responseBuilder, final String error) {
+		final Command command = responseBuilder.getCommand();
+		if (command.getName().equals("quit")) {
 			// Response to a quit command received, we're done
 			interrupt();
 		}
 
-		command.feedError(error.substring("error ".length()));
-		if (command.getError().getId() != 0) {
-			log.warn("TS3 command error: {}", command.getError());
-		}
 		receiveQueue.remove();
 
-		final Callback callback = command.getCallback();
-		if (callback != null) {
-			ts3.submitUserTask(new Runnable() {
+		final QueryError queryError = DefaultArrayResponse.parseError(error);
+		final CommandFuture<DefaultArrayResponse> future = command.getFuture();
+
+		if (queryError.isSuccessful()) {
+			final DefaultArrayResponse response = responseBuilder.buildResponse();
+
+			ts3.submitUserTask("Future SuccessListener (" + command.getName() + ")", new Runnable() {
 				@Override
 				public void run() {
-					try {
-						callback.handle();
-					} catch (Exception e) {
-						log.warn("User callback threw exception", e);
-					}
+					future.set(response);
+				}
+			});
+		} else {
+			log.debug("TS3 command error: {}", queryError);
+
+			ts3.submitUserTask("Future FailureListener (" + command.getName() + ")", new Runnable() {
+				@Override
+				public void run() {
+					future.fail(new TS3CommandFailedException(queryError));
 				}
 			});
 		}

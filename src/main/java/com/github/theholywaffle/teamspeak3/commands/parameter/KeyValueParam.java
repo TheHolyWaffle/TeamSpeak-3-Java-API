@@ -53,7 +53,9 @@ public class KeyValueParam extends Parameter {
 	}
 
 	@Override
-	public String build() {
-		return CommandEncoding.encode(key) + "=" + CommandEncoding.encode(value);
+	public void appendTo(StringBuilder str) {
+		str.append(CommandEncoding.encode(key));
+		str.append('=');
+		str.append(CommandEncoding.encode(value));
 	}
 }
