@@ -2217,13 +2217,12 @@ public class TS3ApiAsync {
 			}
 		}).onFailure(new CommandFuture.FailureListener() {
 			@Override
-			public void handleFailure(TS3Exception e) {
-				if (e instanceof TS3CommandFailedException
-						&& ((TS3CommandFailedException) e).getError().getId() == 512) {
+			public void handleFailure(TS3Exception exception) {
+				if (isQueryError(exception, 512)) {
 					// clientfind returns error 512 if no clients with a matching pattern were found.
 					future.set(Collections.<Client>emptyList());
 				} else {
-					future.fail(e);
+					future.fail(exception);
 				}
 			}
 		});
@@ -2238,7 +2237,7 @@ public class TS3ApiAsync {
 	 * @param clientUId
 	 * 		the unique identifier of the client
 	 *
-	 * @return the client or {@code null} if no client was found
+	 * @return information about the client
 	 *
 	 * @throws TS3CommandFailedException
 	 * 		if the execution of a command fails
@@ -2253,12 +2252,8 @@ public class TS3ApiAsync {
 		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
 			public void handleSuccess(DefaultArrayResponse result) {
-				if (result.getResponses().isEmpty()) {
-					future.set(null);
-				} else {
-					final int clientId = result.getFirstResponse().getInt("clid");
-					getClientInfo(clientId).forwardResult(future);
-				}
+				final int clientId = result.getFirstResponse().getInt("clid");
+				getClientInfo(clientId).forwardResult(future);
 			}
 		}).forwardFailure(future);
 
@@ -2272,7 +2267,7 @@ public class TS3ApiAsync {
 	 * @param clientId
 	 * 		the client ID of the client
 	 *
-	 * @return the client or {@code null} if no client was found
+	 * @return information about the client
 	 *
 	 * @throws TS3CommandFailedException
 	 * 		if the execution of a command fails
@@ -3292,6 +3287,75 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<String>> getVirtualServerLogEntries() {
 		return getVirtualServerLogEntries(100);
+	}
+
+	/**
+	 * Checks whether the client with the specified client ID is online.
+	 * <p>
+	 * Please note that there is no guarantee that the client will still be
+	 * online by the time the next command is executed.
+	 * </p>
+	 *
+	 * @param clientId
+	 * 		the ID of the client
+	 *
+	 * @return {@code true} if the client is online, {@code false} otherwise
+	 *
+	 * @querycommands 1
+	 * @see #getClientInfo(int)
+	 */
+	public CommandFuture<Boolean> isClientOnline(int clientId) {
+		final Command cmd = ClientCommands.clientInfo(clientId);
+		final CommandFuture<Boolean> future = new CommandFuture<>();
+
+		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
+			@Override
+			public void handleSuccess(DefaultArrayResponse result) {
+				future.set(true);
+			}
+		}).onFailure(new CommandFuture.FailureListener() {
+			@Override
+			public void handleFailure(TS3Exception exception) {
+				if (isQueryError(exception, 512)) {
+					future.set(false);
+				} else {
+					future.fail(exception);
+				}
+			}
+		});
+
+		query.doCommandAsync(cmd);
+		return future;
+	}
+
+	/**
+	 * Checks whether the client with the specified unique identifier is online.
+	 * <p>
+	 * Please note that there is no guarantee that the client will still be
+	 * online by the time the next command is executed.
+	 * </p>
+	 *
+	 * @param clientUId
+	 * 		the unique ID of the client
+	 *
+	 * @return {@code true} if the client is online, {@code false} otherwise
+	 *
+	 * @querycommands 1
+	 * @see #getClientByUId(String)
+	 */
+	public CommandFuture<Boolean> isClientOnline(String clientUId) {
+		final Command cmd = ClientCommands.clientGetIds(clientUId);
+		final CommandFuture<Boolean> future = new CommandFuture<>();
+
+		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
+			@Override
+			public void handleSuccess(DefaultArrayResponse result) {
+				future.set(!result.getResponses().isEmpty());
+			}
+		}).forwardFailure(future);
+
+		query.doCommandAsync(cmd);
+		return future;
 	}
 
 	/**
@@ -5138,6 +5202,26 @@ public class TS3ApiAsync {
 	public CommandFuture<ServerQueryInfo> whoAmI() {
 		final Command cmd = QueryCommands.whoAmI();
 		return executeAndTransformFirst(cmd, Transformer.SERVER_QUERY_INFO /* ServerQueryInfo::new */);
+	}
+
+	/**
+	 * Checks whether a given {@link TS3Exception} is a {@link TS3CommandFailedException} with the
+	 * specified error ID.
+	 *
+	 * @param exception
+	 * 		the exception to check
+	 * @param errorId
+	 * 		the error ID to match
+	 *
+	 * @return whether {@code exception} is a {@code TS3CommandFailedException} with error ID {@code errorId}.
+	 */
+	private static boolean isQueryError(TS3Exception exception, int errorId) {
+		if (exception instanceof TS3CommandFailedException) {
+			TS3CommandFailedException cfe = (TS3CommandFailedException) exception;
+			return (cfe.getError().getId() == errorId);
+		} else {
+			return false;
+		}
 	}
 
 	/**

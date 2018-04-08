@@ -1859,7 +1859,7 @@ public class TS3Api {
 	 * @param clientUId
 	 * 		the unique identifier of the client
 	 *
-	 * @return the client or {@code null} if no client was found
+	 * @return information about the client
 	 *
 	 * @throws TS3CommandFailedException
 	 * 		if the execution of a command fails
@@ -1877,7 +1877,7 @@ public class TS3Api {
 	 * @param clientId
 	 * 		the client ID of the client
 	 *
-	 * @return the client or {@code null} if no client was found
+	 * @return information about the client
 	 *
 	 * @throws TS3CommandFailedException
 	 * 		if the execution of a command fails
@@ -2716,6 +2716,44 @@ public class TS3Api {
 	 */
 	public List<String> getVirtualServerLogEntries() {
 		return asyncApi.getVirtualServerLogEntries().getUninterruptibly();
+	}
+
+	/**
+	 * Checks whether the client with the specified client ID is online.
+	 * <p>
+	 * Please note that there is no guarantee that the client will still be
+	 * online by the time the next command is executed.
+	 * </p>
+	 *
+	 * @param clientId
+	 * 		the ID of the client
+	 *
+	 * @return {@code true} if the client is online, {@code false} otherwise
+	 *
+	 * @querycommands 1
+	 * @see #getClientInfo(int)
+	 */
+	public boolean isClientOnline(int clientId) {
+		return asyncApi.isClientOnline(clientId).getUninterruptibly();
+	}
+
+	/**
+	 * Checks whether the client with the specified unique identifier is online.
+	 * <p>
+	 * Please note that there is no guarantee that the client will still be
+	 * online by the time the next command is executed.
+	 * </p>
+	 *
+	 * @param clientUId
+	 * 		the unique ID of the client
+	 *
+	 * @return {@code true} if the client is online, {@code false} otherwise
+	 *
+	 * @querycommands 1
+	 * @see #getClientByUId(String)
+	 */
+	public boolean isClientOnline(String clientUId) {
+		return asyncApi.isClientOnline(clientUId).getUninterruptibly();
 	}
 
 	/**
