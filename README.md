@@ -18,7 +18,7 @@ A Java 7 wrapper of the [TeamSpeak 3](http://media.teamspeak.com/ts3_literature/
 
 - **Option 1 (Standalone Jar)**: 
 
-   Download the [latest release](https://repo1.maven.org/maven2/com/github/theholywaffle/teamspeak3-api/1.0.14/teamspeak3-api-1.0.14-with-dependencies.jar) and add this jar to the buildpath of your project.
+   Download the [latest release](https://search.maven.org/remote_content?g=com.github.theholywaffle&a=teamspeak3-api&v=LATEST&c=with-dependencies) and add this jar to the buildpath of your project.
 
 - **Option 2 (Maven)**: 
 
