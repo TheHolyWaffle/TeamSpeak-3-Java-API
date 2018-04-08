@@ -27,6 +27,7 @@ package com.github.theholywaffle.teamspeak3;
  */
 
 import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3QueryShutDownException;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 import com.github.theholywaffle.teamspeak3.commands.Command;
@@ -127,8 +128,8 @@ public class TS3Query {
 	 */
 	public void exit() {
 		if (shuttingDown.compareAndSet(false, true)) {
-			// Sending this command will guarantee that all previously sent commands have been processed
 			try {
+				// Sending this command will guarantee that all previously sent commands have been processed
 				api.quit();
 			} catch (TS3Exception e) {
 				log.warn("Could not send a quit command to terminate the connection", e);
@@ -151,8 +152,11 @@ public class TS3Query {
 	}
 
 	private synchronized void shutDown() {
+		if (userThreadPool.isShutdown()) return;
+
 		if (io != null) {
 			io.disconnect();
+			io.failRemainingCommands();
 		}
 
 		userThreadPool.shutdown();
@@ -193,6 +197,11 @@ public class TS3Query {
 	// INTERNAL
 
 	synchronized void doCommandAsync(Command c) {
+		if (userThreadPool.isShutdown()) {
+			c.getFuture().fail(new TS3QueryShutDownException());
+			return;
+		}
+
 		io.enqueueCommand(c);
 	}
 
@@ -233,6 +242,7 @@ public class TS3Query {
 			connectionHandler.onDisconnect(this);
 		} finally {
 			if (!connected.get()) {
+				shuttingDown.set(true); // Try to prevent extraneous exit commands
 				shutDown();
 			}
 		}

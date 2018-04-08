@@ -27,6 +27,7 @@ package com.github.theholywaffle.teamspeak3;
  */
 
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3QueryShutDownException;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.reconnect.DisconnectingConnectionHandler;
 import com.github.theholywaffle.teamspeak3.commands.Command;
@@ -64,9 +65,10 @@ public class QueryIO {
 			tmpSocket = new Socket(config.getHost(), config.getQueryPort());
 			socket = tmpSocket;
 			socket.setTcpNoDelay(true);
+			socket.setSoTimeout(config.getCommandTimeout());
 
-			socketReader = new SocketReader(this, query, config);
 			socketWriter = new SocketWriter(this, config);
+			socketReader = new SocketReader(this, socketWriter, query, config);
 			keepAlive = new KeepAliveThread(socketWriter, query.getAsyncApi());
 		} catch (IOException e) {
 			// Clean up resources and fail
@@ -117,6 +119,15 @@ public class QueryIO {
 		try {
 			socket.close();
 		} catch (IOException ignored) {
+		}
+	}
+
+	void failRemainingCommands() {
+		for (ResponseBuilder toReceive : receiveQueue) {
+			toReceive.getCommand().getFuture().fail(new TS3QueryShutDownException());
+		}
+		for (Command toSend : sendQueue) {
+			toSend.getFuture().fail(new TS3QueryShutDownException());
 		}
 	}
 

@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.SocketTimeoutException;
 import java.util.Queue;
 
 public class SocketReader extends Thread {
@@ -47,13 +48,17 @@ public class SocketReader extends Thread {
 	private final TS3Query ts3;
 	private final Queue<ResponseBuilder> receiveQueue;
 	private final BufferedReader in;
+	private final SocketWriter writer;
+	private final long commandTimeout;
 	private final boolean logComms;
 
 	private String lastEvent = "";
 
-	public SocketReader(QueryIO io, TS3Query ts3Query, TS3Config config) throws IOException {
+	public SocketReader(QueryIO io, SocketWriter writer, TS3Query ts3Query, TS3Config config) throws IOException {
 		super("[TeamSpeak-3-Java-API] SocketReader");
 		this.receiveQueue = io.getReceiveQueue();
+		this.writer = writer;
+		this.commandTimeout = config.getCommandTimeout();
 		this.ts3 = ts3Query;
 		this.logComms = config.getEnableCommunicationsLogging();
 
@@ -75,6 +80,14 @@ public class SocketReader extends Thread {
 			try {
 				// Will block until a full line of text could be read.
 				line = in.readLine();
+			} catch (SocketTimeoutException socketTimeout) {
+				// Really disconnected or just no data transferred for <commandTimeout> milliseconds?
+				if (receiveQueue.isEmpty() || writer.getIdleTime() < commandTimeout) {
+					continue;
+				} else {
+					log.error("Connection timed out.", socketTimeout);
+					break;
+				}
 			} catch (IOException io) {
 				if (!isInterrupted()) {
 					log.error("Connection error occurred.", io);
@@ -104,7 +117,6 @@ public class SocketReader extends Thread {
 		}
 
 		if (!isInterrupted()) {
-			log.warn("SocketReader has stopped!");
 			ts3.fireDisconnect();
 		}
 	}
