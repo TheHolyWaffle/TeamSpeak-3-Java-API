@@ -2429,7 +2429,7 @@ public class TS3Api {
 
 	/**
 	 * Gets a list of all assigned permissions for a client in a specified channel.
-	 * If you do not care about channel permissions, set {@code channelId} to {@code -1}.
+	 * If you do not care about channel permissions, set {@code channelId} to {@code 0}.
 	 *
 	 * @param channelId
 	 * 		the ID of the channel
