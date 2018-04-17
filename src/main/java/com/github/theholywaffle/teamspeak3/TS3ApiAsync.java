@@ -1910,12 +1910,12 @@ public class TS3ApiAsync {
 		final Command cmd = ChannelCommands.channelFind(name);
 		final CommandFuture<List<Channel>> future = new CommandFuture<>();
 
-		getChannels().onSuccess(new CommandFuture.SuccessListener<List<Channel>>() {
+		cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
-			public void handleSuccess(final List<Channel> allChannels) {
-				cmd.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
+			public void handleSuccess(final DefaultArrayResponse result) {
+				getChannels().onSuccess(new CommandFuture.SuccessListener<List<Channel>>() {
 					@Override
-					public void handleSuccess(DefaultArrayResponse result) {
+					public void handleSuccess(List<Channel> allChannels) {
 						final List<Wrapper> responses = result.getResponses();
 						final List<Channel> channels = new ArrayList<>(responses.size());
 
@@ -1931,10 +1931,10 @@ public class TS3ApiAsync {
 						future.set(channels);
 					}
 				}).forwardFailure(future);
-
-				query.doCommandAsync(cmd);
 			}
-		}).forwardFailure(future);
+		}).onFailure(transformError(future, 768, Collections.<Channel>emptyList()));
+
+		query.doCommandAsync(cmd);
 		return future;
 	}
 
@@ -2215,17 +2215,7 @@ public class TS3ApiAsync {
 					}
 				}).forwardFailure(future);
 			}
-		}).onFailure(new CommandFuture.FailureListener() {
-			@Override
-			public void handleFailure(TS3Exception exception) {
-				if (isQueryError(exception, 512)) {
-					// clientfind returns error 512 if no clients with a matching pattern were found.
-					future.set(Collections.<Client>emptyList());
-				} else {
-					future.fail(exception);
-				}
-			}
-		});
+		}).onFailure(transformError(future, 512, Collections.<Client>emptyList()));
 
 		query.doCommandAsync(cmd);
 		return future;
@@ -2880,7 +2870,13 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<PermissionAssignment>> getPermissionAssignments(String permName) {
 		final Command cmd = PermissionCommands.permFind(permName);
-		return executeAndTransform(cmd, Transformer.PERMISSION_ASSIGNMENT /* PermissionAssignment::new */);
+		final CommandFuture<List<PermissionAssignment>> future = new CommandFuture<>();
+
+		executeAndTransform(cmd, Transformer.PERMISSION_ASSIGNMENT /* PermissionAssignment::new */)
+				.forwardSuccess(future)
+				.onFailure(transformError(future, 2562, Collections.<PermissionAssignment>emptyList()));
+
+		return future;
 	}
 
 	/**
@@ -3313,16 +3309,7 @@ public class TS3ApiAsync {
 			public void handleSuccess(DefaultArrayResponse result) {
 				future.set(true);
 			}
-		}).onFailure(new CommandFuture.FailureListener() {
-			@Override
-			public void handleFailure(TS3Exception exception) {
-				if (isQueryError(exception, 512)) {
-					future.set(false);
-				} else {
-					future.fail(exception);
-				}
-			}
-		});
+		}).onFailure(transformError(future, 512, false));
 
 		query.doCommandAsync(cmd);
 		return future;
@@ -5222,6 +5209,33 @@ public class TS3ApiAsync {
 		} else {
 			return false;
 		}
+	}
+
+	/**
+	 * Creates a {@code FailureListener} that checks whether the caught exception is
+	 * a {@code TS3CommandFailedException} with error ID {@code errorId}.
+	 * <p>
+	 * If so, the listener makes {@code future} succeed by setting its result value to an empty
+	 * list with element type {@code T}. Else, the caught exception is forwarded to {@code future}.
+	 * </p>
+	 *
+	 * @param future the future to forward the result to
+	 * @param errorId the error ID to catch
+	 * @param replacement the value to
+	 * @param <T> the type of {@code replacement} and element type of {@code future}
+	 * @return a {@code FailureListener} with the described properties
+	 */
+	private static <T> CommandFuture.FailureListener transformError(final CommandFuture<T> future, final int errorId, final T replacement) {
+		return new CommandFuture.FailureListener() {
+			@Override
+			public void handleFailure(TS3Exception exception) {
+				if (isQueryError(exception, errorId)) {
+					future.set(replacement);
+				} else {
+					future.fail(exception);
+				}
+			}
+		};
 	}
 
 	/**
