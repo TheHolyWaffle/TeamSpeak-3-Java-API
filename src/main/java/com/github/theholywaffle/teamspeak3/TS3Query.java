@@ -64,8 +64,8 @@ public class TS3Query {
 	}
 
 	private final ConnectionHandler connectionHandler;
-	private final EventManager eventManager = new EventManager(this);
-	private final ExecutorService userThreadPool = Executors.newCachedThreadPool();
+	private final EventManager eventManager;
+	private final ExecutorService userThreadPool;
 	private final FileTransferHelper fileTransferHelper;
 	private final TS3Api api;
 	private final TS3ApiAsync asyncApi;
@@ -93,6 +93,8 @@ public class TS3Query {
 	 */
 	public TS3Query(TS3Config config) {
 		this.config = config;
+		this.eventManager = new EventManager(this);
+		this.userThreadPool = Executors.newCachedThreadPool();
 		this.fileTransferHelper = new FileTransferHelper(config.getHost());
 		this.connectionHandler = config.getReconnectStrategy().create(config.getConnectionHandler());
 
@@ -100,27 +102,46 @@ public class TS3Query {
 		this.api = new TS3Api(asyncApi);
 	}
 
+	/*
+	 * Copy constructor only used for ReconnectQuery
+	 */
+	private TS3Query(TS3Query query) {
+		this.config = query.config;
+		this.eventManager = query.eventManager;
+		this.userThreadPool = query.userThreadPool;
+		this.fileTransferHelper = query.fileTransferHelper;
+		this.connectionHandler = null;
+
+		this.asyncApi = new TS3ApiAsync(this);
+		this.api = new TS3Api(asyncApi);
+	}
+
 	// PUBLIC
 
-	public synchronized void connect() {
-		if (userThreadPool.isShutdown()) {
-			throw new IllegalStateException("The query has already been shut down");
+	public void connect() {
+		synchronized (this) {
+			if (userThreadPool.isShutdown()) {
+				throw new IllegalStateException("The query has already been shut down");
+			}
 		}
 
-		QueryIO oldIO = io;
-		if (oldIO != null) {
-			oldIO.disconnect();
-		}
-
-		io = new QueryIO(this, config);
-		connected.set(true);
+		QueryIO newIO = new QueryIO(this, config);
 
 		try {
-			connectionHandler.onConnect(this);
+			connectionHandler.onConnect(new ReconnectQuery(this, newIO));
 		} catch (Exception e) {
 			log.error("ConnectionHandler threw exception in connect handler", e);
 		}
-		io.continueFrom(oldIO);
+
+		synchronized (this) {
+			QueryIO oldIO = io;
+			io = newIO;
+			if (oldIO != null) {
+				oldIO.disconnect();
+				newIO.continueFrom(io);
+			}
+			connected.set(true);
+		}
 	}
 
 	/**
@@ -245,6 +266,27 @@ public class TS3Query {
 				shuttingDown.set(true); // Try to prevent extraneous exit commands
 				shutDown();
 			}
+		}
+	}
+
+	private static class ReconnectQuery extends TS3Query {
+
+		private final TS3Query parent;
+
+		private ReconnectQuery(TS3Query query, QueryIO io) {
+			super(query);
+			super.io = io;
+			this.parent = query;
+		}
+
+		@Override
+		public void connect() {
+			throw new UnsupportedOperationException("Can't call connect from onConnect");
+		}
+
+		@Override
+		public void exit() {
+			parent.exit();
 		}
 	}
 }
