@@ -58,6 +58,9 @@ public class SocketWriter extends Thread {
 	@Override
 	public void run() {
 		try {
+			// Initial sleep to prevent flood ban shortly after connecting
+			if (floodRate > 0) Thread.sleep(floodRate);
+
 			while (!isInterrupted()) {
 				final Command c = sendQueue.take();
 				final String msg = c.toString();
