@@ -41,9 +41,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -51,6 +48,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 /**
@@ -824,7 +822,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<CreatedVirtualServer> createServer(String name, Map<VirtualServerProperty, String> options) {
 		final Command cmd = VirtualServerCommands.serverCreate(name, options);
-		return executeAndTransformFirst(cmd, Transformer.CREATED_VIRTUAL_SERVER /* CreatedVirtualServer::new */);
+		return executeAndTransformFirst(cmd, CreatedVirtualServer::new);
 	}
 
 	/**
@@ -1838,7 +1836,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<Ban>> getBans() {
 		final Command cmd = BanCommands.banList();
-		return executeAndTransform(cmd, Transformer.BAN /* Ban::new */);
+		return executeAndTransform(cmd, Ban::new);
 	}
 
 	/**
@@ -1853,7 +1851,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<Binding>> getBindings() {
 		final Command cmd = ServerCommands.bindingList();
-		return executeAndTransform(cmd, Transformer.BINDING /* Binding::new */);
+		return executeAndTransform(cmd, Binding::new);
 	}
 
 	/**
@@ -1957,7 +1955,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<Permission>> getChannelClientPermissions(int channelId, int clientDBId) {
 		final Command cmd = PermissionCommands.channelClientPermList(channelId, clientDBId);
-		return executeAndTransform(cmd, Transformer.PERMISSION /* Permission::new */);
+		return executeAndTransform(cmd, Permission::new);
 	}
 
 	/**
@@ -1983,7 +1981,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<ChannelGroupClient>> getChannelGroupClients(int channelId, int clientDBId, int groupId) {
 		final Command cmd = ChannelGroupCommands.channelGroupClientList(channelId, clientDBId, groupId);
-		return executeAndTransform(cmd, Transformer.CHANNEL_GROUP_CLIENT /* ChannelGroupClient::new */);
+		return executeAndTransform(cmd, ChannelGroupClient::new);
 	}
 
 	/**
@@ -2059,7 +2057,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<Permission>> getChannelGroupPermissions(int groupId) {
 		final Command cmd = PermissionCommands.channelGroupPermList(groupId);
-		return executeAndTransform(cmd, Transformer.PERMISSION /* Permission::new */);
+		return executeAndTransform(cmd, Permission::new);
 	}
 
 	/**
@@ -2074,7 +2072,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<ChannelGroup>> getChannelGroups() {
 		final Command cmd = ChannelGroupCommands.channelGroupList();
-		return executeAndTransform(cmd, Transformer.CHANNEL_GROUP /* ChannelGroup::new */);
+		return executeAndTransform(cmd, ChannelGroup::new);
 	}
 
 	/**
@@ -2122,7 +2120,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<Permission>> getChannelPermissions(int channelId) {
 		final Command cmd = PermissionCommands.channelPermList(channelId);
-		return executeAndTransform(cmd, Transformer.PERMISSION /* Permission::new */);
+		return executeAndTransform(cmd, Permission::new);
 	}
 
 	/**
@@ -2137,7 +2135,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<Channel>> getChannels() {
 		final Command cmd = ChannelCommands.channelList();
-		return executeAndTransform(cmd, Transformer.CHANNEL /* Channel::new */);
+		return executeAndTransform(cmd, Channel::new);
 	}
 
 	/**
@@ -2296,7 +2294,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<Permission>> getClientPermissions(int clientDBId) {
 		final Command cmd = PermissionCommands.clientPermList(clientDBId);
-		return executeAndTransform(cmd, Transformer.PERMISSION /* Permission::new */);
+		return executeAndTransform(cmd, Permission::new);
 	}
 
 	/**
@@ -2311,7 +2309,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<Client>> getClients() {
 		final Command cmd = ClientCommands.clientList();
-		return executeAndTransform(cmd, Transformer.CLIENT /* Client::new */);
+		return executeAndTransform(cmd, Client::new);
 	}
 
 	/**
@@ -2345,7 +2343,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<Complaint>> getComplaints(int clientDBId) {
 		final Command cmd = ComplaintCommands.complainList(clientDBId);
-		return executeAndTransform(cmd, Transformer.COMPLAINT /* Complaint::new */);
+		return executeAndTransform(cmd, Complaint::new);
 	}
 
 	/**
@@ -2361,7 +2359,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<ConnectionInfo> getConnectionInfo() {
 		final Command cmd = VirtualServerCommands.serverRequestConnectionInfo();
-		return executeAndTransformFirst(cmd, Transformer.CONNECTION_INFO /* ConnectionInfo::new */);
+		return executeAndTransformFirst(cmd, ConnectionInfo::new);
 	}
 
 	/**
@@ -2450,7 +2448,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<DatabaseClientInfo> getDatabaseClientInfo(int clientDBId) {
 		final Command cmd = DatabaseClientCommands.clientDBInfo(clientDBId);
-		return executeAndTransformFirst(cmd, Transformer.DATABASE_CLIENT_INFO /* DatabaseClientInfo::new */);
+		return executeAndTransformFirst(cmd, DatabaseClientInfo::new);
 	}
 
 	/**
@@ -2525,7 +2523,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<DatabaseClient>> getDatabaseClients(final int offset, final int count) {
 		final Command cmd = DatabaseClientCommands.clientDBList(offset, count, false);
-		return executeAndTransform(cmd, Transformer.DATABASE_CLIENT /* DatabaseClient::new */);
+		return executeAndTransform(cmd, DatabaseClient::new);
 	}
 
 	/**
@@ -2576,7 +2574,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<FileInfo> getFileInfo(String filePath, int channelId, String channelPassword) {
 		final Command cmd = FileCommands.ftGetFileInfo(channelId, channelPassword, filePath);
-		return executeAndTransformFirst(cmd, Transformer.FILE_INFO /* FileInfo::new */);
+		return executeAndTransformFirst(cmd, FileInfo::new);
 	}
 
 	/**
@@ -2627,7 +2625,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<FileInfo>> getFileInfos(String filePaths[], int channelId, String channelPassword) {
 		final Command cmd = FileCommands.ftGetFileInfo(channelId, channelPassword, filePaths);
-		return executeAndTransform(cmd, Transformer.FILE_INFO /* FileInfo::new */);
+		return executeAndTransform(cmd, FileInfo::new);
 	}
 
 	/**
@@ -2656,7 +2654,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<FileInfo>> getFileInfos(String filePaths[], int[] channelIds, String[] channelPasswords) {
 		final Command cmd = FileCommands.ftGetFileInfo(channelIds, channelPasswords, filePaths);
-		return executeAndTransform(cmd, Transformer.FILE_INFO /* FileInfo::new */);
+		return executeAndTransform(cmd, FileInfo::new);
 	}
 
 	/**
@@ -2699,7 +2697,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<FileListEntry>> getFileList(final String directoryPath, final int channelId, String channelPassword) {
 		final Command cmd = FileCommands.ftGetFileList(directoryPath, channelId, channelPassword);
-		return executeAndTransform(cmd, Transformer.FILE_LIST_ENTRY /* FileListEntry::new */);
+		return executeAndTransform(cmd, FileListEntry::new);
 	}
 
 	/**
@@ -2713,7 +2711,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<FileTransfer>> getFileTransfers() {
 		final Command cmd = FileCommands.ftList();
-		return executeAndTransform(cmd, Transformer.FILE_TRANSFER /* FileTransfer::new */);
+		return executeAndTransform(cmd, FileTransfer::new);
 	}
 
 	/**
@@ -2728,7 +2726,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<HostInfo> getHostInfo() {
 		final Command cmd = ServerCommands.hostInfo();
-		return executeAndTransformFirst(cmd, Transformer.HOST_INFO /* HostInfo::new */);
+		return executeAndTransformFirst(cmd, HostInfo::new);
 	}
 
 	/**
@@ -2766,7 +2764,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<InstanceInfo> getInstanceInfo() {
 		final Command cmd = ServerCommands.instanceInfo();
-		return executeAndTransformFirst(cmd, Transformer.INSTANCE_INFO /* InstanceInfo::new */);
+		return executeAndTransformFirst(cmd, InstanceInfo::new);
 	}
 
 	/**
@@ -2850,7 +2848,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<Message>> getOfflineMessages() {
 		final Command cmd = MessageCommands.messageList();
-		return executeAndTransform(cmd, Transformer.MESSAGE /* Message::new */);
+		return executeAndTransform(cmd, Message::new);
 	}
 
 	/**
@@ -2872,7 +2870,7 @@ public class TS3ApiAsync {
 		final Command cmd = PermissionCommands.permFind(permName);
 		final CommandFuture<List<PermissionAssignment>> future = new CommandFuture<>();
 
-		executeAndTransform(cmd, Transformer.PERMISSION_ASSIGNMENT /* PermissionAssignment::new */)
+		executeAndTransform(cmd, PermissionAssignment::new)
 				.forwardSuccess(future)
 				.onFailure(transformError(future, 2562, Collections.<PermissionAssignment>emptyList()));
 
@@ -2958,7 +2956,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<PermissionAssignment>> getPermissionOverview(int channelId, int clientDBId) {
 		final Command cmd = PermissionCommands.permOverview(channelId, clientDBId);
-		return executeAndTransform(cmd, Transformer.PERMISSION_ASSIGNMENT /* PermissionAssignment::new */);
+		return executeAndTransform(cmd, PermissionAssignment::new);
 	}
 
 	/**
@@ -2972,7 +2970,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<PermissionInfo>> getPermissions() {
 		final Command cmd = PermissionCommands.permissionList();
-		return executeAndTransform(cmd, Transformer.PERMISSION_INFO /* PermissionInfo::new */);
+		return executeAndTransform(cmd, PermissionInfo::new);
 	}
 
 	/**
@@ -3041,7 +3039,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<PrivilegeKey>> getPrivilegeKeys() {
 		final Command cmd = PrivilegeKeyCommands.privilegeKeyList();
-		return executeAndTransform(cmd, Transformer.PRIVILEGE_KEY /* PrivilegeKey::new */);
+		return executeAndTransform(cmd, PrivilegeKey::new);
 	}
 
 	/**
@@ -3058,7 +3056,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<ServerGroupClient>> getServerGroupClients(int serverGroupId) {
 		final Command cmd = ServerGroupCommands.serverGroupClientList(serverGroupId);
-		return executeAndTransform(cmd, Transformer.SERVER_GROUP_CLIENT /* ServerGroupClient::new */);
+		return executeAndTransform(cmd, ServerGroupClient::new);
 	}
 
 	/**
@@ -3093,7 +3091,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<Permission>> getServerGroupPermissions(int serverGroupId) {
 		final Command cmd = PermissionCommands.serverGroupPermList(serverGroupId);
-		return executeAndTransform(cmd, Transformer.PERMISSION /* Permission::new */);
+		return executeAndTransform(cmd, Permission::new);
 	}
 
 	/**
@@ -3127,7 +3125,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<ServerGroup>> getServerGroups() {
 		final Command cmd = ServerGroupCommands.serverGroupList();
-		return executeAndTransform(cmd, Transformer.SERVER_GROUP /* ServerGroup::new */);
+		return executeAndTransform(cmd, ServerGroup::new);
 	}
 
 	/**
@@ -3221,7 +3219,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<VirtualServerInfo> getServerInfo() {
 		final Command cmd = VirtualServerCommands.serverInfo();
-		return executeAndTransformFirst(cmd, Transformer.VIRTUAL_SERVER_INFO /* VirtualServerInfo::new */);
+		return executeAndTransformFirst(cmd, VirtualServerInfo::new);
 	}
 
 	/**
@@ -3235,7 +3233,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<Version> getVersion() {
 		final Command cmd = ServerCommands.version();
-		return executeAndTransformFirst(cmd, Transformer.VERSION /* Version::new */);
+		return executeAndTransformFirst(cmd, Version::new);
 	}
 
 	/**
@@ -3249,7 +3247,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<List<VirtualServer>> getVirtualServers() {
 		final Command cmd = VirtualServerCommands.serverList();
-		return executeAndTransform(cmd, Transformer.VIRTUAL_SERVER /* VirtualServer::new */);
+		return executeAndTransform(cmd, VirtualServer::new);
 	}
 
 	/**
@@ -5188,7 +5186,7 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<ServerQueryInfo> whoAmI() {
 		final Command cmd = QueryCommands.whoAmI();
-		return executeAndTransformFirst(cmd, Transformer.SERVER_QUERY_INFO /* ServerQueryInfo::new */);
+		return executeAndTransformFirst(cmd, ServerQueryInfo::new);
 	}
 
 	/**
@@ -5340,20 +5338,20 @@ public class TS3ApiAsync {
 	 *
 	 * @param command
 	 * 		the command to execute
-	 * @param transformer
+	 * @param constructor
 	 * 		the function that creates a new wrapper of type {@code T}
 	 * @param <T>
 	 * 		the wrapper class the map should be wrapped with
 	 *
 	 * @return a wrapped version of the first response map
 	 */
-	private <T extends Wrapper> CommandFuture<T> executeAndTransformFirst(final Command command, final Transformer<T> transformer) {
+	private <T extends Wrapper> CommandFuture<T> executeAndTransformFirst(final Command command, final Function<Map<String, String>, T> constructor) {
 		final CommandFuture<T> future = new CommandFuture<>();
 		command.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
 			@Override
 			public void handleSuccess(DefaultArrayResponse result) {
 				Wrapper firstResponse = result.getFirstResponse();
-				T transformed = transformer.apply(firstResponse.getMap());
+				T transformed = constructor.apply(firstResponse.getMap());
 				future.set(transformed);
 			}
 		}).forwardFailure(future);
@@ -5368,14 +5366,14 @@ public class TS3ApiAsync {
 	 *
 	 * @param command
 	 * 		the command to execute
-	 * @param transformer
+	 * @param constructor
 	 * 		the function that creates the new wrappers of type {@code T}
 	 * @param <T>
 	 * 		the wrapper class the maps should be wrapped with
 	 *
 	 * @return a list of wrapped response maps
 	 */
-	private <T extends Wrapper> CommandFuture<List<T>> executeAndTransform(final Command command, final Transformer<T> transformer) {
+	private <T extends Wrapper> CommandFuture<List<T>> executeAndTransform(final Command command, final Function<Map<String, String>, T> constructor) {
 		final CommandFuture<List<T>> future = new CommandFuture<>();
 
 		command.getFuture().onSuccess(new CommandFuture.SuccessListener<DefaultArrayResponse>() {
@@ -5384,7 +5382,7 @@ public class TS3ApiAsync {
 				List<Wrapper> response = result.getResponses();
 				List<T> transformed = new ArrayList<>(response.size());
 				for (Wrapper wrapper : response) {
-					transformed.add(transformer.apply(wrapper.getMap()));
+					transformed.add(constructor.apply(wrapper.getMap()));
 				}
 
 				future.set(transformed);
@@ -5393,85 +5391,5 @@ public class TS3ApiAsync {
 
 		query.doCommandAsync(command);
 		return future;
-	}
-
-	/**
-	 * This interface directly corresponds to {@code java.util.function.Function<Map<String, String>, T>}
-	 * and only exists because we're still using Java 7 instead of Java 8.
-	 * <p>
-	 * All uses of this interface can be replaced by a method reference to the constructor of the wrapper class
-	 * if and when we switch to using Java 8.
-	 * </p>
-	 *
-	 * @param <T>
-	 * 		the type of the wrapper class to transform maps to
-	 */
-	private interface Transformer<T extends Wrapper> /* extends Function<Map<String, String>, T> */ {
-
-		Transformer<Ban> BAN = new ReflectiveTransformer<>(Ban.class);
-		Transformer<Binding> BINDING = new ReflectiveTransformer<>(Binding.class);
-		Transformer<Channel> CHANNEL = new ReflectiveTransformer<>(Channel.class);
-		Transformer<ChannelGroup> CHANNEL_GROUP = new ReflectiveTransformer<>(ChannelGroup.class);
-		Transformer<ChannelGroupClient> CHANNEL_GROUP_CLIENT = new ReflectiveTransformer<>(ChannelGroupClient.class);
-		Transformer<Client> CLIENT = new ReflectiveTransformer<>(Client.class);
-		Transformer<Complaint> COMPLAINT = new ReflectiveTransformer<>(Complaint.class);
-		Transformer<ConnectionInfo> CONNECTION_INFO = new ReflectiveTransformer<>(ConnectionInfo.class);
-		Transformer<CreatedVirtualServer> CREATED_VIRTUAL_SERVER = new ReflectiveTransformer<>(CreatedVirtualServer.class);
-		Transformer<DatabaseClient> DATABASE_CLIENT = new ReflectiveTransformer<>(DatabaseClient.class);
-		Transformer<DatabaseClientInfo> DATABASE_CLIENT_INFO = new ReflectiveTransformer<>(DatabaseClientInfo.class);
-		Transformer<FileInfo> FILE_INFO = new ReflectiveTransformer<>(FileInfo.class);
-		Transformer<FileListEntry> FILE_LIST_ENTRY = new ReflectiveTransformer<>(FileListEntry.class);
-		Transformer<FileTransfer> FILE_TRANSFER = new ReflectiveTransformer<>(FileTransfer.class);
-		Transformer<HostInfo> HOST_INFO = new ReflectiveTransformer<>(HostInfo.class);
-		Transformer<InstanceInfo> INSTANCE_INFO = new ReflectiveTransformer<>(InstanceInfo.class);
-		Transformer<Message> MESSAGE = new ReflectiveTransformer<>(Message.class);
-		Transformer<Permission> PERMISSION = new ReflectiveTransformer<>(Permission.class);
-		Transformer<PermissionAssignment> PERMISSION_ASSIGNMENT = new ReflectiveTransformer<>(PermissionAssignment.class);
-		Transformer<PermissionInfo> PERMISSION_INFO = new ReflectiveTransformer<>(PermissionInfo.class);
-		Transformer<PrivilegeKey> PRIVILEGE_KEY = new ReflectiveTransformer<>(PrivilegeKey.class);
-		Transformer<ServerGroup> SERVER_GROUP = new ReflectiveTransformer<>(ServerGroup.class);
-		Transformer<ServerGroupClient> SERVER_GROUP_CLIENT = new ReflectiveTransformer<>(ServerGroupClient.class);
-		Transformer<ServerQueryInfo> SERVER_QUERY_INFO = new ReflectiveTransformer<>(ServerQueryInfo.class);
-		Transformer<Version> VERSION = new ReflectiveTransformer<>(Version.class);
-		Transformer<VirtualServer> VIRTUAL_SERVER = new ReflectiveTransformer<>(VirtualServer.class);
-		Transformer<VirtualServerInfo> VIRTUAL_SERVER_INFO = new ReflectiveTransformer<>(VirtualServerInfo.class);
-
-		T apply(Map<String, String> map);
-	}
-
-	/**
-	 * This implementation of Transformer uses MethodHandles because creating an anonymous class
-	 * for each of the about 30 instances of Transformer would significantly increase the class loading time
-	 * and would also necessitate around 150 more lines of boilerplate code.
-	 *
-	 * @param <T>
-	 * 		the type of the wrapper class to transform maps to
-	 */
-	private static class ReflectiveTransformer<T extends Wrapper> implements Transformer<T> {
-
-		private final Class<T> wrapperClass;
-		private final MethodHandle constructor;
-
-		public ReflectiveTransformer(Class<T> wrapperClass) {
-			this.wrapperClass = wrapperClass;
-
-			try {
-				MethodType type = MethodType.methodType(void.class, Map.class);
-				constructor = MethodHandles.publicLookup()
-						.in(wrapperClass)
-						.findConstructor(wrapperClass, type);
-			} catch (NoSuchMethodException | IllegalAccessException e) {
-				throw new Error("Missing public constructor of wrapper class " + wrapperClass.getSimpleName(), e);
-			}
-		}
-
-		@Override
-		public T apply(Map<String, String> map) {
-			try {
-				return wrapperClass.cast(constructor.invoke(map));
-			} catch (Throwable t) {
-				throw new Error("Method handle error", t);
-			}
-		}
 	}
 }
