@@ -5132,7 +5132,7 @@ public class TS3ApiAsync {
 			public void handleSuccess(Void ignored) {
 				future.set(iconId);
 			}
-		}).forwardFailure(future);
+		}).onFailure(transformError(future, 2050, iconId));
 
 		return future;
 	}
