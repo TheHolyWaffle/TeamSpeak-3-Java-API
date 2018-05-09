@@ -627,12 +627,7 @@ public class CommandFuture<V> implements Future<V> {
 	 * @return this object for chaining
 	 */
 	public CommandFuture<V> forwardSuccess(final CommandFuture<? super V> otherFuture) {
-		return onSuccess(new SuccessListener<V>() {
-			@Override
-			public void handleSuccess(V result) {
-				otherFuture.set(result);
-			}
-		});
+		return onSuccess(otherFuture::set);
 	}
 
 	/**
@@ -649,12 +644,7 @@ public class CommandFuture<V> implements Future<V> {
 	 * @return this object for chaining
 	 */
 	public CommandFuture<V> forwardFailure(final CommandFuture<?> otherFuture) {
-		return onFailure(new FailureListener() {
-			@Override
-			public void handleFailure(TS3Exception exception) {
-				otherFuture.fail(exception);
-			}
-		});
+		return onFailure(otherFuture::fail);
 	}
 
 	/**
@@ -728,14 +718,11 @@ public class CommandFuture<V> implements Future<V> {
 			final int index = i;
 			final CommandFuture<F> future = iterator.next();
 
-			future.forwardFailure(combined).onSuccess(new SuccessListener<F>() {
-				@Override
-				public void handleSuccess(F result) {
-					results[index] = result;
+			future.forwardFailure(combined).onSuccess(result -> {
+				results[index] = result;
 
-					if (successCounter.decrementAndGet() == 0) {
-						combined.set(Arrays.asList(results));
-					}
+				if (successCounter.decrementAndGet() == 0) {
+					combined.set(Arrays.asList(results));
 				}
 			});
 		}
@@ -777,12 +764,9 @@ public class CommandFuture<V> implements Future<V> {
 		final AtomicInteger failureCounter = new AtomicInteger(futures.size());
 
 		for (CommandFuture<F> future : futures) {
-			future.forwardSuccess(any).onFailure(new FailureListener() {
-				@Override
-				public void handleFailure(TS3Exception exception) {
-					if (failureCounter.decrementAndGet() == 0) {
-						any.fail(exception);
-					}
+			future.forwardSuccess(any).onFailure(exception -> {
+				if (failureCounter.decrementAndGet() == 0) {
+					any.fail(exception);
 				}
 			});
 		}
@@ -802,6 +786,7 @@ public class CommandFuture<V> implements Future<V> {
 	 * @param <V>
 	 * 		the type of the value
 	 */
+	@FunctionalInterface
 	public interface SuccessListener<V> {
 
 		/**
@@ -822,6 +807,7 @@ public class CommandFuture<V> implements Future<V> {
 	 * {@link #onFailure(FailureListener)}.
 	 * </p>
 	 */
+	@FunctionalInterface
 	public interface FailureListener {
 
 		/**
