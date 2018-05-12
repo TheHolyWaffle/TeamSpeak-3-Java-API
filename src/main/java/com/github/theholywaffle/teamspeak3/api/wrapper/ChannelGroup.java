@@ -40,14 +40,6 @@ public class ChannelGroup extends Wrapper {
 		return getInt("cgid");
 	}
 
-	/**
-	 * @deprecated Use {@link #getId()} instead.
-	 */
-	@Deprecated
-	public int getGroupId() {
-		return getId();
-	}
-
 	public String getName() {
 		return get("name");
 	}
