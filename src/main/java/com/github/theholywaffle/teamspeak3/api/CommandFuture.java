@@ -40,6 +40,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 /**
  * Represents the result of an asynchronous execution of a query command.
@@ -661,6 +662,74 @@ public class CommandFuture<V> implements Future<V> {
 	 */
 	public void forwardResult(final CommandFuture<V> otherFuture) {
 		forwardSuccess(otherFuture).forwardFailure(otherFuture);
+	}
+
+	/**
+	 * Creates a new {@code CommandFuture} that succeeds with {@code fn(result)}
+	 * if the original future succeeded with a value {@code result}, and fails
+	 * if the original future failed or if the mapping function {@code fn} threw
+	 * an exception.
+	 *
+	 * @param fn
+	 * 		a function that maps the result value of type {@code V} to a value of type {@code F}
+	 * @param <F>
+	 * 		the result type of {@code fn}
+	 *
+	 * @return a new {@code CommandFuture} that will hold the return value of {@code fn}
+	 */
+	public <F> CommandFuture<F> map(Function<? super V, ? extends F> fn) {
+		CommandFuture<F> target = new CommandFuture<>();
+		onSuccess(result -> {
+			F output;
+			try {
+				output = fn.apply(result);
+			} catch (Exception ex) {
+				target.fail(new TS3Exception("CommandFuture 'map' function threw an exception", ex));
+				return;
+			}
+			target.set(output);
+		}).forwardFailure(target);
+		return target;
+	}
+
+	/**
+	 * Creates a new {@code CommandFuture} that succeeds with the result value of
+	 * the {@code CommandFuture} returned by {@code fn} if both the original future
+	 * and the future returned by {@code fn} succeed.
+	 * <p>
+	 * The created {@code CommandFuture} fails if the original future failed,
+	 * the future returned by {@code fn} fails, or if {@code fn} throws an exception.
+	 * </p><p>
+	 * If {@code fn} returns {@code null}, the created {@code CommandFuture}
+	 * will immediately succeed with a value of {@code null}. To create this effect
+	 * with non-null values, return an {@link #immediate(Object)} future instead.
+	 * </p>
+	 *
+	 * @param fn
+	 * 		a function that maps the result value of type {@code V} to a {@code CommandFuture<F>}
+	 * @param <F>
+	 * 		the result type of the future returned by {@code fn}
+	 *
+	 * @return a new {@code CommandFuture} that will hold the result of the future returned by {@code fn}
+	 */
+	public <F> CommandFuture<F> then(Function<? super V, CommandFuture<F>> fn) {
+		CommandFuture<F> target = new CommandFuture<>();
+		onSuccess(result -> {
+			CommandFuture<F> nextFuture;
+			try {
+				nextFuture = fn.apply(result);
+			} catch (Exception ex) {
+				target.fail(new TS3Exception("CommandFuture 'then' function threw an exception", ex));
+				return;
+			}
+
+			if (nextFuture == null) {
+				target.set(null); // Propagate null shortcut
+			} else {
+				nextFuture.forwardResult(target);
+			}
+		}).forwardFailure(target);
+		return target;
 	}
 
 	/**
