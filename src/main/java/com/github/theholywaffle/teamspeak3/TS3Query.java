@@ -227,14 +227,11 @@ public class TS3Query {
 	}
 
 	void submitUserTask(final String name, final Runnable task) {
-		userThreadPool.submit(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					task.run();
-				} catch (Throwable throwable) {
-					log.error(name + " threw an exception", throwable);
-				}
+		userThreadPool.submit(() -> {
+			try {
+				task.run();
+			} catch (Throwable throwable) {
+				log.error(name + " threw an exception", throwable);
 			}
 		});
 	}
@@ -250,21 +247,18 @@ public class TS3Query {
 	void fireDisconnect() {
 		connected.set(false);
 
-		submitUserTask("ConnectionHandler disconnect task", new Runnable() {
-			@Override
-			public void run() {
-				handleDisconnect();
-			}
-		});
+		submitUserTask("ConnectionHandler disconnect task", this::handleDisconnect);
 	}
 
-	private synchronized void handleDisconnect() {
+	private void handleDisconnect() {
 		try {
 			connectionHandler.onDisconnect(this);
 		} finally {
-			if (!connected.get()) {
-				shuttingDown.set(true); // Try to prevent extraneous exit commands
-				shutDown();
+			synchronized (this) {
+				if (!connected.get()) {
+					shuttingDown.set(true); // Try to prevent extraneous exit commands
+					shutDown();
+				}
 			}
 		}
 	}
@@ -281,12 +275,21 @@ public class TS3Query {
 
 		@Override
 		public void connect() {
-			throw new UnsupportedOperationException("Can't call connect from onConnect");
+			throw new UnsupportedOperationException("Can't call connect from onConnect handler");
 		}
 
 		@Override
 		public void exit() {
 			parent.exit();
+		}
+
+		@Override
+		synchronized void fireDisconnect() {
+			// If a reconnect query fails, we do not want this to affect the parent query.
+			// Instead, simply fail all remaining onConnect commands.
+			QueryIO io = super.io;
+			io.disconnect();
+			io.failRemainingCommands();
 		}
 	}
 }
