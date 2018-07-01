@@ -138,7 +138,7 @@ public class TS3Query {
 			io = newIO;
 			if (oldIO != null) {
 				oldIO.disconnect();
-				newIO.continueFrom(io);
+				newIO.continueFrom(oldIO);
 			}
 			connected.set(true);
 		}

@@ -39,6 +39,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.SocketTimeoutException;
+import java.util.Collection;
 import java.util.Queue;
 
 public class SocketReader extends Thread {
@@ -197,5 +198,11 @@ public class SocketReader extends Thread {
 
 		lastEvent = eventMessage;
 		return false;
+	}
+
+	void drainCommandsTo(Collection<Command> commands) {
+		for (ResponseBuilder responseBuilder : receiveQueue) {
+			commands.add(responseBuilder.getCommand());
+		}
 	}
 }

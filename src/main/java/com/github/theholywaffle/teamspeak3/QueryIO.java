@@ -93,10 +93,8 @@ public class QueryIO {
 		if (io.sendQueue.isEmpty() && io.receiveQueue.isEmpty()) return;
 
 		// Resend commands which remained unanswered first
-		for (ResponseBuilder responseBuilder : io.receiveQueue) {
-			sendQueue.add(responseBuilder.getCommand());
-		}
-		sendQueue.addAll(io.sendQueue);
+		io.socketReader.drainCommandsTo(sendQueue);
+		io.socketWriter.drainCommandsTo(sendQueue);
 
 		io.receiveQueue.clear();
 		io.sendQueue.clear();

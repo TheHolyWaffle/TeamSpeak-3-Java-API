@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Collection;
 import java.util.concurrent.BlockingQueue;
 
 public class SocketWriter extends Thread {
@@ -44,7 +45,10 @@ public class SocketWriter extends Thread {
 	private final int floodRate;
 	private final boolean logComms;
 	private final PrintStream out;
-	private volatile long lastCommand = System.currentTimeMillis();
+
+	private volatile long lastCommandTime = System.currentTimeMillis();
+
+	private Command interruptedCommand = null;
 
 	public SocketWriter(QueryIO io, TS3Config config) throws IOException {
 		super("[TeamSpeak-3-Java-API] SocketWriter");
@@ -65,14 +69,23 @@ public class SocketWriter extends Thread {
 				final Command c = sendQueue.take();
 				final String msg = c.toString();
 
-				receiveQueue.put(new ResponseBuilder(c));
+				try {
+					receiveQueue.put(new ResponseBuilder(c));
+				} catch (InterruptedException e) {
+					// Properly handle commands removed from the sendQueue
+					// but not inserted into the receiveQueue
+					interruptedCommand = c;
+					interrupt();
+					break;
+				}
+
 				if (logComms) log.debug("[{}] > {}", c.getName(), msg);
 				out.println(msg);
 
-				lastCommand = System.currentTimeMillis();
+				lastCommandTime = System.currentTimeMillis();
 				if (floodRate > 0) Thread.sleep(floodRate);
 			}
-		} catch (final InterruptedException e) {
+		} catch (InterruptedException e) {
 			// Regular shutdown
 			interrupt();
 		}
@@ -85,6 +98,13 @@ public class SocketWriter extends Thread {
 	}
 
 	long getIdleTime() {
-		return System.currentTimeMillis() - lastCommand;
+		return System.currentTimeMillis() - lastCommandTime;
+	}
+
+	void drainCommandsTo(Collection<Command> commands) {
+		if (interruptedCommand != null) {
+			commands.add(interruptedCommand);
+		}
+		sendQueue.drainTo(commands);
 	}
 }
