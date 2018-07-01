@@ -129,8 +129,8 @@ public class ReconnectExample {
 		// If you've modified the code of this example to run it on a local server, you
 		// should try stopping and then restarting your TS3 server when this code executes
 
-		final Collection<Integer> createdChannelIds = new ArrayList<>("Hello World".length());
-		final Map<ChannelProperty, String> channelOptions = Collections.singletonMap(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1");
+		Collection<Integer> createdChannelIds = Collections.synchronizedList(new ArrayList<>("Hello World".length()));
+		Map<ChannelProperty, String> channelOptions = Collections.singletonMap(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1");
 
 		// Queue up a lot of commands
 		int counter = 1;
@@ -141,12 +141,7 @@ public class ReconnectExample {
 			// Create a permanent channel with that name
 			CommandFuture<Integer> create = api.createChannel(name, channelOptions);
 			// and store its ID (once it's created) in a list so we can delete it later
-			create.onSuccess(new CommandFuture.SuccessListener<Integer>() {
-				@Override
-				public void handleSuccess(Integer result) {
-					createdChannelIds.add(result);
-				}
-			});
+			create.onSuccess(channelId -> createdChannelIds.add(channelId));
 
 			// Artificial delay
 			api.whoAmI();
@@ -166,7 +161,8 @@ public class ReconnectExample {
 		} catch (InterruptedException ignored) {
 			// No need to handle an interrupt
 		}
-		for (Integer channelId : createdChannelIds) {
+
+		for (int channelId : createdChannelIds) {
 			api.deleteChannel(channelId, true);
 		}
 
