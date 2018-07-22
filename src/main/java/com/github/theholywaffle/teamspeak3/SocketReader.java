@@ -163,21 +163,12 @@ public class SocketReader extends Thread {
 		if (queryError.isSuccessful()) {
 			final DefaultArrayResponse response = responseBuilder.buildResponse();
 
-			ts3.submitUserTask("Future SuccessListener (" + command.getName() + ")", new Runnable() {
-				@Override
-				public void run() {
-					future.set(response);
-				}
-			});
+			ts3.submitUserTask("Future SuccessListener (" + command.getName() + ")", () -> future.set(response));
 		} else {
 			log.debug("TS3 command error: {}", queryError);
 
-			ts3.submitUserTask("Future FailureListener (" + command.getName() + ")", new Runnable() {
-				@Override
-				public void run() {
-					future.fail(new TS3CommandFailedException(queryError));
-				}
-			});
+			ts3.submitUserTask("Future FailureListener (" + command.getName() + ")",
+					() -> future.fail(new TS3CommandFailedException(queryError)));
 		}
 	}
 
