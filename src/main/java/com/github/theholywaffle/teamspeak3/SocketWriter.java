@@ -69,6 +69,8 @@ public class SocketWriter extends Thread {
 				final Command c = sendQueue.take();
 				final String msg = c.toString();
 
+				lastCommandTime = System.currentTimeMillis();
+
 				try {
 					receiveQueue.put(new ResponseBuilder(c));
 				} catch (InterruptedException e) {
@@ -82,7 +84,6 @@ public class SocketWriter extends Thread {
 				if (logComms) log.debug("[{}] > {}", c.getName(), msg);
 				out.println(msg);
 
-				lastCommandTime = System.currentTimeMillis();
 				if (floodRate > 0) Thread.sleep(floodRate);
 			}
 		} catch (InterruptedException e) {
