@@ -90,7 +90,6 @@ public class QueryIO {
 
 	public void continueFrom(QueryIO io) {
 		if (io == null) return;
-		if (io.sendQueue.isEmpty() && io.receiveQueue.isEmpty()) return;
 
 		// Resend commands which remained unanswered first
 		io.socketReader.drainCommandsTo(sendQueue);
