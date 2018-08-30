@@ -35,6 +35,8 @@ import com.github.theholywaffle.teamspeak3.commands.response.ResponseBuilder;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -120,11 +122,12 @@ public class QueryIO {
 	}
 
 	void failRemainingCommands() {
-		for (ResponseBuilder toReceive : receiveQueue) {
-			toReceive.getCommand().getFuture().fail(new TS3QueryShutDownException());
-		}
-		for (Command toSend : sendQueue) {
-			toSend.getFuture().fail(new TS3QueryShutDownException());
+		Collection<Command> commands = new ArrayList<>(receiveQueue.size() + sendQueue.size() + 1);
+		socketReader.drainCommandsTo(commands);
+		socketWriter.drainCommandsTo(commands);
+
+		for (Command command : commands) {
+			command.getFuture().fail(new TS3QueryShutDownException());
 		}
 	}
 
