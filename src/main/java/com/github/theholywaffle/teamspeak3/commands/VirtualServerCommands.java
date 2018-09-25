@@ -93,7 +93,10 @@ public final class VirtualServerCommands {
 		return new CommandBuilder("serverstart", 1).add(new KeyValueParam("sid", id)).build();
 	}
 
-	public static Command serverStop(int id) {
-		return new CommandBuilder("serverstop", 1).add(new KeyValueParam("sid", id)).build();
+	public static Command serverStop(int id, String reason) {
+		CommandBuilder builder = new CommandBuilder("serverstop", 2);
+		builder.add(new KeyValueParam("sid", id));
+		builder.addIf(reason != null, new KeyValueParam("reasonmsg", reason));
+		return builder.build();
 	}
 }

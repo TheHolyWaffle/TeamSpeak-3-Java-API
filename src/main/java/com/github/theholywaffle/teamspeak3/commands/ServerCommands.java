@@ -70,8 +70,10 @@ public final class ServerCommands {
 		return builder.build();
 	}
 
-	public static Command serverProcessStop() {
-		return new CommandBuilder("serverprocessstop").build();
+	public static Command serverProcessStop(String reason) {
+		CommandBuilder builder = new CommandBuilder("serverprocessstop", 1);
+		builder.addIf(reason != null, new KeyValueParam("reasonmsg", reason));
+		return builder.build();
 	}
 
 	public static Command version() {

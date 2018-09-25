@@ -4708,7 +4708,25 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 */
 	public CommandFuture<Void> stopServer(int serverId) {
-		Command cmd = VirtualServerCommands.serverStop(serverId);
+		return stopServer(serverId, null);
+	}
+
+	/**
+	 * Stops the virtual server with the specified ID.
+	 *
+	 * @param serverId
+	 * 		the ID of the virtual server
+	 * @param reason
+	 * 		the reason message to display to clients when they are disconnected
+	 *
+	 * @return a future to track the progress of this command
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 */
+	public CommandFuture<Void> stopServer(int serverId, String reason) {
+		Command cmd = VirtualServerCommands.serverStop(serverId, reason);
 		return executeAndReturnError(cmd);
 	}
 
@@ -4725,7 +4743,25 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 */
 	public CommandFuture<Void> stopServer(VirtualServer virtualServer) {
-		return stopServer(virtualServer.getId());
+		return stopServer(virtualServer.getId(), null);
+	}
+
+	/**
+	 * Stops the specified virtual server.
+	 *
+	 * @param virtualServer
+	 * 		the virtual server to stop
+	 * @param reason
+	 * 		the reason message to display to clients when they are disconnected
+	 *
+	 * @return a future to track the progress of this command
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 */
+	public CommandFuture<Void> stopServer(VirtualServer virtualServer, String reason) {
+		return stopServer(virtualServer.getId(), reason);
 	}
 
 	/**
@@ -4741,7 +4777,26 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 */
 	public CommandFuture<Void> stopServerProcess() {
-		Command cmd = ServerCommands.serverProcessStop();
+		return stopServerProcess(null);
+	}
+
+	/**
+	 * Stops the entire TeamSpeak 3 Server instance by shutting down the process.
+	 * <p>
+	 * To have permission to use this command, you need to use the server query admin login.
+	 * </p>
+	 *
+	 * @param reason
+	 * 		the reason message to display to clients when they are disconnected
+	 *
+	 * @return a future to track the progress of this command
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 */
+	public CommandFuture<Void> stopServerProcess(String reason) {
+		Command cmd = ServerCommands.serverProcessStop(reason);
 		return executeAndReturnError(cmd);
 	}
 

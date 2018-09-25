@@ -4085,6 +4085,22 @@ public class TS3Api {
 	}
 
 	/**
+	 * Stops the virtual server with the specified ID.
+	 *
+	 * @param serverId
+	 * 		the ID of the virtual server
+	 * @param reason
+	 * 		the reason message to display to clients when they are disconnected
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 */
+	public void stopServer(int serverId, String reason) {
+		asyncApi.stopServer(serverId, reason).getUninterruptibly();
+	}
+
+	/**
 	 * Stops the specified virtual server.
 	 *
 	 * @param virtualServer
@@ -4099,6 +4115,22 @@ public class TS3Api {
 	}
 
 	/**
+	 * Stops the specified virtual server.
+	 *
+	 * @param virtualServer
+	 * 		the virtual server to stop
+	 * @param reason
+	 * 		the reason message to display to clients when they are disconnected
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 */
+	public void stopServer(VirtualServer virtualServer, String reason) {
+		asyncApi.stopServer(virtualServer, reason).getUninterruptibly();
+	}
+
+	/**
 	 * Stops the entire TeamSpeak 3 Server instance by shutting down the process.
 	 * <p>
 	 * To have permission to use this command, you need to use the server query admin login.
@@ -4110,6 +4142,23 @@ public class TS3Api {
 	 */
 	public void stopServerProcess() {
 		asyncApi.stopServerProcess().getUninterruptibly();
+	}
+
+	/**
+	 * Stops the entire TeamSpeak 3 Server instance by shutting down the process.
+	 * <p>
+	 * To have permission to use this command, you need to use the server query admin login.
+	 * </p>
+	 *
+	 * @param reason
+	 * 		the reason message to display to clients when they are disconnected
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 */
+	public void stopServerProcess(String reason) {
+		asyncApi.stopServerProcess(reason).getUninterruptibly();
 	}
 
 	/**
