@@ -34,13 +34,14 @@ public class TS3CommandFailedException extends TS3Exception {
 
 	private final QueryError queryError;
 
-	public TS3CommandFailedException(QueryError error) {
-		super(buildMessage(error));
+	public TS3CommandFailedException(QueryError error, String commandName) {
+		super(buildMessage(error, commandName));
 		queryError = error;
 	}
 
-	private static String buildMessage(QueryError error) {
-		final StringBuilder msg = new StringBuilder("A command returned with a server error.\n");
+	private static String buildMessage(QueryError error, String cmdName) {
+		final StringBuilder msg = new StringBuilder();
+		msg.append("A \"").append(cmdName).append("\" command returned with a server error.\n");
 		msg.append(">> ").append(error.getMessage()).append(" (ID ").append(error.getId()).append(')');
 
 		final String extra = error.getExtraMessage();

@@ -1489,7 +1489,7 @@ public class TS3ApiAsync {
 		executeAndTransformFirst(cmd, FileTransferParameters::new).onSuccess(params -> {
 			QueryError error = params.getQueryError();
 			if (!error.isSuccessful()) {
-				future.fail(new TS3CommandFailedException(error));
+				future.fail(new TS3CommandFailedException(error, cmd.getName()));
 				return;
 			}
 
@@ -1570,7 +1570,7 @@ public class TS3ApiAsync {
 		executeAndTransformFirst(cmd, FileTransferParameters::new).onSuccess(params -> {
 			QueryError error = params.getQueryError();
 			if (!error.isSuccessful()) {
-				future.fail(new TS3CommandFailedException(error));
+				future.fail(new TS3CommandFailedException(error, cmd.getName()));
 				return;
 			}
 
@@ -4905,7 +4905,7 @@ public class TS3ApiAsync {
 		executeAndTransformFirst(cmd, FileTransferParameters::new).onSuccess(params -> {
 			QueryError error = params.getQueryError();
 			if (!error.isSuccessful()) {
-				future.fail(new TS3CommandFailedException(error));
+				future.fail(new TS3CommandFailedException(error, cmd.getName()));
 				return;
 			}
 

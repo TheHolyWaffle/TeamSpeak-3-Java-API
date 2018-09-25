@@ -168,7 +168,7 @@ public class SocketReader extends Thread {
 			log.debug("TS3 command error: {}", queryError);
 
 			ts3.submitUserTask("Future FailureListener (" + command.getName() + ")",
-					() -> future.fail(new TS3CommandFailedException(queryError)));
+					() -> future.fail(new TS3CommandFailedException(queryError, command.getName())));
 		}
 	}
 
