@@ -40,13 +40,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -1070,6 +1064,28 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<Void> deleteComplaint(int targetClientDBId, int fromClientDBId) {
 		Command cmd = ComplaintCommands.complainDel(targetClientDBId, fromClientDBId);
+		return executeAndReturnError(cmd);
+	}
+
+	/**
+	 * Removes the {@code key} custom client property from a client.
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the target client
+	 * @param key
+	 * 		the key of the custom property to delete, cannot be {@code null}
+	 *
+	 * @return a future to track the progress of this command
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Client#getDatabaseId()
+	 */
+	public CommandFuture<Void> deleteCustomClientProperty(int clientDBId, String key) {
+		if (key == null) throw new IllegalArgumentException("Key cannot be null");
+
+		Command cmd = CustomPropertyCommands.customDelete(clientDBId, key);
 		return executeAndReturnError(cmd);
 	}
 
@@ -2249,6 +2265,39 @@ public class TS3ApiAsync {
 	public CommandFuture<ConnectionInfo> getConnectionInfo() {
 		Command cmd = VirtualServerCommands.serverRequestConnectionInfo();
 		return executeAndTransformFirst(cmd, ConnectionInfo::new);
+	}
+
+	/**
+	 * Gets a map of all custom client properties and their values
+	 * assigned to the client with database ID {@code clientDBId}.
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the target client
+	 *
+	 * @return a map of the client's custom client property assignments
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Client#getDatabaseId()
+	 * @see #searchCustomClientProperty(String)
+	 * @see #searchCustomClientProperty(String, String)
+	 */
+	public CommandFuture<Map<String, String>> getCustomClientProperties(int clientDBId) {
+		Command cmd = CustomPropertyCommands.customInfo(clientDBId);
+		CommandFuture<Map<String, String>> future = cmd.getFuture()
+				.map(result -> {
+					List<Wrapper> response = result.getResponses();
+					Map<String, String> properties = new HashMap<>(response.size());
+					for (Wrapper wrapper : response) {
+						properties.put(wrapper.get("ident"), wrapper.get("value"));
+					}
+
+					return properties;
+				});
+
+		query.doCommandAsync(cmd);
+		return future;
 	}
 
 	/**
@@ -4153,6 +4202,56 @@ public class TS3ApiAsync {
 	}
 
 	/**
+	 * Finds all clients that have any value associated with the {@code key} custom client property,
+	 * and returns the client's database ID and the key and value of the matching custom property.
+	 *
+	 * @param key
+	 * 		the key to search for, cannot be {@code null}
+	 *
+	 * @return a list of client database IDs and their matching custom client properties
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Client#getDatabaseId()
+	 * @see #searchCustomClientProperty(String, String)
+	 * @see #getCustomClientProperties(int)
+	 */
+	public CommandFuture<List<CustomPropertyAssignment>> searchCustomClientProperty(String key) {
+		return searchCustomClientProperty(key, "%");
+	}
+
+	/**
+	 * Finds all clients whose value associated with the {@code key} custom client property matches the
+	 * SQL-like pattern {@code valuePattern}, and returns the client's database ID and the key and value
+	 * of the matching custom property.
+	 * <p>
+	 * Patterns are case insensitive. They support the wildcard characters {@code %}, which matches any sequence of
+	 * zero or more characters, and {@code _}, which matches exactly one arbitrary character.
+	 * </p>
+	 *
+	 * @param key
+	 * 		the key to search for, cannot be {@code null}
+	 * @param valuePattern
+	 * 		the pattern that values need to match to be included
+	 *
+	 * @return a list of client database IDs and their matching custom client properties
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Client#getDatabaseId()
+	 * @see #searchCustomClientProperty(String)
+	 * @see #getCustomClientProperties(int)
+	 */
+	public CommandFuture<List<CustomPropertyAssignment>> searchCustomClientProperty(String key, String valuePattern) {
+		if (key == null) throw new IllegalArgumentException("Key cannot be null");
+
+		Command cmd = CustomPropertyCommands.customSearch(key, valuePattern);
+		return executeAndTransform(cmd, CustomPropertyAssignment::new);
+	}
+
+	/**
 	 * Moves the server query into the virtual server with the specified ID.
 	 *
 	 * @param id
@@ -4391,6 +4490,77 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<Void> setClientChannelGroup(int groupId, int channelId, int clientDBId) {
 		Command cmd = ChannelGroupCommands.setClientChannelGroup(groupId, channelId, clientDBId);
+		return executeAndReturnError(cmd);
+	}
+
+	/**
+	 * Sets the value of the multiple custom client properties for a client.
+	 * <p>
+	 * If any key present in the map already has a value assigned for this client,
+	 * the existing value will be overwritten.
+	 * This method does not delete keys not present in the map.
+	 * </p><p>
+	 * If {@code properties} contains an entry with {@code null} as its key,
+	 * that entry will be ignored and no exception will be thrown.
+	 * </p>
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the target client
+	 * @param properties
+	 * 		the map of properties to set, cannot be {@code null}
+	 *
+	 * @return a future to track the progress of this command
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands properties.size()
+	 * @see Client#getDatabaseId()
+	 * @see #setCustomClientProperty(int, String, String)
+	 * @see #deleteCustomClientProperty(int, String)
+	 */
+	public CommandFuture<Void> setCustomClientProperties(int clientDBId, Map<String, String> properties) {
+		Collection<CommandFuture<Void>> futures = new ArrayList<>(properties.size());
+
+		for (Map.Entry<String, String> entry : properties.entrySet()) {
+			String key = entry.getKey();
+			String value = entry.getValue();
+
+			if (key != null) {
+				futures.add(setCustomClientProperty(clientDBId, key, value));
+			}
+		}
+
+		return CommandFuture.ofAll(futures)
+				.map(__ -> null); // Return success as Void, not List<Void>
+	}
+
+	/**
+	 * Sets the value of the {@code key} custom client property for a client.
+	 * <p>
+	 * If there is already an assignment of the {@code key} custom client property
+	 * for this client, the existing value will be overwritten.
+	 * </p>
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the target client
+	 * @param key
+	 * 		the key of the custom property to set, cannot be {@code null}
+	 * @param value
+	 * 		the (new) value of the custom property to set
+	 *
+	 * @return a future to track the progress of this command
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Client#getDatabaseId()
+	 * @see #setCustomClientProperties(int, Map)
+	 * @see #deleteCustomClientProperty(int, String)
+	 */
+	public CommandFuture<Void> setCustomClientProperty(int clientDBId, String key, String value) {
+		if (key == null) throw new IllegalArgumentException("Key cannot be null");
+
+		Command cmd = CustomPropertyCommands.customSet(clientDBId, key, value);
 		return executeAndReturnError(cmd);
 	}
 

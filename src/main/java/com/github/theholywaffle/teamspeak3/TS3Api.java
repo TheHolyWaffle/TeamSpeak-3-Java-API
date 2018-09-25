@@ -961,6 +961,23 @@ public class TS3Api {
 	}
 
 	/**
+	 * Removes the {@code key} custom client property from a client.
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the target client
+	 * @param key
+	 * 		the key of the custom property to delete, cannot be {@code null}
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Client#getDatabaseId()
+	 */
+	public void deleteCustomClientProperty(int clientDBId, String key) {
+		asyncApi.deleteCustomClientProperty(clientDBId, key).getUninterruptibly();
+	}
+
+	/**
 	 * Removes all stored database information about the specified client.
 	 * Please note that this data is also automatically removed after a configured time (usually 90 days).
 	 * <p>
@@ -1967,6 +1984,26 @@ public class TS3Api {
 	 */
 	public ConnectionInfo getConnectionInfo() {
 		return asyncApi.getConnectionInfo().getUninterruptibly();
+	}
+
+	/**
+	 * Gets a map of all custom client properties and their values
+	 * assigned to the client with database ID {@code clientDBId}.
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the target client
+	 *
+	 * @return a map of the client's custom client property assignments
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Client#getDatabaseId()
+	 * @see #searchCustomClientProperty(String)
+	 * @see #searchCustomClientProperty(String, String)
+	 */
+	public Map<String, String> getCustomClientProperties(int clientDBId) {
+		return asyncApi.getCustomClientProperties(clientDBId).getUninterruptibly();
 	}
 
 	/**
@@ -3608,6 +3645,53 @@ public class TS3Api {
 	}
 
 	/**
+	 * Finds all clients that have any value associated with the {@code key} custom client property,
+	 * and returns the client's database ID and the key and value of the matching custom property.
+	 *
+	 * @param key
+	 * 		the key to search for, cannot be {@code null}
+	 *
+	 * @return a list of client database IDs and their matching custom client properties
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Client#getDatabaseId()
+	 * @see #searchCustomClientProperty(String, String)
+	 * @see #getCustomClientProperties(int)
+	 */
+	public List<CustomPropertyAssignment> searchCustomClientProperty(String key) {
+		return asyncApi.searchCustomClientProperty(key).getUninterruptibly();
+	}
+
+	/**
+	 * Finds all clients whose value associated with the {@code key} custom client property matches the
+	 * SQL-like pattern {@code valuePattern}, and returns the client's database ID and the key and value
+	 * of the matching custom property.
+	 * <p>
+	 * Patterns are case insensitive. They support the wildcard characters {@code %}, which matches any sequence of
+	 * zero or more characters, and {@code _}, which matches exactly one arbitrary character.
+	 * </p>
+	 *
+	 * @param key
+	 * 		the key to search for, cannot be {@code null}
+	 * @param valuePattern
+	 * 		the pattern that values need to match to be included
+	 *
+	 * @return a list of client database IDs and their matching custom client properties
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Client#getDatabaseId()
+	 * @see #searchCustomClientProperty(String)
+	 * @see #getCustomClientProperties(int)
+	 */
+	public List<CustomPropertyAssignment> searchCustomClientProperty(String key, String valuePattern) {
+		return asyncApi.searchCustomClientProperty(key, valuePattern).getUninterruptibly();
+	}
+
+	/**
 	 * Moves the server query into the virtual server with the specified ID.
 	 *
 	 * @param id
@@ -3818,6 +3902,58 @@ public class TS3Api {
 	 */
 	public void setClientChannelGroup(int groupId, int channelId, int clientDBId) {
 		asyncApi.setClientChannelGroup(groupId, channelId, clientDBId).getUninterruptibly();
+	}
+
+	/**
+	 * Sets the value of the multiple custom client properties for a client.
+	 * <p>
+	 * If any key present in the map already has a value assigned for this client,
+	 * the existing value will be overwritten.
+	 * This method does not delete keys not present in the map.
+	 * </p><p>
+	 * If {@code properties} contains an entry with {@code null} as its key,
+	 * that entry will be ignored and no exception will be thrown.
+	 * </p>
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the target client
+	 * @param properties
+	 * 		the map of properties to set, cannot be {@code null}
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands properties.size()
+	 * @see Client#getDatabaseId()
+	 * @see #setCustomClientProperty(int, String, String)
+	 * @see #deleteCustomClientProperty(int, String)
+	 */
+	public void setCustomClientProperties(int clientDBId, Map<String, String> properties) {
+		asyncApi.setCustomClientProperties(clientDBId, properties).getUninterruptibly();
+	}
+
+	/**
+	 * Sets the value of the {@code key} custom client property for a client.
+	 * <p>
+	 * If there is already an assignment of the {@code key} custom client property
+	 * for this client, the existing value will be overwritten.
+	 * </p>
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the target client
+	 * @param key
+	 * 		the key of the custom property to set, cannot be {@code null}
+	 * @param value
+	 * 		the (new) value of the custom property to set
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Client#getDatabaseId()
+	 * @see #setCustomClientProperties(int, Map)
+	 * @see #deleteCustomClientProperty(int, String)
+	 */
+	public void setCustomClientProperty(int clientDBId, String key, String value) {
+		asyncApi.setCustomClientProperty(clientDBId, key, value).getUninterruptibly();
 	}
 
 	/**
