@@ -3699,11 +3699,36 @@ public class TS3Api {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see VirtualServer#getId()
+	 * @see #selectVirtualServerById(int, String)
 	 * @see #selectVirtualServerByPort(int)
 	 * @see #selectVirtualServer(VirtualServer)
 	 */
 	public void selectVirtualServerById(int id) {
 		asyncApi.selectVirtualServerById(id).getUninterruptibly();
+	}
+
+	/**
+	 * Moves the server query into the virtual server with the specified ID
+	 * and sets the server query's nickname.
+	 * <p>
+	 * The nickname must be between 3 and 30 UTF-8 bytes long. BB codes will be ignored.
+	 * </p>
+	 *
+	 * @param id
+	 * 		the ID of the virtual server
+	 * @param nickname
+	 * 		the nickname, or {@code null} if the nickname should not be set
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see VirtualServer#getId()
+	 * @see #selectVirtualServerById(int)
+	 * @see #selectVirtualServerByPort(int, String)
+	 * @see #selectVirtualServer(VirtualServer, String)
+	 */
+	public void selectVirtualServerById(int id, String nickname) {
+		asyncApi.selectVirtualServerById(id, nickname).getUninterruptibly();
 	}
 
 	/**
@@ -3717,10 +3742,35 @@ public class TS3Api {
 	 * @querycommands 1
 	 * @see VirtualServer#getPort()
 	 * @see #selectVirtualServerById(int)
+	 * @see #selectVirtualServerByPort(int, String)
 	 * @see #selectVirtualServer(VirtualServer)
 	 */
 	public void selectVirtualServerByPort(int port) {
 		asyncApi.selectVirtualServerByPort(port).getUninterruptibly();
+	}
+
+	/**
+	 * Moves the server query into the virtual server with the specified voice port
+	 * and sets the server query's nickname.
+	 * <p>
+	 * The nickname must be between 3 and 30 UTF-8 bytes long. BB codes will be ignored.
+	 * </p>
+	 *
+	 * @param port
+	 * 		the voice port of the virtual server
+	 * @param nickname
+	 * 		the nickname, or {@code null} if the nickname should not be set
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see VirtualServer#getPort()
+	 * @see #selectVirtualServerById(int, String)
+	 * @see #selectVirtualServerByPort(int)
+	 * @see #selectVirtualServer(VirtualServer, String)
+	 */
+	public void selectVirtualServerByPort(int port, String nickname) {
+		asyncApi.selectVirtualServerByPort(port, nickname).getUninterruptibly();
 	}
 
 	/**
@@ -3734,9 +3784,33 @@ public class TS3Api {
 	 * @querycommands 1
 	 * @see #selectVirtualServerById(int)
 	 * @see #selectVirtualServerByPort(int)
+	 * @see #selectVirtualServer(VirtualServer, String)
 	 */
 	public void selectVirtualServer(VirtualServer server) {
 		asyncApi.selectVirtualServer(server).getUninterruptibly();
+	}
+
+	/**
+	 * Moves the server query into the specified virtual server
+	 * and sets the server query's nickname.
+	 * <p>
+	 * The nickname must be between 3 and 30 UTF-8 bytes long. BB codes will be ignored.
+	 * </p>
+	 *
+	 * @param server
+	 * 		the virtual server to move into
+	 * @param nickname
+	 * 		the nickname, or {@code null} if the nickname should not be set
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see #selectVirtualServerById(int, String)
+	 * @see #selectVirtualServerByPort(int, String)
+	 * @see #selectVirtualServer(VirtualServer)
+	 */
+	public void selectVirtualServer(VirtualServer server, String nickname) {
+		asyncApi.selectVirtualServer(server, nickname).getUninterruptibly();
 	}
 
 	/**
@@ -4026,10 +4100,12 @@ public class TS3Api {
 
 	/**
 	 * Sets the nickname of the server query client.
-	 * The nickname must be between 3 and 30 UTF-8 bytes long and BB codes will be ignored.
+	 * <p>
+	 * The nickname must be between 3 and 30 UTF-8 bytes long. BB codes will be ignored.
+	 * </p>
 	 *
 	 * @param nickname
-	 * 		the new nickname, may not contain any BB codes and may not be {@code null}
+	 * 		the new nickname, may not be {@code null}
 	 *
 	 * @throws TS3CommandFailedException
 	 * 		if the execution of a command fails

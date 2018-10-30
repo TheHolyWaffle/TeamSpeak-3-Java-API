@@ -4265,11 +4265,38 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see VirtualServer#getId()
+	 * @see #selectVirtualServerById(int, String)
 	 * @see #selectVirtualServerByPort(int)
 	 * @see #selectVirtualServer(VirtualServer)
 	 */
 	public CommandFuture<Void> selectVirtualServerById(int id) {
-		Command cmd = QueryCommands.useId(id);
+		return selectVirtualServerById(id, null);
+	}
+
+	/**
+	 * Moves the server query into the virtual server with the specified ID
+	 * and sets the server query's nickname.
+	 * <p>
+	 * The nickname must be between 3 and 30 UTF-8 bytes long. BB codes will be ignored.
+	 * </p>
+	 *
+	 * @param id
+	 * 		the ID of the virtual server
+	 * @param nickname
+	 * 		the nickname, or {@code null} if the nickname should not be set
+	 *
+	 * @return a future to track the progress of this command
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see VirtualServer#getId()
+	 * @see #selectVirtualServerById(int)
+	 * @see #selectVirtualServerByPort(int, String)
+	 * @see #selectVirtualServer(VirtualServer, String)
+	 */
+	public CommandFuture<Void> selectVirtualServerById(int id, String nickname) {
+		Command cmd = QueryCommands.useId(id, nickname);
 		return executeAndReturnError(cmd);
 	}
 
@@ -4286,10 +4313,37 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see VirtualServer#getPort()
 	 * @see #selectVirtualServerById(int)
+	 * @see #selectVirtualServerByPort(int, String)
 	 * @see #selectVirtualServer(VirtualServer)
 	 */
 	public CommandFuture<Void> selectVirtualServerByPort(int port) {
-		Command cmd = QueryCommands.usePort(port);
+		return selectVirtualServerByPort(port, null);
+	}
+
+	/**
+	 * Moves the server query into the virtual server with the specified voice port
+	 * and sets the server query's nickname.
+	 * <p>
+	 * The nickname must be between 3 and 30 UTF-8 bytes long. BB codes will be ignored.
+	 * </p>
+	 *
+	 * @param port
+	 * 		the voice port of the virtual server
+	 * @param nickname
+	 * 		the nickname, or {@code null} if the nickname should not be set
+	 *
+	 * @return a future to track the progress of this command
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see VirtualServer#getPort()
+	 * @see #selectVirtualServerById(int, String)
+	 * @see #selectVirtualServerByPort(int)
+	 * @see #selectVirtualServer(VirtualServer, String)
+	 */
+	public CommandFuture<Void> selectVirtualServerByPort(int port, String nickname) {
+		Command cmd = QueryCommands.usePort(port, nickname);
 		return executeAndReturnError(cmd);
 	}
 
@@ -4306,9 +4360,35 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see #selectVirtualServerById(int)
 	 * @see #selectVirtualServerByPort(int)
+	 * @see #selectVirtualServer(VirtualServer, String)
 	 */
 	public CommandFuture<Void> selectVirtualServer(VirtualServer server) {
 		return selectVirtualServerById(server.getId());
+	}
+
+	/**
+	 * Moves the server query into the specified virtual server
+	 * and sets the server query's nickname.
+	 * <p>
+	 * The nickname must be between 3 and 30 UTF-8 bytes long. BB codes will be ignored.
+	 * </p>
+	 *
+	 * @param server
+	 * 		the virtual server to move into
+	 * @param nickname
+	 * 		the nickname, or {@code null} if the nickname should not be set
+	 *
+	 * @return a future to track the progress of this command
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see #selectVirtualServerById(int, String)
+	 * @see #selectVirtualServerByPort(int, String)
+	 * @see #selectVirtualServer(VirtualServer)
+	 */
+	public CommandFuture<Void> selectVirtualServer(VirtualServer server, String nickname) {
+		return selectVirtualServerById(server.getId(), nickname);
 	}
 
 	/**
@@ -4647,10 +4727,12 @@ public class TS3ApiAsync {
 
 	/**
 	 * Sets the nickname of the server query client.
-	 * The nickname must be between 3 and 30 UTF-8 bytes long and BB codes will be ignored.
+	 * <p>
+	 * The nickname must be between 3 and 30 UTF-8 bytes long. BB codes will be ignored.
+	 * </p>
 	 *
 	 * @param nickname
-	 * 		the new nickname, may not contain any BB codes and may not be {@code null}
+	 * 		the new nickname, may not be {@code null}
 	 *
 	 * @return a future to track the progress of this command
 	 *

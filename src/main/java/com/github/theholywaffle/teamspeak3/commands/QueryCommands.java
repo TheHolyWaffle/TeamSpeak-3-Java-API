@@ -28,6 +28,7 @@ package com.github.theholywaffle.teamspeak3.commands;
 
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
+import com.github.theholywaffle.teamspeak3.commands.parameter.OptionParam;
 import com.github.theholywaffle.teamspeak3.commands.parameter.ValueParam;
 
 public final class QueryCommands {
@@ -70,12 +71,20 @@ public final class QueryCommands {
 		return new CommandBuilder("servernotifyunregister").build();
 	}
 
-	public static Command useId(int id) {
-		return new CommandBuilder("use", 1).add(new KeyValueParam("sid", id)).build();
+	public static Command useId(int id, String nickname) {
+		CommandBuilder builder = new CommandBuilder("use", 3);
+		builder.add(new KeyValueParam("sid", id));
+		builder.add(new OptionParam("virtual"));
+		builder.addIf(nickname != null, new KeyValueParam("client_nickname", nickname));
+		return builder.build();
 	}
 
-	public static Command usePort(int port) {
-		return new CommandBuilder("use", 1).add(new KeyValueParam("port", port)).build();
+	public static Command usePort(int port, String nickname) {
+		CommandBuilder builder = new CommandBuilder("use", 3);
+		builder.add(new KeyValueParam("port", port));
+		builder.add(new OptionParam("virtual"));
+		builder.addIf(nickname != null, new KeyValueParam("client_nickname", nickname));
+		return builder.build();
 	}
 
 	public static Command whoAmI() {
