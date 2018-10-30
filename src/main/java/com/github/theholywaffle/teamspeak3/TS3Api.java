@@ -620,13 +620,15 @@ public class TS3Api {
 	 * @param type
 	 * 		the desired type of server group
 	 *
+	 * @return the ID of the newly created server group
+	 *
 	 * @throws TS3CommandFailedException
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 */
-	public void copyServerGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
-		asyncApi.copyServerGroup(sourceGroupId, targetGroupId, type).getUninterruptibly();
+	public int copyServerGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
+		return asyncApi.copyServerGroup(sourceGroupId, targetGroupId, type).getUninterruptibly();
 	}
 
 	/**
@@ -2978,7 +2980,7 @@ public class TS3Api {
 	 * To move a channel to root level, set {@code channelTargetId} to {@code 0}.
 	 * <p>
 	 * This will move the channel right below the specified parent channel, above all other child channels.
-	 * The command will fail if the channel already has the specified target channel as the parent channel.
+	 * This command will fail if the channel already has the specified target channel as the parent channel.
 	 * </p>
 	 *
 	 * @param channelId
@@ -3003,8 +3005,8 @@ public class TS3Api {
 	 * The channel will be ordered below the channel with the ID specified by {@code order}.
 	 * To move the channel right below the parent channel, set {@code order} to {@code 0}.
 	 * </p><p>
-	 * Note that re-ordering a channel without also changing its parent channel cannot be done with this method.
-	 * Use {@link #editChannel(int, Map)} to change {@link ChannelProperty#CHANNEL_ORDER} instead.
+	 * Note that you can't re-order a channel without also changing its parent channel with this method.
+	 * Use {@link #editChannel(int, ChannelProperty, String)} to change {@link ChannelProperty#CHANNEL_ORDER} instead.
 	 * </p>
 	 *
 	 * @param channelId
@@ -3025,10 +3027,9 @@ public class TS3Api {
 	}
 
 	/**
-	 * Moves a client into a channel.
+	 * Moves a single client into a channel.
 	 * <p>
-	 * Consider using {@link #moveClients(int[], int)}
-	 * for moving multiple clients.
+	 * Consider using {@link #moveClients(int[], int)} to move multiple clients.
 	 * </p>
 	 *
 	 * @param clientId
@@ -3072,10 +3073,9 @@ public class TS3Api {
 	}
 
 	/**
-	 * Moves a client into a channel.
+	 * Moves a single client into a channel.
 	 * <p>
-	 * Consider using {@link #moveClients(Client[], ChannelBase)}
-	 * for moving multiple clients.
+	 * Consider using {@link #moveClients(Client[], ChannelBase)} to move multiple clients.
 	 * </p>
 	 *
 	 * @param client
@@ -3117,10 +3117,9 @@ public class TS3Api {
 	}
 
 	/**
-	 * Moves a client into a channel using the specified password.
+	 * Moves a single client into a channel using the specified password.
 	 * <p>
-	 * Consider using {@link #moveClients(int[], int, String)}
-	 * for moving multiple clients.
+	 * Consider using {@link #moveClients(int[], int, String)} to move multiple clients.
 	 * </p>
 	 *
 	 * @param clientId
@@ -3170,8 +3169,7 @@ public class TS3Api {
 	/**
 	 * Moves a single client into a channel using the specified password.
 	 * <p>
-	 * Consider using {@link #moveClients(Client[], ChannelBase, String)}
-	 * for moving multiple clients.
+	 * Consider using {@link #moveClients(Client[], ChannelBase, String)} to move multiple clients.
 	 * </p>
 	 *
 	 * @param client

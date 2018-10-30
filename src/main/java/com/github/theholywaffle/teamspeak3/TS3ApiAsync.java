@@ -673,7 +673,7 @@ public class TS3ApiAsync {
 	 * @param type
 	 * 		the desired type of server group
 	 *
-	 * @return a future to track the progress of this command
+	 * @return the ID of the newly created server group
 	 *
 	 * @throws TS3CommandFailedException
 	 * 		if the execution of a command fails
@@ -3458,7 +3458,9 @@ public class TS3ApiAsync {
 	 * <p>
 	 * The channel will be ordered below the channel with the ID specified by {@code order}.
 	 * To move the channel right below the parent channel, set {@code order} to {@code 0}.
-	 * Also note that a channel cannot be re-ordered without also changing its parent channel.
+	 * </p><p>
+	 * Note that you can't re-order a channel without also changing its parent channel with this method.
+	 * Use {@link #editChannel(int, ChannelProperty, String)} to change {@link ChannelProperty#CHANNEL_ORDER} instead.
 	 * </p>
 	 *
 	 * @param channelId
@@ -3482,10 +3484,9 @@ public class TS3ApiAsync {
 	}
 
 	/**
-	 * Moves a client into a channel.
+	 * Moves a single client into a channel.
 	 * <p>
-	 * Consider using {@link #moveClients(int[], int)}
-	 * for moving multiple clients.
+	 * Consider using {@link #moveClients(int[], int)} to move multiple clients.
 	 * </p>
 	 *
 	 * @param clientId
@@ -3533,10 +3534,9 @@ public class TS3ApiAsync {
 	}
 
 	/**
-	 * Moves a client into a channel.
+	 * Moves a single client into a channel.
 	 * <p>
-	 * Consider using {@link #moveClients(Client[], ChannelBase)}
-	 * for moving multiple clients.
+	 * Consider using {@link #moveClients(Client[], ChannelBase)} to move multiple clients.
 	 * </p>
 	 *
 	 * @param client
@@ -3582,7 +3582,10 @@ public class TS3ApiAsync {
 	}
 
 	/**
-	 * Moves a client into a channel using the specified password.
+	 * Moves a single client into a channel using the specified password.
+	 * <p>
+	 * Consider using {@link #moveClients(int[], int, String)} to move multiple clients.
+	 * </p>
 	 *
 	 * @param clientId
 	 * 		the ID of the client to move
@@ -3638,10 +3641,9 @@ public class TS3ApiAsync {
 	}
 
 	/**
-	 * Moves a client into a channel using the specified password.
+	 * Moves a single client into a channel using the specified password.
 	 * <p>
-	 * Consider using {@link #moveClients(Client[], ChannelBase, String)}
-	 * for moving multiple clients.
+	 * Consider using {@link #moveClients(Client[], ChannelBase, String)} to move multiple clients.
 	 * </p>
 	 *
 	 * @param client
@@ -4565,7 +4567,7 @@ public class TS3ApiAsync {
 	}
 
 	/**
-	 * Sets the read flag to true for a given message. This will not delete the message.
+	 * Sets the read flag to {@code true} for a given message. This will not delete the message.
 	 *
 	 * @param messageId
 	 * 		the ID of the message for which the read flag should be set
@@ -4582,7 +4584,7 @@ public class TS3ApiAsync {
 	}
 
 	/**
-	 * Sets the read flag to true for a given message. This will not delete the message.
+	 * Sets the read flag to {@code true} for a given message. This will not delete the message.
 	 *
 	 * @param message
 	 * 		the message for which the read flag should be set
@@ -4825,6 +4827,7 @@ public class TS3ApiAsync {
 	 * @throws TS3CommandFailedException
 	 * 		if the execution of a command fails
 	 * @querycommands 1
+	 * @see #updateClient(ClientProperty, String)
 	 * @see #editClient(int, Map)
 	 */
 	public CommandFuture<Void> updateClient(Map<ClientProperty, String> options) {
