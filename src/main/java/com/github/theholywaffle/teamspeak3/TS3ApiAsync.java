@@ -2501,7 +2501,7 @@ public class TS3ApiAsync {
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<List<FileInfo>> getFileInfos(String filePaths[], int channelId) {
+	public CommandFuture<List<FileInfo>> getFileInfos(String[] filePaths, int channelId) {
 		return getFileInfos(filePaths, channelId, null);
 	}
 
@@ -2527,7 +2527,7 @@ public class TS3ApiAsync {
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<List<FileInfo>> getFileInfos(String filePaths[], int channelId, String channelPassword) {
+	public CommandFuture<List<FileInfo>> getFileInfos(String[] filePaths, int channelId, String channelPassword) {
 		Command cmd = FileCommands.ftGetFileInfo(channelId, channelPassword, filePaths);
 		return executeAndTransform(cmd, FileInfo::new);
 	}
@@ -2556,7 +2556,7 @@ public class TS3ApiAsync {
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<List<FileInfo>> getFileInfos(String filePaths[], int[] channelIds, String[] channelPasswords) {
+	public CommandFuture<List<FileInfo>> getFileInfos(String[] filePaths, int[] channelIds, String[] channelPasswords) {
 		Command cmd = FileCommands.ftGetFileInfo(channelIds, channelPasswords, filePaths);
 		return executeAndTransform(cmd, FileInfo::new);
 	}

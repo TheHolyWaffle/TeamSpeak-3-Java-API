@@ -2172,7 +2172,7 @@ public class TS3Api {
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public List<FileInfo> getFileInfos(String filePaths[], int channelId) {
+	public List<FileInfo> getFileInfos(String[] filePaths, int channelId) {
 		return asyncApi.getFileInfos(filePaths, channelId).getUninterruptibly();
 	}
 
@@ -2198,7 +2198,7 @@ public class TS3Api {
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public List<FileInfo> getFileInfos(String filePaths[], int channelId, String channelPassword) {
+	public List<FileInfo> getFileInfos(String[] filePaths, int channelId, String channelPassword) {
 		return asyncApi.getFileInfos(filePaths, channelId, channelPassword).getUninterruptibly();
 	}
 
@@ -2226,7 +2226,7 @@ public class TS3Api {
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public List<FileInfo> getFileInfos(String filePaths[], int[] channelIds, String[] channelPasswords) {
+	public List<FileInfo> getFileInfos(String[] filePaths, int[] channelIds, String[] channelPasswords) {
 		return asyncApi.getFileInfos(filePaths, channelIds, channelPasswords).getUninterruptibly();
 	}
 
