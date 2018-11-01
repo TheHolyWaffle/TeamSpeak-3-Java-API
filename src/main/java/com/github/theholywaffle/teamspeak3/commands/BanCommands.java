@@ -34,15 +34,16 @@ public final class BanCommands {
 		throw new Error("No instances");
 	}
 
-	public static Command banAdd(String ip, String name, String uid, long timeInSeconds, String reason) {
+	public static Command banAdd(String ip, String name, String uid, String myTSId, long timeInSeconds, String reason) {
 		if (ip == null && name == null && uid == null) {
 			throw new IllegalArgumentException("Either IP, name or UId must be non-null");
 		}
 
-		CommandBuilder builder = new CommandBuilder("banadd", 5);
+		CommandBuilder builder = new CommandBuilder("banadd", 6);
 		builder.addIf(ip != null, new KeyValueParam("ip", ip));
 		builder.addIf(name != null, new KeyValueParam("name", name));
 		builder.addIf(uid != null, new KeyValueParam("uid", uid));
+		builder.addIf(myTSId != null, new KeyValueParam("mytsid", myTSId));
 		builder.addIf(timeInSeconds > 0, new KeyValueParam("time", timeInSeconds));
 		builder.addIf(reason != null, new KeyValueParam("banreason", reason));
 		return builder.build();

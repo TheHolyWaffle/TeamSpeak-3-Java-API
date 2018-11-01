@@ -82,19 +82,55 @@ public class TS3Api {
 	}
 
 	/**
-	 * Adds a new ban entry. At least one of the parameters {@code ip}, {@code name} or {@code uid} needs to be not null.
-	 * Returns the ID of the newly created ban.
+	 * Adds a new ban entry. At least one of the parameters {@code ip}, {@code name} or {@code uid} needs to be non-null.
+	 * Returns the ID of the newly created ban entry.
 	 *
 	 * @param ip
-	 * 		a RegEx pattern to match a client's IP against, can be null
+	 * 		a RegEx pattern to match a client's IP against, can be {@code null}
 	 * @param name
-	 * 		a RegEx pattern to match a client's name against, can be null
+	 * 		a RegEx pattern to match a client's name against, can be {@code null}
 	 * @param uid
-	 * 		the unique identifier of a client, can be null
+	 * 		the unique identifier of a client, can be {@code null}
 	 * @param timeInSeconds
 	 * 		the duration of the ban in seconds. 0 equals a permanent ban
 	 * @param reason
-	 * 		the reason for the ban, can be null
+	 * 		the reason for the ban, can be {@code null}
+	 *
+	 * @return the ID of the newly created ban entry
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Pattern RegEx Pattern
+	 * @see #addBan(String, String, String, String, long, String)
+	 * @see Client#getId()
+	 * @see Client#getUniqueIdentifier()
+	 * @see ClientInfo#getIp()
+	 */
+	public int addBan(String ip, String name, String uid, long timeInSeconds, String reason) {
+		return asyncApi.addBan(ip, name, uid, timeInSeconds, reason).getUninterruptibly();
+	}
+
+	/**
+	 * Adds a new ban entry. At least one of the parameters {@code ip}, {@code name}, {@code uid}, or
+	 * {@code myTSId} needs to be non-null. Returns the ID of the newly created ban entry.
+	 * <p>
+	 * Note that creating a ban entry for the {@code "empty"} "myTeamSpeak" ID will ban all clients who
+	 * don't have a linked "myTeamSpeak" account.
+	 * </p>
+	 *
+	 * @param ip
+	 * 		a RegEx pattern to match a client's IP against, can be {@code null}
+	 * @param name
+	 * 		a RegEx pattern to match a client's name against, can be {@code null}
+	 * @param uid
+	 * 		the unique identifier of a client, can be {@code null}
+	 * @param myTSId
+	 * 		the "myTeamSpeak" ID of a client, the string {@code "empty"}, or {@code null}
+	 * @param timeInSeconds
+	 * 		the duration of the ban in seconds. 0 equals a permanent ban
+	 * @param reason
+	 * 		the reason for the ban, can be {@code null}
 	 *
 	 * @return the ID of the newly created ban entry
 	 *
@@ -106,8 +142,8 @@ public class TS3Api {
 	 * @see Client#getUniqueIdentifier()
 	 * @see ClientInfo#getIp()
 	 */
-	public int addBan(String ip, String name, String uid, long timeInSeconds, String reason) {
-		return asyncApi.addBan(ip, name, uid, timeInSeconds, reason).getUninterruptibly();
+	public int addBan(String ip, String name, String uid, String myTSId, long timeInSeconds, String reason) {
+		return asyncApi.addBan(ip, name, uid, myTSId, timeInSeconds, reason).getUninterruptibly();
 	}
 
 	/**
@@ -463,8 +499,9 @@ public class TS3Api {
 	/**
 	 * Bans a client with a given client ID for a given time.
 	 * <p>
-	 * Please note that this will create two separate ban rules,
-	 * one for the targeted client's IP address and their unique identifier.
+	 * Please note that this will create 2 or 3 separate ban rules,
+	 * one for the targeted client's IP address, one for their unique identifier,
+	 * and potentially one more for their "myTeamSpeak" ID.
 	 * </p><p>
 	 * <i>Exception:</i> If the banned client connects via a loopback address
 	 * (i.e. {@code 127.0.0.1} or {@code localhost}), no IP ban is created
@@ -476,7 +513,7 @@ public class TS3Api {
 	 * @param timeInSeconds
 	 * 		the duration of the ban in seconds. 0 equals a permanent ban
 	 *
-	 * @return an array containing the IDs of the first and the second ban entry
+	 * @return an array containing the IDs of the created ban entries
 	 *
 	 * @throws TS3CommandFailedException
 	 * 		if the execution of a command fails
