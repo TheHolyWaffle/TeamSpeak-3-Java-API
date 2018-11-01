@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.CRC32;
 
@@ -64,7 +65,7 @@ public class FileTransferHelper {
 			int actualSize = socket.getReceiveBufferSize();
 
 			OutputStream out = socket.getOutputStream();
-			out.write(params.getFileTransferKey().getBytes("UTF-8"));
+			out.write(params.getFileTransferKey().getBytes(StandardCharsets.UTF_8));
 			out.flush();
 
 			InputStream in = socket.getInputStream();
@@ -96,7 +97,7 @@ public class FileTransferHelper {
 			int actualSize = socket.getSendBufferSize();
 
 			OutputStream out = socket.getOutputStream();
-			out.write(params.getFileTransferKey().getBytes("UTF-8"));
+			out.write(params.getFileTransferKey().getBytes(StandardCharsets.UTF_8));
 			out.flush();
 
 			byte[] buffer = new byte[actualSize];
@@ -141,13 +142,7 @@ public class FileTransferHelper {
 	}
 
 	public int getClientTransferId() {
-		// AtomicInteger#getAndUpdate without Java 8
-		int prev, next;
-		do {
-			prev = clientTransferId.get();
-			next = (prev + 1) & 0xFFFF;
-		} while (!clientTransferId.compareAndSet(prev, next));
-		return prev;
+		return clientTransferId.getAndUpdate(id -> (id + 1) & 0xFFFF);
 	}
 
 	private String getHostFromResponse(String raw) {
