@@ -40,7 +40,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class EventManager {
+class EventManager {
 
 	private static final Logger log = LoggerFactory.getLogger(EventManager.class);
 
@@ -52,7 +52,7 @@ public class EventManager {
 		ts3 = query;
 	}
 
-	public void addListeners(TS3Listener... listeners) {
+	void addListeners(TS3Listener... listeners) {
 		for (TS3Listener listener : listeners) {
 			if (listener == null) throw new IllegalArgumentException("A listener was null");
 			ListenerTask task = new ListenerTask(listener);
@@ -60,7 +60,7 @@ public class EventManager {
 		}
 	}
 
-	public void removeListeners(TS3Listener... listeners) {
+	void removeListeners(TS3Listener... listeners) {
 		// Bad performance (O(n*m)), but this method is rarely if ever used
 		Iterator<ListenerTask> taskIterator = tasks.iterator();
 		while (taskIterator.hasNext()) {
@@ -76,7 +76,7 @@ public class EventManager {
 		}
 	}
 
-	public void fireEvent(String notifyName, String notifyBody) {
+	void fireEvent(String notifyName, String notifyBody) {
 		final DefaultArrayResponse response = DefaultArrayResponse.parse(notifyBody);
 
 		for (Wrapper dataWrapper : response.getResponses()) {
@@ -87,7 +87,7 @@ public class EventManager {
 		}
 	}
 
-	public void fireEvent(TS3Event event) {
+	void fireEvent(TS3Event event) {
 		if (event == null) throw new IllegalArgumentException("TS3Event was null");
 		for (ListenerTask task : tasks) {
 			task.enqueueEvent(event);

@@ -38,7 +38,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.CRC32;
 
-public class FileTransferHelper {
+class FileTransferHelper {
 
 	private static final Logger log = LoggerFactory.getLogger(FileTransferHelper.class);
 	private static final int BUFFER_SIZE = 16_384; // 16 kB
@@ -53,7 +53,7 @@ public class FileTransferHelper {
 
 	// FILES
 
-	public void downloadFile(OutputStream dataOut, FileTransferParameters params) throws IOException {
+	void downloadFile(OutputStream dataOut, FileTransferParameters params) throws IOException {
 		final String host = getHostFromResponse(params.getFileServerHost());
 		final int port = params.getFileServerPort();
 		final long dataLength = params.getFileSize();
@@ -86,7 +86,7 @@ public class FileTransferHelper {
 		}
 	}
 
-	public void uploadFile(InputStream dataIn, long dataLength, FileTransferParameters params) throws IOException {
+	void uploadFile(InputStream dataIn, long dataLength, FileTransferParameters params) throws IOException {
 		final String host = getHostFromResponse(params.getFileServerHost());
 		final int port = params.getFileServerPort();
 		final int uploadId = params.getClientTransferId() + 1;
@@ -119,7 +119,7 @@ public class FileTransferHelper {
 
 	// ICONS
 
-	public long getIconId(byte[] data) {
+	static long getIconId(byte[] data) {
 		final CRC32 crc32 = new CRC32();
 		crc32.update(data);
 		return crc32.getValue();
@@ -127,7 +127,7 @@ public class FileTransferHelper {
 
 	// UTIL
 
-	public byte[] readFully(InputStream dataIn, long dataLength) throws IOException {
+	static byte[] readFully(InputStream dataIn, long dataLength) throws IOException {
 		if (dataLength > Integer.MAX_VALUE - 64) throw new IOException("File too large");
 
 		final int len = (int) dataLength;
@@ -141,7 +141,7 @@ public class FileTransferHelper {
 		return data;
 	}
 
-	public int getClientTransferId() {
+	int getClientTransferId() {
 		return clientTransferId.getAndUpdate(id -> (id + 1) & 0xFFFF);
 	}
 
