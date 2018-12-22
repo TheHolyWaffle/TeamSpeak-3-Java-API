@@ -1,10 +1,10 @@
-package com.github.theholywaffle.teamspeak3.api.reconnect;
+package com.github.theholywaffle.teamspeak3;
 
 /*
  * #%L
  * TeamSpeak 3 Java API
  * %%
- * Copyright (C) 2015 Bert De Geyter
+ * Copyright (C) 2018 Bert De Geyter, Roger Baumgartner
  * %%
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,12 +26,39 @@ package com.github.theholywaffle.teamspeak3.api.reconnect;
  * #L%
  */
 
-import com.github.theholywaffle.teamspeak3.TS3Api;
-import com.github.theholywaffle.teamspeak3.TS3Query;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public interface ConnectionHandler {
+class KeepAlive extends Thread {
 
-	void onConnect(TS3Api api);
+	private static final Logger log = LoggerFactory.getLogger(KeepAlive.class);
+	private static final int SLEEP = 60_000;
 
-	void onDisconnect(TS3Query ts3Query);
+	private final Connection con;
+
+	public KeepAlive(Connection connection) {
+		super("[TeamSpeak-3-Java-API] KeepAlive");
+		con = connection;
+	}
+
+	@Override
+	public void run() {
+		try {
+			while (!isInterrupted()) {
+				final long idleTime = con.getIdleTime();
+				if (idleTime >= SLEEP) {
+					// Using the asynchronous API so we get InterruptedExceptions
+					TS3ApiAsync asyncApi = con.getCommandQueue().getAsyncApi();
+					asyncApi.whoAmI().await();
+				} else {
+					Thread.sleep(SLEEP - idleTime);
+				}
+			}
+		} catch (InterruptedException ignored) {
+			// Thread stopped properly, ignore
+		} catch (Exception e) {
+			log.warn("KeepAlive thread has stopped!", e);
+			con.internalDisconnect();
+		}
+	}
 }

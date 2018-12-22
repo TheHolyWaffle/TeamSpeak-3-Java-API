@@ -64,8 +64,8 @@ public class ReconnectExample {
 		config.setConnectionHandler(new ConnectionHandler() {
 
 			@Override
-			public void onConnect(TS3Query ts3Query) {
-				stuffThatNeedsToRunEveryTimeTheQueryConnects(ts3Query.getApi());
+			public void onConnect(TS3Api api) {
+				stuffThatNeedsToRunEveryTimeTheQueryConnects(api);
 			}
 
 			@Override

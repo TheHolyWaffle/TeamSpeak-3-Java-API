@@ -4,7 +4,7 @@ package com.github.theholywaffle.teamspeak3;
  * #%L
  * TeamSpeak 3 Java API
  * %%
- * Copyright (C) 2014 Bert De Geyter
+ * Copyright (C) 2018 Bert De Geyter, Roger Baumgartner
  * %%
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,56 +38,56 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.Socket;
 import java.net.SocketTimeoutException;
-import java.util.Collection;
-import java.util.Queue;
+import java.nio.charset.StandardCharsets;
 
-public class SocketReader extends Thread {
+class SocketReader extends Thread {
 
 	private static final Logger log = LoggerFactory.getLogger(SocketReader.class);
 
 	private final TS3Query ts3;
-	private final Queue<ResponseBuilder> receiveQueue;
+	private final Connection con;
 	private final BufferedReader in;
-	private final SocketWriter writer;
-	private final long commandTimeout;
 	private final boolean logComms;
 
+	private CommandQueue commandQueue = null;
+	private ResponseBuilder responseBuilder = null;
 	private String lastEvent = "";
 
-	public SocketReader(QueryIO io, SocketWriter writer, TS3Query ts3Query, TS3Config config) throws IOException {
+	SocketReader(Connection connection, Socket socket, TS3Query query, TS3Config config) throws IOException {
 		super("[TeamSpeak-3-Java-API] SocketReader");
-		this.receiveQueue = io.getReceiveQueue();
-		this.writer = writer;
-		this.commandTimeout = config.getCommandTimeout();
-		this.ts3 = ts3Query;
-		this.logComms = config.getEnableCommunicationsLogging();
 
-		// Connect
-		this.in = new BufferedReader(new InputStreamReader(io.getSocket().getInputStream(), "UTF-8"));
-		int i = 0;
-		while (i < 4 || in.ready()) {
+		ts3 = query;
+		con = connection;
+		in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+		logComms = config.getEnableCommunicationsLogging();
+
+		readWelcomeMessage();
+	}
+
+	private void readWelcomeMessage() throws IOException {
+		for (int i = 0; i < 4 || in.ready(); ++i) {
 			String welcomeMessage = in.readLine();
 			if (logComms) log.debug("< {}", welcomeMessage);
-			i++;
 		}
 	}
 
 	@Override
 	public void run() {
 		while (!isInterrupted()) {
-			final String line;
+			String line;
 
 			try {
 				// Will block until a full line of text could be read.
 				line = in.readLine();
 			} catch (SocketTimeoutException socketTimeout) {
 				// Really disconnected or just no data transferred for <commandTimeout> milliseconds?
-				if (receiveQueue.isEmpty() || writer.getIdleTime() < commandTimeout) {
-					continue;
-				} else {
+				if (con.isTimedOut()) {
 					log.error("Connection timed out.", socketTimeout);
 					break;
+				} else {
+					continue;
 				}
 			} catch (IOException io) {
 				if (!isInterrupted()) {
@@ -107,6 +107,7 @@ public class SocketReader extends Thread {
 			if (line.startsWith("notify")) {
 				handleEvent(line);
 			} else {
+				con.resetIdleTime();
 				handleCommandResponse(line);
 			}
 		}
@@ -118,52 +119,60 @@ public class SocketReader extends Thread {
 		}
 
 		if (!isInterrupted()) {
-			ts3.fireDisconnect();
+			con.internalDisconnect();
 		}
 	}
 
-	private void handleEvent(final String event) {
+	private void handleEvent(String event) {
 		if (logComms) log.debug("[event] < {}", event);
 
 		// Filter out duplicate events for join, quit and channel move events
-		if (!isDuplicate(event)) {
-			final String arr[] = event.split(" ", 2);
-			ts3.getEventManager().fireEvent(arr[0], arr[1]);
-		}
+		if (isDuplicate(event)) return;
+
+		String arr[] = event.split(" ", 2);
+		ts3.getEventManager().fireEvent(arr[0], arr[1]);
 	}
 
-	private void handleCommandResponse(final String response) {
-		final ResponseBuilder responseBuilder = receiveQueue.peek();
+	private void handleCommandResponse(String response) {
 		if (responseBuilder == null) {
-			log.warn("[UNHANDLED] < {}", response);
-			return;
+			commandQueue = con.getCommandQueue();
+			Command command = commandQueue.peekReceiveQueue();
+
+			if (command == null) {
+				log.warn("[UNHANDLED] < {}", response);
+				return;
+			}
+
+			responseBuilder = new ResponseBuilder(command);
 		}
 
 		if (logComms) log.debug("[{}] < {}", responseBuilder.getCommand().getName(), response);
 
 		if (response.startsWith("error ")) {
 			handleCommandError(responseBuilder, response);
+
+			commandQueue.removeFromReceiveQueue();
+			responseBuilder = null;
 		} else {
 			responseBuilder.appendResponse(response);
 		}
 	}
 
-	private void handleCommandError(ResponseBuilder responseBuilder, final String error) {
-		final Command command = responseBuilder.getCommand();
+	private void handleCommandError(ResponseBuilder responseBuilder, String error) {
+		Command command = responseBuilder.getCommand();
 		if (command.getName().equals("quit")) {
 			// Response to a quit command received, we're done
 			interrupt();
 		}
 
-		receiveQueue.remove();
-
-		final QueryError queryError = DefaultArrayResponse.parseError(error);
-		final CommandFuture<DefaultArrayResponse> future = command.getFuture();
+		QueryError queryError = DefaultArrayResponse.parseError(error);
+		CommandFuture<DefaultArrayResponse> future = command.getFuture();
 
 		if (queryError.isSuccessful()) {
-			final DefaultArrayResponse response = responseBuilder.buildResponse();
+			DefaultArrayResponse response = responseBuilder.buildResponse();
 
-			ts3.submitUserTask("Future SuccessListener (" + command.getName() + ")", () -> future.set(response));
+			ts3.submitUserTask("Future SuccessListener (" + command.getName() + ")",
+					() -> future.set(response));
 		} else {
 			log.debug("TS3 command error: {}", queryError);
 
@@ -189,11 +198,5 @@ public class SocketReader extends Thread {
 
 		lastEvent = eventMessage;
 		return false;
-	}
-
-	void drainCommandsTo(Collection<Command> commands) {
-		for (ResponseBuilder responseBuilder : receiveQueue) {
-			commands.add(responseBuilder.getCommand());
-		}
 	}
 }
