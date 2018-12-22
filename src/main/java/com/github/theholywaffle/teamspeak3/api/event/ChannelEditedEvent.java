@@ -27,13 +27,12 @@ package com.github.theholywaffle.teamspeak3.api.event;
  */
 
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
-
-import java.util.Map;
+import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 
 public class ChannelEditedEvent extends BaseEvent {
 
-	public ChannelEditedEvent(Map<String, String> map) {
-		super(map);
+	public ChannelEditedEvent(Wrapper wrapper) {
+		super(wrapper);
 	}
 
 	public int getChannelId() {

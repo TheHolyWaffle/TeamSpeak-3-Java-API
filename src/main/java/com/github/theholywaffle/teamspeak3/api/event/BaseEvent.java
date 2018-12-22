@@ -29,12 +29,11 @@ package com.github.theholywaffle.teamspeak3.api.event;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 
 import java.util.Collections;
-import java.util.Map;
 
 public abstract class BaseEvent extends Wrapper implements TS3Event {
 
-	protected BaseEvent(Map<String, String> map) {
-		super(Collections.unmodifiableMap(map));
+	protected BaseEvent(Wrapper wrapper) {
+		super(Collections.unmodifiableMap(wrapper.getMap()));
 	}
 
 	/**

@@ -26,12 +26,12 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * #L%
  */
 
-import java.util.Map;
+import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 
 public class ServerEditedEvent extends BaseEvent {
 
-	public ServerEditedEvent(Map<String, String> map) {
-		super(map);
+	public ServerEditedEvent(Wrapper wrapper) {
+		super(wrapper);
 	}
 
 	@Override

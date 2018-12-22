@@ -27,13 +27,12 @@ package com.github.theholywaffle.teamspeak3.api.event;
  */
 
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
-
-import java.util.Map;
+import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 
 public class ClientJoinEvent extends BaseEvent {
 
-	public ClientJoinEvent(Map<String, String> map) {
-		super(map);
+	public ClientJoinEvent(Wrapper wrapper) {
+		super(wrapper);
 	}
 
 	public int getClientFromId() {

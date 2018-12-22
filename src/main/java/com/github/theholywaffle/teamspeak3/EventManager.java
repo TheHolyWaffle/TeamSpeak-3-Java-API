@@ -36,14 +36,31 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Function;
 
 class EventManager {
 
 	private static final Logger log = LoggerFactory.getLogger(EventManager.class);
+	private static final Map<String, Function<Wrapper, TS3Event>> eventByName = new HashMap<>(12);
+	static {
+		eventByName.put("notifytextmessage", TextMessageEvent::new);
+		eventByName.put("notifycliententerview", ClientJoinEvent::new);
+		eventByName.put("notifyclientleftview", ClientLeaveEvent::new);
+		eventByName.put("notifyserveredited", ServerEditedEvent::new);
+		eventByName.put("notifychanneledited", ChannelEditedEvent::new);
+		eventByName.put("notifychanneldescriptionchanged", ChannelDescriptionEditedEvent::new);
+		eventByName.put("notifyclientmoved", ClientMovedEvent::new);
+		eventByName.put("notifychannelcreated", ChannelCreateEvent::new);
+		eventByName.put("notifychanneldeleted", ChannelDeletedEvent::new);
+		eventByName.put("notifychannelmoved", ChannelMovedEvent::new);
+		eventByName.put("notifychannelpasswordchanged", ChannelPasswordChangedEvent::new);
+		eventByName.put("notifytokenused", PrivilegeKeyUsedEvent::new);
+	}
 
 	// CopyOnWriteArrayList for thread safety
 	private final Collection<ListenerTask> tasks = new CopyOnWriteArrayList<>();
@@ -70,10 +87,8 @@ class EventManager {
 	void fireEvent(String notifyName, String notifyBody) {
 		final DefaultArrayResponse response = DefaultArrayResponse.parse(notifyBody);
 
-		for (Wrapper dataWrapper : response.getResponses()) {
-			Map<String, String> eventData = dataWrapper.getMap();
+		for (Wrapper eventData : response.getResponses()) {
 			TS3Event event = createEvent(notifyName, eventData);
-
 			fireEvent(event);
 		}
 	}
@@ -85,35 +100,10 @@ class EventManager {
 		}
 	}
 
-	private static TS3Event createEvent(String notifyName, Map<String, String> eventData) {
-		switch (notifyName) {
-			case "notifytextmessage":
-				return new TextMessageEvent(eventData);
-			case "notifycliententerview":
-				return new ClientJoinEvent(eventData);
-			case "notifyclientleftview":
-				return new ClientLeaveEvent(eventData);
-			case "notifyserveredited":
-				return new ServerEditedEvent(eventData);
-			case "notifychanneledited":
-				return new ChannelEditedEvent(eventData);
-			case "notifychanneldescriptionchanged":
-				return new ChannelDescriptionEditedEvent(eventData);
-			case "notifyclientmoved":
-				return new ClientMovedEvent(eventData);
-			case "notifychannelcreated":
-				return new ChannelCreateEvent(eventData);
-			case "notifychanneldeleted":
-				return new ChannelDeletedEvent(eventData);
-			case "notifychannelmoved":
-				return new ChannelMovedEvent(eventData);
-			case "notifychannelpasswordchanged":
-				return new ChannelPasswordChangedEvent(eventData);
-			case "notifytokenused":
-				return new PrivilegeKeyUsedEvent(eventData);
-			default:
-				throw new TS3UnknownEventException(notifyName + " " + eventData);
-		}
+	private static TS3Event createEvent(String notifyName, Wrapper eventData) {
+		Function<Wrapper, TS3Event> constructor = eventByName.get(notifyName);
+		if (constructor == null) throw new TS3UnknownEventException(notifyName + " " + eventData);
+		return constructor.apply(eventData);
 	}
 
 	/*

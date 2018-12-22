@@ -27,13 +27,12 @@ package com.github.theholywaffle.teamspeak3.api.event;
  */
 
 import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
-
-import java.util.Map;
+import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 
 public class TextMessageEvent extends BaseEvent {
 
-	public TextMessageEvent(Map<String, String> map) {
-		super(map);
+	public TextMessageEvent(Wrapper wrapper) {
+		super(wrapper);
 	}
 
 	public TextMessageTargetMode getTargetMode() {

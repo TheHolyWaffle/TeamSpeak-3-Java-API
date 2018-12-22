@@ -27,13 +27,12 @@ package com.github.theholywaffle.teamspeak3.api.event;
  */
 
 import com.github.theholywaffle.teamspeak3.api.PrivilegeKeyType;
-
-import java.util.Map;
+import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 
 public class PrivilegeKeyUsedEvent extends BaseEvent {
 
-	public PrivilegeKeyUsedEvent(Map<String, String> map) {
-		super(map);
+	public PrivilegeKeyUsedEvent(Wrapper wrapper) {
+		super(wrapper);
 	}
 
 	public int getClientId() {
