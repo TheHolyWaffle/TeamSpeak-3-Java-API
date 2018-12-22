@@ -107,6 +107,10 @@ public class ClientInfo extends Client {
 		return getLong(ClientProperty.CLIENT_MONTH_BYTES_UPLOADED);
 	}
 
+	public String getMyTeamSpeakId() {
+		return get(ClientProperty.CLIENT_MYTEAMSPEAK_ID);
+	}
+
 	public int getNeededServerQueryViewPower() {
 		return getInt(ClientProperty.CLIENT_NEEDED_SERVERQUERY_VIEW_POWER);
 	}
