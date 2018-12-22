@@ -90,7 +90,7 @@ public class DefaultArrayResponse {
 		return map;
 	}
 
-	private static final DefaultArrayResponse EMPTY = new DefaultArrayResponse(new ArrayList<Wrapper>(0), "");
+	private static final DefaultArrayResponse EMPTY = new DefaultArrayResponse(Collections.emptyList(), "");
 
 	private final List<Wrapper> responses;
 	private final String rawResponse;

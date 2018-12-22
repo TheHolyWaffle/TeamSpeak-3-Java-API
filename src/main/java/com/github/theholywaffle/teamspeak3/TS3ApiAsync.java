@@ -5189,10 +5189,9 @@ public class TS3ApiAsync {
 	 * @see #downloadIcon(OutputStream, long)
 	 */
 	public CommandFuture<Long> uploadIcon(InputStream dataIn, long dataLength) {
-		FileTransferHelper helper = query.getFileTransferHelper();
 		byte[] data;
 		try {
-			data = helper.readFully(dataIn, dataLength);
+			data = FileTransferHelper.readFully(dataIn, dataLength);
 		} catch (IOException e) {
 			throw new TS3FileTransferFailedException("Reading stream failed", e);
 		}
@@ -5219,10 +5218,9 @@ public class TS3ApiAsync {
 	 * @see #downloadIconDirect(long)
 	 */
 	public CommandFuture<Long> uploadIconDirect(byte[] data) {
-		FileTransferHelper helper = query.getFileTransferHelper();
 		CommandFuture<Long> future = new CommandFuture<>();
 
-		long iconId = helper.getIconId(data);
+		long iconId = FileTransferHelper.getIconId(data);
 		String path = "/icon_" + iconId;
 
 		uploadFileDirect(data, path, false, 0)

@@ -44,7 +44,11 @@ import java.util.Map;
  */
 public class Wrapper {
 
-	public static final Wrapper EMPTY = new Wrapper(Collections.<String, String>emptyMap());
+	/**
+	 * An empty wrapper whose getters will always return the default values
+	 * ({@code -1}, {@code false}, or {@code ""}).
+	 */
+	public static final Wrapper EMPTY = new Wrapper(Collections.emptyMap());
 
 	private final Map<String, String> map;
 
@@ -103,11 +107,8 @@ public class Wrapper {
 	 * @return the double value of the property or {@code -1.0} if the property doesn't exist
 	 */
 	public double getDouble(String propertyName) {
-		final String value = get(propertyName);
-		if (value == null || value.isEmpty()) {
-			return -1D;
-		}
-		return Double.valueOf(value);
+		String value = get(propertyName);
+		return value.isEmpty() ? -1D : Double.parseDouble(value);
 	}
 
 	/**
@@ -133,11 +134,8 @@ public class Wrapper {
 	 * @return the long value of the property or {@code -1} if the property doesn't exist
 	 */
 	public long getLong(String propertyName) {
-		final String value = get(propertyName);
-		if (value == null || value.isEmpty()) {
-			return -1L;
-		}
-		return Long.parseLong(value);
+		String value = get(propertyName);
+		return value.isEmpty() ? -1L : Long.parseLong(value);
 	}
 
 	/**
@@ -163,11 +161,8 @@ public class Wrapper {
 	 * @return the integer value of the property or {@code -1} if the property doesn't exist
 	 */
 	public int getInt(String propertyName) {
-		final String value = get(propertyName);
-		if (value == null || value.isEmpty()) {
-			return -1;
-		}
-		return Integer.parseInt(value);
+		String value = get(propertyName);
+		return value.isEmpty() ? -1 : Integer.parseInt(value);
 	}
 
 	/**
