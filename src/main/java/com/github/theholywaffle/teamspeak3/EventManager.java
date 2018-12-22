@@ -34,8 +34,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -62,18 +63,8 @@ class EventManager {
 
 	void removeListeners(TS3Listener... listeners) {
 		// Bad performance (O(n*m)), but this method is rarely if ever used
-		Iterator<ListenerTask> taskIterator = tasks.iterator();
-		while (taskIterator.hasNext()) {
-			ListenerTask task = taskIterator.next();
-			TS3Listener taskListener = task.getListener();
-
-			for (TS3Listener listener : listeners) {
-				if (taskListener.equals(listener)) {
-					taskIterator.remove();
-					break;
-				}
-			}
-		}
+		List<TS3Listener> listenersToRemove = Arrays.asList(listeners);
+		tasks.removeIf(listenerTask -> listenersToRemove.contains(listenerTask.listener));
 	}
 
 	void fireEvent(String notifyName, String notifyBody) {
