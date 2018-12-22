@@ -26,6 +26,7 @@ package com.github.theholywaffle.teamspeak3.api.reconnect;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,9 +41,9 @@ public class DisconnectingConnectionHandler implements ConnectionHandler {
 	}
 
 	@Override
-	public void onConnect(TS3Query ts3Query) {
+	public void onConnect(TS3Api api) {
 		if (userConnectionHandler != null) {
-			userConnectionHandler.onConnect(ts3Query);
+			userConnectionHandler.onConnect(api);
 		}
 	}
 

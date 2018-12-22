@@ -77,9 +77,14 @@ import java.util.stream.Collectors;
 public class TS3ApiAsync {
 
 	/**
-	 * The TS3 query to which this API sends its commands.
+	 * The TS3 query that holds the event manager and the file transfer helper.
 	 */
 	private final TS3Query query;
+
+	/**
+	 * The queue that this TS3ApiAsync sends its commands to.
+	 */
+	private final CommandQueue commandQueue;
 
 	/**
 	 * Creates a new asynchronous API object for the given {@code TS3Query}.
@@ -88,10 +93,13 @@ public class TS3ApiAsync {
 	 * </p>
 	 *
 	 * @param query
-	 * 		the TS3Query to call
+	 * 		the TS3Query to use
+	 * @param commandQueue
+	 * 		the queue to send commands to
 	 */
-	public TS3ApiAsync(TS3Query query) {
+	public TS3ApiAsync(TS3Query query, CommandQueue commandQueue) {
 		this.query = query;
+		this.commandQueue = commandQueue;
 	}
 
 	/**
@@ -859,7 +867,7 @@ public class TS3ApiAsync {
 		CommandFuture<Snapshot> future = cmd.getFuture()
 				.map(result -> new Snapshot(result.getRawResponse()));
 
-		query.doCommandAsync(cmd);
+		commandQueue.enqueueCommand(cmd);
 		return future;
 	}
 
@@ -2333,7 +2341,7 @@ public class TS3ApiAsync {
 					return properties;
 				});
 
-		query.doCommandAsync(cmd);
+		commandQueue.enqueueCommand(cmd);
 		return future;
 	}
 
@@ -2390,7 +2398,7 @@ public class TS3ApiAsync {
 					}
 				});
 
-		query.doCommandAsync(cmd);
+		commandQueue.enqueueCommand(cmd);
 		return future;
 	}
 
@@ -3188,7 +3196,7 @@ public class TS3ApiAsync {
 				.onSuccess(__ -> future.set(true))
 				.onFailure(transformError(future, 512, false));
 
-		query.doCommandAsync(cmd);
+		commandQueue.enqueueCommand(cmd);
 		return future;
 	}
 
@@ -3212,7 +3220,7 @@ public class TS3ApiAsync {
 		CommandFuture<Boolean> future = cmd.getFuture()
 				.map(result -> !result.getResponses().isEmpty());
 
-		query.doCommandAsync(cmd);
+		commandQueue.enqueueCommand(cmd);
 		return future;
 	}
 
@@ -5345,7 +5353,7 @@ public class TS3ApiAsync {
 		CommandFuture<Void> future = command.getFuture()
 				.map(__ -> null); // Mark as successful
 
-		query.doCommandAsync(command);
+		commandQueue.enqueueCommand(command);
 		return future;
 	}
 
@@ -5364,7 +5372,7 @@ public class TS3ApiAsync {
 		CommandFuture<String> future = command.getFuture()
 				.map(result -> result.getFirstResponse().get(property));
 
-		query.doCommandAsync(command);
+		commandQueue.enqueueCommand(command);
 		return future;
 	}
 
@@ -5382,7 +5390,7 @@ public class TS3ApiAsync {
 		CommandFuture<Integer> future = command.getFuture()
 				.map(result -> result.getFirstResponse().getInt(property));
 
-		query.doCommandAsync(command);
+		commandQueue.enqueueCommand(command);
 		return future;
 	}
 
@@ -5399,7 +5407,7 @@ public class TS3ApiAsync {
 					return values;
 				});
 
-		query.doCommandAsync(command);
+		commandQueue.enqueueCommand(command);
 		return future;
 	}
 
@@ -5437,7 +5445,7 @@ public class TS3ApiAsync {
 		CommandFuture<T> future = command.getFuture()
 				.map(result -> fn.apply(result.getFirstResponse()));
 
-		query.doCommandAsync(command);
+		commandQueue.enqueueCommand(command);
 		return future;
 	}
 
@@ -5483,7 +5491,7 @@ public class TS3ApiAsync {
 					return transformed;
 				});
 
-		query.doCommandAsync(command);
+		commandQueue.enqueueCommand(command);
 		return future;
 	}
 

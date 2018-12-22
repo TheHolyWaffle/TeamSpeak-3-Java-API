@@ -26,11 +26,11 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
-import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3QueryShutDownException;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
+import com.github.theholywaffle.teamspeak3.api.reconnect.DisconnectingConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
-import com.github.theholywaffle.teamspeak3.commands.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,14 +67,12 @@ public class TS3Query {
 	private final EventManager eventManager;
 	private final ExecutorService userThreadPool;
 	private final FileTransferHelper fileTransferHelper;
-	private final TS3Api api;
-	private final TS3ApiAsync asyncApi;
+	private final CommandQueue globalQueue;
 	private final TS3Config config;
 
 	private final AtomicBoolean connected = new AtomicBoolean(false);
-	private final AtomicBoolean shuttingDown = new AtomicBoolean(false);
 
-	private QueryIO io;
+	private Connection connection;
 
 	/**
 	 * Creates a TS3Query that connects to a TS3 server at
@@ -97,92 +95,77 @@ public class TS3Query {
 		this.userThreadPool = Executors.newCachedThreadPool();
 		this.fileTransferHelper = new FileTransferHelper(config.getHost());
 		this.connectionHandler = config.getReconnectStrategy().create(config.getConnectionHandler());
-
-		this.asyncApi = new TS3ApiAsync(this);
-		this.api = new TS3Api(asyncApi);
-	}
-
-	/*
-	 * Copy constructor only used for ReconnectQuery
-	 */
-	private TS3Query(TS3Query query) {
-		this.config = query.config;
-		this.eventManager = query.eventManager;
-		this.userThreadPool = query.userThreadPool;
-		this.fileTransferHelper = query.fileTransferHelper;
-		this.connectionHandler = null;
-
-		this.asyncApi = new TS3ApiAsync(this);
-		this.api = new TS3Api(asyncApi);
+		this.globalQueue = CommandQueue.newGlobalQueue(this, connectionHandler instanceof DisconnectingConnectionHandler);
 	}
 
 	// PUBLIC
 
 	public void connect() {
-		synchronized (this) {
-			if (userThreadPool.isShutdown()) {
-				throw new IllegalStateException("The query has already been shut down");
-			}
+		if (Thread.holdsLock(this)) {
+			// Check that connect is not called from onConnect
+			throw new IllegalStateException("Cannot call connect from onConnect handler");
 		}
 
-		QueryIO newIO = new QueryIO(this, config);
+		doConnect();
+	}
+
+	private synchronized void doConnect() {
+		if (userThreadPool.isShutdown()) {
+			throw new IllegalStateException("The query has already been shut down");
+		}
+
+		disconnect(); // If we're already connected
+
+		CommandQueue queue = CommandQueue.newConnectQueue(this);
+		Connection con = new Connection(this, config, queue);
 
 		try {
-			connectionHandler.onConnect(new ReconnectQuery(this, newIO));
+			connectionHandler.onConnect(queue.getApi());
+		} catch (TS3QueryShutDownException e) {
+			// Disconnected during onConnect, re-throw as a TS3ConnectionFailedException
+			throw new TS3ConnectionFailedException(e);
 		} catch (Exception e) {
 			log.error("ConnectionHandler threw exception in connect handler", e);
+			return;
 		}
 
-		synchronized (this) {
-			QueryIO oldIO = io;
-			io = newIO;
-			if (oldIO != null) {
-				oldIO.disconnect();
-				newIO.continueFrom(oldIO);
-			}
-			connected.set(true);
-		}
+		// Reject new commands and wait until the onConnect queue is empty
+		queue.shutDown();
+
+		connection = con;
+		con.setCommandQueue(globalQueue);
+		connected.set(true);
 	}
 
 	/**
 	 * Removes and closes all used resources to the TeamSpeak server.
 	 */
 	public void exit() {
-		if (shuttingDown.compareAndSet(false, true)) {
-			try {
-				// Sending this command will guarantee that all previously sent commands have been processed
-				api.quit();
-			} catch (TS3Exception e) {
-				log.warn("Could not send a quit command to terminate the connection", e);
-			} finally {
-				shutDown();
-			}
-		} else {
-			// Only 1 thread shall ever send quit, the rest of the threads wait for the first thread to finish
-			try {
-				synchronized (this) {
-					while (connected.get()) {
-						wait();
-					}
-				}
-			} catch (InterruptedException e) {
-				// Restore interrupt, then bail out
-				Thread.currentThread().interrupt();
-			}
+		if (Thread.holdsLock(this)) {
+			// Check that exit is not called from onConnect
+			throw new IllegalStateException("Cannot call exit from onConnect handler");
+		}
+
+		try {
+			globalQueue.quit();
+		} finally {
+			shutDown();
 		}
 	}
 
 	private synchronized void shutDown() {
 		if (userThreadPool.isShutdown()) return;
 
-		if (io != null) {
-			io.disconnect();
-			io.failRemainingCommands();
-		}
-
+		disconnect();
+		globalQueue.failRemainingCommands();
 		userThreadPool.shutdown();
+	}
+
+	private synchronized void disconnect() {
+		if (connection == null) return;
+
+		connection.disconnect();
 		connected.set(false);
-		notifyAll();
 	}
 
 	/**
@@ -208,23 +191,14 @@ public class TS3Query {
 	}
 
 	public TS3Api getApi() {
-		return api;
+		return globalQueue.getApi();
 	}
 
 	public TS3ApiAsync getAsyncApi() {
-		return asyncApi;
+		return globalQueue.getAsyncApi();
 	}
 
 	// INTERNAL
-
-	synchronized void doCommandAsync(Command c) {
-		if (userThreadPool.isShutdown()) {
-			c.getFuture().fail(new TS3QueryShutDownException());
-			return;
-		}
-
-		io.enqueueCommand(c);
-	}
 
 	void submitUserTask(final String name, final Runnable task) {
 		userThreadPool.submit(() -> {
@@ -256,40 +230,9 @@ public class TS3Query {
 		} finally {
 			synchronized (this) {
 				if (!connected.get()) {
-					shuttingDown.set(true); // Try to prevent extraneous exit commands
 					shutDown();
 				}
 			}
-		}
-	}
-
-	private static class ReconnectQuery extends TS3Query {
-
-		private final TS3Query parent;
-
-		private ReconnectQuery(TS3Query query, QueryIO io) {
-			super(query);
-			super.io = io;
-			this.parent = query;
-		}
-
-		@Override
-		public void connect() {
-			throw new UnsupportedOperationException("Can't call connect from onConnect handler");
-		}
-
-		@Override
-		public void exit() {
-			parent.exit();
-		}
-
-		@Override
-		synchronized void fireDisconnect() {
-			// If a reconnect query fails, we do not want this to affect the parent query.
-			// Instead, simply fail all remaining onConnect commands.
-			QueryIO io = super.io;
-			io.disconnect();
-			io.failRemainingCommands();
 		}
 	}
 }
