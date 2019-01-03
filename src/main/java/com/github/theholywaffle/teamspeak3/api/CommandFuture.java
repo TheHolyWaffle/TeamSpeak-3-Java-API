@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -776,7 +777,7 @@ public class CommandFuture<V> implements Future<V> {
 	 * @return a future which succeeds if all supplied futures succeed
 	 */
 	public static <F> CommandFuture<List<F>> ofAll(final Collection<CommandFuture<F>> futures) {
-		if (futures.isEmpty()) throw new IllegalArgumentException("Requires at least 1 future");
+		if (futures.isEmpty()) return CommandFuture.immediate(Collections.emptyList());
 
 		@SuppressWarnings("unchecked") final F[] results = (F[]) new Object[futures.size()];
 		final AtomicInteger successCounter = new AtomicInteger(futures.size());
