@@ -97,7 +97,7 @@ public class TS3ApiAsync {
 	 * @param commandQueue
 	 * 		the queue to send commands to
 	 */
-	public TS3ApiAsync(TS3Query query, CommandQueue commandQueue) {
+	TS3ApiAsync(TS3Query query, CommandQueue commandQueue) {
 		this.query = query;
 		this.commandQueue = commandQueue;
 	}
