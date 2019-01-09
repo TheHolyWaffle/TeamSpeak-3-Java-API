@@ -77,7 +77,7 @@ public class TS3Api {
 	 * @param asyncApi
 	 * 		the asynchronous version of the API this class routes its method calls through
 	 */
-	public TS3Api(TS3ApiAsync asyncApi) {
+	TS3Api(TS3ApiAsync asyncApi) {
 		this.asyncApi = asyncApi;
 	}
 
