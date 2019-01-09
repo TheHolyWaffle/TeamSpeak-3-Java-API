@@ -777,7 +777,7 @@ public class CommandFuture<V> implements Future<V> {
 	 * @return a future which succeeds if all supplied futures succeed
 	 */
 	public static <F> CommandFuture<List<F>> ofAll(final Collection<CommandFuture<F>> futures) {
-		if (futures.isEmpty()) return CommandFuture.immediate(Collections.emptyList());
+		if (futures.isEmpty()) return immediate(Collections.emptyList());
 
 		@SuppressWarnings("unchecked") final F[] results = (F[]) new Object[futures.size()];
 		final AtomicInteger successCounter = new AtomicInteger(futures.size());
