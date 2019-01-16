@@ -36,12 +36,10 @@ public final class FileCommands {
 	}
 
 	public static Command ftCreateDir(String path, int channelId, String channelPassword) {
-		if (path == null) throw new IllegalArgumentException("File path cannot be null");
-
 		CommandBuilder builder = new CommandBuilder("ftcreatedir", 3);
 		builder.add(new KeyValueParam("cid", channelId));
 		builder.add(new KeyValueParam("cpw", channelPassword));
-		builder.add(new KeyValueParam("dirname", path.startsWith("/") ? path : "/" + path));
+		builder.add(new KeyValueParam("dirname", prefixSlash(path)));
 		return builder.build();
 	}
 
@@ -56,8 +54,7 @@ public final class FileCommands {
 
 		ArrayParameter files = new ArrayParameter(filePaths.length);
 		for (String filePath : filePaths) {
-			if (filePath == null) throw new IllegalArgumentException("File path cannot be null");
-			files.add(new KeyValueParam("name", filePath.startsWith("/") ? filePath : "/" + filePath));
+			files.add(new KeyValueParam("name", prefixSlash(filePath)));
 		}
 		builder.add(files);
 
@@ -72,10 +69,9 @@ public final class FileCommands {
 		CommandBuilder builder = new CommandBuilder("ftgetfileinfo", 1);
 		ArrayParameter files = new ArrayParameter(filePaths.length, 3);
 		for (String filePath : filePaths) {
-			if (filePath == null) throw new IllegalArgumentException("File path cannot be null");
 			files.add(new KeyValueParam("cid", channelId));
 			files.add(new KeyValueParam("cpw", channelPassword));
-			files.add(new KeyValueParam("name", filePath));
+			files.add(new KeyValueParam("name", prefixSlash(filePath)));
 		}
 		builder.add(files);
 
@@ -100,12 +96,10 @@ public final class FileCommands {
 		ArrayParameter files = new ArrayParameter(filePaths.length, 3);
 		for (int i = 0; i < filePaths.length; ++i) {
 			final String password = channelPasswords == null ? null : channelPasswords[i];
-			final String path = filePaths[i];
-			if (path == null) throw new IllegalArgumentException("File path cannot be null");
 
 			files.add(new KeyValueParam("cid", channelIds[i]));
 			files.add(new KeyValueParam("cpw", password));
-			files.add(new KeyValueParam("name", path.startsWith("/") ? path : "/" + path));
+			files.add(new KeyValueParam("name", prefixSlash(filePaths[i])));
 		}
 		builder.add(files);
 
@@ -128,11 +122,9 @@ public final class FileCommands {
 	}
 
 	public static Command ftInitDownload(int transferId, String path, int channelId, String channelPassword) {
-		if (path == null) throw new IllegalArgumentException("File path cannot be null");
-
 		CommandBuilder builder = new CommandBuilder("ftinitdownload", 6);
 		builder.add(new KeyValueParam("clientftfid", transferId));
-		builder.add(new KeyValueParam("name", path.startsWith("/") ? path : "/" + path));
+		builder.add(new KeyValueParam("name", prefixSlash(path)));
 		builder.add(new KeyValueParam("cid", channelId));
 		builder.add(new KeyValueParam("cpw", channelPassword));
 		builder.add(new KeyValueParam("seekpos", 0));
@@ -142,11 +134,9 @@ public final class FileCommands {
 
 	public static Command ftInitUpload(int transferId, String path, int channelId, String channelPassword,
 	                                   long size, boolean overwrite) {
-		if (path == null) throw new IllegalArgumentException("File path cannot be null");
-
 		CommandBuilder builder = new CommandBuilder("ftinitupload", 8);
 		builder.add(new KeyValueParam("clientftfid", transferId));
-		builder.add(new KeyValueParam("name", path.startsWith("/") ? path : "/" + path));
+		builder.add(new KeyValueParam("name", prefixSlash(path)));
 		builder.add(new KeyValueParam("cid", channelId));
 		builder.add(new KeyValueParam("cpw", channelPassword));
 		builder.add(new KeyValueParam("size", size));
@@ -168,8 +158,8 @@ public final class FileCommands {
 		CommandBuilder builder = new CommandBuilder("ftrenamefile", 4);
 		builder.add(new KeyValueParam("cid", channelId));
 		builder.add(new KeyValueParam("cpw", channelPassword));
-		builder.add(new KeyValueParam("oldname", oldPath.startsWith("/") ? oldPath : "/" + oldPath));
-		builder.add(new KeyValueParam("newname", newPath.startsWith("/") ? newPath : "/" + newPath));
+		builder.add(new KeyValueParam("oldname", prefixSlash(oldPath)));
+		builder.add(new KeyValueParam("newname", prefixSlash(newPath)));
 		return builder.build();
 	}
 
@@ -184,8 +174,13 @@ public final class FileCommands {
 		builder.add(new KeyValueParam("cpw", oldChannelPassword));
 		builder.add(new KeyValueParam("tcid", newChannelId));
 		builder.add(new KeyValueParam("tcpw", newChannelPassword));
-		builder.add(new KeyValueParam("oldname", oldPath.startsWith("/") ? oldPath : "/" + oldPath));
-		builder.add(new KeyValueParam("newname", newPath.startsWith("/") ? newPath : "/" + newPath));
+		builder.add(new KeyValueParam("oldname", prefixSlash(oldPath)));
+		builder.add(new KeyValueParam("newname", prefixSlash(newPath)));
 		return builder.build();
+	}
+
+	private static String prefixSlash(String path) {
+		if (path == null) throw new IllegalArgumentException("File path cannot be null");
+		return path.startsWith("/") ? path : "/" + path;
 	}
 }

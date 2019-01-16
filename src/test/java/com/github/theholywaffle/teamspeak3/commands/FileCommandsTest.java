@@ -33,7 +33,7 @@ public class FileCommandsTest {
   @Test
   public void ftDeleteFile_NullFileArrayException() {
     thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftDeleteFile(1, null, null);
+    FileCommands.ftDeleteFile(1, null, (String[]) null);
   }
 
   @Test
@@ -60,7 +60,7 @@ public class FileCommandsTest {
   @Test
   public void ftGetFileInfo_NullFileArrayException() {
     thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftGetFileInfo(1, null, null);
+    FileCommands.ftGetFileInfo(1, null, (String[]) null);
   }
 
   @Test
@@ -73,7 +73,7 @@ public class FileCommandsTest {
   @Test
   public void ftGetFileInfo() {
     final String[] filePaths = {"dir1", "/dir2"};
-    final String expected = "ftgetfileinfo cid=1 cpw= name=dir1|cid=1 cpw= name=\\/dir2";
+    final String expected = "ftgetfileinfo cid=1 cpw= name=\\/dir1|cid=1 cpw= name=\\/dir2";
     Assert.assertEquals(expected, FileCommands.ftGetFileInfo(1, null, filePaths).toString());
   }
 
