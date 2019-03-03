@@ -98,6 +98,7 @@ class Connection {
 	}
 
 	private static boolean joinThread(Thread thread) {
+		if (thread == Thread.currentThread()) return false;
 		try {
 			thread.join();
 			return false;
