@@ -63,6 +63,10 @@ public class TS3Query {
 		}
 	}
 
+	public enum Protocol {
+		RAW, SSH
+	}
+
 	private final ConnectionHandler connectionHandler;
 	private final EventManager eventManager;
 	private final ExecutorService userThreadPool;
@@ -120,7 +124,11 @@ public class TS3Query {
 		Connection con = new Connection(this, config, queue);
 
 		try {
-			connectionHandler.onConnect(queue.getApi());
+			TS3Api api = queue.getApi();
+			if (config.getProtocol() == Protocol.RAW && config.hasLoginCredentials()) {
+				api.login(config.getUsername(), config.getPassword());
+			}
+			connectionHandler.onConnect(api);
 		} catch (TS3QueryShutDownException e) {
 			// Disconnected during onConnect, re-throw as a TS3ConnectionFailedException
 			throw new TS3ConnectionFailedException(e);

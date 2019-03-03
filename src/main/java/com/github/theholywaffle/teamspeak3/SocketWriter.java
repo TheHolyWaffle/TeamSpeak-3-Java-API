@@ -30,10 +30,9 @@ import com.github.theholywaffle.teamspeak3.commands.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
 class SocketWriter extends Thread {
@@ -45,11 +44,11 @@ class SocketWriter extends Thread {
 	private final int floodRate;
 	private final boolean logComms;
 
-	SocketWriter(Connection connection, Socket socket, TS3Config config) throws IOException {
+	SocketWriter(Connection connection, OutputStream outStream, TS3Config config) {
 		super("[TeamSpeak-3-Java-API] SocketWriter");
 
 		con = connection;
-		out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true);
+		out = new PrintWriter(new OutputStreamWriter(outStream, StandardCharsets.UTF_8), true);
 		floodRate = config.getFloodRate().getMs();
 		logComms = config.getEnableCommunicationsLogging();
 	}

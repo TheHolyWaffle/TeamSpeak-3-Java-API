@@ -29,14 +29,13 @@ package com.github.theholywaffle.teamspeak3;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
 
 import java.io.IOException;
-import java.net.Socket;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 class Connection {
 
 	private final TS3Query ts3Query;
-	private final Socket socket;
+	private final IOChannel ioChannel;
 	private final SocketReader socketReader;
 	private final SocketWriter socketWriter;
 	private final KeepAlive keepAlive;
@@ -52,12 +51,14 @@ class Connection {
 		commandTimeout = config.getCommandTimeout();
 
 		try {
-			socket = new Socket(config.getHost(), config.getQueryPort());
-			socket.setTcpNoDelay(true);
-			socket.setSoTimeout(config.getCommandTimeout());
+			if (config.getProtocol() == TS3Query.Protocol.SSH) {
+				ioChannel = new SSHChannel(config);
+			} else {
+				ioChannel = new SocketChannel(config);
+			}
 
-			socketReader = new SocketReader(this, socket, query, config);
-			socketWriter = new SocketWriter(this, socket, config);
+			socketReader = new SocketReader(this, ioChannel.getInputStream(), query, config);
+			socketWriter = new SocketWriter(this, ioChannel.getOutputStream(), config);
 			keepAlive = new KeepAlive(this);
 		} catch (IOException ioe) {
 			closeSocket();
@@ -108,9 +109,9 @@ class Connection {
 	}
 
 	private void closeSocket() {
-		if (socket == null) return;
+		if (ioChannel == null) return;
 		try {
-			socket.close();
+			ioChannel.close();
 		} catch (IOException ignored) {
 		}
 	}

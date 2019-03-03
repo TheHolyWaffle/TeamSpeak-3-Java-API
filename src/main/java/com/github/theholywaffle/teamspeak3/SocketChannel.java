@@ -1,10 +1,10 @@
-package com.github.theholywaffle.teamspeak3.api.exception;
+package com.github.theholywaffle.teamspeak3;
 
 /*
  * #%L
  * TeamSpeak 3 Java API
  * %%
- * Copyright (C) 2014 Bert De Geyter
+ * Copyright (C) 2019 Bert De Geyter, Roger Baumgartner
  * %%
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api.exception;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,16 +26,38 @@ package com.github.theholywaffle.teamspeak3.api.exception;
  * #L%
  */
 
-public class TS3ConnectionFailedException extends TS3Exception {
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.Socket;
 
-	private static final long serialVersionUID = 6849777544299282019L;
+class SocketChannel implements IOChannel {
 
-	public TS3ConnectionFailedException(String msg) {
-		super(msg);
+	private final Socket socket;
+
+	SocketChannel(TS3Config config) throws IOException {
+		try {
+			socket = new Socket(config.getHost(), config.getQueryPort());
+			socket.setTcpNoDelay(true);
+			socket.setSoTimeout(config.getCommandTimeout());
+		} catch (IOException ioe) {
+			close();
+			throw ioe;
+		}
 	}
 
-	public TS3ConnectionFailedException(Throwable c) {
-		super("Could not connect to the TeamSpeak3 server", c);
+	@Override
+	public InputStream getInputStream() throws IOException {
+		return socket.getInputStream();
 	}
 
+	@Override
+	public OutputStream getOutputStream() throws IOException {
+		return socket.getOutputStream();
+	}
+
+	@Override
+	public void close() throws IOException {
+		if (socket != null) socket.close();
+	}
 }

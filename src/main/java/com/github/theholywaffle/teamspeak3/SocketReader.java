@@ -37,8 +37,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 
@@ -55,12 +55,12 @@ class SocketReader extends Thread {
 	private ResponseBuilder responseBuilder = null;
 	private String lastEvent = "";
 
-	SocketReader(Connection connection, Socket socket, TS3Query query, TS3Config config) throws IOException {
+	SocketReader(Connection connection, InputStream inStream, TS3Query query, TS3Config config) throws IOException {
 		super("[TeamSpeak-3-Java-API] SocketReader");
 
 		ts3 = query;
 		con = connection;
-		in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+		in = new BufferedReader(new InputStreamReader(inStream, StandardCharsets.UTF_8));
 		logComms = config.getEnableCommunicationsLogging();
 
 		readWelcomeMessage();

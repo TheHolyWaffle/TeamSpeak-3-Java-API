@@ -27,13 +27,17 @@ package com.github.theholywaffle.teamspeak3;
  */
 
 import com.github.theholywaffle.teamspeak3.TS3Query.FloodRate;
+import com.github.theholywaffle.teamspeak3.TS3Query.Protocol;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 
 public class TS3Config {
 
 	private String host = null;
-	private int queryPort = 10011;
+	private int queryPort = -1;
+	private Protocol protocol = Protocol.RAW;
+	private String username = null;
+	private String password = null;
 	private FloodRate floodRate = FloodRate.DEFAULT;
 	private boolean enableCommunicationsLogging = false;
 	private int commandTimeout = 4000;
@@ -58,7 +62,40 @@ public class TS3Config {
 	}
 
 	int getQueryPort() {
-		return queryPort;
+		if (queryPort > 0) {
+			return queryPort;
+		} else {
+			// Query port not set by user, use default for chosen protocol
+			return protocol == Protocol.SSH ? 10022 : 10011;
+		}
+	}
+
+	public TS3Config setProtocol(Protocol protocol) {
+		if (protocol == null) throw new IllegalArgumentException("protocol cannot be null!");
+		this.protocol = protocol;
+		return this;
+	}
+
+	Protocol getProtocol() {
+		return protocol;
+	}
+
+	public TS3Config setLoginCredentials(String username, String password) {
+		this.username = username;
+		this.password = password;
+		return this;
+	}
+
+	boolean hasLoginCredentials() {
+		return username != null && password != null;
+	}
+
+	String getUsername() {
+		return username;
+	}
+
+	String getPassword() {
+		return password;
 	}
 
 	public TS3Config setFloodRate(FloodRate rate) {
