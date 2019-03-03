@@ -36,8 +36,8 @@ class Connection {
 
 	private final TS3Query ts3Query;
 	private final IOChannel ioChannel;
-	private final SocketReader socketReader;
-	private final SocketWriter socketWriter;
+	private final StreamReader streamReader;
+	private final StreamWriter streamWriter;
 	private final KeepAlive keepAlive;
 
 	private final AtomicReference<CommandQueue> commandQueue;
@@ -57,16 +57,16 @@ class Connection {
 				ioChannel = new SocketChannel(config);
 			}
 
-			socketReader = new SocketReader(this, ioChannel.getInputStream(), query, config);
-			socketWriter = new SocketWriter(this, ioChannel.getOutputStream(), config);
+			streamReader = new StreamReader(this, ioChannel.getInputStream(), query, config);
+			streamWriter = new StreamWriter(this, ioChannel.getOutputStream(), config);
 			keepAlive = new KeepAlive(this);
 		} catch (IOException ioe) {
 			closeSocket();
 			throw new TS3ConnectionFailedException(ioe);
 		}
 
-		socketReader.start();
-		socketWriter.start();
+		streamReader.start();
+		streamWriter.start();
 		keepAlive.start();
 	}
 
@@ -83,12 +83,12 @@ class Connection {
 
 	void disconnect() {
 		keepAlive.interrupt();
-		socketWriter.interrupt();
-		socketReader.interrupt();
+		streamWriter.interrupt();
+		streamReader.interrupt();
 
 		boolean wasInterrupted = joinThread(keepAlive);
-		wasInterrupted |= joinThread(socketWriter);
-		wasInterrupted |= joinThread(socketReader);
+		wasInterrupted |= joinThread(streamWriter);
+		wasInterrupted |= joinThread(streamReader);
 
 		if (wasInterrupted) {
 			// Restore the interrupt for the caller

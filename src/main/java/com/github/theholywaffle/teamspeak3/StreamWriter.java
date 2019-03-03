@@ -35,17 +35,17 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 
-class SocketWriter extends Thread {
+class StreamWriter extends Thread {
 
-	private static final Logger log = LoggerFactory.getLogger(SocketWriter.class);
+	private static final Logger log = LoggerFactory.getLogger(StreamWriter.class);
 
 	private final Connection con;
 	private final PrintWriter out;
 	private final int floodRate;
 	private final boolean logComms;
 
-	SocketWriter(Connection connection, OutputStream outStream, TS3Config config) {
-		super("[TeamSpeak-3-Java-API] SocketWriter");
+	StreamWriter(Connection connection, OutputStream outStream, TS3Config config) {
+		super("[TeamSpeak-3-Java-API] StreamWriter");
 
 		con = connection;
 		out = new PrintWriter(new OutputStreamWriter(outStream, StandardCharsets.UTF_8), true);
@@ -75,7 +75,7 @@ class SocketWriter extends Thread {
 		out.close();
 
 		if (!isInterrupted()) {
-			log.warn("SocketWriter has stopped!");
+			log.warn("StreamWriter has stopped!");
 			con.internalDisconnect();
 		}
 	}

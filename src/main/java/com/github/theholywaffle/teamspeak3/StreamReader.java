@@ -42,9 +42,9 @@ import java.io.InputStreamReader;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 
-class SocketReader extends Thread {
+class StreamReader extends Thread {
 
-	private static final Logger log = LoggerFactory.getLogger(SocketReader.class);
+	private static final Logger log = LoggerFactory.getLogger(StreamReader.class);
 
 	private final TS3Query ts3;
 	private final Connection con;
@@ -55,8 +55,8 @@ class SocketReader extends Thread {
 	private ResponseBuilder responseBuilder = null;
 	private String lastEvent = "";
 
-	SocketReader(Connection connection, InputStream inStream, TS3Query query, TS3Config config) throws IOException {
-		super("[TeamSpeak-3-Java-API] SocketReader");
+	StreamReader(Connection connection, InputStream inStream, TS3Query query, TS3Config config) throws IOException {
+		super("[TeamSpeak-3-Java-API] StreamReader");
 
 		ts3 = query;
 		con = connection;
