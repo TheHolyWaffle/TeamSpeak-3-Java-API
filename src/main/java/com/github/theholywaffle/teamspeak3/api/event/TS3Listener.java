@@ -26,6 +26,16 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * #L%
  */
 
+/**
+ * Interface used to listen to events from a TeamSpeak3 server.
+ * <p><i>
+ * Directly using this interface requires implementing all listener methods, even if you don't intend to use them.
+ * Consider extending {@link TS3EventAdapter} instead.
+ * </i></p>
+ *
+ * @see com.github.theholywaffle.teamspeak3.TS3Api#addTS3Listeners(TS3Listener...)
+ * @see com.github.theholywaffle.teamspeak3.TS3ApiAsync#addTS3Listeners(TS3Listener...)
+ */
 public interface TS3Listener {
 
 	void onTextMessage(TextMessageEvent e);
