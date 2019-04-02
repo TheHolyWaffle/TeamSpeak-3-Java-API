@@ -38,4 +38,7 @@ public class TS3ConnectionFailedException extends TS3Exception {
 		super("Could not connect to the TeamSpeak3 server", c);
 	}
 
+	public TS3ConnectionFailedException(String msg, Throwable cause) {
+		super(msg, cause);
+	}
 }

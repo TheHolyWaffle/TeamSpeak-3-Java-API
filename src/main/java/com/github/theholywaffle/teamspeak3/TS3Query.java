@@ -120,29 +120,39 @@ public class TS3Query {
 
 		disconnect(); // If we're already connected
 
-		CommandQueue queue = CommandQueue.newConnectQueue(this);
-		Connection con = new Connection(this, config, queue);
-
 		try {
-			TS3Api api = queue.getApi();
-			if (config.getProtocol() == Protocol.RAW && config.hasLoginCredentials()) {
-				api.login(config.getUsername(), config.getPassword());
+			CommandQueue queue = CommandQueue.newConnectQueue(this);
+			Connection con = new Connection(this, config, queue);
+
+			try {
+				TS3Api api = queue.getApi();
+				if (config.getProtocol() == Protocol.RAW && config.hasLoginCredentials()) {
+					api.login(config.getUsername(), config.getPassword());
+				}
+				connectionHandler.onConnect(api);
+			} catch (TS3QueryShutDownException e) {
+				// Disconnected during onConnect, re-throw as a TS3ConnectionFailedException
+				queue.failRemainingCommands();
+				throw new TS3ConnectionFailedException(e);
+			} catch (Exception e) {
+				con.disconnect();
+				queue.failRemainingCommands();
+				throw new TS3ConnectionFailedException("ConnectionHandler threw exception in connect handler", e);
 			}
-			connectionHandler.onConnect(api);
-		} catch (TS3QueryShutDownException e) {
-			// Disconnected during onConnect, re-throw as a TS3ConnectionFailedException
-			throw new TS3ConnectionFailedException(e);
-		} catch (Exception e) {
-			log.error("ConnectionHandler threw exception in connect handler", e);
-			return;
+
+			// Reject new commands and wait until the onConnect queue is empty
+			queue.shutDown();
+
+			connection = con;
+			con.setCommandQueue(globalQueue);
+			connected.set(true);
+
+		} catch (TS3ConnectionFailedException conFailed) {
+			// If this is the first connection attempt, we won't run the handleDisconnect method,
+			// so we need to call shutDown from this method instead.
+			if (connection == null) shutDown();
+			throw conFailed;
 		}
-
-		// Reject new commands and wait until the onConnect queue is empty
-		queue.shutDown();
-
-		connection = con;
-		con.setCommandQueue(globalQueue);
-		connected.set(true);
 	}
 
 	/**
