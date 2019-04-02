@@ -222,6 +222,9 @@ class CommandQueue {
 			for (Command command : allCommands) {
 				command.getFuture().fail(new TS3QueryShutDownException());
 			}
+
+			sendQueue.clear();
+			receiveQueue.clear();
 		} finally {
 			queueLock.unlock();
 		}
