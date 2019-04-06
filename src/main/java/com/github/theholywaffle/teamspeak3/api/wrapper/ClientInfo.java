@@ -28,6 +28,7 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
 
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 
+import java.util.Date;
 import java.util.Map;
 
 public class ClientInfo extends Client {
@@ -119,6 +120,11 @@ public class ClientInfo extends Client {
 		return get(ClientProperty.CLIENT_NICKNAME_PHONETIC);
 	}
 
+	public Date getTalkRequestCreatedDate() {
+		long talkRequestDate = getLong(ClientProperty.CLIENT_TALK_REQUEST);
+		return talkRequestDate == 0 ? null : new Date(talkRequestDate * 1000L);
+	}
+
 	public String getTalkRequestMessage() {
 		return get(ClientProperty.CLIENT_TALK_REQUEST_MSG);
 	}
@@ -164,7 +170,7 @@ public class ClientInfo extends Client {
 	}
 
 	public boolean isRequestingToTalk() {
-		return getBoolean(ClientProperty.CLIENT_TALK_REQUEST);
+		return getLong(ClientProperty.CLIENT_TALK_REQUEST) != 0L;
 	}
 
 	@Override
