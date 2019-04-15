@@ -122,7 +122,7 @@ public class TS3Query {
 	 * 		configuration for this TS3Query
 	 */
 	public TS3Query(TS3Config config) {
-		this.config = config;
+		this.config = config.freeze();
 		this.eventManager = new EventManager(this);
 		this.userThreadPool = Executors.newCachedThreadPool();
 		this.fileTransferHelper = new FileTransferHelper(config.getHost());

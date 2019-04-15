@@ -36,6 +36,8 @@ import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
  */
 public class TS3Config {
 
+	private boolean frozen = false;
+
 	private String host = null;
 	private int queryPort = -1;
 	private Protocol protocol = Protocol.RAW;
@@ -64,6 +66,8 @@ public class TS3Config {
 	 * @return this TS3Config object for chaining
 	 */
 	public TS3Config setHost(String host) {
+		checkFrozen();
+
 		this.host = host;
 		return this;
 	}
@@ -95,6 +99,8 @@ public class TS3Config {
 	 * 		if the port is out of range
 	 */
 	public TS3Config setQueryPort(int queryPort) {
+		checkFrozen();
+
 		if (queryPort <= 0 || queryPort > 65535) {
 			throw new IllegalArgumentException("Port out of range: " + queryPort);
 		}
@@ -125,6 +131,8 @@ public class TS3Config {
 	 * @see Protocol Protocol
 	 */
 	public TS3Config setProtocol(Protocol protocol) {
+		checkFrozen();
+
 		if (protocol == null) throw new IllegalArgumentException("protocol cannot be null!");
 		this.protocol = protocol;
 		return this;
@@ -153,6 +161,8 @@ public class TS3Config {
 	 * @return this TS3Config object for chaining
 	 */
 	public TS3Config setLoginCredentials(String username, String password) {
+		checkFrozen();
+
 		this.username = username;
 		this.password = password;
 		return this;
@@ -190,6 +200,8 @@ public class TS3Config {
 	 * @see FloodRate FloodRate
 	 */
 	public TS3Config setFloodRate(FloodRate rate) {
+		checkFrozen();
+
 		if (rate == null) throw new IllegalArgumentException("rate cannot be null!");
 		this.floodRate = rate;
 		return this;
@@ -213,6 +225,8 @@ public class TS3Config {
 	 * @return this TS3Config object for chaining
 	 */
 	public TS3Config setEnableCommunicationsLogging(boolean enable) {
+		checkFrozen();
+
 		enableCommunicationsLogging = enable;
 		return this;
 	}
@@ -241,6 +255,8 @@ public class TS3Config {
 	 * 		if the timeout value is less than or equal to {@code 0}
 	 */
 	public TS3Config setCommandTimeout(int commandTimeout) {
+		checkFrozen();
+
 		if (commandTimeout <= 0) {
 			throw new IllegalArgumentException("Timeout value must be greater than 0");
 		}
@@ -272,6 +288,8 @@ public class TS3Config {
 	 * @see ConnectionHandler The connection handler
 	 */
 	public TS3Config setReconnectStrategy(ReconnectStrategy reconnectStrategy) {
+		checkFrozen();
+
 		if (reconnectStrategy == null) throw new IllegalArgumentException("reconnectStrategy cannot be null!");
 		this.reconnectStrategy = reconnectStrategy;
 		return this;
@@ -312,11 +330,25 @@ public class TS3Config {
 	 * @see TS3Config#setReconnectStrategy(ReconnectStrategy)
 	 */
 	public TS3Config setConnectionHandler(ConnectionHandler connectionHandler) {
+		checkFrozen();
+
 		this.connectionHandler = connectionHandler;
 		return this;
 	}
 
 	ConnectionHandler getConnectionHandler() {
 		return connectionHandler;
+	}
+
+	TS3Config freeze() {
+		frozen = true;
+		return this;
+	}
+
+	private void checkFrozen() {
+		if (frozen) {
+			throw new IllegalStateException("TS3Config cannot be modified after being used to create a TS3Query. " +
+					"Please make any changes to TS3Config *before* calling TS3Query's constructor.");
+		}
 	}
 }
