@@ -65,6 +65,7 @@ class SSHChannel implements IOChannel {
 			client.setRemoteCharset(StandardCharsets.UTF_8);
 
 			client.connect(config.getHost(), config.getQueryPort());
+			client.getSocket().setTcpNoDelay(true);
 			client.authPassword(config.getUsername(), config.getPassword());
 			session = client.startSession();
 			session.startShell();
