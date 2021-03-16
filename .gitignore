@@ -16,4 +16,5 @@
 /html
 
 # Idea Files
+*.iml
 /.idea
