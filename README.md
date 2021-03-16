@@ -1,8 +1,8 @@
-TeamSpeak 3 Java API
+TeamSpeak 3 Java/Kotlin API
 ====================
 [![Build Status](https://travis-ci.org/TheHolyWaffle/TeamSpeak-3-Java-API.svg)](https://travis-ci.org/TheHolyWaffle/TeamSpeak-3-Java-API) [![Maven Central](https://img.shields.io/maven-central/v/com.github.theholywaffle/teamspeak3-api.svg)](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.github.theholywaffle%22%20a%3A%22teamspeak3-api%22) [![Javadocs](http://www.javadoc.io/badge/com.github.theholywaffle/teamspeak3-api.svg)](http://www.javadoc.io/doc/com.github.theholywaffle/teamspeak3-api) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/TheHolyWaffle/TeamSpeak-3-Java-API?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-A Java wrapper of the [TeamSpeak 3](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf)  Server Query API
+A Java and Kotlin wrapper of the [TeamSpeak 3](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf)  Server Query API
 
 ## Features
 
