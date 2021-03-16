@@ -66,6 +66,7 @@ All functionality is contained in the [TS3Api](src/main/java/com/github/theholyw
 
 ### Example
 
+#### Java
 ```java
 final TS3Config config = new TS3Config();
 config.setHost("77.77.77.77");
@@ -78,6 +79,22 @@ api.login("serveradmin", "serveradminpassword");
 api.selectVirtualServerById(1);
 api.setNickname("PutPutBot");
 api.sendChannelMessage("PutPutBot is online!");
+...
+```
+
+#### Kotlin
+```kotlin
+val config = TS3Config()
+config.setHost("77.77.77.77")
+
+val query = TS3Query(config)
+query.connect()
+
+val api = query.api
+api.login("serveradmin", "serveradminpassword")
+api.selectVirtualServerById(1)
+api.setNickname("PutPutBot")
+api.sendChannelMessage("PutPutBot is online!")
 ...
 ```
 
