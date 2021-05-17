@@ -26,7 +26,11 @@ package com.github.theholywaffle.teamspeak3.commands;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.commands.parameter.ArrayParameter;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
+import com.github.theholywaffle.teamspeak3.commands.parameter.OptionParam;
+
+import java.util.Collection;
 
 public final class BanCommands {
 
@@ -49,11 +53,19 @@ public final class BanCommands {
 		return builder.build();
 	}
 
-	public static Command banClient(int clientId, long timeInSeconds, String reason) {
-		CommandBuilder builder = new CommandBuilder("banclient", 3);
-		builder.add(new KeyValueParam("clid", clientId));
+	public static Command banClient(Collection<Integer> clientIds, long timeInSeconds,
+	                                String reason, boolean continueOnError) {
+		CommandBuilder builder = new CommandBuilder("banclient", 4);
 		builder.addIf(timeInSeconds > 0, new KeyValueParam("time", timeInSeconds));
 		builder.addIf(reason != null, new KeyValueParam("banreason", reason));
+		builder.addIf(continueOnError, new OptionParam("continueonerror"));
+
+		ArrayParameter clients = new ArrayParameter(clientIds.size());
+		for (int clientId : clientIds) {
+			clients.add(new KeyValueParam("clid", clientId));
+		}
+		builder.add(clients);
+
 		return builder.build();
 	}
 

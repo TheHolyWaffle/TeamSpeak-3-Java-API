@@ -548,13 +548,12 @@ public class TS3ApiAsync {
 	/**
 	 * Bans a client with a given client ID for a given time.
 	 * <p>
-	 * Please note that this will create 2 or 3 separate ban rules,
+	 * Please note that this will create up to three separate ban rules,
 	 * one for the targeted client's IP address, one for their unique identifier,
-	 * and potentially one more for their "myTeamSpeak" ID.
+	 * and potentially one more entry for their "myTeamSpeak" ID, if available.
 	 * </p><p>
 	 * <i>Exception:</i> If the banned client connects via a loopback address
-	 * (i.e. {@code 127.0.0.1} or {@code localhost}), no IP ban is created
-	 * and the returned array will only have 1 entry.
+	 * (i.e. {@code 127.0.0.1} or {@code localhost}), no IP ban is created.
 	 * </p>
 	 *
 	 * @param clientId
@@ -577,12 +576,12 @@ public class TS3ApiAsync {
 	/**
 	 * Bans a client with a given client ID for a given time for the specified reason.
 	 * <p>
-	 * Please note that this will create two separate ban rules,
-	 * one for the targeted client's IP address and their unique identifier.
+	 * Please note that this will create up to three separate ban rules,
+	 * one for the targeted client's IP address, one for their unique identifier,
+	 * and potentially one more entry for their "myTeamSpeak" ID, if available.
 	 * </p><p>
 	 * <i>Exception:</i> If the banned client connects via a loopback address
-	 * (i.e. {@code 127.0.0.1} or {@code localhost}), no IP ban is created
-	 * and the returned array will only have 1 entry.
+	 * (i.e. {@code 127.0.0.1} or {@code localhost}), no IP ban is created.
 	 * </p>
 	 *
 	 * @param clientId
@@ -592,7 +591,7 @@ public class TS3ApiAsync {
 	 * @param reason
 	 * 		the reason for the ban, can be null
 	 *
-	 * @return an array containing the IDs of the first and the second ban entry
+	 * @return an array containing the IDs of the created ban entries
 	 *
 	 * @throws TS3CommandFailedException
 	 * 		if the execution of a command fails
@@ -601,19 +600,19 @@ public class TS3ApiAsync {
 	 * @see #addBan(String, String, String, long, String)
 	 */
 	public CommandFuture<int[]> banClient(int clientId, long timeInSeconds, String reason) {
-		Command cmd = BanCommands.banClient(clientId, timeInSeconds, reason);
+		Command cmd = BanCommands.banClient(Collections.singletonList(clientId), timeInSeconds, reason, false);
 		return executeAndReturnIntArray(cmd, "banid");
 	}
 
 	/**
 	 * Bans a client with a given client ID permanently for the specified reason.
 	 * <p>
-	 * Please note that this will create two separate ban rules,
-	 * one for the targeted client's IP address and their unique identifier.
+	 * Please note that this will create up to three separate ban rules,
+	 * one for the targeted client's IP address, one for their unique identifier,
+	 * and potentially one more entry for their "myTeamSpeak" ID, if available.
 	 * </p><p>
 	 * <i>Exception:</i> If the banned client connects via a loopback address
-	 * (i.e. {@code 127.0.0.1} or {@code localhost}), no IP ban is created
-	 * and the returned array will only have 1 entry.
+	 * (i.e. {@code 127.0.0.1} or {@code localhost}), no IP ban is created.
 	 * </p>
 	 *
 	 * @param clientId
@@ -621,7 +620,7 @@ public class TS3ApiAsync {
 	 * @param reason
 	 * 		the reason for the ban, can be null
 	 *
-	 * @return an array containing the IDs of the first and the second ban entry
+	 * @return an array containing the IDs of the created ban entries
 	 *
 	 * @throws TS3CommandFailedException
 	 * 		if the execution of a command fails
@@ -631,6 +630,42 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<int[]> banClient(int clientId, String reason) {
 		return banClient(clientId, 0, reason);
+	}
+
+	/**
+	 * Bans multiple clients by their client ID for a given time for the specified reason.
+	 * <p>
+	 * Please note that this will create up to three separate ban rules for each client,
+	 * one for the targeted client's IP address, one for their unique identifier,
+	 * and potentially one more entry for their "myTeamSpeak" ID, if available.
+	 * </p><p>
+	 * <i>Exception:</i> If the banned client connects via a loopback address
+	 * (i.e. {@code 127.0.0.1} or {@code localhost}), no IP ban is created.
+	 * </p><p>
+	 * <i>Exception:</i> If two or more clients are connecting from the
+	 * same IP address, only one IP ban entry for that IP will be created.
+	 * </p>
+	 *
+	 * @param clientIds
+	 * 		the IDs of the clients to be banned
+	 * @param timeInSeconds
+	 * 		the duration of the ban in seconds. 0 equals a permanent ban
+	 * @param reason
+	 * 		the reason for the ban, can be null
+	 * @param continueOnError
+	 * 		if true, continue to the next client if banning one client fails, else do not create any bans on error
+	 *
+	 * @return an array containing the IDs of the created ban entries
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Client#getId()
+	 * @see #addBan(String, String, String, long, String)
+	 */
+	public CommandFuture<int[]> banClients(Collection<Integer> clientIds, long timeInSeconds, String reason, boolean continueOnError) {
+		Command cmd = BanCommands.banClient(clientIds, timeInSeconds, reason, continueOnError);
+		return executeAndReturnIntArray(cmd, "banid");
 	}
 
 	/**
