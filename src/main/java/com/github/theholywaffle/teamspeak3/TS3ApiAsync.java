@@ -600,7 +600,7 @@ public class TS3ApiAsync {
 	 * @see #addBan(String, String, String, long, String)
 	 */
 	public CommandFuture<int[]> banClient(int clientId, long timeInSeconds, String reason) {
-		Command cmd = BanCommands.banClient(Collections.singletonList(clientId), timeInSeconds, reason, false);
+		Command cmd = BanCommands.banClient(new int[] {clientId}, timeInSeconds, reason, false);
 		return executeAndReturnIntArray(cmd, "banid");
 	}
 
@@ -663,7 +663,10 @@ public class TS3ApiAsync {
 	 * @see Client#getId()
 	 * @see #addBan(String, String, String, long, String)
 	 */
-	public CommandFuture<int[]> banClients(Collection<Integer> clientIds, long timeInSeconds, String reason, boolean continueOnError) {
+	public CommandFuture<int[]> banClients(int[] clientIds, long timeInSeconds, String reason, boolean continueOnError) {
+		if (clientIds == null) throw new IllegalArgumentException("Client ID array was null");
+		if (clientIds.length == 0) return CommandFuture.immediate(new int[0]); // Success
+
 		Command cmd = BanCommands.banClient(clientIds, timeInSeconds, reason, continueOnError);
 		return executeAndReturnIntArray(cmd, "banid");
 	}

@@ -36,7 +36,6 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.*;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -614,7 +613,7 @@ public class TS3Api {
 	 * @see Client#getId()
 	 * @see #addBan(String, String, String, long, String)
 	 */
-	public int[] banClients(Collection<Integer> clientIds, long timeInSeconds, String reason, boolean continueOnError) {
+	public int[] banClients(int[] clientIds, long timeInSeconds, String reason, boolean continueOnError) {
 		return asyncApi.banClients(clientIds, timeInSeconds, reason, continueOnError).getUninterruptibly();
 	}
 
