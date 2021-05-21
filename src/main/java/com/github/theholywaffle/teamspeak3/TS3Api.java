@@ -477,6 +477,34 @@ public class TS3Api {
 	}
 
 	/**
+	 * Creates a server query login with name {@code loginName} for the client specified by {@code clientDBId}
+	 * on the currently selected virtual server and returns the password of the created login.
+	 * If the client already had a server query login, the existing login will be deleted and replaced.
+	 * <p>
+	 * Moreover, this method can be used to create new <i>global</i> server query logins that are not tied to any
+	 * particular virtual server or client. To create such a server query login, make sure no virtual server is
+	 * selected (e.g. use {@code selectVirtualServerById(0)}) and call this method with {@code clientDBId = 0}.
+	 * </p>
+	 *
+	 * @param loginName
+	 * 		the name of the server query login to add
+	 * @param clientDBId
+	 * 		the database ID of the client for which a server query login should be created
+	 *
+	 * @return an object containing the password of the new server query login
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see #deleteServerQueryLogin(int)
+	 * @see #getServerQueryLogins()
+	 * @see #updateServerQueryLogin(String)
+	 */
+	public CreatedQueryLogin addServerQueryLogin(String loginName, int clientDBId) {
+		return asyncApi.addServerQueryLogin(loginName, clientDBId).getUninterruptibly();
+	}
+
+	/**
 	 * Adds one or more {@link TS3Listener}s to the event manager of the query.
 	 * These listeners will be notified when the TS3 server fires an event.
 	 * <p>
@@ -1296,6 +1324,26 @@ public class TS3Api {
 	 */
 	public void deleteServerGroupPermission(int groupId, String permName) {
 		asyncApi.deleteServerGroupPermission(groupId, permName).getUninterruptibly();
+	}
+
+	/**
+	 * Deletes the server query login with the specified client database ID.
+	 * <p>
+	 * If you only know the name of the server query login, use {@link #getServerQueryLoginsByName(String)} first.
+	 * </p>
+	 *
+	 * @param clientDBId
+	 * 		the client database ID of the server query login (usually the ID of the associated client)
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see #addServerQueryLogin(String, int)
+	 * @see #getServerQueryLogins()
+	 * @see #updateServerQueryLogin(String)
+	 */
+	public void deleteServerQueryLogin(int clientDBId) {
+		asyncApi.deleteServerQueryLogin(clientDBId).getUninterruptibly();
 	}
 
 	/**
@@ -2768,6 +2816,46 @@ public class TS3Api {
 	 */
 	public VirtualServerInfo getServerInfo() {
 		return asyncApi.getServerInfo().getUninterruptibly();
+	}
+
+	/**
+	 * Gets a list of all server query logins (containing login name, virtual server ID, and client database ID).
+	 * If a virtual server is selected, only the server query logins of the selected virtual server are returned.
+	 *
+	 * @return a list of {@code QueryLogin} objects describing existing server query logins
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see #addServerQueryLogin(String, int)
+	 * @see #deleteServerQueryLogin(int)
+	 * @see #getServerQueryLoginsByName(String)
+	 * @see #updateServerQueryLogin(String)
+	 */
+	public List<QueryLogin> getServerQueryLogins() {
+		return asyncApi.getServerQueryLogins().getUninterruptibly();
+	}
+
+	/**
+	 * Gets a list of all server query logins (containing login name, virtual server ID, and client database ID)
+	 * whose login name matches the specified SQL-like pattern.
+	 * If a virtual server is selected, only the server query logins of the selected virtual server are returned.
+	 *
+	 * @param pattern
+	 * 		the SQL-like pattern to match the server query login name against
+	 *
+	 * @return a list of {@code QueryLogin} objects describing existing server query logins
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see #addServerQueryLogin(String, int)
+	 * @see #deleteServerQueryLogin(int)
+	 * @see #getServerQueryLogins()
+	 * @see #updateServerQueryLogin(String)
+	 */
+	public List<QueryLogin> getServerQueryLoginsByName(String pattern) {
+		return asyncApi.getServerQueryLoginsByName(pattern).getUninterruptibly();
 	}
 
 	/**
@@ -4370,6 +4458,9 @@ public class TS3Api {
 	 * @throws TS3CommandFailedException
 	 * 		if the execution of a command fails
 	 * @querycommands 1
+	 * @see #addServerQueryLogin(String, int)
+	 * @see #deleteServerQueryLogin(int)
+	 * @see #getServerQueryLogins()
 	 */
 	public String updateServerQueryLogin(String loginName) {
 		return asyncApi.updateServerQueryLogin(loginName).getUninterruptibly();
