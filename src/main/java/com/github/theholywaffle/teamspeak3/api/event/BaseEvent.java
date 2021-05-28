@@ -95,7 +95,8 @@ public abstract class BaseEvent extends Wrapper implements TS3Event {
 	 * <p>
 	 * Here's an incomplete list of known reason IDs:
 	 * </p>
-	 * <table summary="Incomplete list of known reason IDs">
+	 * <table>
+	 * <caption>Incomplete list of known reason IDs</caption>
 	 * <tr><th>ID</th><th>Description</th></tr>
 	 * <tr><td>-1</td><td>No reason present</td></tr>
 	 * <tr><td>0</td><td>No external cause</td></tr>
