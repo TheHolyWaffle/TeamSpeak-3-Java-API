@@ -66,7 +66,7 @@ public class ClientInfo extends Client {
 	}
 
 	public String getBase64ClientUId() {
-		return get("client_base64HashClientUID");
+		return get(ClientProperty.CLIENT_BASE64HASHCLIENTUID);
 	}
 
 	public int getDefaultChannel() {

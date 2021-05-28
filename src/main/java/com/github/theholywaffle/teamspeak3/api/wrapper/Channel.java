@@ -42,11 +42,11 @@ public class Channel extends ChannelBase {
 	}
 
 	public int getTotalClientsFamily() {
-		return getInt("total_clients_family");
+		return getInt(ChannelProperty.TOTAL_CLIENTS_FAMILY);
 	}
 
 	public int getTotalClients() {
-		return getInt("total_clients");
+		return getInt(ChannelProperty.TOTAL_CLIENTS);
 	}
 
 	public int getNeededSubscribePower() {

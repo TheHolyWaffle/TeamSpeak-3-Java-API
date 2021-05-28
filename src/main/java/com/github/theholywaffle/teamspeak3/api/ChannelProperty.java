@@ -30,6 +30,8 @@ import java.util.Locale;
 
 public enum ChannelProperty implements Property {
 
+	CHANNEL_BANNER_GFX_URL(true),
+	CHANNEL_BANNER_MODE(true),
 	CHANNEL_CODEC(true),
 	CHANNEL_CODEC_IS_UNENCRYPTED(true),
 	CHANNEL_CODEC_LATENCY_FACTOR(false),
@@ -55,11 +57,15 @@ public enum ChannelProperty implements Property {
 	CHANNEL_NEEDED_TALK_POWER(true),
 	CHANNEL_ORDER(true),
 	CHANNEL_PASSWORD(true),
+	CHANNEL_SECURITY_SALT(false),
 	CHANNEL_TOPIC(true),
-	SECONDS_EMPTY(false),
+	CHANNEL_UNIQUE_IDENTIFIER(false),
 	CID(false),
+	CPID(true),
 	PID(false),
-	CPID(true);
+	SECONDS_EMPTY(false),
+	TOTAL_CLIENTS(false),
+	TOTAL_CLIENTS_FAMILY(false);
 
 	private final boolean changeable;
 

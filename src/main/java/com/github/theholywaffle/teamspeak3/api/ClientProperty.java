@@ -34,6 +34,7 @@ import java.util.Map;
 public enum ClientProperty implements Property {
 
 	CID(false),
+	CLID(false),
 	CLIENT_AWAY(false),
 	CLIENT_AWAY_MESSAGE(false),
 	/**
@@ -45,7 +46,12 @@ public enum ClientProperty implements Property {
 	 * </p>
 	 */
 	CLIENT_BADGES(true),
-	CLIENT_BASE64HASHCLIENTUID(false),
+	CLIENT_BASE64HASHCLIENTUID(false) {
+		@Override
+		public String getName() {
+			return "client_base64HashClientUID";
+		}
+	},
 	CLIENT_CHANNEL_GROUP_ID(false),
 	CLIENT_CHANNEL_GROUP_INHERITED_CHANNEL_ID(false),
 	CLIENT_COUNTRY(false),
@@ -54,12 +60,14 @@ public enum ClientProperty implements Property {
 	CLIENT_DEFAULT_CHANNEL(false),
 	CLIENT_DEFAULT_TOKEN(false),
 	CLIENT_DESCRIPTION(true),
+	CLIENT_ESTIMATED_LOCATION(false),
 	CLIENT_FLAG_AVATAR(false),
 	CLIENT_FLAG_TALKING(false),
 	CLIENT_ICON_ID(true),
 	CLIENT_IDLE_TIME(false),
 	CLIENT_INPUT_HARDWARE(false),
 	CLIENT_INPUT_MUTED(false),
+	CLIENT_INTEGRATIONS(false),
 	CLIENT_IS_CHANNEL_COMMANDER(true),
 	CLIENT_IS_PRIORITY_SPEAKER(false),
 	CLIENT_IS_RECORDING(false),
@@ -69,6 +77,7 @@ public enum ClientProperty implements Property {
 	CLIENT_META_DATA(false),
 	CLIENT_MONTH_BYTES_DOWNLOADED(false),
 	CLIENT_MONTH_BYTES_UPLOADED(false),
+	CLIENT_MYTEAMSPEAK_AVATAR(false),
 	CLIENT_MYTEAMSPEAK_ID(false),
 	CLIENT_NEEDED_SERVERQUERY_VIEW_POWER(false),
 	CLIENT_NICKNAME(true),
@@ -77,7 +86,9 @@ public enum ClientProperty implements Property {
 	CLIENT_OUTPUT_MUTED(false),
 	CLIENT_OUTPUTONLY_MUTED(false),
 	CLIENT_PLATFORM(false),
+	CLIENT_SECURITY_HASH(false),
 	CLIENT_SERVERGROUPS(false),
+	CLIENT_SIGNED_BADGES(false),
 	CLIENT_TALK_POWER(false),
 	CLIENT_TALK_REQUEST(false),
 	CLIENT_TALK_REQUEST_MSG(false),
@@ -88,6 +99,7 @@ public enum ClientProperty implements Property {
 	CLIENT_UNIQUE_IDENTIFIER(false),
 	CLIENT_UNREAD_MESSAGES(false),
 	CLIENT_VERSION(false),
+	CLIENT_VERSION_SIGN(false),
 	CONNECTION_BANDWIDTH_RECEIVED_LAST_MINUTE_TOTAL(false),
 	CONNECTION_BANDWIDTH_RECEIVED_LAST_SECOND_TOTAL(false),
 	CONNECTION_BANDWIDTH_SENT_LAST_MINUTE_TOTAL(false),

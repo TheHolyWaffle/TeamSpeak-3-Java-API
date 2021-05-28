@@ -103,7 +103,7 @@ public class Client extends Wrapper {
 	}
 
 	public int getId() {
-		return getInt("clid");
+		return getInt(ClientProperty.CLID);
 	}
 
 	public long getIdleTime() {
