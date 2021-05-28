@@ -1,19 +1,13 @@
 package com.github.theholywaffle.teamspeak3.commands;
 
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class FileCommandsTest {
 
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
-  
   @Test
   public void ftCreateDir_NullPathException() {
-    thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftCreateDir(null, 1, null);
+    Assert.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftCreateDir(null, 1, null));
   }
 
   @Test
@@ -26,21 +20,18 @@ public class FileCommandsTest {
   @Test
   public void ftDeleteFile_EmptyFileArrayException() {
     final String[] filePaths = {};
-    thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftDeleteFile(1, null, filePaths);
+    Assert.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftDeleteFile(1, null, filePaths));
   }
 
   @Test
   public void ftDeleteFile_NullFileArrayException() {
-    thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftDeleteFile(1, null, (String[]) null);
+    Assert.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftDeleteFile(1, null, (String[]) null));
   }
 
   @Test
   public void ftDeleteFile_NullFilePathException() {
     final String[] filePaths = {null};
-    thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftDeleteFile(1, null, filePaths);
+    Assert.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftDeleteFile(1, null, filePaths));
   }
 
   @Test
@@ -53,21 +44,18 @@ public class FileCommandsTest {
   @Test
   public void ftGetFileInfo_EmptyFileArrayException() {
     final String[] filePaths = {};
-    thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftGetFileInfo(1, null, filePaths);
+    Assert.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(1, null, filePaths));
   }
 
   @Test
   public void ftGetFileInfo_NullFileArrayException() {
-    thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftGetFileInfo(1, null, (String[]) null);
+    Assert.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(1, null, (String[]) null));
   }
 
   @Test
   public void ftGetFileInfo_NullFilePathException() {
     final String[] filePaths = {null};
-    thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftGetFileInfo(1, null, filePaths);
+    Assert.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(1, null, filePaths));
   }
 
   @Test
@@ -80,37 +68,32 @@ public class FileCommandsTest {
   @Test
   public void ftGetFileInfoArray_EmptyChannelIDArrayException() {
     final int[] channelIds = {};
-    thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftGetFileInfo(channelIds, null, null);
+    Assert.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(channelIds, null, null));
   }
 
   @Test
   public void ftGetFileInfoArray_NullChannelIDArrayException() {
-    thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftGetFileInfo(null, null, null);
+    Assert.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(null, null, null));
   }
 
   @Test
   public void ftGetFileInfoArray_EmptyFileArrayException() {
     final int[] channelIds = {1};
     final String[] filePaths = {};
-    thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftGetFileInfo(channelIds, null, filePaths);
+    Assert.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(channelIds, null, filePaths));
   }
 
   @Test
   public void ftGetFileInfoArray_NullFileArrayException() {
     final int[] channelIds = {1};
-    thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftGetFileInfo(channelIds, null, null);
+    Assert.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(channelIds, null, null));
   }
 
   @Test
   public void ftGetFileInfoArray_ChannelIDsLengthFilePathsLengthException() {
     final int[] channelIds = {1};
     final String[] filePaths = {"dir1", "dir2"};
-    thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftGetFileInfo(channelIds, null, filePaths);
+    Assert.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(channelIds, null, filePaths));
   }
 
   @Test
@@ -118,16 +101,14 @@ public class FileCommandsTest {
     final int[] channelIds = {1, 2};
     final String[] channelPasswords = {null};
     final String[] filePaths = {"dir1", "dir2"};
-    thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftGetFileInfo(channelIds, channelPasswords, filePaths);
+    Assert.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(channelIds, channelPasswords, filePaths));
   }
 
   @Test
   public void ftGetFileInfoArray_NullFilePathException() {
     final int[] channelIds = {1};
     final String[] filePaths = {null};
-    thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftGetFileInfo(channelIds, null, filePaths);
+    Assert.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(channelIds, null, filePaths));
   }
 
   @Test
@@ -141,8 +122,7 @@ public class FileCommandsTest {
 
   @Test
   public void ftGetFileList_NullDirectoryPathException() {
-    thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftGetFileList(null, 1, null);
+    Assert.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftGetFileList(null, 1, null));
   }
 
   @Test
@@ -154,8 +134,7 @@ public class FileCommandsTest {
 
   @Test
   public void ftInitDownload_NullDirectoryPathException() {
-    thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftInitDownload(1, null, 1, null);
+    Assert.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftInitDownload(1, null, 1, null));
   }
 
   @Test
@@ -167,8 +146,7 @@ public class FileCommandsTest {
 
   @Test
   public void ftInitUpload_NullDirectoryPathException() {
-    thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftInitUpload(1, null, 1, null, 1024, true);
+    Assert.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftInitUpload(1, null, 1, null, 1024, true));
   }
 
   @Test
@@ -186,14 +164,12 @@ public class FileCommandsTest {
 
   @Test
   public void ftRenameFile_NullOldPathException() {
-    thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftRenameFile(null, "dir2", 1, null);
+    Assert.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftRenameFile(null, "dir2", 1, null));
   }
 
   @Test
   public void ftRenameFile_NullNewPathException() {
-    thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftRenameFile("dir1", null, 1, null);
+    Assert.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftRenameFile("dir1", null, 1, null));
   }
 
   @Test
@@ -205,14 +181,12 @@ public class FileCommandsTest {
 
   @Test
   public void ftRenameFileAndChannel_NullOldPathException() {
-    thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftRenameFile(null, "dir2", 1, null, 2, null);
+    Assert.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftRenameFile(null, "dir2", 1, null, 2, null));
   }
 
   @Test
   public void ftRenameFileAndChannel_NullNewPathException() {
-    thrown.expect(IllegalArgumentException.class);
-    FileCommands.ftRenameFile("dir1", null, 1, null, 2, null);
+    Assert.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftRenameFile("dir1", null, 1, null, 2, null));
   }
 
   @Test
