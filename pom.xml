@@ -196,11 +196,15 @@
 											<file>src/main/resources/simplelogger.properties</file>
 										</transformer>
 									</transformers>
-									<artifactSet>
-										<excludes>
-											<exclude>org.bouncycastle:*</exclude>
-										</excludes>
-									</artifactSet>
+									<filters>
+										<filter>
+											<artifact>org.bouncycastle:*</artifact>
+											<excludes>
+												<exclude>META-INF/*.*</exclude>
+												<exclude>META-INF/versions/9/module-info.class</exclude>
+											</excludes>
+										</filter>
+									</filters>
 								</configuration>
 							</execution>
 						</executions>
