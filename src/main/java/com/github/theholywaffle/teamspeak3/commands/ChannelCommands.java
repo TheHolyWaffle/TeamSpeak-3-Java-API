@@ -76,13 +76,14 @@ public final class ChannelCommands {
 	}
 
 	public static Command channelList() {
-		CommandBuilder builder = new CommandBuilder("channellist", 6);
+		CommandBuilder builder = new CommandBuilder("channellist", 7);
 		builder.add(new OptionParam("topic"));
 		builder.add(new OptionParam("flags"));
 		builder.add(new OptionParam("voice"));
 		builder.add(new OptionParam("limits"));
 		builder.add(new OptionParam("icon"));
 		builder.add(new OptionParam("secondsempty"));
+		builder.add(new OptionParam("banners"));
 		return builder.build();
 	}
 

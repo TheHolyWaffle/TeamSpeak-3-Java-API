@@ -26,6 +26,7 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.ChannelBannerMode;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.Codec;
 
@@ -69,6 +70,20 @@ public abstract class ChannelBase extends Wrapper {
 
 	public boolean isSemiPermanent() {
 		return getBoolean(ChannelProperty.CHANNEL_FLAG_SEMI_PERMANENT);
+	}
+
+	public ChannelBannerMode getBannerMode() {
+		final int mode = getInt(ChannelProperty.CHANNEL_BANNER_MODE);
+		for (final ChannelBannerMode m : ChannelBannerMode.values()) {
+			if (m.getIndex() == mode) {
+				return m;
+			}
+		}
+		return ChannelBannerMode.UNKNOWN;
+	}
+
+	public String getBannerGraphicsUrl() {
+		return get(ChannelProperty.CHANNEL_BANNER_GFX_URL);
 	}
 
 	public Codec getCodec() {

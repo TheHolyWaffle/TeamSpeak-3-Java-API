@@ -27,6 +27,7 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  */
 
 import java.util.Map;
+import java.util.UUID;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 
@@ -54,6 +55,10 @@ public class ChannelInfo extends ChannelBase {
 
 	public int getCodecLatencyFactor() {
 		return getInt(ChannelProperty.CHANNEL_CODEC_LATENCY_FACTOR);
+	}
+
+	public UUID getUniqueIdentifier() {
+		return UUID.fromString(get(ChannelProperty.CHANNEL_UNIQUE_IDENTIFIER));
 	}
 
 	public boolean isEncrypted() {
