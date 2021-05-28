@@ -94,7 +94,7 @@ public final class ClientCommands {
 	}
 
 	public static Command clientList() {
-		CommandBuilder builder = new CommandBuilder("clientlist", 10);
+		CommandBuilder builder = new CommandBuilder("clientlist", 11);
 		builder.add(new OptionParam("uid"));
 		builder.add(new OptionParam("away"));
 		builder.add(new OptionParam("voice"));
@@ -105,6 +105,7 @@ public final class ClientCommands {
 		builder.add(new OptionParam("country"));
 		builder.add(new OptionParam("ip"));
 		builder.add(new OptionParam("badges"));
+		builder.add(new OptionParam("location"));
 		return builder.build();
 	}
 

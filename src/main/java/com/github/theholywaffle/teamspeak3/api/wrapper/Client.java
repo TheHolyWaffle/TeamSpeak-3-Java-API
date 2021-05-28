@@ -98,6 +98,10 @@ public class Client extends Wrapper {
 		return getInt(ClientProperty.CLIENT_DATABASE_ID);
 	}
 
+	public String getEstimatedLocation() {
+		return get(ClientProperty.CLIENT_ESTIMATED_LOCATION);
+	}
+
 	public long getIconId() {
 		return getLong(ClientProperty.CLIENT_ICON_ID);
 	}
