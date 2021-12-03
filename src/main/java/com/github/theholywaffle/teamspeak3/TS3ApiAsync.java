@@ -4362,7 +4362,7 @@ public class TS3ApiAsync {
 	 * @see #renameServerGroup(int, String)
 	 */
 	public CommandFuture<Void> renameServerGroup(ServerGroup serverGroup, String name) {
-		return renameChannelGroup(serverGroup.getId(), name);
+		return renameServerGroup(serverGroup.getId(), name);
 	}
 
 	/**
