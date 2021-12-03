@@ -1,0 +1,53 @@
+# This workflow will check out the project, build it using Maven, and run
+# unit tests every time someone pushes to the repo or a pull request is opened.
+# For pushes to master, the project will also be packaged and deployed to Maven Central.
+
+name: Maven
+
+on: [ push, pull_request ]
+
+jobs:
+  build_and_test:
+    name: Build and run tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 8
+        uses: actions/setup-java@v2
+        with:
+          java-version: '8'
+          distribution: 'zulu'
+          cache: maven
+      - name: Run tests with Maven
+        run: mvn test -B
+
+  deploy:
+    name: Deploy to Maven Central
+    runs-on: ubuntu-latest
+    needs: [ build_and_test ]
+
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 8
+        uses: actions/setup-java@v2
+        with:
+          java-version: '8'
+          distribution: 'zulu'
+          cache: maven
+      - name: Decrypt GPG keypair
+        run: |
+          openssl aes-256-cbc -pass pass:$ENCRYPT_PASSWORD -in deploy/pubring.gpg.enc -out deploy/pubring.gpg -d
+          openssl aes-256-cbc -pass pass:$ENCRYPT_PASSWORD -in deploy/secring.gpg.enc -out deploy/secring.gpg -d
+        env:
+          ENCRYPT_PASSWORD: ${{ secrets.ENCRYPT_PASSWORD }}
+      - name: Publish to Maven Central
+        run: mvn deploy -B -s deploy/settings.xml -Pfull -DperformRelease=true -DskipTests=true
+        env:
+          GPG_DIR: ${{ github.workspace }}/deploy
+          GPG_KEYNAME: ${{ secrets.GPG_KEYNAME }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
