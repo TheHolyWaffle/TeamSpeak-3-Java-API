@@ -37,17 +37,14 @@ jobs:
           java-version: '8'
           distribution: 'zulu'
           cache: maven
-      - name: Decrypt GPG keypair
-        run: |
-          openssl aes-256-cbc -pass pass:$ENCRYPT_PASSWORD -in deploy/pubring.gpg.enc -out deploy/pubring.gpg -d
-          openssl aes-256-cbc -pass pass:$ENCRYPT_PASSWORD -in deploy/secring.gpg.enc -out deploy/secring.gpg -d
-        env:
-          ENCRYPT_PASSWORD: ${{ secrets.ENCRYPT_PASSWORD }}
+          server-id: ossrh
+          server-username: SONATYPE_USERNAME
+          server-password: SONATYPE_PASSWORD
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
       - name: Publish to Maven Central
-        run: mvn deploy -B -s deploy/settings.xml -Pfull -DperformRelease=true -DskipTests=true
+        run: mvn deploy -B -Pfull,ossrh -DskipTests=true
         env:
-          GPG_DIR: ${{ github.workspace }}/deploy
-          GPG_KEYNAME: ${{ secrets.GPG_KEYNAME }}
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
