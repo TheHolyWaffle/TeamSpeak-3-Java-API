@@ -6,7 +6,7 @@ A Java wrapper of the [TeamSpeak 3](http://media.teamspeak.com/ts3_literature/Te
 
 ## Features
 
-- Contains almost all server query functionality! (see [TeamSpeak 3 Server Query Manual](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf))
+- Contains almost all server query functionality! (see [TeamSpeak 3 Server Query Manual](Contains almost all server query functionality! (see TeamSpeak 3 Server Query Manual)))
 - Built-in keep alive method
 - Threaded event-based system
 - Both [synchronous](src/main/java/com/github/theholywaffle/teamspeak3/TS3Api.java) and [asynchronous](src/main/java/com/github/theholywaffle/teamspeak3/TS3ApiAsync.java) implementations available
