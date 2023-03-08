@@ -307,6 +307,54 @@ public class TS3ApiAsync {
 	}
 
 	/**
+	 * Adds a specified permission to a client.
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the client to grant the permission
+	 * @param permName
+	 * 		the enum of the permission to grant
+	 * 		@see IPermissionType
+	 * @param value
+	 * 		the numeric value of the permission
+	 * @param skipped
+	 * 		if set to {@code true}, the permission will not be overridden by channel group permissions
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Client#getDatabaseId()
+	 * @see Permission
+	 */
+	public CommandFuture<Void> addClientPermission(int clientDBId, IPermissionType permName, int value, boolean skipped) {
+		Command cmd = PermissionCommands.clientAddPerm(clientDBId, permName.getName(), value, skipped);
+		return executeAndReturnError(cmd);
+	}
+
+	/**
+	 * Adds a specified permission to a client.
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the client to grant the permission
+	 * @param permName
+	 * 		the enum of the permission to grant
+	 * 		@see BPermissionType
+	 * @param value
+	 * 		the boolean value of the permission
+	 * @param skipped
+	 * 		if set to {@code true}, the permission will not be overridden by channel group permissions
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Client#getDatabaseId()
+	 * @see Permission
+	 */
+	public CommandFuture<Void> addClientPermission(int clientDBId, BPermissionType permName, boolean value, boolean skipped) {
+		Command cmd = PermissionCommands.clientAddPerm(clientDBId, permName.getName(), value, skipped);
+		return executeAndReturnError(cmd);
+	}
+
+	/**
 	 * Adds a client to the specified server group.
 	 * <p>
 	 * Please note that a client cannot be added to default groups or template groups.
@@ -1154,6 +1202,46 @@ public class TS3ApiAsync {
 	 */
 	public CommandFuture<Void> deleteClientPermission(int clientDBId, String permName) {
 		Command cmd = PermissionCommands.clientDelPerm(clientDBId, permName);
+		return executeAndReturnError(cmd);
+	}
+
+	/**
+	 * Removes a permission from a client.
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the client
+	 * @param permName
+	 * 		the enum of the permission to revoke
+	 * 		@see IPermissionType
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Client#getDatabaseId()
+	 * @see Permission#getName()
+	 */
+	public CommandFuture<Void> deleteClientPermission(int clientDBId, IPermissionType permName) {
+		Command cmd = PermissionCommands.clientDelPerm(clientDBId, permName.getName());
+		return executeAndReturnError(cmd);
+	}
+
+	/**
+	 * Removes a permission from a client.
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the client
+	 * @param permName
+	 * 		the enum of the permission to revoke
+	 * 		@see BPermissionType
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Client#getDatabaseId()
+	 * @see Permission#getName()
+	 */
+	public CommandFuture<Void> deleteClientPermission(int clientDBId, BPermissionType permName) {
+		Command cmd = PermissionCommands.clientDelPerm(clientDBId, permName.getName());
 		return executeAndReturnError(cmd);
 	}
 

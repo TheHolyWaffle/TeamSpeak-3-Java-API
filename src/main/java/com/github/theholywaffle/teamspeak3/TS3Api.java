@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -268,6 +268,52 @@ public class TS3Api {
 	 * @see Permission
 	 */
 	public void addClientPermission(int clientDBId, String permName, int value, boolean skipped) {
+		asyncApi.addClientPermission(clientDBId, permName, value, skipped).getUninterruptibly();
+	}
+
+	/**
+	 * Adds a specified permission to a client.
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the client to grant the permission
+	 * @param permName
+	 * 		the enum of the permission to grant
+	 * 		@see IPermissionType
+	 * @param value
+	 * 		the numeric value of the permission
+	 * @param skipped
+	 * 		if set to {@code true}, the permission will not be overridden by channel group permissions
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Client#getDatabaseId()
+	 * @see Permission
+	 */
+	public void addClientPermission(int clientDBId, IPermissionType permName, int value, boolean skipped) {
+		asyncApi.addClientPermission(clientDBId, permName, value, skipped).getUninterruptibly();
+	}
+
+	/**
+	 * Adds a specified permission to a client.
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the client to grant the permission
+	 * @param permName
+	 * 		the enum of the permission to grant
+	 * 		@see BPermissionType
+	 * @param value
+	 * 		the boolean value of the permission
+	 * @param skipped
+	 * 		if set to {@code true}, the permission will not be overridden by channel group permissions
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Client#getDatabaseId()
+	 * @see Permission
+	 */
+	public void addClientPermission(int clientDBId, BPermissionType permName, boolean value, boolean skipped) {
 		asyncApi.addClientPermission(clientDBId, permName, value, skipped).getUninterruptibly();
 	}
 
@@ -1002,9 +1048,6 @@ public class TS3Api {
 	 * @see ChannelGroup#getId()
 	 * @see Permission#getName()
 	 */
-	public void deleteChannelGroupPermission(int groupId, String permName) {
-		asyncApi.deleteChannelGroupPermission(groupId, permName).getUninterruptibly();
-	}
 
 	/**
 	 * Removes a permission from the channel with the given ID.
@@ -1039,6 +1082,44 @@ public class TS3Api {
 	 * @see Permission#getName()
 	 */
 	public void deleteClientPermission(int clientDBId, String permName) {
+		asyncApi.deleteClientPermission(clientDBId, permName).getUninterruptibly();
+	}
+
+	/**
+	 * Removes a permission from a client.
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the client
+	 * @param permName
+	 * 		the enum of the permission to revoke
+	 * 		@see IPermissionType
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Client#getDatabaseId()
+	 * @see Permission#getName()
+	 */
+	public void deleteClientPermission(int clientDBId, IPermissionType permName) {
+		asyncApi.deleteClientPermission(clientDBId, permName).getUninterruptibly();
+	}
+
+	/**
+	 * Removes a permission from a client.
+	 *
+	 * @param clientDBId
+	 * 		the database ID of the client
+	 * @param permName
+	 * 		the enum of the permission to revoke
+	 * 		@see BPermissionType
+	 *
+	 * @throws TS3CommandFailedException
+	 * 		if the execution of a command fails
+	 * @querycommands 1
+	 * @see Client#getDatabaseId()
+	 * @see Permission#getName()
+	 */
+	public void deleteClientPermission(int clientDBId, BPermissionType permName) {
 		asyncApi.deleteClientPermission(clientDBId, permName).getUninterruptibly();
 	}
 
