@@ -251,6 +251,12 @@ public class TS3Api {
 
 	/**
 	 * Adds a specified permission to a channel.
+	 * @deprecated
+	 * This method is no longer preferred for adding permissions to the client
+	 * <p>
+	 *    	Use {@link TS3Api#addClientPermission(int, IPermissionType, int, boolean)}
+	 * 		or {@link TS3Api#addClientPermission(int, BPermissionType, boolean, boolean)} instead.
+	 * </p>
 	 *
 	 * @param clientDBId
 	 * 		the database ID of the client to grant the permission
@@ -267,6 +273,7 @@ public class TS3Api {
 	 * @see Client#getDatabaseId()
 	 * @see Permission
 	 */
+	@Deprecated
 	public void addClientPermission(int clientDBId, String permName, int value, boolean skipped) {
 		asyncApi.addClientPermission(clientDBId, permName, value, skipped).getUninterruptibly();
 	}
@@ -1048,6 +1055,9 @@ public class TS3Api {
 	 * @see ChannelGroup#getId()
 	 * @see Permission#getName()
 	 */
+	public void deleteChannelGroupPermission(int groupId, String permName) {
+		asyncApi.deleteChannelGroupPermission(groupId, permName).getUninterruptibly();
+	}
 
 	/**
 	 * Removes a permission from the channel with the given ID.

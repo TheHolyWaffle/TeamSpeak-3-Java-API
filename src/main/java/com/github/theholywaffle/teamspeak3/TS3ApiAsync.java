@@ -283,6 +283,12 @@ public class TS3ApiAsync {
 
 	/**
 	 * Adds a specified permission to a channel.
+	 * @deprecated
+	 * This method is no longer preferred for adding permissions to the client
+	 * <p> 
+	 *  	Use {@link TS3ApiAsync#addClientPermission(int, IPermissionType, int, boolean)}
+	 * 	 	or {@link TS3ApiAsync#addClientPermission(int, BPermissionType, boolean, boolean)} instead.
+	 * </p>
 	 *
 	 * @param clientDBId
 	 * 		the database ID of the client to grant the permission
@@ -301,6 +307,7 @@ public class TS3ApiAsync {
 	 * @see Client#getDatabaseId()
 	 * @see Permission
 	 */
+	@Deprecated
 	public CommandFuture<Void> addClientPermission(int clientDBId, String permName, int value, boolean skipped) {
 		Command cmd = PermissionCommands.clientAddPerm(clientDBId, permName, value, skipped);
 		return executeAndReturnError(cmd);
