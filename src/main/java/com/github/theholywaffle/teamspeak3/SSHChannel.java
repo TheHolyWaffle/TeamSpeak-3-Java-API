@@ -41,6 +41,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.PublicKey;
+import java.util.Collections;
+import java.util.List;
 
 class SSHChannel implements IOChannel {
 
@@ -121,6 +123,11 @@ class SSHChannel implements IOChannel {
 			log.error("If you trust that the new host key is genuine, correct or remove the entry" +
 					" for {} in your known hosts file ({}).", hostname, khFile);
 			return false;
+		}
+
+		@Override
+		public List<String> findExistingAlgorithms(String hostname, int port) {
+			return Collections.emptyList();
 		}
 	}
 }
