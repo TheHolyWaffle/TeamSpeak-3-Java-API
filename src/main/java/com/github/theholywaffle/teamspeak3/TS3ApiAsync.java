@@ -283,11 +283,12 @@ public class TS3ApiAsync {
 
 	/**
 	 * Adds a specified permission to a channel.
+	 *
 	 * @deprecated
-	 * This method is no longer preferred for adding permissions to the client
-	 * <p> 
-	 *  	Use {@link TS3ApiAsync#addClientPermission(int, IPermissionType, int, boolean)}
-	 * 	 	or {@link TS3ApiAsync#addClientPermission(int, BPermissionType, boolean, boolean)} instead.
+	 * This method is no longer preferred for adding permissions to a client.
+	 * <p>
+	 * Use {@link TS3ApiAsync#addClientPermission(int, IPermissionType, int, boolean)}
+	 * or {@link TS3ApiAsync#addClientPermission(int, BPermissionType, boolean, boolean)} instead.
 	 * </p>
 	 *
 	 * @param clientDBId
@@ -326,6 +327,8 @@ public class TS3ApiAsync {
 	 * @param skipped
 	 * 		if set to {@code true}, the permission will not be overridden by channel group permissions
 	 *
+	 * @return a future to track the progress of this command
+	 *
 	 * @throws TS3CommandFailedException
 	 * 		if the execution of a command fails
 	 * @querycommands 1
@@ -349,6 +352,8 @@ public class TS3ApiAsync {
 	 * 		the boolean value of the permission
 	 * @param skipped
 	 * 		if set to {@code true}, the permission will not be overridden by channel group permissions
+	 *
+	 * @return a future to track the progress of this command
 	 *
 	 * @throws TS3CommandFailedException
 	 * 		if the execution of a command fails
@@ -1194,6 +1199,13 @@ public class TS3ApiAsync {
 	/**
 	 * Removes a permission from a client.
 	 *
+	 * @deprecated
+	 * This method is no longer preferred for removing permissions from a client.
+	 * <p>
+	 * Use {@link TS3ApiAsync#deleteClientPermission(int, IPermissionType)}
+	 * or {@link TS3ApiAsync#deleteClientPermission(int, BPermissionType)} instead.
+	 * </p>
+	 *
 	 * @param clientDBId
 	 * 		the database ID of the client
 	 * @param permName
@@ -1207,6 +1219,7 @@ public class TS3ApiAsync {
 	 * @see Client#getDatabaseId()
 	 * @see Permission#getName()
 	 */
+	@Deprecated
 	public CommandFuture<Void> deleteClientPermission(int clientDBId, String permName) {
 		Command cmd = PermissionCommands.clientDelPerm(clientDBId, permName);
 		return executeAndReturnError(cmd);
@@ -1220,6 +1233,8 @@ public class TS3ApiAsync {
 	 * @param permName
 	 * 		the enum of the permission to revoke
 	 * 		@see IPermissionType
+	 *
+	 * @return a future to track the progress of this command
 	 *
 	 * @throws TS3CommandFailedException
 	 * 		if the execution of a command fails
@@ -1240,6 +1255,8 @@ public class TS3ApiAsync {
 	 * @param permName
 	 * 		the enum of the permission to revoke
 	 * 		@see BPermissionType
+	 *
+	 * @return a future to track the progress of this command
 	 *
 	 * @throws TS3CommandFailedException
 	 * 		if the execution of a command fails
