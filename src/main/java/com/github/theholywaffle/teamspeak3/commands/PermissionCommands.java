@@ -114,6 +114,17 @@ public final class PermissionCommands {
 		return builder.build();
 	}
 
+	public static Command clientAddPerm(int clientDBId, String permName, boolean permValue, boolean skip) {
+		nonEmptyPermissionName(permName);
+
+		CommandBuilder builder = new CommandBuilder("clientaddperm", 4);
+		builder.add(new KeyValueParam("cldbid", clientDBId));
+		builder.add(new KeyValueParam("permsid", permName));
+		builder.add(new KeyValueParam("permvalue", permValue));
+		builder.add(new KeyValueParam("permskip", skip));
+		return builder.build();
+	}
+
 	public static Command clientDelPerm(int clientDBId, String permName) {
 		nonEmptyPermissionName(permName);
 
