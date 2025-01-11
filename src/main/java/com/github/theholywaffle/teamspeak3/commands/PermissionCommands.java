@@ -145,7 +145,7 @@ public final class PermissionCommands {
 	 * Channel commands
 	 */
 
-	public static Command channelAddPerm(int channelId, String permName, int permValue) {
+	public static Command channelAddPerm(int channelId, String permName, long permValue) {
 		nonEmptyPermissionName(permName);
 
 		CommandBuilder builder = new CommandBuilder("channeladdperm", 3);
