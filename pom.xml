@@ -51,7 +51,10 @@
 		<encoding>UTF-8</encoding>
 		<sshj.version>0.35.0</sshj.version>
 		<slf4j.version>1.7.35</slf4j.version>
-		<junit4.version>4.13.2</junit4.version>
+		<junit5.version>5.10.1</junit5.version>
+		<mockito.version>5.7.0</mockito.version>
+		<assertj.version>3.24.2</assertj.version>
+		<testcontainers.version>1.19.3</testcontainers.version>
 		<project.build.outputTimestamp>1970-01-01T00:00:00Z</project.build.outputTimestamp>
 	</properties>
 
@@ -72,10 +75,35 @@
 			<version>${slf4j.version}</version>
 			<scope>test</scope>
 		</dependency>
+		<!-- JUnit 5 -->
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>${junit4.version}</version>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>${junit5.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Mockito -->
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>${mockito.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- AssertJ -->
+		<dependency>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-core</artifactId>
+			<version>${assertj.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- TestContainers -->
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>${testcontainers.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
@@ -114,7 +142,13 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.0.0-M5</version>
+				<version>3.2.2</version>
+				<configuration>
+					<includes>
+						<include>**/*Test.java</include>
+						<include>**/*Tests.java</include>
+					</includes>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
