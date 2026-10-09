@@ -1,0 +1,21 @@
+.github/workflows/release.yml
+  s_cf5f5b8dbd7031::t_6f938fa420ecfc 124
+docs/releases.md
+  s_cf5f5b8dbd7031::t_6e80f0a2999504 144,215-216,218-219,255
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "83a338513cbc38adca355c2604e3d84a6b0564a2",
+  "prompts": {},
+  "sessions": {
+    "s_cf5f5b8dbd7031": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12228-284a-7f80-8202-97a19460d06c",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "bert.degeyter <bert.degeyter@showpad.com>"
+    }
+  }
+}
