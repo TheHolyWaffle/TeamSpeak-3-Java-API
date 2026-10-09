@@ -1,0 +1,22 @@
+README.md
+  s_cf5f5b8dbd7031::t_40c6592ff2e611 137-138,152
+  s_cf5f5b8dbd7031::t_7314e26287573f 127-128
+.github/workflows/release-prepare.yml
+  s_cf5f5b8dbd7031::t_6d03594c51e392 28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3d0f950b5956ba3cdb899dcce4ae70d693e3a7fd",
+  "prompts": {},
+  "sessions": {
+    "s_cf5f5b8dbd7031": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12228-284a-7f80-8202-97a19460d06c",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "bert.degeyter <bert.degeyter@showpad.com>"
+    }
+  }
+}
