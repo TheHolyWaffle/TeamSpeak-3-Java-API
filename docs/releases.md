@@ -141,8 +141,7 @@ verification must not upload a test release. See the official
 and [namespace documentation](https://central.sonatype.org/register/namespace/).
 
 Configure a protected GitHub environment named **release**, restricted to `master`,
-with required human reviewers and self-review disabled. Store these secrets only
-in that environment:
+using its deployment branch policy. Store these secrets only in that environment:
 
 - `CENTRAL_PORTAL_USERNAME` and `CENTRAL_PORTAL_PASSWORD`: Portal user-token pair.
 - `RELEASE_GPG_PUBLIC_KEY` and `RELEASE_GPG_SECRET_KEY`: ASCII-armored release keys.
@@ -213,10 +212,11 @@ release-please PR targeting `master` with `autorelease: pending`, and have succe
 **CI required** checks. Maven version, manifest, latest changelog entry and tag must
 agree. Existing tags must identify that exact commit; an existing GitHub release
 blocks reruns. The same Java matrix and signed bundle rehearsal must succeed before
-the protected publication job can begin.
+the protected publication job can begin. Additional environment reviewers may be
+configured under repository policy; they are not required by this task.
 
-Select **publish** only as the explicit release action after those checks and human
-environment approval. The job rechecks `master` HEAD after approval, checks out the
+Select **publish** only as the explicit release action after those checks. The job
+rechecks `master` HEAD when the release environment job begins, checks out the
 validated SHA, stages the normal artifacts, then signs and deploys using the
 [JReleaser Central Portal deployer](https://jreleaser.org/guide/latest/reference/deploy/maven/maven-central.html).
 After Central succeeds, it waits for the release POM to be available from Central
@@ -252,7 +252,7 @@ version merely to recover and never overwrite released artifacts.
   release already exists, the workflow refuses to overwrite it; inspect and resolve
   state manually rather than deleting a completed release.
 
-Recovery actions repeat validation and require environment approval. If `master`
+Recovery actions repeat validation and use the restricted release environment. If `master`
 has advanced, the workflow intentionally blocks; a maintainer must review a recovery
 change for that exact approved commit rather than bypassing checks. JReleaser's
 [staged deployment documentation](https://jreleaser.org/guide/latest/reference/deploy/maven/maven-central.html#_staged_deployments)

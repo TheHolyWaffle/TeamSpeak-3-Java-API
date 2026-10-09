@@ -121,7 +121,7 @@ jobs:
           java-version: '25'
           distribution: temurin
           cache: maven
-      - name: Recheck immutable inputs after environment approval
+      - name: Recheck immutable inputs in the restricted release environment
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
