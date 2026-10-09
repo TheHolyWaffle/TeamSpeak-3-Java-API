@@ -1,0 +1,46 @@
+src/test/java/com/github/theholywaffle/teamspeak3/FakeServerQuery.java
+  s_eee20c8e39470a::t_a124b8c0b04161 1-71
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryProtocolTest.java
+  s_eee20c8e39470a::t_a124b8c0b04161 1-33,35-59,62-70,76-92,96-107,110-154
+  s_eee20c8e39470a::t_b654ba3a1ff6e7 108
+  s_eee20c8e39470a::t_549a4984be238d 34,60-61,71-75,93-95,109
+src/test/java/com/github/theholywaffle/teamspeak3/ProtocolLineReaderTest.java
+  s_eee20c8e39470a::t_b654ba3a1ff6e7 1-34,38-39,41-43,45-58,60-64
+  s_eee20c8e39470a::t_a1b62ff554d7dc 35-37,40,44,59
+src/main/java/com/github/theholywaffle/teamspeak3/commands/CommandEncoding.java
+  s_eee20c8e39470a::t_1df4f20de3fde0 50-56,58-81
+src/main/java/com/github/theholywaffle/teamspeak3/commands/response/DefaultArrayResponse.java
+  s_eee20c8e39470a::t_1e418d4fe3f162 41-48,52,71-77,79-81,84-91
+pom.xml
+  s_eee20c8e39470a::t_1df4f20de3fde0 57,105-107
+src/main/java/com/github/theholywaffle/teamspeak3/StreamReader.java
+  s_eee20c8e39470a::t_b654ba3a1ff6e7 48,61,103-110
+  s_eee20c8e39470a::t_1df4f20de3fde0 54,99-101,138-142
+  s_eee20c8e39470a::t_549a4984be238d 98,125-128
+  s_eee20c8e39470a::t_a065b8364c32e3 129-130
+src/test/java/com/github/theholywaffle/teamspeak3/commands/FileCommandsTest.java
+  s_eee20c8e39470a::t_1df4f20de3fde0 3-4,10,16-17,23,28,34,41,47,52,58,65,71,76,83,89,96,104,111,120,125,131-132,137,143-144,149,155-156,162,167,172,178-179,184,189,195-196
+src/main/java/com/github/theholywaffle/teamspeak3/ProtocolLineReader.java
+  s_eee20c8e39470a::t_b654ba3a1ff6e7 1-2,29-62
+  s_eee20c8e39470a::t_549a4984be238d 3-28
+src/test/java/com/github/theholywaffle/teamspeak3/commands/CommandEncodingTest.java
+  s_eee20c8e39470a::t_03813c9b09defa 1-43
+src/test/java/com/github/theholywaffle/teamspeak3/commands/response/DefaultArrayResponseTest.java
+  s_eee20c8e39470a::t_23a94eee766468 1-84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "62468e66feb3b261da6bff86a373662e6a17efac",
+  "prompts": {},
+  "sessions": {
+    "s_eee20c8e39470a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12211-d862-72b2-b9d8-3e52c848426b",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "bert.degeyter <bert.degeyter@showpad.com>"
+    }
+  }
+}
