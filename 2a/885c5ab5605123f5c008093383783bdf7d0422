@@ -1,0 +1,67 @@
+.changie.yaml
+  s_49fc06267c579d::t_07f74479e417b1 1-35
+.changes/header.md
+  s_49fc06267c579d::t_07f74479e417b1 1-3
+CHANGELOG.md
+  s_49fc06267c579d::t_07f74479e417b1 1-10
+.github/workflows/maven.yml
+  s_49fc06267c579d::t_2336216f34637c 1,3-8,10-15,18-19,21-24,26,28-46,48-51,53,55,57-59
+.changes/unreleased/430-dependencies.yaml
+  s_49fc06267c579d::t_07f74479e417b1 1-5
+.github/workflows/verify.yml
+  s_49fc06267c579d::t_2336216f34637c 1-50
+.github/workflows/release.yml
+  s_49fc06267c579d::t_2336216f34637c 1-38,40-43
+  s_49fc06267c579d::t_622c3e81aef525 39
+docs/releases.md
+  s_49fc06267c579d::t_6faa29c5c60ec4 15-18
+  s_49fc06267c579d::t_2e02cfb0085890 37-71
+  s_49fc06267c579d::t_053e0d0f915bb6 1-14,19-36,72-120
+.github/scripts/release.py
+  s_49fc06267c579d::t_2e02cfb0085890 5,33,60,126-133,139-140
+  s_49fc06267c579d::t_07f74479e417b1 1-4,6-9,12-16,34-47,56,58-59,61-82,84-125,134-138,141-148,150-151,181-184,186-226
+  s_49fc06267c579d::t_c58fe432cbbbc7 10-11,17-32,48-55,57,149,152-180,185
+  s_49fc06267c579d::t_f0fa72dd7fce03 83
+.changes/v1.3.1.md
+  s_49fc06267c579d::t_07f74479e417b1 1-5
+.github/scripts/install-changie.py
+  s_49fc06267c579d::t_07f74479e417b1 1-33
+.changes/unreleased/431-release-workflows.yaml
+  s_49fc06267c579d::t_07f74479e417b1 1-5
+docs/master-publishing-isolation.patch
+  s_49fc06267c579d::t_6faa29c5c60ec4 1-39
+.changes/unreleased/429-java25.yaml
+  s_49fc06267c579d::t_07f74479e417b1 1-5
+.gitignore
+  s_49fc06267c579d::t_07f74479e417b1 20-23
+.github/workflows/release-prepare.yml
+  s_49fc06267c579d::t_2336216f34637c 1-49
+pom.xml
+  s_49fc06267c579d::t_2336216f34637c 136-137
+  s_49fc06267c579d::t_124473fdd55ede 8
+README.md
+  s_49fc06267c579d::t_2e02cfb0085890 124-125
+  s_49fc06267c579d::t_2336216f34637c 3,98,123,135-155
+  s_49fc06267c579d::t_2abbdd00318e35 127
+.github/scripts/test_release.py
+  s_49fc06267c579d::t_2e02cfb0085890 26-173,176
+  s_49fc06267c579d::t_f9741059736a04 1-25,174-175,177-181
+.github/scripts/requirements.txt
+  s_49fc06267c579d::t_07f74479e417b1 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2a885c5ab5605123f5c008093383783bdf7d0422",
+  "prompts": {},
+  "sessions": {
+    "s_49fc06267c579d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a121de-88f8-7ab3-812d-f35c342af47a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "bert.degeyter <bert.degeyter@showpad.com>"
+    }
+  }
+}
