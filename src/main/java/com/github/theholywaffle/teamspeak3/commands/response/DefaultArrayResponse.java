@@ -38,12 +38,19 @@ import java.util.Map;
 
 public class DefaultArrayResponse {
 
+	/**
+	 * Parses rows separated by pipes, inheriting shared fields from the first row.
+	 * Empty rows, including trailing rows, inherit those same fields. Null or
+	 * empty input represents no rows; valueless fields represent empty strings.
+	 *
+	 * @param rawResponse the encoded response
+	 * @return the parsed response
+	 */
 	public static DefaultArrayResponse parse(String rawResponse) {
 		if (rawResponse == null || rawResponse.isEmpty()) return EMPTY;
 
-		String[] rawMaps = rawResponse.split("\\|");
+		String[] rawMaps = rawResponse.split("\\|", -1);
 		List<Wrapper> responses = new ArrayList<>(rawMaps.length);
-		if (rawMaps.length == 0) return new DefaultArrayResponse(responses, rawResponse);
 
 		// First response, just use the parsed map
 		Map<String, String> firstResponse = parseMap(rawMaps[0]);
@@ -61,9 +68,27 @@ public class DefaultArrayResponse {
 		return new DefaultArrayResponse(responses, rawResponse);
 	}
 
+	/**
+	 * Parses a terminating error line. IDs 0 and 1281 represent success.
+	 *
+	 * @param rawError the encoded error line
+	 * @return the parsed error
+	 * @throws IllegalArgumentException if the prefix or nonnegative integer ID is missing or invalid
+	 */
 	public static QueryError parseError(String rawError) {
+		if (rawError == null || !rawError.startsWith("error ")) {
+			throw new IllegalArgumentException("Expected an error line");
+		}
 		String error = rawError.substring("error ".length());
 		Map<String, String> errorMap = parseMap(error);
+		String id = errorMap.get("id");
+		try {
+			if (id == null || Integer.parseInt(id) < 0) {
+				throw new IllegalArgumentException("Error line requires a nonnegative integer id");
+			}
+		} catch (NumberFormatException e) {
+			throw new IllegalArgumentException("Error line requires a nonnegative integer id", e);
+		}
 		return new QueryError(errorMap);
 	}
 

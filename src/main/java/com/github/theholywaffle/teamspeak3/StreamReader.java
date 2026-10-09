@@ -35,12 +35,9 @@ import com.github.theholywaffle.teamspeak3.commands.response.ResponseBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.SocketTimeoutException;
-import java.nio.charset.StandardCharsets;
 
 class StreamReader extends Thread {
 
@@ -48,29 +45,21 @@ class StreamReader extends Thread {
 
 	private final TS3Query ts3;
 	private final Connection con;
-	private final BufferedReader in;
+	private final ProtocolLineReader in;
 	private final boolean logComms;
 
 	private CommandQueue commandQueue = null;
 	private ResponseBuilder responseBuilder = null;
 	private String lastEvent = "";
+	private boolean receivingResponses;
 
 	StreamReader(Connection connection, InputStream inStream, TS3Query query, TS3Config config) throws IOException {
 		super("[TeamSpeak-3-Java-API] StreamReader");
 
 		ts3 = query;
 		con = connection;
-		in = new BufferedReader(new InputStreamReader(inStream, StandardCharsets.UTF_8));
+		in = new ProtocolLineReader(inStream);
 		logComms = config.getEnableCommunicationsLogging();
-
-		readWelcomeMessage();
-	}
-
-	private void readWelcomeMessage() throws IOException {
-		for (int i = 0; i < 4 || in.ready(); ++i) {
-			String welcomeMessage = in.readLine();
-			if (logComms) log.debug("< {}", welcomeMessage);
-		}
 	}
 
 	@Override
@@ -106,9 +95,19 @@ class StreamReader extends Thread {
 
 			if (line.startsWith("notify")) {
 				handleEvent(line);
-			} else {
+			} else if (receivingResponses || line.startsWith("error ") || startsWithField(line)) {
+				// Welcome text is informational, not a fixed-size response frame.
+				// Protocol data is key/value text; error lines terminate a command.
+				receivingResponses = true;
 				con.resetIdleTime();
-				handleCommandResponse(line);
+				try {
+					handleCommandResponse(line);
+				} catch (IllegalArgumentException malformed) {
+					log.error("Malformed command response: {}", line, malformed);
+					break;
+				}
+			} else if (logComms) {
+				log.debug("[welcome] < {}", line);
 			}
 		}
 
@@ -123,6 +122,12 @@ class StreamReader extends Thread {
 		}
 	}
 
+	private static boolean startsWithField(String line) {
+		int equals = line.indexOf('=');
+		int space = line.indexOf(' ');
+		return equals > 0 && (space == -1 || equals < space);
+	}
+
 	private void handleEvent(String event) {
 		if (logComms) log.debug("[event] < {}", event);
 
@@ -130,7 +135,11 @@ class StreamReader extends Thread {
 		if (isDuplicate(event)) return;
 
 		String arr[] = event.split(" ", 2);
-		ts3.getEventManager().fireEvent(arr[0], arr[1]);
+		if (arr.length == 2) {
+			ts3.getEventManager().fireEvent(arr[0], arr[1]);
+		} else {
+			log.warn("Malformed notification: {}", event);
+		}
 	}
 
 	private void handleCommandResponse(String response) {

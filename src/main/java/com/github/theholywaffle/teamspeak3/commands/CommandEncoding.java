@@ -47,20 +47,37 @@ public final class CommandEncoding {
 		return str;
 	}
 
+	/**
+	 * Decodes each escape once. Unknown escapes and a trailing backslash are
+	 * preserved verbatim, allowing forward-compatible and malformed values.
+	 *
+	 * @param str the encoded value
+	 * @return the decoded value
+	 */
 	public static String decode(String str) {
-		str = str.replace("\\s", " ");
-		str = str.replace("\\/", "/");
-		str = str.replace("\\p", "|");
-		str = str.replace("\\b", "\b");
-		str = str.replace("\\f", "\f");
-		str = str.replace("\\n", "\n");
-		str = str.replace("\\r", "\r");
-		str = str.replace("\\t", "\t");
-		str = str.replace("\\a", String.valueOf((char) 7)); // Bell
-		str = str.replace("\\v", String.valueOf((char) 11)); // Vertical Tab
-
-		str = str.replace("\\\\", "\\");
-
-		return str;
+		StringBuilder decoded = new StringBuilder(str.length());
+		for (int i = 0; i < str.length(); i++) {
+			char ch = str.charAt(i);
+			if (ch != '\\' || i + 1 == str.length()) {
+				decoded.append(ch);
+				continue;
+			}
+			char escaped = str.charAt(++i);
+			switch (escaped) {
+				case '\\' -> decoded.append('\\');
+				case 's' -> decoded.append(' ');
+				case '/' -> decoded.append('/');
+				case 'p' -> decoded.append('|');
+				case 'b' -> decoded.append('\b');
+				case 'f' -> decoded.append('\f');
+				case 'n' -> decoded.append('\n');
+				case 'r' -> decoded.append('\r');
+				case 't' -> decoded.append('\t');
+				case 'a' -> decoded.append((char) 7);
+				case 'v' -> decoded.append((char) 11);
+				default -> decoded.append('\\').append(escaped);
+			}
+		}
+		return decoded.toString();
 	}
 }
