@@ -46,12 +46,20 @@ A Java wrapper of the [TeamSpeak 3](http://media.teamspeak.com/ts3_literature/Te
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
-      <version>1.7.25</version>
+      <version>2.0.20</version>
     </dependency>
     ```
 
-    You can however choose whichever logging framework suits your needs best. Just add your logging framework and the
-    corresponding [binding](https://mvnrepository.com/artifact/org.slf4j) to your pom.xml.
+    This development branch uses SLF4J 2.0.20. Choose exactly one provider that supports
+    the SLF4J 2.0 API, and keep `slf4j-api` and `slf4j-simple` at the same version when
+    using SimpleLogger. SLF4J 2.x discovers providers through `ServiceLoader`; old
+    SLF4J 1.7 bindings are ignored and must be replaced. Existing SLF4J logging calls
+    remain compatible. See the [SLF4J manual](https://slf4j.org/manual.html).
+
+    The Maven library supplies only the logging API. The standalone
+    `with-dependencies` JAR includes SimpleLogger 2.0.20 and its provider registration;
+    use the Maven library when supplying your own logging provider.
+
 
 ### Usage
 
@@ -130,6 +138,20 @@ publishing before the final modernization merge into `master`; it is not a
 prerequisite for merging this build change into `modernization/2.0`.
 
 ## Extra notes
+
+### SSH security defaults
+
+SSH queries require credentials supplied through `TS3Config#setLoginCredentials`.
+SSHJ tries password authentication, then keyboard-interactive using the same password.
+The client automatically trusts and stores unknown host keys in `~/.ssh/known_ts3_hosts`
+when `~/.ssh` exists, otherwise in `known_ts3_hosts` in the working directory.
+Changed keys for an existing host/key-type entry are rejected, but an unrecorded
+key type can still be accepted. Prepopulate this file with host keys obtained
+through a trusted channel for a trusted first connection.
+
+The client uses SSHJ's default algorithms, which still include legacy algorithms;
+this update does not enforce a modern-only algorithm policy. Compression is disabled.
+Terrapin's strict key-exchange mitigation also requires server support.
 
 ### FloodRate
 
