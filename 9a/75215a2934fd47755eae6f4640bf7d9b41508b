@@ -1,0 +1,48 @@
+docs/releases.md
+  s_cf5f5b8dbd7031::t_87ea74fec453a2 6-7,80-82,111-230,232-239,243-265
+  s_cf5f5b8dbd7031::t_66d100293b919c 231
+  s_cf5f5b8dbd7031::t_5e0cea5375414e 240-242
+.github/scripts/test-release-metadata.sh
+  s_cf5f5b8dbd7031::t_3bfdbcb9723b92 1-26
+  s_cf5f5b8dbd7031::t_5e0cea5375414e 27-39
+jreleaser.yml
+  s_cf5f5b8dbd7031::t_dfe0e7038495bb 1-42
+.github/scripts/release-rehearsal.sh
+  s_cf5f5b8dbd7031::t_dfe0e7038495bb 20-21
+  s_cf5f5b8dbd7031::t_5a3cf7f56b822e 1-19,22-41
+.github/workflows/release.yml
+  s_cf5f5b8dbd7031::t_66d100293b919c 73-76,179,196
+  s_cf5f5b8dbd7031::t_dfe0e7038495bb 188
+  s_cf5f5b8dbd7031::t_abd9e0f8ac9363 1,5-22,33,36-41,46,52-60,62-72,77-91,93,98,105,107-108,110-112,114-165,175-178,180-187,189-195,197-200
+  s_cf5f5b8dbd7031::t_5e0cea5375414e 166-174
+.github/scripts/check-portal-deployment.sh
+  s_cf5f5b8dbd7031::t_5e0cea5375414e 1-11
+jreleaser-github.yml
+  s_cf5f5b8dbd7031::t_dfe0e7038495bb 1-27
+.github/workflows/verify.yml
+  s_cf5f5b8dbd7031::t_3bfdbcb9723b92 51-69,72-85
+  s_cf5f5b8dbd7031::t_73ef8e4cac90e6 70
+  s_cf5f5b8dbd7031::t_87ea74fec453a2 71
+.github/scripts/release-metadata.sh
+  s_cf5f5b8dbd7031::t_54951a1843f707 15-22
+  s_cf5f5b8dbd7031::t_536c1b9b87b3eb 1-14,23-25
+pom.xml
+  s_cf5f5b8dbd7031::t_4fb7d908bd0765 191-237,239-240,246-249
+  s_cf5f5b8dbd7031::t_dfe0e7038495bb 58,238
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9a75215a2934fd47755eae6f4640bf7d9b41508b",
+  "prompts": {},
+  "sessions": {
+    "s_cf5f5b8dbd7031": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12228-284a-7f80-8202-97a19460d06c",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "bert.degeyter <bert.degeyter@showpad.com>"
+    }
+  }
+}
