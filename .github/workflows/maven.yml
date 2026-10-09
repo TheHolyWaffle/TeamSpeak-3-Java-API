@@ -21,6 +21,8 @@ jobs:
           cache: maven
       - name: Verify with Maven Wrapper
         run: ./mvnw -B -ntp verify
+      - name: Verify standalone artifacts
+        run: ./mvnw -B -ntp -Pfull verify
 
   deploy:
     name: Deploy to Maven Central
