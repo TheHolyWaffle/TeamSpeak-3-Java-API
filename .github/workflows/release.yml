@@ -179,12 +179,17 @@ jobs:
           cp target/jreleaser/output.properties target/jreleaser/deployment-output.properties
       - name: Require Central availability before creating the GitHub release
         env:
+          GH_TOKEN: ${{ github.token }}
           JRELEASER_GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
         run: |
           version=$(cat target/release-version.txt)
           curl --fail --silent --show-error --retry 10 --retry-delay 30 --retry-all-errors \
             "https://repo.maven.apache.org/maven2/com/github/theholywaffle/teamspeak3-api/$version/teamspeak3-api-$version.pom" \
             --output target/published.pom
+          # JReleaser creates the remote tag against its configured branch.
+          # Check again after deployment/propagation, immediately before that operation.
+          test "$RELEASE_COMMIT" = "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/master" --jq '.object.sha')"
           ./mvnw -B -ntp jreleaser:release -Djreleaser.config.file=jreleaser-github.yml
       - name: Retain recovery state without signing material
         if: ${{ always() }}

@@ -221,7 +221,9 @@ validated SHA, stages the normal artifacts, then signs and deploys using the
 [JReleaser Central Portal deployer](https://jreleaser.org/guide/latest/reference/deploy/maven/maven-central.html).
 After Central succeeds, it waits for the release POM to be available from Central
 and uses the release-only configuration to create the version tag and GitHub release
-with exactly the extracted notes. Both JReleaser configurations disable overwrite
+with exactly the extracted notes. The job rechecks the approved `master` SHA again
+immediately before that tag/release step, after deployment and Central propagation.
+Both JReleaser configurations disable overwrite
 and release updates. No tag or GitHub release is created by release-please.
 
 ### Partial failure and recovery
