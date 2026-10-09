@@ -1,0 +1,23 @@
+.github/scripts/test-release-metadata.sh
+  s_cf5f5b8dbd7031::t_08f69a8393036b 6
+.github/scripts/release-metadata.sh
+  s_cf5f5b8dbd7031::t_8475653bac98d0 14,22
+docs/releases.md
+  s_cf5f5b8dbd7031::t_1494885f288f19 119-120
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b1bd5775afbcbb196512262b4c812d40c99c4170",
+  "prompts": {},
+  "sessions": {
+    "s_cf5f5b8dbd7031": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12228-284a-7f80-8202-97a19460d06c",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "bert.degeyter <bert.degeyter@showpad.com>"
+    }
+  }
+}
