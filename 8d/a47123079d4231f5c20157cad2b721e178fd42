@@ -1,0 +1,32 @@
+README.md
+  s_4306c82f4c03ea::t_8f7acf404923f0 88-125,131
+  s_4306c82f4c03ea::t_6243da0d90dbd7 126-130
+.mvn/wrapper/maven-wrapper.properties
+  s_4306c82f4c03ea::t_8f7acf404923f0 4
+  s_4306c82f4c03ea::t_e098fb05a5a502 1-3
+pom.xml
+  s_4306c82f4c03ea::t_f131ed76147b8c 57
+  s_4306c82f4c03ea::t_5cad2deb9ec652 51-53,95-140,144,149,161,174,224,263,276,278
+.github/workflows/maven.yml
+  s_4306c82f4c03ea::t_8f7acf404923f0 16,19,22-23,34,37,46
+mvnw
+  s_4306c82f4c03ea::t_138f8a867d3d80 1-295
+mvnw.cmd
+  s_4306c82f4c03ea::t_981cc747fa00dd 1-189
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8da47123079d4231f5c20157cad2b721e178fd42",
+  "prompts": {},
+  "sessions": {
+    "s_4306c82f4c03ea": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a121a4-a532-77c3-bc82-6f0a54bfbc23",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "bert.degeyter <bert.degeyter@showpad.com>"
+    }
+  }
+}
