@@ -1,0 +1,43 @@
+name: Release publication handoff
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install release tooling
+        run: |
+          python3 -m pip install -r .github/scripts/requirements.txt
+          python3 .github/scripts/install-changie.py
+      - name: Match the tag to the approved stable POM and changelog version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: python3 .github/scripts/release.py check-tag --tag "$RELEASE_TAG"
+
+  verify:
+    needs: validate
+    uses: ./.github/workflows/verify.yml
+
+  publish:
+    name: Publication disabled pending JReleaser (task 05)
+    needs: [validate, verify]
+    if: ${{ needs.validate.result == 'success' && false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - run: echo 'Task 05 must implement JReleaser publication from this exact verified commit.'

@@ -1,0 +1,50 @@
+name: Verify artifacts
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify Java ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['25', '27'] # Java 25 baseline and newer GA, never an EA build.
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: temurin
+          cache: maven
+      - name: Verify library
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p target/ci-logs
+          ./mvnw -B -ntp verify 2>&1 | tee target/ci-logs/library.log
+      - name: Verify standalone, sources and Javadoc artifacts
+        shell: bash
+        run: |
+          set -o pipefail
+          ./mvnw -B -ntp -Pfull verify 2>&1 | tee target/ci-logs/full.log
+      - name: Upload failure reports
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: failure-reports-java-${{ matrix.java }}
+          path: |
+            target/ci-logs/
+            target/surefire-reports/
+            target/failsafe-reports/
+            target/reports/
+            target/site/
+          if-no-files-found: ignore
+          retention-days: 7

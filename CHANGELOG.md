@@ -1,0 +1,10 @@
+# Changelog
+
+Release intent is recorded with Changie, independently of commit messages.
+
+
+## v1.3.1
+
+Last published release before modernization, verified against Maven Central metadata
+and the [GitHub release](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/releases/tag/v1.3.1).
+Historical notes remain on GitHub; this file establishes the SemVer baseline.

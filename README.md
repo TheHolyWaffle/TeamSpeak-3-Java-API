@@ -1,6 +1,6 @@
 TeamSpeak 3 Java API
 ====================
-[![Build Status](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/actions/workflows/maven.yml/badge.svg?branch=master)](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/actions/workflows/maven.yml) [![Maven Central](https://img.shields.io/maven-central/v/com.github.theholywaffle/teamspeak3-api.svg)](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.github.theholywaffle%22%20a%3A%22teamspeak3-api%22) [![Javadocs](http://www.javadoc.io/badge/com.github.theholywaffle/teamspeak3-api.svg)](http://www.javadoc.io/doc/com.github.theholywaffle/teamspeak3-api) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/TheHolyWaffle/TeamSpeak-3-Java-API?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![Build Status](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/actions/workflows/maven.yml/badge.svg?branch=modernization%2F2.0)](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/actions/workflows/maven.yml) [![Maven Central](https://img.shields.io/maven-central/v/com.github.theholywaffle/teamspeak3-api.svg)](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.github.theholywaffle%22%20a%3A%22teamspeak3-api%22) [![Javadocs](http://www.javadoc.io/badge/com.github.theholywaffle/teamspeak3-api.svg)](http://www.javadoc.io/doc/com.github.theholywaffle/teamspeak3-api) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/TheHolyWaffle/TeamSpeak-3-Java-API?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 A Java wrapper of the [TeamSpeak 3](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf)  Server Query API
 
@@ -95,7 +95,7 @@ api.sendChannelMessage("PutPutBot is online!");
 
 ## Building from source
 
-This development branch requires **JDK 25** to build and run the library. It produces
+This development branch requires **JDK 25 or newer** to build and run the library. It produces
 Java 25 bytecode; Java 8–24 runtimes used with earlier versions are no longer supported.
 
 Install a JDK 25 distribution (for example, [Eclipse Temurin](https://adoptium.net/temurin/releases/?version=25))
@@ -120,11 +120,11 @@ From a fresh checkout, run:
 The checked-in Maven Wrapper downloads and verifies the pinned Maven 3.10.0
 archive on first use, so a separate Maven installation is unnecessary. The first
 build requires internet access to download Maven, plugins, and dependencies.
-Check that `./mvnw -v` reports Java 25. Maven Enforcer rejects other build JDKs
-and Maven versions during validation, before compilation. No `toolchains.xml` is
-needed: compilation, tests, and Javadoc use the JDK running Maven.
+Check that `./mvnw -v` reports Java 25 or newer. CI verifies Java 25 and Java 27.
+Maven Enforcer rejects older build JDKs and unpinned Maven versions during
+validation, before compilation. No `toolchains.xml` is needed: compilation, tests, and Javadoc use the JDK running Maven.
 
-The default build runs the unit tests and creates `target/teamspeak3-api-1.4.0-SNAPSHOT.jar`.
+The default build runs the unit tests and creates `target/teamspeak3-api-2.0.0-SNAPSHOT.jar`.
 To also build the standalone jar, sources jar, and Java 25 Javadoc jar:
 
 ```sh
@@ -132,10 +132,27 @@ To also build the standalone jar, sources jar, and Java 25 Javadoc jar:
 ```
 
 These commands build locally and do not publish artifacts. Modernization tasks
-branch from and merge into `modernization/2.0`. Task
-[#431](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/issues/431) must isolate
-publishing before the final modernization merge into `master`; it is not a
-prerequisite for merging this build change into `modernization/2.0`.
+branch from and merge into `modernization/2.0`; `master` remains the default branch
+and receives the final validated integration PR. Ordinary merges never publish
+with these workflows. Publication is disabled pending JReleaser in task 05.
+
+### Release fragments
+
+Install pinned tooling and record release intent independently of commit messages:
+
+```sh
+python3 -m venv .tools/venv
+.tools/venv/bin/pip install -r .github/scripts/requirements.txt
+python3 .github/scripts/install-changie.py
+.tools/changie new --kind fixed --body "Describe the user-visible fix" --custom Issue=123
+.tools/venv/bin/python .github/scripts/release.py validate
+```
+
+Use `breaking` (major), `added` (minor), `fixed` or `security` (patch), or
+`internal` (none). Every fragment needs a user-facing description and an issue or
+PR reference. For internal-only PRs, an explicit exemption with a reviewable reason
+is also supported. See [release preparation and CI administration](docs/releases.md)
+for exemptions, local rehearsal, generated PR checks, and the publication handoff.
 
 ## Extra notes
 

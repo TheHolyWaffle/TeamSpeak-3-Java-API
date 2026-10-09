@@ -17,3 +17,7 @@
 
 # Idea Files
 /.idea
+
+# Pinned local release tools
+/.tools/
+__pycache__/
