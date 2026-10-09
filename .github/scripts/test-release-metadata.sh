@@ -3,7 +3,7 @@ set -euo pipefail
 fixtures=$(mktemp -d)
 trap 'rm -rf "$fixtures"' EXIT
 printf '{".":"2.0.0"}\n' > "$fixtures/manifest.json"
-printf '## [2.0.0](https://example.invalid/v2.0.0)\n\n### Features\n\n* Approved notes, preserved verbatim.\n\n' > "$fixtures/expected.md"
+printf '## [2.0.0](https://example.invalid/v2.0.0)\n\n### Features\n\n* Approved notes, preserved verbatim.\n\n## Compatibility\n\nApproved internal heading and details.\n\n' > "$fixtures/expected.md"
 { printf '# Changelog\n\n'; cat "$fixtures/expected.md"; printf '## [1.3.1]\n\nOld notes.\n'; } > "$fixtures/changelog.md"
 validate() {
   bash .github/scripts/release-metadata.sh "$1" "$2" "$fixtures/changelog.md" "$fixtures/manifest.json" "$fixtures/actual.md"

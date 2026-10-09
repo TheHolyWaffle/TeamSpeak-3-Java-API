@@ -11,7 +11,7 @@ output=${5:-target/release-notes.md}
 jq -e --arg version "$version" '.["."] == $version' "$manifest" >/dev/null
 # Require exactly one entry, at the top, then retain its bytes including blank lines.
 awk -v version="$version" '
-  /^## / {
+  /^## \[[0-9]+\.[0-9]+\.[0-9]+[^]]*\]/ {
     if (index($0, "## [" version "]") == 1) matches++
     if (!first++) { if (index($0, "## [" version "]") != 1) exit 1 }
   }
@@ -19,7 +19,7 @@ awk -v version="$version" '
 ' "$changelog"
 mkdir -p "$(dirname "$output")"
 awk -v version="$version" '
-  /^## / { if (capture) exit; if (index($0, "## [" version "]") == 1) capture=1 }
+  /^## \[[0-9]+\.[0-9]+\.[0-9]+[^]]*\]/ { if (capture) exit; if (index($0, "## [" version "]") == 1) capture=1 }
   capture { print }
 ' "$changelog" > "$output"
 test -s "$output"

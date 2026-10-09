@@ -116,7 +116,8 @@ sole owner of the reviewed stable POM version, manifest version and release note
 its preparation workflow continues to use `skip-github-release: true`. JReleaser
 uses `target/release-notes.md` as an external changelog, with formatting disabled.
 The metadata script extracts exactly the newest matching `## [version]` section,
-including its heading and whitespace, and excludes all older releases. It rejects
+including its heading, internal Markdown headings and whitespace, and excludes
+all older releases. Only version headings delimit release entries. It rejects
 snapshots, prereleases, leading-zero versions, tag/manifest mismatches, duplicate
 entries, and entries which are not newest. Notes above 10,000 UTF-8 bytes are
 rejected before publication: JReleaser truncates GitHub bodies above 10,000
