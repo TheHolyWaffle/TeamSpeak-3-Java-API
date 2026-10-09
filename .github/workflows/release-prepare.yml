@@ -1,0 +1,29 @@
+name: Prepare release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Preparation and future publication share a lock; never cancel a running release.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: ${{ github.ref == 'refs/heads/modernization/2.0' || github.ref == 'refs/heads/master' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Create or update the Maven release PR
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          # A dedicated fine-grained PAT causes normal pull_request CI events.
+          token: ${{ secrets.RELEASE_PR_TOKEN }}
+          target-branch: ${{ github.ref_name }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          # Task 05 owns publication and must define the tag/GitHub release owner.
+          skip-github-release: true

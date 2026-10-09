@@ -1,0 +1,53 @@
+name: Release publication handoff
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: '25'
+          distribution: temurin
+          cache: maven
+      - name: Match the tag to the stable POM, release manifest and changelog
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          mkdir -p target
+          ./mvnw -B -ntp org.apache.maven.plugins:maven-help-plugin:3.5.2:evaluate \
+            -Dexpression=project.version -Doutput=target/release-version.txt
+          version=$(cat target/release-version.txt)
+          [[ "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          test "$RELEASE_TAG" = "v$version"
+          jq -e --arg version "$version" '.["."] == $version' .release-please-manifest.json
+          grep -F "## [$version]" CHANGELOG.md
+
+  verify:
+    needs: validate
+    uses: ./.github/workflows/verify.yml
+
+  publish:
+    name: Publication disabled pending JReleaser (task 05)
+    needs: [validate, verify]
+    if: ${{ needs.validate.result == 'success' && false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - run: echo 'Task 05 must implement JReleaser publication from this exact verified commit.'
