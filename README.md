@@ -85,6 +85,50 @@ api.sendChannelMessage("PutPutBot is online!");
 
 [here](example)
 
+## Building from source
+
+This development branch requires **JDK 25** to build and run the library. It produces
+Java 25 bytecode; Java 8–24 runtimes used with earlier versions are no longer supported.
+
+Install a JDK 25 distribution (for example, [Eclipse Temurin](https://adoptium.net/temurin/releases/?version=25))
+and set `JAVA_HOME` to its installation directory. On macOS, after installing JDK 25:
+
+```sh
+export JAVA_HOME=$(/usr/libexec/java_home -v 25)
+export PATH="$JAVA_HOME/bin:$PATH"
+```
+
+On Linux, set `JAVA_HOME` to your JDK 25 directory (for example,
+`export JAVA_HOME=/path/to/jdk-25`). On Windows, set `JAVA_HOME` to the JDK 25 directory
+and use `mvnw.cmd` in place of `./mvnw`.
+
+From a fresh checkout, run:
+
+```sh
+./mvnw -v
+./mvnw -B -ntp verify
+```
+
+The checked-in Maven Wrapper downloads and verifies the pinned Maven 3.10.0
+archive on first use, so a separate Maven installation is unnecessary. The first
+build requires internet access to download Maven, plugins, and dependencies.
+Check that `./mvnw -v` reports Java 25. Maven Enforcer rejects other build JDKs
+and Maven versions during validation, before compilation. No `toolchains.xml` is
+needed: compilation, tests, and Javadoc use the JDK running Maven.
+
+The default build runs the unit tests and creates `target/teamspeak3-api-1.4.0-SNAPSHOT.jar`.
+To also build the standalone jar, sources jar, and Java 25 Javadoc jar:
+
+```sh
+./mvnw -B -ntp -Pfull verify
+```
+
+These commands build locally and do not publish artifacts. Modernization tasks
+branch from and merge into `modernization/2.0`. Task
+[#431](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/issues/431) must isolate
+publishing before the final modernization merge into `master`; it is not a
+prerequisite for merging this build change into `modernization/2.0`.
+
 ## Extra notes
 
 ### FloodRate

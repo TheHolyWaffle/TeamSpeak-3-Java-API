@@ -13,14 +13,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Set up JDK 8
+      - name: Set up JDK 25
         uses: actions/setup-java@v3
         with:
-          java-version: '8'
+          java-version: '25'
           distribution: 'zulu'
           cache: maven
-      - name: Run tests with Maven
-        run: mvn test -B
+      - name: Verify with Maven Wrapper
+        run: ./mvnw -B -ntp verify
 
   deploy:
     name: Deploy to Maven Central
@@ -31,10 +31,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Set up JDK 8
+      - name: Set up JDK 25
         uses: actions/setup-java@v3
         with:
-          java-version: '8'
+          java-version: '25'
           distribution: 'zulu'
           cache: maven
           server-id: ossrh
@@ -43,7 +43,7 @@ jobs:
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
       - name: Publish to Maven Central
-        run: mvn deploy -B -Pfull,ossrh -DskipTests=true
+        run: ./mvnw -B -ntp deploy -Pfull,ossrh -DskipTests=true
         env:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
