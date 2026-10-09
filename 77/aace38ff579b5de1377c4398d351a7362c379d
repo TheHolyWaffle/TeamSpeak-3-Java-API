@@ -1,0 +1,28 @@
+README.md
+  s_4d347e01f7d294::t_f85a29bad6802b 49,53-62
+  s_4d347e01f7d294::t_dd67aecd2ffc42 142-154
+  s_4d347e01f7d294::t_a1df463937abc6 155
+pom.xml
+  s_4d347e01f7d294::t_1248a5bbe7a5fd 56,61-73
+  s_4d347e01f7d294::t_c69e403b37a7d3 81-92,260
+  s_4d347e01f7d294::t_ec3eaf18459302 54-55,263
+  s_4d347e01f7d294::t_ae2e88dcf99edc 74
+.github/workflows/maven.yml
+  s_4d347e01f7d294::t_17bf238d8b566d 24-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "77aace38ff579b5de1377c4398d351a7362c379d",
+  "prompts": {},
+  "sessions": {
+    "s_4d347e01f7d294": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a121d4-8e61-7040-9677-a43e9605efb8",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "bert.degeyter <bert.degeyter@showpad.com>"
+    }
+  }
+}
