@@ -23,6 +23,14 @@ printf '## [2.0.1]\nNewer.\n## [2.0.0]\nOld.\n' > "$fixtures/changelog.md"
 if validate 2.0.0 v2.0.0; then exit 1; fi
 printf '## [1.3.1]\nMissing release entry.\n' > "$fixtures/changelog.md"
 if validate 2.0.0 v2.0.0; then exit 1; fi
+printf '## [2.0.0]\n' > "$fixtures/changelog.md"
+header_bytes=$(LC_ALL=C wc -c < "$fixtures/changelog.md")
+head -c "$((9999 - header_bytes))" /dev/zero | tr '\0' x >> "$fixtures/changelog.md"
+printf '\n' >> "$fixtures/changelog.md"
+validate 2.0.0 v2.0.0
+cmp "$fixtures/changelog.md" "$fixtures/actual.md"
+printf 'x\n' >> "$fixtures/changelog.md"
+if validate 2.0.0 v2.0.0; then exit 1; fi
 echo 'Release metadata acceptance and rejection tests passed.'
 
 # Recovery must reject a wrong version, namespace, ID, empty bundle, or published state.

@@ -23,3 +23,11 @@ awk -v version="$version" '
   capture { print }
 ' "$changelog" > "$output"
 test -s "$output"
+
+# JReleaser 1.26.0 truncates GitHub bodies above 10,000 Java characters.
+# A UTF-8 byte bound is conservative and guarantees the approved body stays unchanged.
+notes_bytes=$(LC_ALL=C wc -c < "$output" | tr -d '[:space:]')
+if (( notes_bytes > 10000 )); then
+  echo 'Approved release notes exceed the unchanged GitHub-body limit (10,000 UTF-8 bytes).' >&2
+  exit 1
+fi

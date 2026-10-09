@@ -118,7 +118,11 @@ uses `target/release-notes.md` as an external changelog, with formatting disable
 The metadata script extracts exactly the newest matching `## [version]` section,
 including its heading and whitespace, and excludes all older releases. It rejects
 snapshots, prereleases, leading-zero versions, tag/manifest mismatches, duplicate
-entries, and entries which are not newest. No second changelog generator runs.
+entries, and entries which are not newest. Notes above 10,000 UTF-8 bytes are
+rejected before publication: JReleaser truncates GitHub bodies above 10,000
+characters, so this conservative bound guarantees unchanged notes. If needed,
+shorten the release-please entry through a reviewed PR; the workflow never rewrites
+it. No second changelog generator runs.
 
 The old `ossrh` profile, Nexus staging extension and retired endpoints are removed.
 Do not use `-Possrh` or remote Maven `deploy`. `-Pcentral-staging deploy` runs tests
