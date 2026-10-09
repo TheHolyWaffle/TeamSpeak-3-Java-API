@@ -17,33 +17,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Install release tooling
-        run: |
-          python3 -m pip install -r .github/scripts/requirements.txt
-          python3 .github/scripts/install-changie.py
-      - name: Prepare changelog and Maven reactor versions
-        run: python3 .github/scripts/release.py prepare
-      - name: Create or update the release PR
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+      - name: Create or update the Maven release PR
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           # A dedicated fine-grained PAT causes normal pull_request CI events.
-          # The read-only GITHUB_TOKEN cannot supply that behavior.
           token: ${{ secrets.RELEASE_PR_TOKEN }}
-          base: ${{ github.ref_name }}
-          branch: release/prepare-${{ github.ref_name }}
-          delete-branch: true
-          add-paths: |
-            .changes/
-            CHANGELOG.md
-            **/pom.xml
-            pom.xml
-          commit-message: Prepare release changelog and Maven versions
-          title: Prepare release
-          body: |
-            Generated with pinned Changie tooling from the selected integration commit.
-            Review release notes, migration guidance, and Maven project versions.
-            All required CI must pass before merging. Publication remains disabled until #433.
-            After merge, tag the exact approved commit with v<project version>.
+          target-branch: ${{ github.ref_name }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          # Task 05 owns publication and must define the tag/GitHub release owner.
+          skip-github-release: true

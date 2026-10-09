@@ -5,6 +5,7 @@ on:
     branches: [master, modernization/2.0]
   pull_request:
     branches: [master, modernization/2.0]
+    types: [opened, reopened, synchronize, edited]
   workflow_dispatch:
 
 permissions:
@@ -20,30 +21,30 @@ jobs:
 
   release_intent:
     name: Release intent
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          persist-credentials: false
-      - name: Install release tooling
-        run: |
-          python3 -m pip install -r .github/scripts/requirements.txt
-          python3 .github/scripts/install-changie.py
-      - name: Validate fragments and PR intent
+      - name: Validate Conventional Commit PR title
+        uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_BRANCH: ${{ github.head_ref }}
-        run: |
-          if [ -n "$BASE_SHA" ]; then
-            python3 .github/scripts/release.py validate --base "$BASE_SHA" --head-branch "$HEAD_BRANCH"
-          else
-            python3 .github/scripts/release.py validate
-          fi
-      - name: Rehearse release tooling
-        run: python3 -m unittest discover -s .github/scripts -p 'test_*.py'
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          types: |
+            feat
+            fix
+            perf
+            deps
+            revert
+            docs
+            style
+            chore
+            refactor
+            test
+            build
+            ci
 
   required:
     name: CI required
@@ -52,8 +53,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Require every verification job to succeed
+      - name: Require every applicable verification job to succeed
         env:
           BUILD_RESULT: ${{ needs.verify.result }}
           INTENT_RESULT: ${{ needs.release_intent.result }}
-        run: test "$BUILD_RESULT" = success && test "$INTENT_RESULT" = success
+        run: |
+          test "$BUILD_RESULT" = success
+          test "$INTENT_RESULT" = success || test "$INTENT_RESULT" = skipped

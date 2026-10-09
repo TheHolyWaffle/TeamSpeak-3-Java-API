@@ -136,23 +136,19 @@ branch from and merge into `modernization/2.0`; `master` remains the default bra
 and receives the final validated integration PR. Ordinary merges never publish
 with these workflows. Publication is disabled pending JReleaser in task 05.
 
-### Release fragments
+### Release preparation
 
-Install pinned tooling and record release intent independently of commit messages:
+Release-please prepares Maven release PRs from Conventional Commit messages.
+Use a Conventional Commit PR title and squash-merge it: `fix: ...` for a patch,
+`feat: ...` for a feature, and `feat!: ...` (or another type with `!`) for a
+breaking change. Include migration details in the PR body and reference its issue.
+Internal changes use titles such as `ci: ...`, `test: ...`, or `chore: ...`.
+No separate release fragments or local release tooling are required.
 
-```sh
-python3 -m venv .tools/venv
-.tools/venv/bin/pip install -r .github/scripts/requirements.txt
-python3 .github/scripts/install-changie.py
-.tools/changie new --kind fixed --body "Describe the user-visible fix" --custom Issue=123
-.tools/venv/bin/python .github/scripts/release.py validate
-```
-
-Use `breaking` (major), `added` (minor), `fixed` or `security` (patch), or
-`internal` (none). Every fragment needs a user-facing description and an issue or
-PR reference. For internal-only PRs, an explicit exemption with a reviewable reason
-is also supported. See [release preparation and CI administration](docs/releases.md)
-for exemptions, local rehearsal, generated PR checks, and the publication handoff.
+Run **Prepare release** manually on `modernization/2.0` to open or update its
+release PR. The first modernization release is pinned to **2.0.0**. See
+[release preparation and CI administration](docs/releases.md) for the token,
+merge settings, snapshot convention, and JReleaser publication handoff.
 
 ## Extra notes
 

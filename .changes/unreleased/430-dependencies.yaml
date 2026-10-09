@@ -1,5 +1,0 @@
-kind: breaking
-body: Upgrade SSHJ and patched Bouncy Castle modules, and migrate logging to SLF4J 2.0. Replace SLF4J 1.7 bindings with a single SLF4J 2.x provider; the standalone JAR includes SimpleLogger.
-time: 2026-10-09T16:01:00Z
-custom:
-  Issue: "430"

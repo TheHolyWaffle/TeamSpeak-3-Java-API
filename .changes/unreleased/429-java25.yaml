@@ -1,5 +1,0 @@
-kind: breaking
-body: Require Java 25 to build and run the library; migrate Java 8–24 applications to JDK 25. Use the pinned Maven Wrapper to build from source.
-time: 2026-10-09T16:00:00Z
-custom:
-  Issue: "429"

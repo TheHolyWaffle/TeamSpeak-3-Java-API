@@ -1,5 +1,0 @@
-kind: internal
-body: Separate verification from release preparation, require explicit release intent, and disable automatic Maven Central publication pending JReleaser.
-time: 2026-10-09T16:02:00Z
-custom:
-  Issue: "431"
