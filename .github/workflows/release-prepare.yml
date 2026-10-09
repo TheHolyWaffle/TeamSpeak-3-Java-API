@@ -25,5 +25,5 @@ jobs:
           target-branch: ${{ github.ref_name }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-          # Task 05 owns publication and must define the tag/GitHub release owner.
+          # JReleaser alone owns publication and version tags/GitHub releases.
           skip-github-release: true

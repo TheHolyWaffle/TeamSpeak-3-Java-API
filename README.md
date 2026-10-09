@@ -124,8 +124,8 @@ Check that `./mvnw -v` reports Java 25 or newer. CI verifies Java 25 and Java 27
 Maven Enforcer rejects older build JDKs and unpinned Maven versions during
 validation, before compilation. No `toolchains.xml` is needed: compilation, tests, and Javadoc use the JDK running Maven.
 
-The default build runs the unit tests and creates `target/teamspeak3-api-2.0.0-SNAPSHOT.jar`.
-To also build the standalone jar, sources jar, and Java 25 Javadoc jar:
+The default build runs the unit tests and creates the normal JAR, sources JAR and
+Java 25 Javadoc JAR under `target`. To also build the standalone JAR:
 
 ```sh
 ./mvnw -B -ntp -Pfull verify
@@ -134,7 +134,8 @@ To also build the standalone jar, sources jar, and Java 25 Javadoc jar:
 These commands build locally and do not publish artifacts. Modernization tasks
 branch from and merge into `modernization/2.0`; `master` remains the default branch
 and receives the final validated integration PR. Ordinary merges never publish
-with these workflows. Publication is disabled pending JReleaser in task 05.
+with these workflows. Publication uses an explicit, protected JReleaser action from the approved stable
+release commit on `master`; ordinary pushes and integration merges do not publish.
 
 ### Release preparation
 
@@ -148,7 +149,7 @@ No separate release fragments or local release tooling are required.
 Run **Prepare release** manually on `modernization/2.0` to open or update its
 release PR. The first modernization release is pinned to **2.0.0**. See
 [release preparation and CI administration](docs/releases.md) for the token,
-merge settings, snapshot convention, and JReleaser publication handoff.
+merge settings, snapshot convention, and JReleaser Central Portal publication and recovery.
 
 ## Extra notes
 
