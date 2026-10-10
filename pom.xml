@@ -55,6 +55,7 @@
 		<slf4j.version>2.0.20</slf4j.version>
 		<bouncycastle.version>1.86</bouncycastle.version>
 		<junit.version>6.1.3</junit.version>
+		<jreleaser.config.file>${project.basedir}/jreleaser.yml</jreleaser.config.file>
 		<project.build.outputTimestamp>1980-01-01T00:00:02Z</project.build.outputTimestamp>
 	</properties>
 
@@ -187,48 +188,65 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.6.0</version>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.4.0</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.12.0</version>
+				<configuration>
+					<release>${maven.compiler.release}</release>
+					<quiet>true</quiet>
+					<show>protected</show>
+					<linksource>true</linksource>
+					<notimestamp>true</notimestamp>
+					<bottom>Released under the MIT license.</bottom>
+					<tags>
+						<tag>
+							<name>querycommands</name>
+							<placement>m</placement>
+							<head>Number of query commands sent:</head>
+						</tag>
+					</tags>
+				</configuration>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.jreleaser</groupId>
+				<artifactId>jreleaser-maven-plugin</artifactId>
+				<version>1.26.0</version>
+				<inherited>false</inherited>
+				<configuration>
+					<configFile>${jreleaser.config.file}</configFile>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 
 	<profiles>
 		<profile>
-			<id>ossrh</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-gpg-plugin</artifactId>
-						<version>3.2.8</version>
-						<executions>
-							<execution>
-								<id>sign-artifacts</id>
-								<phase>verify</phase>
-								<goals>
-									<goal>sign</goal>
-								</goals>
-								<configuration>
-									<!-- Prevent gpg from using pinentry programs -->
-									<gpgArguments>
-										<arg>--pinentry-mode</arg>
-										<arg>loopback</arg>
-									</gpgArguments>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-					<plugin>
-						<groupId>org.sonatype.plugins</groupId>
-						<artifactId>nexus-staging-maven-plugin</artifactId>
-						<version>1.6.8</version>
-						<extensions>true</extensions>
-						<configuration>
-							<serverId>ossrh</serverId>
-							<nexusUrl>https://oss.sonatype.org/</nexusUrl>
-							<autoReleaseAfterClose>true</autoReleaseAfterClose>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
+			<id>central-staging</id>
+			<properties>
+				<altDeploymentRepository>local-staging::file://${project.build.directory}/staging-deploy</altDeploymentRepository>
+			</properties>
 		</profile>
 
 		<profile>
@@ -286,60 +304,9 @@
 							</execution>
 						</executions>
 					</plugin>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-source-plugin</artifactId>
-						<version>3.4.0</version>
-						<executions>
-							<execution>
-								<id>attach-sources</id>
-								<goals>
-									<goal>jar-no-fork</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-javadoc-plugin</artifactId>
-						<version>3.12.0</version>
-						<configuration>
-							<release>${maven.compiler.release}</release>
-							<quiet>true</quiet>
-							<show>protected</show>
-							<linksource>true</linksource>
-							<notimestamp>true</notimestamp>
-							<bottom>Released under the MIT license.</bottom>
-							<tags>
-								<tag>
-									<name>querycommands</name>
-									<placement>m</placement>
-									<head>Number of query commands sent:</head>
-								</tag>
-							</tags>
-						</configuration>
-						<executions>
-							<execution>
-								<id>attach-javadocs</id>
-								<goals>
-									<goal>jar</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
 				</plugins>
 			</build>
 		</profile>
 	</profiles>
 
-	<distributionManagement>
-		<snapshotRepository>
-			<id>ossrh</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-		</snapshotRepository>
-		<repository>
-			<id>ossrh</id>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-		</repository>
-	</distributionManagement>
 </project>

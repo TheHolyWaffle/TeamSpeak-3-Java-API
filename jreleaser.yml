@@ -1,0 +1,42 @@
+# release-please owns versions and notes; JReleaser owns signing, deployment,
+# the version tag and GitHub release. Snapshots are never published.
+project:
+  name: teamspeak3-api
+  description: A Java wrapper of the TeamSpeak ServerQuery API
+  license: MIT
+  authors:
+    - TheHolyWaffle
+    - rogermb
+  links:
+    homepage: https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API
+release:
+  github:
+    owner: TheHolyWaffle
+    name: TeamSpeak-3-Java-API
+    branch: master
+    tagName: 'v{{projectVersion}}'
+    overwrite: false
+    update:
+      enabled: false
+    uploadAssets: NEVER
+    milestone:
+      close: false
+    changelog:
+      external: target/release-notes.md
+      formatted: NEVER
+signing:
+  active: RELEASE
+  pgp:
+    armored: true
+    mode: FILE
+    verify: true
+deploy:
+  maven:
+    mavenCentral:
+      central:
+        active: RELEASE
+        url: https://central.sonatype.com/api/v1/publisher
+        namespace: com.github.theholywaffle
+        applyMavenCentralRules: true
+        stagingRepositories:
+          - target/staging-deploy
