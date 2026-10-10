@@ -146,11 +146,18 @@ verification must not upload a test release. See the official
 and [namespace documentation](https://central.sonatype.org/register/namespace/).
 
 Configure a protected GitHub environment named **release**, restricted to `master`,
-using its deployment branch policy. Store these secrets only in that environment:
+using its deployment branch policy. Store the Portal token in that environment:
 
 - `CENTRAL_PORTAL_USERNAME` and `CENTRAL_PORTAL_PASSWORD`: Portal user-token pair.
-- `RELEASE_GPG_PUBLIC_KEY` and `RELEASE_GPG_SECRET_KEY`: ASCII-armored release keys.
-- `RELEASE_GPG_PASSPHRASE`: the signing-key passphrase.
+
+Reuse the existing `MAVEN_GPG_PRIVATE_KEY` (ASCII-armored private key) and
+`MAVEN_GPG_PASSPHRASE` signing secrets. The protected release job references this
+pair directly; no key regeneration, renamed copies or separate public-key secret
+are required. It derives the public key in an isolated temporary GnuPG keyring,
+then passes both key files to JReleaser. Only this job receives the real signing
+pair. Repository secrets already used by the legacy `master` publisher remain
+supported; storing the pair under the same names in the `release` environment
+can restrict future access further, because environment secrets take precedence.
 
 The public key must be published to a supported keyserver and valid for the
 release; JReleaser checks publication and expiration. The default GitHub token has
@@ -159,7 +166,7 @@ version tag and GitHub release. Preparation still uses its separate release PR
 token. CI, PRs, metadata validation and non-publishing bundle validation have no
 Portal or real signing credentials. Publication writes temporary private-key
 files with owner-only permissions and deletes them on exit; recovery artifacts
-exclude those files and JReleaser's trace log. Retire legacy OSSRH secrets once
+exclude those files and JReleaser's trace log. Retire legacy OSSRH account secrets once
 `master`'s old automatic publisher has been isolated as described above.
 
 ### Local validation and CI rehearsal

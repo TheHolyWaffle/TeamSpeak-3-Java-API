@@ -6,9 +6,11 @@ trap 'gpgconf --homedir "$keydir" --kill all >/dev/null 2>&1 || true; rm -rf "$k
 chmod 700 "$keydir"
 gpg --homedir "$keydir" --batch --pinentry-mode loopback --passphrase rehearsal \
   --quick-generate-key 'CI rehearsal <rehearsal@example.invalid>' rsa3072 sign 1d >/dev/null 2>&1
-gpg --homedir "$keydir" --batch --armor --export > "$keydir/public.asc"
+gpg --homedir "$keydir" --batch --armor --export > "$keydir/expected-public.asc"
 gpg --homedir "$keydir" --batch --pinentry-mode loopback --passphrase rehearsal \
   --armor --export-secret-keys > "$keydir/secret.asc"
+bash .github/scripts/derive-signing-public-key.sh "$keydir/secret.asc" "$keydir/public.asc"
+cmp "$keydir/expected-public.asc" "$keydir/public.asc"
 export JRELEASER_GPG_PUBLIC_KEY="$keydir/public.asc"
 export JRELEASER_GPG_SECRET_KEY="$keydir/secret.asc"
 export JRELEASER_GPG_PASSPHRASE=rehearsal

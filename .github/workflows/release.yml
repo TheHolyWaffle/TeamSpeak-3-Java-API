@@ -141,9 +141,8 @@ jobs:
           JRELEASER_GITHUB_TOKEN: ${{ github.token }}
           JRELEASER_MAVENCENTRAL_CENTRAL_USERNAME: ${{ secrets.CENTRAL_PORTAL_USERNAME }}
           JRELEASER_MAVENCENTRAL_CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PORTAL_PASSWORD }}
-          SIGNING_PUBLIC_KEY: ${{ secrets.RELEASE_GPG_PUBLIC_KEY }}
-          SIGNING_SECRET_KEY: ${{ secrets.RELEASE_GPG_SECRET_KEY }}
-          JRELEASER_GPG_PASSPHRASE: ${{ secrets.RELEASE_GPG_PASSPHRASE }}
+          SIGNING_SECRET_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          JRELEASER_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
           RELEASE_ACTION: ${{ inputs.action }}
           DEPLOYMENT_ID: ${{ inputs.deployment_id }}
         shell: bash
@@ -151,15 +150,14 @@ jobs:
           set -euo pipefail
           test -n "$JRELEASER_MAVENCENTRAL_CENTRAL_USERNAME"
           test -n "$JRELEASER_MAVENCENTRAL_CENTRAL_PASSWORD"
-          test -n "$SIGNING_PUBLIC_KEY"
           test -n "$SIGNING_SECRET_KEY"
           test -n "$JRELEASER_GPG_PASSPHRASE"
           keydir=$(mktemp -d)
           trap 'rm -rf "$keydir"' EXIT
           chmod 700 "$keydir"
           umask 077
-          printf '%s' "$SIGNING_PUBLIC_KEY" > "$keydir/public.asc"
           printf '%s' "$SIGNING_SECRET_KEY" > "$keydir/secret.asc"
+          bash .github/scripts/derive-signing-public-key.sh "$keydir/secret.asc" "$keydir/public.asc"
           export JRELEASER_GPG_PUBLIC_KEY="$keydir/public.asc"
           export JRELEASER_GPG_SECRET_KEY="$keydir/secret.asc"
           if test "$RELEASE_ACTION" = resume-central; then
