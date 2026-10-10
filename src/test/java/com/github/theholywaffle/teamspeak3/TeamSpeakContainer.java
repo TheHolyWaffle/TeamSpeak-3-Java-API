@@ -1,6 +1,7 @@
 package com.github.theholywaffle.teamspeak3;
 
 import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.DefaultConfig;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.transport.verification.HostKeyVerifier;
 import org.testcontainers.containers.GenericContainer;
@@ -90,7 +91,9 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer> {
 	}
 
 	private void probeSsh() throws IOException {
-		try (SSHClient client = new SSHClient()) {
+		DefaultConfig config = new DefaultConfig();
+		config.setChannelReadTimeoutMs(2000);
+		try (SSHClient client = new SSHClient(config)) {
 			client.setConnectTimeout(2000);
 			client.setTimeout(2000);
 			// Bootstrap only from our freshly created, isolated container; never a user server.
