@@ -64,7 +64,7 @@ class ReconnectSemanticsTest {
 				var second = query.getAsyncApi().createChannel("second", Map.of());
 				var third = query.getAsyncApi().createChannel("third", Map.of());
 				drop.countDown();
-				var unknown = assertThrows(TS3UnknownOutcomeException.class, () -> first.get(2, TimeUnit.SECONDS));
+				var unknown = assertThrows(TS3UnknownOutcomeException.class, () -> FutureAssertions.read(first, 2, TimeUnit.SECONDS));
 				assertEquals("channelcreate", unknown.getCommandName());
 				assertEquals(22, second.get(2, TimeUnit.SECONDS));
 				assertEquals(23, third.get(2, TimeUnit.SECONDS));
@@ -109,7 +109,7 @@ class ReconnectSemanticsTest {
 				assertTrue(received.await(1, TimeUnit.SECONDS));
 				var waiting = query.getAsyncApi().getVersion();
 				drop.countDown();
-				assertThrows(TS3UnknownOutcomeException.class, () -> read.get(2, TimeUnit.SECONDS));
+				assertThrows(TS3UnknownOutcomeException.class, () -> FutureAssertions.read(read, 2, TimeUnit.SECONDS));
 				assertEquals("after-exhaustion", waiting.get(2, TimeUnit.SECONDS).getVersion());
 				query.exit(); server.await(); closed(query);
 			}
@@ -121,7 +121,7 @@ class ReconnectSemanticsTest {
 		try (var server = new Peer(p -> { p.restore(); p.expect("whoami"); }, p -> { p.restore(); p.quit(); })) {
 			try (var query = new TS3Query(config(server.port()))) {
 				query.connect();
-				assertThrows(TS3UnknownOutcomeException.class, () -> query.getAsyncApi().whoAmI().get(2, TimeUnit.SECONDS));
+				assertThrows(TS3UnknownOutcomeException.class, () -> FutureAssertions.read(query.getAsyncApi().whoAmI(), 2, TimeUnit.SECONDS));
 				assertTrue(server.secondSession.await(2, TimeUnit.SECONDS));
 				awaitConnected(query);
 				query.exit(); server.await(); closed(query);
@@ -174,8 +174,8 @@ class ReconnectSemanticsTest {
 				assertTrue(received.await(1, TimeUnit.SECONDS));
 				var waiting = query.getAsyncApi().createChannel("never-sent", Map.of());
 				drop.countDown();
-				assertThrows(TS3Exception.class, () -> waiting.get(3, TimeUnit.SECONDS));
-				assertThrows(TS3Exception.class, () -> read.get(1, TimeUnit.SECONDS));
+				assertThrows(TS3Exception.class, () -> FutureAssertions.read(waiting, 3, TimeUnit.SECONDS));
+				assertThrows(TS3Exception.class, () -> FutureAssertions.read(read, 1, TimeUnit.SECONDS));
 				closed(query); server.await();
 			}
 		}
@@ -198,8 +198,8 @@ class ReconnectSemanticsTest {
 				while (query.getState() != TS3Query.State.DISCONNECTED && System.nanoTime() < until) Thread.sleep(2);
 				assertEquals(TS3Query.State.DISCONNECTED, query.getState());
 				assertTimeout(Duration.ofMillis(700), query::close);
-				assertThrows(TS3Exception.class, () -> read.get(1, TimeUnit.SECONDS));
-				assertThrows(TS3Exception.class, () -> waiting.get(1, TimeUnit.SECONDS));
+				assertThrows(TS3Exception.class, () -> FutureAssertions.read(read, 1, TimeUnit.SECONDS));
+				assertThrows(TS3Exception.class, () -> FutureAssertions.read(waiting, 1, TimeUnit.SECONDS));
 				closed(query); server.await();
 			}
 		}
@@ -211,7 +211,7 @@ class ReconnectSemanticsTest {
 			p.expect("version"); p.reply("version=framing-ok"); p.quit(); })) {
 			try (var query = new TS3Query(config(server.port()).setCommandRetryPolicy(CommandRetryPolicy.safeReads(2, "whoami")))) {
 				query.connect();
-				assertThrows(TS3CommandFailedException.class, () -> query.getAsyncApi().whoAmI().get(1, TimeUnit.SECONDS));
+				assertThrows(TS3CommandFailedException.class, () -> FutureAssertions.read(query.getAsyncApi().whoAmI(), 1, TimeUnit.SECONDS));
 				assertThrows(TS3Exception.class, () -> query.getApi().selectVirtualServerById(8));
 				assertThrows(TS3Exception.class, () -> query.getApi().setNickname("other"));
 				assertEquals("framing-ok", query.getApi().getVersion().getVersion());
@@ -234,8 +234,8 @@ class ReconnectSemanticsTest {
 				assertTrue(received.await(1, TimeUnit.SECONDS));
 				var waiting = query.getAsyncApi().createChannel("expired", Map.of());
 				drop.countDown();
-				assertThrows(TS3UnknownOutcomeException.class, () -> read.get(1, TimeUnit.SECONDS));
-				var failure = assertThrows(TS3Exception.class, () -> waiting.get(1, TimeUnit.SECONDS));
+				assertThrows(TS3UnknownOutcomeException.class, () -> FutureAssertions.read(read, 1, TimeUnit.SECONDS));
+				var failure = assertThrows(TS3Exception.class, () -> FutureAssertions.read(waiting, 1, TimeUnit.SECONDS));
 				assertTrue(failure.getMessage().contains("queue wait"));
 				assertTrue(server.secondSession.await(2, TimeUnit.SECONDS));
 				awaitConnected(query); query.exit(); server.await(); closed(query);
@@ -261,8 +261,8 @@ class ReconnectSemanticsTest {
 				drop.countDown();
 				assertTrue(login.await(2, TimeUnit.SECONDS));
 				assertTimeout(Duration.ofMillis(700), query::close);
-				assertThrows(TS3Exception.class, () -> read.get(1, TimeUnit.SECONDS));
-				assertThrows(TS3Exception.class, () -> waiting.get(1, TimeUnit.SECONDS));
+				assertThrows(TS3Exception.class, () -> FutureAssertions.read(read, 1, TimeUnit.SECONDS));
+				assertThrows(TS3Exception.class, () -> FutureAssertions.read(waiting, 1, TimeUnit.SECONDS));
 				closed(query); server.await();
 			}
 		}
@@ -283,11 +283,11 @@ class ReconnectSemanticsTest {
 				assertTrue(received.await(1, TimeUnit.SECONDS));
 				var unsent = query.getAsyncApi().createChannel("never-sent", Map.of());
 				drop.countDown();
-				assertThrows(TS3Exception.class, () -> unsent.get(1, TimeUnit.SECONDS));
-				assertThrows(TS3UnknownOutcomeException.class, () -> sent.get(1, TimeUnit.SECONDS));
+				assertThrows(TS3Exception.class, () -> FutureAssertions.read(unsent, 1, TimeUnit.SECONDS));
+				assertThrows(TS3UnknownOutcomeException.class, () -> FutureAssertions.read(sent, 1, TimeUnit.SECONDS));
 				long until = System.nanoTime() + TimeUnit.SECONDS.toNanos(1);
 				while (query.getState() != TS3Query.State.DISCONNECTED && System.nanoTime() < until) Thread.sleep(2);
-				assertThrows(TS3Exception.class, () -> query.getAsyncApi().createChannel("during-backoff", Map.of()).get());
+				assertThrows(TS3Exception.class, () -> FutureAssertions.read(query.getAsyncApi().createChannel("during-backoff", Map.of())));
 				awaitConnected(query); query.exit(); server.await(); closed(query);
 			}
 		}

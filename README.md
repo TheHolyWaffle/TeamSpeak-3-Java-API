@@ -4,6 +4,8 @@ TeamSpeak 3 Java API
 
 A Java wrapper of the [TeamSpeak 3](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf)  Server Query API
 
+For the 2.0 asynchronous API, see the [CompletableFuture migration and execution contract](docs/futures.md).
+
 ## Features
 
 - Contains almost all server query functionality! (see [TeamSpeak 3 Server Query Manual](https://www.teamspeak-info.de/downloads/ts3_serverquery_manual.pdf))

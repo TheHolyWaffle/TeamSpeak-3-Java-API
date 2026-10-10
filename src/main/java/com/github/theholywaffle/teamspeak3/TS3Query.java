@@ -111,6 +111,7 @@ public class TS3Query implements AutoCloseable {
 	private final ConnectionHandler connectionHandler;
 	private final EventManager eventManager;
 	private final ExecutorService userThreadPool;
+	private final ExecutorService completions;
 	private final FileTransferHelper fileTransferHelper;
 	private final CommandQueue globalQueue;
 	private final TS3Config config;
@@ -148,6 +149,8 @@ public class TS3Query implements AutoCloseable {
 		this.eventManager = new EventManager(this);
 		this.userThreadPool = Executors.newThreadPerTaskExecutor(
 			Thread.ofVirtual().name("[TeamSpeak-3-Java-API] Callback-", 0).factory());
+		this.completions = Executors.newSingleThreadExecutor(
+			Thread.ofVirtual().name("[TeamSpeak-3-Java-API] Completions").factory());
 		this.deadlines = Executors.newSingleThreadScheduledExecutor(
 			Thread.ofPlatform().name("[TeamSpeak-3-Java-API] Deadlines").factory());
 		this.fileTransferHelper = new FileTransferHelper(config.getHost());
@@ -269,12 +272,18 @@ public class TS3Query implements AutoCloseable {
 		eventManager.close();
 		globalQueue.failRemainingCommands();
 		deadlines.shutdownNow();
-		userThreadPool.shutdown();
+		completions.shutdown();
 		// Never await our own callback executor from one of its workers.
 		if (!userTask.get()) {
-			try {
-				userThreadPool.awaitTermination(deadline.remaining() / 2, TimeUnit.NANOSECONDS);
-			} catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+			try { completions.awaitTermination(deadline.remaining() / 3, TimeUnit.NANOSECONDS); }
+			catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+		}
+		// A blocking callback must not strand completions queued behind it at close.
+		for (Runnable pending : completions.shutdownNow()) userThreadPool.execute(pending);
+		userThreadPool.shutdown();
+		if (!userTask.get()) {
+			try { userThreadPool.awaitTermination(deadline.remaining() / 2, TimeUnit.NANOSECONDS); }
+			catch (InterruptedException e) { Thread.currentThread().interrupt(); }
 		}
 		userThreadPool.shutdownNow();
 		if (!userTask.get()) {
@@ -294,7 +303,7 @@ public class TS3Query implements AutoCloseable {
 
 	boolean resourcesTerminated() {
 		Connection con = connection;
-		return eventManager.isTerminated() && userThreadPool.isTerminated() && deadlines.isTerminated()
+		return eventManager.isTerminated() && userThreadPool.isTerminated() && completions.isTerminated() && deadlines.isTerminated()
 			&& (con == null || con.threadsTerminated());
 	}
 
@@ -360,6 +369,14 @@ public class TS3Query implements AutoCloseable {
 	void runUserTask(Runnable task) {
 		userTask.set(true);
 		try { task.run(); } finally { userTask.remove(); }
+	}
+
+	java.util.concurrent.Executor callbackExecutor() {
+		return task -> userThreadPool.execute(() -> runUserTask(task));
+	}
+
+	void submitCompletion(Runnable task) {
+		completions.execute(() -> runUserTask(task));
 	}
 
 	void submitUserTask(final String name, final Runnable task) {

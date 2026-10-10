@@ -47,10 +47,13 @@ import java.util.regex.Pattern;
  * sends them to the TeamSpeak3 server, processes the response and returns the result.
  * </p><p>
  * All methods in this class are synchronous, so they will block until the response arrives.
- * Calls to this API will usually take about 50 milliseconds to complete (plus ping),
- * but delays can range up to 4 seconds.
- * If a command takes longer than 4 seconds to complete, a {@link TS3ConnectionFailedException}
- * will be thrown.
+ * Waiting ignores interruption until the future completes, then preserves the interrupt
+ * flag. TS3 failure causes are rethrown directly; other completion failures are translated
+ * to {@link com.github.theholywaffle.teamspeak3.api.exception.TS3Exception}.
+ * Queue-wait and response deadlines are configured through {@link TS3Config}.
+ * Do not call this API from a non-async completion callback: waiting for another command
+ * would block the same completion worker. Use CompletionStage composition or an
+ * application executor instead.
  * </p><p>
  * You won't be able to execute most commands while you're not logged in due to missing permissions.
  * Make sure to either pass your login credentials to the {@link TS3Config} object when
@@ -108,7 +111,7 @@ public class TS3Api {
 	 * @see ClientInfo#getIp()
 	 */
 	public int addBan(String ip, String name, String uid, long timeInSeconds, String reason) {
-		return asyncApi.addBan(ip, name, uid, timeInSeconds, reason).getUninterruptibly();
+		return CommandFutures.join(asyncApi.addBan(ip, name, uid, timeInSeconds, reason));
 	}
 
 	/**
@@ -143,7 +146,7 @@ public class TS3Api {
 	 * @see ClientInfo#getIp()
 	 */
 	public int addBan(String ip, String name, String uid, String myTSId, long timeInSeconds, String reason) {
-		return asyncApi.addBan(ip, name, uid, myTSId, timeInSeconds, reason).getUninterruptibly();
+		return CommandFutures.join(asyncApi.addBan(ip, name, uid, myTSId, timeInSeconds, reason));
 	}
 
 	/**
@@ -166,7 +169,7 @@ public class TS3Api {
 	 * @see Permission
 	 */
 	public void addChannelClientPermission(int channelId, int clientDBId, String permName, int permValue) {
-		asyncApi.addChannelClientPermission(channelId, clientDBId, permName, permValue).getUninterruptibly();
+		CommandFutures.join(asyncApi.addChannelClientPermission(channelId, clientDBId, permName, permValue));
 	}
 
 	/**
@@ -187,7 +190,7 @@ public class TS3Api {
 	 * @see ChannelGroup
 	 */
 	public int addChannelGroup(String name) {
-		return asyncApi.addChannelGroup(name).getUninterruptibly();
+		return CommandFutures.join(asyncApi.addChannelGroup(name));
 	}
 
 	/**
@@ -206,7 +209,7 @@ public class TS3Api {
 	 * @see ChannelGroup
 	 */
 	public int addChannelGroup(String name, PermissionGroupDatabaseType type) {
-		return asyncApi.addChannelGroup(name, type).getUninterruptibly();
+		return CommandFutures.join(asyncApi.addChannelGroup(name, type));
 	}
 
 	/**
@@ -226,7 +229,7 @@ public class TS3Api {
 	 * @see Permission
 	 */
 	public void addChannelGroupPermission(int groupId, String permName, int permValue) {
-		asyncApi.addChannelGroupPermission(groupId, permName, permValue).getUninterruptibly();
+		CommandFutures.join(asyncApi.addChannelGroupPermission(groupId, permName, permValue));
 	}
 
 	/**
@@ -246,7 +249,7 @@ public class TS3Api {
 	 * @see Permission
 	 */
 	public void addChannelPermission(int channelId, String permName, int permValue) {
-		asyncApi.addChannelPermission(channelId, permName, permValue).getUninterruptibly();
+		CommandFutures.join(asyncApi.addChannelPermission(channelId, permName, permValue));
 	}
 
 	/**
@@ -276,7 +279,7 @@ public class TS3Api {
 	 */
 	@Deprecated
 	public void addClientPermission(int clientDBId, String permName, int value, boolean skipped) {
-		asyncApi.addClientPermission(clientDBId, permName, value, skipped).getUninterruptibly();
+		CommandFutures.join(asyncApi.addClientPermission(clientDBId, permName, value, skipped));
 	}
 
 	/**
@@ -299,7 +302,7 @@ public class TS3Api {
 	 * @see Permission
 	 */
 	public void addClientPermission(int clientDBId, IPermissionType permName, int value, boolean skipped) {
-		asyncApi.addClientPermission(clientDBId, permName, value, skipped).getUninterruptibly();
+		CommandFutures.join(asyncApi.addClientPermission(clientDBId, permName, value, skipped));
 	}
 
 	/**
@@ -322,7 +325,7 @@ public class TS3Api {
 	 * @see Permission
 	 */
 	public void addClientPermission(int clientDBId, BPermissionType permName, boolean value, boolean skipped) {
-		asyncApi.addClientPermission(clientDBId, permName, value, skipped).getUninterruptibly();
+		CommandFutures.join(asyncApi.addClientPermission(clientDBId, permName, value, skipped));
 	}
 
 	/**
@@ -343,7 +346,7 @@ public class TS3Api {
 	 * @see Client#getDatabaseId()
 	 */
 	public void addClientToServerGroup(int groupId, int clientDatabaseId) {
-		asyncApi.addClientToServerGroup(groupId, clientDatabaseId).getUninterruptibly();
+		CommandFutures.join(asyncApi.addClientToServerGroup(groupId, clientDatabaseId));
 	}
 
 	/**
@@ -362,7 +365,7 @@ public class TS3Api {
 	 * @see Complaint#getMessage()
 	 */
 	public void addComplaint(int clientDBId, String message) {
-		asyncApi.addComplaint(clientDBId, message).getUninterruptibly();
+		CommandFutures.join(asyncApi.addComplaint(clientDBId, message));
 	}
 
 	/**
@@ -386,7 +389,7 @@ public class TS3Api {
 	 * @see Permission
 	 */
 	public void addPermissionToAllServerGroups(ServerGroupType type, String permName, int value, boolean negated, boolean skipped) {
-		asyncApi.addPermissionToAllServerGroups(type, permName, value, negated, skipped).getUninterruptibly();
+		CommandFutures.join(asyncApi.addPermissionToAllServerGroups(type, permName, value, negated, skipped));
 	}
 
 	/**
@@ -417,7 +420,7 @@ public class TS3Api {
 	 * @see #addPrivilegeKeyChannelGroup(int, int, String)
 	 */
 	public String addPrivilegeKey(PrivilegeKeyType type, int groupId, int channelId, String description) {
-		return asyncApi.addPrivilegeKey(type, groupId, channelId, description).getUninterruptibly();
+		return CommandFutures.join(asyncApi.addPrivilegeKey(type, groupId, channelId, description));
 	}
 
 	/**
@@ -441,7 +444,7 @@ public class TS3Api {
 	 * @see #addPrivilegeKeyServerGroup(int, String)
 	 */
 	public String addPrivilegeKeyChannelGroup(int channelGroupId, int channelId, String description) {
-		return asyncApi.addPrivilegeKeyChannelGroup(channelGroupId, channelId, description).getUninterruptibly();
+		return CommandFutures.join(asyncApi.addPrivilegeKeyChannelGroup(channelGroupId, channelId, description));
 	}
 
 	/**
@@ -462,7 +465,7 @@ public class TS3Api {
 	 * @see #addPrivilegeKeyChannelGroup(int, int, String)
 	 */
 	public String addPrivilegeKeyServerGroup(int serverGroupId, String description) {
-		return asyncApi.addPrivilegeKeyServerGroup(serverGroupId, description).getUninterruptibly();
+		return CommandFutures.join(asyncApi.addPrivilegeKeyServerGroup(serverGroupId, description));
 	}
 
 	/**
@@ -483,7 +486,7 @@ public class TS3Api {
 	 * @see ServerGroup
 	 */
 	public int addServerGroup(String name) {
-		return asyncApi.addServerGroup(name).getUninterruptibly();
+		return CommandFutures.join(asyncApi.addServerGroup(name));
 	}
 
 	/**
@@ -503,7 +506,7 @@ public class TS3Api {
 	 * @see PermissionGroupDatabaseType
 	 */
 	public int addServerGroup(String name, PermissionGroupDatabaseType type) {
-		return asyncApi.addServerGroup(name, type).getUninterruptibly();
+		return CommandFutures.join(asyncApi.addServerGroup(name, type));
 	}
 
 	/**
@@ -527,7 +530,7 @@ public class TS3Api {
 	 * @see Permission
 	 */
 	public void addServerGroupPermission(int groupId, String permName, int value, boolean negated, boolean skipped) {
-		asyncApi.addServerGroupPermission(groupId, permName, value, negated, skipped).getUninterruptibly();
+		CommandFutures.join(asyncApi.addServerGroupPermission(groupId, permName, value, negated, skipped));
 	}
 
 	/**
@@ -555,7 +558,7 @@ public class TS3Api {
 	 * @see #updateServerQueryLogin(String)
 	 */
 	public CreatedQueryLogin addServerQueryLogin(String loginName, int clientDBId) {
-		return asyncApi.addServerQueryLogin(loginName, clientDBId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.addServerQueryLogin(loginName, clientDBId));
 	}
 
 	/**
@@ -603,7 +606,7 @@ public class TS3Api {
 	 * @see #addBan(String, String, String, long, String)
 	 */
 	public int[] banClient(int clientId, long timeInSeconds) {
-		return asyncApi.banClient(clientId, timeInSeconds).getUninterruptibly();
+		return CommandFutures.join(asyncApi.banClient(clientId, timeInSeconds));
 	}
 
 	/**
@@ -633,7 +636,7 @@ public class TS3Api {
 	 * @see #addBan(String, String, String, long, String)
 	 */
 	public int[] banClient(int clientId, long timeInSeconds, String reason) {
-		return asyncApi.banClient(clientId, timeInSeconds, reason).getUninterruptibly();
+		return CommandFutures.join(asyncApi.banClient(clientId, timeInSeconds, reason));
 	}
 
 	/**
@@ -661,7 +664,7 @@ public class TS3Api {
 	 * @see #addBan(String, String, String, long, String)
 	 */
 	public int[] banClient(int clientId, String reason) {
-		return asyncApi.banClient(clientId, reason).getUninterruptibly();
+		return CommandFutures.join(asyncApi.banClient(clientId, reason));
 	}
 
 	/**
@@ -696,7 +699,7 @@ public class TS3Api {
 	 * @see #addBan(String, String, String, long, String)
 	 */
 	public int[] banClients(int[] clientIds, long timeInSeconds, String reason, boolean continueOnError) {
-		return asyncApi.banClients(clientIds, timeInSeconds, reason, continueOnError).getUninterruptibly();
+		return CommandFutures.join(asyncApi.banClients(clientIds, timeInSeconds, reason, continueOnError));
 	}
 
 	/**
@@ -711,7 +714,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public void broadcast(String message) {
-		asyncApi.broadcast(message).getUninterruptibly();
+		CommandFutures.join(asyncApi.broadcast(message));
 	}
 
 	/**
@@ -734,7 +737,7 @@ public class TS3Api {
 	 * @see ChannelGroup#getId()
 	 */
 	public void copyChannelGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
-		asyncApi.copyChannelGroup(sourceGroupId, targetGroupId, type).getUninterruptibly();
+		CommandFutures.join(asyncApi.copyChannelGroup(sourceGroupId, targetGroupId, type));
 	}
 
 	/**
@@ -756,7 +759,7 @@ public class TS3Api {
 	 * @see ChannelGroup#getId()
 	 */
 	public int copyChannelGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
-		return asyncApi.copyChannelGroup(sourceGroupId, targetName, type).getUninterruptibly();
+		return CommandFutures.join(asyncApi.copyChannelGroup(sourceGroupId, targetName, type));
 	}
 
 	/**
@@ -781,7 +784,7 @@ public class TS3Api {
 	 * @see ServerGroup#getId()
 	 */
 	public int copyServerGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
-		return asyncApi.copyServerGroup(sourceGroupId, targetGroupId, type).getUninterruptibly();
+		return CommandFutures.join(asyncApi.copyServerGroup(sourceGroupId, targetGroupId, type));
 	}
 
 	/**
@@ -803,7 +806,7 @@ public class TS3Api {
 	 * @see ServerGroup#getId()
 	 */
 	public int copyServerGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
-		return asyncApi.copyServerGroup(sourceGroupId, targetName, type).getUninterruptibly();
+		return CommandFutures.join(asyncApi.copyServerGroup(sourceGroupId, targetName, type));
 	}
 
 	/**
@@ -822,7 +825,7 @@ public class TS3Api {
 	 * @see Channel
 	 */
 	public int createChannel(String name, Map<ChannelProperty, String> options) {
-		return asyncApi.createChannel(name, options).getUninterruptibly();
+		return CommandFutures.join(asyncApi.createChannel(name, options));
 	}
 
 	/**
@@ -840,7 +843,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 */
 	public void createFileDirectory(String directoryPath, int channelId) {
-		asyncApi.createFileDirectory(directoryPath, channelId).getUninterruptibly();
+		CommandFutures.join(asyncApi.createFileDirectory(directoryPath, channelId));
 	}
 
 	/**
@@ -860,7 +863,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 */
 	public void createFileDirectory(String directoryPath, int channelId, String channelPassword) {
-		asyncApi.createFileDirectory(directoryPath, channelId, channelPassword).getUninterruptibly();
+		CommandFutures.join(asyncApi.createFileDirectory(directoryPath, channelId, channelPassword));
 	}
 
 	/**
@@ -889,7 +892,7 @@ public class TS3Api {
 	 * @see VirtualServer
 	 */
 	public CreatedVirtualServer createServer(String name, Map<VirtualServerProperty, String> options) {
-		return asyncApi.createServer(name, options).getUninterruptibly();
+		return CommandFutures.join(asyncApi.createServer(name, options));
 	}
 
 	/**
@@ -905,7 +908,7 @@ public class TS3Api {
 	 * @see #deployServerSnapshot(Snapshot)
 	 */
 	public Snapshot createServerSnapshot() {
-		return asyncApi.createServerSnapshot().getUninterruptibly();
+		return CommandFutures.join(asyncApi.createServerSnapshot());
 	}
 
 	/**
@@ -916,7 +919,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public void deleteAllBans() {
-		asyncApi.deleteAllBans().getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteAllBans());
 	}
 
 	/**
@@ -932,7 +935,7 @@ public class TS3Api {
 	 * @see Complaint
 	 */
 	public void deleteAllComplaints(int clientDBId) {
-		asyncApi.deleteAllComplaints(clientDBId).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteAllComplaints(clientDBId));
 	}
 
 	/**
@@ -947,7 +950,7 @@ public class TS3Api {
 	 * @see Ban#getId()
 	 */
 	public void deleteBan(int banId) {
-		asyncApi.deleteBan(banId).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteBan(banId));
 	}
 
 	/**
@@ -964,7 +967,7 @@ public class TS3Api {
 	 * @see #kickClientFromChannel(String, int...)
 	 */
 	public void deleteChannel(int channelId) {
-		asyncApi.deleteChannel(channelId).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteChannel(channelId));
 	}
 
 	/**
@@ -984,7 +987,7 @@ public class TS3Api {
 	 * @see #kickClientFromChannel(String, int...)
 	 */
 	public void deleteChannel(int channelId, boolean force) {
-		asyncApi.deleteChannel(channelId, force).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteChannel(channelId, force));
 	}
 
 	/**
@@ -1005,7 +1008,7 @@ public class TS3Api {
 	 * @see Permission#getName()
 	 */
 	public void deleteChannelClientPermission(int channelId, int clientDBId, String permName) {
-		asyncApi.deleteChannelClientPermission(channelId, clientDBId, permName).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteChannelClientPermission(channelId, clientDBId, permName));
 	}
 
 	/**
@@ -1020,7 +1023,7 @@ public class TS3Api {
 	 * @see ChannelGroup#getId()
 	 */
 	public void deleteChannelGroup(int groupId) {
-		asyncApi.deleteChannelGroup(groupId).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteChannelGroup(groupId));
 	}
 
 	/**
@@ -1039,7 +1042,7 @@ public class TS3Api {
 	 * @see ChannelGroup#getId()
 	 */
 	public void deleteChannelGroup(int groupId, boolean force) {
-		asyncApi.deleteChannelGroup(groupId, force).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteChannelGroup(groupId, force));
 	}
 
 	/**
@@ -1057,7 +1060,7 @@ public class TS3Api {
 	 * @see Permission#getName()
 	 */
 	public void deleteChannelGroupPermission(int groupId, String permName) {
-		asyncApi.deleteChannelGroupPermission(groupId, permName).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteChannelGroupPermission(groupId, permName));
 	}
 
 	/**
@@ -1075,7 +1078,7 @@ public class TS3Api {
 	 * @see Permission#getName()
 	 */
 	public void deleteChannelPermission(int channelId, String permName) {
-		asyncApi.deleteChannelPermission(channelId, permName).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteChannelPermission(channelId, permName));
 	}
 
 	/**
@@ -1101,7 +1104,7 @@ public class TS3Api {
 	 */
 	@Deprecated
 	public void deleteClientPermission(int clientDBId, String permName) {
-		asyncApi.deleteClientPermission(clientDBId, permName).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteClientPermission(clientDBId, permName));
 	}
 
 	/**
@@ -1120,7 +1123,7 @@ public class TS3Api {
 	 * @see Permission#getName()
 	 */
 	public void deleteClientPermission(int clientDBId, IPermissionType permName) {
-		asyncApi.deleteClientPermission(clientDBId, permName).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteClientPermission(clientDBId, permName));
 	}
 
 	/**
@@ -1139,7 +1142,7 @@ public class TS3Api {
 	 * @see Permission#getName()
 	 */
 	public void deleteClientPermission(int clientDBId, BPermissionType permName) {
-		asyncApi.deleteClientPermission(clientDBId, permName).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteClientPermission(clientDBId, permName));
 	}
 
 	/**
@@ -1158,7 +1161,7 @@ public class TS3Api {
 	 * @see Client#getDatabaseId()
 	 */
 	public void deleteComplaint(int targetClientDBId, int fromClientDBId) {
-		asyncApi.deleteComplaint(targetClientDBId, fromClientDBId).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteComplaint(targetClientDBId, fromClientDBId));
 	}
 
 	/**
@@ -1175,7 +1178,7 @@ public class TS3Api {
 	 * @see Client#getDatabaseId()
 	 */
 	public void deleteCustomClientProperty(int clientDBId, String key) {
-		asyncApi.deleteCustomClientProperty(clientDBId, key).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteCustomClientProperty(clientDBId, key));
 	}
 
 	/**
@@ -1196,7 +1199,7 @@ public class TS3Api {
 	 * @see DatabaseClientInfo
 	 */
 	public void deleteDatabaseClientProperties(int clientDBId) {
-		asyncApi.deleteDatabaseClientProperties(clientDBId).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteDatabaseClientProperties(clientDBId));
 	}
 
 	/**
@@ -1214,7 +1217,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 */
 	public void deleteFile(String filePath, int channelId) {
-		asyncApi.deleteFile(filePath, channelId).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteFile(filePath, channelId));
 	}
 
 	/**
@@ -1234,7 +1237,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 */
 	public void deleteFile(String filePath, int channelId, String channelPassword) {
-		asyncApi.deleteFile(filePath, channelId, channelPassword).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteFile(filePath, channelId, channelPassword));
 	}
 
 	/**
@@ -1252,7 +1255,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 */
 	public void deleteFiles(String[] filePaths, int channelId) {
-		asyncApi.deleteFiles(filePaths, channelId).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteFiles(filePaths, channelId));
 	}
 
 	/**
@@ -1272,7 +1275,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 */
 	public void deleteFiles(String[] filePaths, int channelId, String channelPassword) {
-		asyncApi.deleteFiles(filePaths, channelId, channelPassword).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteFiles(filePaths, channelId, channelPassword));
 	}
 
 	/**
@@ -1287,7 +1290,7 @@ public class TS3Api {
 	 * @see IconFile#getIconId()
 	 */
 	public void deleteIcon(long iconId) {
-		asyncApi.deleteIcon(iconId).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteIcon(iconId));
 	}
 
 	/**
@@ -1302,7 +1305,7 @@ public class TS3Api {
 	 * @see IconFile#getIconId()
 	 */
 	public void deleteIcons(long... iconIds) {
-		asyncApi.deleteIcons(iconIds).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteIcons(iconIds));
 	}
 
 	/**
@@ -1317,7 +1320,7 @@ public class TS3Api {
 	 * @see Message#getId()
 	 */
 	public void deleteOfflineMessage(int messageId) {
-		asyncApi.deleteOfflineMessage(messageId).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteOfflineMessage(messageId));
 	}
 
 	/**
@@ -1335,7 +1338,7 @@ public class TS3Api {
 	 * @see Permission#getName()
 	 */
 	public void deletePermissionFromAllServerGroups(ServerGroupType type, String permName) {
-		asyncApi.deletePermissionFromAllServerGroups(type, permName).getUninterruptibly();
+		CommandFutures.join(asyncApi.deletePermissionFromAllServerGroups(type, permName));
 	}
 
 	/**
@@ -1350,7 +1353,7 @@ public class TS3Api {
 	 * @see PrivilegeKey
 	 */
 	public void deletePrivilegeKey(String token) {
-		asyncApi.deletePrivilegeKey(token).getUninterruptibly();
+		CommandFutures.join(asyncApi.deletePrivilegeKey(token));
 	}
 
 	/**
@@ -1369,7 +1372,7 @@ public class TS3Api {
 	 * @see #stopServer(int)
 	 */
 	public void deleteServer(int serverId) {
-		asyncApi.deleteServer(serverId).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteServer(serverId));
 	}
 
 	/**
@@ -1384,7 +1387,7 @@ public class TS3Api {
 	 * @see ServerGroup#getId()
 	 */
 	public void deleteServerGroup(int groupId) {
-		asyncApi.deleteServerGroup(groupId).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteServerGroup(groupId));
 	}
 
 	/**
@@ -1405,7 +1408,7 @@ public class TS3Api {
 	 * @see ServerGroup#getId()
 	 */
 	public void deleteServerGroup(int groupId, boolean force) {
-		asyncApi.deleteServerGroup(groupId, force).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteServerGroup(groupId, force));
 	}
 
 	/**
@@ -1423,7 +1426,7 @@ public class TS3Api {
 	 * @see Permission#getName()
 	 */
 	public void deleteServerGroupPermission(int groupId, String permName) {
-		asyncApi.deleteServerGroupPermission(groupId, permName).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteServerGroupPermission(groupId, permName));
 	}
 
 	/**
@@ -1443,7 +1446,7 @@ public class TS3Api {
 	 * @see #updateServerQueryLogin(String)
 	 */
 	public void deleteServerQueryLogin(int clientDBId) {
-		asyncApi.deleteServerQueryLogin(clientDBId).getUninterruptibly();
+		CommandFutures.join(asyncApi.deleteServerQueryLogin(clientDBId));
 	}
 
 	/**
@@ -1459,7 +1462,7 @@ public class TS3Api {
 	 * @see #createServerSnapshot()
 	 */
 	public void deployServerSnapshot(Snapshot snapshot) {
-		asyncApi.deployServerSnapshot(snapshot).getUninterruptibly();
+		CommandFutures.join(asyncApi.deployServerSnapshot(snapshot));
 	}
 
 	/**
@@ -1475,7 +1478,7 @@ public class TS3Api {
 	 * @see #createServerSnapshot()
 	 */
 	public void deployServerSnapshot(String snapshot) {
-		asyncApi.deployServerSnapshot(snapshot).getUninterruptibly();
+		CommandFutures.join(asyncApi.deployServerSnapshot(snapshot));
 	}
 
 	/**
@@ -1508,7 +1511,7 @@ public class TS3Api {
 	 * @see #downloadFileDirect(String, int)
 	 */
 	public long downloadFile(OutputStream dataOut, String filePath, int channelId) {
-		return asyncApi.downloadFile(dataOut, filePath, channelId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.downloadFile(dataOut, filePath, channelId));
 	}
 
 	/**
@@ -1543,7 +1546,7 @@ public class TS3Api {
 	 * @see #downloadFileDirect(String, int, String)
 	 */
 	public long downloadFile(OutputStream dataOut, String filePath, int channelId, String channelPassword) {
-		return asyncApi.downloadFile(dataOut, filePath, channelId, channelPassword).getUninterruptibly();
+		return CommandFutures.join(asyncApi.downloadFile(dataOut, filePath, channelId, channelPassword));
 	}
 
 	/**
@@ -1572,7 +1575,7 @@ public class TS3Api {
 	 * @see #downloadFile(OutputStream, String, int)
 	 */
 	public byte[] downloadFileDirect(String filePath, int channelId) {
-		return asyncApi.downloadFileDirect(filePath, channelId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.downloadFileDirect(filePath, channelId));
 	}
 
 	/**
@@ -1603,7 +1606,7 @@ public class TS3Api {
 	 * @see #downloadFile(OutputStream, String, int, String)
 	 */
 	public byte[] downloadFileDirect(String filePath, int channelId, String channelPassword) {
-		return asyncApi.downloadFileDirect(filePath, channelId, channelPassword).getUninterruptibly();
+		return CommandFutures.join(asyncApi.downloadFileDirect(filePath, channelId, channelPassword));
 	}
 
 	/**
@@ -1631,7 +1634,7 @@ public class TS3Api {
 	 * @see #uploadIcon(InputStream, long)
 	 */
 	public long downloadIcon(OutputStream dataOut, long iconId) {
-		return asyncApi.downloadIcon(dataOut, iconId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.downloadIcon(dataOut, iconId));
 	}
 
 	/**
@@ -1656,7 +1659,7 @@ public class TS3Api {
 	 * @see #uploadIconDirect(byte[])
 	 */
 	public byte[] downloadIconDirect(long iconId) {
-		return asyncApi.downloadIconDirect(iconId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.downloadIconDirect(iconId));
 	}
 
 	/**
@@ -1673,7 +1676,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 */
 	public void editChannel(int channelId, Map<ChannelProperty, String> options) {
-		asyncApi.editChannel(channelId, options).getUninterruptibly();
+		CommandFutures.join(asyncApi.editChannel(channelId, options));
 	}
 
 	/**
@@ -1697,7 +1700,7 @@ public class TS3Api {
 	 * @see #editChannel(int, Map)
 	 */
 	public void editChannel(int channelId, ChannelProperty property, String value) {
-		asyncApi.editChannel(channelId, property, value).getUninterruptibly();
+		CommandFutures.join(asyncApi.editChannel(channelId, property, value));
 	}
 
 	/**
@@ -1720,7 +1723,7 @@ public class TS3Api {
 	 * @see #updateClient(Map)
 	 */
 	public void editClient(int clientId, Map<ClientProperty, String> options) {
-		asyncApi.editClient(clientId, options).getUninterruptibly();
+		CommandFutures.join(asyncApi.editClient(clientId, options));
 	}
 
 	/**
@@ -1746,7 +1749,7 @@ public class TS3Api {
 	 * @see #updateClient(Map)
 	 */
 	public void editClient(int clientId, ClientProperty property, String value) {
-		asyncApi.editClient(clientId, property, value).getUninterruptibly();
+		CommandFutures.join(asyncApi.editClient(clientId, property, value));
 	}
 
 	/**
@@ -1764,7 +1767,7 @@ public class TS3Api {
 	 * @see Client#getDatabaseId()
 	 */
 	public void editDatabaseClient(int clientDBId, Map<ClientProperty, String> options) {
-		asyncApi.editDatabaseClient(clientDBId, options).getUninterruptibly();
+		CommandFutures.join(asyncApi.editDatabaseClient(clientDBId, options));
 	}
 
 	/**
@@ -1784,7 +1787,7 @@ public class TS3Api {
 	 * @see ServerInstanceProperty#isChangeable()
 	 */
 	public void editInstance(ServerInstanceProperty property, String value) {
-		asyncApi.editInstance(property, value).getUninterruptibly();
+		CommandFutures.join(asyncApi.editInstance(property, value));
 	}
 
 	/**
@@ -1799,7 +1802,7 @@ public class TS3Api {
 	 * @see VirtualServerProperty
 	 */
 	public void editServer(Map<VirtualServerProperty, String> options) {
-		asyncApi.editServer(options).getUninterruptibly();
+		CommandFutures.join(asyncApi.editServer(options));
 	}
 
 	/**
@@ -1813,7 +1816,7 @@ public class TS3Api {
 	 * @see Ban
 	 */
 	public List<Ban> getBans() {
-		return asyncApi.getBans().getUninterruptibly();
+		return CommandFutures.join(asyncApi.getBans());
 	}
 
 	/**
@@ -1827,7 +1830,7 @@ public class TS3Api {
 	 * @see Binding
 	 */
 	public List<Binding> getBindings() {
-		return asyncApi.getBindings().getUninterruptibly();
+		return CommandFutures.join(asyncApi.getBindings());
 	}
 
 	/**
@@ -1847,7 +1850,7 @@ public class TS3Api {
 	 * @see #getChannelsByName(String)
 	 */
 	public Channel getChannelByNameExact(String name, boolean ignoreCase) {
-		return asyncApi.getChannelByNameExact(name, ignoreCase).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getChannelByNameExact(name, ignoreCase));
 	}
 
 	/**
@@ -1865,7 +1868,7 @@ public class TS3Api {
 	 * @see #getChannelByNameExact(String, boolean)
 	 */
 	public List<Channel> getChannelsByName(String name) {
-		return asyncApi.getChannelsByName(name).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getChannelsByName(name));
 	}
 
 	/**
@@ -1886,7 +1889,7 @@ public class TS3Api {
 	 * @see Permission
 	 */
 	public List<Permission> getChannelClientPermissions(int channelId, int clientDBId) {
-		return asyncApi.getChannelClientPermissions(channelId, clientDBId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getChannelClientPermissions(channelId, clientDBId));
 	}
 
 	/**
@@ -1911,7 +1914,7 @@ public class TS3Api {
 	 * @see ChannelGroupClient
 	 */
 	public List<ChannelGroupClient> getChannelGroupClients(int channelId, int clientDBId, int groupId) {
-		return asyncApi.getChannelGroupClients(channelId, clientDBId, groupId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getChannelGroupClients(channelId, clientDBId, groupId));
 	}
 
 	/**
@@ -1930,7 +1933,7 @@ public class TS3Api {
 	 * @see #getChannelGroupClients(int, int, int)
 	 */
 	public List<ChannelGroupClient> getChannelGroupClientsByChannelGroupId(int groupId) {
-		return asyncApi.getChannelGroupClientsByChannelGroupId(groupId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getChannelGroupClientsByChannelGroupId(groupId));
 	}
 
 	/**
@@ -1949,7 +1952,7 @@ public class TS3Api {
 	 * @see #getChannelGroupClients(int, int, int)
 	 */
 	public List<ChannelGroupClient> getChannelGroupClientsByChannelId(int channelId) {
-		return asyncApi.getChannelGroupClientsByChannelId(channelId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getChannelGroupClientsByChannelId(channelId));
 	}
 
 	/**
@@ -1968,7 +1971,7 @@ public class TS3Api {
 	 * @see #getChannelGroupClients(int, int, int)
 	 */
 	public List<ChannelGroupClient> getChannelGroupClientsByClientDBId(int clientDBId) {
-		return asyncApi.getChannelGroupClientsByClientDBId(clientDBId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getChannelGroupClientsByClientDBId(clientDBId));
 	}
 
 	/**
@@ -1986,7 +1989,7 @@ public class TS3Api {
 	 * @see Permission
 	 */
 	public List<Permission> getChannelGroupPermissions(int groupId) {
-		return asyncApi.getChannelGroupPermissions(groupId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getChannelGroupPermissions(groupId));
 	}
 
 	/**
@@ -2000,7 +2003,7 @@ public class TS3Api {
 	 * @see ChannelGroup
 	 */
 	public List<ChannelGroup> getChannelGroups() {
-		return asyncApi.getChannelGroups().getUninterruptibly();
+		return CommandFutures.join(asyncApi.getChannelGroups());
 	}
 
 	/**
@@ -2018,7 +2021,7 @@ public class TS3Api {
 	 * @see ChannelInfo
 	 */
 	public ChannelInfo getChannelInfo(int channelId) {
-		return asyncApi.getChannelInfo(channelId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getChannelInfo(channelId));
 	}
 
 	/**
@@ -2036,7 +2039,7 @@ public class TS3Api {
 	 * @see Permission
 	 */
 	public List<Permission> getChannelPermissions(int channelId) {
-		return asyncApi.getChannelPermissions(channelId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getChannelPermissions(channelId));
 	}
 
 	/**
@@ -2050,7 +2053,7 @@ public class TS3Api {
 	 * @see Channel
 	 */
 	public List<Channel> getChannels() {
-		return asyncApi.getChannels().getUninterruptibly();
+		return CommandFutures.join(asyncApi.getChannels());
 	}
 
 	/**
@@ -2070,7 +2073,7 @@ public class TS3Api {
 	 * @see #getClientsByName(String)
 	 */
 	public Client getClientByNameExact(String name, boolean ignoreCase) {
-		return asyncApi.getClientByNameExact(name, ignoreCase).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getClientByNameExact(name, ignoreCase));
 	}
 
 	/**
@@ -2088,7 +2091,7 @@ public class TS3Api {
 	 * @see #getClientByNameExact(String, boolean)
 	 */
 	public List<Client> getClientsByName(String name) {
-		return asyncApi.getClientsByName(name).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getClientsByName(name));
 	}
 
 	/**
@@ -2106,7 +2109,7 @@ public class TS3Api {
 	 * @see ClientInfo
 	 */
 	public ClientInfo getClientByUId(String clientUId) {
-		return asyncApi.getClientByUId(clientUId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getClientByUId(clientUId));
 	}
 
 	/**
@@ -2124,7 +2127,7 @@ public class TS3Api {
 	 * @see ClientInfo
 	 */
 	public ClientInfo getClientInfo(int clientId) {
-		return asyncApi.getClientInfo(clientId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getClientInfo(clientId));
 	}
 
 	/**
@@ -2142,7 +2145,7 @@ public class TS3Api {
 	 * @see Permission
 	 */
 	public List<Permission> getClientPermissions(int clientDBId) {
-		return asyncApi.getClientPermissions(clientDBId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getClientPermissions(clientDBId));
 	}
 
 	/**
@@ -2156,7 +2159,7 @@ public class TS3Api {
 	 * @see Client
 	 */
 	public List<Client> getClients() {
-		return asyncApi.getClients().getUninterruptibly();
+		return CommandFutures.join(asyncApi.getClients());
 	}
 
 	/**
@@ -2171,7 +2174,7 @@ public class TS3Api {
 	 * @see #getComplaints(int)
 	 */
 	public List<Complaint> getComplaints() {
-		return asyncApi.getComplaints().getUninterruptibly();
+		return CommandFutures.join(asyncApi.getComplaints());
 	}
 
 	/**
@@ -2189,7 +2192,7 @@ public class TS3Api {
 	 * @see Complaint
 	 */
 	public List<Complaint> getComplaints(int clientDBId) {
-		return asyncApi.getComplaints(clientDBId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getComplaints(clientDBId));
 	}
 
 	/**
@@ -2204,7 +2207,7 @@ public class TS3Api {
 	 * @see #getServerInfo()
 	 */
 	public ConnectionInfo getConnectionInfo() {
-		return asyncApi.getConnectionInfo().getUninterruptibly();
+		return CommandFutures.join(asyncApi.getConnectionInfo());
 	}
 
 	/**
@@ -2224,7 +2227,7 @@ public class TS3Api {
 	 * @see #searchCustomClientProperty(String, String)
 	 */
 	public Map<String, String> getCustomClientProperties(int clientDBId) {
-		return asyncApi.getCustomClientProperties(clientDBId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getCustomClientProperties(clientDBId));
 	}
 
 	/**
@@ -2242,7 +2245,7 @@ public class TS3Api {
 	 * @see Client#getNickname()
 	 */
 	public List<DatabaseClientInfo> getDatabaseClientsByName(String name) {
-		return asyncApi.getDatabaseClientsByName(name).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getDatabaseClientsByName(name));
 	}
 
 	/**
@@ -2260,7 +2263,7 @@ public class TS3Api {
 	 * @see DatabaseClientInfo
 	 */
 	public DatabaseClientInfo getDatabaseClientByUId(String clientUId) {
-		return asyncApi.getDatabaseClientByUId(clientUId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getDatabaseClientByUId(clientUId));
 	}
 
 	/**
@@ -2278,7 +2281,7 @@ public class TS3Api {
 	 * @see DatabaseClientInfo
 	 */
 	public DatabaseClientInfo getDatabaseClientInfo(int clientDBId) {
-		return asyncApi.getDatabaseClientInfo(clientDBId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getDatabaseClientInfo(clientDBId));
 	}
 
 	/**
@@ -2299,7 +2302,7 @@ public class TS3Api {
 	 * @see DatabaseClient
 	 */
 	public List<DatabaseClient> getDatabaseClients() {
-		return asyncApi.getDatabaseClients().getUninterruptibly();
+		return CommandFutures.join(asyncApi.getDatabaseClients());
 	}
 
 	/**
@@ -2320,7 +2323,7 @@ public class TS3Api {
 	 * @see DatabaseClient
 	 */
 	public List<DatabaseClient> getDatabaseClients(int offset, int count) {
-		return asyncApi.getDatabaseClients(offset, count).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getDatabaseClients(offset, count));
 	}
 
 	/**
@@ -2344,7 +2347,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 */
 	public FileInfo getFileInfo(String filePath, int channelId) {
-		return asyncApi.getFileInfo(filePath, channelId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getFileInfo(filePath, channelId));
 	}
 
 	/**
@@ -2370,7 +2373,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 */
 	public FileInfo getFileInfo(String filePath, int channelId, String channelPassword) {
-		return asyncApi.getFileInfo(filePath, channelId, channelPassword).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getFileInfo(filePath, channelId, channelPassword));
 	}
 
 	/**
@@ -2394,7 +2397,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 */
 	public List<FileInfo> getFileInfos(String[] filePaths, int channelId) {
-		return asyncApi.getFileInfos(filePaths, channelId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getFileInfos(filePaths, channelId));
 	}
 
 	/**
@@ -2420,7 +2423,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 */
 	public List<FileInfo> getFileInfos(String[] filePaths, int channelId, String channelPassword) {
-		return asyncApi.getFileInfos(filePaths, channelId, channelPassword).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getFileInfos(filePaths, channelId, channelPassword));
 	}
 
 	/**
@@ -2448,7 +2451,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 */
 	public List<FileInfo> getFileInfos(String[] filePaths, int[] channelIds, String[] channelPasswords) {
-		return asyncApi.getFileInfos(filePaths, channelIds, channelPasswords).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getFileInfos(filePaths, channelIds, channelPasswords));
 	}
 
 	/**
@@ -2468,7 +2471,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 */
 	public List<FileListEntry> getFileList(String directoryPath, int channelId) {
-		return asyncApi.getFileList(directoryPath, channelId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getFileList(directoryPath, channelId));
 	}
 
 	/**
@@ -2490,7 +2493,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 */
 	public List<FileListEntry> getFileList(String directoryPath, int channelId, String channelPassword) {
-		return asyncApi.getFileList(directoryPath, channelId, channelPassword).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getFileList(directoryPath, channelId, channelPassword));
 	}
 
 	/**
@@ -2503,7 +2506,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public List<FileTransfer> getFileTransfers() {
-		return asyncApi.getFileTransfers().getUninterruptibly();
+		return CommandFutures.join(asyncApi.getFileTransfers());
 	}
 
 	/**
@@ -2517,7 +2520,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public HostInfo getHostInfo() {
-		return asyncApi.getHostInfo().getUninterruptibly();
+		return CommandFutures.join(asyncApi.getHostInfo());
 	}
 
 	/**
@@ -2526,7 +2529,7 @@ public class TS3Api {
 	 * @return a list of all icons
 	 */
 	public List<IconFile> getIconList() {
-		return asyncApi.getIconList().getUninterruptibly();
+		return CommandFutures.join(asyncApi.getIconList());
 	}
 
 	/**
@@ -2540,7 +2543,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public InstanceInfo getInstanceInfo() {
-		return asyncApi.getInstanceInfo().getUninterruptibly();
+		return CommandFutures.join(asyncApi.getInstanceInfo());
 	}
 
 	/**
@@ -2557,7 +2560,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public List<String> getInstanceLogEntries(int lines) {
-		return asyncApi.getInstanceLogEntries(lines).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getInstanceLogEntries(lines));
 	}
 
 	/**
@@ -2570,7 +2573,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public List<String> getInstanceLogEntries() {
-		return asyncApi.getInstanceLogEntries().getUninterruptibly();
+		return CommandFutures.join(asyncApi.getInstanceLogEntries());
 	}
 
 	/**
@@ -2588,7 +2591,7 @@ public class TS3Api {
 	 * @see #setMessageRead(int)
 	 */
 	public String getOfflineMessage(int messageId) {
-		return asyncApi.getOfflineMessage(messageId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getOfflineMessage(messageId));
 	}
 
 	/**
@@ -2606,7 +2609,7 @@ public class TS3Api {
 	 * @see #setMessageRead(Message)
 	 */
 	public String getOfflineMessage(Message message) {
-		return asyncApi.getOfflineMessage(message).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getOfflineMessage(message));
 	}
 
 	/**
@@ -2621,7 +2624,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public List<Message> getOfflineMessages() {
-		return asyncApi.getOfflineMessages().getUninterruptibly();
+		return CommandFutures.join(asyncApi.getOfflineMessages());
 	}
 
 	/**
@@ -2640,7 +2643,7 @@ public class TS3Api {
 	 * @see #getPermissionOverview(int, int)
 	 */
 	public List<PermissionAssignment> getPermissionAssignments(String permName) {
-		return asyncApi.getPermissionAssignments(permName).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getPermissionAssignments(permName));
 	}
 
 	/**
@@ -2660,7 +2663,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public int getPermissionIdByName(String permName) {
-		return asyncApi.getPermissionIdByName(permName).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getPermissionIdByName(permName));
 	}
 
 	/**
@@ -2682,7 +2685,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public int[] getPermissionIdsByName(String... permNames) {
-		return asyncApi.getPermissionIdsByName(permNames).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getPermissionIdsByName(permNames));
 	}
 
 	/**
@@ -2703,7 +2706,7 @@ public class TS3Api {
 	 * @see Client#getDatabaseId()
 	 */
 	public List<PermissionAssignment> getPermissionOverview(int channelId, int clientDBId) {
-		return asyncApi.getPermissionOverview(channelId, clientDBId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getPermissionOverview(channelId, clientDBId));
 	}
 
 	/**
@@ -2716,7 +2719,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public List<PermissionInfo> getPermissions() {
-		return asyncApi.getPermissions().getUninterruptibly();
+		return CommandFutures.join(asyncApi.getPermissions());
 	}
 
 	/**
@@ -2732,7 +2735,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public int getPermissionValue(String permName) {
-		return asyncApi.getPermissionValue(permName).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getPermissionValue(permName));
 	}
 
 	/**
@@ -2750,7 +2753,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public int[] getPermissionValues(String... permNames) {
-		return asyncApi.getPermissionValues(permNames).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getPermissionValues(permNames));
 	}
 
 	/**
@@ -2766,7 +2769,7 @@ public class TS3Api {
 	 * @see #usePrivilegeKey(String)
 	 */
 	public List<PrivilegeKey> getPrivilegeKeys() {
-		return asyncApi.getPrivilegeKeys().getUninterruptibly();
+		return CommandFutures.join(asyncApi.getPrivilegeKeys());
 	}
 
 	/**
@@ -2782,7 +2785,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public List<ServerGroupClient> getServerGroupClients(int serverGroupId) {
-		return asyncApi.getServerGroupClients(serverGroupId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getServerGroupClients(serverGroupId));
 	}
 
 	/**
@@ -2798,7 +2801,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public List<ServerGroupClient> getServerGroupClients(ServerGroup serverGroup) {
-		return asyncApi.getServerGroupClients(serverGroup).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getServerGroupClients(serverGroup));
 	}
 
 	/**
@@ -2816,7 +2819,7 @@ public class TS3Api {
 	 * @see #getServerGroupPermissions(ServerGroup)
 	 */
 	public List<Permission> getServerGroupPermissions(int serverGroupId) {
-		return asyncApi.getServerGroupPermissions(serverGroupId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getServerGroupPermissions(serverGroupId));
 	}
 
 	/**
@@ -2832,7 +2835,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public List<Permission> getServerGroupPermissions(ServerGroup serverGroup) {
-		return asyncApi.getServerGroupPermissions(serverGroup).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getServerGroupPermissions(serverGroup));
 	}
 
 	/**
@@ -2849,7 +2852,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public List<ServerGroup> getServerGroups() {
-		return asyncApi.getServerGroups().getUninterruptibly();
+		return CommandFutures.join(asyncApi.getServerGroups());
 	}
 
 	/**
@@ -2867,7 +2870,7 @@ public class TS3Api {
 	 * @see #getServerGroupsByClient(Client)
 	 */
 	public List<ServerGroup> getServerGroupsByClientId(int clientDatabaseId) {
-		return asyncApi.getServerGroupsByClientId(clientDatabaseId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getServerGroupsByClientId(clientDatabaseId));
 	}
 
 	/**
@@ -2884,7 +2887,7 @@ public class TS3Api {
 	 * @see #getServerGroupsByClientId(int)
 	 */
 	public List<ServerGroup> getServerGroupsByClient(Client client) {
-		return asyncApi.getServerGroupsByClient(client).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getServerGroupsByClient(client));
 	}
 
 	/**
@@ -2902,7 +2905,7 @@ public class TS3Api {
 	 * @see VirtualServer#getId()
 	 */
 	public int getServerIdByPort(int port) {
-		return asyncApi.getServerIdByPort(port).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getServerIdByPort(port));
 	}
 
 	/**
@@ -2915,7 +2918,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public VirtualServerInfo getServerInfo() {
-		return asyncApi.getServerInfo().getUninterruptibly();
+		return CommandFutures.join(asyncApi.getServerInfo());
 	}
 
 	/**
@@ -2933,7 +2936,7 @@ public class TS3Api {
 	 * @see #updateServerQueryLogin(String)
 	 */
 	public List<QueryLogin> getServerQueryLogins() {
-		return asyncApi.getServerQueryLogins().getUninterruptibly();
+		return CommandFutures.join(asyncApi.getServerQueryLogins());
 	}
 
 	/**
@@ -2955,7 +2958,7 @@ public class TS3Api {
 	 * @see #updateServerQueryLogin(String)
 	 */
 	public List<QueryLogin> getServerQueryLoginsByName(String pattern) {
-		return asyncApi.getServerQueryLoginsByName(pattern).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getServerQueryLoginsByName(pattern));
 	}
 
 	/**
@@ -2968,7 +2971,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public Version getVersion() {
-		return asyncApi.getVersion().getUninterruptibly();
+		return CommandFutures.join(asyncApi.getVersion());
 	}
 
 	/**
@@ -2981,7 +2984,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public List<VirtualServer> getVirtualServers() {
-		return asyncApi.getVirtualServers().getUninterruptibly();
+		return CommandFutures.join(asyncApi.getVirtualServers());
 	}
 
 	/**
@@ -2999,7 +3002,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public List<String> getVirtualServerLogEntries(int lines) {
-		return asyncApi.getVirtualServerLogEntries(lines).getUninterruptibly();
+		return CommandFutures.join(asyncApi.getVirtualServerLogEntries(lines));
 	}
 
 	/**
@@ -3013,7 +3016,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public List<String> getVirtualServerLogEntries() {
-		return asyncApi.getVirtualServerLogEntries().getUninterruptibly();
+		return CommandFutures.join(asyncApi.getVirtualServerLogEntries());
 	}
 
 	/**
@@ -3032,7 +3035,7 @@ public class TS3Api {
 	 * @see #getClientInfo(int)
 	 */
 	public boolean isClientOnline(int clientId) {
-		return asyncApi.isClientOnline(clientId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.isClientOnline(clientId));
 	}
 
 	/**
@@ -3051,7 +3054,7 @@ public class TS3Api {
 	 * @see #getClientByUId(String)
 	 */
 	public boolean isClientOnline(String clientUId) {
-		return asyncApi.isClientOnline(clientUId).getUninterruptibly();
+		return CommandFutures.join(asyncApi.isClientOnline(clientUId));
 	}
 
 	/**
@@ -3069,7 +3072,7 @@ public class TS3Api {
 	 * @see #kickClientFromChannel(String, int...)
 	 */
 	public void kickClientFromChannel(int... clientIds) {
-		asyncApi.kickClientFromChannel(clientIds).getUninterruptibly();
+		CommandFutures.join(asyncApi.kickClientFromChannel(clientIds));
 	}
 
 	/**
@@ -3087,7 +3090,7 @@ public class TS3Api {
 	 * @see #kickClientFromChannel(String, Client...)
 	 */
 	public void kickClientFromChannel(Client... clients) {
-		asyncApi.kickClientFromChannel(clients).getUninterruptibly();
+		CommandFutures.join(asyncApi.kickClientFromChannel(clients));
 	}
 
 	/**
@@ -3108,7 +3111,7 @@ public class TS3Api {
 	 * @see #kickClientFromChannel(String, Client...)
 	 */
 	public void kickClientFromChannel(String message, int... clientIds) {
-		asyncApi.kickClientFromChannel(message, clientIds).getUninterruptibly();
+		CommandFutures.join(asyncApi.kickClientFromChannel(message, clientIds));
 	}
 
 	/**
@@ -3128,7 +3131,7 @@ public class TS3Api {
 	 * @see #kickClientFromChannel(String, int...)
 	 */
 	public void kickClientFromChannel(String message, Client... clients) {
-		asyncApi.kickClientFromChannel(message, clients).getUninterruptibly();
+		CommandFutures.join(asyncApi.kickClientFromChannel(message, clients));
 	}
 
 	/**
@@ -3145,7 +3148,7 @@ public class TS3Api {
 	 * @see #kickClientFromServer(String, int...)
 	 */
 	public void kickClientFromServer(int... clientIds) {
-		asyncApi.kickClientFromServer(clientIds).getUninterruptibly();
+		CommandFutures.join(asyncApi.kickClientFromServer(clientIds));
 	}
 
 	/**
@@ -3161,7 +3164,7 @@ public class TS3Api {
 	 * @see #kickClientFromServer(String, Client...)
 	 */
 	public void kickClientFromServer(Client... clients) {
-		asyncApi.kickClientFromServer(clients).getUninterruptibly();
+		CommandFutures.join(asyncApi.kickClientFromServer(clients));
 	}
 
 	/**
@@ -3180,7 +3183,7 @@ public class TS3Api {
 	 * @see #kickClientFromServer(String, Client...)
 	 */
 	public void kickClientFromServer(String message, int... clientIds) {
-		asyncApi.kickClientFromServer(message, clientIds).getUninterruptibly();
+		CommandFutures.join(asyncApi.kickClientFromServer(message, clientIds));
 	}
 
 	/**
@@ -3198,7 +3201,7 @@ public class TS3Api {
 	 * @see #kickClientFromServer(String, int...)
 	 */
 	public void kickClientFromServer(String message, Client... clients) {
-		asyncApi.kickClientFromServer(message, clients).getUninterruptibly();
+		CommandFutures.join(asyncApi.kickClientFromServer(message, clients));
 	}
 
 	/**
@@ -3219,7 +3222,7 @@ public class TS3Api {
 	 * @see #logout()
 	 */
 	public void login(String username, String password) {
-		asyncApi.login(username, password).getUninterruptibly();
+		CommandFutures.join(asyncApi.login(username, password));
 	}
 
 	/**
@@ -3231,7 +3234,7 @@ public class TS3Api {
 	 * @see #login(String, String)
 	 */
 	public void logout() {
-		asyncApi.logout().getUninterruptibly();
+		CommandFutures.join(asyncApi.logout());
 	}
 
 	/**
@@ -3254,7 +3257,7 @@ public class TS3Api {
 	 * @see #moveChannel(int, int, int)
 	 */
 	public void moveChannel(int channelId, int channelTargetId) {
-		asyncApi.moveChannel(channelId, channelTargetId).getUninterruptibly();
+		CommandFutures.join(asyncApi.moveChannel(channelId, channelTargetId));
 	}
 
 	/**
@@ -3282,7 +3285,7 @@ public class TS3Api {
 	 * @see #moveChannel(int, int)
 	 */
 	public void moveChannel(int channelId, int channelTargetId, int order) {
-		asyncApi.moveChannel(channelId, channelTargetId, order).getUninterruptibly();
+		CommandFutures.join(asyncApi.moveChannel(channelId, channelTargetId, order));
 	}
 
 	/**
@@ -3303,7 +3306,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 */
 	public void moveClient(int clientId, int channelId) {
-		asyncApi.moveClient(clientId, channelId).getUninterruptibly();
+		CommandFutures.join(asyncApi.moveClient(clientId, channelId));
 	}
 
 	/**
@@ -3328,7 +3331,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 */
 	public void moveClients(int[] clientIds, int channelId) {
-		asyncApi.moveClients(clientIds, channelId).getUninterruptibly();
+		CommandFutures.join(asyncApi.moveClients(clientIds, channelId));
 	}
 
 	/**
@@ -3349,7 +3352,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public void moveClient(Client client, ChannelBase channel) {
-		asyncApi.moveClient(client, channel).getUninterruptibly();
+		CommandFutures.join(asyncApi.moveClient(client, channel));
 	}
 
 	/**
@@ -3372,7 +3375,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public void moveClients(Client[] clients, ChannelBase channel) {
-		asyncApi.moveClients(clients, channel).getUninterruptibly();
+		CommandFutures.join(asyncApi.moveClients(clients, channel));
 	}
 
 	/**
@@ -3395,7 +3398,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 */
 	public void moveClient(int clientId, int channelId, String channelPassword) {
-		asyncApi.moveClient(clientId, channelId, channelPassword).getUninterruptibly();
+		CommandFutures.join(asyncApi.moveClient(clientId, channelId, channelPassword));
 	}
 
 	/**
@@ -3422,7 +3425,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 */
 	public void moveClients(int[] clientIds, int channelId, String channelPassword) {
-		asyncApi.moveClients(clientIds, channelId, channelPassword).getUninterruptibly();
+		CommandFutures.join(asyncApi.moveClients(clientIds, channelId, channelPassword));
 	}
 
 	/**
@@ -3445,7 +3448,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public void moveClient(Client client, ChannelBase channel, String channelPassword) {
-		asyncApi.moveClient(client, channel, channelPassword).getUninterruptibly();
+		CommandFutures.join(asyncApi.moveClient(client, channel, channelPassword));
 	}
 
 	/**
@@ -3470,7 +3473,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public void moveClients(Client[] clients, ChannelBase channel, String channelPassword) {
-		asyncApi.moveClients(clients, channel, channelPassword).getUninterruptibly();
+		CommandFutures.join(asyncApi.moveClients(clients, channel, channelPassword));
 	}
 
 	/**
@@ -3491,7 +3494,7 @@ public class TS3Api {
 	 * @see #moveFile(String, String, int, int) moveFile to a different channel
 	 */
 	public void moveFile(String oldPath, String newPath, int channelId) {
-		asyncApi.moveFile(oldPath, newPath, channelId).getUninterruptibly();
+		CommandFutures.join(asyncApi.moveFile(oldPath, newPath, channelId));
 	}
 
 	/**
@@ -3514,7 +3517,7 @@ public class TS3Api {
 	 * @see #moveFile(String, String, int) moveFile within the same channel
 	 */
 	public void moveFile(String oldPath, String newPath, int oldChannelId, int newChannelId) {
-		asyncApi.moveFile(oldPath, newPath, oldChannelId, newChannelId).getUninterruptibly();
+		CommandFutures.join(asyncApi.moveFile(oldPath, newPath, oldChannelId, newChannelId));
 	}
 
 	/**
@@ -3537,7 +3540,7 @@ public class TS3Api {
 	 * @see #moveFile(String, String, int, String, int, String) moveFile to a different channel
 	 */
 	public void moveFile(String oldPath, String newPath, int channelId, String channelPassword) {
-		asyncApi.moveFile(oldPath, newPath, channelId, channelPassword).getUninterruptibly();
+		CommandFutures.join(asyncApi.moveFile(oldPath, newPath, channelId, channelPassword));
 	}
 
 	/**
@@ -3564,7 +3567,7 @@ public class TS3Api {
 	 * @see #moveFile(String, String, int, String) moveFile within the same channel
 	 */
 	public void moveFile(String oldPath, String newPath, int oldChannelId, String oldPassword, int newChannelId, String newPassword) {
-		asyncApi.moveFile(oldPath, newPath, oldChannelId, oldPassword, newChannelId, newPassword).getUninterruptibly();
+		CommandFutures.join(asyncApi.moveFile(oldPath, newPath, oldChannelId, oldPassword, newChannelId, newPassword));
 	}
 
 	/**
@@ -3579,7 +3582,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 */
 	public void moveQuery(int channelId) {
-		asyncApi.moveQuery(channelId).getUninterruptibly();
+		CommandFutures.join(asyncApi.moveQuery(channelId));
 	}
 
 	/**
@@ -3595,7 +3598,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public void moveQuery(ChannelBase channel) {
-		asyncApi.moveQuery(channel).getUninterruptibly();
+		CommandFutures.join(asyncApi.moveQuery(channel));
 	}
 
 	/**
@@ -3612,7 +3615,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 */
 	public void moveQuery(int channelId, String channelPassword) {
-		asyncApi.moveQuery(channelId, channelPassword).getUninterruptibly();
+		CommandFutures.join(asyncApi.moveQuery(channelId, channelPassword));
 	}
 
 	/**
@@ -3630,7 +3633,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public void moveQuery(ChannelBase channel, String channelPassword) {
-		asyncApi.moveQuery(channel, channelPassword).getUninterruptibly();
+		CommandFutures.join(asyncApi.moveQuery(channel, channelPassword));
 	}
 
 	/**
@@ -3655,7 +3658,7 @@ public class TS3Api {
 	 * @see Client#getId()
 	 */
 	public void pokeClient(int clientId, String message) {
-		asyncApi.pokeClient(clientId, message).getUninterruptibly();
+		CommandFutures.join(asyncApi.pokeClient(clientId, message));
 	}
 
 	/**
@@ -3671,7 +3674,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	void quit() {
-		asyncApi.quit().getUninterruptibly();
+		CommandFutures.join(asyncApi.quit());
 	}
 
 	/**
@@ -3698,7 +3701,7 @@ public class TS3Api {
 	 * @see #addTS3Listeners(TS3Listener...)
 	 */
 	public void registerAllEvents() {
-		asyncApi.registerAllEvents().getUninterruptibly();
+		CommandFutures.join(asyncApi.registerAllEvents());
 	}
 
 	/**
@@ -3720,7 +3723,7 @@ public class TS3Api {
 	 * @see #registerAllEvents()
 	 */
 	public void registerEvent(TS3EventType eventType) {
-		asyncApi.registerEvent(eventType).getUninterruptibly();
+		CommandFutures.join(asyncApi.registerEvent(eventType));
 	}
 
 	/**
@@ -3740,7 +3743,7 @@ public class TS3Api {
 	 * @see #registerAllEvents()
 	 */
 	public void registerEvent(TS3EventType eventType, int channelId) {
-		asyncApi.registerEvent(eventType, channelId).getUninterruptibly();
+		CommandFutures.join(asyncApi.registerEvent(eventType, channelId));
 	}
 
 	/**
@@ -3762,7 +3765,7 @@ public class TS3Api {
 	 * @see #registerAllEvents()
 	 */
 	public void registerEvents(TS3EventType... eventTypes) {
-		asyncApi.registerEvents(eventTypes).getUninterruptibly();
+		CommandFutures.join(asyncApi.registerEvents(eventTypes));
 	}
 
 	/**
@@ -3781,7 +3784,7 @@ public class TS3Api {
 	 * @see #removeClientFromServerGroup(ServerGroup, Client)
 	 */
 	public void removeClientFromServerGroup(int serverGroupId, int clientDatabaseId) {
-		asyncApi.removeClientFromServerGroup(serverGroupId, clientDatabaseId).getUninterruptibly();
+		CommandFutures.join(asyncApi.removeClientFromServerGroup(serverGroupId, clientDatabaseId));
 	}
 
 	/**
@@ -3798,7 +3801,7 @@ public class TS3Api {
 	 * @see #removeClientFromServerGroup(int, int)
 	 */
 	public void removeClientFromServerGroup(ServerGroup serverGroup, Client client) {
-		asyncApi.removeClientFromServerGroup(serverGroup, client).getUninterruptibly();
+		CommandFutures.join(asyncApi.removeClientFromServerGroup(serverGroup, client));
 	}
 
 	/**
@@ -3833,7 +3836,7 @@ public class TS3Api {
 	 * @see #renameChannelGroup(ChannelGroup, String)
 	 */
 	public void renameChannelGroup(int channelGroupId, String name) {
-		asyncApi.renameChannelGroup(channelGroupId, name).getUninterruptibly();
+		CommandFutures.join(asyncApi.renameChannelGroup(channelGroupId, name));
 	}
 
 	/**
@@ -3850,7 +3853,7 @@ public class TS3Api {
 	 * @see #renameChannelGroup(int, String)
 	 */
 	public void renameChannelGroup(ChannelGroup channelGroup, String name) {
-		asyncApi.renameChannelGroup(channelGroup, name).getUninterruptibly();
+		CommandFutures.join(asyncApi.renameChannelGroup(channelGroup, name));
 	}
 
 	/**
@@ -3868,7 +3871,7 @@ public class TS3Api {
 	 * @see #renameServerGroup(ServerGroup, String)
 	 */
 	public void renameServerGroup(int serverGroupId, String name) {
-		asyncApi.renameServerGroup(serverGroupId, name).getUninterruptibly();
+		CommandFutures.join(asyncApi.renameServerGroup(serverGroupId, name));
 	}
 
 	/**
@@ -3885,7 +3888,7 @@ public class TS3Api {
 	 * @see #renameServerGroup(int, String)
 	 */
 	public void renameServerGroup(ServerGroup serverGroup, String name) {
-		asyncApi.renameServerGroup(serverGroup, name).getUninterruptibly();
+		CommandFutures.join(asyncApi.renameServerGroup(serverGroup, name));
 	}
 
 	/**
@@ -3898,7 +3901,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public String resetPermissions() {
-		return asyncApi.resetPermissions().getUninterruptibly();
+		return CommandFutures.join(asyncApi.resetPermissions());
 	}
 
 	/**
@@ -3918,7 +3921,7 @@ public class TS3Api {
 	 * @see #getCustomClientProperties(int)
 	 */
 	public List<CustomPropertyAssignment> searchCustomClientProperty(String key) {
-		return asyncApi.searchCustomClientProperty(key).getUninterruptibly();
+		return CommandFutures.join(asyncApi.searchCustomClientProperty(key));
 	}
 
 	/**
@@ -3945,7 +3948,7 @@ public class TS3Api {
 	 * @see #getCustomClientProperties(int)
 	 */
 	public List<CustomPropertyAssignment> searchCustomClientProperty(String key, String valuePattern) {
-		return asyncApi.searchCustomClientProperty(key, valuePattern).getUninterruptibly();
+		return CommandFutures.join(asyncApi.searchCustomClientProperty(key, valuePattern));
 	}
 
 	/**
@@ -3963,7 +3966,7 @@ public class TS3Api {
 	 * @see #selectVirtualServer(VirtualServer)
 	 */
 	public void selectVirtualServerById(int id) {
-		asyncApi.selectVirtualServerById(id).getUninterruptibly();
+		CommandFutures.join(asyncApi.selectVirtualServerById(id));
 	}
 
 	/**
@@ -3987,7 +3990,7 @@ public class TS3Api {
 	 * @see #selectVirtualServer(VirtualServer, String)
 	 */
 	public void selectVirtualServerById(int id, String nickname) {
-		asyncApi.selectVirtualServerById(id, nickname).getUninterruptibly();
+		CommandFutures.join(asyncApi.selectVirtualServerById(id, nickname));
 	}
 
 	/**
@@ -4005,7 +4008,7 @@ public class TS3Api {
 	 * @see #selectVirtualServer(VirtualServer)
 	 */
 	public void selectVirtualServerByPort(int port) {
-		asyncApi.selectVirtualServerByPort(port).getUninterruptibly();
+		CommandFutures.join(asyncApi.selectVirtualServerByPort(port));
 	}
 
 	/**
@@ -4029,7 +4032,7 @@ public class TS3Api {
 	 * @see #selectVirtualServer(VirtualServer, String)
 	 */
 	public void selectVirtualServerByPort(int port, String nickname) {
-		asyncApi.selectVirtualServerByPort(port, nickname).getUninterruptibly();
+		CommandFutures.join(asyncApi.selectVirtualServerByPort(port, nickname));
 	}
 
 	/**
@@ -4046,7 +4049,7 @@ public class TS3Api {
 	 * @see #selectVirtualServer(VirtualServer, String)
 	 */
 	public void selectVirtualServer(VirtualServer server) {
-		asyncApi.selectVirtualServer(server).getUninterruptibly();
+		CommandFutures.join(asyncApi.selectVirtualServer(server));
 	}
 
 	/**
@@ -4069,7 +4072,7 @@ public class TS3Api {
 	 * @see #selectVirtualServer(VirtualServer)
 	 */
 	public void selectVirtualServer(VirtualServer server, String nickname) {
-		asyncApi.selectVirtualServer(server, nickname).getUninterruptibly();
+		CommandFutures.join(asyncApi.selectVirtualServer(server, nickname));
 	}
 
 	/**
@@ -4093,7 +4096,7 @@ public class TS3Api {
 	 * @see Message
 	 */
 	public void sendOfflineMessage(String clientUId, String subject, String message) {
-		asyncApi.sendOfflineMessage(clientUId, subject, message).getUninterruptibly();
+		CommandFutures.join(asyncApi.sendOfflineMessage(clientUId, subject, message));
 	}
 
 	/**
@@ -4117,7 +4120,7 @@ public class TS3Api {
 	 * @see Client#getId()
 	 */
 	public void sendTextMessage(TextMessageTargetMode targetMode, int targetId, String message) {
-		asyncApi.sendTextMessage(targetMode, targetId, message).getUninterruptibly();
+		CommandFutures.join(asyncApi.sendTextMessage(targetMode, targetId, message));
 	}
 
 	/**
@@ -4140,7 +4143,7 @@ public class TS3Api {
 	 * @see Channel#getId()
 	 */
 	public void sendChannelMessage(int channelId, String message) {
-		asyncApi.sendChannelMessage(channelId, message).getUninterruptibly();
+		CommandFutures.join(asyncApi.sendChannelMessage(channelId, message));
 	}
 
 	/**
@@ -4155,7 +4158,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public void sendChannelMessage(String message) {
-		asyncApi.sendChannelMessage(message).getUninterruptibly();
+		CommandFutures.join(asyncApi.sendChannelMessage(message));
 	}
 
 	/**
@@ -4178,7 +4181,7 @@ public class TS3Api {
 	 * @see VirtualServer#getId()
 	 */
 	public void sendServerMessage(int serverId, String message) {
-		asyncApi.sendServerMessage(serverId, message).getUninterruptibly();
+		CommandFutures.join(asyncApi.sendServerMessage(serverId, message));
 	}
 
 	/**
@@ -4193,7 +4196,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public void sendServerMessage(String message) {
-		asyncApi.sendServerMessage(message).getUninterruptibly();
+		CommandFutures.join(asyncApi.sendServerMessage(message));
 	}
 
 	/**
@@ -4211,7 +4214,7 @@ public class TS3Api {
 	 * @see Client#getId()
 	 */
 	public void sendPrivateMessage(int clientId, String message) {
-		asyncApi.sendPrivateMessage(clientId, message).getUninterruptibly();
+		CommandFutures.join(asyncApi.sendPrivateMessage(clientId, message));
 	}
 
 	/**
@@ -4232,7 +4235,7 @@ public class TS3Api {
 	 * @see Client#getDatabaseId()
 	 */
 	public void setClientChannelGroup(int groupId, int channelId, int clientDBId) {
-		asyncApi.setClientChannelGroup(groupId, channelId, clientDBId).getUninterruptibly();
+		CommandFutures.join(asyncApi.setClientChannelGroup(groupId, channelId, clientDBId));
 	}
 
 	/**
@@ -4259,7 +4262,7 @@ public class TS3Api {
 	 * @see #deleteCustomClientProperty(int, String)
 	 */
 	public void setCustomClientProperties(int clientDBId, Map<String, String> properties) {
-		asyncApi.setCustomClientProperties(clientDBId, properties).getUninterruptibly();
+		CommandFutures.join(asyncApi.setCustomClientProperties(clientDBId, properties));
 	}
 
 	/**
@@ -4284,7 +4287,7 @@ public class TS3Api {
 	 * @see #deleteCustomClientProperty(int, String)
 	 */
 	public void setCustomClientProperty(int clientDBId, String key, String value) {
-		asyncApi.setCustomClientProperty(clientDBId, key, value).getUninterruptibly();
+		CommandFutures.join(asyncApi.setCustomClientProperty(clientDBId, key, value));
 	}
 
 	/**
@@ -4299,7 +4302,7 @@ public class TS3Api {
 	 * @see #setMessageReadFlag(int, boolean)
 	 */
 	public void setMessageRead(int messageId) {
-		asyncApi.setMessageRead(messageId).getUninterruptibly();
+		CommandFutures.join(asyncApi.setMessageRead(messageId));
 	}
 
 	/**
@@ -4316,7 +4319,7 @@ public class TS3Api {
 	 * @see #deleteOfflineMessage(int)
 	 */
 	public void setMessageRead(Message message) {
-		asyncApi.setMessageRead(message).getUninterruptibly();
+		CommandFutures.join(asyncApi.setMessageRead(message));
 	}
 
 	/**
@@ -4335,7 +4338,7 @@ public class TS3Api {
 	 * @see #deleteOfflineMessage(int)
 	 */
 	public void setMessageReadFlag(int messageId, boolean read) {
-		asyncApi.setMessageReadFlag(messageId, read).getUninterruptibly();
+		CommandFutures.join(asyncApi.setMessageReadFlag(messageId, read));
 	}
 
 	/**
@@ -4354,7 +4357,7 @@ public class TS3Api {
 	 * @see #deleteOfflineMessage(int)
 	 */
 	public void setMessageReadFlag(Message message, boolean read) {
-		asyncApi.setMessageReadFlag(message, read).getUninterruptibly();
+		CommandFutures.join(asyncApi.setMessageReadFlag(message, read));
 	}
 
 	/**
@@ -4372,7 +4375,7 @@ public class TS3Api {
 	 * @see #updateClient(Map)
 	 */
 	public void setNickname(String nickname) {
-		asyncApi.setNickname(nickname).getUninterruptibly();
+		CommandFutures.join(asyncApi.setNickname(nickname));
 	}
 
 	/**
@@ -4386,7 +4389,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public void startServer(int serverId) {
-		asyncApi.startServer(serverId).getUninterruptibly();
+		CommandFutures.join(asyncApi.startServer(serverId));
 	}
 
 	/**
@@ -4400,7 +4403,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public void startServer(VirtualServer virtualServer) {
-		asyncApi.startServer(virtualServer).getUninterruptibly();
+		CommandFutures.join(asyncApi.startServer(virtualServer));
 	}
 
 	/**
@@ -4414,7 +4417,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public void stopServer(int serverId) {
-		asyncApi.stopServer(serverId).getUninterruptibly();
+		CommandFutures.join(asyncApi.stopServer(serverId));
 	}
 
 	/**
@@ -4430,7 +4433,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public void stopServer(int serverId, String reason) {
-		asyncApi.stopServer(serverId, reason).getUninterruptibly();
+		CommandFutures.join(asyncApi.stopServer(serverId, reason));
 	}
 
 	/**
@@ -4444,7 +4447,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public void stopServer(VirtualServer virtualServer) {
-		asyncApi.stopServer(virtualServer).getUninterruptibly();
+		CommandFutures.join(asyncApi.stopServer(virtualServer));
 	}
 
 	/**
@@ -4460,7 +4463,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public void stopServer(VirtualServer virtualServer, String reason) {
-		asyncApi.stopServer(virtualServer, reason).getUninterruptibly();
+		CommandFutures.join(asyncApi.stopServer(virtualServer, reason));
 	}
 
 	/**
@@ -4474,7 +4477,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public void stopServerProcess() {
-		asyncApi.stopServerProcess().getUninterruptibly();
+		CommandFutures.join(asyncApi.stopServerProcess());
 	}
 
 	/**
@@ -4491,7 +4494,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public void stopServerProcess(String reason) {
-		asyncApi.stopServerProcess(reason).getUninterruptibly();
+		CommandFutures.join(asyncApi.stopServerProcess(reason));
 	}
 
 	/**
@@ -4502,7 +4505,7 @@ public class TS3Api {
 	 * @querycommands 1
 	 */
 	public void unregisterAllEvents() {
-		asyncApi.unregisterAllEvents().getUninterruptibly();
+		CommandFutures.join(asyncApi.unregisterAllEvents());
 	}
 
 	/**
@@ -4518,7 +4521,7 @@ public class TS3Api {
 	 * @see #editClient(int, Map)
 	 */
 	public void updateClient(Map<ClientProperty, String> options) {
-		asyncApi.updateClient(options).getUninterruptibly();
+		CommandFutures.join(asyncApi.updateClient(options));
 	}
 
 	/**
@@ -4540,7 +4543,7 @@ public class TS3Api {
 	 * @see #editClient(int, Map)
 	 */
 	public void updateClient(ClientProperty property, String value) {
-		asyncApi.updateClient(property, value).getUninterruptibly();
+		CommandFutures.join(asyncApi.updateClient(property, value));
 	}
 
 	/**
@@ -4563,7 +4566,7 @@ public class TS3Api {
 	 * @see #getServerQueryLogins()
 	 */
 	public String updateServerQueryLogin(String loginName) {
-		return asyncApi.updateServerQueryLogin(loginName).getUninterruptibly();
+		return CommandFutures.join(asyncApi.updateServerQueryLogin(loginName));
 	}
 
 	/**
@@ -4599,7 +4602,7 @@ public class TS3Api {
 	 * @see #uploadFileDirect(byte[], String, boolean, int, String)
 	 */
 	public void uploadFile(InputStream dataIn, long dataLength, String filePath, boolean overwrite, int channelId) {
-		asyncApi.uploadFile(dataIn, dataLength, filePath, overwrite, channelId).getUninterruptibly();
+		CommandFutures.join(asyncApi.uploadFile(dataIn, dataLength, filePath, overwrite, channelId));
 	}
 
 	/**
@@ -4637,7 +4640,7 @@ public class TS3Api {
 	 * @see #uploadFileDirect(byte[], String, boolean, int, String)
 	 */
 	public void uploadFile(InputStream dataIn, long dataLength, String filePath, boolean overwrite, int channelId, String channelPassword) {
-		asyncApi.uploadFile(dataIn, dataLength, filePath, overwrite, channelId, channelPassword).getUninterruptibly();
+		CommandFutures.join(asyncApi.uploadFile(dataIn, dataLength, filePath, overwrite, channelId, channelPassword));
 	}
 
 	/**
@@ -4663,7 +4666,7 @@ public class TS3Api {
 	 * @see #uploadFile(InputStream, long, String, boolean, int)
 	 */
 	public void uploadFileDirect(byte[] data, String filePath, boolean overwrite, int channelId) {
-		asyncApi.uploadFileDirect(data, filePath, overwrite, channelId).getUninterruptibly();
+		CommandFutures.join(asyncApi.uploadFileDirect(data, filePath, overwrite, channelId));
 	}
 
 	/**
@@ -4691,7 +4694,7 @@ public class TS3Api {
 	 * @see #uploadFile(InputStream, long, String, boolean, int, String)
 	 */
 	public void uploadFileDirect(byte[] data, String filePath, boolean overwrite, int channelId, String channelPassword) {
-		asyncApi.uploadFileDirect(data, filePath, overwrite, channelId, channelPassword).getUninterruptibly();
+		CommandFutures.join(asyncApi.uploadFileDirect(data, filePath, overwrite, channelId, channelPassword));
 	}
 
 	/**
@@ -4727,7 +4730,7 @@ public class TS3Api {
 	 * @see #downloadIcon(OutputStream, long)
 	 */
 	public long uploadIcon(InputStream dataIn, long dataLength) {
-		return asyncApi.uploadIcon(dataIn, dataLength).getUninterruptibly();
+		return CommandFutures.join(asyncApi.uploadIcon(dataIn, dataLength));
 	}
 
 	/**
@@ -4750,7 +4753,7 @@ public class TS3Api {
 	 * @see #downloadIconDirect(long)
 	 */
 	public long uploadIconDirect(byte[] data) {
-		return asyncApi.uploadIconDirect(data).getUninterruptibly();
+		return CommandFutures.join(asyncApi.uploadIconDirect(data));
 	}
 
 	/**
@@ -4767,7 +4770,7 @@ public class TS3Api {
 	 * @see #usePrivilegeKey(PrivilegeKey)
 	 */
 	public void usePrivilegeKey(String token) {
-		asyncApi.usePrivilegeKey(token).getUninterruptibly();
+		CommandFutures.join(asyncApi.usePrivilegeKey(token));
 	}
 
 	/**
@@ -4784,7 +4787,7 @@ public class TS3Api {
 	 * @see #usePrivilegeKey(String)
 	 */
 	public void usePrivilegeKey(PrivilegeKey privilegeKey) {
-		asyncApi.usePrivilegeKey(privilegeKey).getUninterruptibly();
+		CommandFutures.join(asyncApi.usePrivilegeKey(privilegeKey));
 	}
 
 	/**
@@ -4798,6 +4801,6 @@ public class TS3Api {
 	 * @see #getClientInfo(int)
 	 */
 	public ServerQueryInfo whoAmI() {
-		return asyncApi.whoAmI().getUninterruptibly();
+		return CommandFutures.join(asyncApi.whoAmI());
 	}
 }

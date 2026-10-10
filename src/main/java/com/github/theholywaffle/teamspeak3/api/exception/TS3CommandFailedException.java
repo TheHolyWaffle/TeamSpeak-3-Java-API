@@ -60,4 +60,6 @@ public class TS3CommandFailedException extends TS3Exception {
 	public QueryError getError() {
 		return queryError;
 	}
+	@Override public boolean matchesQueryError(int errorId) { return queryError.getId() == errorId; }
+
 }

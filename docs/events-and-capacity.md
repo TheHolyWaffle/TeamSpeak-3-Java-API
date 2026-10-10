@@ -14,16 +14,18 @@ startup/session-restoration commands across all connection generations. Blocked
 startup callbacks therefore also bound subsequent reconnect initialization. A reconnect retains the budget of recovered
 commands. Completion callbacks release admission only after they return, so a
 response stream cannot create an unlimited number of blocked callback threads.
+Library file-transfer work retains the same slot until its I/O and inline callbacks
+finish, including when the public result has been cancelled.
 Immediate admission failures settle on the submitting thread; listeners attached
-to an already completed future retain the existing `CommandFuture` calling-thread
-behavior. Do not busy-loop on rejection; reduce concurrency or arrange application
+to an already completed JDK future can run on the registering thread. See
+[the future contract](futures.md) for completion ordering and async executors. Do not busy-loop on rejection; reduce concurrency or arrange application
 backpressure. A callback issuing commands also needs spare admission capacity.
 
 Event callbacks run on a separate owned executor from command completions and
-connection handlers. Command/lifecycle callbacks use owned virtual threads;
+connection handlers. Command completions use one ordered virtual worker; lifecycle callbacks use separate owned virtual threads;
 accepted command completions are bounded by the command budget. There is no
-caller-runs fallback on the reader. Both executors are owned and stopped by the
-query; applications do not supply executors. Event callbacks for one registration
+caller-runs fallback on the reader. The query stops its owned executors. Applications may supply their own executors
+to JDK async completion-stage methods and own their lifetime. Event callbacks for one registration
 are serialized in received order. Separate registrations of the same listener are
 independent. A slow listener can occupy an event worker and delay other listeners
 if all workers are occupied, but cannot stall reading or command completions.

@@ -26,7 +26,7 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
-import com.github.theholywaffle.teamspeak3.api.CommandFuture;
+import java.util.concurrent.CompletableFuture;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
 import com.github.theholywaffle.teamspeak3.commands.Command;
@@ -167,16 +167,16 @@ class StreamReader extends Thread {
 		}
 
 		QueryError queryError = DefaultArrayResponse.parseError(error);
-		CommandFuture<DefaultArrayResponse> future = command.getFuture();
+		CompletableFuture<DefaultArrayResponse> future = command.getFuture();
 
 		if (queryError.isSuccessful()) {
 			DefaultArrayResponse response = responseBuilder.buildResponse();
 
-			commandQueue.completeResponse(command, con, () -> future.set(response));
+			commandQueue.completeResponse(command, con, () -> future.complete(response));
 		} else {
 			log.debug("TS3 command error: {}", queryError);
 
-			commandQueue.completeResponse(command, con, () -> future.fail(new TS3CommandFailedException(queryError, command.getName())));
+			commandQueue.completeResponse(command, con, () -> future.completeExceptionally(new TS3CommandFailedException(queryError, command.getName())));
 		}
 	}
 

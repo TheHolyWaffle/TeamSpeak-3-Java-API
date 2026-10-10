@@ -125,7 +125,7 @@ class ServerQueryProtocolTest {
 				query.connect();
 				var response = query.getAsyncApi().getFileList("/", 7);
 				if (error.contains("256")) {
-					var failure = assertThrows(TS3CommandFailedException.class, () -> response.get(5, TimeUnit.SECONDS));
+					var failure = assertThrows(TS3CommandFailedException.class, () -> FutureAssertions.read(response, 5, TimeUnit.SECONDS));
 					assertEquals("bad command", failure.getError().getMessage());
 				} else { assertTrue(response.get(5, TimeUnit.SECONDS).isEmpty()); }
 				assertEquals("after", query.getAsyncApi().getFileList("/", 7).get(5, TimeUnit.SECONDS).get(0).getName());
@@ -146,7 +146,7 @@ class ServerQueryProtocolTest {
 			try {
 				query.connect();
 				var response = query.getAsyncApi().getFileList("/", 7);
-				assertThrows(TS3QueryShutDownException.class, () -> response.get(5, TimeUnit.SECONDS));
+				assertThrows(TS3QueryShutDownException.class, () -> FutureAssertions.read(response, 5, TimeUnit.SECONDS));
 			} finally { query.exit(); }
 			peer.await();
 		}

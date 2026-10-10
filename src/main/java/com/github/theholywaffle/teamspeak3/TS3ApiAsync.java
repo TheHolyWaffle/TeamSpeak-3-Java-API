@@ -41,7 +41,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -53,16 +53,21 @@ import java.util.stream.Collectors;
  * sends them to the TeamSpeak3 server, processes the response and returns the result.
  * </p><p>
  * All methods in this class are asynchronous (so they won't block) and
- * will return a {@link CommandFuture} of the corresponding return type in {@link TS3Api}.
- * If a command fails, no exception will be thrown directly. It will however be rethrown in
- * {@link CommandFuture#get()} and {@link CommandFuture#get(long, TimeUnit)}.
- * Usually, the thrown exception is a {@link TS3CommandFailedException}, which will get you
- * access to the {@link QueryError} from which more information about the error can be obtained.
+ * will return a {@link CompletableFuture} of the corresponding return type in {@link TS3Api}.
+ * Failures are wrapped in {@link java.util.concurrent.ExecutionException} by get methods,
+ * and in {@link java.util.concurrent.CompletionException} by join. Server failures retain
+ * {@link TS3CommandFailedException} as their cause.
  * </p><p>
- * Also note that while these methods are asynchronous, the commands will still be sent through a
- * synchronous command pipeline. That means if an asynchronous method is called immediately
- * followed by a synchronous method, the synchronous method will first have to wait until the
- * asynchronous method completed until it its command is sent.
+ * Accepted response completions are published in receive order on an owned completion
+ * worker, away from protocol threads. Non-async callbacks must be short and must not
+ * block waiting for another command. Use async stages with an application executor for
+ * blocking work. Callbacks added after completion may run on the registering thread;
+ * JDK async methods without an executor use the common pool.
+ * </p><p>
+ * Cancel the original API result to remove an unsent request. Sent requests still consume
+ * their eventual responses; cancellation cannot undo a server-side mutation. Cancelling
+ * an application-created dependent stage does not cancel its source. Timed get limits
+ * only the wait; orTimeout changes the future's result without aborting the request.
  * </p><p>
  * You won't be able to execute most commands while you're not logged in due to missing permissions.
  * Make sure to either pass your login credentials to the {@link TS3Config} object when
@@ -128,7 +133,7 @@ public class TS3ApiAsync {
 	 * @see Client#getUniqueIdentifier()
 	 * @see ClientInfo#getIp()
 	 */
-	public CommandFuture<Integer> addBan(String ip, String name, String uid, long timeInSeconds, String reason) {
+	public CompletableFuture<Integer> addBan(String ip, String name, String uid, long timeInSeconds, String reason) {
 		return addBan(ip, name, uid, null, timeInSeconds, reason);
 	}
 
@@ -163,7 +168,7 @@ public class TS3ApiAsync {
 	 * @see Client#getUniqueIdentifier()
 	 * @see ClientInfo#getIp()
 	 */
-	public CommandFuture<Integer> addBan(String ip, String name, String uid, String myTSId, long timeInSeconds, String reason) {
+	public CompletableFuture<Integer> addBan(String ip, String name, String uid, String myTSId, long timeInSeconds, String reason) {
 		Command cmd = BanCommands.banAdd(ip, name, uid, myTSId, timeInSeconds, reason);
 		return executeAndReturnIntProperty(cmd, "banid");
 	}
@@ -189,7 +194,7 @@ public class TS3ApiAsync {
 	 * @see Client#getDatabaseId()
 	 * @see Permission
 	 */
-	public CommandFuture<Void> addChannelClientPermission(int channelId, int clientDBId, String permName, int permValue) {
+	public CompletableFuture<Void> addChannelClientPermission(int channelId, int clientDBId, String permName, int permValue) {
 		Command cmd = PermissionCommands.channelClientAddPerm(channelId, clientDBId, permName, permValue);
 		return executeAndReturnError(cmd);
 	}
@@ -211,7 +216,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see ChannelGroup
 	 */
-	public CommandFuture<Integer> addChannelGroup(String name) {
+	public CompletableFuture<Integer> addChannelGroup(String name) {
 		return addChannelGroup(name, null);
 	}
 
@@ -230,7 +235,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see ChannelGroup
 	 */
-	public CommandFuture<Integer> addChannelGroup(String name, PermissionGroupDatabaseType type) {
+	public CompletableFuture<Integer> addChannelGroup(String name, PermissionGroupDatabaseType type) {
 		Command cmd = ChannelGroupCommands.channelGroupAdd(name, type);
 		return executeAndReturnIntProperty(cmd, "cgid");
 	}
@@ -253,7 +258,7 @@ public class TS3ApiAsync {
 	 * @see ChannelGroup#getId()
 	 * @see Permission
 	 */
-	public CommandFuture<Void> addChannelGroupPermission(int groupId, String permName, int permValue) {
+	public CompletableFuture<Void> addChannelGroupPermission(int groupId, String permName, int permValue) {
 		Command cmd = PermissionCommands.channelGroupAddPerm(groupId, permName, permValue);
 		return executeAndReturnError(cmd);
 	}
@@ -276,7 +281,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see Permission
 	 */
-	public CommandFuture<Void> addChannelPermission(int channelId, String permName, int permValue) {
+	public CompletableFuture<Void> addChannelPermission(int channelId, String permName, int permValue) {
 		Command cmd = PermissionCommands.channelAddPerm(channelId, permName, permValue);
 		return executeAndReturnError(cmd);
 	}
@@ -309,7 +314,7 @@ public class TS3ApiAsync {
 	 * @see Permission
 	 */
 	@Deprecated
-	public CommandFuture<Void> addClientPermission(int clientDBId, String permName, int value, boolean skipped) {
+	public CompletableFuture<Void> addClientPermission(int clientDBId, String permName, int value, boolean skipped) {
 		Command cmd = PermissionCommands.clientAddPerm(clientDBId, permName, value, skipped);
 		return executeAndReturnError(cmd);
 	}
@@ -335,7 +340,7 @@ public class TS3ApiAsync {
 	 * @see Client#getDatabaseId()
 	 * @see Permission
 	 */
-	public CommandFuture<Void> addClientPermission(int clientDBId, IPermissionType permName, int value, boolean skipped) {
+	public CompletableFuture<Void> addClientPermission(int clientDBId, IPermissionType permName, int value, boolean skipped) {
 		Command cmd = PermissionCommands.clientAddPerm(clientDBId, permName.getName(), value, skipped);
 		return executeAndReturnError(cmd);
 	}
@@ -361,7 +366,7 @@ public class TS3ApiAsync {
 	 * @see Client#getDatabaseId()
 	 * @see Permission
 	 */
-	public CommandFuture<Void> addClientPermission(int clientDBId, BPermissionType permName, boolean value, boolean skipped) {
+	public CompletableFuture<Void> addClientPermission(int clientDBId, BPermissionType permName, boolean value, boolean skipped) {
 		Command cmd = PermissionCommands.clientAddPerm(clientDBId, permName.getName(), value, skipped);
 		return executeAndReturnError(cmd);
 	}
@@ -385,7 +390,7 @@ public class TS3ApiAsync {
 	 * @see ServerGroup#getId()
 	 * @see Client#getDatabaseId()
 	 */
-	public CommandFuture<Void> addClientToServerGroup(int groupId, int clientDatabaseId) {
+	public CompletableFuture<Void> addClientToServerGroup(int groupId, int clientDatabaseId) {
 		Command cmd = ServerGroupCommands.serverGroupAddClient(groupId, clientDatabaseId);
 		return executeAndReturnError(cmd);
 	}
@@ -407,7 +412,7 @@ public class TS3ApiAsync {
 	 * @see Client#getDatabaseId()
 	 * @see Complaint#getMessage()
 	 */
-	public CommandFuture<Void> addComplaint(int clientDBId, String message) {
+	public CompletableFuture<Void> addComplaint(int clientDBId, String message) {
 		Command cmd = ComplaintCommands.complainAdd(clientDBId, message);
 		return executeAndReturnError(cmd);
 	}
@@ -434,7 +439,7 @@ public class TS3ApiAsync {
 	 * @see ServerGroupType
 	 * @see Permission
 	 */
-	public CommandFuture<Void> addPermissionToAllServerGroups(ServerGroupType type, String permName, int value, boolean negated, boolean skipped) {
+	public CompletableFuture<Void> addPermissionToAllServerGroups(ServerGroupType type, String permName, int value, boolean negated, boolean skipped) {
 		Command cmd = PermissionCommands.serverGroupAutoAddPerm(type, permName, value, negated, skipped);
 		return executeAndReturnError(cmd);
 	}
@@ -466,7 +471,7 @@ public class TS3ApiAsync {
 	 * @see #addPrivilegeKeyServerGroup(int, String)
 	 * @see #addPrivilegeKeyChannelGroup(int, int, String)
 	 */
-	public CommandFuture<String> addPrivilegeKey(PrivilegeKeyType type, int groupId, int channelId, String description) {
+	public CompletableFuture<String> addPrivilegeKey(PrivilegeKeyType type, int groupId, int channelId, String description) {
 		Command cmd = PrivilegeKeyCommands.privilegeKeyAdd(type, groupId, channelId, description);
 		return executeAndReturnStringProperty(cmd, "token");
 	}
@@ -491,7 +496,7 @@ public class TS3ApiAsync {
 	 * @see #addPrivilegeKey(PrivilegeKeyType, int, int, String)
 	 * @see #addPrivilegeKeyServerGroup(int, String)
 	 */
-	public CommandFuture<String> addPrivilegeKeyChannelGroup(int channelGroupId, int channelId, String description) {
+	public CompletableFuture<String> addPrivilegeKeyChannelGroup(int channelGroupId, int channelId, String description) {
 		return addPrivilegeKey(PrivilegeKeyType.CHANNEL_GROUP, channelGroupId, channelId, description);
 	}
 
@@ -512,7 +517,7 @@ public class TS3ApiAsync {
 	 * @see #addPrivilegeKey(PrivilegeKeyType, int, int, String)
 	 * @see #addPrivilegeKeyChannelGroup(int, int, String)
 	 */
-	public CommandFuture<String> addPrivilegeKeyServerGroup(int serverGroupId, String description) {
+	public CompletableFuture<String> addPrivilegeKeyServerGroup(int serverGroupId, String description) {
 		return addPrivilegeKey(PrivilegeKeyType.SERVER_GROUP, serverGroupId, 0, description);
 	}
 
@@ -533,7 +538,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see ServerGroup
 	 */
-	public CommandFuture<Integer> addServerGroup(String name) {
+	public CompletableFuture<Integer> addServerGroup(String name) {
 		return addServerGroup(name, PermissionGroupDatabaseType.REGULAR);
 	}
 
@@ -553,7 +558,7 @@ public class TS3ApiAsync {
 	 * @see ServerGroup
 	 * @see PermissionGroupDatabaseType
 	 */
-	public CommandFuture<Integer> addServerGroup(String name, PermissionGroupDatabaseType type) {
+	public CompletableFuture<Integer> addServerGroup(String name, PermissionGroupDatabaseType type) {
 		Command cmd = ServerGroupCommands.serverGroupAdd(name, type);
 		return executeAndReturnIntProperty(cmd, "sgid");
 	}
@@ -580,7 +585,7 @@ public class TS3ApiAsync {
 	 * @see ServerGroup#getId()
 	 * @see Permission
 	 */
-	public CommandFuture<Void> addServerGroupPermission(int groupId, String permName, int value, boolean negated, boolean skipped) {
+	public CompletableFuture<Void> addServerGroupPermission(int groupId, String permName, int value, boolean negated, boolean skipped) {
 		Command cmd = PermissionCommands.serverGroupAddPerm(groupId, permName, value, negated, skipped);
 		return executeAndReturnError(cmd);
 	}
@@ -609,7 +614,7 @@ public class TS3ApiAsync {
 	 * @see #getServerQueryLogins()
 	 * @see #updateServerQueryLogin(String)
 	 */
-	public CommandFuture<CreatedQueryLogin> addServerQueryLogin(String loginName, int clientDBId) {
+	public CompletableFuture<CreatedQueryLogin> addServerQueryLogin(String loginName, int clientDBId) {
 		Command cmd = QueryLoginCommands.queryLoginAdd(loginName, clientDBId);
 		return executeAndTransformFirst(cmd, CreatedQueryLogin::new);
 	}
@@ -658,7 +663,7 @@ public class TS3ApiAsync {
 	 * @see Client#getId()
 	 * @see #addBan(String, String, String, long, String)
 	 */
-	public CommandFuture<int[]> banClient(int clientId, long timeInSeconds) {
+	public CompletableFuture<int[]> banClient(int clientId, long timeInSeconds) {
 		return banClient(clientId, timeInSeconds, null);
 	}
 
@@ -688,7 +693,7 @@ public class TS3ApiAsync {
 	 * @see Client#getId()
 	 * @see #addBan(String, String, String, long, String)
 	 */
-	public CommandFuture<int[]> banClient(int clientId, long timeInSeconds, String reason) {
+	public CompletableFuture<int[]> banClient(int clientId, long timeInSeconds, String reason) {
 		Command cmd = BanCommands.banClient(new int[] {clientId}, timeInSeconds, reason, false);
 		return executeAndReturnIntArray(cmd, "banid");
 	}
@@ -717,7 +722,7 @@ public class TS3ApiAsync {
 	 * @see Client#getId()
 	 * @see #addBan(String, String, String, long, String)
 	 */
-	public CommandFuture<int[]> banClient(int clientId, String reason) {
+	public CompletableFuture<int[]> banClient(int clientId, String reason) {
 		return banClient(clientId, 0, reason);
 	}
 
@@ -752,9 +757,9 @@ public class TS3ApiAsync {
 	 * @see Client#getId()
 	 * @see #addBan(String, String, String, long, String)
 	 */
-	public CommandFuture<int[]> banClients(int[] clientIds, long timeInSeconds, String reason, boolean continueOnError) {
+	public CompletableFuture<int[]> banClients(int[] clientIds, long timeInSeconds, String reason, boolean continueOnError) {
 		if (clientIds == null) throw new IllegalArgumentException("Client ID array was null");
-		if (clientIds.length == 0) return CommandFuture.immediate(new int[0]); // Success
+		if (clientIds.length == 0) return CompletableFuture.completedFuture(new int[0]); // Success
 
 		Command cmd = BanCommands.banClient(clientIds, timeInSeconds, reason, continueOnError);
 		return executeAndReturnIntArray(cmd, "banid");
@@ -773,7 +778,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Void> broadcast(String message) {
+	public CompletableFuture<Void> broadcast(String message) {
 		Command cmd = ServerCommands.gm(message);
 		return executeAndReturnError(cmd);
 	}
@@ -799,7 +804,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 */
-	public CommandFuture<Void> copyChannelGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
+	public CompletableFuture<Void> copyChannelGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
 		if (targetGroupId <= 0) {
 			throw new IllegalArgumentException("To create a new channel group, use the method with a String argument");
 		}
@@ -826,7 +831,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 */
-	public CommandFuture<Integer> copyChannelGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
+	public CompletableFuture<Integer> copyChannelGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
 		Command cmd = ChannelGroupCommands.channelGroupCopy(sourceGroupId, targetName, type);
 		return executeAndReturnIntProperty(cmd, "cgid");
 	}
@@ -852,7 +857,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 */
-	public CommandFuture<Integer> copyServerGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
+	public CompletableFuture<Integer> copyServerGroup(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
 		if (targetGroupId <= 0) {
 			throw new IllegalArgumentException("To create a new server group, use the method with a String argument");
 		}
@@ -879,7 +884,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 */
-	public CommandFuture<Integer> copyServerGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
+	public CompletableFuture<Integer> copyServerGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
 		Command cmd = ServerGroupCommands.serverGroupCopy(sourceGroupId, targetName, type);
 		return executeAndReturnIntProperty(cmd, "sgid");
 	}
@@ -899,7 +904,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see Channel
 	 */
-	public CommandFuture<Integer> createChannel(String name, Map<ChannelProperty, String> options) {
+	public CompletableFuture<Integer> createChannel(String name, Map<ChannelProperty, String> options) {
 		Command cmd = ChannelCommands.channelCreate(name, options);
 		return executeAndReturnIntProperty(cmd, "cid");
 	}
@@ -920,7 +925,7 @@ public class TS3ApiAsync {
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Void> createFileDirectory(String directoryPath, int channelId) {
+	public CompletableFuture<Void> createFileDirectory(String directoryPath, int channelId) {
 		return createFileDirectory(directoryPath, channelId, null);
 	}
 
@@ -942,7 +947,7 @@ public class TS3ApiAsync {
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Void> createFileDirectory(String directoryPath, int channelId, String channelPassword) {
+	public CompletableFuture<Void> createFileDirectory(String directoryPath, int channelId, String channelPassword) {
 		Command cmd = FileCommands.ftCreateDir(directoryPath, channelId, channelPassword);
 		return executeAndReturnError(cmd);
 	}
@@ -972,7 +977,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see VirtualServer
 	 */
-	public CommandFuture<CreatedVirtualServer> createServer(String name, Map<VirtualServerProperty, String> options) {
+	public CompletableFuture<CreatedVirtualServer> createServer(String name, Map<VirtualServerProperty, String> options) {
 		Command cmd = VirtualServerCommands.serverCreate(name, options);
 		return executeAndTransformFirst(cmd, CreatedVirtualServer::new);
 	}
@@ -989,10 +994,10 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see #deployServerSnapshot(Snapshot)
 	 */
-	public CommandFuture<Snapshot> createServerSnapshot() {
+	public CompletableFuture<Snapshot> createServerSnapshot() {
 		Command cmd = VirtualServerCommands.serverSnapshotCreate();
-		CommandFuture<Snapshot> future = cmd.getFuture()
-				.map(result -> new Snapshot(result.getRawResponse()));
+		CompletableFuture<Snapshot> future = CommandFutures.map(cmd.getFuture(),
+				result -> new Snapshot(result.getRawResponse()));
 
 		commandQueue.enqueueCommand(cmd);
 		return future;
@@ -1007,7 +1012,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Void> deleteAllBans() {
+	public CompletableFuture<Void> deleteAllBans() {
 		Command cmd = BanCommands.banDelAll();
 		return executeAndReturnError(cmd);
 	}
@@ -1026,7 +1031,7 @@ public class TS3ApiAsync {
 	 * @see Client#getDatabaseId()
 	 * @see Complaint
 	 */
-	public CommandFuture<Void> deleteAllComplaints(int clientDBId) {
+	public CompletableFuture<Void> deleteAllComplaints(int clientDBId) {
 		Command cmd = ComplaintCommands.complainDelAll(clientDBId);
 		return executeAndReturnError(cmd);
 	}
@@ -1044,7 +1049,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see Ban#getId()
 	 */
-	public CommandFuture<Void> deleteBan(int banId) {
+	public CompletableFuture<Void> deleteBan(int banId) {
 		Command cmd = BanCommands.banDel(banId);
 		return executeAndReturnError(cmd);
 	}
@@ -1064,7 +1069,7 @@ public class TS3ApiAsync {
 	 * @see #deleteChannel(int, boolean)
 	 * @see #kickClientFromChannel(String, int...)
 	 */
-	public CommandFuture<Void> deleteChannel(int channelId) {
+	public CompletableFuture<Void> deleteChannel(int channelId) {
 		return deleteChannel(channelId, true);
 	}
 
@@ -1086,7 +1091,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see #kickClientFromChannel(String, int...)
 	 */
-	public CommandFuture<Void> deleteChannel(int channelId, boolean force) {
+	public CompletableFuture<Void> deleteChannel(int channelId, boolean force) {
 		Command cmd = ChannelCommands.channelDelete(channelId, force);
 		return executeAndReturnError(cmd);
 	}
@@ -1110,7 +1115,7 @@ public class TS3ApiAsync {
 	 * @see Client#getDatabaseId()
 	 * @see Permission#getName()
 	 */
-	public CommandFuture<Void> deleteChannelClientPermission(int channelId, int clientDBId, String permName) {
+	public CompletableFuture<Void> deleteChannelClientPermission(int channelId, int clientDBId, String permName) {
 		Command cmd = PermissionCommands.channelClientDelPerm(channelId, clientDBId, permName);
 		return executeAndReturnError(cmd);
 	}
@@ -1128,7 +1133,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 */
-	public CommandFuture<Void> deleteChannelGroup(int groupId) {
+	public CompletableFuture<Void> deleteChannelGroup(int groupId) {
 		return deleteChannelGroup(groupId, true);
 	}
 
@@ -1149,7 +1154,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see ChannelGroup#getId()
 	 */
-	public CommandFuture<Void> deleteChannelGroup(int groupId, boolean force) {
+	public CompletableFuture<Void> deleteChannelGroup(int groupId, boolean force) {
 		Command cmd = ChannelGroupCommands.channelGroupDel(groupId, force);
 		return executeAndReturnError(cmd);
 	}
@@ -1170,7 +1175,7 @@ public class TS3ApiAsync {
 	 * @see ChannelGroup#getId()
 	 * @see Permission#getName()
 	 */
-	public CommandFuture<Void> deleteChannelGroupPermission(int groupId, String permName) {
+	public CompletableFuture<Void> deleteChannelGroupPermission(int groupId, String permName) {
 		Command cmd = PermissionCommands.channelGroupDelPerm(groupId, permName);
 		return executeAndReturnError(cmd);
 	}
@@ -1191,7 +1196,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see Permission#getName()
 	 */
-	public CommandFuture<Void> deleteChannelPermission(int channelId, String permName) {
+	public CompletableFuture<Void> deleteChannelPermission(int channelId, String permName) {
 		Command cmd = PermissionCommands.channelDelPerm(channelId, permName);
 		return executeAndReturnError(cmd);
 	}
@@ -1220,7 +1225,7 @@ public class TS3ApiAsync {
 	 * @see Permission#getName()
 	 */
 	@Deprecated
-	public CommandFuture<Void> deleteClientPermission(int clientDBId, String permName) {
+	public CompletableFuture<Void> deleteClientPermission(int clientDBId, String permName) {
 		Command cmd = PermissionCommands.clientDelPerm(clientDBId, permName);
 		return executeAndReturnError(cmd);
 	}
@@ -1242,7 +1247,7 @@ public class TS3ApiAsync {
 	 * @see Client#getDatabaseId()
 	 * @see Permission#getName()
 	 */
-	public CommandFuture<Void> deleteClientPermission(int clientDBId, IPermissionType permName) {
+	public CompletableFuture<Void> deleteClientPermission(int clientDBId, IPermissionType permName) {
 		Command cmd = PermissionCommands.clientDelPerm(clientDBId, permName.getName());
 		return executeAndReturnError(cmd);
 	}
@@ -1264,7 +1269,7 @@ public class TS3ApiAsync {
 	 * @see Client#getDatabaseId()
 	 * @see Permission#getName()
 	 */
-	public CommandFuture<Void> deleteClientPermission(int clientDBId, BPermissionType permName) {
+	public CompletableFuture<Void> deleteClientPermission(int clientDBId, BPermissionType permName) {
 		Command cmd = PermissionCommands.clientDelPerm(clientDBId, permName.getName());
 		return executeAndReturnError(cmd);
 	}
@@ -1286,7 +1291,7 @@ public class TS3ApiAsync {
 	 * @see Complaint
 	 * @see Client#getDatabaseId()
 	 */
-	public CommandFuture<Void> deleteComplaint(int targetClientDBId, int fromClientDBId) {
+	public CompletableFuture<Void> deleteComplaint(int targetClientDBId, int fromClientDBId) {
 		Command cmd = ComplaintCommands.complainDel(targetClientDBId, fromClientDBId);
 		return executeAndReturnError(cmd);
 	}
@@ -1306,7 +1311,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see Client#getDatabaseId()
 	 */
-	public CommandFuture<Void> deleteCustomClientProperty(int clientDBId, String key) {
+	public CompletableFuture<Void> deleteCustomClientProperty(int clientDBId, String key) {
 		if (key == null) throw new IllegalArgumentException("Key cannot be null");
 
 		Command cmd = CustomPropertyCommands.customDelete(clientDBId, key);
@@ -1332,7 +1337,7 @@ public class TS3ApiAsync {
 	 * @see #getDatabaseClientInfo(int)
 	 * @see DatabaseClientInfo
 	 */
-	public CommandFuture<Void> deleteDatabaseClientProperties(int clientDBId) {
+	public CompletableFuture<Void> deleteDatabaseClientProperties(int clientDBId) {
 		Command cmd = DatabaseClientCommands.clientDBDelete(clientDBId);
 		return executeAndReturnError(cmd);
 	}
@@ -1353,7 +1358,7 @@ public class TS3ApiAsync {
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Void> deleteFile(String filePath, int channelId) {
+	public CompletableFuture<Void> deleteFile(String filePath, int channelId) {
 		return deleteFile(filePath, channelId, null);
 	}
 
@@ -1375,7 +1380,7 @@ public class TS3ApiAsync {
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Void> deleteFile(String filePath, int channelId, String channelPassword) {
+	public CompletableFuture<Void> deleteFile(String filePath, int channelId, String channelPassword) {
 		Command cmd = FileCommands.ftDeleteFile(channelId, channelPassword, filePath);
 		return executeAndReturnError(cmd);
 	}
@@ -1396,7 +1401,7 @@ public class TS3ApiAsync {
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Void> deleteFiles(String[] filePaths, int channelId) {
+	public CompletableFuture<Void> deleteFiles(String[] filePaths, int channelId) {
 		return deleteFiles(filePaths, channelId, null);
 	}
 
@@ -1418,7 +1423,7 @@ public class TS3ApiAsync {
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Void> deleteFiles(String[] filePaths, int channelId, String channelPassword) {
+	public CompletableFuture<Void> deleteFiles(String[] filePaths, int channelId, String channelPassword) {
 		Command cmd = FileCommands.ftDeleteFile(channelId, channelPassword, filePaths);
 		return executeAndReturnError(cmd);
 	}
@@ -1436,7 +1441,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see IconFile#getIconId()
 	 */
-	public CommandFuture<Void> deleteIcon(long iconId) {
+	public CompletableFuture<Void> deleteIcon(long iconId) {
 		String iconPath = "/icon_" + iconId;
 		return deleteFile(iconPath, 0);
 	}
@@ -1454,7 +1459,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see IconFile#getIconId()
 	 */
-	public CommandFuture<Void> deleteIcons(long... iconIds) {
+	public CompletableFuture<Void> deleteIcons(long... iconIds) {
 		String[] iconPaths = new String[iconIds.length];
 		for (int i = 0; i < iconIds.length; ++i) {
 			iconPaths[i] = "/icon_" + iconIds[i];
@@ -1475,7 +1480,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see Message#getId()
 	 */
-	public CommandFuture<Void> deleteOfflineMessage(int messageId) {
+	public CompletableFuture<Void> deleteOfflineMessage(int messageId) {
 		Command cmd = MessageCommands.messageDel(messageId);
 		return executeAndReturnError(cmd);
 	}
@@ -1496,7 +1501,7 @@ public class TS3ApiAsync {
 	 * @see ServerGroupType
 	 * @see Permission#getName()
 	 */
-	public CommandFuture<Void> deletePermissionFromAllServerGroups(ServerGroupType type, String permName) {
+	public CompletableFuture<Void> deletePermissionFromAllServerGroups(ServerGroupType type, String permName) {
 		Command cmd = PermissionCommands.serverGroupAutoDelPerm(type, permName);
 		return executeAndReturnError(cmd);
 	}
@@ -1514,7 +1519,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see PrivilegeKey
 	 */
-	public CommandFuture<Void> deletePrivilegeKey(String token) {
+	public CompletableFuture<Void> deletePrivilegeKey(String token) {
 		Command cmd = PrivilegeKeyCommands.privilegeKeyDelete(token);
 		return executeAndReturnError(cmd);
 	}
@@ -1536,7 +1541,7 @@ public class TS3ApiAsync {
 	 * @see VirtualServer#getId()
 	 * @see #stopServer(int)
 	 */
-	public CommandFuture<Void> deleteServer(int serverId) {
+	public CompletableFuture<Void> deleteServer(int serverId) {
 		Command cmd = VirtualServerCommands.serverDelete(serverId);
 		return executeAndReturnError(cmd);
 	}
@@ -1554,7 +1559,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 */
-	public CommandFuture<Void> deleteServerGroup(int groupId) {
+	public CompletableFuture<Void> deleteServerGroup(int groupId) {
 		return deleteServerGroup(groupId, true);
 	}
 
@@ -1577,7 +1582,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see ServerGroup#getId()
 	 */
-	public CommandFuture<Void> deleteServerGroup(int groupId, boolean force) {
+	public CompletableFuture<Void> deleteServerGroup(int groupId, boolean force) {
 		Command cmd = ServerGroupCommands.serverGroupDel(groupId, force);
 		return executeAndReturnError(cmd);
 	}
@@ -1598,7 +1603,7 @@ public class TS3ApiAsync {
 	 * @see ServerGroup#getId()
 	 * @see Permission#getName()
 	 */
-	public CommandFuture<Void> deleteServerGroupPermission(int groupId, String permName) {
+	public CompletableFuture<Void> deleteServerGroupPermission(int groupId, String permName) {
 		Command cmd = PermissionCommands.serverGroupDelPerm(groupId, permName);
 		return executeAndReturnError(cmd);
 	}
@@ -1621,7 +1626,7 @@ public class TS3ApiAsync {
 	 * @see #getServerQueryLogins()
 	 * @see #updateServerQueryLogin(String)
 	 */
-	public CommandFuture<Void> deleteServerQueryLogin(int clientDBId) {
+	public CompletableFuture<Void> deleteServerQueryLogin(int clientDBId) {
 		Command cmd = QueryLoginCommands.queryLoginDel(clientDBId);
 		return executeAndReturnError(cmd);
 	}
@@ -1640,7 +1645,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see #createServerSnapshot()
 	 */
-	public CommandFuture<Void> deployServerSnapshot(Snapshot snapshot) {
+	public CompletableFuture<Void> deployServerSnapshot(Snapshot snapshot) {
 		return deployServerSnapshot(snapshot.get());
 	}
 
@@ -1658,7 +1663,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see #createServerSnapshot()
 	 */
-	public CommandFuture<Void> deployServerSnapshot(String snapshot) {
+	public CompletableFuture<Void> deployServerSnapshot(String snapshot) {
 		Command cmd = VirtualServerCommands.serverSnapshotDeploy(snapshot);
 		return executeAndReturnError(cmd);
 	}
@@ -1692,7 +1697,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see #downloadFileDirect(String, int)
 	 */
-	public CommandFuture<Long> downloadFile(OutputStream dataOut, String filePath, int channelId) {
+	public CompletableFuture<Long> downloadFile(OutputStream dataOut, String filePath, int channelId) {
 		return downloadFile(dataOut, filePath, channelId, null);
 	}
 
@@ -1727,29 +1732,14 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see #downloadFileDirect(String, int, String)
 	 */
-	public CommandFuture<Long> downloadFile(OutputStream dataOut, String filePath, int channelId, String channelPassword) {
+	public CompletableFuture<Long> downloadFile(OutputStream dataOut, String filePath, int channelId, String channelPassword) {
 		FileTransferHelper helper = query.getFileTransferHelper();
-		int transferId = helper.getClientTransferId();
-		Command cmd = FileCommands.ftInitDownload(transferId, filePath, channelId, channelPassword);
-		CommandFuture<Long> future = new CommandFuture<>();
-
-		executeAndTransformFirst(cmd, FileTransferParameters::new).onSuccess(params -> {
-			QueryError error = params.getQueryError();
-			if (!error.isSuccessful()) {
-				future.fail(new TS3CommandFailedException(error, cmd.getName()));
-				return;
-			}
-
-			try {
-				query.getFileTransferHelper().downloadFile(dataOut, params);
-			} catch (IOException e) {
-				future.fail(new TS3FileTransferFailedException("Download failed", e));
-				return;
-			}
-			future.set(params.getFileSize());
-		}).forwardFailure(future);
-
-		return future;
+		Command cmd = FileCommands.ftInitDownload(helper.getClientTransferId(), filePath, channelId, channelPassword);
+		return executeTransfer(cmd, params -> {
+			try { helper.downloadFile(dataOut, params); }
+			catch (IOException failure) { throw new TS3FileTransferFailedException("Download failed", failure); }
+			return params.getFileSize();
+		});
 	}
 
 	/**
@@ -1777,7 +1767,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see #downloadFile(OutputStream, String, int)
 	 */
-	public CommandFuture<byte[]> downloadFileDirect(String filePath, int channelId) {
+	public CompletableFuture<byte[]> downloadFileDirect(String filePath, int channelId) {
 		return downloadFileDirect(filePath, channelId, null);
 	}
 
@@ -1808,36 +1798,17 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see #downloadFile(OutputStream, String, int, String)
 	 */
-	public CommandFuture<byte[]> downloadFileDirect(String filePath, int channelId, String channelPassword) {
+	public CompletableFuture<byte[]> downloadFileDirect(String filePath, int channelId, String channelPassword) {
 		FileTransferHelper helper = query.getFileTransferHelper();
-		int transferId = helper.getClientTransferId();
-		Command cmd = FileCommands.ftInitDownload(transferId, filePath, channelId, channelPassword);
-		CommandFuture<byte[]> future = new CommandFuture<>();
-
-		executeAndTransformFirst(cmd, FileTransferParameters::new).onSuccess(params -> {
-			QueryError error = params.getQueryError();
-			if (!error.isSuccessful()) {
-				future.fail(new TS3CommandFailedException(error, cmd.getName()));
-				return;
-			}
-
+		Command cmd = FileCommands.ftInitDownload(helper.getClientTransferId(), filePath, channelId, channelPassword);
+		return executeTransfer(cmd, params -> {
 			long fileSize = params.getFileSize();
-			if (fileSize > Integer.MAX_VALUE) {
-				future.fail(new TS3FileTransferFailedException("File too big for byte array"));
-				return;
-			}
+			if (fileSize > Integer.MAX_VALUE) throw new TS3FileTransferFailedException("File too big for byte array");
 			ByteArrayOutputStream dataOut = new ByteArrayOutputStream((int) fileSize);
-
-			try {
-				query.getFileTransferHelper().downloadFile(dataOut, params);
-			} catch (IOException e) {
-				future.fail(new TS3FileTransferFailedException("Download failed", e));
-				return;
-			}
-			future.set(dataOut.toByteArray());
-		}).forwardFailure(future);
-
-		return future;
+			try { helper.downloadFile(dataOut, params); }
+			catch (IOException failure) { throw new TS3FileTransferFailedException("Download failed", failure); }
+			return dataOut.toByteArray();
+		});
 	}
 
 	/**
@@ -1864,7 +1835,7 @@ public class TS3ApiAsync {
 	 * @see #downloadIconDirect(long)
 	 * @see #uploadIcon(InputStream, long)
 	 */
-	public CommandFuture<Long> downloadIcon(OutputStream dataOut, long iconId) {
+	public CompletableFuture<Long> downloadIcon(OutputStream dataOut, long iconId) {
 		String iconPath = "/icon_" + iconId;
 		return downloadFile(dataOut, iconPath, 0);
 	}
@@ -1890,7 +1861,7 @@ public class TS3ApiAsync {
 	 * @see #downloadIcon(OutputStream, long)
 	 * @see #uploadIconDirect(byte[])
 	 */
-	public CommandFuture<byte[]> downloadIconDirect(long iconId) {
+	public CompletableFuture<byte[]> downloadIconDirect(long iconId) {
 		String iconPath = "/icon_" + iconId;
 		return downloadFileDirect(iconPath, 0);
 	}
@@ -1910,7 +1881,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Void> editChannel(int channelId, Map<ChannelProperty, String> options) {
+	public CompletableFuture<Void> editChannel(int channelId, Map<ChannelProperty, String> options) {
 		Command cmd = ChannelCommands.channelEdit(channelId, options);
 		return executeAndReturnError(cmd);
 	}
@@ -1937,7 +1908,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see #editChannel(int, Map)
 	 */
-	public CommandFuture<Void> editChannel(int channelId, ChannelProperty property, String value) {
+	public CompletableFuture<Void> editChannel(int channelId, ChannelProperty property, String value) {
 		return editChannel(channelId, Collections.singletonMap(property, value));
 	}
 
@@ -1962,7 +1933,7 @@ public class TS3ApiAsync {
 	 * @see Client#getId()
 	 * @see #updateClient(Map)
 	 */
-	public CommandFuture<Void> editClient(int clientId, Map<ClientProperty, String> options) {
+	public CompletableFuture<Void> editClient(int clientId, Map<ClientProperty, String> options) {
 		Command cmd = ClientCommands.clientEdit(clientId, options);
 		return executeAndReturnError(cmd);
 	}
@@ -1991,7 +1962,7 @@ public class TS3ApiAsync {
 	 * @see #editClient(int, Map)
 	 * @see #updateClient(Map)
 	 */
-	public CommandFuture<Void> editClient(int clientId, ClientProperty property, String value) {
+	public CompletableFuture<Void> editClient(int clientId, ClientProperty property, String value) {
 		return editClient(clientId, Collections.singletonMap(property, value));
 	}
 
@@ -2011,7 +1982,7 @@ public class TS3ApiAsync {
 	 * @see DatabaseClientInfo
 	 * @see Client#getDatabaseId()
 	 */
-	public CommandFuture<Void> editDatabaseClient(int clientDBId, Map<ClientProperty, String> options) {
+	public CompletableFuture<Void> editDatabaseClient(int clientDBId, Map<ClientProperty, String> options) {
 		Command cmd = DatabaseClientCommands.clientDBEdit(clientDBId, options);
 		return executeAndReturnError(cmd);
 	}
@@ -2034,7 +2005,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see ServerInstanceProperty#isChangeable()
 	 */
-	public CommandFuture<Void> editInstance(ServerInstanceProperty property, String value) {
+	public CompletableFuture<Void> editInstance(ServerInstanceProperty property, String value) {
 		Command cmd = ServerCommands.instanceEdit(Collections.singletonMap(property, value));
 		return executeAndReturnError(cmd);
 	}
@@ -2052,7 +2023,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see VirtualServerProperty
 	 */
-	public CommandFuture<Void> editServer(Map<VirtualServerProperty, String> options) {
+	public CompletableFuture<Void> editServer(Map<VirtualServerProperty, String> options) {
 		Command cmd = VirtualServerCommands.serverEdit(options);
 		return executeAndReturnError(cmd);
 	}
@@ -2067,7 +2038,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see Ban
 	 */
-	public CommandFuture<List<Ban>> getBans() {
+	public CompletableFuture<List<Ban>> getBans() {
 		Command cmd = BanCommands.banList();
 		return executeAndTransform(cmd, Ban::new);
 	}
@@ -2082,7 +2053,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see Binding
 	 */
-	public CommandFuture<List<Binding>> getBindings() {
+	public CompletableFuture<List<Binding>> getBindings() {
 		Command cmd = ServerCommands.bindingList();
 		return executeAndTransform(cmd, Binding::new);
 	}
@@ -2103,10 +2074,10 @@ public class TS3ApiAsync {
 	 * @see Channel
 	 * @see #getChannelsByName(String)
 	 */
-	public CommandFuture<Channel> getChannelByNameExact(String name, boolean ignoreCase) {
+	public CompletableFuture<Channel> getChannelByNameExact(String name, boolean ignoreCase) {
 		String caseName = ignoreCase ? name.toLowerCase(Locale.ROOT) : name;
 
-		return getChannels().map(allChannels -> {
+		return CommandFutures.map(getChannels(), allChannels -> {
 			for (Channel c : allChannels) {
 				String channelName = ignoreCase ? c.getName().toLowerCase(Locale.ROOT) : c.getName();
 				if (caseName.equals(channelName)) return c;
@@ -2129,18 +2100,13 @@ public class TS3ApiAsync {
 	 * @see Channel
 	 * @see #getChannelByNameExact(String, boolean)
 	 */
-	public CommandFuture<List<Channel>> getChannelsByName(String name) {
+	public CompletableFuture<List<Channel>> getChannelsByName(String name) {
 		Command cmd = ChannelCommands.channelFind(name);
-		CommandFuture<List<Channel>> future = new CommandFuture<>();
 
-		CommandFuture<List<Integer>> channelIds = executeAndMap(cmd, response -> response.getInt("cid"));
-		CommandFuture<List<Channel>> allChannels = getChannels();
+		CompletableFuture<List<Integer>> channelIds = executeAndMap(cmd, response -> response.getInt("cid"));
+		CompletableFuture<List<Channel>> allChannels = getChannels();
 
-		findByKey(channelIds, allChannels, Channel::getId)
-				.forwardSuccess(future)
-				.onFailure(transformError(future, 768, Collections.emptyList()));
-
-		return future;
+		return recover(findByKey(channelIds, allChannels, Channel::getId), 768, Collections.emptyList());
 	}
 
 	/**
@@ -2160,7 +2126,7 @@ public class TS3ApiAsync {
 	 * @see Client#getDatabaseId()
 	 * @see Permission
 	 */
-	public CommandFuture<List<Permission>> getChannelClientPermissions(int channelId, int clientDBId) {
+	public CompletableFuture<List<Permission>> getChannelClientPermissions(int channelId, int clientDBId) {
 		Command cmd = PermissionCommands.channelClientPermList(channelId, clientDBId);
 		return executeAndTransform(cmd, Permission::new);
 	}
@@ -2186,7 +2152,7 @@ public class TS3ApiAsync {
 	 * @see ChannelGroup#getId()
 	 * @see ChannelGroupClient
 	 */
-	public CommandFuture<List<ChannelGroupClient>> getChannelGroupClients(int channelId, int clientDBId, int groupId) {
+	public CompletableFuture<List<ChannelGroupClient>> getChannelGroupClients(int channelId, int clientDBId, int groupId) {
 		Command cmd = ChannelGroupCommands.channelGroupClientList(channelId, clientDBId, groupId);
 		return executeAndTransform(cmd, ChannelGroupClient::new);
 	}
@@ -2206,7 +2172,7 @@ public class TS3ApiAsync {
 	 * @see ChannelGroupClient
 	 * @see #getChannelGroupClients(int, int, int)
 	 */
-	public CommandFuture<List<ChannelGroupClient>> getChannelGroupClientsByChannelGroupId(int groupId) {
+	public CompletableFuture<List<ChannelGroupClient>> getChannelGroupClientsByChannelGroupId(int groupId) {
 		return getChannelGroupClients(-1, -1, groupId);
 	}
 
@@ -2225,7 +2191,7 @@ public class TS3ApiAsync {
 	 * @see ChannelGroupClient
 	 * @see #getChannelGroupClients(int, int, int)
 	 */
-	public CommandFuture<List<ChannelGroupClient>> getChannelGroupClientsByChannelId(int channelId) {
+	public CompletableFuture<List<ChannelGroupClient>> getChannelGroupClientsByChannelId(int channelId) {
 		return getChannelGroupClients(channelId, -1, -1);
 	}
 
@@ -2244,7 +2210,7 @@ public class TS3ApiAsync {
 	 * @see ChannelGroupClient
 	 * @see #getChannelGroupClients(int, int, int)
 	 */
-	public CommandFuture<List<ChannelGroupClient>> getChannelGroupClientsByClientDBId(int clientDBId) {
+	public CompletableFuture<List<ChannelGroupClient>> getChannelGroupClientsByClientDBId(int clientDBId) {
 		return getChannelGroupClients(-1, clientDBId, -1);
 	}
 
@@ -2262,7 +2228,7 @@ public class TS3ApiAsync {
 	 * @see ChannelGroup#getId()
 	 * @see Permission
 	 */
-	public CommandFuture<List<Permission>> getChannelGroupPermissions(int groupId) {
+	public CompletableFuture<List<Permission>> getChannelGroupPermissions(int groupId) {
 		Command cmd = PermissionCommands.channelGroupPermList(groupId);
 		return executeAndTransform(cmd, Permission::new);
 	}
@@ -2277,7 +2243,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see ChannelGroup
 	 */
-	public CommandFuture<List<ChannelGroup>> getChannelGroups() {
+	public CompletableFuture<List<ChannelGroup>> getChannelGroups() {
 		Command cmd = ChannelGroupCommands.channelGroupList();
 		return executeAndTransform(cmd, ChannelGroup::new);
 	}
@@ -2296,7 +2262,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see ChannelInfo
 	 */
-	public CommandFuture<ChannelInfo> getChannelInfo(int channelId) {
+	public CompletableFuture<ChannelInfo> getChannelInfo(int channelId) {
 		Command cmd = ChannelCommands.channelInfo(channelId);
 		return executeAndTransformFirst(cmd, map -> new ChannelInfo(channelId, map));
 	}
@@ -2315,7 +2281,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see Permission
 	 */
-	public CommandFuture<List<Permission>> getChannelPermissions(int channelId) {
+	public CompletableFuture<List<Permission>> getChannelPermissions(int channelId) {
 		Command cmd = PermissionCommands.channelPermList(channelId);
 		return executeAndTransform(cmd, Permission::new);
 	}
@@ -2330,7 +2296,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see Channel
 	 */
-	public CommandFuture<List<Channel>> getChannels() {
+	public CompletableFuture<List<Channel>> getChannels() {
 		Command cmd = ChannelCommands.channelList();
 		return executeAndTransform(cmd, Channel::new);
 	}
@@ -2351,10 +2317,10 @@ public class TS3ApiAsync {
 	 * @see Client
 	 * @see #getClientsByName(String)
 	 */
-	public CommandFuture<Client> getClientByNameExact(String name, boolean ignoreCase) {
+	public CompletableFuture<Client> getClientByNameExact(String name, boolean ignoreCase) {
 		String caseName = ignoreCase ? name.toLowerCase(Locale.ROOT) : name;
 
-		return getClients().map(allClients -> {
+		return CommandFutures.map(getClients(), allClients -> {
 			for (Client c : allClients) {
 				String clientName = ignoreCase ? c.getNickname().toLowerCase(Locale.ROOT) : c.getNickname();
 				if (caseName.equals(clientName)) return c;
@@ -2377,18 +2343,13 @@ public class TS3ApiAsync {
 	 * @see Client
 	 * @see #getClientByNameExact(String, boolean)
 	 */
-	public CommandFuture<List<Client>> getClientsByName(String name) {
+	public CompletableFuture<List<Client>> getClientsByName(String name) {
 		Command cmd = ClientCommands.clientFind(name);
-		CommandFuture<List<Client>> future = new CommandFuture<>();
 
-		CommandFuture<List<Integer>> clientIds = executeAndMap(cmd, response -> response.getInt("clid"));
-		CommandFuture<List<Client>> allClients = getClients();
+		CompletableFuture<List<Integer>> clientIds = executeAndMap(cmd, response -> response.getInt("clid"));
+		CompletableFuture<List<Client>> allClients = getClients();
 
-		findByKey(clientIds, allClients, Client::getId)
-				.forwardSuccess(future)
-				.onFailure(transformError(future, 512, Collections.emptyList()));
-
-		return future;
+		return recover(findByKey(clientIds, allClients, Client::getId), 512, Collections.emptyList());
 	}
 
 	/**
@@ -2405,10 +2366,10 @@ public class TS3ApiAsync {
 	 * @see Client#getUniqueIdentifier()
 	 * @see ClientInfo
 	 */
-	public CommandFuture<ClientInfo> getClientByUId(String clientUId) {
+	public CompletableFuture<ClientInfo> getClientByUId(String clientUId) {
 		Command cmd = ClientCommands.clientGetIds(clientUId);
-		return executeAndReturnIntProperty(cmd, "clid")
-				.then(this::getClientInfo);
+		return CommandFutures.compose(executeAndReturnIntProperty(cmd, "clid"),
+				this::getClientInfo);
 	}
 
 	/**
@@ -2425,7 +2386,7 @@ public class TS3ApiAsync {
 	 * @see Client#getId()
 	 * @see ClientInfo
 	 */
-	public CommandFuture<ClientInfo> getClientInfo(int clientId) {
+	public CompletableFuture<ClientInfo> getClientInfo(int clientId) {
 		Command cmd = ClientCommands.clientInfo(clientId);
 		return executeAndTransformFirst(cmd, map -> new ClientInfo(clientId, map));
 	}
@@ -2444,7 +2405,7 @@ public class TS3ApiAsync {
 	 * @see Client#getDatabaseId()
 	 * @see Permission
 	 */
-	public CommandFuture<List<Permission>> getClientPermissions(int clientDBId) {
+	public CompletableFuture<List<Permission>> getClientPermissions(int clientDBId) {
 		Command cmd = PermissionCommands.clientPermList(clientDBId);
 		return executeAndTransform(cmd, Permission::new);
 	}
@@ -2459,7 +2420,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see Client
 	 */
-	public CommandFuture<List<Client>> getClients() {
+	public CompletableFuture<List<Client>> getClients() {
 		Command cmd = ClientCommands.clientList();
 		return executeAndTransform(cmd, Client::new);
 	}
@@ -2475,7 +2436,7 @@ public class TS3ApiAsync {
 	 * @see Complaint
 	 * @see #getComplaints(int)
 	 */
-	public CommandFuture<List<Complaint>> getComplaints() {
+	public CompletableFuture<List<Complaint>> getComplaints() {
 		return getComplaints(-1);
 	}
 
@@ -2493,7 +2454,7 @@ public class TS3ApiAsync {
 	 * @see Client#getDatabaseId()
 	 * @see Complaint
 	 */
-	public CommandFuture<List<Complaint>> getComplaints(int clientDBId) {
+	public CompletableFuture<List<Complaint>> getComplaints(int clientDBId) {
 		Command cmd = ComplaintCommands.complainList(clientDBId);
 		return executeAndTransform(cmd, Complaint::new);
 	}
@@ -2509,7 +2470,7 @@ public class TS3ApiAsync {
 	 * @see ConnectionInfo
 	 * @see #getServerInfo()
 	 */
-	public CommandFuture<ConnectionInfo> getConnectionInfo() {
+	public CompletableFuture<ConnectionInfo> getConnectionInfo() {
 		Command cmd = VirtualServerCommands.serverRequestConnectionInfo();
 		return executeAndTransformFirst(cmd, ConnectionInfo::new);
 	}
@@ -2530,10 +2491,10 @@ public class TS3ApiAsync {
 	 * @see #searchCustomClientProperty(String)
 	 * @see #searchCustomClientProperty(String, String)
 	 */
-	public CommandFuture<Map<String, String>> getCustomClientProperties(int clientDBId) {
+	public CompletableFuture<Map<String, String>> getCustomClientProperties(int clientDBId) {
 		Command cmd = CustomPropertyCommands.customInfo(clientDBId);
-		CommandFuture<Map<String, String>> future = cmd.getFuture()
-				.map(result -> {
+		CompletableFuture<Map<String, String>> future = CommandFutures.map(cmd.getFuture(),
+				result -> {
 					List<Wrapper> response = result.getResponses();
 					Map<String, String> properties = new HashMap<>(response.size());
 					for (Wrapper wrapper : response) {
@@ -2561,16 +2522,16 @@ public class TS3ApiAsync {
 	 * where n is the amount of database clients with a matching nickname
 	 * @see Client#getNickname()
 	 */
-	public CommandFuture<List<DatabaseClientInfo>> getDatabaseClientsByName(String name) {
+	public CompletableFuture<List<DatabaseClientInfo>> getDatabaseClientsByName(String name) {
 		Command cmd = DatabaseClientCommands.clientDBFind(name, false);
 
-		return executeAndMap(cmd, response -> response.getInt("cldbid"))
-				.then(dbClientIds -> {
-					Collection<CommandFuture<DatabaseClientInfo>> infoFutures = new ArrayList<>(dbClientIds.size());
+		return CommandFutures.compose(executeAndMap(cmd, response -> response.getInt("cldbid")),
+				dbClientIds -> {
+					Collection<CompletableFuture<DatabaseClientInfo>> infoFutures = new ArrayList<>(dbClientIds.size());
 					for (int dbClientId : dbClientIds) {
 						infoFutures.add(getDatabaseClientInfo(dbClientId));
 					}
-					return CommandFuture.ofAll(infoFutures);
+					return CommandFutures.all(infoFutures);
 				});
 	}
 
@@ -2588,12 +2549,12 @@ public class TS3ApiAsync {
 	 * @see Client#getUniqueIdentifier()
 	 * @see DatabaseClientInfo
 	 */
-	public CommandFuture<DatabaseClientInfo> getDatabaseClientByUId(String clientUId) {
+	public CompletableFuture<DatabaseClientInfo> getDatabaseClientByUId(String clientUId) {
 		Command cmd = DatabaseClientCommands.clientDBFind(clientUId, true);
-		CommandFuture<DatabaseClientInfo> future = cmd.getFuture()
-				.then(result -> {
+		CompletableFuture<DatabaseClientInfo> future = CommandFutures.compose(cmd.getFuture(),
+				result -> {
 					if (result.getResponses().isEmpty()) {
-						return null;
+						return CompletableFuture.completedFuture(null);
 					} else {
 						int databaseId = result.getFirstResponse().getInt("cldbid");
 						return getDatabaseClientInfo(databaseId);
@@ -2618,7 +2579,7 @@ public class TS3ApiAsync {
 	 * @see Client#getDatabaseId()
 	 * @see DatabaseClientInfo
 	 */
-	public CommandFuture<DatabaseClientInfo> getDatabaseClientInfo(int clientDBId) {
+	public CompletableFuture<DatabaseClientInfo> getDatabaseClientInfo(int clientDBId) {
 		Command cmd = DatabaseClientCommands.clientDBInfo(clientDBId);
 		return executeAndTransformFirst(cmd, DatabaseClientInfo::new);
 	}
@@ -2640,17 +2601,16 @@ public class TS3ApiAsync {
 	 * where n = Math.ceil([amount of database clients] / 200)
 	 * @see DatabaseClient
 	 */
-	public CommandFuture<List<DatabaseClient>> getDatabaseClients() {
+	public CompletableFuture<List<DatabaseClient>> getDatabaseClients() {
 		Command cmd = DatabaseClientCommands.clientDBList(0, 1, true);
 
-		return executeAndReturnIntProperty(cmd, "count")
-				.then(count -> {
-					Collection<CommandFuture<List<DatabaseClient>>> futures = new ArrayList<>((count + 199) / 200);
+		return CommandFutures.map(CommandFutures.compose(executeAndReturnIntProperty(cmd, "count"), count -> {
+					Collection<CompletableFuture<List<DatabaseClient>>> futures = new ArrayList<>((count + 199) / 200);
 					for (int i = 0; i < count; i += 200) {
 						futures.add(getDatabaseClients(i, 200));
 					}
-					return CommandFuture.ofAll(futures);
-				}).map(listOfLists -> listOfLists.stream()
+					return CommandFutures.all(futures);
+				}), listOfLists -> listOfLists.stream()
 						.flatMap(List::stream)
 						.collect(Collectors.toList()));
 	}
@@ -2672,7 +2632,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see DatabaseClient
 	 */
-	public CommandFuture<List<DatabaseClient>> getDatabaseClients(int offset, int count) {
+	public CompletableFuture<List<DatabaseClient>> getDatabaseClients(int offset, int count) {
 		Command cmd = DatabaseClientCommands.clientDBList(offset, count, false);
 		return executeAndTransform(cmd, DatabaseClient::new);
 	}
@@ -2697,7 +2657,7 @@ public class TS3ApiAsync {
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<FileInfo> getFileInfo(String filePath, int channelId) {
+	public CompletableFuture<FileInfo> getFileInfo(String filePath, int channelId) {
 		return getFileInfo(filePath, channelId, null);
 	}
 
@@ -2723,7 +2683,7 @@ public class TS3ApiAsync {
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<FileInfo> getFileInfo(String filePath, int channelId, String channelPassword) {
+	public CompletableFuture<FileInfo> getFileInfo(String filePath, int channelId, String channelPassword) {
 		Command cmd = FileCommands.ftGetFileInfo(channelId, channelPassword, filePath);
 		return executeAndTransformFirst(cmd, FileInfo::new);
 	}
@@ -2748,7 +2708,7 @@ public class TS3ApiAsync {
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<List<FileInfo>> getFileInfos(String[] filePaths, int channelId) {
+	public CompletableFuture<List<FileInfo>> getFileInfos(String[] filePaths, int channelId) {
 		return getFileInfos(filePaths, channelId, null);
 	}
 
@@ -2774,7 +2734,7 @@ public class TS3ApiAsync {
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<List<FileInfo>> getFileInfos(String[] filePaths, int channelId, String channelPassword) {
+	public CompletableFuture<List<FileInfo>> getFileInfos(String[] filePaths, int channelId, String channelPassword) {
 		Command cmd = FileCommands.ftGetFileInfo(channelId, channelPassword, filePaths);
 		return executeAndTransform(cmd, FileInfo::new);
 	}
@@ -2803,7 +2763,7 @@ public class TS3ApiAsync {
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<List<FileInfo>> getFileInfos(String[] filePaths, int[] channelIds, String[] channelPasswords) {
+	public CompletableFuture<List<FileInfo>> getFileInfos(String[] filePaths, int[] channelIds, String[] channelPasswords) {
 		Command cmd = FileCommands.ftGetFileInfo(channelIds, channelPasswords, filePaths);
 		return executeAndTransform(cmd, FileInfo::new);
 	}
@@ -2824,7 +2784,7 @@ public class TS3ApiAsync {
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<List<FileListEntry>> getFileList(String directoryPath, int channelId) {
+	public CompletableFuture<List<FileListEntry>> getFileList(String directoryPath, int channelId) {
 		return getFileList(directoryPath, channelId, null);
 	}
 
@@ -2846,7 +2806,7 @@ public class TS3ApiAsync {
 	 * @see FileInfo#getPath()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<List<FileListEntry>> getFileList(String directoryPath, int channelId, String channelPassword) {
+	public CompletableFuture<List<FileListEntry>> getFileList(String directoryPath, int channelId, String channelPassword) {
 		Command cmd = FileCommands.ftGetFileList(directoryPath, channelId, channelPassword);
 		return executeAndTransform(cmd, FileListEntry::new);
 	}
@@ -2860,7 +2820,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<List<FileTransfer>> getFileTransfers() {
+	public CompletableFuture<List<FileTransfer>> getFileTransfers() {
 		Command cmd = FileCommands.ftList();
 		return executeAndTransform(cmd, FileTransfer::new);
 	}
@@ -2875,7 +2835,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<HostInfo> getHostInfo() {
+	public CompletableFuture<HostInfo> getHostInfo() {
 		Command cmd = ServerCommands.hostInfo();
 		return executeAndTransformFirst(cmd, HostInfo::new);
 	}
@@ -2885,9 +2845,9 @@ public class TS3ApiAsync {
 	 *
 	 * @return a list of all icons
 	 */
-	public CommandFuture<List<IconFile>> getIconList() {
-		return getFileList("/icons/", 0)
-				.map(result -> {
+	public CompletableFuture<List<IconFile>> getIconList() {
+		return CommandFutures.map(getFileList("/icons/", 0),
+				result -> {
 					List<IconFile> icons = new ArrayList<>(result.size());
 					for (FileListEntry file : result) {
 						if (file.isDirectory() || file.isStillUploading()) continue;
@@ -2907,7 +2867,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<InstanceInfo> getInstanceInfo() {
+	public CompletableFuture<InstanceInfo> getInstanceInfo() {
 		Command cmd = ServerCommands.instanceInfo();
 		return executeAndTransformFirst(cmd, InstanceInfo::new);
 	}
@@ -2925,7 +2885,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<List<String>> getInstanceLogEntries(int lines) {
+	public CompletableFuture<List<String>> getInstanceLogEntries(int lines) {
 		Command cmd = ServerCommands.logView(lines, true);
 		return executeAndMap(cmd, response -> response.get("l"));
 	}
@@ -2939,7 +2899,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<List<String>> getInstanceLogEntries() {
+	public CompletableFuture<List<String>> getInstanceLogEntries() {
 		return getInstanceLogEntries(100);
 	}
 
@@ -2957,7 +2917,7 @@ public class TS3ApiAsync {
 	 * @see Message#getId()
 	 * @see #setMessageRead(int)
 	 */
-	public CommandFuture<String> getOfflineMessage(int messageId) {
+	public CompletableFuture<String> getOfflineMessage(int messageId) {
 		Command cmd = MessageCommands.messageGet(messageId);
 		return executeAndReturnStringProperty(cmd, "message");
 	}
@@ -2976,7 +2936,7 @@ public class TS3ApiAsync {
 	 * @see Message#getId()
 	 * @see #setMessageRead(Message)
 	 */
-	public CommandFuture<String> getOfflineMessage(Message message) {
+	public CompletableFuture<String> getOfflineMessage(Message message) {
 		return getOfflineMessage(message.getId());
 	}
 
@@ -2991,7 +2951,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<List<Message>> getOfflineMessages() {
+	public CompletableFuture<List<Message>> getOfflineMessages() {
 		Command cmd = MessageCommands.messageList();
 		return executeAndTransform(cmd, Message::new);
 	}
@@ -3011,15 +2971,10 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see #getPermissionOverview(int, int)
 	 */
-	public CommandFuture<List<PermissionAssignment>> getPermissionAssignments(String permName) {
+	public CompletableFuture<List<PermissionAssignment>> getPermissionAssignments(String permName) {
 		Command cmd = PermissionCommands.permFind(permName);
-		CommandFuture<List<PermissionAssignment>> future = new CommandFuture<>();
 
-		executeAndTransform(cmd, PermissionAssignment::new)
-				.forwardSuccess(future)
-				.onFailure(transformError(future, 2562, Collections.emptyList()));
-
-		return future;
+		return recover(executeAndTransform(cmd, PermissionAssignment::new), 2562, Collections.emptyList());
 	}
 
 	/**
@@ -3038,7 +2993,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Integer> getPermissionIdByName(String permName) {
+	public CompletableFuture<Integer> getPermissionIdByName(String permName) {
 		Command cmd = PermissionCommands.permIdGetByName(permName);
 		return executeAndReturnIntProperty(cmd, "permid");
 	}
@@ -3061,7 +3016,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<int[]> getPermissionIdsByName(String... permNames) {
+	public CompletableFuture<int[]> getPermissionIdsByName(String... permNames) {
 		Command cmd = PermissionCommands.permIdGetByName(permNames);
 		return executeAndReturnIntArray(cmd, "permid");
 	}
@@ -3083,7 +3038,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
 	 */
-	public CommandFuture<List<PermissionAssignment>> getPermissionOverview(int channelId, int clientDBId) {
+	public CompletableFuture<List<PermissionAssignment>> getPermissionOverview(int channelId, int clientDBId) {
 		Command cmd = PermissionCommands.permOverview(channelId, clientDBId);
 		return executeAndTransform(cmd, PermissionAssignment::new);
 	}
@@ -3097,7 +3052,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<List<PermissionInfo>> getPermissions() {
+	public CompletableFuture<List<PermissionInfo>> getPermissions() {
 		Command cmd = PermissionCommands.permissionList();
 		return executeAndTransform(cmd, PermissionInfo::new);
 	}
@@ -3114,7 +3069,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Integer> getPermissionValue(String permName) {
+	public CompletableFuture<Integer> getPermissionValue(String permName) {
 		Command cmd = PermissionCommands.permGet(permName);
 		return executeAndReturnIntProperty(cmd, "permvalue");
 	}
@@ -3133,7 +3088,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<int[]> getPermissionValues(String... permNames) {
+	public CompletableFuture<int[]> getPermissionValues(String... permNames) {
 		Command cmd = PermissionCommands.permGet(permNames);
 		return executeAndReturnIntArray(cmd, "permvalue");
 	}
@@ -3150,7 +3105,7 @@ public class TS3ApiAsync {
 	 * @see #addPrivilegeKey(PrivilegeKeyType, int, int, String)
 	 * @see #usePrivilegeKey(String)
 	 */
-	public CommandFuture<List<PrivilegeKey>> getPrivilegeKeys() {
+	public CompletableFuture<List<PrivilegeKey>> getPrivilegeKeys() {
 		Command cmd = PrivilegeKeyCommands.privilegeKeyList();
 		return executeAndTransform(cmd, PrivilegeKey::new);
 	}
@@ -3167,7 +3122,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<List<ServerGroupClient>> getServerGroupClients(int serverGroupId) {
+	public CompletableFuture<List<ServerGroupClient>> getServerGroupClients(int serverGroupId) {
 		Command cmd = ServerGroupCommands.serverGroupClientList(serverGroupId);
 		return executeAndTransform(cmd, ServerGroupClient::new);
 	}
@@ -3184,7 +3139,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<List<ServerGroupClient>> getServerGroupClients(ServerGroup serverGroup) {
+	public CompletableFuture<List<ServerGroupClient>> getServerGroupClients(ServerGroup serverGroup) {
 		return getServerGroupClients(serverGroup.getId());
 	}
 
@@ -3202,7 +3157,7 @@ public class TS3ApiAsync {
 	 * @see ServerGroup#getId()
 	 * @see #getServerGroupPermissions(ServerGroup)
 	 */
-	public CommandFuture<List<Permission>> getServerGroupPermissions(int serverGroupId) {
+	public CompletableFuture<List<Permission>> getServerGroupPermissions(int serverGroupId) {
 		Command cmd = PermissionCommands.serverGroupPermList(serverGroupId);
 		return executeAndTransform(cmd, Permission::new);
 	}
@@ -3219,7 +3174,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<List<Permission>> getServerGroupPermissions(ServerGroup serverGroup) {
+	public CompletableFuture<List<Permission>> getServerGroupPermissions(ServerGroup serverGroup) {
 		return getServerGroupPermissions(serverGroup.getId());
 	}
 
@@ -3236,7 +3191,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<List<ServerGroup>> getServerGroups() {
+	public CompletableFuture<List<ServerGroup>> getServerGroups() {
 		Command cmd = ServerGroupCommands.serverGroupList();
 		return executeAndTransform(cmd, ServerGroup::new);
 	}
@@ -3255,11 +3210,11 @@ public class TS3ApiAsync {
 	 * @see Client#getDatabaseId()
 	 * @see #getServerGroupsByClient(Client)
 	 */
-	public CommandFuture<List<ServerGroup>> getServerGroupsByClientId(int clientDatabaseId) {
+	public CompletableFuture<List<ServerGroup>> getServerGroupsByClientId(int clientDatabaseId) {
 		Command cmd = ServerGroupCommands.serverGroupsByClientId(clientDatabaseId);
 
-		CommandFuture<List<Integer>> serverGroupIds = executeAndMap(cmd, response -> response.getInt("sgid"));
-		CommandFuture<List<ServerGroup>> allServerGroups = getServerGroups();
+		CompletableFuture<List<Integer>> serverGroupIds = executeAndMap(cmd, response -> response.getInt("sgid"));
+		CompletableFuture<List<ServerGroup>> allServerGroups = getServerGroups();
 
 		return findByKey(serverGroupIds, allServerGroups, ServerGroup::getId);
 	}
@@ -3277,7 +3232,7 @@ public class TS3ApiAsync {
 	 * @querycommands 2
 	 * @see #getServerGroupsByClientId(int)
 	 */
-	public CommandFuture<List<ServerGroup>> getServerGroupsByClient(Client client) {
+	public CompletableFuture<List<ServerGroup>> getServerGroupsByClient(Client client) {
 		return getServerGroupsByClientId(client.getDatabaseId());
 	}
 
@@ -3295,7 +3250,7 @@ public class TS3ApiAsync {
 	 * @see VirtualServer#getPort()
 	 * @see VirtualServer#getId()
 	 */
-	public CommandFuture<Integer> getServerIdByPort(int port) {
+	public CompletableFuture<Integer> getServerIdByPort(int port) {
 		Command cmd = VirtualServerCommands.serverIdGetByPort(port);
 		return executeAndReturnIntProperty(cmd, "server_id");
 	}
@@ -3309,7 +3264,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<VirtualServerInfo> getServerInfo() {
+	public CompletableFuture<VirtualServerInfo> getServerInfo() {
 		Command cmd = VirtualServerCommands.serverInfo();
 		return executeAndTransformFirst(cmd, VirtualServerInfo::new);
 	}
@@ -3328,7 +3283,7 @@ public class TS3ApiAsync {
 	 * @see #getServerQueryLoginsByName(String)
 	 * @see #updateServerQueryLogin(String)
 	 */
-	public CommandFuture<List<QueryLogin>> getServerQueryLogins() {
+	public CompletableFuture<List<QueryLogin>> getServerQueryLogins() {
 		return getServerQueryLoginsByName(null);
 	}
 
@@ -3350,7 +3305,7 @@ public class TS3ApiAsync {
 	 * @see #getServerQueryLogins()
 	 * @see #updateServerQueryLogin(String)
 	 */
-	public CommandFuture<List<QueryLogin>> getServerQueryLoginsByName(String pattern) {
+	public CompletableFuture<List<QueryLogin>> getServerQueryLoginsByName(String pattern) {
 		Command cmd = QueryLoginCommands.queryLoginList(pattern);
 		return executeAndTransform(cmd, QueryLogin::new);
 	}
@@ -3364,7 +3319,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Version> getVersion() {
+	public CompletableFuture<Version> getVersion() {
 		Command cmd = ServerCommands.version();
 		return executeAndTransformFirst(cmd, Version::new);
 	}
@@ -3378,7 +3333,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<List<VirtualServer>> getVirtualServers() {
+	public CompletableFuture<List<VirtualServer>> getVirtualServers() {
 		Command cmd = VirtualServerCommands.serverList();
 		return executeAndTransform(cmd, VirtualServer::new);
 	}
@@ -3397,7 +3352,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<List<String>> getVirtualServerLogEntries(int lines) {
+	public CompletableFuture<List<String>> getVirtualServerLogEntries(int lines) {
 		Command cmd = ServerCommands.logView(lines, false);
 		return executeAndMap(cmd, response -> response.get("l"));
 	}
@@ -3412,7 +3367,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<List<String>> getVirtualServerLogEntries() {
+	public CompletableFuture<List<String>> getVirtualServerLogEntries() {
 		return getVirtualServerLogEntries(100);
 	}
 
@@ -3431,13 +3386,9 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see #getClientInfo(int)
 	 */
-	public CommandFuture<Boolean> isClientOnline(int clientId) {
+	public CompletableFuture<Boolean> isClientOnline(int clientId) {
 		Command cmd = ClientCommands.clientInfo(clientId);
-		CommandFuture<Boolean> future = new CommandFuture<>();
-
-		cmd.getFuture()
-				.onSuccess(__ -> future.set(true))
-				.onFailure(transformError(future, 512, false));
+		CompletableFuture<Boolean> future = recover(CommandFutures.map(cmd.getFuture(), __ -> true), 512, false);
 
 		commandQueue.enqueueCommand(cmd);
 		return future;
@@ -3458,10 +3409,10 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see #getClientByUId(String)
 	 */
-	public CommandFuture<Boolean> isClientOnline(String clientUId) {
+	public CompletableFuture<Boolean> isClientOnline(String clientUId) {
 		Command cmd = ClientCommands.clientGetIds(clientUId);
-		CommandFuture<Boolean> future = cmd.getFuture()
-				.map(result -> !result.getResponses().isEmpty());
+		CompletableFuture<Boolean> future = CommandFutures.map(cmd.getFuture(),
+				result -> !result.getResponses().isEmpty());
 
 		commandQueue.enqueueCommand(cmd);
 		return future;
@@ -3483,7 +3434,7 @@ public class TS3ApiAsync {
 	 * @see #kickClientFromChannel(Client...)
 	 * @see #kickClientFromChannel(String, int...)
 	 */
-	public CommandFuture<Void> kickClientFromChannel(int... clientIds) {
+	public CompletableFuture<Void> kickClientFromChannel(int... clientIds) {
 		return kickClients(ReasonIdentifier.REASON_KICK_CHANNEL, null, clientIds);
 	}
 
@@ -3503,7 +3454,7 @@ public class TS3ApiAsync {
 	 * @see #kickClientFromChannel(int...)
 	 * @see #kickClientFromChannel(String, Client...)
 	 */
-	public CommandFuture<Void> kickClientFromChannel(Client... clients) {
+	public CompletableFuture<Void> kickClientFromChannel(Client... clients) {
 		return kickClients(ReasonIdentifier.REASON_KICK_CHANNEL, null, clients);
 	}
 
@@ -3526,7 +3477,7 @@ public class TS3ApiAsync {
 	 * @see #kickClientFromChannel(int...)
 	 * @see #kickClientFromChannel(String, Client...)
 	 */
-	public CommandFuture<Void> kickClientFromChannel(String message, int... clientIds) {
+	public CompletableFuture<Void> kickClientFromChannel(String message, int... clientIds) {
 		return kickClients(ReasonIdentifier.REASON_KICK_CHANNEL, message, clientIds);
 	}
 
@@ -3548,7 +3499,7 @@ public class TS3ApiAsync {
 	 * @see #kickClientFromChannel(Client...)
 	 * @see #kickClientFromChannel(String, int...)
 	 */
-	public CommandFuture<Void> kickClientFromChannel(String message, Client... clients) {
+	public CompletableFuture<Void> kickClientFromChannel(String message, Client... clients) {
 		return kickClients(ReasonIdentifier.REASON_KICK_CHANNEL, message, clients);
 	}
 
@@ -3567,7 +3518,7 @@ public class TS3ApiAsync {
 	 * @see #kickClientFromServer(Client...)
 	 * @see #kickClientFromServer(String, int...)
 	 */
-	public CommandFuture<Void> kickClientFromServer(int... clientIds) {
+	public CompletableFuture<Void> kickClientFromServer(int... clientIds) {
 		return kickClients(ReasonIdentifier.REASON_KICK_SERVER, null, clientIds);
 	}
 
@@ -3585,7 +3536,7 @@ public class TS3ApiAsync {
 	 * @see #kickClientFromServer(int...)
 	 * @see #kickClientFromServer(String, Client...)
 	 */
-	public CommandFuture<Void> kickClientFromServer(Client... clients) {
+	public CompletableFuture<Void> kickClientFromServer(Client... clients) {
 		return kickClients(ReasonIdentifier.REASON_KICK_SERVER, null, clients);
 	}
 
@@ -3606,7 +3557,7 @@ public class TS3ApiAsync {
 	 * @see #kickClientFromServer(int...)
 	 * @see #kickClientFromServer(String, Client...)
 	 */
-	public CommandFuture<Void> kickClientFromServer(String message, int... clientIds) {
+	public CompletableFuture<Void> kickClientFromServer(String message, int... clientIds) {
 		return kickClients(ReasonIdentifier.REASON_KICK_SERVER, message, clientIds);
 	}
 
@@ -3626,7 +3577,7 @@ public class TS3ApiAsync {
 	 * @see #kickClientFromServer(Client...)
 	 * @see #kickClientFromServer(String, int...)
 	 */
-	public CommandFuture<Void> kickClientFromServer(String message, Client... clients) {
+	public CompletableFuture<Void> kickClientFromServer(String message, Client... clients) {
 		return kickClients(ReasonIdentifier.REASON_KICK_SERVER, message, clients);
 	}
 
@@ -3646,7 +3597,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	private CommandFuture<Void> kickClients(ReasonIdentifier reason, String message, Client... clients) {
+	private CompletableFuture<Void> kickClients(ReasonIdentifier reason, String message, Client... clients) {
 		int[] clientIds = new int[clients.length];
 		for (int i = 0; i < clients.length; ++i) {
 			clientIds[i] = clients[i].getId();
@@ -3671,7 +3622,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see Client#getId()
 	 */
-	private CommandFuture<Void> kickClients(ReasonIdentifier reason, String message, int... clientIds) {
+	private CompletableFuture<Void> kickClients(ReasonIdentifier reason, String message, int... clientIds) {
 		Command cmd = ClientCommands.clientKick(reason, message, clientIds);
 		return executeAndReturnError(cmd);
 	}
@@ -3695,7 +3646,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see #logout()
 	 */
-	public CommandFuture<Void> login(String username, String password) {
+	public CompletableFuture<Void> login(String username, String password) {
 		Command cmd = QueryCommands.logIn(username, password);
 		return executeAndReturnError(cmd);
 	}
@@ -3710,7 +3661,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see #login(String, String)
 	 */
-	public CommandFuture<Void> logout() {
+	public CompletableFuture<Void> logout() {
 		Command cmd = QueryCommands.logOut();
 		return executeAndReturnError(cmd);
 	}
@@ -3736,7 +3687,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see #moveChannel(int, int, int)
 	 */
-	public CommandFuture<Void> moveChannel(int channelId, int channelTargetId) {
+	public CompletableFuture<Void> moveChannel(int channelId, int channelTargetId) {
 		return moveChannel(channelId, channelTargetId, 0);
 	}
 
@@ -3766,7 +3717,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see #moveChannel(int, int)
 	 */
-	public CommandFuture<Void> moveChannel(int channelId, int channelTargetId, int order) {
+	public CompletableFuture<Void> moveChannel(int channelId, int channelTargetId, int order) {
 		Command cmd = ChannelCommands.channelMove(channelId, channelTargetId, order);
 		return executeAndReturnError(cmd);
 	}
@@ -3790,7 +3741,7 @@ public class TS3ApiAsync {
 	 * @see Client#getId()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Void> moveClient(int clientId, int channelId) {
+	public CompletableFuture<Void> moveClient(int clientId, int channelId) {
 		return moveClient(clientId, channelId, null);
 	}
 
@@ -3817,7 +3768,7 @@ public class TS3ApiAsync {
 	 * @see Client#getId()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Void> moveClients(int[] clientIds, int channelId) {
+	public CompletableFuture<Void> moveClients(int[] clientIds, int channelId) {
 		return moveClients(clientIds, channelId, null);
 	}
 
@@ -3840,7 +3791,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Void> moveClient(Client client, ChannelBase channel) {
+	public CompletableFuture<Void> moveClient(Client client, ChannelBase channel) {
 		return moveClient(client, channel, null);
 	}
 
@@ -3865,7 +3816,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Void> moveClients(Client[] clients, ChannelBase channel) {
+	public CompletableFuture<Void> moveClients(Client[] clients, ChannelBase channel) {
 		return moveClients(clients, channel, null);
 	}
 
@@ -3890,7 +3841,7 @@ public class TS3ApiAsync {
 	 * @see Client#getId()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Void> moveClient(int clientId, int channelId, String channelPassword) {
+	public CompletableFuture<Void> moveClient(int clientId, int channelId, String channelPassword) {
 		Command cmd = ClientCommands.clientMove(clientId, channelId, channelPassword);
 		return executeAndReturnError(cmd);
 	}
@@ -3920,9 +3871,9 @@ public class TS3ApiAsync {
 	 * @see Client#getId()
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Void> moveClients(int[] clientIds, int channelId, String channelPassword) {
+	public CompletableFuture<Void> moveClients(int[] clientIds, int channelId, String channelPassword) {
 		if (clientIds == null) throw new IllegalArgumentException("Client ID array was null");
-		if (clientIds.length == 0) return CommandFuture.immediate(null); // Success
+		if (clientIds.length == 0) return CompletableFuture.completedFuture(null); // Success
 
 		Command cmd = ClientCommands.clientMove(clientIds, channelId, channelPassword);
 		return executeAndReturnError(cmd);
@@ -3949,7 +3900,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Void> moveClient(Client client, ChannelBase channel, String channelPassword) {
+	public CompletableFuture<Void> moveClient(Client client, ChannelBase channel, String channelPassword) {
 		if (client == null) throw new IllegalArgumentException("Client cannot be null");
 		if (channel == null) throw new IllegalArgumentException("Channel cannot be null");
 
@@ -3979,7 +3930,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Void> moveClients(Client[] clients, ChannelBase channel, String channelPassword) {
+	public CompletableFuture<Void> moveClients(Client[] clients, ChannelBase channel, String channelPassword) {
 		if (clients == null) throw new IllegalArgumentException("Client array cannot be null");
 		if (channel == null) throw new IllegalArgumentException("Channel cannot be null");
 
@@ -4009,7 +3960,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see #moveFile(String, String, int, int) moveFile to a different channel
 	 */
-	public CommandFuture<Void> moveFile(String oldPath, String newPath, int channelId) {
+	public CompletableFuture<Void> moveFile(String oldPath, String newPath, int channelId) {
 		return moveFile(oldPath, newPath, channelId, null);
 	}
 
@@ -4034,7 +3985,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see #moveFile(String, String, int) moveFile within the same channel
 	 */
-	public CommandFuture<Void> moveFile(String oldPath, String newPath, int oldChannelId, int newChannelId) {
+	public CompletableFuture<Void> moveFile(String oldPath, String newPath, int oldChannelId, int newChannelId) {
 		return moveFile(oldPath, newPath, oldChannelId, null, newChannelId, null);
 	}
 
@@ -4059,7 +4010,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see #moveFile(String, String, int, String, int, String) moveFile to a different channel
 	 */
-	public CommandFuture<Void> moveFile(String oldPath, String newPath, int channelId, String channelPassword) {
+	public CompletableFuture<Void> moveFile(String oldPath, String newPath, int channelId, String channelPassword) {
 		Command cmd = FileCommands.ftRenameFile(oldPath, newPath, channelId, channelPassword);
 		return executeAndReturnError(cmd);
 	}
@@ -4089,7 +4040,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see #moveFile(String, String, int, String) moveFile within the same channel
 	 */
-	public CommandFuture<Void> moveFile(String oldPath, String newPath, int oldChannelId, String oldPassword, int newChannelId, String newPassword) {
+	public CompletableFuture<Void> moveFile(String oldPath, String newPath, int oldChannelId, String oldPassword, int newChannelId, String newPassword) {
 		Command cmd = FileCommands.ftRenameFile(oldPath, newPath, oldChannelId, oldPassword, newChannelId, newPassword);
 		return executeAndReturnError(cmd);
 	}
@@ -4107,7 +4058,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Void> moveQuery(int channelId) {
+	public CompletableFuture<Void> moveQuery(int channelId) {
 		return moveClient(0, channelId, null);
 	}
 
@@ -4125,7 +4076,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Void> moveQuery(ChannelBase channel) {
+	public CompletableFuture<Void> moveQuery(ChannelBase channel) {
 		if (channel == null) throw new IllegalArgumentException("Channel cannot be null");
 
 		return moveClient(0, channel.getId(), null);
@@ -4146,7 +4097,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Void> moveQuery(int channelId, String channelPassword) {
+	public CompletableFuture<Void> moveQuery(int channelId, String channelPassword) {
 		return moveClient(0, channelId, channelPassword);
 	}
 
@@ -4166,7 +4117,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Void> moveQuery(ChannelBase channel, String channelPassword) {
+	public CompletableFuture<Void> moveQuery(ChannelBase channel, String channelPassword) {
 		if (channel == null) throw new IllegalArgumentException("Channel cannot be null");
 
 		return moveClient(0, channel.getId(), channelPassword);
@@ -4195,7 +4146,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see Client#getId()
 	 */
-	public CommandFuture<Void> pokeClient(int clientId, String message) {
+	public CompletableFuture<Void> pokeClient(int clientId, String message) {
 		Command cmd = ClientCommands.clientPoke(clientId, message);
 		return executeAndReturnError(cmd);
 	}
@@ -4212,7 +4163,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	CommandFuture<Void> quit() {
+	CompletableFuture<Void> quit() {
 		Command cmd = QueryCommands.quit();
 		return executeAndReturnError(cmd);
 	}
@@ -4242,8 +4193,8 @@ public class TS3ApiAsync {
 	 * @querycommands 6
 	 * @see #addTS3Listeners(TS3Listener...)
 	 */
-	public CommandFuture<Void> registerAllEvents() {
-		Collection<CommandFuture<Void>> eventFutures = Arrays.asList(
+	public CompletableFuture<Void> registerAllEvents() {
+		Collection<CompletableFuture<Void>> eventFutures = Arrays.asList(
 				registerEvent(TS3EventType.SERVER),
 				registerEvent(TS3EventType.TEXT_SERVER),
 				registerEvent(TS3EventType.CHANNEL, 0),
@@ -4252,8 +4203,8 @@ public class TS3ApiAsync {
 				registerEvent(TS3EventType.PRIVILEGE_KEY_USED)
 		);
 
-		return CommandFuture.ofAll(eventFutures)
-				.map(__ -> null); // Return success as Void, not List<Void>
+		return CommandFutures.map(CommandFutures.all(eventFutures),
+				__ -> null); // Return success as Void, not List<Void>
 	}
 
 	/**
@@ -4276,7 +4227,7 @@ public class TS3ApiAsync {
 	 * @see #registerEvent(TS3EventType, int)
 	 * @see #registerAllEvents()
 	 */
-	public CommandFuture<Void> registerEvent(TS3EventType eventType) {
+	public CompletableFuture<Void> registerEvent(TS3EventType eventType) {
 		if (eventType == TS3EventType.CHANNEL || eventType == TS3EventType.TEXT_CHANNEL) {
 			return registerEvent(eventType, 0);
 		} else {
@@ -4302,7 +4253,7 @@ public class TS3ApiAsync {
 	 * @see #addTS3Listeners(TS3Listener...)
 	 * @see #registerAllEvents()
 	 */
-	public CommandFuture<Void> registerEvent(TS3EventType eventType, int channelId) {
+	public CompletableFuture<Void> registerEvent(TS3EventType eventType, int channelId) {
 		Command cmd = QueryCommands.serverNotifyRegister(eventType, channelId);
 		return executeAndReturnError(cmd);
 	}
@@ -4327,16 +4278,16 @@ public class TS3ApiAsync {
 	 * @see #registerEvent(TS3EventType, int)
 	 * @see #registerAllEvents()
 	 */
-	public CommandFuture<Void> registerEvents(TS3EventType... eventTypes) {
-		if (eventTypes.length == 0) return CommandFuture.immediate(null); // Success
+	public CompletableFuture<Void> registerEvents(TS3EventType... eventTypes) {
+		if (eventTypes.length == 0) return CompletableFuture.completedFuture(null); // Success
 
-		Collection<CommandFuture<Void>> registerFutures = new ArrayList<>(eventTypes.length);
+		Collection<CompletableFuture<Void>> registerFutures = new ArrayList<>(eventTypes.length);
 		for (TS3EventType type : eventTypes) {
 			registerFutures.add(registerEvent(type));
 		}
 
-		return CommandFuture.ofAll(registerFutures)
-				.map(__ -> null); // Return success as Void, not List<Void>
+		return CommandFutures.map(CommandFutures.all(registerFutures),
+				__ -> null); // Return success as Void, not List<Void>
 	}
 
 	/**
@@ -4356,7 +4307,7 @@ public class TS3ApiAsync {
 	 * @see Client#getDatabaseId()
 	 * @see #removeClientFromServerGroup(ServerGroup, Client)
 	 */
-	public CommandFuture<Void> removeClientFromServerGroup(int serverGroupId, int clientDatabaseId) {
+	public CompletableFuture<Void> removeClientFromServerGroup(int serverGroupId, int clientDatabaseId) {
 		Command cmd = ServerGroupCommands.serverGroupDelClient(serverGroupId, clientDatabaseId);
 		return executeAndReturnError(cmd);
 	}
@@ -4376,7 +4327,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see #removeClientFromServerGroup(int, int)
 	 */
-	public CommandFuture<Void> removeClientFromServerGroup(ServerGroup serverGroup, Client client) {
+	public CompletableFuture<Void> removeClientFromServerGroup(ServerGroup serverGroup, Client client) {
 		return removeClientFromServerGroup(serverGroup.getId(), client.getDatabaseId());
 	}
 
@@ -4413,7 +4364,7 @@ public class TS3ApiAsync {
 	 * @see ChannelGroup#getId()
 	 * @see #renameChannelGroup(ChannelGroup, String)
 	 */
-	public CommandFuture<Void> renameChannelGroup(int channelGroupId, String name) {
+	public CompletableFuture<Void> renameChannelGroup(int channelGroupId, String name) {
 		Command cmd = ChannelGroupCommands.channelGroupRename(channelGroupId, name);
 		return executeAndReturnError(cmd);
 	}
@@ -4433,7 +4384,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see #renameChannelGroup(int, String)
 	 */
-	public CommandFuture<Void> renameChannelGroup(ChannelGroup channelGroup, String name) {
+	public CompletableFuture<Void> renameChannelGroup(ChannelGroup channelGroup, String name) {
 		return renameChannelGroup(channelGroup.getId(), name);
 	}
 
@@ -4453,7 +4404,7 @@ public class TS3ApiAsync {
 	 * @see ServerGroup#getId()
 	 * @see #renameServerGroup(ServerGroup, String)
 	 */
-	public CommandFuture<Void> renameServerGroup(int serverGroupId, String name) {
+	public CompletableFuture<Void> renameServerGroup(int serverGroupId, String name) {
 		Command cmd = ServerGroupCommands.serverGroupRename(serverGroupId, name);
 		return executeAndReturnError(cmd);
 	}
@@ -4473,7 +4424,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see #renameServerGroup(int, String)
 	 */
-	public CommandFuture<Void> renameServerGroup(ServerGroup serverGroup, String name) {
+	public CompletableFuture<Void> renameServerGroup(ServerGroup serverGroup, String name) {
 		return renameServerGroup(serverGroup.getId(), name);
 	}
 
@@ -4486,7 +4437,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<String> resetPermissions() {
+	public CompletableFuture<String> resetPermissions() {
 		Command cmd = PermissionCommands.permReset();
 		return executeAndReturnStringProperty(cmd, "token");
 	}
@@ -4507,7 +4458,7 @@ public class TS3ApiAsync {
 	 * @see #searchCustomClientProperty(String, String)
 	 * @see #getCustomClientProperties(int)
 	 */
-	public CommandFuture<List<CustomPropertyAssignment>> searchCustomClientProperty(String key) {
+	public CompletableFuture<List<CustomPropertyAssignment>> searchCustomClientProperty(String key) {
 		return searchCustomClientProperty(key, "%");
 	}
 
@@ -4534,7 +4485,7 @@ public class TS3ApiAsync {
 	 * @see #searchCustomClientProperty(String)
 	 * @see #getCustomClientProperties(int)
 	 */
-	public CommandFuture<List<CustomPropertyAssignment>> searchCustomClientProperty(String key, String valuePattern) {
+	public CompletableFuture<List<CustomPropertyAssignment>> searchCustomClientProperty(String key, String valuePattern) {
 		if (key == null) throw new IllegalArgumentException("Key cannot be null");
 
 		Command cmd = CustomPropertyCommands.customSearch(key, valuePattern);
@@ -4557,7 +4508,7 @@ public class TS3ApiAsync {
 	 * @see #selectVirtualServerByPort(int)
 	 * @see #selectVirtualServer(VirtualServer)
 	 */
-	public CommandFuture<Void> selectVirtualServerById(int id) {
+	public CompletableFuture<Void> selectVirtualServerById(int id) {
 		return selectVirtualServerById(id, null);
 	}
 
@@ -4583,7 +4534,7 @@ public class TS3ApiAsync {
 	 * @see #selectVirtualServerByPort(int, String)
 	 * @see #selectVirtualServer(VirtualServer, String)
 	 */
-	public CommandFuture<Void> selectVirtualServerById(int id, String nickname) {
+	public CompletableFuture<Void> selectVirtualServerById(int id, String nickname) {
 		Command cmd = QueryCommands.useId(id, nickname);
 		return executeAndReturnError(cmd);
 	}
@@ -4604,7 +4555,7 @@ public class TS3ApiAsync {
 	 * @see #selectVirtualServerByPort(int, String)
 	 * @see #selectVirtualServer(VirtualServer)
 	 */
-	public CommandFuture<Void> selectVirtualServerByPort(int port) {
+	public CompletableFuture<Void> selectVirtualServerByPort(int port) {
 		return selectVirtualServerByPort(port, null);
 	}
 
@@ -4630,7 +4581,7 @@ public class TS3ApiAsync {
 	 * @see #selectVirtualServerByPort(int)
 	 * @see #selectVirtualServer(VirtualServer, String)
 	 */
-	public CommandFuture<Void> selectVirtualServerByPort(int port, String nickname) {
+	public CompletableFuture<Void> selectVirtualServerByPort(int port, String nickname) {
 		Command cmd = QueryCommands.usePort(port, nickname);
 		return executeAndReturnError(cmd);
 	}
@@ -4650,7 +4601,7 @@ public class TS3ApiAsync {
 	 * @see #selectVirtualServerByPort(int)
 	 * @see #selectVirtualServer(VirtualServer, String)
 	 */
-	public CommandFuture<Void> selectVirtualServer(VirtualServer server) {
+	public CompletableFuture<Void> selectVirtualServer(VirtualServer server) {
 		return selectVirtualServerById(server.getId());
 	}
 
@@ -4675,7 +4626,7 @@ public class TS3ApiAsync {
 	 * @see #selectVirtualServerByPort(int, String)
 	 * @see #selectVirtualServer(VirtualServer)
 	 */
-	public CommandFuture<Void> selectVirtualServer(VirtualServer server, String nickname) {
+	public CompletableFuture<Void> selectVirtualServer(VirtualServer server, String nickname) {
 		return selectVirtualServerById(server.getId(), nickname);
 	}
 
@@ -4701,7 +4652,7 @@ public class TS3ApiAsync {
 	 * @see Client#getUniqueIdentifier()
 	 * @see Message
 	 */
-	public CommandFuture<Void> sendOfflineMessage(String clientUId, String subject, String message) {
+	public CompletableFuture<Void> sendOfflineMessage(String clientUId, String subject, String message) {
 		Command cmd = MessageCommands.messageAdd(clientUId, subject, message);
 		return executeAndReturnError(cmd);
 	}
@@ -4728,7 +4679,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see Client#getId()
 	 */
-	public CommandFuture<Void> sendTextMessage(TextMessageTargetMode targetMode, int targetId, String message) {
+	public CompletableFuture<Void> sendTextMessage(TextMessageTargetMode targetMode, int targetId, String message) {
 		Command cmd = ClientCommands.sendTextMessage(targetMode.getIndex(), targetId, message);
 		return executeAndReturnError(cmd);
 	}
@@ -4754,9 +4705,9 @@ public class TS3ApiAsync {
 	 * @see #sendChannelMessage(String)
 	 * @see Channel#getId()
 	 */
-	public CommandFuture<Void> sendChannelMessage(int channelId, String message) {
-		return moveQuery(channelId)
-				.then(__ -> sendTextMessage(TextMessageTargetMode.CHANNEL, 0, message));
+	public CompletableFuture<Void> sendChannelMessage(int channelId, String message) {
+		return CommandFutures.compose(moveQuery(channelId),
+				__ -> sendTextMessage(TextMessageTargetMode.CHANNEL, 0, message));
 	}
 
 	/**
@@ -4772,7 +4723,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Void> sendChannelMessage(String message) {
+	public CompletableFuture<Void> sendChannelMessage(String message) {
 		return sendTextMessage(TextMessageTargetMode.CHANNEL, 0, message);
 	}
 
@@ -4797,9 +4748,9 @@ public class TS3ApiAsync {
 	 * @see #sendServerMessage(String)
 	 * @see VirtualServer#getId()
 	 */
-	public CommandFuture<Void> sendServerMessage(int serverId, String message) {
-		return selectVirtualServerById(serverId)
-				.then(__ -> sendTextMessage(TextMessageTargetMode.SERVER, 0, message));
+	public CompletableFuture<Void> sendServerMessage(int serverId, String message) {
+		return CommandFutures.compose(selectVirtualServerById(serverId),
+				__ -> sendTextMessage(TextMessageTargetMode.SERVER, 0, message));
 	}
 
 	/**
@@ -4815,7 +4766,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Void> sendServerMessage(String message) {
+	public CompletableFuture<Void> sendServerMessage(String message) {
 		return sendTextMessage(TextMessageTargetMode.SERVER, 0, message);
 	}
 
@@ -4835,7 +4786,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see Client#getId()
 	 */
-	public CommandFuture<Void> sendPrivateMessage(int clientId, String message) {
+	public CompletableFuture<Void> sendPrivateMessage(int clientId, String message) {
 		return sendTextMessage(TextMessageTargetMode.CLIENT, clientId, message);
 	}
 
@@ -4858,7 +4809,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see Client#getDatabaseId()
 	 */
-	public CommandFuture<Void> setClientChannelGroup(int groupId, int channelId, int clientDBId) {
+	public CompletableFuture<Void> setClientChannelGroup(int groupId, int channelId, int clientDBId) {
 		Command cmd = ChannelGroupCommands.setClientChannelGroup(groupId, channelId, clientDBId);
 		return executeAndReturnError(cmd);
 	}
@@ -4888,8 +4839,8 @@ public class TS3ApiAsync {
 	 * @see #setCustomClientProperty(int, String, String)
 	 * @see #deleteCustomClientProperty(int, String)
 	 */
-	public CommandFuture<Void> setCustomClientProperties(int clientDBId, Map<String, String> properties) {
-		Collection<CommandFuture<Void>> futures = new ArrayList<>(properties.size());
+	public CompletableFuture<Void> setCustomClientProperties(int clientDBId, Map<String, String> properties) {
+		Collection<CompletableFuture<Void>> futures = new ArrayList<>(properties.size());
 
 		for (Map.Entry<String, String> entry : properties.entrySet()) {
 			String key = entry.getKey();
@@ -4900,8 +4851,8 @@ public class TS3ApiAsync {
 			}
 		}
 
-		return CommandFuture.ofAll(futures)
-				.map(__ -> null); // Return success as Void, not List<Void>
+		return CommandFutures.map(CommandFutures.all(futures),
+				__ -> null); // Return success as Void, not List<Void>
 	}
 
 	/**
@@ -4927,7 +4878,7 @@ public class TS3ApiAsync {
 	 * @see #setCustomClientProperties(int, Map)
 	 * @see #deleteCustomClientProperty(int, String)
 	 */
-	public CommandFuture<Void> setCustomClientProperty(int clientDBId, String key, String value) {
+	public CompletableFuture<Void> setCustomClientProperty(int clientDBId, String key, String value) {
 		if (key == null) throw new IllegalArgumentException("Key cannot be null");
 
 		Command cmd = CustomPropertyCommands.customSet(clientDBId, key, value);
@@ -4947,7 +4898,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see #setMessageReadFlag(int, boolean)
 	 */
-	public CommandFuture<Void> setMessageRead(int messageId) {
+	public CompletableFuture<Void> setMessageRead(int messageId) {
 		return setMessageReadFlag(messageId, true);
 	}
 
@@ -4966,7 +4917,7 @@ public class TS3ApiAsync {
 	 * @see #setMessageReadFlag(Message, boolean)
 	 * @see #deleteOfflineMessage(int)
 	 */
-	public CommandFuture<Void> setMessageRead(Message message) {
+	public CompletableFuture<Void> setMessageRead(Message message) {
 		return setMessageReadFlag(message.getId(), true);
 	}
 
@@ -4987,7 +4938,7 @@ public class TS3ApiAsync {
 	 * @see #setMessageReadFlag(Message, boolean)
 	 * @see #deleteOfflineMessage(int)
 	 */
-	public CommandFuture<Void> setMessageReadFlag(int messageId, boolean read) {
+	public CompletableFuture<Void> setMessageReadFlag(int messageId, boolean read) {
 		Command cmd = MessageCommands.messageUpdateFlag(messageId, read);
 		return executeAndReturnError(cmd);
 	}
@@ -5009,7 +4960,7 @@ public class TS3ApiAsync {
 	 * @see #setMessageReadFlag(int, boolean)
 	 * @see #deleteOfflineMessage(int)
 	 */
-	public CommandFuture<Void> setMessageReadFlag(Message message, boolean read) {
+	public CompletableFuture<Void> setMessageReadFlag(Message message, boolean read) {
 		return setMessageReadFlag(message.getId(), read);
 	}
 
@@ -5029,7 +4980,7 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see #updateClient(Map)
 	 */
-	public CommandFuture<Void> setNickname(String nickname) {
+	public CompletableFuture<Void> setNickname(String nickname) {
 		Map<ClientProperty, String> options = Collections.singletonMap(ClientProperty.CLIENT_NICKNAME, nickname);
 		return updateClient(options);
 	}
@@ -5046,7 +4997,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Void> startServer(int serverId) {
+	public CompletableFuture<Void> startServer(int serverId) {
 		Command cmd = VirtualServerCommands.serverStart(serverId);
 		return executeAndReturnError(cmd);
 	}
@@ -5063,7 +5014,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Void> startServer(VirtualServer virtualServer) {
+	public CompletableFuture<Void> startServer(VirtualServer virtualServer) {
 		return startServer(virtualServer.getId());
 	}
 
@@ -5079,7 +5030,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Void> stopServer(int serverId) {
+	public CompletableFuture<Void> stopServer(int serverId) {
 		return stopServer(serverId, null);
 	}
 
@@ -5097,7 +5048,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Void> stopServer(int serverId, String reason) {
+	public CompletableFuture<Void> stopServer(int serverId, String reason) {
 		Command cmd = VirtualServerCommands.serverStop(serverId, reason);
 		return executeAndReturnError(cmd);
 	}
@@ -5114,7 +5065,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Void> stopServer(VirtualServer virtualServer) {
+	public CompletableFuture<Void> stopServer(VirtualServer virtualServer) {
 		return stopServer(virtualServer.getId(), null);
 	}
 
@@ -5132,7 +5083,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Void> stopServer(VirtualServer virtualServer, String reason) {
+	public CompletableFuture<Void> stopServer(VirtualServer virtualServer, String reason) {
 		return stopServer(virtualServer.getId(), reason);
 	}
 
@@ -5148,7 +5099,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Void> stopServerProcess() {
+	public CompletableFuture<Void> stopServerProcess() {
 		return stopServerProcess(null);
 	}
 
@@ -5167,7 +5118,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Void> stopServerProcess(String reason) {
+	public CompletableFuture<Void> stopServerProcess(String reason) {
 		Command cmd = ServerCommands.serverProcessStop(reason);
 		return executeAndReturnError(cmd);
 	}
@@ -5181,7 +5132,7 @@ public class TS3ApiAsync {
 	 * 		if the execution of a command fails
 	 * @querycommands 1
 	 */
-	public CommandFuture<Void> unregisterAllEvents() {
+	public CompletableFuture<Void> unregisterAllEvents() {
 		Command cmd = QueryCommands.serverNotifyUnregister();
 		return executeAndReturnError(cmd);
 	}
@@ -5200,7 +5151,7 @@ public class TS3ApiAsync {
 	 * @see #updateClient(ClientProperty, String)
 	 * @see #editClient(int, Map)
 	 */
-	public CommandFuture<Void> updateClient(Map<ClientProperty, String> options) {
+	public CompletableFuture<Void> updateClient(Map<ClientProperty, String> options) {
 		Command cmd = ClientCommands.clientUpdate(options);
 		return executeAndReturnError(cmd);
 	}
@@ -5225,7 +5176,7 @@ public class TS3ApiAsync {
 	 * @see #updateClient(Map)
 	 * @see #editClient(int, Map)
 	 */
-	public CommandFuture<Void> updateClient(ClientProperty property, String value) {
+	public CompletableFuture<Void> updateClient(ClientProperty property, String value) {
 		return updateClient(Collections.singletonMap(property, value));
 	}
 
@@ -5248,7 +5199,7 @@ public class TS3ApiAsync {
 	 * @see #deleteServerQueryLogin(int)
 	 * @see #getServerQueryLogins()
 	 */
-	public CommandFuture<String> updateServerQueryLogin(String loginName) {
+	public CompletableFuture<String> updateServerQueryLogin(String loginName) {
 		Command cmd = ClientCommands.clientSetServerQueryLogin(loginName);
 		return executeAndReturnStringProperty(cmd, "client_login_password");
 	}
@@ -5287,7 +5238,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see #uploadFileDirect(byte[], String, boolean, int, String)
 	 */
-	public CommandFuture<Void> uploadFile(InputStream dataIn, long dataLength, String filePath, boolean overwrite, int channelId) {
+	public CompletableFuture<Void> uploadFile(InputStream dataIn, long dataLength, String filePath, boolean overwrite, int channelId) {
 		return uploadFile(dataIn, dataLength, filePath, overwrite, channelId, null);
 	}
 
@@ -5327,29 +5278,14 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see #uploadFileDirect(byte[], String, boolean, int, String)
 	 */
-	public CommandFuture<Void> uploadFile(InputStream dataIn, long dataLength, String filePath, boolean overwrite, int channelId, String channelPassword) {
+	public CompletableFuture<Void> uploadFile(InputStream dataIn, long dataLength, String filePath, boolean overwrite, int channelId, String channelPassword) {
 		FileTransferHelper helper = query.getFileTransferHelper();
-		int transferId = helper.getClientTransferId();
-		Command cmd = FileCommands.ftInitUpload(transferId, filePath, channelId, channelPassword, dataLength, overwrite);
-		CommandFuture<Void> future = new CommandFuture<>();
-
-		executeAndTransformFirst(cmd, FileTransferParameters::new).onSuccess(params -> {
-			QueryError error = params.getQueryError();
-			if (!error.isSuccessful()) {
-				future.fail(new TS3CommandFailedException(error, cmd.getName()));
-				return;
-			}
-
-			try {
-				query.getFileTransferHelper().uploadFile(dataIn, dataLength, params);
-			} catch (IOException e) {
-				future.fail(new TS3FileTransferFailedException("Upload failed", e));
-				return;
-			}
-			future.set(null); // Mark as successful
-		}).forwardFailure(future);
-
-		return future;
+		Command cmd = FileCommands.ftInitUpload(helper.getClientTransferId(), filePath, channelId, channelPassword, dataLength, overwrite);
+		return executeTransfer(cmd, params -> {
+			try { helper.uploadFile(dataIn, dataLength, params); }
+			catch (IOException failure) { throw new TS3FileTransferFailedException("Upload failed", failure); }
+			return null;
+		});
 	}
 
 	/**
@@ -5376,7 +5312,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see #uploadFile(InputStream, long, String, boolean, int)
 	 */
-	public CommandFuture<Void> uploadFileDirect(byte[] data, String filePath, boolean overwrite, int channelId) {
+	public CompletableFuture<Void> uploadFileDirect(byte[] data, String filePath, boolean overwrite, int channelId) {
 		return uploadFileDirect(data, filePath, overwrite, channelId, null);
 	}
 
@@ -5406,7 +5342,7 @@ public class TS3ApiAsync {
 	 * @see Channel#getId()
 	 * @see #uploadFile(InputStream, long, String, boolean, int, String)
 	 */
-	public CommandFuture<Void> uploadFileDirect(byte[] data, String filePath, boolean overwrite, int channelId, String channelPassword) {
+	public CompletableFuture<Void> uploadFileDirect(byte[] data, String filePath, boolean overwrite, int channelId, String channelPassword) {
 		return uploadFile(new ByteArrayInputStream(data), data.length, filePath, overwrite, channelId, channelPassword);
 	}
 
@@ -5442,7 +5378,7 @@ public class TS3ApiAsync {
 	 * @see #uploadIconDirect(byte[])
 	 * @see #downloadIcon(OutputStream, long)
 	 */
-	public CommandFuture<Long> uploadIcon(InputStream dataIn, long dataLength) {
+	public CompletableFuture<Long> uploadIcon(InputStream dataIn, long dataLength) {
 		byte[] data;
 		try {
 			data = FileTransferHelper.readFully(dataIn, dataLength);
@@ -5471,17 +5407,10 @@ public class TS3ApiAsync {
 	 * @see #uploadIcon(InputStream, long)
 	 * @see #downloadIconDirect(long)
 	 */
-	public CommandFuture<Long> uploadIconDirect(byte[] data) {
-		CommandFuture<Long> future = new CommandFuture<>();
-
+	public CompletableFuture<Long> uploadIconDirect(byte[] data) {
 		long iconId = FileTransferHelper.getIconId(data);
 		String path = "/icon_" + iconId;
-
-		uploadFileDirect(data, path, false, 0)
-				.onSuccess(__ -> future.set(iconId))
-				.onFailure(transformError(future, 2050, iconId));
-
-		return future;
+		return recover(CommandFutures.map(uploadFileDirect(data, path, false, 0), __ -> iconId), 2050, iconId);
 	}
 
 	/**
@@ -5499,7 +5428,7 @@ public class TS3ApiAsync {
 	 * @see #addPrivilegeKey(PrivilegeKeyType, int, int, String)
 	 * @see #usePrivilegeKey(PrivilegeKey)
 	 */
-	public CommandFuture<Void> usePrivilegeKey(String token) {
+	public CompletableFuture<Void> usePrivilegeKey(String token) {
 		Command cmd = PrivilegeKeyCommands.privilegeKeyUse(token);
 		return executeAndReturnError(cmd);
 	}
@@ -5519,7 +5448,7 @@ public class TS3ApiAsync {
 	 * @see #addPrivilegeKey(PrivilegeKeyType, int, int, String)
 	 * @see #usePrivilegeKey(String)
 	 */
-	public CommandFuture<Void> usePrivilegeKey(PrivilegeKey privilegeKey) {
+	public CompletableFuture<Void> usePrivilegeKey(PrivilegeKey privilegeKey) {
 		return usePrivilegeKey(privilegeKey.getToken());
 	}
 
@@ -5533,58 +5462,64 @@ public class TS3ApiAsync {
 	 * @querycommands 1
 	 * @see #getClientInfo(int)
 	 */
-	public CommandFuture<ServerQueryInfo> whoAmI() {
+	public CompletableFuture<ServerQueryInfo> whoAmI() {
 		Command cmd = QueryCommands.whoAmI();
 		return executeAndTransformFirst(cmd, ServerQueryInfo::new);
 	}
 
-	/**
-	 * Checks whether a given {@link TS3Exception} is a {@link TS3CommandFailedException} with the
-	 * specified error ID.
-	 *
-	 * @param exception
-	 * 		the exception to check
-	 * @param errorId
-	 * 		the error ID to match
-	 *
-	 * @return whether {@code exception} is a {@code TS3CommandFailedException} with error ID {@code errorId}.
-	 */
-	private static boolean isQueryError(TS3Exception exception, int errorId) {
-		if (exception instanceof TS3CommandFailedException) {
-			TS3CommandFailedException cfe = (TS3CommandFailedException) exception;
-			return (cfe.getError().getId() == errorId);
-		} else {
-			return false;
-		}
+	/** Retains admission until actual transfer work finishes, even if its public result is cancelled. */
+	private <T> CompletableFuture<T> executeTransfer(Command command, Function<FileTransferParameters, T> transfer) {
+		var finished = new CompletableFuture<Void>();
+		command.getFuture().whenComplete((value, failure) -> {
+			if (failure != null) finished.complete(null);
+		});
+		java.util.concurrent.Executor executor = action -> {
+			try {
+				query.callbackExecutor().execute(() -> {
+					try { action.run(); } finally { finished.complete(null); }
+				});
+			} catch (RuntimeException rejected) { finished.complete(null); throw rejected; }
+		};
+		var work = command.getFuture().thenApplyAsync(response -> {
+			var params = new FileTransferParameters(response.getFirstResponse().getMap());
+			var error = params.getQueryError();
+			if (!error.isSuccessful()) throw new TS3CommandFailedException(error, command.getName());
+			return transfer.apply(params);
+		}, executor);
+		var result = CommandFutures.link(work, command.getFuture(), work);
+		commandQueue.enqueueCommand(command, finished);
+		return result;
 	}
 
 	/**
-	 * Creates a {@code FailureListener} that checks whether the caught exception is
+	 * Creates an error recovery stage that checks whether the caught exception is
 	 * a {@code TS3CommandFailedException} with error ID {@code errorId}.
 	 * <p>
-	 * If so, the listener makes {@code future} succeed by setting its result value to an empty
-	 * list with element type {@code T}. Else, the caught exception is forwarded to {@code future}.
+	 * If so, the stage succeeds with the replacement value, such as an empty
+	 * list with element type {@code T}. Otherwise the failure is propagated.
 	 * </p>
 	 *
-	 * @param future
-	 * 		the future to forward the result to
+	 * @param request
+	 * 		the future to recover
 	 * @param errorId
 	 * 		the error ID to catch
 	 * @param replacement
-	 * 		the value to
+	 * 		the value to return for the expected error
 	 * @param <T>
-	 * 		the type of {@code replacement} and element type of {@code future}
+	 * 		the type of the replacement value
 	 *
-	 * @return a {@code FailureListener} with the described properties
+	 * @return a stage with the described error recovery
 	 */
-	private static <T> CommandFuture.FailureListener transformError(CommandFuture<T> future, int errorId, T replacement) {
-		return exception -> {
-			if (isQueryError(exception, errorId)) {
-				future.set(replacement);
-			} else {
-				future.fail(exception);
-			}
-		};
+	private static <T> CompletableFuture<T> recover(CompletableFuture<T> request, int errorId, T replacement) {
+		return CommandFutures.link(request.handle((value, failure) -> {
+			if (failure == null) return value;
+			Throwable cause = CommandFutures.unwrap(failure);
+			try { throw cause; }
+			catch (TS3Exception error) {
+				if (error.matchesQueryError(errorId)) return replacement;
+				throw error;
+			} catch (Throwable other) { throw new java.util.concurrent.CompletionException(other); }
+		}), request);
 	}
 
 	/**
@@ -5595,9 +5530,9 @@ public class TS3ApiAsync {
 	 *
 	 * @return a future to track the progress of this command
 	 */
-	private CommandFuture<Void> executeAndReturnError(Command command) {
-		CommandFuture<Void> future = command.getFuture()
-				.map(__ -> null); // Mark as successful
+	private CompletableFuture<Void> executeAndReturnError(Command command) {
+		CompletableFuture<Void> future = CommandFutures.map(command.getFuture(),
+				__ -> null); // Mark as successful
 
 		commandQueue.enqueueCommand(command);
 		return future;
@@ -5614,9 +5549,9 @@ public class TS3ApiAsync {
 	 *
 	 * @return the value of the specified {@code String} property
 	 */
-	private CommandFuture<String> executeAndReturnStringProperty(Command command, String property) {
-		CommandFuture<String> future = command.getFuture()
-				.map(result -> result.getFirstResponse().get(property));
+	private CompletableFuture<String> executeAndReturnStringProperty(Command command, String property) {
+		CompletableFuture<String> future = CommandFutures.map(command.getFuture(),
+				result -> result.getFirstResponse().get(property));
 
 		commandQueue.enqueueCommand(command);
 		return future;
@@ -5632,17 +5567,17 @@ public class TS3ApiAsync {
 	 *
 	 * @return the value of the specified {@code Integer} property
 	 */
-	private CommandFuture<Integer> executeAndReturnIntProperty(Command command, String property) {
-		CommandFuture<Integer> future = command.getFuture()
-				.map(result -> result.getFirstResponse().getInt(property));
+	private CompletableFuture<Integer> executeAndReturnIntProperty(Command command, String property) {
+		CompletableFuture<Integer> future = CommandFutures.map(command.getFuture(),
+				result -> result.getFirstResponse().getInt(property));
 
 		commandQueue.enqueueCommand(command);
 		return future;
 	}
 
-	private CommandFuture<int[]> executeAndReturnIntArray(Command command, String property) {
-		CommandFuture<int[]> future = command.getFuture()
-				.map(result -> {
+	private CompletableFuture<int[]> executeAndReturnIntArray(Command command, String property) {
+		CompletableFuture<int[]> future = CommandFutures.map(command.getFuture(),
+				result -> {
 					List<Wrapper> responses = result.getResponses();
 					int[] values = new int[responses.size()];
 					int i = 0;
@@ -5670,7 +5605,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a future of a {@code T} wrapper of the first response map
 	 */
-	private <T extends Wrapper> CommandFuture<T> executeAndTransformFirst(Command command, Function<Map<String, String>, T> fn) {
+	private <T extends Wrapper> CompletableFuture<T> executeAndTransformFirst(Command command, Function<Map<String, String>, T> fn) {
 		return executeAndMapFirst(command, wrapper -> fn.apply(wrapper.getMap()));
 	}
 
@@ -5687,9 +5622,9 @@ public class TS3ApiAsync {
 	 *
 	 * @return a future of a {@code T}
 	 */
-	private <T> CommandFuture<T> executeAndMapFirst(Command command, Function<Wrapper, T> fn) {
-		CommandFuture<T> future = command.getFuture()
-				.map(result -> fn.apply(result.getFirstResponse()));
+	private <T> CompletableFuture<T> executeAndMapFirst(Command command, Function<Wrapper, T> fn) {
+		CompletableFuture<T> future = CommandFutures.map(command.getFuture(),
+				result -> fn.apply(result.getFirstResponse()));
 
 		commandQueue.enqueueCommand(command);
 		return future;
@@ -5708,7 +5643,7 @@ public class TS3ApiAsync {
 	 *
 	 * @return a future of a list of wrapped response maps
 	 */
-	private <T extends Wrapper> CommandFuture<List<T>> executeAndTransform(Command command, Function<Map<String, String>, T> fn) {
+	private <T extends Wrapper> CompletableFuture<List<T>> executeAndTransform(Command command, Function<Map<String, String>, T> fn) {
 		return executeAndMap(command, wrapper -> fn.apply(wrapper.getMap()));
 	}
 
@@ -5725,9 +5660,9 @@ public class TS3ApiAsync {
 	 *
 	 * @return a future of a list of {@code T}
 	 */
-	private <T> CommandFuture<List<T>> executeAndMap(Command command, Function<Wrapper, T> fn) {
-		CommandFuture<List<T>> future = command.getFuture()
-				.map(result -> {
+	private <T> CompletableFuture<List<T>> executeAndMap(Command command, Function<Wrapper, T> fn) {
+		CompletableFuture<List<T>> future = CommandFutures.map(command.getFuture(),
+				result -> {
 					List<Wrapper> response = result.getResponses();
 					List<T> transformed = new ArrayList<>(response.size());
 					for (Wrapper wrapper : response) {
@@ -5768,26 +5703,17 @@ public class TS3ApiAsync {
 	 *
 	 * @return a future of a list of values of type {@code V}
 	 */
-	private static <K, V> CommandFuture<List<V>> findByKey(CommandFuture<List<K>> keysFuture, CommandFuture<List<V>> valuesFuture,
+	private static <K, V> CompletableFuture<List<V>> findByKey(CompletableFuture<List<K>> keysFuture, CompletableFuture<List<V>> valuesFuture,
 	                                                       Function<? super V, ? extends K> keyMapper) {
-		CommandFuture<List<V>> future = new CommandFuture<>();
-
-		keysFuture.onSuccess(keys ->
-				valuesFuture.onSuccess(values -> {
-					Map<K, V> valueMap = values.stream().collect(Collectors.toMap(keyMapper, Function.identity(), (l, r) -> l));
-					List<V> foundValues = new ArrayList<>(keys.size());
-
-					for (K key : keys) {
-						if (key == null) continue;
-						V value = valueMap.get(key);
-						if (value == null) continue;
-						foundValues.add(value);
-					}
-
-					future.set(foundValues);
-				}).forwardFailure(future)
-		).forwardFailure(future);
-
-		return future;
+		return CommandFutures.link(CommandFutures.compose(keysFuture, keys -> CommandFutures.map(valuesFuture, values -> {
+			Map<K, V> valueMap = values.stream().collect(Collectors.toMap(keyMapper, Function.identity(), (l, r) -> l));
+			List<V> foundValues = new ArrayList<>(keys.size());
+			for (K key : keys) {
+				if (key == null) continue;
+				V value = valueMap.get(key);
+				if (value != null) foundValues.add(value);
+			}
+			return foundValues;
+		})), keysFuture, valuesFuture);
 	}
 }
