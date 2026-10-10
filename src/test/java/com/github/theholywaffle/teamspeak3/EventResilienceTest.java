@@ -143,9 +143,7 @@ class EventResilienceTest {
 					try { assertEquals(2, FutureAssertions.read(query.getAsyncApi().whoAmI()).getId()); break; }
 					catch (TS3QueueFullException full) { if (System.nanoTime() >= until) throw full; Thread.sleep(1); }
 				}
-				// get observes the value before completion callbacks return and release the slot.
-				while (query.commandAdmission(true).availablePermits() == 0 && System.nanoTime() < until) Thread.sleep(1);
-				assertEquals(1, query.commandAdmission(true).availablePermits());
+				FutureAssertions.awaitCommandAdmission(query);
 			} finally { response.countDown(); release.countDown(); query.exit(); }
 			peer.await();
 		}

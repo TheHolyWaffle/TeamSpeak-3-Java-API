@@ -146,6 +146,7 @@ class CommandFuturesTest {
 			assertTrue(cancelled.cancel(false));
 			var next = query.getAsyncApi().whoAmI(); assertFalse(next.isDone());
 			query.connect(); assertEquals(2, next.get(2, TimeUnit.SECONDS).getId());
+			FutureAssertions.awaitCommandAdmission(query);
 			query.exit(); peer.await();
 		}
 	}
@@ -284,7 +285,9 @@ class CommandFuturesTest {
 				var next = query.getAsyncApi().whoAmI(); assertFalse(next.isDone());
 				query.connect(); assertEquals(2, next.get(2, TimeUnit.SECONDS).getId());
 			} finally { release.countDown(); cancelling.join(5000); }
-			assertTrue(cancelled.get(1, TimeUnit.SECONDS)); query.exit(); peer.await();
+			assertTrue(cancelled.get(1, TimeUnit.SECONDS));
+			FutureAssertions.awaitCommandAdmission(query);
+			query.exit(); peer.await();
 		} finally { release.countDown(); }
 	}
 
@@ -340,6 +343,7 @@ class CommandFuturesTest {
 				while (query.commandAdmission(true).availablePermits() == 0 && System.nanoTime() < until) Thread.sleep(1);
 				assertEquals(1, query.commandAdmission(true).availablePermits());
 				assertEquals(2, query.getAsyncApi().whoAmI().get(2, TimeUnit.SECONDS).getId());
+				FutureAssertions.awaitCommandAdmission(query);
 				query.exit(); peer.await(); fileDone.get(2, TimeUnit.SECONDS);
 			} finally { release.countDown(); fileWorker.join(5000); }
 		} finally { release.countDown(); }
