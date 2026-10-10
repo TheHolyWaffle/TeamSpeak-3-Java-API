@@ -1,0 +1,19 @@
+src/main/java/com/github/theholywaffle/teamspeak3/api/CommandFutures.java
+  s_32edc947027172::t_9c3de5b1c902c1 15,18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9a00cad2184fe38350a0808101d96dd5a6ef5aeb",
+  "prompts": {},
+  "sessions": {
+    "s_32edc947027172": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a125cf-814f-7241-8752-f6bd9460ab89",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
