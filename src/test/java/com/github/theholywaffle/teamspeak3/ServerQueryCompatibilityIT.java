@@ -1,6 +1,11 @@
 package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
+import com.github.theholywaffle.teamspeak3.api.BPermissionType;
+import com.github.theholywaffle.teamspeak3.api.IPermissionType;
+import com.github.theholywaffle.teamspeak3.api.PermissionGroupType;
+import com.github.theholywaffle.teamspeak3.api.wrapper.Permission;
+import com.github.theholywaffle.teamspeak3.api.wrapper.PermissionInfo;
 import com.github.theholywaffle.teamspeak3.api.event.ChannelCreateEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ChannelEditedEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ChannelMovedEvent;
@@ -289,6 +294,117 @@ class ServerQueryCompatibilityIT {
 			Path path = Path.of("target", "compatibility", target + "-channels.txt");
 			Files.createDirectories(path.getParent()); Files.write(path, evidence);
 		}
+	}
+
+	@ParameterizedTest(name = "{0}: permission metadata and named channel/group assignments")
+	@EnumSource(Target.class)
+	@Timeout(60)
+	void permissionDomain(Target target) throws Exception {
+		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		var evidence = new java.util.ArrayList<String>();
+		try (var query = new TS3Query(server.config(target.protocol))) {
+			query.connect();
+			var api = query.getApi();
+			api.selectVirtualServerById(1);
+			server.record(target.name(), api.getVersion());
+			for (String command : java.util.List.of("permissionlist", "permidgetbyname", "permget", "permfind", "channeladdperm",
+				"channelpermlist", "channeldelperm", "servergroupadd", "servergrouplist", "servergrouprename", "servergroupdel",
+				"servergroupaddperm", "servergrouppermlist", "servergroupdelperm", "channelgroupadd", "channelgrouplist",
+				"channelgrouprename", "channelgroupdel", "channelgroupaddperm", "channelgrouppermlist", "channelgroupdelperm")) {
+				String help = api.executeRawCommand("help " + command).getRawResponse();
+				assertTrue(help.startsWith("Usage: " + command), "Live help must describe " + command);
+				evidence.add("help " + command + "\n" + help);
+			}
+			var metadata = api.getPermissions();
+			assertFalse(metadata.isEmpty());
+			var byName = new java.util.HashMap<String, PermissionInfo>();
+			var ids = new java.util.HashSet<Integer>();
+			for (var permission : metadata) {
+				assertFalse(permission.getName().isBlank()); assertTrue(permission.getId() > 0);
+				assertNull(byName.put(permission.getName(), permission), "Permission names must be unique");
+				assertTrue(ids.add(permission.getId()), "Permission IDs must be unique on this server");
+			}
+			metadata.stream().sorted(java.util.Comparator.comparing(PermissionInfo::getName))
+				.forEach(p -> evidence.add("metadata " + new java.util.TreeMap<>(p.getMap())));
+			String integerName = IPermissionType.I_CHANNEL_NEEDED_JOIN_POWER.getName();
+			String booleanName = BPermissionType.B_CHANNEL_CREATE_PERMANENT.getName();
+			assertTrue(byName.containsKey(integerName)); assertTrue(byName.containsKey(booleanName));
+			assertEquals(target.ts6, byName.containsKey("i_ft_max_file_size_mb"));
+			if (target.ts6) assertEquals(byName.get("i_ft_max_file_size_mb").getId(), api.getPermissionIdByName("i_ft_max_file_size_mb"));
+			else assertEquals(2562, assertThrows(TS3CommandFailedException.class, () -> api.getPermissionIdByName("i_ft_max_file_size_mb")).getError().getId());
+			assertEquals(byName.get(integerName).getId(), api.getPermissionIdByName(integerName));
+			assertArrayEquals(new int[]{byName.get(booleanName).getId(), byName.get(integerName).getId()},
+				api.getPermissionIdsByName(booleanName, integerName));
+			assertArrayEquals(new int[]{api.getPermissionValue(booleanName), api.getPermissionValue(integerName)},
+				api.getPermissionValues(booleanName, integerName));
+			try (var channels = new ChannelCleanup(api);
+				 var serverGroup = new CreatedResource(api.addServerGroup("permissions " + target + " | \\s"), id -> api.deleteServerGroup(id, true));
+				 var channelGroup = new CreatedResource(api.addChannelGroup("permissions " + target + " | \\s"), id -> api.deleteChannelGroup(id, true))) {
+				int channel = channels.track(api.createChannel("permission-channel-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
+				assertEquals("permissions " + target + " | \\s", api.getServerGroups().stream().filter(g -> g.getId() == serverGroup.id()).findFirst().orElseThrow().getName());
+				assertEquals("permissions " + target + " | \\s", api.getChannelGroups().stream().filter(g -> g.getId() == channelGroup.id()).findFirst().orElseThrow().getName());
+				api.addChannelPermission(channel, integerName, 17);
+				assertPermission(api.getChannelPermissions(channel), integerName, 17, false, false, evidence, "channel");
+				api.addChannelPermission(channel, integerName, 23);
+				assertPermission(api.getChannelPermissions(channel), integerName, 23, false, false, evidence, "channel update");
+				api.deleteChannelPermission(channel, integerName);
+				assertTrue(api.getChannelPermissions(channel).stream().noneMatch(p -> p.getName().equals(integerName)));
+				api.addServerGroupPermission(serverGroup.id(), integerName, 31, true, true);
+				assertPermission(api.getServerGroupPermissions(serverGroup.id()), integerName, 31, true, true, evidence, "server group");
+				var assignment = api.getPermissionAssignments(integerName).stream().filter(p ->
+					p.getType() == PermissionGroupType.SERVER_GROUP && p.getMajorId() == serverGroup.id()).findFirst().orElseThrow();
+				assertEquals(byName.get(integerName).getId(), assignment.getId());
+				assertFalse(assignment.getMap().containsKey("v"), "permfind returns identities, not assignment values");
+				assertFalse(assignment.getMap().containsKey("n"));
+				assertFalse(assignment.getMap().containsKey("s"));
+				evidence.add("assignment search " + new java.util.TreeMap<>(assignment.getMap()));
+				api.addServerGroupPermission(serverGroup.id(), integerName, 37, false, false);
+				assertPermission(api.getServerGroupPermissions(serverGroup.id()), integerName, 37, false, false, evidence, "server group update");
+				api.addServerGroupPermission(serverGroup.id(), booleanName, 1, false, true);
+				assertPermission(api.getServerGroupPermissions(serverGroup.id()), booleanName, 1, false, true, evidence, "server group boolean");
+				api.deleteServerGroupPermission(serverGroup.id(), booleanName);
+				assertTrue(api.getServerGroupPermissions(serverGroup.id()).stream().noneMatch(p -> p.getName().equals(booleanName)));
+				api.deleteServerGroupPermission(serverGroup.id(), integerName);
+				assertTrue(api.getServerGroupPermissions(serverGroup.id()).stream().noneMatch(p -> p.getName().equals(integerName)));
+				api.addChannelGroupPermission(channelGroup.id(), integerName, 41);
+				assertPermission(api.getChannelGroupPermissions(channelGroup.id()), integerName, 41, false, false, evidence, "channel group");
+				api.addChannelGroupPermission(channelGroup.id(), integerName, 43);
+				assertPermission(api.getChannelGroupPermissions(channelGroup.id()), integerName, 43, false, false, evidence, "channel group update");
+				api.deleteChannelGroupPermission(channelGroup.id(), integerName);
+				assertTrue(api.getChannelGroupPermissions(channelGroup.id()).stream().noneMatch(p -> p.getName().equals(integerName)));
+				api.renameServerGroup(serverGroup.id(), "renamed server " + target);
+				assertEquals("renamed server " + target, api.getServerGroups().stream().filter(g -> g.getId() == serverGroup.id()).findFirst().orElseThrow().getName());
+				api.renameChannelGroup(channelGroup.id(), "renamed channel " + target);
+				assertEquals("renamed channel " + target, api.getChannelGroups().stream().filter(g -> g.getId() == channelGroup.id()).findFirst().orElseThrow().getName());
+				var error = assertThrows(TS3CommandFailedException.class, () -> api.addChannelPermission(channel, "i_issue441_missing_permission", 1));
+				evidence.add("unknown permission " + new java.util.TreeMap<>(error.getError().getMap()));
+				assertEquals(2562, error.getError().getId());
+				assertEquals("invalid permission ID", error.getError().getMessage());
+				var lookupError = assertThrows(TS3CommandFailedException.class, () -> api.getPermissionIdByName("i_issue441_missing_permission"));
+				assertEquals(2562, lookupError.getError().getId());
+				var findError = assertThrows(TS3CommandFailedException.class, () -> api.getPermissionAssignments("i_issue441_missing_permission"));
+				assertEquals(2562, findError.getError().getId());
+				assertEquals(byName.get(integerName).getId(), api.getPermissionIdByName(integerName));
+			}
+			assertTrue(api.getServerGroups().stream().noneMatch(g -> g.getName().equals("renamed server " + target)));
+			assertTrue(api.getChannelGroups().stream().noneMatch(g -> g.getName().equals("renamed channel " + target)));
+			query.exit();
+		} finally {
+			Path path = Path.of("target", "compatibility", target + "-permissions.txt");
+			Files.createDirectories(path.getParent()); Files.write(path, evidence);
+		}
+	}
+
+	private static void assertPermission(java.util.List<Permission> assignments,
+	                                    String name, int value, boolean negated, boolean skipped,
+	                                    java.util.List<String> evidence, String label) {
+		var permission = assignments.stream().filter(p -> p.getName().equals(name)).findFirst().orElseThrow();
+		assertEquals(value, permission.getValue()); assertEquals(negated, permission.isNegated()); assertEquals(skipped, permission.isSkipped());
+		evidence.add(label + " " + new java.util.TreeMap<>(permission.getMap()));
+	}
+
+	private record CreatedResource(int id, java.util.function.IntConsumer deletion) implements AutoCloseable {
+		@Override public void close() { deletion.accept(id); }
 	}
 
 	private static final class ChannelCleanup implements AutoCloseable {
