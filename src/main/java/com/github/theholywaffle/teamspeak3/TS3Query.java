@@ -27,6 +27,7 @@ package com.github.theholywaffle.teamspeak3;
  */
 
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
+import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 import org.slf4j.Logger;
@@ -39,12 +40,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * ServerQuery client owning its transport, I/O workers, deadline scheduler and callback executor.
+ * ServerQuery client owning its transport, I/O workers, deadline scheduler and callback executors.
+ * Event callbacks use a fixed worker pool with bounded queues; command completions use virtual
+ * threads bounded by command admission and run separately from event callbacks.
  * Closing interrupts callback tasks; application callbacks must cooperate with interruption.
  */
 public class TS3Query implements AutoCloseable {
@@ -110,6 +114,8 @@ public class TS3Query implements AutoCloseable {
 	private final FileTransferHelper fileTransferHelper;
 	private final CommandQueue globalQueue;
 	private final TS3Config config;
+	private final Semaphore commandAdmission;
+	private final Semaphore startupAdmission;
 
 	/** Observable lifecycle. CLOSED is terminal; DISCONNECTED may reconnect. */
 	public enum State { NEW, CONNECTING, CONNECTED, DISCONNECTED, CLOSING, CLOSED }
@@ -137,6 +143,8 @@ public class TS3Query implements AutoCloseable {
 	 */
 	public TS3Query(TS3Config config) {
 		this.config = config.freeze();
+		this.commandAdmission = new Semaphore(config.getCommandCapacity());
+		this.startupAdmission = new Semaphore(config.getCommandCapacity());
 		this.eventManager = new EventManager(this);
 		this.userThreadPool = Executors.newThreadPerTaskExecutor(
 			Thread.ofVirtual().name("[TeamSpeak-3-Java-API] Callback-", 0).factory());
@@ -258,6 +266,7 @@ public class TS3Query implements AutoCloseable {
 		if (con != null) con.disconnect(deadline);
 		Future<?> task = initializationTask;
 		if (task != null && !task.isDone()) task.cancel(true);
+		eventManager.close();
 		globalQueue.failRemainingCommands();
 		deadlines.shutdownNow();
 		userThreadPool.shutdown();
@@ -272,6 +281,7 @@ public class TS3Query implements AutoCloseable {
 			try { userThreadPool.awaitTermination(deadline.remaining(), TimeUnit.NANOSECONDS); }
 			catch (InterruptedException e) { Thread.currentThread().interrupt(); }
 		}
+		if (!userTask.get()) eventManager.awaitTermination(deadline);
 		state.set(State.CLOSED);
 	}
 
@@ -279,11 +289,12 @@ public class TS3Query implements AutoCloseable {
 	public State getState() { return state.get(); }
 
 	TS3Config getConfig() { return config; }
+	Semaphore commandAdmission(boolean global) { return global ? commandAdmission : startupAdmission; }
 	boolean isReconnectEnabled() { return config.getReconnectStrategy().isReconnectEnabled(); }
 
 	boolean resourcesTerminated() {
 		Connection con = connection;
-		return userThreadPool.isTerminated() && deadlines.isTerminated()
+		return eventManager.isTerminated() && userThreadPool.isTerminated() && deadlines.isTerminated()
 			&& (con == null || con.threadsTerminated());
 	}
 
@@ -332,7 +343,24 @@ public class TS3Query implements AutoCloseable {
 		return globalQueue.getAsyncApi();
 	}
 
+	/**
+	 * Registers one local event listener with an idempotent close handle.
+	 * @param listener listener receiving ordered callbacks on the owned event executor
+	 * @return local subscription; server event registration remains explicit
+	 */
+	public EventSubscription subscribe(TS3Listener listener) {
+		return eventManager.subscribe(listener);
+	}
+
+	/** @return observable event overflow, unknown/malformed input and callback failure counters */
+	public EventStatistics getEventStatistics() { return eventManager.statistics(); }
+
 	// INTERNAL
+
+	void runUserTask(Runnable task) {
+		userTask.set(true);
+		try { task.run(); } finally { userTask.remove(); }
+	}
 
 	void submitUserTask(final String name, final Runnable task) {
 		try {
