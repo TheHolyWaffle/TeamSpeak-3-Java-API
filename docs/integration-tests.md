@@ -103,3 +103,8 @@ TS3 SSH and TS6 SSH. It records decoded payloads in
 no malformed notifications, callback failures or event loss. Scripted tests cover
 unknown/malformed notifications and repeated identical frames that real servers
 are not expected to emit on demand. See [event migration notes](events-and-capacity.md).
+
+Task #441 expands the baseline with independent-session channel domain tests,
+live command help, decoded field inventories and typed channel-error checks. See
+the [command/event inventory and migration notes](command-compatibility.md) for
+the exact supported subset and remaining domains.

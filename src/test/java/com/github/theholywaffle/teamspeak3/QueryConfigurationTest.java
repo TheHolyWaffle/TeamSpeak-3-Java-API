@@ -92,7 +92,10 @@ class QueryConfigurationTest {
 				query.connect();
 				assertEquals("6.0.0-test", query.getApi().getVersion().getVersion());
 				query.exit();
-				assertTrue(query.resourcesTerminated());
+				// Shutdown signals may precede the worker termination flag on a busy CI runner.
+				long until = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(1);
+				while (!query.resourcesTerminated() && System.nanoTime() < until) Thread.sleep(5);
+				assertTrue(query.resourcesTerminated(), "Custom transport and library workers must terminate");
 				peer.await();
 			}
 			assertEquals(1, created.get());
