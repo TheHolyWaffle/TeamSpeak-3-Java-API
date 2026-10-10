@@ -1,0 +1,71 @@
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Config.java
+  s_45dca1ad1c3916::t_fee93b72bf05a3 62-63,65,67,69,71-74,76,78,80,82-83,440-442
+  s_45dca1ad1c3916::t_793daef6a870a5 32-33,37,60-61,68,70,79,81,85-86
+  s_45dca1ad1c3916::t_61caa6518de47a 64,66,75,77,84
+docs/reconnect-and-retry.md
+  s_45dca1ad1c3916::t_1bce782b0d58ed 1-119
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3UnknownOutcomeException.java
+  s_45dca1ad1c3916::t_fee93b72bf05a3 1-42
+src/main/java/com/github/theholywaffle/teamspeak3/api/reconnect/CommandRetryPolicy.java
+  s_45dca1ad1c3916::t_fee93b72bf05a3 1-65,68-70
+  s_45dca1ad1c3916::t_5b557aa17ab37a 66-67
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Query.java
+  s_45dca1ad1c3916::t_fee93b72bf05a3 196-199
+  s_45dca1ad1c3916::t_21ae083cdd1835 147,228,282,372
+src/main/java/com/github/theholywaffle/teamspeak3/Connection.java
+  s_45dca1ad1c3916::t_fee93b72bf05a3 85,91,97-104
+  s_45dca1ad1c3916::t_793daef6a870a5 129
+src/main/java/com/github/theholywaffle/teamspeak3/api/reconnect/SessionConfiguration.java
+  s_45dca1ad1c3916::t_fee93b72bf05a3 1-45,49-63,66-69,72-75,79-86,89-95
+  s_45dca1ad1c3916::t_1e7bd327934196 46-48,64-65,70-71,76-78,87-88
+src/main/java/com/github/theholywaffle/teamspeak3/CommandQueue.java
+  s_45dca1ad1c3916::t_fee93b72bf05a3 31,40,63-67,71,85,120-123,132,135-137,139-143,148-152,154,171,173,176,178-179,181-184,186-189,191-207,210-215,251,287-288
+  s_45dca1ad1c3916::t_793daef6a870a5 116-119,144-147
+  s_45dca1ad1c3916::t_8aa0b6ab0c4db3 138,166,169-170,190,208,289
+docs/connection-lifecycle.md
+  s_45dca1ad1c3916::t_1bce782b0d58ed 75-76,78-81
+src/main/java/com/github/theholywaffle/teamspeak3/api/CommandFuture.java
+  s_45dca1ad1c3916::t_793daef6a870a5 531-533
+  s_45dca1ad1c3916::t_fee93b72bf05a3 116,548,685
+src/main/java/com/github/theholywaffle/teamspeak3/StreamWriter.java
+  s_45dca1ad1c3916::t_793daef6a870a5 76-78
+  s_45dca1ad1c3916::t_8c8d13ac16825f 63
+src/test/java/com/github/theholywaffle/teamspeak3/ReconnectSemanticsTest.java
+  s_45dca1ad1c3916::t_793daef6a870a5 125-396
+  s_45dca1ad1c3916::t_ab0eb3c63d166e 1-124,397-406
+example/ReconnectExample.java
+  s_45dca1ad1c3916::t_1bce782b0d58ed 38-39,60-64,98-99,142-143,152-153
+  s_45dca1ad1c3916::t_fe43ac32f9cf87 154
+AGENTS.md
+  s_45dca1ad1c3916::t_04040a50f54459 1
+README.md
+  s_45dca1ad1c3916::t_050b306a067ddc 73
+src/main/java/com/github/theholywaffle/teamspeak3/StreamReader.java
+  s_45dca1ad1c3916::t_8f1fef4733d9f5 182,186
+src/main/java/com/github/theholywaffle/teamspeak3/api/reconnect/ReconnectStrategy.java
+  s_45dca1ad1c3916::t_9f7ca327ed61d1 37-39,43-60,102,113,124-126,128-130,136-138,141,150,152-156,160-161,167-169,172,181,183-187,189-191,198-200,203
+src/main/java/com/github/theholywaffle/teamspeak3/api/reconnect/ReconnectingConnectionHandler.java
+  s_45dca1ad1c3916::t_8d43a75de65338 35-36,46,50-67,85,90-92,94,96,99,102,104-108,110,112-117,119-123
+src/test/java/com/github/theholywaffle/teamspeak3/DisconnectingProxy.java
+  s_45dca1ad1c3916::t_f6dc2f365f7c25 1-65
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryCompatibilityIT.java
+  s_45dca1ad1c3916::t_44ffaa0f4309d1 4-13,96-135
+src/test/java/com/github/theholywaffle/teamspeak3/api/reconnect/ReconnectBackoffTest.java
+  s_45dca1ad1c3916::t_32b9e5385cfa5c 1-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "df1d1be24bed600088092665420a6d70f94a88f2",
+  "prompts": {},
+  "sessions": {
+    "s_45dca1ad1c3916": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1259e-f615-7801-89cb-88563c78b6ca",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "bert.degeyter <bert.degeyter@showpad.com>"
+    }
+  }
+}
