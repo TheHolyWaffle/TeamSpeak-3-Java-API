@@ -54,7 +54,7 @@ public final class CommandFutures {
 		} catch (CompletionException failure) {
 			Throwable cause = unwrap(failure);
 			try { throw cause; }
-			catch (TS3Exception exception) { throw exception; }
+			catch (TS3Exception | CancellationException exception) { throw exception; }
 			catch (Throwable exception) { throw new TS3Exception("Asynchronous operation failed", exception); }
 		}
 	}
@@ -71,10 +71,40 @@ public final class CommandFutures {
 	public static <T> CompletableFuture<T> link(CompletableFuture<T> result, CompletableFuture<?>... requests) {
 		var snapshot = requests.clone();
 		for (var request : snapshot) Objects.requireNonNull(request);
-		result.whenComplete((value, failure) -> {
-			if (result.isCancelled()) for (var request : snapshot) request.cancel(false);
+		var linked = new RequestFuture<T>(() -> {
+			for (var request : snapshot) request.cancel(false);
 		});
-		return result;
+		relay(result, linked);
+		return linked;
+	}
+
+	private static <T> void relay(CompletableFuture<T> source, RequestFuture<T> target) {
+		source.whenComplete((value, failure) -> {
+			if (target.cancelling.get()) return;
+			if (failure == null) target.complete(value);
+			else target.completeExceptionally(unwrap(failure));
+		});
+	}
+
+	/** JDK state/composition with request cancellation performed before application observers. */
+	private static final class RequestFuture<T> extends CompletableFuture<T> {
+		private final AtomicReference<Runnable> cancelRequest;
+		private final AtomicBoolean cancelling = new AtomicBoolean();
+
+		private RequestFuture(Runnable cancelRequest) {
+			this.cancelRequest = new AtomicReference<>(cancelRequest);
+			whenComplete((value, failure) -> this.cancelRequest.set(null));
+		}
+
+		@Override public boolean cancel(boolean mayInterruptIfRunning) {
+			if (isDone()) return super.cancel(false);
+			if (!cancelling.compareAndSet(false, true)) return isCancelled();
+			try {
+				var action = cancelRequest.getAndSet(null);
+				if (action != null) action.run();
+			} finally { super.cancel(false); }
+			return isCancelled();
+		}
 	}
 
 	/** Maps a result using JDK composition and links request cancellation. */
@@ -88,21 +118,20 @@ public final class CommandFutures {
 		Objects.requireNonNull(fn);
 		var cancelled = new AtomicBoolean();
 		var child = new AtomicReference<CompletableFuture<U>>();
-		var result = request.thenCompose(value -> {
+		var result = new RequestFuture<U>(() -> {
+			cancelled.set(true);
+			request.cancel(false);
+			var next = child.get();
+			if (next != null) next.cancel(false);
+		});
+		var composed = request.thenCompose(value -> {
 			if (cancelled.get()) return CompletableFuture.<U>failedFuture(new CancellationException());
 			var next = Objects.requireNonNull(fn.apply(value));
 			child.set(next);
 			if (cancelled.get()) next.cancel(false);
 			return next;
 		});
-		result.whenComplete((value, failure) -> {
-			if (result.isCancelled()) {
-				cancelled.set(true);
-				request.cancel(false);
-				var next = child.get();
-				if (next != null) next.cancel(false);
-			}
-		});
+		relay(composed, result);
 		return result;
 	}
 

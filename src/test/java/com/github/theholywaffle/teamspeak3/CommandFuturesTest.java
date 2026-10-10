@@ -94,6 +94,26 @@ class CommandFuturesTest {
 		assertEquals(List.of(), CommandFutures.all(List.<CompletableFuture<Integer>>of()).get());
 	}
 
+	@Test void aggregateCancellationReachesEveryInputBeforeApplicationObservers() throws Exception {
+		var first = new CompletableFuture<Integer>();
+		var second = new CompletableFuture<Integer>();
+		var result = CommandFutures.all(List.of(first, second));
+		var observed = new CountDownLatch(1);
+		var release = new CountDownLatch(1);
+		result.whenComplete((value, failure) -> {
+			observed.countDown();
+			try { await(release); } catch (InterruptedException e) { throw new AssertionError(e); }
+		});
+		var cancelling = Thread.ofVirtual().start(() -> result.cancel(false));
+		try {
+			await(observed);
+			assertTrue(first.isCancelled());
+			assertTrue(second.isCancelled());
+		} finally { release.countDown(); }
+		cancelling.join(5000);
+		assertFalse(cancelling.isAlive());
+	}
+
 	@Test void getTimeoutIsObservationalAndStageTimeoutIsTerminal() throws Exception {
 		var source = new CompletableFuture<Integer>();
 		assertThrows(TimeoutException.class, () -> source.get(1, TimeUnit.MILLISECONDS));
@@ -245,6 +265,84 @@ class CommandFuturesTest {
 			var closed = first.thenRun(query::close); respond.countDown();
 			closed.get(2, TimeUnit.SECONDS); assertEquals(TS3Query.State.CLOSED, query.getState()); peer.await();
 		} finally { respond.countDown(); }
+	}
+
+	@Test void cancellationReachesUnsentRequestBeforeBlockingApplicationObservers() throws Exception {
+		var entered = new CountDownLatch(1); var release = new CountDownLatch(1);
+		try (var peer = new FakeServerQuery(p -> {
+			p.expect("whoami"); p.write("client_id=2\nerror id=0 msg=ok\n"); p.finishQuit();
+		}); var query = new TS3Query(new TS3Config().setHost("127.0.0.1").setQueryPort(peer.port()).setCommandCapacity(1))) {
+			var mutation = query.getAsyncApi().createChannel("must-not-send", java.util.Map.of());
+			mutation.whenComplete((value, failure) -> {
+				entered.countDown();
+				try { await(release); } catch (InterruptedException e) { throw new AssertionError(e); }
+			});
+			var cancelled = new CompletableFuture<Boolean>();
+			var cancelling = Thread.ofVirtual().start(() -> cancelled.complete(mutation.cancel(false)));
+			try {
+				await(entered); assertTrue(mutation.isCancelled());
+				var next = query.getAsyncApi().whoAmI(); assertFalse(next.isDone());
+				query.connect(); assertEquals(2, next.get(2, TimeUnit.SECONDS).getId());
+			} finally { release.countDown(); cancelling.join(5000); }
+			assertTrue(cancelled.get(1, TimeUnit.SECONDS)); query.exit(); peer.await();
+		} finally { release.countDown(); }
+	}
+
+	@Test void lookupErrorRecoversBeforeAnUnrelatedListingResponds() throws Exception {
+		var release = new CountDownLatch(1);
+		try (var peer = new FakeServerQuery(p -> {
+			p.expect("channelfind pattern=missing"); p.write("error id=768 msg=invalid_channel\n");
+			p.expect(com.github.theholywaffle.teamspeak3.commands.ChannelCommands.channelList().toString());
+			await(release); p.write("error id=0 msg=ok\n"); p.finishQuit();
+		}); var query = query(peer)) {
+			query.connect();
+			try { assertEquals(List.of(), query.getAsyncApi().getChannelsByName("missing").get(500, TimeUnit.MILLISECONDS)); }
+			finally { release.countDown(); }
+			query.exit(); peer.await();
+		} finally { release.countDown(); }
+	}
+
+	@Test void synchronousAdapterRethrowsWrappedCancellation() {
+		var source = new CompletableFuture<Integer>(); source.cancel(false);
+		var dependent = source.thenApply(value -> value + 1);
+		assertThrows(CancellationException.class, () -> CommandFutures.join(dependent));
+	}
+
+	@Test void fileWorkRetainsAdmissionEvenWhenItsResultIsCancelled() throws Exception {
+		var entered = new CountDownLatch(1); var release = new CountDownLatch(1);
+		var fileDone = new CompletableFuture<Void>();
+		try (var files = new java.net.ServerSocket(0, 1, java.net.InetAddress.getLoopbackAddress());
+		     var peer = new FakeServerQuery(p -> {
+			p.expect(com.github.theholywaffle.teamspeak3.commands.FileCommands.ftInitDownload(0, "/test", 0, "").toString());
+			p.write("clientftfid=0 serverftfid=1 ftkey=k port=" + files.getLocalPort() + " size=1\nerror id=0 msg=ok\n");
+			p.expect("whoami"); p.write("client_id=2\nerror id=0 msg=ok\n"); p.finishQuit();
+		}); var query = new TS3Query(new TS3Config().setHost("127.0.0.1").setQueryPort(peer.port()).setCommandCapacity(1))) {
+			files.setSoTimeout(5000);
+			var fileWorker = Thread.ofVirtual().start(() -> {
+				try (var socket = files.accept()) {
+					socket.setSoTimeout(5000); assertEquals('k', socket.getInputStream().read());
+					socket.getOutputStream().write(7); fileDone.complete(null);
+				} catch (Throwable failure) { fileDone.completeExceptionally(failure); }
+			});
+			var output = new java.io.OutputStream() {
+				@Override public void write(int value) throws java.io.IOException {
+					entered.countDown();
+					try { await(release); } catch (InterruptedException e) { throw new java.io.IOException(e); }
+				}
+			};
+			query.connect(); var transfer = query.getAsyncApi().downloadFile(output, "/test", 0);
+			try {
+				await(entered); assertTrue(transfer.cancel(false));
+				assertThrows(com.github.theholywaffle.teamspeak3.api.exception.TS3QueueFullException.class,
+					() -> FutureAssertions.read(query.getAsyncApi().whoAmI()));
+				release.countDown();
+				long until = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+				while (query.commandAdmission(true).availablePermits() == 0 && System.nanoTime() < until) Thread.sleep(1);
+				assertEquals(1, query.commandAdmission(true).availablePermits());
+				assertEquals(2, query.getAsyncApi().whoAmI().get(2, TimeUnit.SECONDS).getId());
+				query.exit(); peer.await(); fileDone.get(2, TimeUnit.SECONDS);
+			} finally { release.countDown(); fileWorker.join(5000); }
+		} finally { release.countDown(); }
 	}
 
 }

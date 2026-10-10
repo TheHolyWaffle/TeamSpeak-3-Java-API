@@ -40,6 +40,8 @@ import java.util.Collection;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -47,6 +49,7 @@ import java.util.concurrent.locks.ReentrantLock;
 class CommandQueue {
 
 	private static final int INITIAL_QUEUE_SIZE = 16;
+	private static final CompletionStage<?> NO_ASYNC_WORK = CompletableFuture.completedStage(null);
 
 	private final Queue<Command> sendQueue;
 	private final Queue<Command> receiveQueue;
@@ -70,6 +73,7 @@ class CommandQueue {
 		"login", "logout", "use", "clientupdate", "servernotifyregister", "servernotifyunregister");
 	private final Map<Command, Integer> retries = new IdentityHashMap<>();
 	private final TS3Query query;
+	private final Map<Command, CompletionStage<?>> completionWork = new IdentityHashMap<>();
 	private final Map<Command, Long> enqueued = new IdentityHashMap<>();
 	private final Map<Command, Long> sent = new IdentityHashMap<>();
 	private final Map<Command, Connection> owners = new IdentityHashMap<>();
@@ -110,7 +114,10 @@ class CommandQueue {
 		return isGlobal;
 	}
 
-	void enqueueCommand(Command command) {
+	void enqueueCommand(Command command) { enqueueCommand(command, NO_ASYNC_WORK); }
+
+	// The work stage settles only after asynchronous library work and its inline callbacks return.
+	void enqueueCommand(Command command, CompletionStage<?> work) {
 		queueLock.lock();
 		try {
 			if (rejectNew) {
@@ -131,6 +138,7 @@ class CommandQueue {
 				return;
 			}
 			enqueued.put(command, System.nanoTime());
+			completionWork.put(command, work);
 			sendQueue.add(command);
 			command.getFuture().whenComplete((value, failure) -> {
 				if (command.getFuture().isCancelled()) removeUnsent(command);
@@ -145,7 +153,7 @@ class CommandQueue {
 		queueLock.lock();
 		try {
 			if (sendQueue.remove(command)) {
-				enqueued.remove(command); retries.remove(command); admission.release();
+				enqueued.remove(command); retries.remove(command); completionWork.remove(command); admission.release();
 				canTransfer.signalAll();
 			}
 		} finally { queueLock.unlock(); }
@@ -162,7 +170,7 @@ class CommandQueue {
 				}
 				if (owner.isStopped()) return null;
 				Command command = sendQueue.remove();
-				if (command.getFuture().isCancelled()) { enqueued.remove(command); retries.remove(command); admission.release(); continue; }
+				if (command.getFuture().isCancelled()) { enqueued.remove(command); retries.remove(command); completionWork.remove(command); admission.release(); continue; }
 				if (System.nanoTime() - enqueued.get(command) >= query.getConfig().getQueueWaitTimeout().toNanos()) {
 					fail(command, new TS3Exception("Command queue wait deadline exceeded"));
 					continue;
@@ -190,7 +198,7 @@ class CommandQueue {
 		try {
 			if (receiveQueue.peek() != command || owners.get(command) != owner) return;
 			receiveQueue.remove(); sent.remove(command); owners.remove(command); enqueued.remove(command); retries.remove(command);
-			complete(completion);
+			complete(command, completion);
 			canTransfer.signalAll();
 		} finally { queueLock.unlock(); }
 	}
@@ -234,13 +242,14 @@ class CommandQueue {
 
 	private void fail(Command command, TS3Exception failure) {
 		enqueued.remove(command); retries.remove(command);
-		complete(() -> command.getFuture().completeExceptionally(failure));
+		complete(command, () -> command.getFuture().completeExceptionally(failure));
 	}
 
-	private void complete(Runnable completion) {
+	private void complete(Command command, Runnable completion) {
+		CompletionStage<?> work = completionWork.remove(command);
 		query.submitCompletion(() -> {
 			try { completion.run(); }
-			finally { admission.release(); }
+			finally { work.whenComplete((value, failure) -> admission.release()); }
 		});
 	}
 
@@ -278,7 +287,7 @@ class CommandQueue {
 				if (now - enqueued.get(command) >= timeout) {
 					iterator.remove();
 					enqueued.remove(command); retries.remove(command);
-					complete(() ->
+					complete(command, () ->
 						command.getFuture().completeExceptionally(new TS3Exception("Command queue wait deadline exceeded")));
 					changed = true;
 				}

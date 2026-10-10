@@ -38,4 +38,7 @@ public class TS3Exception extends RuntimeException {
 		super(msg, cause);
 	}
 
+	/** Whether this failure represents the given ServerQuery error ID. */
+	public boolean matchesQueryError(int errorId) { return false; }
+
 }

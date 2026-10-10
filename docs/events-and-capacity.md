@@ -14,6 +14,8 @@ startup/session-restoration commands across all connection generations. Blocked
 startup callbacks therefore also bound subsequent reconnect initialization. A reconnect retains the budget of recovered
 commands. Completion callbacks release admission only after they return, so a
 response stream cannot create an unlimited number of blocked callback threads.
+Library file-transfer work retains the same slot until its I/O and inline callbacks
+finish, including when the public result has been cancelled.
 Immediate admission failures settle on the submitting thread; listeners attached
 to an already completed JDK future can run on the registering thread. See
 [the future contract](futures.md) for completion ordering and async executors. Do not busy-loop on rejection; reduce concurrency or arrange application

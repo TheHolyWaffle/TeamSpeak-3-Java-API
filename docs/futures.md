@@ -67,7 +67,8 @@ an inline callback: it needs the same completion worker. Use `thenCompose` to
 sequence requests, or `thenAcceptAsync`/`whenCompleteAsync` with an application
 executor for blocking work. JDK async methods without an executor use the common
 pool; applications own the lifetime and capacity of their supplied executor.
-File-transfer work uses the query's separate virtual callback executor.
+File-transfer work uses the query's separate virtual callback executor and retains
+its admission slot until that work actually finishes, even after cancellation.
 
 Closing the query stops its completion executor within the existing close budget.
 If an inline callback blocks shutdown, queued completions are handed to the
@@ -102,7 +103,8 @@ request. A response deadline closes the affected connection to avoid misaligning
 later responses.
 
 Cancelling the original API result removes an unsent request and immediately
-releases its admission slot. If the writer has already claimed it, cancellation
+releases its admission slot before cancellation observers run. Aggregate adapters
+also cancel all underlying requests before publishing cancellation. If the writer has already claimed it, cancellation
 cannot retract the bytes: the request remains in the receive queue, its eventual
 response is consumed, and subsequent commands stay aligned. The cancelled request
 is not replayed on reconnect. `cancel(true)` and `cancel(false)` have the same

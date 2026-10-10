@@ -1734,28 +1734,12 @@ public class TS3ApiAsync {
 	 */
 	public CompletableFuture<Long> downloadFile(OutputStream dataOut, String filePath, int channelId, String channelPassword) {
 		FileTransferHelper helper = query.getFileTransferHelper();
-		int transferId = helper.getClientTransferId();
-		Command cmd = FileCommands.ftInitDownload(transferId, filePath, channelId, channelPassword);
-		CompletableFuture<Long> future = new CompletableFuture<>();
-
-		executeAndTransformFirst(cmd, FileTransferParameters::new).thenAcceptAsync(params -> {
-			if (future.isDone()) return;
-			QueryError error = params.getQueryError();
-			if (!error.isSuccessful()) {
-				future.completeExceptionally(new TS3CommandFailedException(error, cmd.getName()));
-				return;
-			}
-
-			try {
-				query.getFileTransferHelper().downloadFile(dataOut, params);
-			} catch (IOException e) {
-				future.completeExceptionally(new TS3FileTransferFailedException("Download failed", e));
-				return;
-			}
-			future.complete(params.getFileSize());
-		}, query.callbackExecutor()).whenComplete((unused, failure) -> { if (failure != null) future.completeExceptionally(failure); });
-
-		return CommandFutures.link(future, cmd.getFuture());
+		Command cmd = FileCommands.ftInitDownload(helper.getClientTransferId(), filePath, channelId, channelPassword);
+		return executeTransfer(cmd, params -> {
+			try { helper.downloadFile(dataOut, params); }
+			catch (IOException failure) { throw new TS3FileTransferFailedException("Download failed", failure); }
+			return params.getFileSize();
+		});
 	}
 
 	/**
@@ -1816,35 +1800,15 @@ public class TS3ApiAsync {
 	 */
 	public CompletableFuture<byte[]> downloadFileDirect(String filePath, int channelId, String channelPassword) {
 		FileTransferHelper helper = query.getFileTransferHelper();
-		int transferId = helper.getClientTransferId();
-		Command cmd = FileCommands.ftInitDownload(transferId, filePath, channelId, channelPassword);
-		CompletableFuture<byte[]> future = new CompletableFuture<>();
-
-		executeAndTransformFirst(cmd, FileTransferParameters::new).thenAcceptAsync(params -> {
-			if (future.isDone()) return;
-			QueryError error = params.getQueryError();
-			if (!error.isSuccessful()) {
-				future.completeExceptionally(new TS3CommandFailedException(error, cmd.getName()));
-				return;
-			}
-
+		Command cmd = FileCommands.ftInitDownload(helper.getClientTransferId(), filePath, channelId, channelPassword);
+		return executeTransfer(cmd, params -> {
 			long fileSize = params.getFileSize();
-			if (fileSize > Integer.MAX_VALUE) {
-				future.completeExceptionally(new TS3FileTransferFailedException("File too big for byte array"));
-				return;
-			}
+			if (fileSize > Integer.MAX_VALUE) throw new TS3FileTransferFailedException("File too big for byte array");
 			ByteArrayOutputStream dataOut = new ByteArrayOutputStream((int) fileSize);
-
-			try {
-				query.getFileTransferHelper().downloadFile(dataOut, params);
-			} catch (IOException e) {
-				future.completeExceptionally(new TS3FileTransferFailedException("Download failed", e));
-				return;
-			}
-			future.complete(dataOut.toByteArray());
-		}, query.callbackExecutor()).whenComplete((unused, failure) -> { if (failure != null) future.completeExceptionally(failure); });
-
-		return CommandFutures.link(future, cmd.getFuture());
+			try { helper.downloadFile(dataOut, params); }
+			catch (IOException failure) { throw new TS3FileTransferFailedException("Download failed", failure); }
+			return dataOut.toByteArray();
+		});
 	}
 
 	/**
@@ -5316,28 +5280,12 @@ public class TS3ApiAsync {
 	 */
 	public CompletableFuture<Void> uploadFile(InputStream dataIn, long dataLength, String filePath, boolean overwrite, int channelId, String channelPassword) {
 		FileTransferHelper helper = query.getFileTransferHelper();
-		int transferId = helper.getClientTransferId();
-		Command cmd = FileCommands.ftInitUpload(transferId, filePath, channelId, channelPassword, dataLength, overwrite);
-		CompletableFuture<Void> future = new CompletableFuture<>();
-
-		executeAndTransformFirst(cmd, FileTransferParameters::new).thenAcceptAsync(params -> {
-			if (future.isDone()) return;
-			QueryError error = params.getQueryError();
-			if (!error.isSuccessful()) {
-				future.completeExceptionally(new TS3CommandFailedException(error, cmd.getName()));
-				return;
-			}
-
-			try {
-				query.getFileTransferHelper().uploadFile(dataIn, dataLength, params);
-			} catch (IOException e) {
-				future.completeExceptionally(new TS3FileTransferFailedException("Upload failed", e));
-				return;
-			}
-			future.complete(null); // Mark as successful
-		}, query.callbackExecutor()).whenComplete((unused, failure) -> { if (failure != null) future.completeExceptionally(failure); });
-
-		return CommandFutures.link(future, cmd.getFuture());
+		Command cmd = FileCommands.ftInitUpload(helper.getClientTransferId(), filePath, channelId, channelPassword, dataLength, overwrite);
+		return executeTransfer(cmd, params -> {
+			try { helper.uploadFile(dataIn, dataLength, params); }
+			catch (IOException failure) { throw new TS3FileTransferFailedException("Upload failed", failure); }
+			return null;
+		});
 	}
 
 	/**
@@ -5519,22 +5467,30 @@ public class TS3ApiAsync {
 		return executeAndTransformFirst(cmd, ServerQueryInfo::new);
 	}
 
-	/**
-	 * Checks whether a given {@link TS3Exception} is a {@link TS3CommandFailedException} with the
-	 * specified error ID.
-	 *
-	 * @param exception
-	 * 		the exception to check
-	 * @param errorId
-	 * 		the error ID to match
-	 *
-	 * @return whether {@code exception} is a {@code TS3CommandFailedException} with error ID {@code errorId}.
-	 */
-	private static boolean isQueryError(Throwable failure, int errorId) {
-		try { throw failure; }
-		catch (TS3CommandFailedException error) { return error.getError().getId() == errorId; }
-		catch (Throwable other) { return false; }
+	/** Retains admission until actual transfer work finishes, even if its public result is cancelled. */
+	private <T> CompletableFuture<T> executeTransfer(Command command, Function<FileTransferParameters, T> transfer) {
+		var finished = new CompletableFuture<Void>();
+		command.getFuture().whenComplete((value, failure) -> {
+			if (failure != null) finished.complete(null);
+		});
+		java.util.concurrent.Executor executor = action -> {
+			try {
+				query.callbackExecutor().execute(() -> {
+					try { action.run(); } finally { finished.complete(null); }
+				});
+			} catch (RuntimeException rejected) { finished.complete(null); throw rejected; }
+		};
+		var work = command.getFuture().thenApplyAsync(response -> {
+			var params = new FileTransferParameters(response.getFirstResponse().getMap());
+			var error = params.getQueryError();
+			if (!error.isSuccessful()) throw new TS3CommandFailedException(error, command.getName());
+			return transfer.apply(params);
+		}, executor);
+		var result = CommandFutures.link(work, command.getFuture(), work);
+		commandQueue.enqueueCommand(command, finished);
+		return result;
 	}
+
 	/**
 	 * Creates an error recovery stage that checks whether the caught exception is
 	 * a {@code TS3CommandFailedException} with error ID {@code errorId}.
@@ -5558,8 +5514,11 @@ public class TS3ApiAsync {
 		return CommandFutures.link(request.handle((value, failure) -> {
 			if (failure == null) return value;
 			Throwable cause = CommandFutures.unwrap(failure);
-			if (isQueryError(cause, errorId)) return replacement;
-			throw new java.util.concurrent.CompletionException(cause);
+			try { throw cause; }
+			catch (TS3Exception error) {
+				if (error.matchesQueryError(errorId)) return replacement;
+				throw error;
+			} catch (Throwable other) { throw new java.util.concurrent.CompletionException(other); }
 		}), request);
 	}
 
@@ -5746,7 +5705,7 @@ public class TS3ApiAsync {
 	 */
 	private static <K, V> CompletableFuture<List<V>> findByKey(CompletableFuture<List<K>> keysFuture, CompletableFuture<List<V>> valuesFuture,
 	                                                       Function<? super V, ? extends K> keyMapper) {
-		return CommandFutures.link(keysFuture.thenCombine(valuesFuture, (keys, values) -> {
+		return CommandFutures.link(CommandFutures.compose(keysFuture, keys -> CommandFutures.map(valuesFuture, values -> {
 			Map<K, V> valueMap = values.stream().collect(Collectors.toMap(keyMapper, Function.identity(), (l, r) -> l));
 			List<V> foundValues = new ArrayList<>(keys.size());
 			for (K key : keys) {
@@ -5755,6 +5714,6 @@ public class TS3ApiAsync {
 				if (value != null) foundValues.add(value);
 			}
 			return foundValues;
-		}), keysFuture, valuesFuture);
+		})), keysFuture, valuesFuture);
 	}
 }
