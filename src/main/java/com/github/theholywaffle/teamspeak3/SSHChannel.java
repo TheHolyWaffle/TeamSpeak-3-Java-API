@@ -40,21 +40,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 class SSHChannel implements QueryTransport {
 
 	private final SSHClient client = new SSHClient();
-	private final Set<Thread> transportReaders = ConcurrentHashMap.newKeySet();
+	private volatile Thread initializingThread;
+	private volatile Thread transportReader;
 	private final Socket socket = new Socket() {
 		@Override
 		public InputStream getInputStream() throws IOException {
 			return new FilterInputStream(super.getInputStream()) {
 				private void trackReader() {
-					// Track socket readers by their I/O contract, including SSH negotiation.
-					// SSHJ's transport join event can fire before its reader thread exits.
-					transportReaders.add(Thread.currentThread());
+					// SSHJ reads identification on the caller before starting its single owned reader.
+					// The query owns that caller; only the asynchronous reader belongs to the transport.
+					Thread current = Thread.currentThread();
+					if (transportReader == null && current != initializingThread) transportReader = current;
 				}
 				@Override public int read() throws IOException { trackReader(); return in.read(); }
 				@Override public int read(byte[] bytes, int offset, int length) throws IOException {
@@ -70,6 +70,7 @@ class SSHChannel implements QueryTransport {
 
 	@Override
 	public void connect(QueryTransport.Connected connection) throws IOException {
+		initializingThread = Thread.currentThread();
 		if (!config.hasLoginCredentials()) {
 			throw new TS3ConnectionFailedException("SSH requires query login credentials");
 		}
@@ -117,13 +118,14 @@ class SSHChannel implements QueryTransport {
 	@Override
 	public void awaitTermination(java.time.Duration timeout) {
 		Deadline deadline = new Deadline(timeout);
-		for (Thread reader : transportReaders) deadline.join(reader);
+		deadline.join(transportReader);
 		deadline.join(client.getConnection().getKeepAlive());
 	}
 
 	@Override
 	public boolean isTerminated() {
-		return transportReaders.stream().noneMatch(Thread::isAlive) && !client.getConnection().getKeepAlive().isAlive();
+		Thread reader = transportReader;
+		return (reader == null || !reader.isAlive()) && !client.getConnection().getKeepAlive().isAlive();
 	}
 
 }

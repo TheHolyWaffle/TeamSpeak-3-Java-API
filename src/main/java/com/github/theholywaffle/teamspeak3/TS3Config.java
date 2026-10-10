@@ -254,10 +254,6 @@ public final class TS3Config {
 		return this;
 	}
 
-	boolean hasLoginCredentials() {
-		return username != null && password != null;
-	}
-
 	String getUsername() {
 		return username;
 	}

@@ -223,6 +223,17 @@ class ServerQueryCompatibilityIT {
 		}
 	}
 
+	@ParameterizedTest(name = "{0}: transport shutdown excludes the connecting caller")
+	@EnumSource(value = Target.class, names = {"TS3_SSH", "TS6_SSH"})
+	void sshTransportShutdownDoesNotJoinConnectingCaller(Target target) throws Exception {
+		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		var config = server.config(target.protocol).build();
+		var transport = config.getTransportFactory().create(config);
+		try (transport) { transport.connect(() -> {}); }
+		transport.awaitTermination(Duration.ofSeconds(1));
+		assertTrue(transport.isTerminated(), "Transport shutdown must exclude the still-running connecting caller");
+	}
+
 	@ParameterizedTest(name = "{0}: SSH authentication and host-key regressions")
 	@EnumSource(value = Target.class, names = {"TS3_SSH", "TS6_SSH"})
 	void sshSecurity(Target target) throws Exception {
