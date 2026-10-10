@@ -1,0 +1,25 @@
+docs/connection-lifecycle.md
+  s_2a3efa3485140c::t_2d2de7280d1288 54-57
+src/main/java/com/github/theholywaffle/teamspeak3/Connection.java
+  s_2a3efa3485140c::t_fd0468b2175b12 93,105,110
+src/main/java/com/github/theholywaffle/teamspeak3/IOChannel.java
+  s_2a3efa3485140c::t_8fd8544191263a 38-41
+src/main/java/com/github/theholywaffle/teamspeak3/SSHChannel.java
+  s_2a3efa3485140c::t_6cf1a875b0bdf0 43,58-76,129-140
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8605ac4bf8a526bac925b7398cd92790a94d67e5",
+  "prompts": {},
+  "sessions": {
+    "s_2a3efa3485140c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1253b-97a2-7ab0-bd7d-51b4f012aa35",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "bert.degeyter <bert.degeyter@showpad.com>"
+    }
+  }
+}
