@@ -34,11 +34,24 @@ import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class TS3Query {
+/**
+ * ServerQuery client owning its transport, I/O workers, deadline scheduler and callback executor.
+ * Closing interrupts callback tasks; application callbacks must cooperate with interruption.
+ */
+public class TS3Query implements AutoCloseable {
 
 	private static final Logger log = LoggerFactory.getLogger(TS3Query.class);
 
@@ -104,7 +117,14 @@ public class TS3Query {
 
 	private final AtomicBoolean connected = new AtomicBoolean(false);
 
-	private Connection connection;
+	/** Observable lifecycle. CLOSED is terminal; DISCONNECTED may reconnect. */
+	public enum State { NEW, CONNECTING, CONNECTED, DISCONNECTED, CLOSING, CLOSED }
+	private final AtomicReference<State> state = new AtomicReference<>(State.NEW);
+	private final ScheduledExecutorService deadlines;
+	private final ThreadLocal<Boolean> userTask = ThreadLocal.withInitial(() -> false);
+	private final ThreadLocal<Boolean> initializing = ThreadLocal.withInitial(() -> false);
+	private volatile Connection connection;
+	private volatile Future<?> initializationTask;
 
 	/**
 	 * Creates a TS3Query that connects to a TS3 server at
@@ -124,10 +144,20 @@ public class TS3Query {
 	public TS3Query(TS3Config config) {
 		this.config = config.freeze();
 		this.eventManager = new EventManager(this);
-		this.userThreadPool = Executors.newCachedThreadPool();
+		this.userThreadPool = Executors.newThreadPerTaskExecutor(
+			Thread.ofVirtual().name("[TeamSpeak-3-Java-API] Callback-", 0).factory());
+		this.deadlines = Executors.newSingleThreadScheduledExecutor(
+			Thread.ofPlatform().name("[TeamSpeak-3-Java-API] Deadlines").factory());
 		this.fileTransferHelper = new FileTransferHelper(config.getHost());
 		this.connectionHandler = config.getReconnectStrategy().create(config.getConnectionHandler());
 		this.globalQueue = CommandQueue.newGlobalQueue(this, connectionHandler instanceof DisconnectingConnectionHandler);
+		deadlines.scheduleWithFixedDelay(() -> {
+			try {
+				globalQueue.expireWaitingCommands();
+				Connection con = connection;
+				if (con != null) con.checkDeadlines();
+			} catch (RuntimeException e) { log.error("Deadline check failed", e); }
+		}, 1, 10, TimeUnit.MILLISECONDS);
 	}
 
 	// PUBLIC
@@ -141,92 +171,123 @@ public class TS3Query {
 	 * 		if the query can't connect to the server or the {@link ConnectionHandler} throws an exception
 	 */
 	public void connect() {
-		if (Thread.holdsLock(this)) {
-			// Check that connect is not called from onConnect
-			throw new IllegalStateException("Cannot call connect from onConnect handler");
-		}
-
-		doConnect();
-	}
-
-	private synchronized void doConnect() {
-		if (userThreadPool.isShutdown()) {
-			throw new IllegalStateException("The query has already been shut down");
-		}
-
-		disconnect(); // If we're already connected
-
-		try {
-			CommandQueue queue = CommandQueue.newConnectQueue(this);
-			Connection con = new Connection(this, config, queue);
-
-			try {
-				TS3Api api = queue.getApi();
-				if (config.getProtocol() == Protocol.RAW && config.hasLoginCredentials()) {
-					api.login(config.getUsername(), config.getPassword());
-				}
-				connectionHandler.onConnect(api);
-			} catch (TS3QueryShutDownException e) {
-				// Disconnected during onConnect, re-throw as a TS3ConnectionFailedException
-				queue.failRemainingCommands();
-				throw new TS3ConnectionFailedException(e);
-			} catch (Exception e) {
-				con.disconnect();
-				queue.failRemainingCommands();
-				throw new TS3ConnectionFailedException("ConnectionHandler threw exception in connect handler", e);
+		if (initializing.get()) throw new IllegalStateException("Cannot call connect from onConnect handler");
+		Connection con;
+		Future<?> task;
+		synchronized (this) {
+			State current = state.get();
+			if (current == State.CLOSING || current == State.CLOSED) {
+				throw new IllegalStateException("The query has already been shut down");
 			}
-
-			// Reject new commands and wait until the onConnect queue is empty
-			queue.shutDown();
-
-			connection = con;
-			con.setCommandQueue(globalQueue);
-			connected.set(true);
-		} catch (TS3ConnectionFailedException conFailed) {
-			// If this is the first connection attempt, we won't run the handleDisconnect method,
-			// so we need to call shutDown from this method instead.
-			if (connection == null) shutDown();
-			throw conFailed;
+			if (current == State.CONNECTING || current == State.CONNECTED) {
+				throw new IllegalStateException("The query is already connecting or connected");
+			}
+			state.set(State.CONNECTING);
+			CommandQueue queue = CommandQueue.newConnectQueue(this);
+			try { con = new Connection(this, config, queue); }
+			catch (RuntimeException e) {
+				close();
+				throw new TS3ConnectionFailedException("Could not create connection resources", e);
+			}
+			connection = con; // Publish before opening any blocking I/O.
+			task = userThreadPool.submit(() -> {
+				userTask.set(true);
+				initializing.set(true);
+				try {
+					con.open();
+					TS3Api api = queue.getApi();
+					if (config.getProtocol() == Protocol.RAW && config.hasLoginCredentials()) {
+						api.login(config.getUsername(), config.getPassword());
+					}
+					connectionHandler.onConnect(api);
+					queue.shutDown(new Deadline(config.getHandshakeTimeout()));
+					synchronized (TS3Query.this) {
+						if (state.get() != State.CONNECTING || con.isStopped()) {
+							throw new TS3ConnectionFailedException("Connection closed during initialization");
+						}
+						con.setCommandQueue(globalQueue);
+						con.initialized();
+						connected.set(true);
+						state.set(State.CONNECTED);
+					}
+				} catch (Exception e) {
+					con.disconnect();
+					throw new TS3ConnectionFailedException("Connection initialization failed", e);
+				} finally { initializing.remove(); userTask.remove(); }
+			});
+			initializationTask = task;
+		}
+		try {
+			// Independent phase watchdogs enforce connect and handshake separately.
+			long budget = Math.addExact(config.getConnectTimeout().toNanos(), config.getHandshakeTimeout().toNanos());
+			task.get(budget, TimeUnit.NANOSECONDS);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			close();
+			throw new TS3ConnectionFailedException("Connect interrupted", e);
+		} catch (ExecutionException | CancellationException | TimeoutException e) {
+			con.disconnect();
+			task.cancel(true);
+			if (connectionHandler instanceof DisconnectingConnectionHandler) close();
+			else state.compareAndSet(State.CONNECTING, State.DISCONNECTED);
+			throw new TS3ConnectionFailedException("Could not initialize connection", e);
 		}
 	}
 
 	/**
-	 * Disconnects the query and closes all open resources.
-	 * <p>
-	 * If the command queue still contains commands when this method is called,
-	 * the query will first process these commands, causing this method to block.
-	 * However, the query will reject any new commands as soon as this method is called.
-	 * </p>
-	 *
-	 * @throws IllegalStateException
-	 * 		if this method was called from {@link ConnectionHandler#onConnect}
+	 * Attempts to drain commands and send quit for at most half the close budget,
+	 * then closes the transport and terminates owned workers within the remaining budget.
 	 */
-	public void exit() {
-		if (Thread.holdsLock(this)) {
-			// Check that exit is not called from onConnect
-			throw new IllegalStateException("Cannot call exit from onConnect handler");
+	public void exit() { terminate(true); }
+
+	/**
+	 * Immediately aborts blocking I/O and fails outstanding commands. Idempotent,
+	 * including before connect. User callbacks must cooperate with interruption.
+	 */
+	@Override
+	public void close() { terminate(false); }
+
+	private void terminate(boolean drain) {
+		Deadline deadline = new Deadline(config.getCloseTimeout());
+		Connection con;
+		synchronized (this) {
+			if (state.get() == State.CLOSED || state.get() == State.CLOSING) return;
+			state.set(State.CLOSING);
+			connected.set(false);
+			con = connection;
 		}
-
-		try {
-			globalQueue.quit();
-		} finally {
-			shutDown();
+		if (drain && con != null && !con.isStopped() && !initializing.get()) {
+			globalQueue.quit(new Deadline(config.getCloseTimeout().dividedBy(2)));
 		}
-	}
-
-	private synchronized void shutDown() {
-		if (userThreadPool.isShutdown()) return;
-
-		disconnect();
+		if (con != null) con.disconnect(deadline);
+		Future<?> task = initializationTask;
+		if (task != null && !task.isDone()) task.cancel(true);
 		globalQueue.failRemainingCommands();
+		deadlines.shutdownNow();
 		userThreadPool.shutdown();
+		// Never await our own callback executor from one of its workers.
+		if (!userTask.get()) {
+			try {
+				userThreadPool.awaitTermination(deadline.remaining() / 2, TimeUnit.NANOSECONDS);
+			} catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+		}
+		userThreadPool.shutdownNow();
+		if (!userTask.get()) {
+			try { userThreadPool.awaitTermination(deadline.remaining(), TimeUnit.NANOSECONDS); }
+			catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+		}
+		state.set(State.CLOSED);
 	}
 
-	private synchronized void disconnect() {
-		if (connection == null) return;
+	/** @return the current lifecycle state */
+	public State getState() { return state.get(); }
 
-		connection.disconnect();
-		connected.set(false);
+	TS3Config getConfig() { return config; }
+
+	boolean resourcesTerminated() {
+		Connection con = connection;
+		return userThreadPool.isTerminated() && deadlines.isTerminated()
+			&& (con == null || con.threadsTerminated());
 	}
 
 	/**
@@ -277,13 +338,16 @@ public class TS3Query {
 	// INTERNAL
 
 	void submitUserTask(final String name, final Runnable task) {
-		userThreadPool.submit(() -> {
-			try {
-				task.run();
-			} catch (Throwable throwable) {
-				log.error(name + " threw an exception", throwable);
-			}
-		});
+		try {
+			userThreadPool.submit(() -> {
+				userTask.set(true);
+				try { task.run(); }
+				catch (Throwable e) { log.error(name + " threw an exception", e); }
+				finally { userTask.remove(); }
+			});
+		} catch (RejectedExecutionException ignored) {
+			// Shutdown has already settled pending commands and rejects new callbacks.
+		}
 	}
 
 	EventManager getEventManager() {
@@ -294,21 +358,23 @@ public class TS3Query {
 		return fileTransferHelper;
 	}
 
-	void fireDisconnect() {
-		connected.set(false);
-
-		submitUserTask("ConnectionHandler disconnect task", this::handleDisconnect);
-	}
-
-	private void handleDisconnect() {
-		try {
-			connectionHandler.onDisconnect(this);
-		} finally {
-			synchronized (this) {
-				if (!connected.get()) {
-					shutDown();
-				}
+	void fireDisconnect(Connection source) {
+		synchronized (this) {
+			if (source != connection || state.get() == State.CLOSING || state.get() == State.CLOSED) return;
+			connected.set(false);
+			if (state.get() == State.CONNECTING) {
+				Future<?> task = initializationTask;
+				if (task != null) task.cancel(true);
+				return;
 			}
+			state.set(State.DISCONNECTED);
+		}
+		submitUserTask("ConnectionHandler disconnect task", () -> {
+			try { connectionHandler.onDisconnect(this); }
+			finally { if (state.get() == State.DISCONNECTED) close(); }
+		});
+		if (connectionHandler instanceof DisconnectingConnectionHandler) {
+			submitUserTask("Disconnected query cleanup", this::close);
 		}
 	}
 }

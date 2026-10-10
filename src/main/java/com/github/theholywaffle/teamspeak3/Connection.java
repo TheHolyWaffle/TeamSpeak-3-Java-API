@@ -29,125 +29,96 @@ package com.github.theholywaffle.teamspeak3;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 class Connection {
-
-	private final TS3Query ts3Query;
-	private final IOChannel ioChannel;
-	private final StreamReader streamReader;
-	private final StreamWriter streamWriter;
-	private final KeepAlive keepAlive;
-
-	private final AtomicReference<CommandQueue> commandQueue;
-	private final AtomicLong lastCommandSent;
-	private final long commandTimeout;
+	private final TS3Query query;
+	private final TS3Config config;
+	private final IOChannel channel;
+	private final AtomicReference<CommandQueue> queue;
+	private final AtomicBoolean stopped = new AtomicBoolean();
+	private final AtomicLong lastSent = new AtomicLong(System.nanoTime());
+	private volatile Deadline initialization;
+	private volatile StreamReader reader;
+	private volatile StreamWriter writer;
+	private volatile KeepAlive keepAlive;
 
 	Connection(TS3Query query, TS3Config config, CommandQueue initialQueue) {
-		ts3Query = query;
-		commandQueue = new AtomicReference<>(initialQueue);
-		lastCommandSent = new AtomicLong(System.currentTimeMillis());
-		commandTimeout = config.getCommandTimeout();
+		this.query = query;
+		this.config = config;
+		queue = new AtomicReference<>(initialQueue);
+		channel = config.getProtocol() == TS3Query.Protocol.SSH ? new SSHChannel(config) : new SocketChannel(config);
+		initialization = new Deadline(config.getConnectTimeout());
+	}
 
-		try {
-			if (config.getProtocol() == TS3Query.Protocol.SSH) {
-				ioChannel = new SSHChannel(config);
-			} else {
-				ioChannel = new SocketChannel(config);
-			}
-
-			streamReader = new StreamReader(this, ioChannel.getInputStream(), query, config);
-			streamWriter = new StreamWriter(this, ioChannel.getOutputStream(), config);
+	void open() throws IOException {
+		channel.connect(this);
+		synchronized (this) {
+			if (stopped.get()) throw new IOException("Connection closed during initialization");
+			reader = new StreamReader(this, channel.getInputStream(), query, config);
+			writer = new StreamWriter(this, channel.getOutputStream(), config);
 			keepAlive = new KeepAlive(this);
-		} catch (IOException ioe) {
-			closeSocket();
-			throw new TS3ConnectionFailedException(ioe);
+			reader.start(); writer.start(); keepAlive.start();
 		}
+	}
 
-		streamReader.start();
-		streamWriter.start();
-		keepAlive.start();
+	void transportConnected() throws IOException {
+		if (stopped.get()) throw new IOException("Connection closed during connect");
+		initialization = new Deadline(config.getHandshakeTimeout());
+	}
+
+	void initialized() { initialization = null; }
+	boolean isStopped() { return stopped.get(); }
+
+	void checkDeadlines() {
+		Deadline init = initialization;
+		if (!stopped.get() && ((init != null && init.expired()) || queue.get().responseExpired())) {
+			internalDisconnect();
+		}
+		queue.get().expireWaitingCommands();
 	}
 
 	void internalDisconnect() {
-		disconnect();
+		if (!stop(new Deadline(config.getCloseTimeout()))) return;
+		query.fireDisconnect(this);
+	}
 
-		CommandQueue queue = getCommandQueue();
-		if (queue.isGlobal()) {
-			ts3Query.fireDisconnect();
-		} else {
-			queue.failRemainingCommands();
+	void disconnect() { disconnect(new Deadline(config.getCloseTimeout())); }
+	void disconnect(Deadline deadline) {
+		if (!stop(deadline)) {
+			queue.get().failRemainingCommands();
+			deadline.join(reader); deadline.join(writer); deadline.join(keepAlive);
 		}
 	}
 
-	void disconnect() {
-		keepAlive.interrupt();
-		streamWriter.interrupt();
-		streamReader.interrupt();
-
-		boolean wasInterrupted = joinThread(keepAlive);
-		wasInterrupted |= joinThread(streamWriter);
-		wasInterrupted |= joinThread(streamReader);
-
-		if (wasInterrupted) {
-			// Restore the interrupt for the caller
-			Thread.currentThread().interrupt();
-		}
-
-		closeSocket();
+	private boolean stop(Deadline deadline) {
+		if (!stopped.compareAndSet(false, true)) return false;
+		try { channel.close(); } catch (IOException ignored) { }
+		Thread[] threads;
+		synchronized (this) { threads = new Thread[] {reader, writer, keepAlive}; }
+		for (Thread thread : threads) if (thread != null) thread.interrupt();
+		queue.get().failRemainingCommands();
+		for (Thread thread : threads) deadline.join(thread);
+		return true;
 	}
 
-	private static boolean joinThread(Thread thread) {
-		if (thread == Thread.currentThread()) return false;
-		try {
-			thread.join();
-			return false;
-		} catch (InterruptedException e) {
-			return true;
-		}
+	boolean threadsTerminated() {
+		return (reader == null || !reader.isAlive()) && (writer == null || !writer.isAlive())
+			&& (keepAlive == null || !keepAlive.isAlive());
 	}
 
-	private void closeSocket() {
-		if (ioChannel == null) return;
-		try {
-			ioChannel.close();
-		} catch (IOException ignored) {
-		}
-	}
-
-	CommandQueue getCommandQueue() {
-		return commandQueue.get();
-	}
-
+	CommandQueue getCommandQueue() { return queue.get(); }
 	void setCommandQueue(CommandQueue newQueue) {
-		newQueue.resetSentCommands();
-		CommandQueue oldQueue = commandQueue.getAndSet(newQueue);
-
-		if (!oldQueue.isEmpty()) {
-			// shutDown was not called on the old queue, but that's
-			// a programming error that we can't recover from here
-			throw new IllegalStateException("Old queue not empty");
+		synchronized (this) {
+			if (stopped.get()) throw new TS3ConnectionFailedException("Connection terminated during initialization");
+			newQueue.resetSentCommands();
+			if (!queue.get().isEmpty()) throw new IllegalStateException("Old queue not empty");
+			queue.set(newQueue);
 		}
 	}
-
-	long getIdleTime() {
-		return System.currentTimeMillis() - lastCommandSent.get();
-	}
-
-	void resetIdleTime() {
-		lastCommandSent.set(System.currentTimeMillis());
-	}
-
-	boolean isTimedOut() {
-		/*
-		 * Rationale: The connection has only timed out if we haven't sent a command for some time
-		 * and the command queue has had pending commands for at least that amount of time.
-		 * CommandQueue#getBusyTime is reset when the command queue is switched, so even if a user
-		 * blocks the onConnect handler for too long without sending a command, this won't return true
-		 * when the queue is switched over in #setCommandTime.
-		 */
-
-		return getIdleTime() > commandTimeout && getCommandQueue().getBusyTime() > commandTimeout;
-	}
+	long getIdleTime() { return (System.nanoTime() - lastSent.get()) / 1_000_000L; }
+	void resetIdleTime() { lastSent.set(System.nanoTime()); }
+	boolean isTimedOut() { return queue.get().responseExpired(); }
 }

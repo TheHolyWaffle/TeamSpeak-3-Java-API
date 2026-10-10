@@ -27,9 +27,12 @@ package com.github.theholywaffle.teamspeak3;
  */
 
 import com.github.theholywaffle.teamspeak3.api.exception.TS3QueryShutDownException;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 
 import java.util.ArrayDeque;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Queue;
@@ -55,7 +58,9 @@ class CommandQueue {
 	private final boolean isGlobal;
 
 	private boolean rejectNew = false;
-	private long firstEnqueueTimeAfterEmpty;
+	private final TS3Query query;
+	private final Map<Command, Long> enqueued = new IdentityHashMap<>();
+	private final Map<Command, Long> sent = new IdentityHashMap<>();
 
 	static CommandQueue newGlobalQueue(TS3Query query, boolean unlimited) {
 		return new CommandQueue(query, true, unlimited);
@@ -66,6 +71,7 @@ class CommandQueue {
 	}
 
 	private CommandQueue(TS3Query query, boolean global, boolean unlimited) {
+		this.query = query;
 		isGlobal = global;
 		unlimitedInFlightCommands = unlimited;
 
@@ -98,9 +104,7 @@ class CommandQueue {
 				return;
 			}
 
-			if (isEmpty()) {
-				firstEnqueueTimeAfterEmpty = System.currentTimeMillis();
-			}
+			enqueued.put(command, System.nanoTime());
 			sendQueue.add(command);
 			canTransfer.signalAll();
 		} finally {
@@ -118,6 +122,8 @@ class CommandQueue {
 
 			Command command = sendQueue.remove();
 			receiveQueue.add(command);
+			enqueued.remove(command);
+			sent.put(command, System.nanoTime());
 
 			return command;
 		} finally {
@@ -137,9 +143,8 @@ class CommandQueue {
 	void removeFromReceiveQueue() {
 		queueLock.lock();
 		try {
-			if (receiveQueue.isEmpty()) throw new IllegalStateException("Empty receive queue");
-
-			receiveQueue.remove();
+			if (receiveQueue.isEmpty()) return; // Concurrent termination has already settled it.
+			sent.remove(receiveQueue.remove());
 			canTransfer.signalAll();
 		} finally {
 			queueLock.unlock();
@@ -156,7 +161,8 @@ class CommandQueue {
 			sendQueue.addAll(allCommands);
 
 			rejectNew = false;
-			firstEnqueueTimeAfterEmpty = System.currentTimeMillis();
+			sent.clear();
+			for (Command command : allCommands) enqueued.putIfAbsent(command, System.nanoTime());
 
 			canTransfer.signalAll();
 		} finally {
@@ -173,61 +179,65 @@ class CommandQueue {
 		}
 	}
 
-	long getBusyTime() {
+	boolean responseExpired() {
 		queueLock.lock();
 		try {
-			if (isEmpty()) {
-				return 0L;
-			} else {
-				return System.currentTimeMillis() - firstEnqueueTimeAfterEmpty;
-			}
-		} finally {
-			queueLock.unlock();
-		}
+			long now = System.nanoTime();
+			long timeout = query.getConfig().getCommandResponseTimeout().toNanos();
+			return sent.values().stream().anyMatch(start -> now - start >= timeout);
+		} finally { queueLock.unlock(); }
 	}
 
-	void shutDown() {
+	void expireWaitingCommands() {
+		Collection<Command> expired = new ArrayList<>();
+		queueLock.lock();
+		try {
+			long now = System.nanoTime();
+			long timeout = query.getConfig().getQueueWaitTimeout().toNanos();
+			var iterator = sendQueue.iterator();
+			while (iterator.hasNext()) {
+				Command command = iterator.next();
+				if (now - enqueued.get(command) >= timeout) {
+					iterator.remove(); enqueued.remove(command); expired.add(command);
+				}
+			}
+			for (Command command : expired) query.submitUserTask("Queue deadline", () ->
+				command.getFuture().fail(new TS3Exception("Command queue wait deadline exceeded")));
+			canTransfer.signalAll();
+		} finally { queueLock.unlock(); }
+	}
+
+	void shutDown(Deadline deadline) {
 		queueLock.lock();
 		try {
 			rejectNew = true;
 			canTransfer.signalAll();
-
-			while (!isEmpty()) {
-				canTransfer.awaitUninterruptibly();
+			while (!isEmpty() && !deadline.expired()) {
+				try { canTransfer.awaitNanos(deadline.remaining()); }
+				catch (InterruptedException e) { Thread.currentThread().interrupt(); break; }
 			}
-		} finally {
-			queueLock.unlock();
-		}
+		} finally { queueLock.unlock(); }
 	}
 
-	void quit() {
+	void quit(Deadline deadline) {
 		queueLock.lock();
 		try {
-			// Enqueue the last command - don't wait for a response, we'll wait in shutDown
 			if (!rejectNew) asyncApi.quit();
-			// And wait until all commands have been sent
-			shutDown();
-		} finally {
-			queueLock.unlock();
-		}
+		} finally { queueLock.unlock(); }
+		shutDown(deadline);
 	}
 
 	void failRemainingCommands() {
+		Collection<Command> allCommands;
 		queueLock.lock();
 		try {
 			rejectNew = true;
+			allCommands = getAllCommands();
+			for (Command command : allCommands) query.submitUserTask("Command termination", () ->
+				command.getFuture().fail(new TS3QueryShutDownException()));
+			sendQueue.clear(); receiveQueue.clear(); enqueued.clear(); sent.clear();
 			canTransfer.signalAll();
-
-			Collection<Command> allCommands = getAllCommands();
-			for (Command command : allCommands) {
-				command.getFuture().fail(new TS3QueryShutDownException());
-			}
-
-			sendQueue.clear();
-			receiveQueue.clear();
-		} finally {
-			queueLock.unlock();
-		}
+		} finally { queueLock.unlock(); }
 	}
 
 	// Only call this when holding queueLock

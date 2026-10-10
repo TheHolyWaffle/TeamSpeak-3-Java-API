@@ -35,6 +35,10 @@ import net.schmizz.sshj.userauth.UserAuthException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.SocketFactory;
+import java.net.Socket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,34 +53,40 @@ class SSHChannel implements IOChannel {
 	private static final Logger log = LoggerFactory.getLogger(SSHChannel.class);
 	private static final String KNOWN_HOSTS_FILE_NAME = "known_ts3_hosts";
 
-	private final SSHClient client;
-	private final Session session;
+	private final SSHClient client = new SSHClient();
+	private final Socket socket = new Socket();
+	private final TS3Config config;
+	private volatile Session session;
 
-	SSHChannel(TS3Config config) throws IOException {
+	SSHChannel(TS3Config config) { this.config = config; }
+
+	@Override
+	public void connect(Connection connection) throws IOException {
 		if (!config.hasLoginCredentials()) {
-			throw new TS3ConnectionFailedException("Anonymous queries are not supported when using SSH.\n" +
-					"\t\tYou must specify a query username and password using TS3Config#setLoginCredentials.");
+			throw new TS3ConnectionFailedException("SSH requires query login credentials");
 		}
-
+		socket.connect(new InetSocketAddress(config.getHost() == null ? "127.0.0.1" : config.getHost(),
+			config.getQueryPort()), TS3Config.socketTimeout(config.getConnectTimeout()));
+		connection.transportConnected();
+		socket.setTcpNoDelay(true);
+		client.setSocketFactory(new SocketFactory() {
+			@Override public Socket createSocket() { return socket; }
+			@Override public Socket createSocket(String host, int port) { return socket; }
+			@Override public Socket createSocket(String host, int port, InetAddress local, int localPort) { return socket; }
+			@Override public Socket createSocket(InetAddress host, int port) { return socket; }
+			@Override public Socket createSocket(InetAddress host, int port, InetAddress local, int localPort) { return socket; }
+		});
+		File knownHostsFile = new File(OpenSSHKnownHosts.detectSSHDir(), KNOWN_HOSTS_FILE_NAME);
+		client.addHostKeyVerifier(new AutoAddKnownHosts(knownHostsFile));
+		client.setTimeout(TS3Config.socketTimeout(config.getHandshakeTimeout()));
+		client.setRemoteCharset(StandardCharsets.UTF_8);
 		try {
-			client = new SSHClient();
-			File knownHostsFile = new File(OpenSSHKnownHosts.detectSSHDir(), KNOWN_HOSTS_FILE_NAME);
-			client.addHostKeyVerifier(new AutoAddKnownHosts(knownHostsFile));
-			client.setConnectTimeout(config.getCommandTimeout());
-			client.setTimeout(config.getCommandTimeout());
-			client.setRemoteCharset(StandardCharsets.UTF_8);
-
 			client.connect(config.getHost(), config.getQueryPort());
-			client.getSocket().setTcpNoDelay(true);
 			client.authPassword(config.getUsername(), config.getPassword());
 			session = client.startSession();
 			session.startShell();
-		} catch (UserAuthException uae) {
-			close();
-			throw new TS3ConnectionFailedException("Invalid query username or password");
-		} catch (IOException ioe) {
-			close();
-			throw ioe;
+		} catch (UserAuthException e) {
+			throw new TS3ConnectionFailedException("Invalid query username or password", e);
 		}
 	}
 
@@ -92,8 +102,9 @@ class SSHChannel implements IOChannel {
 
 	@Override
 	public void close() throws IOException {
-		if (session != null) session.close();
-		if (client != null) client.close();
+		// Abort the underlying socket first: SSH channel/client close may write to the peer.
+		socket.close();
+		client.close();
 	}
 
 	private static class AutoAddKnownHosts extends OpenSSHKnownHosts {

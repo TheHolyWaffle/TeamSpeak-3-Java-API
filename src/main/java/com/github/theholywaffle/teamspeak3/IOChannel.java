@@ -33,6 +33,8 @@ import java.io.OutputStream;
 
 interface IOChannel extends Closeable {
 
+	void connect(Connection connection) throws IOException;
+
 	InputStream getInputStream() throws IOException;
 
 	OutputStream getOutputStream() throws IOException;
