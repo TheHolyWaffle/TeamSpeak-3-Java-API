@@ -249,6 +249,35 @@
 	</build>
 
 	<profiles>
+		<!-- Fork a development-only JVM using the already test-scoped harness. -->
+		<profile>
+			<id>dev-server</id>
+			<properties>
+				<dev.server>ts3</dev.server>
+				<dev.once>false</dev.once>
+			</properties>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>exec-maven-plugin</artifactId>
+						<version>3.6.4</version>
+						<configuration>
+							<executable>${java.home}/bin/java</executable>
+							<classpathScope>test</classpathScope>
+							<inheritIo>true</inheritIo>
+							<arguments>
+								<argument>-classpath</argument>
+								<classpath />
+								<argument>com.github.theholywaffle.teamspeak3.DevelopmentServer</argument>
+								<argument>${dev.server}</argument>
+								<argument>${dev.once}</argument>
+								</arguments>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
 		<profile>
 			<id>integration</id>
 			<build>
