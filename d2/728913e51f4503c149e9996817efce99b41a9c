@@ -1,0 +1,23 @@
+src/test/java/com/github/theholywaffle/teamspeak3/CommandFuturesTest.java
+  s_32edc947027172::t_cb1a092c2fb4af 149,288-290,346
+src/test/java/com/github/theholywaffle/teamspeak3/EventResilienceTest.java
+  s_32edc947027172::t_581b73453f559d 146
+src/test/java/com/github/theholywaffle/teamspeak3/FutureAssertions.java
+  s_32edc947027172::t_ab15608b917564 12-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d2728913e51f4503c149e9996817efce99b41a9c",
+  "prompts": {},
+  "sessions": {
+    "s_32edc947027172": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a125cf-814f-7241-8752-f6bd9460ab89",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
