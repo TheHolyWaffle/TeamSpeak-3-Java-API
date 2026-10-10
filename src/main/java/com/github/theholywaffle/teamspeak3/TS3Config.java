@@ -31,6 +31,8 @@ import com.github.theholywaffle.teamspeak3.TS3Query.Protocol;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 
+import java.time.Duration;
+
 /**
  * Class used to configure the behavior of a {@link TS3Query}.
  */
@@ -45,7 +47,11 @@ public class TS3Config {
 	private String password = null;
 	private FloodRate floodRate = FloodRate.DEFAULT;
 	private boolean enableCommunicationsLogging = false;
-	private int commandTimeout = 4000;
+	private Duration connectTimeout = Duration.ofSeconds(4);
+	private Duration handshakeTimeout = Duration.ofSeconds(4);
+	private Duration queueWaitTimeout = Duration.ofSeconds(4);
+	private Duration commandResponseTimeout = Duration.ofSeconds(4);
+	private Duration closeTimeout = Duration.ofSeconds(4);
 	private ReconnectStrategy reconnectStrategy = ReconnectStrategy.disconnect();
 	private ConnectionHandler connectionHandler = null;
 
@@ -236,37 +242,97 @@ public class TS3Config {
 	}
 
 	/**
-	 * Sets how long the query should wait for any response to a command before disconnecting.
-	 * <p>
-	 * If the query doesn't receive any data from the TeamSpeak server after
-	 * having waited for at least {@code commandTimeout} milliseconds, the connection
-	 * is considered to be interrupted, and the query will try to reconnect according to
-	 * its {@linkplain TS3Config#setReconnectStrategy(ReconnectStrategy) reconnect strategy}.
-	 * </p><p>
-	 * By default, this timeout is 4000 milliseconds.
-	 * </p>
-	 *
-	 * @param commandTimeout
-	 * 		the minimum amount of time to wait for any response, in milliseconds
-	 *
-	 * @return this TS3Config object for chaining
-	 *
-	 * @throws IllegalArgumentException
-	 * 		if the timeout value is less than or equal to {@code 0}
+	 * Sets the command response deadline in milliseconds. Unrelated traffic does not extend it.
+	 * @param commandTimeout positive timeout in milliseconds
+	 * @return this configuration
+	 * @deprecated use {@link #setCommandResponseTimeout(Duration)}; other phases have separate deadlines
 	 */
+	@Deprecated
 	public TS3Config setCommandTimeout(int commandTimeout) {
+		return setCommandResponseTimeout(Duration.ofMillis(commandTimeout));
+	}
+
+	private Duration timeout(Duration value) {
 		checkFrozen();
-
-		if (commandTimeout <= 0) {
-			throw new IllegalArgumentException("Timeout value must be greater than 0");
+		if (value == null || value.isZero() || value.isNegative()) {
+			throw new IllegalArgumentException("Deadline must be positive");
 		}
+		try {
+			if (value.toNanos() > Long.MAX_VALUE / 4) throw new ArithmeticException();
+		} catch (ArithmeticException e) {
+			throw new IllegalArgumentException("Deadline is too large", e);
+		}
+		return value;
+	}
 
-		this.commandTimeout = commandTimeout;
+	/**
+	 * Sets the TCP connection deadline, including name resolution. Defaults to four seconds.
+	 * @param value positive, finite duration
+	 * @return this configuration
+	 */
+	public TS3Config setConnectTimeout(Duration value) {
+		connectTimeout = timeout(value);
 		return this;
 	}
 
-	int getCommandTimeout() {
-		return commandTimeout;
+	/**
+	 * Sets the total SSH negotiation, authentication and onConnect deadline after TCP connection. Defaults to four seconds.
+	 * @param value positive, finite duration
+	 * @return this configuration
+	 */
+	public TS3Config setHandshakeTimeout(Duration value) {
+		handshakeTimeout = timeout(value);
+		return this;
+	}
+
+	/**
+	 * Sets the maximum wait before a command starts being written. Defaults to four seconds.
+	 * @param value positive, finite duration
+	 * @return this configuration
+	 */
+	public TS3Config setQueueWaitTimeout(Duration value) {
+		queueWaitTimeout = timeout(value);
+		return this;
+	}
+
+	/**
+	 * Sets the deadline from starting a command write through its terminating error response. Defaults to four seconds.
+	 * @param value positive, finite duration
+	 * @return this configuration
+	 */
+	public TS3Config setCommandResponseTimeout(Duration value) {
+		commandResponseTimeout = timeout(value);
+		return this;
+	}
+
+	/**
+	 * Sets the total shutdown budget, including optional exit draining and thread joins. Defaults to four seconds.
+	 * @param value positive, finite duration
+	 * @return this configuration
+	 */
+	public TS3Config setCloseTimeout(Duration value) {
+		closeTimeout = timeout(value);
+		return this;
+	}
+
+	/** @return the configured TCP connection deadline, including name resolution */
+	public Duration getConnectTimeout() { return connectTimeout; }
+
+	/** @return the configured total SSH negotiation, authentication and onConnect deadline after TCP connection */
+	public Duration getHandshakeTimeout() { return handshakeTimeout; }
+
+	/** @return the configured maximum wait before a command starts being written */
+	public Duration getQueueWaitTimeout() { return queueWaitTimeout; }
+
+	/** @return the configured deadline from starting a command write through its terminating error response */
+	public Duration getCommandResponseTimeout() { return commandResponseTimeout; }
+
+	/** @return the configured total shutdown budget, including optional exit draining and thread joins */
+	public Duration getCloseTimeout() { return closeTimeout; }
+
+
+	static int socketTimeout(Duration value) {
+		return (int) Math.min(Integer.MAX_VALUE, Math.max(1L, value.toMillis()));
 	}
 
 	/**

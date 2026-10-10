@@ -70,6 +70,7 @@ All functionality is contained in the [TS3Api](src/main/java/com/github/theholyw
 3. Call `TS3Query#connect()` to connect to the server.
 4. Call `TS3Query#getApi()` to get an [TS3Api](src/main/java/com/github/theholywaffle/teamspeak3/TS3Api.java) object.
 5. Do whatever you want with this api :)
+6. Close the query, preferably with try-with-resources. See the [2.0 lifecycle and deadline migration notes](docs/connection-lifecycle.md).
 
 
 ### Example

@@ -32,7 +32,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 class StreamWriter extends Thread {
@@ -40,7 +41,7 @@ class StreamWriter extends Thread {
 	private static final Logger log = LoggerFactory.getLogger(StreamWriter.class);
 
 	private final Connection con;
-	private final PrintWriter out;
+	private final BufferedWriter out;
 	private final int floodRate;
 	private final boolean logComms;
 
@@ -48,7 +49,7 @@ class StreamWriter extends Thread {
 		super("[TeamSpeak-3-Java-API] StreamWriter");
 
 		con = connection;
-		out = new PrintWriter(new OutputStreamWriter(outStream, StandardCharsets.UTF_8), true);
+		out = new BufferedWriter(new OutputStreamWriter(outStream, StandardCharsets.UTF_8));
 		floodRate = config.getFloodRate().getMs();
 		logComms = config.getEnableCommunicationsLogging();
 	}
@@ -66,13 +67,17 @@ class StreamWriter extends Thread {
 				String message = command.toString();
 
 				if (logComms) log.debug("[{}] > {}", command.getName(), message);
-				out.println(message);
+				out.write(message);
+				out.write("\n");
+				out.flush();
 			}
+		} catch (IOException e) {
+			if (!isInterrupted()) con.internalDisconnect();
 		} catch (InterruptedException e) {
 			interrupt(); // Regular shutdown
 		}
 
-		out.close();
+		// The connection closes the transport before joining this thread.
 
 		if (!isInterrupted()) {
 			log.warn("StreamWriter has stopped!");

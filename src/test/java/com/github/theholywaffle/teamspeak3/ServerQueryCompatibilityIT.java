@@ -80,15 +80,34 @@ class ServerQueryCompatibilityIT {
 			assertEquals(2816, error.getError().getId()); // invalid virtual server ID
 			// A server error must leave response framing usable.
 			assertEquals(version.getVersion(), api.getVersion().getVersion());
-		} finally { query.exit(); }
+		} finally { exitAndAssertTerminated(query, server); }
 	}
 
-	private static void verifyConnection(TeamSpeakContainer server, TS3Query.Protocol protocol) {
+	private static void verifyConnection(TeamSpeakContainer server, TS3Query.Protocol protocol) throws Exception {
 		TS3Query query = new TS3Query(server.config(protocol));
 		try {
 			query.connect();
 			assertFalse(query.getApi().getVersion().getVersion().isBlank());
-		} finally { query.exit(); }
+		} finally { exitAndAssertTerminated(query, server); }
+	}
+
+	private static void exitAndAssertTerminated(TS3Query query, TeamSpeakContainer server) throws InterruptedException {
+		query.exit();
+		long started = System.nanoTime();
+		while (!query.resourcesTerminated() && System.nanoTime() - started < java.util.concurrent.TimeUnit.SECONDS.toNanos(1)) {
+			Thread.sleep(5);
+		}
+		assertTrue(query.resourcesTerminated(), "Library-owned workers must stop after exit");
+		assertTrue(Thread.getAllStackTraces().keySet().stream().noneMatch(thread ->
+			thread.getName().startsWith("sshj-Reader-") && thread.getName().contains(":" + server.getMappedPort(10022) + "-")),
+			"The SSH transport reader must stop after exit");
+	}
+
+	private static void openSSH(TS3Config config) throws Exception {
+		try (var query = new TS3Query(config)) {
+			var connection = new Connection(query, config, CommandQueue.newConnectQueue(query));
+			try { connection.open(); } finally { connection.disconnect(); }
+		}
 	}
 
 	@ParameterizedTest(name = "{0}: SSH authentication and host-key regressions")
@@ -105,7 +124,7 @@ class ServerQueryCompatibilityIT {
 		verifyConnection(server, target.protocol);
 		assertArrayEquals(trusted, Files.readAllBytes(trust), "Known key must be reused");
 		assertTrue(new OpenSSHKnownHosts(trust.toFile()).verify(server.getHost(), server.getMappedPort(10022), server.hostKey));
-		var authentication = assertThrows(TS3ConnectionFailedException.class, () -> new SSHChannel(server.config(target.protocol)
+		var authentication = assertThrows(TS3ConnectionFailedException.class, () -> openSSH(server.config(target.protocol)
 				.setLoginCredentials("serveradmin", "incorrect-test-password")));
 		assertEquals("Invalid query username or password", authentication.getMessage());
 		var generator = KeyPairGenerator.getInstance("RSA");
@@ -117,7 +136,7 @@ class ServerQueryCompatibilityIT {
 				"[" + server.getHost() + "]:" + server.getMappedPort(10022), KeyType.RSA, wrongKey));
 		known.write();
 		try {
-			var rejection = assertThrows(TransportException.class, () -> new SSHChannel(server.config(target.protocol)));
+			var rejection = assertThrows(TransportException.class, () -> openSSH(server.config(target.protocol)));
 			assertEquals(DisconnectReason.HOST_KEY_NOT_VERIFIABLE, rejection.getDisconnectReason());
 		} finally { Files.delete(trust); }
 	}

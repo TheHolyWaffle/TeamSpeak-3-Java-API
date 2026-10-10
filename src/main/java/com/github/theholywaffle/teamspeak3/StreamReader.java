@@ -99,7 +99,7 @@ class StreamReader extends Thread {
 				// Welcome text is informational, not a fixed-size response frame.
 				// Protocol data is key/value text; error lines terminate a command.
 				receivingResponses = true;
-				con.resetIdleTime();
+				// Response fragments never extend a command deadline.
 				try {
 					handleCommandResponse(line);
 				} catch (IllegalArgumentException malformed) {
