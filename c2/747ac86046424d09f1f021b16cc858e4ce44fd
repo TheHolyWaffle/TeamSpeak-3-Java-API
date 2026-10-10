@@ -1,0 +1,34 @@
+docs/development-server.md
+  s_8e818b2d60ca2c::t_4f2ddc20be7f99 1-79
+src/test/java/com/github/theholywaffle/teamspeak3/DevelopmentServerExample.java
+  s_8e818b2d60ca2c::t_2dfde7fed91094 1-28
+src/test/java/com/github/theholywaffle/teamspeak3/DevelopmentServer.java
+  s_8e818b2d60ca2c::t_2dfde7fed91094 1-29,31-33,39-44,50-79
+  s_8e818b2d60ca2c::t_f0212aa21d3441 34-38
+  s_8e818b2d60ca2c::t_f11fbd1d07eaec 45-49
+  s_8e818b2d60ca2c::t_d0ea320474463e 30
+pom.xml
+  s_8e818b2d60ca2c::t_adb3488ae6c012 252-280
+README.md
+  s_8e818b2d60ca2c::t_4f2ddc20be7f99 145-154
+src/test/java/com/github/theholywaffle/teamspeak3/DevelopmentServerIT.java
+  s_8e818b2d60ca2c::t_d0ea320474463e 1-66
+docs/integration-tests.md
+  s_8e818b2d60ca2c::t_0918c04e56e694 18-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c2747ac86046424d09f1f021b16cc858e4ce44fd",
+  "prompts": {},
+  "sessions": {
+    "s_8e818b2d60ca2c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a124ea-c3d1-7050-9750-8b179aa8fd88",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "bert.degeyter <bert.degeyter@showpad.com>"
+    }
+  }
+}
