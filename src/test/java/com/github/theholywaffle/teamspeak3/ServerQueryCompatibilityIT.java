@@ -80,17 +80,7 @@ class ServerQueryCompatibilityIT {
 			assertEquals(2816, error.getError().getId()); // invalid virtual server ID
 			// A server error must leave response framing usable.
 			assertEquals(version.getVersion(), api.getVersion().getVersion());
-		} finally {
-			query.exit();
-			long started = System.nanoTime();
-			while (!query.resourcesTerminated() && System.nanoTime() - started < java.util.concurrent.TimeUnit.SECONDS.toNanos(1)) {
-				Thread.sleep(5);
-			}
-			assertTrue(query.resourcesTerminated(), "Library-owned workers must stop after exit");
-			assertTrue(Thread.getAllStackTraces().keySet().stream().noneMatch(thread ->
-				thread.getName().startsWith("sshj-Reader-") && thread.getName().contains(":" + server.getMappedPort(10022) + "-")),
-				"The SSH transport reader must stop after exit");
-		}
+		} finally { exitAndAssertTerminated(query, server); }
 	}
 
 	private static void verifyConnection(TeamSpeakContainer server, TS3Query.Protocol protocol) throws Exception {
@@ -98,17 +88,19 @@ class ServerQueryCompatibilityIT {
 		try {
 			query.connect();
 			assertFalse(query.getApi().getVersion().getVersion().isBlank());
-		} finally {
-			query.exit();
-			long started = System.nanoTime();
-			while (!query.resourcesTerminated() && System.nanoTime() - started < java.util.concurrent.TimeUnit.SECONDS.toNanos(1)) {
-				Thread.sleep(5);
-			}
-			assertTrue(query.resourcesTerminated(), "Library-owned workers must stop after exit");
-			assertTrue(Thread.getAllStackTraces().keySet().stream().noneMatch(thread ->
-				thread.getName().startsWith("sshj-Reader-") && thread.getName().contains(":" + server.getMappedPort(10022) + "-")),
-				"The SSH transport reader must stop after exit");
+		} finally { exitAndAssertTerminated(query, server); }
+	}
+
+	private static void exitAndAssertTerminated(TS3Query query, TeamSpeakContainer server) throws InterruptedException {
+		query.exit();
+		long started = System.nanoTime();
+		while (!query.resourcesTerminated() && System.nanoTime() - started < java.util.concurrent.TimeUnit.SECONDS.toNanos(1)) {
+			Thread.sleep(5);
 		}
+		assertTrue(query.resourcesTerminated(), "Library-owned workers must stop after exit");
+		assertTrue(Thread.getAllStackTraces().keySet().stream().noneMatch(thread ->
+			thread.getName().startsWith("sshj-Reader-") && thread.getName().contains(":" + server.getMappedPort(10022) + "-")),
+			"The SSH transport reader must stop after exit");
 	}
 
 	private static void openSSH(TS3Config config) throws Exception {

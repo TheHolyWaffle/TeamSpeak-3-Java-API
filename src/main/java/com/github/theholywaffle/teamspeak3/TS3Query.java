@@ -27,7 +27,6 @@ package com.github.theholywaffle.teamspeak3;
  */
 
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
-import com.github.theholywaffle.teamspeak3.api.exception.TS3QueryShutDownException;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.reconnect.DisconnectingConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
@@ -44,8 +43,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * ServerQuery client owning its transport, I/O workers, deadline scheduler and callback executor.
@@ -114,8 +111,6 @@ public class TS3Query implements AutoCloseable {
 	private final FileTransferHelper fileTransferHelper;
 	private final CommandQueue globalQueue;
 	private final TS3Config config;
-
-	private final AtomicBoolean connected = new AtomicBoolean(false);
 
 	/** Observable lifecycle. CLOSED is terminal; DISCONNECTED may reconnect. */
 	public enum State { NEW, CONNECTING, CONNECTED, DISCONNECTED, CLOSING, CLOSED }
@@ -207,7 +202,6 @@ public class TS3Query implements AutoCloseable {
 						}
 						con.setCommandQueue(globalQueue);
 						con.initialized();
-						connected.set(true);
 						state.set(State.CONNECTED);
 					}
 				} catch (Exception e) {
@@ -253,7 +247,6 @@ public class TS3Query implements AutoCloseable {
 		synchronized (this) {
 			if (state.get() == State.CLOSED || state.get() == State.CLOSING) return;
 			state.set(State.CLOSING);
-			connected.set(false);
 			con = connection;
 		}
 		if (drain && con != null && !con.isStopped() && !initializing.get()) {
@@ -309,7 +302,7 @@ public class TS3Query implements AutoCloseable {
 	 * @see TS3Config#setConnectionHandler(ConnectionHandler)
 	 */
 	public boolean isConnected() {
-		return connected.get();
+		return state.get() == State.CONNECTED;
 	}
 
 	/**
@@ -361,7 +354,6 @@ public class TS3Query implements AutoCloseable {
 	void fireDisconnect(Connection source) {
 		synchronized (this) {
 			if (source != connection || state.get() == State.CLOSING || state.get() == State.CLOSED) return;
-			connected.set(false);
 			if (state.get() == State.CONNECTING) {
 				Future<?> task = initializationTask;
 				if (task != null) task.cancel(true);

@@ -77,7 +77,8 @@ class Connection {
 		if (!stopped.get() && ((init != null && init.expired()) || queue.get().responseExpired())) {
 			internalDisconnect();
 		}
-		queue.get().expireWaitingCommands();
+		CommandQueue currentQueue = queue.get();
+		if (!currentQueue.isGlobal()) currentQueue.expireWaitingCommands();
 	}
 
 	void internalDisconnect() {
@@ -89,8 +90,7 @@ class Connection {
 	void disconnect(Deadline deadline) {
 		if (!stop(deadline)) {
 			queue.get().failRemainingCommands();
-			deadline.join(reader); deadline.join(writer); deadline.join(keepAlive);
-			channel.awaitTermination(deadline);
+			awaitTermination(deadline);
 		}
 	}
 
@@ -101,9 +101,13 @@ class Connection {
 		synchronized (this) { threads = new Thread[] {reader, writer, keepAlive}; }
 		for (Thread thread : threads) if (thread != null) thread.interrupt();
 		queue.get().failRemainingCommands();
-		for (Thread thread : threads) deadline.join(thread);
-		channel.awaitTermination(deadline);
+		awaitTermination(deadline);
 		return true;
+	}
+
+	private void awaitTermination(Deadline deadline) {
+		deadline.join(reader); deadline.join(writer); deadline.join(keepAlive);
+		channel.awaitTermination(deadline);
 	}
 
 	boolean threadsTerminated() {

@@ -184,26 +184,32 @@ class CommandQueue {
 		try {
 			long now = System.nanoTime();
 			long timeout = query.getConfig().getCommandResponseTimeout().toNanos();
-			return sent.values().stream().anyMatch(start -> now - start >= timeout);
+			for (long start : sent.values()) {
+				if (now - start >= timeout) return true;
+			}
+			return false;
 		} finally { queueLock.unlock(); }
 	}
 
 	void expireWaitingCommands() {
-		Collection<Command> expired = new ArrayList<>();
 		queueLock.lock();
 		try {
+			if (sendQueue.isEmpty()) return;
+			boolean changed = false;
 			long now = System.nanoTime();
 			long timeout = query.getConfig().getQueueWaitTimeout().toNanos();
 			var iterator = sendQueue.iterator();
 			while (iterator.hasNext()) {
 				Command command = iterator.next();
 				if (now - enqueued.get(command) >= timeout) {
-					iterator.remove(); enqueued.remove(command); expired.add(command);
+					iterator.remove();
+					enqueued.remove(command);
+					query.submitUserTask("Queue deadline", () ->
+						command.getFuture().fail(new TS3Exception("Command queue wait deadline exceeded")));
+					changed = true;
 				}
 			}
-			for (Command command : expired) query.submitUserTask("Queue deadline", () ->
-				command.getFuture().fail(new TS3Exception("Command queue wait deadline exceeded")));
-			canTransfer.signalAll();
+			if (changed) canTransfer.signalAll();
 		} finally { queueLock.unlock(); }
 	}
 

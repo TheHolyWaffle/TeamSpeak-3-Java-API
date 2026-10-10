@@ -63,7 +63,7 @@ class SSHChannel implements IOChannel {
 				private void trackReader() {
 					// SSHJ exposes transport join as an event, which can complete before
 					// its actual reader exits. Observe that reader at the socket boundary.
-					if (Thread.currentThread() instanceof net.schmizz.sshj.transport.Reader) {
+					if (transportReader == null && Thread.currentThread() instanceof net.schmizz.sshj.transport.Reader) {
 						transportReader = Thread.currentThread();
 					}
 				}
