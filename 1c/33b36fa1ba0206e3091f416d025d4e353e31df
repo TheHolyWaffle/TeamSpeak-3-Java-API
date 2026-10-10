@@ -1,0 +1,27 @@
+src/test/java/com/github/theholywaffle/teamspeak3/DevelopmentServer.java
+  s_df3b12d168cd86::t_a2dce01934205b 16,46,53
+docs/configuration-and-transports.md
+  s_df3b12d168cd86::t_a2dce01934205b 67-68
+docs/development-server.md
+  s_df3b12d168cd86::t_a2dce01934205b 36-37,49
+src/main/java/com/github/theholywaffle/teamspeak3/SSHChannel.java
+  s_df3b12d168cd86::t_de767b82458b54 47-48,54-57,73,121,127-128
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryCompatibilityIT.java
+  s_df3b12d168cd86::t_91801f701a7b51 226-236
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1c33b36fa1ba0206e3091f416d025d4e353e31df",
+  "prompts": {},
+  "sessions": {
+    "s_df3b12d168cd86": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12749-5bf2-7c92-8197-ad5f377edede",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
