@@ -1,0 +1,82 @@
+src/main/java/com/github/theholywaffle/teamspeak3/QueryTransportFactory.java
+  s_df3b12d168cd86::t_1e424e7d342efc 1-14
+src/main/java/com/github/theholywaffle/teamspeak3/ServerType.java
+  s_df3b12d168cd86::t_1e424e7d342efc 1-4
+docs/configuration-and-transports.md
+  s_df3b12d168cd86::t_8e899f63862a97 1-110
+src/main/java/com/github/theholywaffle/teamspeak3/SSHChannel.java
+  s_df3b12d168cd86::t_1e424e7d342efc 44
+  s_df3b12d168cd86::t_bd35cbd006639b 43,46,49,55-57,66,69,72,76,87,118-120,126
+src/main/java/com/github/theholywaffle/teamspeak3/QueryTransports.java
+  s_df3b12d168cd86::t_1e424e7d342efc 1-18
+src/main/java/com/github/theholywaffle/teamspeak3/StreamWriter.java
+  s_df3b12d168cd86::t_1e424e7d342efc 48
+src/main/java/com/github/theholywaffle/teamspeak3/QueryTransport.java
+  s_df3b12d168cd86::t_1e424e7d342efc 1-44,47-48,50-51,53-54,56-57,59-60
+  s_df3b12d168cd86::t_8e899f63862a97 45-46,49,52,55,58
+src/test/java/com/github/theholywaffle/teamspeak3/DevelopmentServer.java
+  s_df3b12d168cd86::t_56e06e4de0d407 28,32
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryCompatibilityIT.java
+  s_df3b12d168cd86::t_56e06e4de0d407 56,221,232-233,239,241-242,257
+  s_df3b12d168cd86::t_5bfad52929761a 105-117,127-128,235-238
+src/test/java/com/github/theholywaffle/teamspeak3/TeamSpeakContainer.java
+  s_df3b12d168cd86::t_56e06e4de0d407 142
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Query.java
+  s_df3b12d168cd86::t_1e424e7d342efc 117,146-151,209,305
+src/test/java/com/github/theholywaffle/teamspeak3/ConnectionLifecycleTest.java
+  s_df3b12d168cd86::t_56e06e4de0d407 311-312
+  s_df3b12d168cd86::t_5ac06de9607c07 249,256,267-268,301
+src/test/java/com/github/theholywaffle/teamspeak3/EventResilienceTest.java
+  s_df3b12d168cd86::t_56e06e4de0d407 201-202
+src/main/java/com/github/theholywaffle/teamspeak3/Connection.java
+  s_df3b12d168cd86::t_1e424e7d342efc 38-39,48,52,57,115
+src/main/java/com/github/theholywaffle/teamspeak3/SocketChannel.java
+  s_df3b12d168cd86::t_1e424e7d342efc 35,38,40,43
+  s_df3b12d168cd86::t_53d513c7221f32 44
+src/main/java/com/github/theholywaffle/teamspeak3/StreamReader.java
+  s_df3b12d168cd86::t_1e424e7d342efc 55
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Config.java
+  s_df3b12d168cd86::t_1e424e7d342efc 43,46-48,76,85,95,105,480-499
+  s_df3b12d168cd86::t_5fda203c79490d 40-41
+src/main/java/com/github/theholywaffle/teamspeak3/QueryConfig.java
+  s_df3b12d168cd86::t_1e424e7d342efc 1-122
+  s_df3b12d168cd86::t_d93551e60f88c8 123-125
+src/main/java/com/github/theholywaffle/teamspeak3/SshHostKeyPolicy.java
+  s_df3b12d168cd86::t_56e06e4de0d407 1-78
+README.md
+  s_df3b12d168cd86::t_1b260bd15b1622 184-193
+docs/connection-lifecycle.md
+  s_df3b12d168cd86::t_2613385c576e67 21
+docs/development-server.md
+  s_df3b12d168cd86::t_5f912511c0caed 36-37,50
+docs/events-and-capacity.md
+  s_df3b12d168cd86::t_1bfa2334beccdf 3
+docs/integration-tests.md
+  s_df3b12d168cd86::t_c5613b354cb9d2 49-51
+docs/reconnect-and-retry.md
+  s_df3b12d168cd86::t_033db371a14e8a 35
+src/test/java/com/github/theholywaffle/teamspeak3/DevelopmentServerIT.java
+  s_df3b12d168cd86::t_79e8d7fd98ecfd 56-58
+src/test/java/com/github/theholywaffle/teamspeak3/QueryConfigurationTest.java
+  s_df3b12d168cd86::t_d036ff8b98c0e6 1-101
+src/test/java/com/github/theholywaffle/teamspeak3/ReconnectSemanticsTest.java
+  s_df3b12d168cd86::t_a4e0eaa9555357 301-302,344,354-357
+src/test/java/com/github/theholywaffle/teamspeak3/SshHostKeyPolicyTest.java
+  s_df3b12d168cd86::t_10d6dba00a31f6 1-67
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f667b49ec51936cfd86b9ecd5d11aebc6f595afb",
+  "prompts": {},
+  "sessions": {
+    "s_df3b12d168cd86": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12749-5bf2-7c92-8197-ad5f377edede",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
