@@ -1,0 +1,25 @@
+.github/workflows/release.yml
+  s_cf5f5b8dbd7031::t_a6ed974ae0a896 144-145,160
+docs/releases.md
+  s_cf5f5b8dbd7031::t_a6ed974ae0a896 149,152-160,169
+.github/scripts/release-rehearsal.sh
+  s_cf5f5b8dbd7031::t_a6ed974ae0a896 9,12-13
+.github/scripts/derive-signing-public-key.sh
+  s_cf5f5b8dbd7031::t_a6ed974ae0a896 1-12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4d3636218dc2d21a53e98e1a93cd3f3f56ff1147",
+  "prompts": {},
+  "sessions": {
+    "s_cf5f5b8dbd7031": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12228-284a-7f80-8202-97a19460d06c",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "bert.degeyter <bert.degeyter@showpad.com>"
+    }
+  }
+}
