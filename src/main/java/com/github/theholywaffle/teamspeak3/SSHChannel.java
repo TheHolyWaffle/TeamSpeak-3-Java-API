@@ -40,6 +40,7 @@ import java.net.Socket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.io.File;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -54,7 +55,25 @@ class SSHChannel implements IOChannel {
 	private static final String KNOWN_HOSTS_FILE_NAME = "known_ts3_hosts";
 
 	private final SSHClient client = new SSHClient();
-	private final Socket socket = new Socket();
+	private volatile Thread transportReader;
+	private final Socket socket = new Socket() {
+		@Override
+		public InputStream getInputStream() throws IOException {
+			return new FilterInputStream(super.getInputStream()) {
+				private void trackReader() {
+					// SSHJ exposes transport join as an event, which can complete before
+					// its actual reader exits. Observe that reader at the socket boundary.
+					if (Thread.currentThread() instanceof net.schmizz.sshj.transport.Reader) {
+						transportReader = Thread.currentThread();
+					}
+				}
+				@Override public int read() throws IOException { trackReader(); return in.read(); }
+				@Override public int read(byte[] bytes, int offset, int length) throws IOException {
+					trackReader(); return in.read(bytes, offset, length);
+				}
+			};
+		}
+	};
 	private final TS3Config config;
 	private volatile Session session;
 
@@ -105,6 +124,18 @@ class SSHChannel implements IOChannel {
 		// Abort the underlying socket first: SSH channel/client close may write to the peer.
 		socket.close();
 		client.close();
+	}
+
+	@Override
+	public void awaitTermination(Deadline deadline) {
+		deadline.join(transportReader);
+		deadline.join(client.getConnection().getKeepAlive());
+	}
+
+	@Override
+	public boolean isTerminated() {
+		Thread reader = transportReader;
+		return (reader == null || !reader.isAlive()) && !client.getConnection().getKeepAlive().isAlive();
 	}
 
 	private static class AutoAddKnownHosts extends OpenSSHKnownHosts {

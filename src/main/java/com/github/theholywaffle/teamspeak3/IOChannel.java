@@ -35,6 +35,10 @@ interface IOChannel extends Closeable {
 
 	void connect(Connection connection) throws IOException;
 
+	default void awaitTermination(Deadline deadline) { }
+
+	default boolean isTerminated() { return true; }
+
 	InputStream getInputStream() throws IOException;
 
 	OutputStream getOutputStream() throws IOException;

@@ -90,6 +90,7 @@ class Connection {
 		if (!stop(deadline)) {
 			queue.get().failRemainingCommands();
 			deadline.join(reader); deadline.join(writer); deadline.join(keepAlive);
+			channel.awaitTermination(deadline);
 		}
 	}
 
@@ -101,11 +102,12 @@ class Connection {
 		for (Thread thread : threads) if (thread != null) thread.interrupt();
 		queue.get().failRemainingCommands();
 		for (Thread thread : threads) deadline.join(thread);
+		channel.awaitTermination(deadline);
 		return true;
 	}
 
 	boolean threadsTerminated() {
-		return (reader == null || !reader.isAlive()) && (writer == null || !writer.isAlive())
+		return channel.isTerminated() && (reader == null || !reader.isAlive()) && (writer == null || !writer.isAlive())
 			&& (keepAlive == null || !keepAlive.isAlive());
 	}
 

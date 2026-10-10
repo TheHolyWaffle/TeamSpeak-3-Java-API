@@ -51,7 +51,10 @@ enter `CONNECTING` again. `isConnected()` describes the current transport state,
 not a guarantee that the server will respond to the next command.
 
 The client owns its socket/SSH client, three I/O/keepalive workers, deadline
-scheduler and virtual-thread callback executor. Applications own callback code
+scheduler and virtual-thread callback executor. The SSH channel also tracks and
+joins SSHJ's transport reader and keepalive worker within the shared close budget;
+SSHJ's transport-close event alone does not guarantee that its reader has exited.
+Applications own callback code
 and streams they supply. Initialization handlers now run on an owned callback
 thread, not the caller's thread; they must cooperate with interruption. Closing
 shuts down the executor and interrupts unfinished callbacks. Java cannot safely
