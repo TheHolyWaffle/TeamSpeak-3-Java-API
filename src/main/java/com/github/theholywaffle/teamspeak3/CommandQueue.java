@@ -114,28 +114,41 @@ class CommandQueue {
 		queueLock.lock();
 		try {
 			if (rejectNew) {
-				command.getFuture().fail(new TS3QueryShutDownException());
+				command.getFuture().completeExceptionally(new TS3QueryShutDownException());
 				return;
 			}
 
 			if (paused && query.getConfig().getSessionConfiguration() == null) {
-				command.getFuture().fail(new TS3Exception("Disconnected query has no restorable session"));
+				command.getFuture().completeExceptionally(new TS3Exception("Disconnected query has no restorable session"));
 				return;
 			}
 			if (contextSealed && SESSION_COMMANDS.contains(command.getName())) {
-				command.getFuture().fail(new TS3Exception("Session changes require SessionConfiguration when reconnect is enabled"));
+				command.getFuture().completeExceptionally(new TS3Exception("Session changes require SessionConfiguration when reconnect is enabled"));
 				return;
 			}
 			if (!admission.tryAcquire()) {
-				command.getFuture().fail(new TS3QueueFullException());
+				command.getFuture().completeExceptionally(new TS3QueueFullException());
 				return;
 			}
 			enqueued.put(command, System.nanoTime());
 			sendQueue.add(command);
+			command.getFuture().whenComplete((value, failure) -> {
+				if (command.getFuture().isCancelled()) removeUnsent(command);
+			});
 			canTransfer.signalAll();
 		} finally {
 			queueLock.unlock();
 		}
+	}
+
+	private void removeUnsent(Command command) {
+		queueLock.lock();
+		try {
+			if (sendQueue.remove(command)) {
+				enqueued.remove(command); retries.remove(command); admission.release();
+				canTransfer.signalAll();
+			}
+		} finally { queueLock.unlock(); }
 	}
 
 	Command transferCommand(Connection owner) throws InterruptedException {
@@ -177,7 +190,7 @@ class CommandQueue {
 		try {
 			if (receiveQueue.peek() != command || owners.get(command) != owner) return;
 			receiveQueue.remove(); sent.remove(command); owners.remove(command); enqueued.remove(command); retries.remove(command);
-			complete("Command response", completion);
+			complete(completion);
 			canTransfer.signalAll();
 		} finally { queueLock.unlock(); }
 	}
@@ -221,11 +234,11 @@ class CommandQueue {
 
 	private void fail(Command command, TS3Exception failure) {
 		enqueued.remove(command); retries.remove(command);
-		complete("Command termination", () -> command.getFuture().fail(failure));
+		complete(() -> command.getFuture().completeExceptionally(failure));
 	}
 
-	private void complete(String name, Runnable completion) {
-		query.submitUserTask(name, () -> {
+	private void complete(Runnable completion) {
+		query.submitCompletion(() -> {
 			try { completion.run(); }
 			finally { admission.release(); }
 		});
@@ -265,8 +278,8 @@ class CommandQueue {
 				if (now - enqueued.get(command) >= timeout) {
 					iterator.remove();
 					enqueued.remove(command); retries.remove(command);
-					complete("Queue deadline", () ->
-						command.getFuture().fail(new TS3Exception("Command queue wait deadline exceeded")));
+					complete(() ->
+						command.getFuture().completeExceptionally(new TS3Exception("Command queue wait deadline exceeded")));
 					changed = true;
 				}
 			}

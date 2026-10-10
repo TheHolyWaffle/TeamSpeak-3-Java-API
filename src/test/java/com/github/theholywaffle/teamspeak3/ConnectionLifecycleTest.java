@@ -46,8 +46,8 @@ class ConnectionLifecycleTest {
 		var pending = query.getAsyncApi().whoAmI();
 		assertEquals(TS3Query.State.NEW, query.getState());
 		assertTimeout(Duration.ofMillis(600), query::close);
-		assertThrows(TS3QueryShutDownException.class, () -> pending.get(1, TimeUnit.SECONDS));
-		assertThrows(TS3QueryShutDownException.class, () -> query.getAsyncApi().whoAmI().get());
+		assertThrows(TS3QueryShutDownException.class, () -> FutureAssertions.read(pending, 1, TimeUnit.SECONDS));
+		assertThrows(TS3QueryShutDownException.class, () -> FutureAssertions.read(query.getAsyncApi().whoAmI()));
 		assertThrows(IllegalStateException.class, query::connect);
 		query.close(); query.exit();
 		terminated(query);
@@ -87,8 +87,8 @@ class ConnectionLifecycleTest {
 				var first = query.getAsyncApi().whoAmI();
 				var second = query.getAsyncApi().whoAmI();
 				assertTrue(received.await(1, TimeUnit.SECONDS));
-				assertThrows(TS3QueryShutDownException.class, () -> first.get(1, TimeUnit.SECONDS));
-				assertThrows(TS3QueryShutDownException.class, () -> second.get(1, TimeUnit.SECONDS));
+				assertThrows(TS3QueryShutDownException.class, () -> FutureAssertions.read(first, 1, TimeUnit.SECONDS));
+				assertThrows(TS3QueryShutDownException.class, () -> FutureAssertions.read(second, 1, TimeUnit.SECONDS));
 				terminated(query);
 			} finally { query.close(); }
 		}
@@ -110,7 +110,7 @@ class ConnectionLifecycleTest {
 				query.connect();
 				var first = query.getAsyncApi().whoAmI();
 				for (int i = 0; i < 10; i++) { query.getAsyncApi().whoAmI(); Thread.sleep(20); }
-				assertThrows(TS3QueryShutDownException.class, () -> first.get(700, TimeUnit.MILLISECONDS));
+				assertThrows(TS3QueryShutDownException.class, () -> FutureAssertions.read(first, 700, TimeUnit.MILLISECONDS));
 				terminated(query);
 			} finally { stop.countDown(); query.close(); }
 		}
@@ -132,7 +132,7 @@ class ConnectionLifecycleTest {
 				var first = query.getAsyncApi().whoAmI();
 				var waiting = query.getAsyncApi().whoAmI();
 				var failure = assertThrows(com.github.theholywaffle.teamspeak3.api.exception.TS3Exception.class,
-					() -> waiting.get(500, TimeUnit.MILLISECONDS));
+					() -> FutureAssertions.read(waiting, 500, TimeUnit.MILLISECONDS));
 				assertTrue(failure.getMessage().contains("queue wait"));
 				assertFalse(first.isDone());
 				release.countDown();
@@ -222,7 +222,7 @@ class ConnectionLifecycleTest {
 					}
 					assertTrue(blocked, "Test must observe the writer blocked in the socket write");
 					if (!timeout) assertTimeout(Duration.ofMillis(600), query::close);
-					assertThrows(TS3QueryShutDownException.class, () -> pending.get(1, TimeUnit.SECONDS));
+					assertThrows(TS3QueryShutDownException.class, () -> FutureAssertions.read(pending, 1, TimeUnit.SECONDS));
 					terminated(query);
 				} finally { query.close(); }
 			}
@@ -236,7 +236,7 @@ class ConnectionLifecycleTest {
 			query.connect();
 			var pending = query.getAsyncApi().whoAmI();
 			assertTimeout(Duration.ofMillis(600), query::exit);
-			assertThrows(TS3QueryShutDownException.class, () -> pending.get(1, TimeUnit.SECONDS));
+			assertThrows(TS3QueryShutDownException.class, () -> FutureAssertions.read(pending, 1, TimeUnit.SECONDS));
 			terminated(query);
 		}
 	}
@@ -256,7 +256,7 @@ class ConnectionLifecycleTest {
 			}, config);
 			writer.start();
 			assertTrue(writes.await(1, TimeUnit.SECONDS));
-			assertThrows(TS3QueryShutDownException.class, () -> pending.get(1, TimeUnit.SECONDS));
+			assertThrows(TS3QueryShutDownException.class, () -> FutureAssertions.read(pending, 1, TimeUnit.SECONDS));
 			writer.join(1000);
 			assertFalse(writer.isAlive());
 			assertTrue(con.isStopped());

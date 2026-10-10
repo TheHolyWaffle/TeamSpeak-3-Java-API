@@ -26,7 +26,7 @@ package com.github.theholywaffle.teamspeak3.commands;
  * #L%
  */
 
-import com.github.theholywaffle.teamspeak3.api.CommandFuture;
+import java.util.concurrent.CompletableFuture;
 import com.github.theholywaffle.teamspeak3.commands.parameter.Parameter;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 
@@ -36,19 +36,19 @@ public class Command {
 
 	private final String name;
 	private final Collection<Parameter> parameters;
-	private final CommandFuture<DefaultArrayResponse> future;
+	private final CompletableFuture<DefaultArrayResponse> future;
 
 	Command(String commandName, Collection<Parameter> parameters) {
 		this.name = commandName;
 		this.parameters = parameters;
-		this.future = new CommandFuture<>();
+		this.future = new CompletableFuture<>();
 	}
 
 	public String getName() {
 		return name;
 	}
 
-	public CommandFuture<DefaultArrayResponse> getFuture() {
+	public CompletableFuture<DefaultArrayResponse> getFuture() {
 		return future;
 	}
 

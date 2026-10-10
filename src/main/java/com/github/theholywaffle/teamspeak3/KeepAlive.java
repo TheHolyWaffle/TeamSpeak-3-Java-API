@@ -49,7 +49,7 @@ class KeepAlive extends Thread {
 				if (idleTime >= SLEEP) {
 					// Using the asynchronous API so we get InterruptedExceptions
 					TS3ApiAsync asyncApi = con.getCommandQueue().getAsyncApi();
-					asyncApi.whoAmI().await();
+					asyncApi.whoAmI().handle((value, failure) -> null).get();
 				} else {
 					Thread.sleep(SLEEP - idleTime);
 				}

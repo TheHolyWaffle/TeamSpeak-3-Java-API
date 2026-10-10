@@ -131,16 +131,16 @@ class EventResilienceTest {
 			.setFloodRate(TS3Query.FloodRate.UNLIMITED).setCommandCapacity(1))) {
 			query.connect();
 			var first = query.getAsyncApi().whoAmI();
-			first.onSuccess(value -> { entered.countDown(); await(release); });
+			first.thenAccept(value -> { entered.countDown(); await(release); });
 			try {
-				assertThrows(TS3QueueFullException.class, () -> query.getAsyncApi().whoAmI().getUninterruptibly());
+				assertThrows(TS3QueueFullException.class, () -> FutureAssertions.read(query.getAsyncApi().whoAmI()));
 				response.countDown(); await(entered);
-				assertThrows(TS3QueueFullException.class, () -> query.getAsyncApi().whoAmI().getUninterruptibly());
+				assertThrows(TS3QueueFullException.class, () -> FutureAssertions.read(query.getAsyncApi().whoAmI()));
 				release.countDown();
 				// Wait for completion to release admission; rejected commands never reach the wire.
 				long until = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
 				while (true) {
-					try { assertEquals(2, query.getAsyncApi().whoAmI().getUninterruptibly().getId()); break; }
+					try { assertEquals(2, FutureAssertions.read(query.getAsyncApi().whoAmI()).getId()); break; }
 					catch (TS3QueueFullException full) { if (System.nanoTime() >= until) throw full; Thread.sleep(1); }
 				}
 			} finally { response.countDown(); release.countDown(); query.exit(); }
@@ -164,13 +164,13 @@ class EventResilienceTest {
 		try (var query = new TS3Query(new TS3Config().setCommandCapacity(1)
 			.setQueueWaitTimeout(java.time.Duration.ofMillis(30)))) {
 			var first = query.getAsyncApi().whoAmI();
-			assertThrows(TS3QueueFullException.class, () -> query.getAsyncApi().whoAmI().getUninterruptibly());
+			assertThrows(TS3QueueFullException.class, () -> FutureAssertions.read(query.getAsyncApi().whoAmI()));
 			assertThrows(com.github.theholywaffle.teamspeak3.api.exception.TS3Exception.class,
-				() -> first.getUninterruptibly(3, TimeUnit.SECONDS));
+				() -> FutureAssertions.read(first, 3, TimeUnit.SECONDS));
 			long until = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
 			while (true) {
 				var next = query.getAsyncApi().whoAmI();
-				if (!next.hasFailed()) break;
+				if (!next.isCompletedExceptionally()) break;
 				if (System.nanoTime() >= until) fail("Expired command must release admission");
 				Thread.sleep(1);
 			}
@@ -184,7 +184,7 @@ class EventResilienceTest {
 			try {
 				var oldCommand = oldStartup.getAsyncApi().whoAmI();
 				assertFalse(oldCommand.isDone());
-				assertThrows(TS3QueueFullException.class, () -> newStartup.getAsyncApi().whoAmI().getUninterruptibly());
+				assertThrows(TS3QueueFullException.class, () -> FutureAssertions.read(newStartup.getAsyncApi().whoAmI()));
 				assertFalse(query.getAsyncApi().whoAmI().isDone(), "Startup saturation must leave application capacity independent");
 			} finally { oldStartup.failRemainingCommands(); newStartup.failRemainingCommands(); }
 		}

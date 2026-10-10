@@ -108,6 +108,11 @@ changes must appear in the first release notes and migration guide:
 - Logging uses SLF4J 2.0. Replace SLF4J 1.7 bindings with exactly one compatible 2.x
   provider. The standalone JAR includes SimpleLogger.
 
+Task #439 removes `CommandFuture` in favor of JDK `CompletableFuture` and
+`CompletionStage`. Recompile consumers and follow the [future migration guide](futures.md)
+for callback execution, exception wrappers, chaining, waiting and cancellation.
+The async return-type change is an intentional 2.0 source/binary break.
+
 ## Central Portal publication (#433)
 
 JReleaser **1.26.0**, pinned in Maven, is the sole owner of signing, Central Portal
