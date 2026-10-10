@@ -1,6 +1,16 @@
 package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
+import com.github.theholywaffle.teamspeak3.api.event.ChannelCreateEvent;
+import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
+import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
+import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
+import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
+import com.github.theholywaffle.teamspeak3.api.reconnect.SessionConfiguration;
+import java.time.Duration;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
 import net.schmizz.sshj.common.DisconnectReason;
@@ -81,6 +91,46 @@ class ServerQueryCompatibilityIT {
 			// A server error must leave response framing usable.
 			assertEquals(version.getVersion(), api.getVersion().getVersion());
 		} finally { exitAndAssertTerminated(query, server); }
+	}
+
+	@ParameterizedTest(name = "{0}: reconnect restores authentication, target, nickname and subscriptions")
+	@EnumSource(Target.class)
+	@Timeout(30)
+	void reconnectSession(Target target) throws Exception {
+		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		try (var proxy = new DisconnectingProxy(server.getHost(), server.getMappedPort(target.protocol == TS3Query.Protocol.RAW ? 10011 : 10022))) {
+			var connected = new AtomicInteger();
+			var restored = new CountDownLatch(1);
+			var event = new CountDownLatch(1);
+			var session = SessionConfiguration.forServer(1).withNickname("reconnect-" + target)
+				.withSubscription(TS3EventType.CHANNEL, 0);
+			var config = server.config(target.protocol).setHost("127.0.0.1").setQueryPort(proxy.port())
+				.setSessionConfiguration(session).setReconnectStrategy(ReconnectStrategy.constantBackoff(50).withMaxAttempts(3))
+				.setHandshakeTimeout(Duration.ofSeconds(10)).setConnectionHandler(new ConnectionHandler() {
+					@Override public void onConnect(TS3Api api) { if (connected.incrementAndGet() == 2) restored.countDown(); }
+					@Override public void onDisconnect(TS3Query query) { }
+				});
+			try (var query = new TS3Query(config)) {
+				query.getApi().addTS3Listeners(new TS3EventAdapter() {
+					@Override public void onChannelCreate(ChannelCreateEvent notification) { event.countDown(); }
+				});
+				query.connect();
+				var before = query.getApi().whoAmI();
+				assertEquals(1, before.getVirtualServerId()); assertEquals(session.nickname(), before.getNickname());
+				proxy.drop();
+				assertTrue(restored.await(15, TimeUnit.SECONDS), "Configured session must reconnect");
+				var after = query.getApi().whoAmI();
+				assertEquals(1, after.getVirtualServerId()); assertEquals(session.nickname(), after.getNickname());
+				// This privileged operation proves authentication was restored; its event proves the subscription.
+				int channel = query.getApi().createChannel("reconnect-event-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"));
+				try { assertTrue(event.await(5, TimeUnit.SECONDS), "Channel notifications must be restored"); }
+				finally { query.getApi().deleteChannel(channel, true); }
+				query.exit();
+				long until = System.nanoTime() + TimeUnit.SECONDS.toNanos(1);
+				while (!query.resourcesTerminated() && System.nanoTime() < until) Thread.sleep(5);
+				assertTrue(query.resourcesTerminated());
+			}
+		}
 	}
 
 	private static void verifyConnection(TeamSpeakContainer server, TS3Query.Protocol protocol) throws Exception {

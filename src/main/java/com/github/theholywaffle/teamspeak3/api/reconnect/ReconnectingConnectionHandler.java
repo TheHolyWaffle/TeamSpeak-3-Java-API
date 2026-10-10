@@ -32,6 +32,8 @@ import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedExce
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public class ReconnectingConnectionHandler implements ConnectionHandler {
 
 	private static final Logger log = LoggerFactory.getLogger(ReconnectingConnectionHandler.class);
@@ -41,9 +43,28 @@ public class ReconnectingConnectionHandler implements ConnectionHandler {
 	private final int timeoutCap;
 	private final int addend;
 	private final double multiplier;
+	private final int maxAttempts;
 
 	public ReconnectingConnectionHandler(ConnectionHandler userConnectionHandler, int startTimeout,
 	                                     int timeoutCap, int addend, double multiplier) {
+		this(userConnectionHandler, startTimeout, timeoutCap, addend, multiplier, 10);
+	}
+
+	/** Creates a bounded reconnect handler; delays use equal jitter within the cap.
+	 * @param userConnectionHandler optional callback
+	 * @param startTimeout first delay upper bound in milliseconds
+	 * @param timeoutCap maximum delay upper bound in milliseconds
+	 * @param addend linear increase in milliseconds
+	 * @param multiplier exponential increase
+	 * @param maxAttempts maximum connection attempts per disconnect
+	 */
+	public ReconnectingConnectionHandler(ConnectionHandler userConnectionHandler, int startTimeout,
+	                                     int timeoutCap, int addend, double multiplier, int maxAttempts) {
+		if (startTimeout <= 0 || timeoutCap < startTimeout || addend < 0
+			|| !Double.isFinite(multiplier) || multiplier < 1 || maxAttempts <= 0) {
+			throw new IllegalArgumentException("Reconnect requires positive attempts/delays, cap >= start, and finite multiplier >= 1");
+		}
+		this.maxAttempts = maxAttempts;
 		this.userConnectionHandler = userConnectionHandler;
 		this.startTimeout = startTimeout;
 		this.timeoutCap = timeoutCap;
@@ -61,30 +82,43 @@ public class ReconnectingConnectionHandler implements ConnectionHandler {
 	@Override
 	public void onDisconnect(TS3Query ts3Query) {
 		// Announce disconnect and run user connection handler
-		log.info("[Connection] Disconnected from TS3 server - reconnecting in {}ms", startTimeout);
+		log.info("[Connection] Disconnected from TS3 server - reconnect delay capped at {}ms", startTimeout);
 		if (userConnectionHandler != null) {
 			userConnectionHandler.onDisconnect(ts3Query);
 		}
 
-		int timeout = startTimeout;
-
-		while (true) {
+		long timeout = startTimeout;
+		for (int attempt = 0; attempt < maxAttempts; attempt++) {
+			if (Thread.currentThread().isInterrupted() || ts3Query.getState() != TS3Query.State.DISCONNECTED) return;
 			try {
-				Thread.sleep(timeout);
+				Thread.sleep(jitterDelay(timeout));
 			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
 				return;
 			}
-
-			timeout = (int) Math.ceil(timeout * multiplier) + addend;
-			if (timeoutCap > 0) timeout = Math.min(timeout, timeoutCap);
-
+			if (ts3Query.getState() != TS3Query.State.DISCONNECTED) return;
 			try {
 				ts3Query.connect();
-				return; // Successfully reconnected, return
+				return;
 			} catch (TS3ConnectionFailedException conFailed) {
-				// Ignore exception, announce reconnect failure
-				log.debug("[Connection] Failed to reconnect - waiting {}ms until next attempt", timeout);
+				log.debug("[Connection] Reconnect attempt {} failed", attempt + 1);
+			} catch (IllegalStateException stateChanged) {
+				if (ts3Query.getState() == TS3Query.State.CLOSED || ts3Query.getState() == TS3Query.State.CLOSING
+					|| ts3Query.getState() == TS3Query.State.CONNECTED) return;
+				throw stateChanged;
 			}
+			timeout = nextDelay(timeout);
 		}
+		log.warn("[Connection] Reconnect attempts exhausted ({})", maxAttempts);
+		ts3Query.close();
 	}
+
+	long nextDelay(long delay) {
+		return (long) Math.min(timeoutCap, Math.ceil(delay * multiplier) + addend);
+	}
+
+	static long jitterDelay(long upperBound) {
+		return ThreadLocalRandom.current().nextLong(Math.max(1, (upperBound + 1) / 2), upperBound + 1);
+	}
+
 }

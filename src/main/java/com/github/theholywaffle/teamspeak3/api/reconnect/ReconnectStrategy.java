@@ -34,9 +34,29 @@ public abstract class ReconnectStrategy {
 	private static final int ADDEND = 2000;
 	private static final double MULTIPLIER = 1.5;
 
-	private ReconnectStrategy() {}
+	private final boolean reconnectEnabled;
+
+	private ReconnectStrategy(boolean reconnectEnabled) { this.reconnectEnabled = reconnectEnabled; }
 
 	public abstract ConnectionHandler create(ConnectionHandler userConnectionHandler);
+
+	/** @return whether this policy permits a new connection after transport loss */
+	public final boolean isReconnectEnabled() { return reconnectEnabled; }
+
+	/**
+	 * Returns a copy using a finite attempt limit. Built-in backoff strategies default to ten attempts.
+	 * All delays have a finite cap and equal jitter; interruption or query closure cancels retries.
+	 * @param attempts maximum connection attempts per disconnect
+	 * @return a bounded strategy
+	 */
+	public final ReconnectStrategy withMaxAttempts(int attempts) {
+		if (attempts <= 0) throw new IllegalArgumentException("Attempts must be positive");
+		return copyWithMaxAttempts(attempts);
+	}
+
+	ReconnectStrategy copyWithMaxAttempts(int attempts) {
+		throw new IllegalArgumentException("Attempt limits require a built-in backoff strategy");
+	}
 
 	public static ReconnectStrategy userControlled() {
 		return new UserControlled();
@@ -79,6 +99,7 @@ public abstract class ReconnectStrategy {
 	}
 
 	private static class UserControlled extends ReconnectStrategy {
+		private UserControlled() { super(true); }
 
 		@Override
 		public ConnectionHandler create(ConnectionHandler userConnectionHandler) {
@@ -89,6 +110,7 @@ public abstract class ReconnectStrategy {
 	}
 
 	private static class Disconnect extends ReconnectStrategy {
+		private Disconnect() { super(false); }
 
 		@Override
 		public ConnectionHandler create(ConnectionHandler userConnectionHandler) {
@@ -99,16 +121,24 @@ public abstract class ReconnectStrategy {
 	private static class Constant extends ReconnectStrategy {
 
 		private final int timeout;
+		private final int maxAttempts;
 
-		public Constant(int timeout) {
+		private Constant(int timeout) { this(timeout, 10); }
+
+		private Constant(int timeout, int maxAttempts) {
+			super(true);
+			this.maxAttempts = maxAttempts;
 			if (timeout <= 0) throw new IllegalArgumentException("Timeout must be greater than 0");
 
 			this.timeout = timeout;
 		}
 
 		@Override
+		ReconnectStrategy copyWithMaxAttempts(int attempts) { return new Constant(timeout, attempts); }
+
+		@Override
 		public ConnectionHandler create(ConnectionHandler userConnectionHandler) {
-			return new ReconnectingConnectionHandler(userConnectionHandler, timeout, timeout, 0, 1.0);
+			return new ReconnectingConnectionHandler(userConnectionHandler, timeout, timeout, 0, 1.0, maxAttempts);
 		}
 	}
 
@@ -117,10 +147,17 @@ public abstract class ReconnectStrategy {
 		private final int startTimeout;
 		private final int addend;
 		private final int timeoutCap;
+		private final int maxAttempts;
 
-		private Linear(int startTimeout, int addend, int timeoutCap) {
+		private Linear(int startTimeout, int addend, int timeoutCap) { this(startTimeout, addend, timeoutCap, 10); }
+
+		private Linear(int startTimeout, int addend, int timeoutCap, int maxAttempts) {
+			super(true);
+			this.maxAttempts = maxAttempts;
 			if (startTimeout <= 0) throw new IllegalArgumentException("Starting timeout must be greater than 0");
 			if (addend <= 0) throw new IllegalArgumentException("Addend must be greater than 0");
+
+			if (timeoutCap < startTimeout) throw new IllegalArgumentException("Cap must be >= starting timeout");
 
 			this.startTimeout = startTimeout;
 			this.addend = addend;
@@ -128,8 +165,11 @@ public abstract class ReconnectStrategy {
 		}
 
 		@Override
+		ReconnectStrategy copyWithMaxAttempts(int attempts) { return new Linear(startTimeout, addend, timeoutCap, attempts); }
+
+		@Override
 		public ConnectionHandler create(ConnectionHandler userConnectionHandler) {
-			return new ReconnectingConnectionHandler(userConnectionHandler, startTimeout, timeoutCap, addend, 1.0);
+			return new ReconnectingConnectionHandler(userConnectionHandler, startTimeout, timeoutCap, addend, 1.0, maxAttempts);
 		}
 	}
 
@@ -138,10 +178,17 @@ public abstract class ReconnectStrategy {
 		private final int startTimeout;
 		private final double multiplier;
 		private final int timeoutCap;
+		private final int maxAttempts;
 
-		private Exponential(int startTimeout, double multiplier, int timeoutCap) {
+		private Exponential(int startTimeout, double multiplier, int timeoutCap) { this(startTimeout, multiplier, timeoutCap, 10); }
+
+		private Exponential(int startTimeout, double multiplier, int timeoutCap, int maxAttempts) {
+			super(true);
+			this.maxAttempts = maxAttempts;
 			if (startTimeout <= 0) throw new IllegalArgumentException("Starting timeout must be greater than 0");
-			if (multiplier <= 1.0) throw new IllegalArgumentException("Multiplier must be greater than 1");
+			if (!Double.isFinite(multiplier) || multiplier <= 1.0) throw new IllegalArgumentException("Multiplier must be greater than 1");
+
+			if (timeoutCap < startTimeout) throw new IllegalArgumentException("Cap must be >= starting timeout");
 
 			this.startTimeout = startTimeout;
 			this.multiplier = multiplier;
@@ -149,8 +196,11 @@ public abstract class ReconnectStrategy {
 		}
 
 		@Override
+		ReconnectStrategy copyWithMaxAttempts(int attempts) { return new Exponential(startTimeout, multiplier, timeoutCap, attempts); }
+
+		@Override
 		public ConnectionHandler create(ConnectionHandler userConnectionHandler) {
-			return new ReconnectingConnectionHandler(userConnectionHandler, startTimeout, timeoutCap, 0, multiplier);
+			return new ReconnectingConnectionHandler(userConnectionHandler, startTimeout, timeoutCap, 0, multiplier, maxAttempts);
 		}
 	}
 }

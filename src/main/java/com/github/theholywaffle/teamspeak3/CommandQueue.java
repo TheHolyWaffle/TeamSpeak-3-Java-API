@@ -28,6 +28,7 @@ package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.exception.TS3QueryShutDownException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3UnknownOutcomeException;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 
 import java.util.ArrayDeque;
@@ -36,6 +37,7 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -58,9 +60,15 @@ class CommandQueue {
 	private final boolean isGlobal;
 
 	private boolean rejectNew = false;
+	private boolean paused;
+	private boolean contextSealed;
+	private static final Set<String> SESSION_COMMANDS = Set.of(
+		"login", "logout", "use", "clientupdate", "servernotifyregister", "servernotifyunregister");
+	private final Map<Command, Integer> retries = new IdentityHashMap<>();
 	private final TS3Query query;
 	private final Map<Command, Long> enqueued = new IdentityHashMap<>();
 	private final Map<Command, Long> sent = new IdentityHashMap<>();
+	private final Map<Command, Connection> owners = new IdentityHashMap<>();
 
 	static CommandQueue newGlobalQueue(TS3Query query, boolean unlimited) {
 		return new CommandQueue(query, true, unlimited);
@@ -74,6 +82,7 @@ class CommandQueue {
 		this.query = query;
 		isGlobal = global;
 		unlimitedInFlightCommands = unlimited;
+		contextSealed = global && query.getConfig().getSessionConfiguration() != null && !unlimited;
 
 		sendQueue = new ArrayDeque<>(INITIAL_QUEUE_SIZE);
 		receiveQueue = new ArrayDeque<>(unlimited ? INITIAL_QUEUE_SIZE : 1);
@@ -104,6 +113,14 @@ class CommandQueue {
 				return;
 			}
 
+			if (paused && query.getConfig().getSessionConfiguration() == null) {
+				command.getFuture().fail(new TS3Exception("Disconnected query has no restorable session"));
+				return;
+			}
+			if (contextSealed && SESSION_COMMANDS.contains(command.getName())) {
+				command.getFuture().fail(new TS3Exception("Session changes require SessionConfiguration when reconnect is enabled"));
+				return;
+			}
 			enqueued.put(command, System.nanoTime());
 			sendQueue.add(command);
 			canTransfer.signalAll();
@@ -112,23 +129,29 @@ class CommandQueue {
 		}
 	}
 
-	Command transferCommand() throws InterruptedException {
+	Command transferCommand(Connection owner) throws InterruptedException {
 		queueLock.lockInterruptibly();
 		try {
-			while (sendQueue.isEmpty() || (!receiveQueue.isEmpty() && !unlimitedInFlightCommands)) {
-				if (sendQueue.isEmpty() && rejectNew) return null;
-				canTransfer.await();
+			while (true) {
+				if (owner.isStopped()) return null;
+				while (paused || sendQueue.isEmpty() || (!receiveQueue.isEmpty() && !unlimitedInFlightCommands)) {
+					if (owner.isStopped() || (sendQueue.isEmpty() && rejectNew)) return null;
+					canTransfer.await();
+				}
+				if (owner.isStopped()) return null;
+				Command command = sendQueue.remove();
+				if (command.getFuture().isCancelled()) { enqueued.remove(command); retries.remove(command); continue; }
+				if (System.nanoTime() - enqueued.get(command) >= query.getConfig().getQueueWaitTimeout().toNanos()) {
+					fail(command, new TS3Exception("Command queue wait deadline exceeded"));
+					continue;
+				}
+				// Conservative boundary: any failure from encoding through flush has an unknown outcome.
+				receiveQueue.add(command);
+				sent.put(command, System.nanoTime());
+				owners.put(command, owner);
+				return command;
 			}
-
-			Command command = sendQueue.remove();
-			receiveQueue.add(command);
-			enqueued.remove(command);
-			sent.put(command, System.nanoTime());
-
-			return command;
-		} finally {
-			queueLock.unlock();
-		}
+		} finally { queueLock.unlock(); }
 	}
 
 	Command peekReceiveQueue() {
@@ -140,34 +163,56 @@ class CommandQueue {
 		}
 	}
 
-	void removeFromReceiveQueue() {
+	void completeResponse(Command command, Connection owner, Runnable completion) {
 		queueLock.lock();
 		try {
-			if (receiveQueue.isEmpty()) return; // Concurrent termination has already settled it.
-			sent.remove(receiveQueue.remove());
+			if (receiveQueue.peek() != command || owners.get(command) != owner) return;
+			receiveQueue.remove(); sent.remove(command); owners.remove(command); enqueued.remove(command); retries.remove(command);
+			query.submitUserTask("Command response", completion);
 			canTransfer.signalAll();
-		} finally {
-			queueLock.unlock();
-		}
+		} finally { queueLock.unlock(); }
 	}
 
-	void resetSentCommands() {
+	void sealSession() {
+		queueLock.lock();
+		try { contextSealed = true; } finally { queueLock.unlock(); }
+	}
+
+	void resume() {
+		queueLock.lock();
+		try { paused = false; canTransfer.signalAll(); } finally { queueLock.unlock(); }
+	}
+
+	void prepareReconnect() {
 		queueLock.lock();
 		try {
-			Collection<Command> allCommands = getAllCommands();
-
-			sendQueue.clear();
-			receiveQueue.clear();
-			sendQueue.addAll(allCommands);
-
-			rejectNew = false;
-			sent.clear();
-			for (Command command : allCommands) enqueued.putIfAbsent(command, System.nanoTime());
-
+			paused = true;
+			boolean restore = query.isReconnectEnabled() && query.getConfig().getSessionConfiguration() != null;
+			var policy = query.getConfig().getCommandRetryPolicy();
+			Queue<Command> recovered = new ArrayDeque<>();
+			for (Command command : receiveQueue) {
+				int count = retries.getOrDefault(command, 0);
+				if (restore && policy.allows(command.getName()) && count < policy.getMaxRetries()
+					&& !command.getFuture().isCancelled()) {
+					retries.put(command, count + 1);
+					enqueued.put(command, System.nanoTime());
+					recovered.add(command);
+				} else {
+					fail(command, new TS3UnknownOutcomeException(command.getName()));
+				}
+			}
+			for (Command command : sendQueue) {
+				if (restore && !command.getFuture().isCancelled()) recovered.add(command);
+				else fail(command, new TS3QueryShutDownException());
+			}
+			sendQueue.clear(); sendQueue.addAll(recovered); receiveQueue.clear(); sent.clear(); owners.clear();
 			canTransfer.signalAll();
-		} finally {
-			queueLock.unlock();
-		}
+		} finally { queueLock.unlock(); }
+	}
+
+	private void fail(Command command, TS3Exception failure) {
+		enqueued.remove(command); retries.remove(command);
+		query.submitUserTask("Command termination", () -> command.getFuture().fail(failure));
 	}
 
 	boolean isEmpty() {
@@ -203,7 +248,7 @@ class CommandQueue {
 				Command command = iterator.next();
 				if (now - enqueued.get(command) >= timeout) {
 					iterator.remove();
-					enqueued.remove(command);
+					enqueued.remove(command); retries.remove(command);
 					query.submitUserTask("Queue deadline", () ->
 						command.getFuture().fail(new TS3Exception("Command queue wait deadline exceeded")));
 					changed = true;
@@ -239,9 +284,9 @@ class CommandQueue {
 		try {
 			rejectNew = true;
 			allCommands = getAllCommands();
-			for (Command command : allCommands) query.submitUserTask("Command termination", () ->
-				command.getFuture().fail(new TS3QueryShutDownException()));
-			sendQueue.clear(); receiveQueue.clear(); enqueued.clear(); sent.clear();
+			for (Command command : allCommands) fail(command, sent.containsKey(command)
+				? new TS3UnknownOutcomeException(command.getName()) : new TS3QueryShutDownException());
+			sendQueue.clear(); receiveQueue.clear(); enqueued.clear(); sent.clear(); owners.clear(); retries.clear();
 			canTransfer.signalAll();
 		} finally { queueLock.unlock(); }
 	}

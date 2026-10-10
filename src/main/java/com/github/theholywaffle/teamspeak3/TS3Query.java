@@ -28,7 +28,6 @@ package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
-import com.github.theholywaffle.teamspeak3.api.reconnect.DisconnectingConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -145,7 +144,7 @@ public class TS3Query implements AutoCloseable {
 			Thread.ofPlatform().name("[TeamSpeak-3-Java-API] Deadlines").factory());
 		this.fileTransferHelper = new FileTransferHelper(config.getHost());
 		this.connectionHandler = config.getReconnectStrategy().create(config.getConnectionHandler());
-		this.globalQueue = CommandQueue.newGlobalQueue(this, connectionHandler instanceof DisconnectingConnectionHandler);
+		this.globalQueue = CommandQueue.newGlobalQueue(this, !isReconnectEnabled());
 		deadlines.scheduleWithFixedDelay(() -> {
 			try {
 				globalQueue.expireWaitingCommands();
@@ -194,6 +193,10 @@ public class TS3Query implements AutoCloseable {
 					if (config.getProtocol() == Protocol.RAW && config.hasLoginCredentials()) {
 						api.login(config.getUsername(), config.getPassword());
 					}
+					if (config.getSessionConfiguration() != null) {
+						config.getSessionConfiguration().restore(api);
+						if (isReconnectEnabled()) queue.sealSession();
+					}
 					connectionHandler.onConnect(api);
 					queue.shutDown(new Deadline(config.getHandshakeTimeout()));
 					synchronized (TS3Query.this) {
@@ -222,7 +225,7 @@ public class TS3Query implements AutoCloseable {
 		} catch (ExecutionException | CancellationException | TimeoutException e) {
 			con.disconnect();
 			task.cancel(true);
-			if (connectionHandler instanceof DisconnectingConnectionHandler) close();
+			if (!isReconnectEnabled()) close();
 			else state.compareAndSet(State.CONNECTING, State.DISCONNECTED);
 			throw new TS3ConnectionFailedException("Could not initialize connection", e);
 		}
@@ -276,6 +279,7 @@ public class TS3Query implements AutoCloseable {
 	public State getState() { return state.get(); }
 
 	TS3Config getConfig() { return config; }
+	boolean isReconnectEnabled() { return config.getReconnectStrategy().isReconnectEnabled(); }
 
 	boolean resourcesTerminated() {
 		Connection con = connection;
@@ -365,7 +369,7 @@ public class TS3Query implements AutoCloseable {
 			try { connectionHandler.onDisconnect(this); }
 			finally { if (state.get() == State.DISCONNECTED) close(); }
 		});
-		if (connectionHandler instanceof DisconnectingConnectionHandler) {
+		if (!isReconnectEnabled()) {
 			submitUserTask("Disconnected query cleanup", this::close);
 		}
 	}

@@ -35,6 +35,8 @@ import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
+import com.github.theholywaffle.teamspeak3.api.reconnect.CommandRetryPolicy;
+import com.github.theholywaffle.teamspeak3.api.reconnect.SessionConfiguration;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 
 import java.util.ArrayList;
@@ -55,7 +57,11 @@ public class ReconnectExample {
 	public static void main(String[] args) {
 		final TS3Config config = new TS3Config();
 		config.setHost("77.77.77.77");
-		config.setEnableCommunicationsLogging(true);
+		config.setLoginCredentials("serveradmin", "serveradminpassword");
+		config.setSessionConfiguration(SessionConfiguration.forServer(1).withNickname("PutPutBot")
+			.withSubscription(TS3EventType.TEXT_CHANNEL, 0));
+		// Opt in only for this read; channel creates always fail if their outcome is unknown.
+		config.setCommandRetryPolicy(CommandRetryPolicy.safeReads(1, "whoami"));
 
 		// Use default exponential backoff reconnect strategy
 		config.setReconnectStrategy(ReconnectStrategy.exponentialBackoff());
@@ -89,17 +95,8 @@ public class ReconnectExample {
 	}
 
 	private static void stuffThatNeedsToRunEveryTimeTheQueryConnects(TS3Api api) {
-		// Logging in, selecting the virtual server, selecting a channel
-		// and setting a nickname needs to be done every time we reconnect
-		api.login("serveradmin", "serveradminpassword");
-		api.selectVirtualServerById(1);
-		// api.moveQuery(x);
-		api.setNickname("PutPutBot");
-
-		// What events we listen to also resets
-		api.registerEvent(TS3EventType.TEXT_CHANNEL, 0);
-
-		// Out clientID changes every time we connect and we need it
+		// Authentication, virtual server, nickname and subscriptions are already restored.
+		// Our clientID changes every time we connect and we need it
 		// for our event listener, so we need to store the ID in a field
 		clientId = api.whoAmI().getId();
 	}
@@ -142,6 +139,8 @@ public class ReconnectExample {
 			CommandFuture<Integer> create = api.createChannel(name, channelOptions);
 			// and store its ID (once it's created) in a list so we can delete it later
 			create.onSuccess(channelId -> createdChannelIds.add(channelId));
+			create.onFailure(error -> System.err.println("Channel creation failed: " + error.getMessage()
+				+ "; reconcile server state before retrying."));
 
 			// Artificial delay
 			api.whoAmI();
@@ -150,9 +149,9 @@ public class ReconnectExample {
 		// If an disconnect happens while these commands are being sent, you'll notice that
 		// - the query automatically reconnects
 		// - the query is logged in, chooses the correct virtual server, etc.
-		// - the execution resumes at the point it left off when the query was disconnected
-		// - no channels are missing -> no commands were left out
-		// - all channels will be removed again -> no callbacks were left out
+		// - unsent commands resume in order after the configured session is restored
+		// - a sent channelcreate with no response fails rather than creating a duplicate
+		// - channels with unknown outcomes need reconciliation; this example cannot clean them up blindly
 
 		// Wait 5 seconds after everything's done, then undo the mess we've created
 		api.whoAmI().getUninterruptibly(); // Wait for all previous commands to complete

@@ -113,6 +113,7 @@ public class CommandFuture<V> implements Future<V> {
 	 * State transitions and check-then-acts must be guarded by monitor.
 	 */
 	private volatile FutureState state = FutureState.WAITING;
+	private CommandFuture<?> cancellationSource;
 
 	// All guarded by monitor
 	private V value = null;
@@ -527,8 +528,9 @@ public class CommandFuture<V> implements Future<V> {
 	/**
 	 * {@inheritDoc}
 	 * <p>
-	 * Cancelling a {@code CommandFuture} will <b>not</b> actually cancel the
-	 * execution of the command which was sent to the TeamSpeak server.
+	 * Cancelling a mapped command future also cancels its source future. An unsent
+	 * command is skipped and a sent command is not replayed after reconnect.
+	 * An already transmitted command cannot be retracted from the TeamSpeak server.
 	 * </p><p>
 	 * It will, however, prevent the {@link SuccessListener} and the
 	 * {@link FailureListener} from firing, provided a response from the
@@ -543,7 +545,7 @@ public class CommandFuture<V> implements Future<V> {
 			this.state = FutureState.CANCELLED;
 			monitor.notifyAll();
 		}
-
+		if (cancellationSource != null) cancellationSource.cancel(mayInterruptIfRunning);
 		return true;
 	}
 
@@ -680,6 +682,7 @@ public class CommandFuture<V> implements Future<V> {
 	 */
 	public <F> CommandFuture<F> map(Function<? super V, ? extends F> fn) {
 		CommandFuture<F> target = new CommandFuture<>();
+		target.cancellationSource = this;
 		onSuccess(result -> {
 			F output;
 			try {
