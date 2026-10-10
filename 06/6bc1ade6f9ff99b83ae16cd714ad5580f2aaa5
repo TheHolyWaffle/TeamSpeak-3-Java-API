@@ -1,0 +1,50 @@
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Api.java
+  s_d757b21d401e7e::t_c71a021ecef383 89-97,99-101
+  s_d757b21d401e7e::t_019e86d3ebc516 36,98
+  s_d757b21d401e7e::t_c8b40b0111e644 102
+src/test/java/com/github/theholywaffle/teamspeak3/RawCommandTest.java
+  s_d757b21d401e7e::t_584ab7180fdb09 5-7,19,63,79
+  s_d757b21d401e7e::t_f8569137891ef0 1-4,8-16,23,25-42,44-55,72-73,76,80-85
+  s_d757b21d401e7e::t_b5cd7a501aa25e 56-62,64-71
+  s_d757b21d401e7e::t_1fe9ebec4e05d3 17-18,20-22,24,43,74-75,77-78
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryCompatibilityIT.java
+  s_d757b21d401e7e::t_019e86d3ebc516 5-7,170,209-211,223-225
+  s_d757b21d401e7e::t_f8569137891ef0 202-208,212-217,220-222,226-228,230-243,246-256,258-262,266-268,270,272-276,278-298
+  s_d757b21d401e7e::t_f11e88b1cb6f79 218-219,229,245,257,271,277
+  s_d757b21d401e7e::t_36d571ae269ab4 244,263-265,269
+README.md
+  s_d757b21d401e7e::t_de9384809fc9f0 143-145
+docs/integration-tests.md
+  s_d757b21d401e7e::t_de9384809fc9f0 106-110
+src/main/java/com/github/theholywaffle/teamspeak3/commands/QueryCommands.java
+  s_d757b21d401e7e::t_c71a021ecef383 41-58,60-62
+  s_d757b21d401e7e::t_019e86d3ebc516 32,59
+src/main/java/com/github/theholywaffle/teamspeak3/TS3ApiAsync.java
+  s_d757b21d401e7e::t_c71a021ecef383 111-123,125-129
+  s_d757b21d401e7e::t_019e86d3ebc516 124
+  s_d757b21d401e7e::t_b52726316a3c88 37
+src/main/java/com/github/theholywaffle/teamspeak3/api/event/ChannelMovedEvent.java
+  s_d757b21d401e7e::t_584ab7180fdb09 15-18
+  s_d757b21d401e7e::t_6e42a2024717eb 47
+  s_d757b21d401e7e::t_382919119134b2 1-14,19-46,48-54
+src/test/java/com/github/theholywaffle/teamspeak3/api/event/ChannelMovedEventTest.java
+  s_d757b21d401e7e::t_6e42a2024717eb 1-22
+docs/command-compatibility.md
+  s_d757b21d401e7e::t_de9384809fc9f0 1-101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "066bc1ade6f9ff99b83ae16cd714ad5580f2aaa5",
+  "prompts": {},
+  "sessions": {
+    "s_d757b21d401e7e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12770-2877-7903-ba65-0fe168e7f6f9",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
