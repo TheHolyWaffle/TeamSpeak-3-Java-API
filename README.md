@@ -142,6 +142,16 @@ license configuration, Apple Silicon emulation requirements and beta revalidatio
 The profile fails when required Docker tests cannot run; ordinary unit builds
 need no Docker.
 
+To start a disposable local server and run a compiled Java example:
+
+```sh
+./mvnw -ntp -Pdev-server test-compile exec:exec
+```
+
+Add `-Ddev.server=ts6` for TS6. The launcher prints connection details and keeps
+the server running until Enter or Ctrl+C. See [local development server](docs/development-server.md)
+for stop/reset behavior, noninteractive runs and fixture requirements.
+
 These commands build locally and do not publish artifacts. Modernization tasks
 branch from and merge into `modernization/2.0`; `master` remains the default branch
 and receives the final validated integration PR. Ordinary merges never publish

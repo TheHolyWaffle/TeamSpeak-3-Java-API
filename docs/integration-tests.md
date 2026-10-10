@@ -15,6 +15,11 @@ none are treated as skipped compatibility checks. Failsafe bounds the entire
 fork to ten minutes, and each fixture allows ninety seconds for authenticated
 readiness. First image pulls also need registry access.
 
+For an interactive server session using the same fixture, see the
+[local development launcher](development-server.md). Its compiled example and
+Enter/EOF/termination cleanup are also exercised by this integration profile;
+each launcher owns a separate disposable server.
+
 `TeamSpeakContainer` uses official images pinned by version and manifest digest:
 
 | Server | Image version | Manifest digest | Advertised platforms |
