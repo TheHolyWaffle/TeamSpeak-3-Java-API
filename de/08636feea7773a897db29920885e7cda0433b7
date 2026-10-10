@@ -1,0 +1,19 @@
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Query.java
+  s_24d6a97243c612::t_879ab90b5ee9d3 368
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "de08636feea7773a897db29920885e7cda0433b7",
+  "prompts": {},
+  "sessions": {
+    "s_24d6a97243c612": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a125bb-28e7-7483-b4d7-a760866404c7",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
