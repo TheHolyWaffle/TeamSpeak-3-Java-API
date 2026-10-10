@@ -1,0 +1,39 @@
+docs/events-and-capacity.md
+  s_32edc947027172::t_3c729eb61749f7 17-18
+src/test/java/com/github/theholywaffle/teamspeak3/CommandFuturesTest.java
+  s_32edc947027172::t_4079aabb2c661c 97-116,288-289,292,302-303,309,345-346
+  s_32edc947027172::t_908b6b1ff7546c 270-287,290-291,293-301,304-308,310-344,347
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3Exception.java
+  s_32edc947027172::t_e3169b5df4a913 41-43
+src/main/java/com/github/theholywaffle/teamspeak3/TS3ApiAsync.java
+  s_32edc947027172::t_ae20ff461df288 1737-1742,1803-1804,1806,1808-1811,5283-5288,5471-5491,5493
+  s_32edc947027172::t_5046e9e8573242 5470
+  s_32edc947027172::t_e3169b5df4a913 5517-5521,5708,5717
+src/main/java/com/github/theholywaffle/teamspeak3/CommandQueue.java
+  s_32edc947027172::t_ae20ff461df288 43-44,52,76,117-120,141,156,173,201,245,248-249,252,290
+src/main/java/com/github/theholywaffle/teamspeak3/api/CommandFutures.java
+  s_32edc947027172::t_0e3abcf65853ea 81,83,92
+  s_32edc947027172::t_e3169b5df4a913 57,74-75,77-79,82,84-90,93,98-99,107,121-127,134
+  s_32edc947027172::t_5046e9e8573242 91,94-97,100-106
+  s_32edc947027172::t_8eb1a6f6ad5959 80
+docs/futures.md
+  s_32edc947027172::t_5046e9e8573242 70-71,106-107
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3CommandFailedException.java
+  s_32edc947027172::t_e3169b5df4a913 63-64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fe1a6fcb81c4236c28278a6df3d79d9a82fd20fe",
+  "prompts": {},
+  "sessions": {
+    "s_32edc947027172": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a125cf-814f-7241-8752-f6bd9460ab89",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
