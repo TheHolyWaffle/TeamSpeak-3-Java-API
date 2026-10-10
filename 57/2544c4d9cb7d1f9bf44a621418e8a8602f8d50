@@ -1,0 +1,51 @@
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Config.java
+  s_24d6a97243c612::t_a88da89989110c 62-119
+docs/events-and-capacity.md
+  s_24d6a97243c612::t_f384f9ceb7f16b 1-12,15-61,63-64,69-78
+  s_24d6a97243c612::t_8e3a94c34e2f54 13-14,62,65-68
+docs/integration-tests.md
+  s_24d6a97243c612::t_5d2467080d8b8a 98-105
+src/main/java/com/github/theholywaffle/teamspeak3/EventSubscription.java
+  s_24d6a97243c612::t_a88da89989110c 1-11
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Query.java
+  s_24d6a97243c612::t_f384f9ceb7f16b 49-51,360
+  s_24d6a97243c612::t_a88da89989110c 269,284,292,297,346-357,361-363
+  s_24d6a97243c612::t_224ae7952566ea 30,43,117-118,146-147,364
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3QueueFullException.java
+  s_24d6a97243c612::t_a88da89989110c 1-6
+src/main/java/com/github/theholywaffle/teamspeak3/StreamReader.java
+  s_24d6a97243c612::t_a88da89989110c 133-135
+src/main/java/com/github/theholywaffle/teamspeak3/CommandQueue.java
+  s_24d6a97243c612::t_a88da89989110c 65,180,224-229,231,268
+  s_24d6a97243c612::t_f384f9ceb7f16b 31,130
+  s_24d6a97243c612::t_ceea3fbb0388d4 42,64,87,129,131-132,152,230
+README.md
+  s_24d6a97243c612::t_f384f9ceb7f16b 73
+src/main/java/com/github/theholywaffle/teamspeak3/EventManager.java
+  s_24d6a97243c612::t_a88da89989110c 1-40,42-202,204-211
+  s_24d6a97243c612::t_5d2467080d8b8a 41
+  s_24d6a97243c612::t_f384f9ceb7f16b 203
+src/test/java/com/github/theholywaffle/teamspeak3/EventResilienceTest.java
+  s_24d6a97243c612::t_5d2467080d8b8a 22,38,46-47,58,70-71,81,91-92,112,120-121,135,148-149,161,177-178,180-192,203-204
+  s_24d6a97243c612::t_329ebdc4291bb8 1-21,23-37,39-45,48-57,59-69,72-80,82-90,93-111,113-119,122-134,136-147,150-160,162-176,179,193-202,205
+src/main/java/com/github/theholywaffle/teamspeak3/EventStatistics.java
+  s_24d6a97243c612::t_a88da89989110c 1-12
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryCompatibilityIT.java
+  s_24d6a97243c612::t_b64df3bf62d32a 136-191
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "572544c4d9cb7d1f9bf44a621418e8a8602f8d50",
+  "prompts": {},
+  "sessions": {
+    "s_24d6a97243c612": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a125bb-28e7-7483-b4d7-a760866404c7",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
