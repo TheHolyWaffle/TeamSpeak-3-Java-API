@@ -298,8 +298,8 @@ class ReconnectSemanticsTest {
 		var config = config(1).setCommandRetryPolicy(CommandRetryPolicy.safeReads(1, "whoami"));
 		try (var query = new TS3Query(config)) {
 			var queue = CommandQueue.newGlobalQueue(query, false);
-			var oldConnection = new Connection(query, config, queue);
-			var newConnection = new Connection(query, config, queue);
+			var oldConnection = new Connection(query, query.getConfig(), queue);
+			var newConnection = new Connection(query, query.getConfig(), queue);
 			var future = queue.getAsyncApi().whoAmI();
 			var command = queue.transferCommand(oldConnection);
 			queue.prepareReconnect(); queue.resume();
@@ -341,7 +341,7 @@ class ReconnectSemanticsTest {
 	}
 
 	@Test
-	void retryAndSessionInputsAreValidatedAndFrozen() {
+	void retryAndSessionInputsAreValidatedAndSnapshotted() {
 		assertThrows(IllegalArgumentException.class, () -> CommandRetryPolicy.safeReads(1, "channelcreate"));
 		assertThrows(IllegalArgumentException.class, () -> CommandRetryPolicy.safeReads(0, "whoami"));
 		assertThrows(IllegalArgumentException.class, () -> ReconnectStrategy.exponentialBackoff(10, Double.NaN, 20));
@@ -351,8 +351,10 @@ class ReconnectSemanticsTest {
 		assertThrows(IllegalStateException.class, () -> new TS3Query(new TS3Config().setCommandRetryPolicy(CommandRetryPolicy.safeReads(1, "whoami"))));
 		var config = config(1);
 		try (var query = new TS3Query(config)) {
-			assertThrows(IllegalStateException.class, () -> config.setSessionConfiguration(SESSION));
-			assertThrows(IllegalStateException.class, () -> config.setCommandRetryPolicy(CommandRetryPolicy.none()));
+			config.setSessionConfiguration(SessionConfiguration.forServer(8));
+			assertSame(SESSION, query.getConfig().getSessionConfiguration());
+			config.setCommandRetryPolicy(CommandRetryPolicy.safeReads(1, "whoami"));
+			assertNotSame(config.getCommandRetryPolicy(), query.getConfig().getCommandRetryPolicy());
 		}
 	}
 

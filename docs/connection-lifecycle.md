@@ -18,7 +18,7 @@ try (TS3Query query = new TS3Query(config)) {
 Import `java.time.Duration` and the library's `TS3Config`/`TS3Query`. All five
 budgets default to four seconds. Values must be positive and fit within a
 finite monotonic budget (at most `Long.MAX_VALUE / 4` nanoseconds). Configuration
-is frozen when constructing a query.
+is snapshotted when constructing a query; the builder remains reusable.
 
 | Budget | Starts | Ends / expiry behavior |
 | --- | --- | --- |

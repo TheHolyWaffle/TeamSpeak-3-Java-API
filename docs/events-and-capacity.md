@@ -1,6 +1,6 @@
 # 2.0 events and capacity migration
 
-Configure finite budgets before constructing `TS3Query`; configuration is then frozen.
+Configure finite budgets before constructing `TS3Query`; the query then captures an immutable configuration snapshot.
 
 | Setting | Default | What consumes capacity | Overflow |
 | --- | --- | --- | --- |

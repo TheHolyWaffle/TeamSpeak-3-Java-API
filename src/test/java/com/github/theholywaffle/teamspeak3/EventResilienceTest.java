@@ -198,7 +198,8 @@ class EventResilienceTest {
 		assertThrows(IllegalArgumentException.class, () -> new TS3Config().setEventCallbackThreads(0));
 		var config = new TS3Config().setListenerCapacity(2);
 		try (var query = new TS3Query(config)) {
-			assertThrows(IllegalStateException.class, () -> config.setCommandCapacity(2));
+			config.setCommandCapacity(2);
+			assertEquals(1024, query.getConfig().getCommandCapacity());
 			assertThrows(NullPointerException.class, () -> query.getApi().addTS3Listeners(new TS3EventAdapter() {}, null));
 			try (var subscription = query.subscribe(new TS3EventAdapter() {})) { }
 		}

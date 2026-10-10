@@ -53,9 +53,9 @@ class DevelopmentServerIT {
 			String id = ready.substring(ready.indexOf("container=") + "container=".length());
 			assertThrows(NotFoundException.class, () -> DockerClientFactory.instance().client().inspectContainerCmd(id).exec(),
 					"Stopping the launcher must remove its container");
-			String home = output.stream().filter(line -> line.startsWith("Disposable SSH home: "))
-					.findFirst().orElseThrow().substring("Disposable SSH home: ".length());
-			assertFalse(Files.exists(Path.of(home)), "Stopping must remove temporary SSH trust");
+			String home = output.stream().filter(line -> line.startsWith("Disposable workspace: "))
+					.findFirst().orElseThrow().substring("Disposable workspace: ".length());
+			assertFalse(Files.exists(Path.of(home)), "Stopping must remove temporary workspace");
 		} finally {
 			if (process.isAlive()) {
 				process.destroy();

@@ -246,14 +246,14 @@ class ConnectionLifecycleTest {
 		var config = config(1);
 		try (var query = new TS3Query(config)) {
 			var queue = CommandQueue.newConnectQueue(query);
-			var con = new Connection(query, config, queue);
+			var con = new Connection(query, query.getConfig(), queue);
 			var pending = queue.getAsyncApi().whoAmI();
 			var writes = new CountDownLatch(1);
 			var writer = new StreamWriter(con, new OutputStream() {
 				@Override public void write(int value) throws IOException {
 					writes.countDown(); throw new IOException("Injected write failure");
 				}
-			}, config);
+			}, query.getConfig());
 			writer.start();
 			assertTrue(writes.await(1, TimeUnit.SECONDS));
 			assertThrows(TS3QueryShutDownException.class, () -> FutureAssertions.read(pending, 1, TimeUnit.SECONDS));
@@ -264,10 +264,8 @@ class ConnectionLifecycleTest {
 	}
 
 	@Test
-	void missingSshCredentialsCleanUpPartiallyCreatedClient() throws Exception {
-		var query = new TS3Query(config(1).setProtocol(TS3Query.Protocol.SSH));
-		assertThrows(TS3ConnectionFailedException.class, query::connect);
-		terminated(query);
+	void missingSshCredentialsFailBeforeCreatingConnectionResources() {
+		assertThrows(IllegalArgumentException.class, () -> new TS3Query(config(1).setProtocol(TS3Query.Protocol.SSH)));
 	}
 
 	@Test
@@ -300,7 +298,7 @@ class ConnectionLifecycleTest {
 	}
 
 	@Test
-	void durationsArePositiveFiniteAndFrozenIndependently() {
+	void durationsArePositiveFiniteAndSnapshottedIndependently() {
 		var config = config(1);
 		assertThrows(IllegalArgumentException.class, () -> config.setConnectTimeout(Duration.ZERO));
 		assertThrows(IllegalArgumentException.class, () -> config.setHandshakeTimeout(Duration.ofMillis(-1)));
@@ -310,7 +308,8 @@ class ConnectionLifecycleTest {
 		assertEquals(Duration.ofMillis(123), config.getCommandResponseTimeout());
 		assertEquals(Duration.ofMillis(300), config.getConnectTimeout());
 		try (var query = new TS3Query(config)) {
-			assertThrows(IllegalStateException.class, () -> config.setCommandResponseTimeout(Duration.ofSeconds(1)));
+			config.setCommandResponseTimeout(Duration.ofSeconds(1));
+			assertNotEquals(config.getCommandResponseTimeout(), query.getConfig().getCommandResponseTimeout());
 		}
 	}
 }

@@ -33,8 +33,8 @@ Press **Enter** or **Ctrl+C** in the launcher's terminal to stop and remove the
 container. End of standard input also stops it, so keep stdin open for an
 interactive session. Data is stored in container tmpfs; stopping destroys all
 server changes. Start the command again to reset to a clean instance with new
-mapped ports and a new SSH host key. The example uses a temporary SSH home that
-is deleted on exit; it does not alter your `~/.ssh/known_ts3_hosts`.
+mapped ports and a new SSH host key. The example pins the freshly created container's SSH key in memory; it does not
+change `user.home` or write host trust files. Its temporary workspace is deleted on exit.
 
 For a noninteractive run that exits after the example:
 
@@ -47,7 +47,7 @@ Ryuk is the fallback for abrupt JVM termination; leave it enabled and do not
 enable container reuse. If Docker becomes unavailable during shutdown, restart
 Docker and remove the printed container ID with `docker rm -f <container-id>`.
 Avoid forced termination when possible because it bypasses the Java shutdown
-hook and may leave the temporary SSH directory; delete only the matching
+hook and may leave the temporary workspace; delete only the matching
 `teamspeak-dev-*` directory from your OS temporary directory if needed.
 
 This is a disposable development session that stays alive until stopped, not a

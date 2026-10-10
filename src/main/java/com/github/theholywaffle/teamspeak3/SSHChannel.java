@@ -28,44 +28,33 @@ package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
 import net.schmizz.sshj.SSHClient;
-import net.schmizz.sshj.common.KeyType;
 import net.schmizz.sshj.connection.channel.direct.Session;
-import net.schmizz.sshj.transport.verification.OpenSSHKnownHosts;
 import net.schmizz.sshj.userauth.UserAuthException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.net.SocketFactory;
 import java.net.Socket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.io.File;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.security.PublicKey;
-import java.util.Collections;
-import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
-class SSHChannel implements IOChannel {
-
-	private static final Logger log = LoggerFactory.getLogger(SSHChannel.class);
-	private static final String KNOWN_HOSTS_FILE_NAME = "known_ts3_hosts";
+class SSHChannel implements QueryTransport {
 
 	private final SSHClient client = new SSHClient();
-	private volatile Thread transportReader;
+	private final Set<Thread> transportReaders = ConcurrentHashMap.newKeySet();
 	private final Socket socket = new Socket() {
 		@Override
 		public InputStream getInputStream() throws IOException {
 			return new FilterInputStream(super.getInputStream()) {
 				private void trackReader() {
-					// SSHJ exposes transport join as an event, which can complete before
-					// its actual reader exits. Observe that reader at the socket boundary.
-					if (transportReader == null && Thread.currentThread() instanceof net.schmizz.sshj.transport.Reader) {
-						transportReader = Thread.currentThread();
-					}
+					// Track socket readers by their I/O contract, including SSH negotiation.
+					// SSHJ's transport join event can fire before its reader thread exits.
+					transportReaders.add(Thread.currentThread());
 				}
 				@Override public int read() throws IOException { trackReader(); return in.read(); }
 				@Override public int read(byte[] bytes, int offset, int length) throws IOException {
@@ -74,17 +63,17 @@ class SSHChannel implements IOChannel {
 			};
 		}
 	};
-	private final TS3Config config;
+	private final QueryConfig config;
 	private volatile Session session;
 
-	SSHChannel(TS3Config config) { this.config = config; }
+	SSHChannel(QueryConfig config) { this.config = config; }
 
 	@Override
-	public void connect(Connection connection) throws IOException {
+	public void connect(QueryTransport.Connected connection) throws IOException {
 		if (!config.hasLoginCredentials()) {
 			throw new TS3ConnectionFailedException("SSH requires query login credentials");
 		}
-		socket.connect(new InetSocketAddress(config.getHost() == null ? "127.0.0.1" : config.getHost(),
+		socket.connect(new InetSocketAddress(config.getHost(),
 			config.getQueryPort()), TS3Config.socketTimeout(config.getConnectTimeout()));
 		connection.transportConnected();
 		socket.setTcpNoDelay(true);
@@ -95,8 +84,7 @@ class SSHChannel implements IOChannel {
 			@Override public Socket createSocket(InetAddress host, int port) { return socket; }
 			@Override public Socket createSocket(InetAddress host, int port, InetAddress local, int localPort) { return socket; }
 		});
-		File knownHostsFile = new File(OpenSSHKnownHosts.detectSSHDir(), KNOWN_HOSTS_FILE_NAME);
-		client.addHostKeyVerifier(new AutoAddKnownHosts(knownHostsFile));
+		client.addHostKeyVerifier(config.getSshHostKeyPolicy().verifier());
 		client.setTimeout(TS3Config.socketTimeout(config.getHandshakeTimeout()));
 		client.setRemoteCharset(StandardCharsets.UTF_8);
 		try {
@@ -127,49 +115,15 @@ class SSHChannel implements IOChannel {
 	}
 
 	@Override
-	public void awaitTermination(Deadline deadline) {
-		deadline.join(transportReader);
+	public void awaitTermination(java.time.Duration timeout) {
+		Deadline deadline = new Deadline(timeout);
+		for (Thread reader : transportReaders) deadline.join(reader);
 		deadline.join(client.getConnection().getKeepAlive());
 	}
 
 	@Override
 	public boolean isTerminated() {
-		Thread reader = transportReader;
-		return (reader == null || !reader.isAlive()) && !client.getConnection().getKeepAlive().isAlive();
+		return transportReaders.stream().noneMatch(Thread::isAlive) && !client.getConnection().getKeepAlive().isAlive();
 	}
 
-	private static class AutoAddKnownHosts extends OpenSSHKnownHosts {
-
-		public AutoAddKnownHosts(File khFile) throws IOException {
-			super(khFile);
-		}
-
-		@Override
-		protected boolean hostKeyUnverifiableAction(String hostname, PublicKey key) {
-			try {
-				entries().add(new HostEntry(null, hostname, KeyType.fromKey(key), key));
-				write();
-
-				return true;
-			} catch (IOException ioe) {
-				throw new RuntimeException("Could not write host keys to file", ioe);
-			}
-		}
-
-		@Override
-		protected boolean hostKeyChangedAction(String hostname, PublicKey key) {
-			Logger log = SSHChannel.log; // OpenSSHKnownHosts also has a "log" field...
-			log.error("The host key for {} has changed!", hostname);
-			log.error("This could be because someone is eavesdropping on you (man-in-the-middle attack).");
-			log.error("It could also be that the host key has changed, e.g. because the TS3 server was re-installed .");
-			log.error("If you trust that the new host key is genuine, correct or remove the entry" +
-					" for {} in your known hosts file ({}).", hostname, khFile);
-			return false;
-		}
-
-		@Override
-		public List<String> findExistingAlgorithms(String hostname, int port) {
-			return Collections.emptyList();
-		}
-	}
 }

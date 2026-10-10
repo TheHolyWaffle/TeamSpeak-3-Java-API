@@ -45,7 +45,7 @@ class StreamWriter extends Thread {
 	private final int floodRate;
 	private final boolean logComms;
 
-	StreamWriter(Connection connection, OutputStream outStream, TS3Config config) {
+	StreamWriter(Connection connection, OutputStream outStream, QueryConfig config) {
 		super("[TeamSpeak-3-Java-API] StreamWriter");
 
 		con = connection;

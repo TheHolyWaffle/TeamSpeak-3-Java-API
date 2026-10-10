@@ -32,7 +32,7 @@ try (TS3Query query = new TS3Query(config)) {
 }
 ```
 
-Credentials on the frozen `TS3Config` provide authentication on **every**
+Credentials in the immutable `QueryConfig` snapshot provide authentication on **every**
 connection: automatic RAW login, or SSH authentication using the configured
 protocol. Then the immutable session selects its explicit virtual server ID,
 sets the nickname, and registers subscriptions in their configured order. The

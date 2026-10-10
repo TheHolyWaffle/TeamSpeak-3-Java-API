@@ -16,32 +16,25 @@ public final class DevelopmentServer {
 				|| !(args[1].equals("true") || args[1].equals("false"))) {
 			throw new IllegalArgumentException("Use -Ddev.server=ts3|ts6 and -Ddev.once=true|false");
 		}
-		String originalHome = System.getProperty("user.home");
 		Path home = Files.createTempDirectory("teamspeak-dev-");
 		try (Resources resources = new Resources(new TeamSpeakContainer(args[0].equals("ts6")), home)) {
 			Thread hook = new Thread(resources::close, "teamspeak-dev-cleanup");
 			Runtime.getRuntime().addShutdownHook(hook);
 			try {
-				Files.createDirectory(home.resolve(".ssh"));
 				TeamSpeakContainer server = resources.server;
 				server.start();
 				System.out.println("Development server ready: " + args[0] + " container=" + server.getContainerId());
 				System.out.println("Image: " + server.getDockerImageName());
-				System.out.println("Disposable SSH home: " + home);
+				System.out.println("Disposable workspace: " + home);
 				System.out.println("SSH ServerQuery: " + server.getHost() + ":" + server.getMappedPort(10022));
 				if (!server.ts6) System.out.println("Raw ServerQuery: " + server.getHost() + ":" + server.getMappedPort(10011));
 				System.out.println("Disposable login: serveradmin / " + TeamSpeakContainer.PASSWORD + "; virtual server: 1");
-				// Redirect only the example's trust store, after Docker configuration is loaded.
-				// This is a dedicated forked JVM, not Maven's JVM.
-				System.setProperty("user.home", home.toString());
-				try { DevelopmentServerExample.run(server.config(TS3Query.Protocol.SSH)); }
-				finally { System.setProperty("user.home", originalHome); }
+				DevelopmentServerExample.run(server.config(TS3Query.Protocol.SSH));
 				if (!Boolean.parseBoolean(args[1])) {
 					System.out.println("Press Enter or Ctrl+C to stop and remove the server. EOF also stops it.");
 					new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8)).readLine();
 				}
 			} finally {
-				System.setProperty("user.home", originalHome);
 				// Keep the hook installed until cleanup completes: SIGTERM can also close stdin.
 				try { resources.close(); } finally {
 					try { Runtime.getRuntime().removeShutdownHook(hook); }

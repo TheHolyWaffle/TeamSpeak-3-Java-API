@@ -114,7 +114,7 @@ public class TS3Query implements AutoCloseable {
 	private final ExecutorService completions;
 	private final FileTransferHelper fileTransferHelper;
 	private final CommandQueue globalQueue;
-	private final TS3Config config;
+	private final QueryConfig config;
 	private final Semaphore commandAdmission;
 	private final Semaphore startupAdmission;
 
@@ -143,7 +143,12 @@ public class TS3Query implements AutoCloseable {
 	 * 		configuration for this TS3Query
 	 */
 	public TS3Query(TS3Config config) {
-		this.config = config.freeze();
+		this(java.util.Objects.requireNonNull(config, "config").build());
+	}
+
+	/** @param config immutable validated connection settings */
+	public TS3Query(QueryConfig config) {
+		this.config = java.util.Objects.requireNonNull(config, "config");
 		this.commandAdmission = new Semaphore(config.getCommandCapacity());
 		this.startupAdmission = new Semaphore(config.getCommandCapacity());
 		this.eventManager = new EventManager(this);
@@ -201,7 +206,7 @@ public class TS3Query implements AutoCloseable {
 				try {
 					con.open();
 					TS3Api api = queue.getApi();
-					if (config.getProtocol() == Protocol.RAW && config.hasLoginCredentials()) {
+					if (!config.getTransportFactory().authenticates() && config.hasLoginCredentials()) {
 						api.login(config.getUsername(), config.getPassword());
 					}
 					if (config.getSessionConfiguration() != null) {
@@ -297,7 +302,7 @@ public class TS3Query implements AutoCloseable {
 	/** @return the current lifecycle state */
 	public State getState() { return state.get(); }
 
-	TS3Config getConfig() { return config; }
+	QueryConfig getConfig() { return config; }
 	Semaphore commandAdmission(boolean global) { return global ? commandAdmission : startupAdmission; }
 	boolean isReconnectEnabled() { return config.getReconnectStrategy().isReconnectEnabled(); }
 

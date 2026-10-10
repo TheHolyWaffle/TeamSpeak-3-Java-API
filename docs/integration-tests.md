@@ -46,9 +46,9 @@ Readiness repeatedly authenticates and successfully executes `version` and
 `use sid=1` over SSH, plus login/version/selection over TS3 raw. The retry delay
 backs off failed probes; an open port or an unconditional startup sleep does not
 establish readiness. SSH host trust is bootstrapped only from the freshly created
-fixture. The library tests redirect `user.home` into JUnit's temporary directory
-and restore it afterward, so the user's `known_ts3_hosts` is untouched. These
-tests must remain sequential while this process-wide property is changed.
+fixture. Normal library connections pin that key in memory. TOFU security tests
+use an explicit JUnit temporary trust file. Neither path changes `user.home`
+or writes to the developer's home directory.
 
 The same parameterized API smoke test covers TS3 raw, TS3 SSH and TS6 SSH:
 initial authenticated connection, exact server version, virtual server selection,
