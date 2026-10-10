@@ -59,6 +59,64 @@ public class TS3Config {
 	private ConnectionHandler connectionHandler = null;
 	private CommandRetryPolicy commandRetryPolicy = CommandRetryPolicy.none();
 	private SessionConfiguration sessionConfiguration;
+	private int commandCapacity = 1024;
+	private int listenerCapacity = 64;
+	private int listenerQueueCapacity = 256;
+	private int eventCallbackThreads = 4;
+
+	/**
+	 * Bounds accepted commands, including queued, in-flight and completing callbacks.
+	 * Excess commands fail immediately on the submitting thread. Default: 1024.
+	 * @param capacity positive command capacity, separately applied to startup and application queues
+	 * @return this configuration
+	 */
+	public TS3Config setCommandCapacity(int capacity) {
+		checkFrozen(); commandCapacity = positiveCapacity(capacity); return this;
+	}
+
+	/**
+	 * Bounds registered listeners. Excess registrations throw IllegalStateException. Default: 64.
+	 * @param capacity positive listener capacity
+	 * @return this configuration
+	 */
+	public TS3Config setListenerCapacity(int capacity) {
+		checkFrozen(); listenerCapacity = positiveCapacity(capacity); return this;
+	}
+
+	/**
+	 * Bounds waiting events per listener, excluding its running callback. Drops newest on overflow.
+	 * Default: 256. Dropped events are counted by TS3Query.getEventStatistics().
+	 * @param capacity positive waiting-event capacity
+	 * @return this configuration
+	 */
+	public TS3Config setListenerQueueCapacity(int capacity) {
+		checkFrozen(); listenerQueueCapacity = positiveCapacity(capacity); return this;
+	}
+
+	/**
+	 * Sizes the query-owned event executor, isolated from command completion and lifecycle callbacks.
+	 * Its task queue is bounded by listener capacity; rejection drops pending events. Default: 4.
+	 * @param threads positive worker count
+	 * @return this configuration
+	 */
+	public TS3Config setEventCallbackThreads(int threads) {
+		checkFrozen(); eventCallbackThreads = positiveCapacity(threads); return this;
+	}
+
+	private static int positiveCapacity(int value) {
+		if (value <= 0) throw new IllegalArgumentException("Capacity must be positive");
+		return value;
+	}
+
+	/** @return command capacity */
+	public int getCommandCapacity() { return commandCapacity; }
+	/** @return listener registration capacity */
+	public int getListenerCapacity() { return listenerCapacity; }
+	/** @return waiting-event capacity per listener */
+	public int getListenerQueueCapacity() { return listenerQueueCapacity; }
+	/** @return owned event executor worker count */
+	public int getEventCallbackThreads() { return eventCallbackThreads; }
+
 
 	/**
 	 * Sets an opt-in read replay policy. Requires explicit session configuration for replay.

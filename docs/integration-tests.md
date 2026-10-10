@@ -95,3 +95,11 @@ Sources: [official TS3 image documentation](https://hub.docker.com/_/teamspeak),
 [Testcontainers waits](https://java.testcontainers.org/features/startup_and_waits/),
 [Testcontainers 2.0.5 release](https://github.com/testcontainers/testcontainers-java/releases/tag/2.0.5),
 [FailSafe usage](https://maven.apache.org/surefire/maven-failsafe-plugin/usage.html).
+
+The task #438 notification probe additionally registers overlapping server/channel
+subscriptions and checks query-client join, move and leave frames on TS3 RAW,
+TS3 SSH and TS6 SSH. It records decoded payloads in
+`target/compatibility/*-notifications.txt` and asserts one frame per tested action,
+no malformed notifications, callback failures or event loss. Scripted tests cover
+unknown/malformed notifications and repeated identical frames that real servers
+are not expected to emit on demand. See [event migration notes](events-and-capacity.md).

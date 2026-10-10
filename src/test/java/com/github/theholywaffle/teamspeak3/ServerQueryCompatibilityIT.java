@@ -133,6 +133,62 @@ class ServerQueryCompatibilityIT {
 		}
 	}
 
+	@ParameterizedTest(name = "{0}: overlapping server/channel subscriptions preserve real join/move/leave frames")
+	@EnumSource(Target.class)
+	@Timeout(30)
+	void notificationFrames(Target target) throws Exception {
+		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		var rows = new java.util.concurrent.CopyOnWriteArrayList<String>();
+		var joined = new CountDownLatch(1);
+		var moved = new CountDownLatch(1);
+		var left = new CountDownLatch(1);
+		var actorId = new AtomicInteger(-1);
+		var deleted = new CountDownLatch(1);
+		try (var observer = new TS3Query(server.config(target.protocol));
+			 var actor = new TS3Query(server.config(target.protocol))) {
+			observer.connect();
+			observer.getApi().selectVirtualServerById(1);
+			observer.getApi().registerEvent(TS3EventType.SERVER);
+			observer.getApi().registerEvent(TS3EventType.CHANNEL, 0);
+			try (var subscription = observer.subscribe(new TS3EventAdapter() {
+				@Override public void onClientJoin(com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent e) {
+					assertTrue(e.getClientId() > 0); rows.add("join " + e); joined.countDown();
+				}
+				@Override public void onClientMoved(com.github.theholywaffle.teamspeak3.api.event.ClientMovedEvent e) {
+					if (e.getClientId() == actorId.get()) { rows.add("move " + e); moved.countDown(); }
+				}
+				@Override public void onChannelDeleted(com.github.theholywaffle.teamspeak3.api.event.ChannelDeletedEvent e) { deleted.countDown(); }
+				@Override public void onClientLeave(com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent e) {
+					if (e.getClientId() == actorId.get()) { rows.add("leave " + e); left.countDown(); }
+				}
+			})) {
+				actor.connect(); actor.getApi().selectVirtualServerById(1);
+				actorId.set(actor.getApi().whoAmI().getId());
+				assertTrue(joined.await(5, TimeUnit.SECONDS));
+				int channel = observer.getApi().createChannel("notification-probe-" + target,
+					Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"));
+				try {
+					observer.getApi().moveClient(actorId.get(), channel);
+					assertTrue(moved.await(5, TimeUnit.SECONDS));
+					actor.exit(); assertTrue(left.await(5, TimeUnit.SECONDS));
+				} finally { observer.getApi().deleteChannel(channel, true); }
+				// Deletion callback fences preceding join/move/leave callbacks on this registration.
+				assertTrue(deleted.await(5, TimeUnit.SECONDS));
+				assertEquals(1, rows.stream().filter(row -> row.startsWith("join ")).count());
+				assertEquals(1, rows.stream().filter(row -> row.startsWith("move ")).count());
+				assertEquals(1, rows.stream().filter(row -> row.startsWith("leave ")).count());
+				assertFalse(observer.getApi().getVersion().getVersion().isBlank());
+				observer.exit();
+				assertEquals(0, observer.getEventStatistics().malformedNotifications());
+				assertEquals(0, observer.getEventStatistics().listenerFailures());
+				assertEquals(0, observer.getEventStatistics().droppedEvents());
+				Path evidence = Path.of("target", "compatibility", target + "-notifications.txt");
+				Files.createDirectories(evidence.getParent());
+				Files.write(evidence, rows);
+			}
+		}
+	}
+
 	private static void verifyConnection(TeamSpeakContainer server, TS3Query.Protocol protocol) throws Exception {
 		TS3Query query = new TS3Query(server.config(protocol));
 		try {

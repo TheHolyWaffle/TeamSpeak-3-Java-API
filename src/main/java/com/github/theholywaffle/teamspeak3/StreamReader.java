@@ -50,7 +50,6 @@ class StreamReader extends Thread {
 
 	private CommandQueue commandQueue = null;
 	private ResponseBuilder responseBuilder = null;
-	private String lastEvent = "";
 	private boolean receivingResponses;
 
 	StreamReader(Connection connection, InputStream inStream, TS3Query query, TS3Config config) throws IOException {
@@ -131,15 +130,9 @@ class StreamReader extends Thread {
 	private void handleEvent(String event) {
 		if (logComms) log.debug("[event] < {}", event);
 
-		// Filter out duplicate events for join, quit and channel move events
-		if (isDuplicate(event)) return;
-
-		String arr[] = event.split(" ", 2);
-		if (arr.length == 2) {
-			ts3.getEventManager().fireEvent(arr[0], arr[1]);
-		} else {
-			log.warn("Malformed notification: {}", event);
-		}
+		String[] parts = event.split(" ", 2);
+		if (parts.length == 2) ts3.getEventManager().fireEvent(parts[0], parts[1]);
+		else ts3.getEventManager().malformedNotification();
 	}
 
 	private void handleCommandResponse(String response) {
@@ -187,22 +180,4 @@ class StreamReader extends Thread {
 		}
 	}
 
-	private boolean isDuplicate(String eventMessage) {
-		if (!(eventMessage.startsWith("notifyclientmoved")
-				|| eventMessage.startsWith("notifycliententerview")
-				|| eventMessage.startsWith("notifyclientleftview"))) {
-
-			// Event that will never cause duplicates
-			return false;
-		}
-
-		if (eventMessage.equals(lastEvent)) {
-			// Duplicate event!
-			lastEvent = ""; // Let's only ever filter one duplicate
-			return true;
-		}
-
-		lastEvent = eventMessage;
-		return false;
-	}
 }
