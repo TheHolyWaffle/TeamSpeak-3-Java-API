@@ -1,0 +1,19 @@
+src/test/java/com/github/theholywaffle/teamspeak3/TeamSpeakContainer.java
+  s_f39089f8107d5f::t_d33df2d8024c3c 4,94-96
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2bd9424408e6f0b2104af15e9d6a43f3505d903a",
+  "prompts": {},
+  "sessions": {
+    "s_f39089f8107d5f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12498-fde1-70f1-aac2-ce532056b52a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "bert.degeyter <bert.degeyter@showpad.com>"
+    }
+  }
+}
