@@ -1,13 +1,14 @@
 package com.github.theholywaffle.teamspeak3;
 
-import net.schmizz.sshj.SSHClient;
+import com.github.theholywaffle.teamspeak3.api.wrapper.Version;
 import net.schmizz.sshj.DefaultConfig;
+import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.transport.verification.HostKeyVerifier;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.AbstractWaitStrategy;
-import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.images.builder.Transferable;
+import org.testcontainers.utility.DockerImageName;
 
 import java.io.BufferedReader;
 import java.io.EOFException;
@@ -21,8 +22,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.PublicKey;
 import java.time.Duration;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 
 /** Disposable server with no host data or fixed host ports. Credentials are test-only. */
 final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer> {
@@ -60,7 +61,6 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer> {
 				Exception last = null;
 				do {
 					try {
-						if (!isRunning()) throw new IllegalStateException("Server container exited before readiness");
 						probeSsh();
 						if (!ts6) probeRaw();
 						return;
@@ -142,11 +142,11 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer> {
 				.setFloodRate(TS3Query.FloodRate.UNLIMITED).setProtocol(protocol).setLoginCredentials("serveradmin", PASSWORD).setCommandTimeout(5000);
 	}
 
-	void record(String name, String version, String build, String platform) throws IOException {
+	void record(String name, Version version) throws IOException {
 		Path directory = Path.of("target", "compatibility");
 		Files.createDirectories(directory);
-		Files.writeString(directory.resolve(name + ".txt"), "image=" + getDockerImageName() + "\nversion=" + version
-				+ "\nbuild=" + build + "\nplatform=" + platform + "\ndaemonArchitecture="
+		Files.writeString(directory.resolve(name + ".txt"), "image=" + getDockerImageName() + "\nversion=" + version.getVersion()
+				+ "\nbuild=" + version.getBuild() + "\nplatform=" + version.getPlatform() + "\ndaemonArchitecture="
 				+ getDockerClient().infoCmd().exec().getArchitecture() + "\nimageArchitecture="
 				+ getDockerClient().inspectImageCmd(getContainerInfo().getImageId()).exec().getArch() + "\nsshBanner=" + sshBanner
 				+ "\nalgorithms=" + algorithms + "\nqueryGreetingAndVersion=" + queryBanner);

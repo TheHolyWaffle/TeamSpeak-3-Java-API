@@ -3,13 +3,13 @@ package com.github.theholywaffle.teamspeak3;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
+import net.schmizz.sshj.common.DisconnectReason;
 import net.schmizz.sshj.common.KeyType;
+import net.schmizz.sshj.transport.TransportException;
 import net.schmizz.sshj.transport.verification.OpenSSHKnownHosts;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.Isolated;
-import net.schmizz.sshj.transport.TransportException;
-import net.schmizz.sshj.common.DisconnectReason;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.testcontainers.DockerClientFactory;
@@ -43,7 +43,8 @@ class ServerQueryCompatibilityIT {
 		System.setProperty("user.home", home.toString());
 		ts3 = new TeamSpeakContainer(false);
 		ts6 = new TeamSpeakContainer(true);
-		try { ts3.start(); ts6.start(); } catch (Exception e) { stop(); throw e; }
+		ts3.start();
+		ts6.start();
 	}
 
 	@AfterAll static void stop() {
@@ -66,7 +67,7 @@ class ServerQueryCompatibilityIT {
 			var version = api.getVersion();
 			assertEquals(target.ts6 ? "6.0.0-beta13.1" : "3.13.8", version.getVersion());
 			assertFalse(version.getBuild().isBlank());
-			server.record(target.name(), version.getVersion(), version.getBuild(), version.getPlatform());
+			server.record(target.name(), version);
 			api.selectVirtualServerById(1);
 			assertEquals(1, api.whoAmI().getVirtualServerId());
 			String name = "compatibility " + target + " | literal \\s";
@@ -99,8 +100,8 @@ class ServerQueryCompatibilityIT {
 		Path trust = home.resolve(".ssh/known_ts3_hosts");
 		Files.deleteIfExists(trust);
 		verifyConnection(server, target.protocol);
-		assertTrue(Files.size(trust) > 0, "First connection must persist host trust in the temporary home");
 		byte[] trusted = Files.readAllBytes(trust);
+		assertTrue(trusted.length > 0, "First connection must persist host trust in the temporary home");
 		verifyConnection(server, target.protocol);
 		assertArrayEquals(trusted, Files.readAllBytes(trust), "Known key must be reused");
 		assertTrue(new OpenSSHKnownHosts(trust.toFile()).verify(server.getHost(), server.getMappedPort(10022), server.hostKey));
