@@ -1,0 +1,34 @@
+.github/workflows/maven.yml
+  s_f39089f8107d5f::t_8859a7650679ec 22-24,55,62,66
+.github/workflows/compatibility.yml
+  s_f39089f8107d5f::t_8859a7650679ec 1-49
+src/test/java/com/github/theholywaffle/teamspeak3/TeamSpeakContainer.java
+  s_f39089f8107d5f::t_c28f71f07e604b 40,48-54,139
+  s_f39089f8107d5f::t_050591556b8754 78,90,117,131-133,135,140,150
+  s_f39089f8107d5f::t_54460090baabec 111
+  s_f39089f8107d5f::t_52066ea247cc6a 1-39,41-47,55-77,79-89,91-110,112-116,118-130,134,136-138,141-149,151
+README.md
+  s_f39089f8107d5f::t_77f9565ee38073 134-144
+docs/integration-tests.md
+  s_f39089f8107d5f::t_77f9565ee38073 1-92
+pom.xml
+  s_f39089f8107d5f::t_265dc6f7850f1d 58,112-117,252-272
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryCompatibilityIT.java
+  s_f39089f8107d5f::t_38d1858e5d518b 1-123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0df859ecad52965f0fc29405b84b04b8ab90bc37",
+  "prompts": {},
+  "sessions": {
+    "s_f39089f8107d5f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12498-fde1-70f1-aac2-ce532056b52a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "bert.degeyter <bert.degeyter@showpad.com>"
+    }
+  }
+}
