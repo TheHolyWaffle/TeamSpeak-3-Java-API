@@ -19,6 +19,9 @@ jobs:
   verify:
     uses: ./.github/workflows/verify.yml
 
+  compatibility:
+    uses: ./.github/workflows/compatibility.yml
+
   release_intent:
     name: Release intent
     if: ${{ github.event_name == 'pull_request' }}
@@ -49,14 +52,16 @@ jobs:
   required:
     name: CI required
     if: ${{ always() }}
-    needs: [verify, release_intent]
+    needs: [verify, compatibility, release_intent]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Require every applicable verification job to succeed
         env:
           BUILD_RESULT: ${{ needs.verify.result }}
+          COMPATIBILITY_RESULT: ${{ needs.compatibility.result }}
           INTENT_RESULT: ${{ needs.release_intent.result }}
         run: |
           test "$BUILD_RESULT" = success
+          test "$COMPATIBILITY_RESULT" = success
           test "$INTENT_RESULT" = success || test "$INTENT_RESULT" = skipped
