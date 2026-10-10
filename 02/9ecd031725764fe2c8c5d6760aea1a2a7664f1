@@ -1,0 +1,21 @@
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryCompatibilityIT.java
+  s_f39089f8107d5f::t_40445801884ca3 6,8,46-47,70,104
+src/test/java/com/github/theholywaffle/teamspeak3/TeamSpeakContainer.java
+  s_f39089f8107d5f::t_65d2b806890e65 3,5,11,26,145,148-149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "029ecd031725764fe2c8c5d6760aea1a2a7664f1",
+  "prompts": {},
+  "sessions": {
+    "s_f39089f8107d5f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12498-fde1-70f1-aac2-ce532056b52a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "bert.degeyter <bert.degeyter@showpad.com>"
+    }
+  }
+}
