@@ -34,6 +34,7 @@ import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3FileTransferFailedException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.*;
 import com.github.theholywaffle.teamspeak3.commands.*;
+import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -105,6 +106,25 @@ public class TS3ApiAsync {
 	TS3ApiAsync(TS3Query query, CommandQueue commandQueue) {
 		this.query = query;
 		this.commandQueue = commandQueue;
+	}
+
+	/**
+	 * Executes one already-encoded ServerQuery command through the bounded command queue.
+	 * Session restrictions, deadlines, cancellation and retry policy apply as for typed methods.
+	 * The caller owns value encoding and interpreting server-specific fields. Use typed methods
+	 * when available; do not pass untrusted command text. Unknown commands are not retried by default.
+	 *
+	 * @param line one command without control characters; encode values with
+	 *             {@link CommandEncoding#encode(String)}
+	 * @return the decoded rows and original response text; server errors fail the future with
+	 *         {@link TS3CommandFailedException}
+	 * @throws IllegalArgumentException if the command line is invalid
+	 * @querycommands 1
+	 */
+	public CompletableFuture<DefaultArrayResponse> executeRawCommand(String line) {
+		Command command = QueryCommands.rawCommand(line);
+		commandQueue.enqueueCommand(command);
+		return command.getFuture();
 	}
 
 	/**

@@ -140,6 +140,9 @@ Docker-dependent TS3 raw, TS3 SSH and TS6 SSH smoke tests run separately:
 ./mvnw -B -ntp -Pintegration verify
 ```
 
+See the [command/event compatibility inventory](docs/command-compatibility.md) for
+verified domains, server differences and the controlled command escape hatch.
+
 See [integration tests](docs/integration-tests.md) for pinned official images,
 license configuration, Apple Silicon emulation requirements and beta revalidation.
 The profile fails when required Docker tests cannot run; ordinary unit builds

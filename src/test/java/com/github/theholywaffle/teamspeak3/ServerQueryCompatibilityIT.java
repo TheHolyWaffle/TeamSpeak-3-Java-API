@@ -2,6 +2,9 @@ package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.event.ChannelCreateEvent;
+import com.github.theholywaffle.teamspeak3.api.event.ChannelEditedEvent;
+import com.github.theholywaffle.teamspeak3.api.event.ChannelMovedEvent;
+import com.github.theholywaffle.teamspeak3.api.event.ChannelDeletedEvent;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
@@ -164,7 +167,7 @@ class ServerQueryCompatibilityIT {
 				@Override public void onClientMoved(com.github.theholywaffle.teamspeak3.api.event.ClientMovedEvent e) {
 					if (e.getClientId() == actorId.get()) { rows.add("move " + e); moved.countDown(); }
 				}
-				@Override public void onChannelDeleted(com.github.theholywaffle.teamspeak3.api.event.ChannelDeletedEvent e) { deleted.countDown(); }
+				@Override public void onChannelDeleted(ChannelDeletedEvent e) { deleted.countDown(); }
 				@Override public void onClientLeave(com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent e) {
 					if (e.getClientId() == actorId.get()) { rows.add("leave " + e); left.countDown(); }
 				}
@@ -193,6 +196,103 @@ class ServerQueryCompatibilityIT {
 				Files.createDirectories(evidence.getParent());
 				Files.write(evidence, rows);
 			}
+		}
+	}
+
+	@ParameterizedTest(name = "{0}: channel domain with independent actor, live help and field inventory")
+	@EnumSource(Target.class)
+	@Timeout(60)
+	void channelDomain(Target target) throws Exception {
+		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		var evidence = new java.util.ArrayList<String>();
+		var created = new java.util.concurrent.LinkedBlockingQueue<ChannelCreateEvent>();
+		var edited = new java.util.concurrent.LinkedBlockingQueue<ChannelEditedEvent>();
+		var moved = new java.util.concurrent.LinkedBlockingQueue<ChannelMovedEvent>();
+		var deleted = new java.util.concurrent.LinkedBlockingQueue<ChannelDeletedEvent>();
+		try (var observer = new TS3Query(server.config(target.protocol));
+			 var actor = new TS3Query(server.config(target.protocol))) {
+			observer.connect(); actor.connect();
+			var api = actor.getApi();
+			api.selectVirtualServerById(1); observer.getApi().selectVirtualServerById(1);
+			server.record(target.name(), api.getVersion());
+			int actorId = api.whoAmI().getId();
+			assertNotEquals(actorId, observer.getApi().whoAmI().getId());
+			observer.getApi().registerEvent(TS3EventType.CHANNEL, 0);
+			try (var subscription = observer.subscribe(new TS3EventAdapter() {
+				@Override public void onChannelCreate(ChannelCreateEvent e) { created.add(e); }
+				@Override public void onChannelEdit(ChannelEditedEvent e) { edited.add(e); }
+				@Override public void onChannelMoved(ChannelMovedEvent e) { moved.add(e); }
+				@Override public void onChannelDeleted(ChannelDeletedEvent e) { deleted.add(e); }
+			})) {
+				for (String command : java.util.List.of("channelcreate", "channellist", "channelinfo", "channelfind", "channeledit", "channelmove", "channeldelete")) {
+					String help = api.executeRawCommand("help " + command).getRawResponse();
+					assertTrue(help.startsWith("Usage: " + command + " "), "Live help must describe " + command);
+					evidence.add("help " + command + "\n" + help);
+				}
+				var owned = new java.util.ArrayList<Integer>();
+				try {
+					String name = "domain-" + target + " 日本語 | literal \\s";
+					int parent = api.createChannel("parent-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"));
+					owned.add(parent);
+					var parentEvent = created.poll(5, TimeUnit.SECONDS);
+					assertNotNull(parentEvent); assertEquals(parent, parentEvent.getChannelId());
+					int channel = api.createChannel(name, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1", ChannelProperty.CHANNEL_TOPIC, "initial topic"));
+					owned.add(channel);
+					var create = created.poll(5, TimeUnit.SECONDS);
+					assertNotNull(create); assertEquals(channel, create.getChannelId());
+					assertEquals(name, create.get("channel_name"));
+					assertEquals(target.ts6, create.getMap().containsKey("channel_unique_identifier"));
+					assertEquals(actorId, create.getInvokerId());
+					evidence.add("create event " + new java.util.TreeMap<>(create.getMap()));
+					var list = api.getChannels().stream().filter(c -> c.getId() == channel).findFirst().orElseThrow();
+					assertEquals(name, list.getName()); assertTrue(list.isPermanent()); assertEquals("initial topic", list.getTopic());
+					evidence.add("channellist " + new java.util.TreeMap<>(list.getMap()));
+					assertTrue(api.getChannelsByName("domain-" + target).stream().anyMatch(c -> c.getId() == channel));
+					String renamed = name + " renamed";
+					String topic = "updated | literal \\n";
+					api.editChannel(channel, Map.of(ChannelProperty.CHANNEL_NAME, renamed, ChannelProperty.CHANNEL_TOPIC, topic,
+						ChannelProperty.CHANNEL_DESCRIPTION, "description 日本語 | literal \\s"));
+					var edit = edited.poll(5, TimeUnit.SECONDS);
+					assertNotNull(edit); assertEquals(channel, edit.getChannelId());
+					assertEquals(actorId, edit.getInvokerId());
+					assertEquals(renamed, edit.get("channel_name")); assertEquals(topic, edit.get("channel_topic"));
+					evidence.add("edit event " + new java.util.TreeMap<>(edit.getMap()));
+					var info = api.getChannelInfo(channel);
+					assertEquals(renamed, info.getName()); assertEquals(topic, info.getTopic());
+					assertEquals("description 日本語 | literal \\s", info.getDescription());
+					assertNotNull(info.getUniqueIdentifier());
+					assertEquals(target.ts6, info.getMap().containsKey("channel_storage_quota"));
+					if (target.ts6) assertEquals("4294967295", info.get("channel_storage_quota"));
+					evidence.add("channelinfo " + new java.util.TreeMap<>(info.getMap()));
+					api.moveChannel(channel, parent, 0);
+					var move = moved.poll(5, TimeUnit.SECONDS);
+					assertNotNull(move); evidence.add("move event " + new java.util.TreeMap<>(move.getMap()));
+					assertEquals(channel, move.getChannelId());
+					assertEquals(actorId, move.getInvokerId());
+					assertEquals(parent, move.getChannelParentId()); assertEquals(0, move.getChannelOrder());
+					assertEquals(parent, api.getChannelInfo(channel).getParentChannelId());
+					api.deleteChannel(channel, true); owned.remove(Integer.valueOf(channel));
+					var delete = deleted.poll(5, TimeUnit.SECONDS);
+					assertNotNull(delete); assertEquals(channel, delete.getChannelId());
+					assertEquals(actorId, delete.getInvokerId());
+					evidence.add("delete event " + new java.util.TreeMap<>(delete.getMap()));
+					assertTrue(api.getChannels().stream().noneMatch(c -> c.getId() == channel));
+					var error = assertThrows(TS3CommandFailedException.class, () -> api.getChannelInfo(channel));
+					assertEquals(768, error.getError().getId());
+					assertEquals("invalid channelID", error.getError().getMessage());
+					evidence.add("deleted channel error " + new java.util.TreeMap<>(error.getError().getMap()));
+					assertEquals(api.getVersion().getVersion(), observer.getApi().getVersion().getVersion());
+				} finally {
+					for (int i = owned.size() - 1; i >= 0; --i) api.deleteChannel(owned.get(i), true);
+				}
+			}
+			observer.exit(); actor.exit();
+			assertEquals(0, observer.getEventStatistics().malformedNotifications());
+			assertEquals(0, observer.getEventStatistics().listenerFailures());
+			assertEquals(0, observer.getEventStatistics().droppedEvents());
+		} finally {
+			Path path = Path.of("target", "compatibility", target + "-channels.txt");
+			Files.createDirectories(path.getParent()); Files.write(path, evidence);
 		}
 	}
 

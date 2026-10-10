@@ -33,6 +33,7 @@ import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedExcepti
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3FileTransferFailedException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.*;
+import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -82,6 +83,20 @@ public class TS3Api {
 	 */
 	TS3Api(TS3ApiAsync asyncApi) {
 		this.asyncApi = asyncApi;
+	}
+
+	/**
+	 * Executes one already-encoded ServerQuery command using the normal bounded queue.
+	 *
+	 * @param line one command without control characters
+	 * @return the decoded rows and original response text
+	 * @throws IllegalArgumentException if the command line is invalid
+	 * @throws TS3CommandFailedException if the server rejects the command
+	 * @querycommands 1
+	 * @see TS3ApiAsync#executeRawCommand(String)
+	 */
+	public DefaultArrayResponse executeRawCommand(String line) {
+		return CommandFutures.join(asyncApi.executeRawCommand(line));
 	}
 
 	/**
