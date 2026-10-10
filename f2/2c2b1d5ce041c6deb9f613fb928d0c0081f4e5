@@ -1,0 +1,19 @@
+src/test/java/com/github/theholywaffle/teamspeak3/QueryConfigurationTest.java
+  s_d757b21d401e7e::t_e4e76a78db05da 95-98
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f22c2b1d5ce041c6deb9f613fb928d0c0081f4e5",
+  "prompts": {},
+  "sessions": {
+    "s_d757b21d401e7e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12770-2877-7903-ba65-0fe168e7f6f9",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
