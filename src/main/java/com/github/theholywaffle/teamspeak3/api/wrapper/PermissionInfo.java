@@ -47,7 +47,7 @@ public class PermissionInfo extends Wrapper {
 	}
 
 	/**
-	 * Gets the numerical ID of this permission.
+	 * Gets the numerical ID supplied by the connected server for this permission.
 	 * <p>
 	 * In most cases, the name of the permission should be
 	 * preferred over the numerical ID.

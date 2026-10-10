@@ -33,6 +33,9 @@ import java.util.Map;
 /**
  * Describes a single permission that is assigned to a varying target.
  * <p>
+ * Permission searches ({@code permfind}) return only type, source IDs and permission ID.
+ * Values and flags are supplied by {@code permoverview}; check {@link #getMap()}
+ * for field presence before interpreting optional values.
  * This class is used when a lot of permissions are sent at once.
  * To reduce bandwidth usage, the TS3 server only transmit the numeric
  * permission ID and not the permission name.
@@ -101,7 +104,8 @@ public class PermissionAssignment extends Wrapper {
 	}
 
 	/**
-	 * Gets the numerical ID of this permission.
+	 * Gets the numerical permission ID supplied by the connected server.
+	 * Resolve it using that server's permission metadata, not an embedded enum ID.
 	 *
 	 * @return this permission's numerical ID
 	 */

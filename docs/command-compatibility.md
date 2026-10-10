@@ -1,7 +1,7 @@
 # Verified ServerQuery command and event inventory
 
-Task #441 is being delivered in focused PRs. This first slice verifies the core
-channel domain. It does not complete the issue or establish whole-API TS6 support.
+Task #441 is being delivered in focused PRs. The implemented slices verify the core
+channel domain and named channel/group permission operations. It does not complete the issue or establish whole-API TS6 support.
 The inventory below is the release acceptance boundary, not a promise based on
 similar method names or server help alone.
 
@@ -29,7 +29,7 @@ Local Apple Silicon uses emulated amd64 TS3 and native arm64 TS6; CI tests amd64
 | Servers | Existing login/version, virtual-server selection, invalid server ID 2816 and post-error framing probes | Server/instance info and edits, virtual-server lifecycle, snapshots and differences |
 | Channels | Permanent channel create/list/info/find, name/topic/description edit, parent move with first-sibling order, force delete; UTF-8 and literal protocol escapes; deleted channel error 768 | Other property combinations, temporary/semi-permanent/password/default channels, limits/codecs/banners; permission failures and extra description/password notifications |
 | Clients | Existing query-client identity, join/move/leave frames and reconnect probes | Client/database administration and properties, kicks/bans, voice-client fixture/manual verification |
-| Permissions/groups | No cross-server operation claim | Enumerate server metadata, resolve permissions by name, compare IDs and errors; verify channel/server groups and permissions. Embedded enum numeric IDs are **not** a verified universal mapping |
+| Permissions/groups | Server metadata and name/ID lookup, effective-value lookup, assignment search; named channel/server-group/channel-group permission add/read/update/delete; group create/list/rename/delete. See [permission evidence and migration](permission-compatibility.md) | Client/channel-client permissions, permission overview, group copy/membership/automatic assignments, permission reset and denied-account probes |
 | Messages/events | Channel create/edit/move/delete from an independent query session; existing overlapping subscription and reconnect probes | Text messages, server edits, privilege keys and other event payloads; voice-client behavior requires a separate client fixture or manual evidence |
 | Files | No cross-server transfer claim | File command inventory, server output/error differences; transfer reliability and container/NAT endpoints belong to #442 |
 | Administrative utilities | Existing version/selection error recovery; `help` through the normal command queue | Logs, bans, complaints, tokens, query-login management and remaining utilities |
@@ -87,13 +87,14 @@ raw commands remain restricted when a reconnect session is configured. Prefer
 `query.exit()`/`close()` for library shutdown and the typed session configuration
 for reconnect restoration.
 
-This PR has additive `feat:` release intent (minor under normal SemVer, included
+The channel/raw-command slice has additive `feat:` release intent (minor under normal SemVer, included
 in the planned 2.0.0 release), with no new runtime dependencies or breaking API
 changes. `ChannelMovedEvent.getChannelOrder()` now returns the supplied protocol
 order instead of incorrectly returning `-1`. Consumers that treated every move
 order as absent should use the real sibling ID or zero. No other channel model
-schema/default changes are introduced. Remaining domains and permissions by name
-stay within #441 and require subsequent focused PRs before it can be closed.
+schema/default changes are introduced. The permission slice intentionally removes embedded enum IDs and corrects unknown-name
+errors; see its [breaking migration notes](permission-compatibility.md#migration-for-200).
+Remaining operations stay within #441 and require subsequent focused PRs before it can be closed.
 
 Tool documentation reviewed: [JUnit parameterized tests](https://docs.junit.org/6.1.3/overview.html),
 [Testcontainers authenticated waits](https://java.testcontainers.org/features/startup_and_waits/),

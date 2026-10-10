@@ -2647,6 +2647,10 @@ public class TS3Api {
 	 * with {@code permName}. The output includes the type and the ID of the client,
 	 * channel or group associated with the permission.
 	 *
+	 * <p>The search returns assignment identities only, without values or flags.
+	 * Use the corresponding permission-list or overview operation for those fields.
+	 * Unknown names fail with the server error; a valid unassigned permission returns an empty list.</p>
+	 *
 	 * @param permName
 	 * 		the name of the permission
 	 *
@@ -2664,8 +2668,9 @@ public class TS3Api {
 	/**
 	 * Gets the ID of the permission specified by {@code permName}.
 	 * <p>
-	 * Note that the use of numeric permission IDs is deprecated
-	 * and that this API only uses the string variant of the IDs.
+	 * Permission IDs are specific to the connected server. Resolve them by name
+	 * or use {@link #getPermissions()} to interpret numeric IDs in server responses.
+	 * Permission mutation commands use names; never reuse IDs from another server.
 	 * </p>
 	 *
 	 * @param permName
@@ -2684,8 +2689,9 @@ public class TS3Api {
 	/**
 	 * Gets the IDs of the permissions specified by {@code permNames}.
 	 * <p>
-	 * Note that the use of numeric permission IDs is deprecated
-	 * and that this API only uses the string variant of the IDs.
+	 * Permission IDs are specific to the connected server. Resolve them by name
+	 * or use {@link #getPermissions()} to interpret numeric IDs in server responses.
+	 * Permission mutation commands use names; never reuse IDs from another server.
 	 * </p>
 	 *
 	 * @param permNames
