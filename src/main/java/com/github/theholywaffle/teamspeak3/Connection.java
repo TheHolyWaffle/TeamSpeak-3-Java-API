@@ -82,25 +82,30 @@ class Connection {
 	}
 
 	void internalDisconnect() {
-		if (!stop(new Deadline(config.getCloseTimeout()))) return;
+		if (!stop(new Deadline(config.getCloseTimeout()), true)) return;
 		query.fireDisconnect(this);
 	}
 
 	void disconnect() { disconnect(new Deadline(config.getCloseTimeout())); }
 	void disconnect(Deadline deadline) {
-		if (!stop(deadline)) {
+		if (!stop(deadline, false)) {
 			queue.get().failRemainingCommands();
 			awaitTermination(deadline);
 		}
 	}
 
-	private boolean stop(Deadline deadline) {
-		if (!stopped.compareAndSet(false, true)) return false;
+	private boolean stop(Deadline deadline, boolean recover) {
+		CommandQueue current;
+		synchronized (this) {
+			if (!stopped.compareAndSet(false, true)) return false;
+			current = queue.get();
+		}
+		if (recover && current.isGlobal()) current.prepareReconnect();
+		else current.failRemainingCommands();
 		try { channel.close(); } catch (IOException ignored) { }
 		Thread[] threads;
 		synchronized (this) { threads = new Thread[] {reader, writer, keepAlive}; }
 		for (Thread thread : threads) if (thread != null) thread.interrupt();
-		queue.get().failRemainingCommands();
 		awaitTermination(deadline);
 		return true;
 	}
@@ -119,9 +124,9 @@ class Connection {
 	void setCommandQueue(CommandQueue newQueue) {
 		synchronized (this) {
 			if (stopped.get()) throw new TS3ConnectionFailedException("Connection terminated during initialization");
-			newQueue.resetSentCommands();
 			if (!queue.get().isEmpty()) throw new IllegalStateException("Old queue not empty");
 			queue.set(newQueue);
+			newQueue.resume();
 		}
 	}
 	long getIdleTime() { return (System.nanoTime() - lastSent.get()) / 1_000_000L; }

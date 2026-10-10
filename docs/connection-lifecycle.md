@@ -72,12 +72,13 @@ and stream lifecycle changes remain assigned to #442.
 - A response must finish within its own budget. Slow streaming responses need a
   larger response duration; repeated data no longer keeps them alive forever.
 - Queue wait is now finite. Increase it for long flood-rate-limited queues.
-- Terminating a connection fails its outstanding requests with
-  `TS3QueryShutDownException`, including requests on the initialization queue.
+- Explicit termination fails outstanding requests with `TS3QueryShutDownException`;
+  commands whose transmission began use its `TS3UnknownOutcomeException` subtype.
   Expired unsent commands fail with `TS3Exception` describing queue expiry.
-  A reconnect does not revive failed requests. Explicit safe retry policy is the
-  separate scope of #437; custom futures and public error redesign remain with
-  #439 and #443.
+  Failed requests never revive. On unexpected loss, explicit session configuration
+  can retain unsent commands and an opt-in safe-read policy can replay eligible
+  commands; see [safe reconnect and retry](reconnect-and-retry.md).
+  Custom future replacement and broader error redesign remain with #439 and #443.
 - Write failures are surfaced as connection termination rather than being
   suppressed by `PrintWriter`.
 - `close()` aborts immediately; use `exit()` when a bounded graceful drain is

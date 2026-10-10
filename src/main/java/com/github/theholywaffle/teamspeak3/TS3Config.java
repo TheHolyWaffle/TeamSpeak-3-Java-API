@@ -29,9 +29,12 @@ package com.github.theholywaffle.teamspeak3;
 import com.github.theholywaffle.teamspeak3.TS3Query.FloodRate;
 import com.github.theholywaffle.teamspeak3.TS3Query.Protocol;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
+import com.github.theholywaffle.teamspeak3.api.reconnect.CommandRetryPolicy;
+import com.github.theholywaffle.teamspeak3.api.reconnect.SessionConfiguration;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 
 import java.time.Duration;
+import java.util.Objects;
 
 /**
  * Class used to configure the behavior of a {@link TS3Query}.
@@ -54,6 +57,33 @@ public class TS3Config {
 	private Duration closeTimeout = Duration.ofSeconds(4);
 	private ReconnectStrategy reconnectStrategy = ReconnectStrategy.disconnect();
 	private ConnectionHandler connectionHandler = null;
+	private CommandRetryPolicy commandRetryPolicy = CommandRetryPolicy.none();
+	private SessionConfiguration sessionConfiguration;
+
+	/**
+	 * Sets an opt-in read replay policy. Requires explicit session configuration for replay.
+	 * @param policy immutable retry policy
+	 * @return this configuration
+	 */
+	public TS3Config setCommandRetryPolicy(CommandRetryPolicy policy) {
+		checkFrozen();
+		commandRetryPolicy = Objects.requireNonNull(policy, "policy");
+		return this;
+	}
+
+	/**
+	 * Sets the session restored before application commands on every connection.
+	 * @param session immutable target, nickname and subscriptions
+	 * @return this configuration
+	 */
+	public TS3Config setSessionConfiguration(SessionConfiguration session) {
+		checkFrozen();
+		sessionConfiguration = Objects.requireNonNull(session, "session");
+		return this;
+	}
+
+	CommandRetryPolicy getCommandRetryPolicy() { return commandRetryPolicy; }
+	SessionConfiguration getSessionConfiguration() { return sessionConfiguration; }
 
 	/**
 	 * Sets the hostname or IP address of the TeamSpeak3 server to connect to.
@@ -407,6 +437,9 @@ public class TS3Config {
 	}
 
 	TS3Config freeze() {
+		if (commandRetryPolicy.getMaxRetries() > 0 && sessionConfiguration == null) {
+			throw new IllegalStateException("Command replay requires explicit session configuration");
+		}
 		frozen = true;
 		return this;
 	}

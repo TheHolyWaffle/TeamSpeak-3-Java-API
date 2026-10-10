@@ -60,7 +60,7 @@ class StreamWriter extends Thread {
 			while (!isInterrupted()) {
 				if (floodRate > 0) Thread.sleep(floodRate);
 
-				Command command = con.getCommandQueue().transferCommand();
+				Command command = con.getCommandQueue().transferCommand(con);
 				if (command == null) continue;
 
 				con.resetIdleTime();
@@ -73,6 +73,9 @@ class StreamWriter extends Thread {
 			}
 		} catch (IOException e) {
 			if (!isInterrupted()) con.internalDisconnect();
+		} catch (RuntimeException e) {
+			log.warn("Command encoding or write failed", e);
+			con.internalDisconnect();
 		} catch (InterruptedException e) {
 			interrupt(); // Regular shutdown
 		}

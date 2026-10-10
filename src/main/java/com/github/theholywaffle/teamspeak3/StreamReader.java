@@ -160,7 +160,6 @@ class StreamReader extends Thread {
 		if (response.startsWith("error ")) {
 			handleCommandError(responseBuilder, response);
 
-			commandQueue.removeFromReceiveQueue();
 			responseBuilder = null;
 		} else {
 			responseBuilder.appendResponse(response);
@@ -180,13 +179,11 @@ class StreamReader extends Thread {
 		if (queryError.isSuccessful()) {
 			DefaultArrayResponse response = responseBuilder.buildResponse();
 
-			ts3.submitUserTask("Future SuccessListener (" + command.getName() + ")",
-					() -> future.set(response));
+			commandQueue.completeResponse(command, con, () -> future.set(response));
 		} else {
 			log.debug("TS3 command error: {}", queryError);
 
-			ts3.submitUserTask("Future FailureListener (" + command.getName() + ")",
-					() -> future.fail(new TS3CommandFailedException(queryError, command.getName())));
+			commandQueue.completeResponse(command, con, () -> future.fail(new TS3CommandFailedException(queryError, command.getName())));
 		}
 	}
 
