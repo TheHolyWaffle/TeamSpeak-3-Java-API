@@ -7,9 +7,12 @@ import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 import com.github.theholywaffle.teamspeak3.api.reconnect.SessionConfiguration;
 import com.github.theholywaffle.teamspeak3.commands.QueryCommands;
+import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -53,7 +56,7 @@ class RawCommandTest {
 		}
 	}
 
-	@Test void unsentCancellationReleasesBoundedAdmission() throws Exception {
+	@Test void unsentCancellationReleasesAdmissionBeforeApplicationCallbacks() throws Exception {
 		try (var peer = new FakeServerQuery(p -> {
 			p.expect("whoami"); p.write("clid=1\nerror id=0 msg=ok\n");
 			p.expect("version"); p.write("version=probe\nerror id=0 msg=ok\n");
@@ -62,8 +65,12 @@ class RawCommandTest {
 			var cancelled = query.getAsyncApi().executeRawCommand("channeldelete cid=5 force=1");
 			assertThrows(TS3QueueFullException.class,
 				() -> query.getApi().executeRawCommand("version"));
+			var replacement = new AtomicReference<CompletableFuture<DefaultArrayResponse>>();
+			cancelled.whenComplete((value, failure) -> replacement.set(query.getAsyncApi().executeRawCommand("version")));
 			assertTrue(cancelled.cancel(false));
-			var next = query.getAsyncApi().executeRawCommand("version");
+			var next = replacement.get();
+			assertNotNull(next);
+			assertFalse(next.isDone(), "Application callback must acquire the capacity released by cancellation");
 			query.connect(); assertEquals("probe", next.get(5, TimeUnit.SECONDS).getFirstResponse().get("version"));
 			query.exit(); peer.await();
 		}

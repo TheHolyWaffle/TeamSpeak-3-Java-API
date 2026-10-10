@@ -229,15 +229,12 @@ class ServerQueryCompatibilityIT {
 					assertTrue(help.startsWith("Usage: " + command + " "), "Live help must describe " + command);
 					evidence.add("help " + command + "\n" + help);
 				}
-				var owned = new java.util.ArrayList<Integer>();
-				try {
+				try (var channels = new ChannelCleanup(api)) {
 					String name = "domain-" + target + " 日本語 | literal \\s";
-					int parent = api.createChannel("parent-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"));
-					owned.add(parent);
+					int parent = channels.track(api.createChannel("parent-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
 					var parentEvent = created.poll(5, TimeUnit.SECONDS);
 					assertNotNull(parentEvent); assertEquals(parent, parentEvent.getChannelId());
-					int channel = api.createChannel(name, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1", ChannelProperty.CHANNEL_TOPIC, "initial topic"));
-					owned.add(channel);
+					int channel = channels.track(api.createChannel(name, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1", ChannelProperty.CHANNEL_TOPIC, "initial topic")));
 					var create = created.poll(5, TimeUnit.SECONDS);
 					assertNotNull(create); assertEquals(channel, create.getChannelId());
 					assertEquals(name, create.get("channel_name"));
@@ -271,7 +268,7 @@ class ServerQueryCompatibilityIT {
 					assertEquals(actorId, move.getInvokerId());
 					assertEquals(parent, move.getChannelParentId()); assertEquals(0, move.getChannelOrder());
 					assertEquals(parent, api.getChannelInfo(channel).getParentChannelId());
-					api.deleteChannel(channel, true); owned.remove(Integer.valueOf(channel));
+					channels.delete(channel);
 					var delete = deleted.poll(5, TimeUnit.SECONDS);
 					assertNotNull(delete); assertEquals(channel, delete.getChannelId());
 					assertEquals(actorId, delete.getInvokerId());
@@ -282,8 +279,6 @@ class ServerQueryCompatibilityIT {
 					assertEquals("invalid channelID", error.getError().getMessage());
 					evidence.add("deleted channel error " + new java.util.TreeMap<>(error.getError().getMap()));
 					assertEquals(api.getVersion().getVersion(), observer.getApi().getVersion().getVersion());
-				} finally {
-					for (int i = owned.size() - 1; i >= 0; --i) api.deleteChannel(owned.get(i), true);
 				}
 			}
 			observer.exit(); actor.exit();
@@ -293,6 +288,32 @@ class ServerQueryCompatibilityIT {
 		} finally {
 			Path path = Path.of("target", "compatibility", target + "-channels.txt");
 			Files.createDirectories(path.getParent()); Files.write(path, evidence);
+		}
+	}
+
+	private static final class ChannelCleanup implements AutoCloseable {
+		private final TS3Api api;
+		private final java.util.List<Integer> ids = new java.util.ArrayList<>();
+
+		ChannelCleanup(TS3Api api) { this.api = api; }
+
+		int track(int id) { ids.add(id); return id; }
+
+		void delete(int id) {
+			api.deleteChannel(id, true);
+			ids.remove(Integer.valueOf(id));
+		}
+
+		@Override public void close() {
+			RuntimeException failure = null;
+			for (int i = ids.size() - 1; i >= 0; --i) {
+				try { api.deleteChannel(ids.get(i), true); }
+				catch (RuntimeException error) {
+					if (failure == null) failure = error;
+					else failure.addSuppressed(error);
+				}
+			}
+			if (failure != null) throw failure;
 		}
 	}
 

@@ -123,8 +123,9 @@ public class TS3ApiAsync {
 	 */
 	public CompletableFuture<DefaultArrayResponse> executeRawCommand(String line) {
 		Command command = QueryCommands.rawCommand(line);
+		var result = CommandFutures.map(command.getFuture(), response -> response);
 		commandQueue.enqueueCommand(command);
-		return command.getFuture();
+		return result;
 	}
 
 	/**
