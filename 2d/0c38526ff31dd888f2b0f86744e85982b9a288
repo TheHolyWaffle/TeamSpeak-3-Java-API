@@ -1,0 +1,28 @@
+src/main/java/com/github/theholywaffle/teamspeak3/SSHChannel.java
+  s_2a3efa3485140c::t_09687ff0b44d75 66
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryCompatibilityIT.java
+  s_2a3efa3485140c::t_09687ff0b44d75 83,91-98,100-103
+src/main/java/com/github/theholywaffle/teamspeak3/CommandQueue.java
+  s_2a3efa3485140c::t_09687ff0b44d75 187-190,197-198,205-209,212
+src/main/java/com/github/theholywaffle/teamspeak3/Connection.java
+  s_2a3efa3485140c::t_09687ff0b44d75 80-81,93,104,108-110
+  s_2a3efa3485140c::t_994cb7c5ccd190 111-112
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Query.java
+  s_2a3efa3485140c::t_09687ff0b44d75 305
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2d0c38526ff31dd888f2b0f86744e85982b9a288",
+  "prompts": {},
+  "sessions": {
+    "s_2a3efa3485140c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1253b-97a2-7ab0-bd7d-51b4f012aa35",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "bert.degeyter <bert.degeyter@showpad.com>"
+    }
+  }
+}
