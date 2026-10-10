@@ -37,13 +37,15 @@ import java.time.Duration;
 import java.util.Objects;
 
 /**
- * Class used to configure the behavior of a {@link TS3Query}.
+ * Reusable mutable builder for immutable {@link QueryConfig} snapshots.
+ * Constructing a query never freezes or changes this builder. Not thread safe.
  */
-public class TS3Config {
-
-	private boolean frozen = false;
+public final class TS3Config {
 
 	private String host = null;
+	private ServerType serverType = ServerType.TS3;
+	private SshHostKeyPolicy sshHostKeyPolicy = SshHostKeyPolicy.defaultKnownHosts();
+	private QueryTransportFactory transportFactory;
 	private int queryPort = -1;
 	private Protocol protocol = Protocol.RAW;
 	private String username = null;
@@ -71,7 +73,7 @@ public class TS3Config {
 	 * @return this configuration
 	 */
 	public TS3Config setCommandCapacity(int capacity) {
-		checkFrozen(); commandCapacity = positiveCapacity(capacity); return this;
+		commandCapacity = positiveCapacity(capacity); return this;
 	}
 
 	/**
@@ -80,7 +82,7 @@ public class TS3Config {
 	 * @return this configuration
 	 */
 	public TS3Config setListenerCapacity(int capacity) {
-		checkFrozen(); listenerCapacity = positiveCapacity(capacity); return this;
+		listenerCapacity = positiveCapacity(capacity); return this;
 	}
 
 	/**
@@ -90,7 +92,7 @@ public class TS3Config {
 	 * @return this configuration
 	 */
 	public TS3Config setListenerQueueCapacity(int capacity) {
-		checkFrozen(); listenerQueueCapacity = positiveCapacity(capacity); return this;
+		listenerQueueCapacity = positiveCapacity(capacity); return this;
 	}
 
 	/**
@@ -100,7 +102,7 @@ public class TS3Config {
 	 * @return this configuration
 	 */
 	public TS3Config setEventCallbackThreads(int threads) {
-		checkFrozen(); eventCallbackThreads = positiveCapacity(threads); return this;
+		eventCallbackThreads = positiveCapacity(threads); return this;
 	}
 
 	private static int positiveCapacity(int value) {
@@ -124,7 +126,6 @@ public class TS3Config {
 	 * @return this configuration
 	 */
 	public TS3Config setCommandRetryPolicy(CommandRetryPolicy policy) {
-		checkFrozen();
 		commandRetryPolicy = Objects.requireNonNull(policy, "policy");
 		return this;
 	}
@@ -135,7 +136,6 @@ public class TS3Config {
 	 * @return this configuration
 	 */
 	public TS3Config setSessionConfiguration(SessionConfiguration session) {
-		checkFrozen();
 		sessionConfiguration = Objects.requireNonNull(session, "session");
 		return this;
 	}
@@ -160,8 +160,6 @@ public class TS3Config {
 	 * @return this TS3Config object for chaining
 	 */
 	public TS3Config setHost(String host) {
-		checkFrozen();
-
 		this.host = host;
 		return this;
 	}
@@ -193,8 +191,6 @@ public class TS3Config {
 	 * 		if the port is out of range
 	 */
 	public TS3Config setQueryPort(int queryPort) {
-		checkFrozen();
-
 		if (queryPort <= 0 || queryPort > 65535) {
 			throw new IllegalArgumentException("Port out of range: " + queryPort);
 		}
@@ -225,8 +221,6 @@ public class TS3Config {
 	 * @see Protocol Protocol
 	 */
 	public TS3Config setProtocol(Protocol protocol) {
-		checkFrozen();
-
 		if (protocol == null) throw new IllegalArgumentException("protocol cannot be null!");
 		this.protocol = protocol;
 		return this;
@@ -255,15 +249,9 @@ public class TS3Config {
 	 * @return this TS3Config object for chaining
 	 */
 	public TS3Config setLoginCredentials(String username, String password) {
-		checkFrozen();
-
 		this.username = username;
 		this.password = password;
 		return this;
-	}
-
-	boolean hasLoginCredentials() {
-		return username != null && password != null;
 	}
 
 	String getUsername() {
@@ -294,8 +282,6 @@ public class TS3Config {
 	 * @see FloodRate FloodRate
 	 */
 	public TS3Config setFloodRate(FloodRate rate) {
-		checkFrozen();
-
 		if (rate == null) throw new IllegalArgumentException("rate cannot be null!");
 		this.floodRate = rate;
 		return this;
@@ -319,8 +305,6 @@ public class TS3Config {
 	 * @return this TS3Config object for chaining
 	 */
 	public TS3Config setEnableCommunicationsLogging(boolean enable) {
-		checkFrozen();
-
 		enableCommunicationsLogging = enable;
 		return this;
 	}
@@ -341,7 +325,6 @@ public class TS3Config {
 	}
 
 	private Duration timeout(Duration value) {
-		checkFrozen();
 		if (value == null || value.isZero() || value.isNegative()) {
 			throw new IllegalArgumentException("Deadline must be positive");
 		}
@@ -442,8 +425,6 @@ public class TS3Config {
 	 * @see ConnectionHandler The connection handler
 	 */
 	public TS3Config setReconnectStrategy(ReconnectStrategy reconnectStrategy) {
-		checkFrozen();
-
 		if (reconnectStrategy == null) throw new IllegalArgumentException("reconnectStrategy cannot be null!");
 		this.reconnectStrategy = reconnectStrategy;
 		return this;
@@ -484,8 +465,6 @@ public class TS3Config {
 	 * @see TS3Config#setReconnectStrategy(ReconnectStrategy)
 	 */
 	public TS3Config setConnectionHandler(ConnectionHandler connectionHandler) {
-		checkFrozen();
-
 		this.connectionHandler = connectionHandler;
 		return this;
 	}
@@ -494,18 +473,24 @@ public class TS3Config {
 		return connectionHandler;
 	}
 
-	TS3Config freeze() {
-		if (commandRetryPolicy.getMaxRetries() > 0 && sessionConfiguration == null) {
-			throw new IllegalStateException("Command replay requires explicit session configuration");
-		}
-		frozen = true;
-		return this;
-	}
+	/** Builds an immutable validated snapshot; this builder remains reusable.
+	 * @return configuration snapshot
+	 */
+	public QueryConfig build() { return new QueryConfig(this); }
 
-	private void checkFrozen() {
-		if (frozen) {
-			throw new IllegalStateException("TS3Config cannot be modified after being used to create a TS3Query. " +
-					"Please make any changes to TS3Config *before* calling TS3Query's constructor.");
-		}
+	/** @param type server generation @return this builder */
+	public TS3Config setServerType(ServerType type) { serverType = Objects.requireNonNull(type); return this; }
+	/** @return configured server generation */
+	public ServerType getServerType() { return serverType; }
+	/** @param policy explicit SSH trust policy @return this builder */
+	public TS3Config setSshHostKeyPolicy(SshHostKeyPolicy policy) { sshHostKeyPolicy = Objects.requireNonNull(policy); return this; }
+	/** @return SSH trust policy */
+	public SshHostKeyPolicy getSshHostKeyPolicy() { return sshHostKeyPolicy; }
+	/** @param factory stream transport factory, invoked separately for every connection @return this builder */
+	public TS3Config setTransportFactory(QueryTransportFactory factory) { transportFactory = Objects.requireNonNull(factory); return this; }
+	/** @return selected transport factory */
+	public QueryTransportFactory getTransportFactory() {
+		return transportFactory == null ? (protocol == Protocol.SSH ? QueryTransports.SSH : QueryTransports.RAW) : transportFactory;
 	}
+	@Override public String toString() { return "TS3Config[server=" + serverType + ", protocol=" + protocol + "]"; }
 }

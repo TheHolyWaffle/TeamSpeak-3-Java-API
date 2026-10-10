@@ -181,11 +181,16 @@ merge settings, snapshot convention, and JReleaser Central Portal publication an
 
 SSH queries require credentials supplied through `TS3Config#setLoginCredentials`.
 SSHJ tries password authentication, then keyboard-interactive using the same password.
-The client automatically trusts and stores unknown host keys in `~/.ssh/known_ts3_hosts`
-when `~/.ssh` exists, otherwise in `known_ts3_hosts` in the working directory.
-Changed keys for an existing host/key-type entry are rejected, but an unrecorded
-key type can still be accepted. Prepopulate this file with host keys obtained
-through a trusted channel for a trusted first connection.
+Unknown and changed host keys are rejected by default using `~/.ssh/known_hosts`.
+Use `SshHostKeyPolicy.knownHosts(path)` for a dedicated strict trust file,
+`pinnedKey(publicKey)` for an independently verified key, or explicitly choose
+`trustOnFirstUse(path)` for a suitable environment. TOFU requires an application-owned
+file and rejects changes, including a different key algorithm, after first trust.
+The library never creates a trust directory or silently falls back to the working directory.
+
+Configuration is captured in an immutable `QueryConfig` snapshot without freezing
+`TS3Config`. Set `ServerType.TS6` and `Protocol.SSH` for TS6; TS3 retains raw TCP and
+uses the same SSH implementation. See [configuration and transport migration](docs/configuration-and-transports.md).
 
 The client uses SSHJ's default algorithms, which still include legacy algorithms;
 this update does not enforce a modern-only algorithm policy. Compression is disabled.

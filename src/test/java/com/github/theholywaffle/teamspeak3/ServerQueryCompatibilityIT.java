@@ -19,7 +19,6 @@ import net.schmizz.sshj.transport.TransportException;
 import net.schmizz.sshj.transport.verification.OpenSSHKnownHosts;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;
-import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.testcontainers.DockerClientFactory;
@@ -31,7 +30,6 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@Isolated("Redirects user.home for disposable SSH trust stores")
 class ServerQueryCompatibilityIT {
 	enum Target {
 		TS3_RAW(false, TS3Query.Protocol.RAW), TS3_SSH(false, TS3Query.Protocol.SSH), TS6_SSH(true, TS3Query.Protocol.SSH);
@@ -41,16 +39,12 @@ class ServerQueryCompatibilityIT {
 	}
 
 	@TempDir static Path home;
-	static String originalHome;
 	static TeamSpeakContainer ts3;
 	static TeamSpeakContainer ts6;
 
 	@BeforeAll static void start() throws Exception {
 		// Deliberately fail, never skip, when the integration profile cannot use Docker.
 		assertTrue(DockerClientFactory.instance().isDockerAvailable(), "Required Docker integration tests cannot run: start a Docker daemon");
-		originalHome = System.getProperty("user.home");
-		Files.createDirectory(home.resolve(".ssh"));
-		System.setProperty("user.home", home.toString());
 		ts3 = new TeamSpeakContainer(false);
 		ts6 = new TeamSpeakContainer(true);
 		ts3.start();
@@ -59,9 +53,7 @@ class ServerQueryCompatibilityIT {
 
 	@AfterAll static void stop() {
 		try { if (ts6 != null) ts6.close(); } finally {
-			try { if (ts3 != null) ts3.close(); } finally {
-				if (originalHome != null) System.setProperty("user.home", originalHome);
-			}
+			if (ts3 != null) ts3.close();
 		}
 	}
 
@@ -110,6 +102,19 @@ class ServerQueryCompatibilityIT {
 					@Override public void onConnect(TS3Api api) { if (connected.incrementAndGet() == 2) restored.countDown(); }
 					@Override public void onDisconnect(TS3Query query) { }
 				});
+			var factory = config.getTransportFactory();
+			var transports = new java.util.concurrent.CopyOnWriteArrayList<QueryTransport>();
+			config.setTransportFactory(new QueryTransportFactory() {
+				@Override public QueryTransport create(QueryConfig settings) {
+					var transport = factory.create(settings);
+					transports.add(transport);
+					return transport;
+				}
+				@Override public boolean supports(ServerType serverType, TS3Query.Protocol protocol) {
+					return factory.supports(serverType, protocol);
+				}
+				@Override public boolean authenticates() { return factory.authenticates(); }
+			});
 			try (var query = new TS3Query(config)) {
 				query.getApi().addTS3Listeners(new TS3EventAdapter() {
 					@Override public void onChannelCreate(ChannelCreateEvent notification) { event.countDown(); }
@@ -119,6 +124,8 @@ class ServerQueryCompatibilityIT {
 				assertEquals(1, before.getVirtualServerId()); assertEquals(session.nickname(), before.getNickname());
 				proxy.drop();
 				assertTrue(restored.await(15, TimeUnit.SECONDS), "Configured session must reconnect");
+				assertEquals(2, transports.size());
+				assertNotSame(transports.get(0), transports.get(1));
 				var after = query.getApi().whoAmI();
 				assertEquals(1, after.getVirtualServerId()); assertEquals(session.nickname(), after.getNickname());
 				// This privileged operation proves authentication was restored; its event proves the subscription.
@@ -211,9 +218,20 @@ class ServerQueryCompatibilityIT {
 
 	private static void openSSH(TS3Config config) throws Exception {
 		try (var query = new TS3Query(config)) {
-			var connection = new Connection(query, config, CommandQueue.newConnectQueue(query));
+			var connection = new Connection(query, query.getConfig(), CommandQueue.newConnectQueue(query));
 			try { connection.open(); } finally { connection.disconnect(); }
 		}
+	}
+
+	@ParameterizedTest(name = "{0}: transport shutdown excludes the connecting caller")
+	@EnumSource(value = Target.class, names = {"TS3_SSH", "TS6_SSH"})
+	void sshTransportShutdownDoesNotJoinConnectingCaller(Target target) throws Exception {
+		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		var config = server.config(target.protocol).build();
+		var transport = config.getTransportFactory().create(config);
+		try (transport) { transport.connect(() -> {}); }
+		transport.awaitTermination(Duration.ofSeconds(1));
+		assertTrue(transport.isTerminated(), "Transport shutdown must exclude the still-running connecting caller");
 	}
 
 	@ParameterizedTest(name = "{0}: SSH authentication and host-key regressions")
@@ -222,12 +240,17 @@ class ServerQueryCompatibilityIT {
 		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
 		assertTrue(server.sshBanner.startsWith("SSH-2.0-"));
 		assertNotNull(server.algorithms);
-		Path trust = home.resolve(".ssh/known_ts3_hosts");
+		Path trust = home.resolve(target + "-known_hosts");
+		var tofu = server.config(target.protocol).setSshHostKeyPolicy(SshHostKeyPolicy.trustOnFirstUse(trust));
 		Files.deleteIfExists(trust);
-		verifyConnection(server, target.protocol);
+		var unknown = assertThrows(TransportException.class, () -> openSSH(server.config(target.protocol)
+			.setSshHostKeyPolicy(SshHostKeyPolicy.knownHosts(trust))));
+		assertEquals(DisconnectReason.HOST_KEY_NOT_VERIFIABLE, unknown.getDisconnectReason());
+		assertFalse(Files.exists(trust), "Strict verification must not persist unknown trust");
+		openSSH(tofu);
 		byte[] trusted = Files.readAllBytes(trust);
-		assertTrue(trusted.length > 0, "First connection must persist host trust in the temporary home");
-		verifyConnection(server, target.protocol);
+		assertTrue(trusted.length > 0, "First connection must persist host trust in the explicit temporary file");
+		openSSH(tofu);
 		assertArrayEquals(trusted, Files.readAllBytes(trust), "Known key must be reused");
 		assertTrue(new OpenSSHKnownHosts(trust.toFile()).verify(server.getHost(), server.getMappedPort(10022), server.hostKey));
 		var authentication = assertThrows(TS3ConnectionFailedException.class, () -> openSSH(server.config(target.protocol)
@@ -242,7 +265,7 @@ class ServerQueryCompatibilityIT {
 				"[" + server.getHost() + "]:" + server.getMappedPort(10022), KeyType.RSA, wrongKey));
 		known.write();
 		try {
-			var rejection = assertThrows(TransportException.class, () -> openSSH(server.config(target.protocol)));
+			var rejection = assertThrows(TransportException.class, () -> openSSH(server.config(target.protocol).setSshHostKeyPolicy(SshHostKeyPolicy.knownHosts(trust))));
 			assertEquals(DisconnectReason.HOST_KEY_NOT_VERIFIABLE, rejection.getDisconnectReason());
 		} finally { Files.delete(trust); }
 	}

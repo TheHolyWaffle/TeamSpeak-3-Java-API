@@ -7,7 +7,6 @@ import org.testcontainers.DockerClientFactory;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
@@ -53,9 +52,6 @@ class DevelopmentServerIT {
 			String id = ready.substring(ready.indexOf("container=") + "container=".length());
 			assertThrows(NotFoundException.class, () -> DockerClientFactory.instance().client().inspectContainerCmd(id).exec(),
 					"Stopping the launcher must remove its container");
-			String home = output.stream().filter(line -> line.startsWith("Disposable SSH home: "))
-					.findFirst().orElseThrow().substring("Disposable SSH home: ".length());
-			assertFalse(Files.exists(Path.of(home)), "Stopping must remove temporary SSH trust");
 		} finally {
 			if (process.isAlive()) {
 				process.destroy();

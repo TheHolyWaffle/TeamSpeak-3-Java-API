@@ -52,7 +52,7 @@ class StreamReader extends Thread {
 	private ResponseBuilder responseBuilder = null;
 	private boolean receivingResponses;
 
-	StreamReader(Connection connection, InputStream inStream, TS3Query query, TS3Config config) throws IOException {
+	StreamReader(Connection connection, InputStream inStream, TS3Query query, QueryConfig config) throws IOException {
 		super("[TeamSpeak-3-Java-API] StreamReader");
 
 		ts3 = query;

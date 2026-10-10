@@ -35,8 +35,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 class Connection {
 	private final TS3Query query;
-	private final TS3Config config;
-	private final IOChannel channel;
+	private final QueryConfig config;
+	private final QueryTransport channel;
 	private final AtomicReference<CommandQueue> queue;
 	private final AtomicBoolean stopped = new AtomicBoolean();
 	private final AtomicLong lastSent = new AtomicLong(System.nanoTime());
@@ -45,16 +45,16 @@ class Connection {
 	private volatile StreamWriter writer;
 	private volatile KeepAlive keepAlive;
 
-	Connection(TS3Query query, TS3Config config, CommandQueue initialQueue) {
+	Connection(TS3Query query, QueryConfig config, CommandQueue initialQueue) {
 		this.query = query;
 		this.config = config;
 		queue = new AtomicReference<>(initialQueue);
-		channel = config.getProtocol() == TS3Query.Protocol.SSH ? new SSHChannel(config) : new SocketChannel(config);
+		channel = java.util.Objects.requireNonNull(config.getTransportFactory().create(config), "transport");
 		initialization = new Deadline(config.getConnectTimeout());
 	}
 
 	void open() throws IOException {
-		channel.connect(this);
+		channel.connect(this::transportConnected);
 		synchronized (this) {
 			if (stopped.get()) throw new IOException("Connection closed during initialization");
 			reader = new StreamReader(this, channel.getInputStream(), query, config);
@@ -112,7 +112,7 @@ class Connection {
 
 	private void awaitTermination(Deadline deadline) {
 		deadline.join(reader); deadline.join(writer); deadline.join(keepAlive);
-		channel.awaitTermination(deadline);
+		channel.awaitTermination(java.time.Duration.ofNanos(deadline.remaining()));
 	}
 
 	boolean threadsTerminated() {
