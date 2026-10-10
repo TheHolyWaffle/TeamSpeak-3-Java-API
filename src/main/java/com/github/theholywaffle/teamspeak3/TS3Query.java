@@ -365,10 +365,8 @@ public class TS3Query implements AutoCloseable {
 	void submitUserTask(final String name, final Runnable task) {
 		try {
 			userThreadPool.submit(() -> {
-				userTask.set(true);
-				try { task.run(); }
+				try { runUserTask(task); }
 				catch (Throwable e) { log.error(name + " threw an exception", e); }
-				finally { userTask.remove(); }
 			});
 		} catch (RejectedExecutionException ignored) {
 			// Shutdown has already settled pending commands and rejects new callbacks.
