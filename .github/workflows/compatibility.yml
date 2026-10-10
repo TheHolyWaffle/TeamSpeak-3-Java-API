@@ -1,0 +1,49 @@
+name: ServerQuery compatibility
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 6 * * 1' # Weekly: pinned TS6 beta licenses need revalidation.
+
+permissions:
+  contents: read
+
+jobs:
+  compatibility:
+    name: Docker compatibility (Java 25, Linux amd64)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: '25'
+          distribution: temurin
+          cache: maven
+      - name: Require Docker and record image architectures
+        run: |
+          docker version
+          docker info --format '{{.Architecture}}'
+          docker buildx imagetools inspect teamspeak:3.13.8@sha256:6dfdfb22869adf50e1b66d024b360b786d57a85ea09e8e8fdb6cca23949b2813
+          docker buildx imagetools inspect teamspeaksystems/teamspeak6-server:6.0.0-beta13.1@sha256:d845f803aecf842c2df034c959c23ff2462357bacafb3807500885c5ec170fa1
+      - name: Run required authenticated ServerQuery smoke suite
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p target/ci-logs
+          ./mvnw -B -ntp -Pintegration verify 2>&1 | tee target/ci-logs/compatibility.log
+      - name: Upload exact versions, negotiation evidence and test reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: serverquery-compatibility
+          path: |
+            target/compatibility/
+            target/ci-logs/
+            target/failsafe-reports/
+            target/surefire-reports/
+          if-no-files-found: error
+          retention-days: 14

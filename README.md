@@ -131,6 +131,17 @@ Java 25 Javadoc JAR under `target`. To also build the standalone JAR:
 ./mvnw -B -ntp -Pfull verify
 ```
 
+Docker-dependent TS3 raw, TS3 SSH and TS6 SSH smoke tests run separately:
+
+```sh
+./mvnw -B -ntp -Pintegration verify
+```
+
+See [integration tests](docs/integration-tests.md) for pinned official images,
+license configuration, Apple Silicon emulation requirements and beta revalidation.
+The profile fails when required Docker tests cannot run; ordinary unit builds
+need no Docker.
+
 These commands build locally and do not publish artifacts. Modernization tasks
 branch from and merge into `modernization/2.0`; `master` remains the default branch
 and receives the final validated integration PR. Ordinary merges never publish
