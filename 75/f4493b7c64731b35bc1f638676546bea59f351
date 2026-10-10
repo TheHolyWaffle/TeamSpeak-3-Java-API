@@ -1,0 +1,42 @@
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryCompatibilityIT.java
+  s_d757b21d401e7e::t_bbc60bd1336e12 6,332-390
+  s_d757b21d401e7e::t_475b5622e74258 4-5,7-8,299-330,398
+  s_d757b21d401e7e::t_ee4bc8350dd674 331,391-397,399-409
+docs/permission-compatibility.md
+  s_d757b21d401e7e::t_127627a1da9c75 1-15,17-68,70-131
+  s_d757b21d401e7e::t_7301acda5e2755 16,69
+src/test/java/com/github/theholywaffle/teamspeak3/PermissionMetadataTest.java
+  s_d757b21d401e7e::t_475b5622e74258 1-25,31-43,48-72
+  s_d757b21d401e7e::t_dbcc32d6d68441 26-30,44-47
+docs/command-compatibility.md
+  s_d757b21d401e7e::t_931c82277f11ec 3-4,32,90,95-97
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/PermissionAssignment.java
+  s_d757b21d401e7e::t_475b5622e74258 107-108
+  s_d757b21d401e7e::t_4067bd1ed0ab6a 36-38
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/PermissionInfo.java
+  s_d757b21d401e7e::t_475b5622e74258 50
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Api.java
+  s_d757b21d401e7e::t_8f00de69615d69 2650-2653,2671-2673,2692-2694
+src/main/java/com/github/theholywaffle/teamspeak3/TS3ApiAsync.java
+  s_d757b21d401e7e::t_f8e35b4cc67ccb 2985-2988,3002,3008-3010,3030-3032
+src/main/java/com/github/theholywaffle/teamspeak3/api/BPermissionType.java
+  s_d757b21d401e7e::t_eae69747e90b18 3-6,9-185,190
+src/main/java/com/github/theholywaffle/teamspeak3/api/IPermissionType.java
+  s_d757b21d401e7e::t_d60eb48696df99 3-6,9-327,332
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "75f4493b7c64731b35bc1f638676546bea59f351",
+  "prompts": {},
+  "sessions": {
+    "s_d757b21d401e7e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12770-2877-7903-ba65-0fe168e7f6f9",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
