@@ -1,0 +1,55 @@
+src/main/java/com/github/theholywaffle/teamspeak3/StreamWriter.java
+  s_2a3efa3485140c::t_999552f889977d 35-36,44,52,70-72,74-75,80
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Config.java
+  s_2a3efa3485140c::t_9ea2ad14049681 260-262
+  s_2a3efa3485140c::t_999552f889977d 50-54,245-248,250,252-253,255-258,263,265,317,319,322,325,328,331,333-335
+  s_2a3efa3485140c::t_61e8b290b0ff9a 34,266-286,288-294,298-316,318,320-321,323-324,326-327,329-330,332
+  s_2a3efa3485140c::t_d54e7c972e10af 35,259
+src/main/java/com/github/theholywaffle/teamspeak3/Deadline.java
+  s_2a3efa3485140c::t_999552f889977d 1-20
+src/main/java/com/github/theholywaffle/teamspeak3/StreamReader.java
+  s_2a3efa3485140c::t_999552f889977d 102
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Query.java
+  s_2a3efa3485140c::t_9ea2ad14049681 46-47,50-54,120-127,147-150,154-160,174-185,192-233,238-239,241,243-257,259-264,266,268-279,282-285,287-290,341-350,361-368,370-377
+  s_2a3efa3485140c::t_ffaaa26d0ce977 37-38,41-45,187-190
+src/main/java/com/github/theholywaffle/teamspeak3/IOChannel.java
+  s_2a3efa3485140c::t_999552f889977d 36-37
+src/main/java/com/github/theholywaffle/teamspeak3/SocketChannel.java
+  s_2a3efa3485140c::t_999552f889977d 33,37-47
+docs/connection-lifecycle.md
+  s_2a3efa3485140c::t_61e8b290b0ff9a 1-89
+README.md
+  s_2a3efa3485140c::t_5308c3abc4bc11 73
+src/main/java/com/github/theholywaffle/teamspeak3/Connection.java
+  s_2a3efa3485140c::t_9ea2ad14049681 107-109
+  s_2a3efa3485140c::t_999552f889977d 32,37-46,49-54,56-61,63,67-69,72-73,75-78,80-81,83-85,89,96,99-103,112,114-118,121-123
+  s_2a3efa3485140c::t_807abb2fc06b63 88,90-92,97-98,104
+src/test/java/com/github/theholywaffle/teamspeak3/ConnectionLifecycleTest.java
+  s_2a3efa3485140c::t_5308c3abc4bc11 277-281
+  s_2a3efa3485140c::t_d33960ef630e5b 10-11,209,214-224,241-262,264-270
+  s_2a3efa3485140c::t_9ea2ad14049681 1-9,12-138,140-208,210-213,225-240,263,271-273,275,282,285-286,288,291-292,294-295,297-300,302-316
+  s_2a3efa3485140c::t_3f7b92f7cce290 139,274,276,283-284,287,289-290,293,296,301
+src/main/java/com/github/theholywaffle/teamspeak3/SSHChannel.java
+  s_2a3efa3485140c::t_999552f889977d 38-41,56-59,61-64,66,68-82,88-89,105-107
+src/main/java/com/github/theholywaffle/teamspeak3/CommandQueue.java
+  s_2a3efa3485140c::t_9ea2ad14049681 34-35,61-63,74,107,125-126,146-147,164-165,182,185-202,204-207,210,215-217,219,222,226-227,231,235-238,240
+  s_2a3efa3485140c::t_2dbbb2105d3f58 30
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryCompatibilityIT.java
+  s_2a3efa3485140c::t_a2875e624f7ebc 83-93,96,101-118,135,147
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "872aedc25b44004a4b2ba992ae299f9349bfca02",
+  "prompts": {},
+  "sessions": {
+    "s_2a3efa3485140c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1253b-97a2-7ab0-bd7d-51b4f012aa35",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "bert.degeyter <bert.degeyter@showpad.com>"
+    }
+  }
+}
