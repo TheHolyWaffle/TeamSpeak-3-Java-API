@@ -1,6 +1,10 @@
 package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
+import com.github.theholywaffle.teamspeak3.api.ClientProperty;
+import com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent;
+import com.github.theholywaffle.teamspeak3.api.event.ClientMovedEvent;
+import com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerStatus;
 import com.github.theholywaffle.teamspeak3.api.event.ServerEditedEvent;
@@ -300,6 +304,139 @@ class ServerQueryCompatibilityIT {
 			Path path = Path.of("target", "compatibility", target + "-channels.txt");
 			Files.createDirectories(path.getParent()); Files.write(path, evidence);
 		}
+	}
+
+	@ParameterizedTest(name = "{0}: online query-client administration and independent notifications")
+	@EnumSource(Target.class)
+	@Timeout(60)
+	void clientDomain(Target target) throws Exception {
+		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		var evidence = new java.util.ArrayList<String>();
+		var joins = new java.util.concurrent.LinkedBlockingQueue<ClientJoinEvent>(16);
+		var moves = new java.util.concurrent.LinkedBlockingQueue<ClientMovedEvent>(16);
+		var leaves = new java.util.concurrent.LinkedBlockingQueue<ClientLeaveEvent>(16);
+		try (var observer = new TS3Query(server.config(target.protocol));
+			 var controller = new TS3Query(server.config(target.protocol));
+			 var subject = new TS3Query(server.config(target.protocol))) {
+			observer.connect(); controller.connect();
+			var api = controller.getApi();
+			api.selectVirtualServerById(1); observer.getApi().selectVirtualServerById(1);
+			api.setNickname("client-admin-" + target);
+			var invoker = api.whoAmI();
+			server.record(target.name(), api.getVersion());
+			for (String command : java.util.List.of("clientlist", "clientinfo", "clientfind", "clientupdate", "clientedit", "clientmove")) {
+				String help = api.executeRawCommand("help " + command).getRawResponse();
+				assertTrue(help.startsWith("Usage: " + command), "Live help must describe " + command);
+				evidence.add("help " + command + "\n" + help);
+			}
+			observer.getApi().registerEvent(TS3EventType.SERVER);
+			observer.getApi().registerEvent(TS3EventType.CHANNEL, 0);
+			try (var channels = new ChannelCleanup(api);
+				 var subscription = observer.subscribe(new TS3EventAdapter() {
+					@Override public void onClientJoin(ClientJoinEvent event) { assertTrue(joins.offer(event)); }
+					@Override public void onClientMoved(ClientMovedEvent event) { assertTrue(moves.offer(event)); }
+					@Override public void onClientLeave(ClientLeaveEvent event) { assertTrue(leaves.offer(event)); }
+				 })) {
+				subject.connect(); subject.getApi().selectVirtualServerById(1);
+				var identity = subject.getApi().whoAmI();
+				int id = identity.getId();
+				assertNotEquals(invoker.getId(), id); assertNotEquals(observer.getApi().whoAmI().getId(), id);
+				var join = joins.poll(5, TimeUnit.SECONDS);
+				assertNotNull(join); evidence.add("join " + new java.util.TreeMap<>(join.getMap()));
+				assertEquals(id, join.getClientId()); assertEquals(identity.getChannelId(), join.getClientTargetId());
+				assertEquals(0, join.getClientFromId()); assertEquals(0, join.getReasonId());
+				assertEquals(identity.getNickname(), join.getClientNickname());
+				assertEquals(identity.getUniqueIdentifier(), join.getUniqueClientIdentifier());
+				assertEquals(identity.getDatabaseId(), join.getClientDatabaseId()); assertEquals(1, join.getClientType());
+				assertEquals(target.ts6, join.getMap().containsKey("client_is_streaming"));
+				assertEquals(target.ts6, join.getMap().containsKey("client_user_tag"));
+				assertFalse(join.getMap().containsKey("invokerid")); assertEquals(-1, join.getInvokerId());
+				String name = "query-" + target + " 日本語 | \\s";
+				subject.getApi().updateClient(Map.of(ClientProperty.CLIENT_NICKNAME, name));
+				assertEquals(name, subject.getApi().whoAmI().getNickname());
+				var info = api.getClientInfo(id);
+				evidence.add("clientinfo " + new java.util.TreeMap<>(info.getMap()));
+				assertEquals(target.ts6, info.getMap().containsKey("client_public_key_raw"));
+				assertEquals(target.ts6, info.getMap().containsKey("client_is_streaming"));
+				assertEquals(target.ts6, info.getMap().containsKey("client_user_tag"));
+				assertEquals(id, info.getId()); assertEquals(name, info.getNickname()); assertEquals(1, info.getType());
+				assertFalse(info.isRegularClient()); assertEquals(identity.getChannelId(), info.getChannelId());
+				assertEquals(identity.getDatabaseId(), info.getDatabaseId());
+				assertEquals(identity.getUniqueIdentifier(), info.getUniqueIdentifier());
+				var listed = api.getClients().stream().filter(c -> c.getId() == id).findFirst().orElseThrow();
+				evidence.add("clientlist " + new java.util.TreeMap<>(listed.getMap()));
+				assertEquals(name, listed.getNickname()); assertEquals(info.getUniqueIdentifier(), listed.getUniqueIdentifier());
+				assertEquals(info.getDatabaseId(), listed.getDatabaseId()); assertEquals(1, listed.getType());
+				assertEquals(id, api.getClientByNameExact(name, false).getId());
+				assertEquals(id, api.getClientByNameExact(name.toUpperCase(java.util.Locale.ROOT), true).getId());
+				assertTrue(api.getClientsByName(name).stream().anyMatch(c -> c.getId() == id));
+				assertNull(api.getClientByNameExact("absent-client-" + target, false));
+				assertTrue(api.getClientsByName("absent-client-" + target).isEmpty());
+				try (var restoration = new ClientDescription(api, id, info.getDescription())) {
+					String description = "description 日本語 | \\s\\p\\n /";
+					api.editClient(id, ClientProperty.CLIENT_DESCRIPTION, description);
+					assertEquals(description, api.getClientInfo(id).getDescription());
+					String controls = "before\nmiddle\tend\r tail";
+					api.editClient(id, Map.of(ClientProperty.CLIENT_DESCRIPTION, controls));
+					assertEquals("beforemiddleend tail", api.getClientInfo(id).getDescription());
+					String rawDescription = api.executeRawCommand("clientinfo clid=" + id).getRawResponse();
+					evidence.add("description controls raw " + rawDescription);
+					assertTrue(rawDescription.contains("client_description=beforemiddleend\\stail"));
+					int channel = channels.track(api.createChannel("client-move-" + target,
+						Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
+					api.moveClient(id, channel);
+					assertClientMove(moves, id, channel, 1, invoker, evidence);
+					assertEquals(channel, subject.getApi().whoAmI().getChannelId());
+					assertEquals(channel, api.getClientInfo(id).getChannelId());
+					var badMove = assertThrows(TS3CommandFailedException.class, () -> api.moveClient(id, Integer.MAX_VALUE));
+					evidence.add("invalid channel " + new java.util.TreeMap<>(badMove.getError().getMap()));
+					assertEquals(768, badMove.getError().getId()); assertEquals("invalid channelID", badMove.getError().getMessage());
+					assertEquals(channel, api.getClientInfo(id).getChannelId());
+					subject.getApi().moveClient(id, identity.getChannelId());
+					assertClientMove(moves, id, identity.getChannelId(), 0, null, evidence);
+					assertTrue(moves.isEmpty(), "Rejected moves must not add notifications before the valid move fence");
+				}
+				assertEquals(info.getDescription(), api.getClientInfo(id).getDescription());
+				subject.exit();
+				var leave = leaves.poll(5, TimeUnit.SECONDS);
+				assertNotNull(leave); evidence.add("leave " + new java.util.TreeMap<>(leave.getMap()));
+				assertEquals(id, leave.getClientId()); assertEquals(identity.getChannelId(), leave.getClientFromId());
+				assertEquals(0, leave.getClientTargetId()); assertEquals(8, leave.getReasonId());
+				assertFalse(leave.getMap().containsKey("invokerid")); assertEquals(-1, leave.getInvokerId());
+				var gone = assertThrows(TS3CommandFailedException.class, () -> api.getClientInfo(id));
+				evidence.add("disconnected client " + new java.util.TreeMap<>(gone.getError().getMap()));
+				assertEquals(512, gone.getError().getId()); assertEquals("invalid clientID", gone.getError().getMessage());
+				assertTrue(api.getClients().stream().noneMatch(c -> c.getId() == id));
+				assertFalse(api.getVersion().getVersion().isBlank());
+				assertTrue(joins.isEmpty()); assertTrue(moves.isEmpty()); assertTrue(leaves.isEmpty());
+			}
+			observer.exit(); controller.exit();
+			assertEquals(0, observer.getEventStatistics().malformedNotifications());
+			assertEquals(0, observer.getEventStatistics().listenerFailures());
+			assertEquals(0, observer.getEventStatistics().droppedEvents());
+		} finally {
+			Path path = Path.of("target", "compatibility", target + "-clients.txt");
+			Files.createDirectories(path.getParent()); Files.write(path, evidence);
+		}
+	}
+
+	private static void assertClientMove(java.util.concurrent.BlockingQueue<ClientMovedEvent> moves,
+	                                     int id, int channel, int reason, ServerQueryInfo invoker, java.util.List<String> evidence) throws InterruptedException {
+		var event = moves.poll(5, TimeUnit.SECONDS);
+		assertNotNull(event); evidence.add("move " + new java.util.TreeMap<>(event.getMap()));
+		assertEquals(id, event.getClientId()); assertEquals(channel, event.getTargetChannelId());
+		assertEquals(reason, event.getReasonId());
+		assertEquals(invoker != null, event.getMap().containsKey("invokerid"));
+		if (invoker != null) {
+			assertEquals(invoker.getId(), event.getInvokerId()); assertEquals(invoker.getNickname(), event.getInvokerName());
+			assertEquals(invoker.getUniqueIdentifier(), event.getInvokerUniqueId());
+		} else {
+			assertEquals(-1, event.getInvokerId()); assertEquals("", event.getInvokerName()); assertEquals("", event.getInvokerUniqueId());
+		}
+	}
+
+	private record ClientDescription(TS3Api api, int id, String value) implements AutoCloseable {
+		@Override public void close() { api.editClient(id, ClientProperty.CLIENT_DESCRIPTION, value); }
 	}
 
 	@ParameterizedTest(name = "{0}: server information and edits from an independent query session")
