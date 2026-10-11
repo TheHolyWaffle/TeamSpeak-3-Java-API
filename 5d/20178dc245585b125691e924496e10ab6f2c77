@@ -1,0 +1,29 @@
+docs/command-compatibility.md
+  s_d757b21d401e7e::t_78ad37f4572d7e 5-6,37
+src/test/java/com/github/theholywaffle/teamspeak3/api/wrapper/FileInfoTest.java
+  s_d757b21d401e7e::t_2ca226634d862d 1-30
+docs/file-compatibility.md
+  s_d757b21d401e7e::t_2ca226634d862d 55-57,68-71,78-96
+  s_d757b21d401e7e::t_78ad37f4572d7e 1-54,58-67,72-77,97-114
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryCompatibilityIT.java
+  s_d757b21d401e7e::t_c15cfb89ff7403 337-339
+  s_d757b21d401e7e::t_473e6bc20bbdb2 309-336,340-413
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/FileInfo.java
+  s_d757b21d401e7e::t_317fb50fc20a77 31-32,98-101,103,109-120
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5d20178dc245585b125691e924496e10ab6f2c77",
+  "prompts": {},
+  "sessions": {
+    "s_d757b21d401e7e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12770-2877-7903-ba65-0fe168e7f6f9",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
