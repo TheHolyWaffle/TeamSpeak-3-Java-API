@@ -411,6 +411,8 @@ class ServerQueryCompatibilityIT {
 		assertEquals(mode, event.getTargetMode()); assertEquals(message, event.getMessage());
 		assertEquals(actorInfo.getId(), event.getInvokerId()); assertEquals(actorInfo.getNickname(), event.getInvokerName());
 		assertEquals(actorInfo.getUniqueIdentifier(), event.getInvokerUniqueId());
+		assertEquals(mode == TextMessageTargetMode.CLIENT, event.getMap().containsKey("target"),
+			"Only private text notifications supply the recipient target field");
 		assertEquals(mode == TextMessageTargetMode.CLIENT ? observerId : -1, event.getTargetClientId());
 	}
 
