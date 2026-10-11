@@ -113,7 +113,8 @@ The controlled raw-command escape hatch from the channel slice remains available
 
 ## Remaining #441 scope and reviewed sources
 
-Client/channel-client permissions, permission overview, group copy/membership,
+Regular group copy/overwrite is covered in [group-copy evidence](group-copy-compatibility.md).
+Client/channel-client permissions, permission overview, template/query group copy/membership,
 automatic groups and permission reset still require live verification. Server,
 client, message/event, file-command and administrative domains remain as recorded
 in the [overall inventory](command-compatibility.md). Actual voice-client
