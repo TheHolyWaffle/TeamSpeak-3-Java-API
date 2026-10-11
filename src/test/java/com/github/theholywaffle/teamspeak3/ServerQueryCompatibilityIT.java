@@ -1,11 +1,14 @@
 package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
+import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
+import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
 import com.github.theholywaffle.teamspeak3.api.BPermissionType;
 import com.github.theholywaffle.teamspeak3.api.IPermissionType;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupType;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Permission;
 import com.github.theholywaffle.teamspeak3.api.wrapper.PermissionInfo;
+import com.github.theholywaffle.teamspeak3.api.wrapper.ServerQueryInfo;
 import com.github.theholywaffle.teamspeak3.api.event.ChannelCreateEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ChannelEditedEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ChannelMovedEvent;
@@ -87,7 +90,7 @@ class ServerQueryCompatibilityIT {
 			} finally { api.deleteChannel(id, true); }
 			assertTrue(api.getChannels().stream().noneMatch(channel -> channel.getId() == id));
 			var error = assertThrows(TS3CommandFailedException.class, () -> api.selectVirtualServerById(999));
-			assertEquals(2816, error.getError().getId()); // invalid virtual server ID
+			assertEquals(2816, error.getError().getId()); // Selection is rejected by this fixture.
 			// A server error must leave response framing usable.
 			assertEquals(version.getVersion(), api.getVersion().getVersion());
 		} finally { exitAndAssertTerminated(query, server); }
@@ -294,6 +297,123 @@ class ServerQueryCompatibilityIT {
 			Path path = Path.of("target", "compatibility", target + "-channels.txt");
 			Files.createDirectories(path.getParent()); Files.write(path, evidence);
 		}
+	}
+
+	@ParameterizedTest(name = "{0}: online text messages from an independent query session")
+	@EnumSource(Target.class)
+	@Timeout(60)
+	void messageDomain(Target target) throws Exception {
+		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		var evidence = new java.util.ArrayList<String>();
+		var messages = new java.util.concurrent.LinkedBlockingQueue<TextMessageEvent>(16);
+		try (var observer = new TS3Query(server.config(target.protocol));
+			 var actor = new TS3Query(server.config(target.protocol))) {
+			observer.connect(); actor.connect();
+			var api = actor.getApi();
+			var recipient = observer.getApi();
+			api.selectVirtualServerById(1); recipient.selectVirtualServerById(1);
+			server.record(target.name(), api.getVersion());
+			String nickname = "msg-" + target + " | \\s";
+			api.setNickname(nickname);
+			var actorInfo = api.whoAmI();
+			assertEquals(nickname, actorInfo.getNickname());
+			int observerId = recipient.whoAmI().getId();
+			assertNotEquals(actorInfo.getId(), observerId);
+			assertFalse(actorInfo.getUniqueIdentifier().isBlank());
+			for (String command : java.util.List.of("sendtextmessage", "servernotifyregister", "servernotifyunregister")) {
+				String help = api.executeRawCommand("help " + command).getRawResponse();
+				assertTrue(help.startsWith("Usage: " + command), "Live help must describe " + command);
+				evidence.add("help " + command + "\n" + help);
+			}
+			try (var channels = new ChannelCleanup(recipient);
+				 var subscription = observer.subscribe(new TS3EventAdapter() {
+					@Override public void onTextMessage(TextMessageEvent event) { assertTrue(messages.offer(event)); }
+				 })) {
+				int channel = channels.track(api.createChannel("messages-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
+				recipient.moveQuery(channel);
+				recipient.registerEvents(TS3EventType.TEXT_SERVER, TS3EventType.TEXT_CHANNEL, TS3EventType.TEXT_PRIVATE);
+				String payload = "[b]héllo 日本語[/b] | literal \\s\\p\\n\\t\\r\\\\ / \n\t\r";
+				api.sendServerMessage(payload);
+				assertMessage(messages, TextMessageTargetMode.SERVER, payload, actorInfo, observerId, evidence);
+				api.sendChannelMessage(channel, payload);
+				assertEquals(channel, api.whoAmI().getChannelId(), "Explicit channel send leaves the query in that channel");
+				assertMessage(messages, TextMessageTargetMode.CHANNEL, payload, actorInfo, observerId, evidence);
+				api.sendChannelMessage("current " + payload);
+				assertMessage(messages, TextMessageTargetMode.CHANNEL, "current " + payload, actorInfo, observerId, evidence);
+				api.sendTextMessage(TextMessageTargetMode.CHANNEL, 65535, "ignored target " + payload);
+				assertMessage(messages, TextMessageTargetMode.CHANNEL, "ignored target " + payload, actorInfo, observerId, evidence);
+				api.sendTextMessage(TextMessageTargetMode.SERVER, 65535, "ignored target " + payload);
+				assertMessage(messages, TextMessageTargetMode.SERVER, "ignored target " + payload, actorInfo, observerId, evidence);
+				api.sendPrivateMessage(observerId, payload);
+				assertMessage(messages, TextMessageTargetMode.CLIENT, payload, actorInfo, observerId, evidence);
+				api.sendTextMessage(TextMessageTargetMode.CLIENT, observerId, "generic " + payload);
+				assertMessage(messages, TextMessageTargetMode.CLIENT, "generic " + payload, actorInfo, observerId, evidence);
+				api.sendServerMessage(1, "selected " + payload);
+				assertEquals(1, api.whoAmI().getVirtualServerId());
+				assertMessage(messages, TextMessageTargetMode.SERVER, "selected " + payload, actorInfo, observerId, evidence);
+				String boundary = "é".repeat(512);
+				api.sendPrivateMessage(observerId, boundary);
+				assertMessage(messages, TextMessageTargetMode.CLIENT, boundary, actorInfo, observerId, evidence);
+				api.sendPrivateMessage(observerId, boundary + "é");
+				assertMessage(messages, TextMessageTargetMode.CLIENT, boundary + "é", actorInfo, observerId, evidence);
+				evidence.add("private UTF-8 payloads: 1024 and 1026 bytes received intact");
+				var invalidNumber = assertThrows(TS3CommandFailedException.class, () -> api.sendPrivateMessage(Integer.MAX_VALUE, "out of range"));
+				evidence.add("out-of-range recipient " + new java.util.TreeMap<>(invalidNumber.getError().getMap()));
+				assertEquals(1540, invalidNumber.getError().getId());
+				assertEquals("convert error", invalidNumber.getError().getMessage());
+				var invalidClient = assertThrows(TS3CommandFailedException.class, () -> api.sendPrivateMessage(65535, "missing client"));
+				evidence.add("invalid recipient " + new java.util.TreeMap<>(invalidClient.getError().getMap()));
+				assertEquals(512, invalidClient.getError().getId());
+				assertEquals("invalid clientID", invalidClient.getError().getMessage());
+				var invalidChannel = assertThrows(TS3CommandFailedException.class, () -> api.sendChannelMessage(65535, "missing channel"));
+				evidence.add("invalid channel " + new java.util.TreeMap<>(invalidChannel.getError().getMap()));
+				assertEquals(768, invalidChannel.getError().getId());
+				assertEquals("invalid channelID", invalidChannel.getError().getMessage());
+				var invalidServer = assertThrows(TS3CommandFailedException.class, () -> api.sendServerMessage(65535, "missing server"));
+				evidence.add("invalid server " + new java.util.TreeMap<>(invalidServer.getError().getMap()));
+				assertEquals(2816, invalidServer.getError().getId());
+				assertEquals("virtualserver limit reached", invalidServer.getError().getMessage());
+				assertEquals(0, api.whoAmI().getVirtualServerId(), "Failed selection clears the current server on these targets");
+				var unselected = assertThrows(TS3CommandFailedException.class, () -> api.sendServerMessage("no current server"));
+				evidence.add("unselected server " + new java.util.TreeMap<>(unselected.getError().getMap()));
+				assertEquals(1024, unselected.getError().getId());
+				assertEquals("invalid serverID", unselected.getError().getMessage());
+				api.selectVirtualServerById(1, nickname);
+				actorInfo = api.whoAmI();
+				assertEquals(1, actorInfo.getVirtualServerId());
+				assertEquals(nickname, actorInfo.getNickname());
+				// A private event fences earlier sends on the same actor and listener, without a timing-only absence check.
+				recipient.unregisterAllEvents();
+				recipient.registerEvent(TS3EventType.TEXT_PRIVATE);
+				api.sendServerMessage("unsubscribed server");
+				api.sendChannelMessage(channel, "unsubscribed channel");
+				api.sendPrivateMessage(observerId, "private fence");
+				assertMessage(messages, TextMessageTargetMode.CLIENT, "private fence", actorInfo, observerId, evidence);
+				assertTrue(messages.isEmpty(), "No failed-target or unsubscribed message may be dispatched before the fence");
+			}
+			assertFalse(api.getVersion().getVersion().isBlank());
+			observer.exit(); actor.exit();
+			assertEquals(0, observer.getEventStatistics().malformedNotifications());
+			assertEquals(0, observer.getEventStatistics().listenerFailures());
+			assertEquals(0, observer.getEventStatistics().droppedEvents());
+		} finally {
+			Path path = Path.of("target", "compatibility", target + "-messages.txt");
+			Files.createDirectories(path.getParent()); Files.write(path, evidence);
+		}
+	}
+
+	private static void assertMessage(java.util.concurrent.BlockingQueue<TextMessageEvent> messages,
+	                                  TextMessageTargetMode mode, String message, ServerQueryInfo actorInfo,
+	                                  int observerId, java.util.List<String> evidence) throws InterruptedException {
+		var event = messages.poll(5, TimeUnit.SECONDS);
+		assertNotNull(event, "Expected " + mode + " notification from the independent actor");
+		evidence.add("message " + new java.util.TreeMap<>(event.getMap()));
+		assertEquals(mode, event.getTargetMode()); assertEquals(message, event.getMessage());
+		assertEquals(actorInfo.getId(), event.getInvokerId()); assertEquals(actorInfo.getNickname(), event.getInvokerName());
+		assertEquals(actorInfo.getUniqueIdentifier(), event.getInvokerUniqueId());
+		assertEquals(mode == TextMessageTargetMode.CLIENT, event.getMap().containsKey("target"),
+			"Only private text notifications supply the recipient target field");
+		assertEquals(mode == TextMessageTargetMode.CLIENT ? observerId : -1, event.getTargetClientId());
 	}
 
 	@ParameterizedTest(name = "{0}: permission metadata and named channel/group assignments")

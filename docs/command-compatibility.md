@@ -1,7 +1,8 @@
 # Verified ServerQuery command and event inventory
 
 Task #441 is being delivered in focused PRs. The implemented slices verify the core
-channel domain and named channel/group permission operations. It does not complete the issue or establish whole-API TS6 support.
+channel domain, named channel/group permission operations and online text messages.
+These slices do not complete the issue or establish whole-API TS6 support.
 The inventory below is the release acceptance boundary, not a promise based on
 similar method names or server help alone.
 
@@ -26,11 +27,11 @@ Local Apple Silicon uses emulated amd64 TS3 and native arm64 TS6; CI tests amd64
 
 | Domain | Verified operations across the three targets | Remaining #441 coverage |
 | --- | --- | --- |
-| Servers | Existing login/version, virtual-server selection, invalid server ID 2816 and post-error framing probes | Server/instance info and edits, virtual-server lifecycle, snapshots and differences |
+| Servers | Existing login/version, virtual-server selection, rejected selection 2816 and post-error framing probes; message tests document cleared selection and error 1024 | Server/instance info and edits, virtual-server lifecycle, snapshots and differences |
 | Channels | Permanent channel create/list/info/find, name/topic/description edit, parent move with first-sibling order, force delete; UTF-8 and literal protocol escapes; deleted channel error 768 | Other property combinations, temporary/semi-permanent/password/default channels, limits/codecs/banners; permission failures and extra description/password notifications |
 | Clients | Existing query-client identity, join/move/leave frames and reconnect probes | Client/database administration and properties, kicks/bans, voice-client fixture/manual verification |
 | Permissions/groups | Server metadata and name/ID lookup, effective-value lookup, assignment search; named channel/server-group/channel-group permission add/read/update/delete; group create/list/rename/delete. See [permission evidence and migration](permission-compatibility.md) | Client/channel-client permissions, permission overview, group copy/membership/automatic assignments, permission reset and denied-account probes |
-| Messages/events | Channel create/edit/move/delete from an independent query session; existing overlapping subscription and reconnect probes | Text messages, server edits, privilege keys and other event payloads; voice-client behavior requires a separate client fixture or manual evidence |
+| Messages/events | Channel create/edit/move/delete and online server/channel/private text messages from an independent query session; text subscriptions/unregister/re-register, decoded payloads and invalid-target errors. See [message evidence](message-compatibility.md); existing overlapping subscription/reconnect probes | Broadcast/offline messages, pokes, server edits, privilege keys and other event payloads; voice-client behavior requires a separate client fixture or manual evidence |
 | Files | No cross-server transfer claim | File command inventory, server output/error differences; transfer reliability and container/NAT endpoints belong to #442 |
 | Administrative utilities | Existing version/selection error recovery; `help` through the normal command queue | Logs, bans, complaints, tokens, query-login management and remaining utilities |
 
