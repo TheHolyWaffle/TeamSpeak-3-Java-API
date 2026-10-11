@@ -1,0 +1,39 @@
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryCompatibilityIT.java
+  s_d757b21d401e7e::t_53093594f6b324 953-956
+  s_d757b21d401e7e::t_b20d5ffa0ebfed 942-952,957-1026
+docs/command-compatibility.md
+  s_d757b21d401e7e::t_9f4bede3582896 35
+src/test/java/com/github/theholywaffle/teamspeak3/GroupCopyTest.java
+  s_d757b21d401e7e::t_011409107c0380 36-52
+  s_d757b21d401e7e::t_8390f231b0b4e6 19-20,23-25,53-74,77,79-87
+  s_d757b21d401e7e::t_8266e1f7f67fba 27-35
+  s_d757b21d401e7e::t_9019445793e588 75-76,78
+  s_d757b21d401e7e::t_a6dc95d736d6ff 1-18,21-22,26,88
+docs/group-copy-compatibility.md
+  s_d757b21d401e7e::t_8390f231b0b4e6 44-50
+  s_d757b21d401e7e::t_5f456bc3c6e621 66
+  s_d757b21d401e7e::t_9f4bede3582896 1-24,26-43,51-65,67-79
+  s_d757b21d401e7e::t_55f78154b9dfbd 25
+docs/permission-compatibility.md
+  s_d757b21d401e7e::t_9f4bede3582896 116-117
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Api.java
+  s_d757b21d401e7e::t_b1cfbd31284870 794
+src/main/java/com/github/theholywaffle/teamspeak3/TS3ApiAsync.java
+  s_d757b21d401e7e::t_3c4f96cd7a4741 874,887
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1c591cc16eb92bfcef76e53981a9c01cc8d9a141",
+  "prompts": {},
+  "sessions": {
+    "s_d757b21d401e7e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12770-2877-7903-ba65-0fe168e7f6f9",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
