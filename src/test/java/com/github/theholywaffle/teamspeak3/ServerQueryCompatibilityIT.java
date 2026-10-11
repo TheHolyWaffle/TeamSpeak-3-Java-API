@@ -939,6 +939,91 @@ class ServerQueryCompatibilityIT {
 		assertEquals(mode == TextMessageTargetMode.CLIENT ? observerId : -1, event.getTargetClientId());
 	}
 
+
+	@ParameterizedTest(name = "{0}: named group copies and overwrites")
+	@EnumSource(Target.class)
+	@Timeout(60)
+	void groupCopyDomain(Target target) throws Exception {
+		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		var evidence = new java.util.ArrayList<String>();
+		var regular = com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType.REGULAR;
+		try (var query = new TS3Query(server.config(target.protocol))) {
+			query.connect(); var api = query.getApi(); api.selectVirtualServerById(1);
+			server.record(target.name(), api.getVersion());
+			int queryDatabaseId = api.whoAmI().getDatabaseId();
+			var queryPermissions = assertThrows(TS3CommandFailedException.class, () -> api.getClientPermissions(queryDatabaseId));
+			evidence.add("query database " + queryDatabaseId + " clientpermlist " + new java.util.TreeMap<>(queryPermissions.getError().getMap()));
+			assertEquals(512, queryPermissions.getError().getId()); assertEquals("invalid clientID", queryPermissions.getError().getMessage());
+			for (String command : java.util.List.of("servergroupcopy", "channelgroupcopy")) {
+				String help = api.executeRawCommand("help " + command).getRawResponse();
+				assertTrue(help.startsWith("Usage: " + command)); evidence.add("help " + command + "\n" + help);
+			}
+			String name = IPermissionType.I_CHANNEL_NEEDED_JOIN_POWER.getName();
+			String extra = BPermissionType.B_CHANNEL_CREATE_PERMANENT.getName();
+			var initialServerIds = api.getServerGroups().stream().map(g -> g.getId()).collect(java.util.stream.Collectors.toSet());
+			var initialChannelIds = api.getChannelGroups().stream().map(g -> g.getId()).collect(java.util.stream.Collectors.toSet());
+			int removedServer, removedChannel;
+			try (var sourceServer = new CreatedResource(api.addServerGroup("copy-source-server-" + target), id -> api.deleteServerGroup(id, true));
+				 var sourceChannel = new CreatedResource(api.addChannelGroup("copy-source-channel-" + target), id -> api.deleteChannelGroup(id, true));
+				 var targetServer = new CreatedResource(api.addServerGroup("copy-target-server-" + target), id -> api.deleteServerGroup(id, true));
+				 var targetChannel = new CreatedResource(api.addChannelGroup("copy-target-channel-" + target), id -> api.deleteChannelGroup(id, true))) {
+				removedServer = sourceServer.id(); removedChannel = sourceChannel.id();
+				api.addServerGroupPermission(sourceServer.id(), name, 31, true, true);
+				api.addChannelGroupPermission(sourceChannel.id(), name, 41);
+				String copiedName = "copy 日本語 | literal \\s " + target;
+				try (var copyServer = new CreatedResource(api.copyServerGroup(sourceServer.id(), copiedName, regular), id -> api.deleteServerGroup(id, true));
+					 var copyChannel = new CreatedResource(api.copyChannelGroup(sourceChannel.id(), copiedName, regular), id -> api.deleteChannelGroup(id, true))) {
+					assertNotEquals(sourceServer.id(), copyServer.id()); assertNotEquals(sourceChannel.id(), copyChannel.id());
+					var serverRow = api.getServerGroups().stream().filter(g -> g.getId() == copyServer.id()).findFirst().orElseThrow();
+					var channelRow = api.getChannelGroups().stream().filter(g -> g.getId() == copyChannel.id()).findFirst().orElseThrow();
+					evidence.add("server copy " + new java.util.TreeMap<>(serverRow.getMap()));
+					evidence.add("channel copy " + new java.util.TreeMap<>(channelRow.getMap()));
+					assertEquals(copiedName, serverRow.getName()); assertEquals(copiedName, channelRow.getName());
+					assertEquals(regular, serverRow.getType()); assertEquals(regular, channelRow.getType());
+					assertPermission(api.getServerGroupPermissions(copyServer.id()), name, 31, true, true, evidence, "server copy permission");
+					assertPermission(api.getChannelGroupPermissions(copyChannel.id()), name, 41, false, false, evidence, "channel copy permission");
+					api.addServerGroupPermission(sourceServer.id(), name, 33, false, false);
+					api.addChannelGroupPermission(sourceChannel.id(), name, 43);
+					assertPermission(api.getServerGroupPermissions(copyServer.id()), name, 31, true, true, evidence, "independent server copy");
+					assertPermission(api.getChannelGroupPermissions(copyChannel.id()), name, 41, false, false, evidence, "independent channel copy");
+					api.addServerGroupPermission(targetServer.id(), extra, 1, false, false);
+					api.addChannelGroupPermission(targetChannel.id(), extra, 1);
+					int result = api.copyServerGroup(sourceServer.id(), targetServer.id(), regular);
+					evidence.add("server overwrite returned " + result); assertEquals(targetServer.id(), result);
+					api.copyChannelGroup(sourceChannel.id(), targetChannel.id(), regular);
+					var serverPermissions = api.getServerGroupPermissions(targetServer.id());
+					var channelPermissions = api.getChannelGroupPermissions(targetChannel.id());
+					assertEquals(permissionStates(api.getServerGroupPermissions(sourceServer.id())), permissionStates(serverPermissions));
+					assertEquals(permissionStates(api.getChannelGroupPermissions(sourceChannel.id())), permissionStates(channelPermissions));
+					assertTrue(serverPermissions.stream().noneMatch(p -> p.getName().equals(extra)));
+					assertTrue(channelPermissions.stream().noneMatch(p -> p.getName().equals(extra)));
+					assertPermission(serverPermissions, name, 33, false, false, evidence, "server overwrite");
+					assertPermission(channelPermissions, name, 43, false, false, evidence, "channel overwrite");
+				}
+			}
+			assertEquals(initialServerIds, api.getServerGroups().stream().map(g -> g.getId()).collect(java.util.stream.Collectors.toSet()));
+			assertEquals(initialChannelIds, api.getChannelGroups().stream().map(g -> g.getId()).collect(java.util.stream.Collectors.toSet()));
+			var serverError = assertThrows(TS3CommandFailedException.class, () -> api.copyServerGroup(removedServer, "missing server", regular));
+			var channelError = assertThrows(TS3CommandFailedException.class, () -> api.copyChannelGroup(removedChannel, "missing channel", regular));
+			evidence.add("removed server source " + new java.util.TreeMap<>(serverError.getError().getMap()));
+			evidence.add("removed channel source " + new java.util.TreeMap<>(channelError.getError().getMap()));
+			for (var error : java.util.List.of(serverError, channelError)) {
+				assertEquals(2560, error.getError().getId()); assertEquals("invalid group ID", error.getError().getMessage());
+			}
+			assertFalse(api.getVersion().getVersion().isBlank()); query.exit();
+		} finally {
+			Path path = Path.of("target", "compatibility", target + "-group-copy.txt");
+			Files.createDirectories(path.getParent()); Files.write(path, evidence);
+		}
+	}
+
+	private record PermissionState(String name, int value, boolean negated, boolean skipped) { }
+
+	private static java.util.Set<PermissionState> permissionStates(java.util.List<Permission> permissions) {
+		return permissions.stream().map(p -> new PermissionState(p.getName(), p.getValue(), p.isNegated(), p.isSkipped()))
+			.collect(java.util.stream.Collectors.toSet());
+	}
+
 	@ParameterizedTest(name = "{0}: permission metadata and named channel/group assignments")
 	@EnumSource(Target.class)
 	@Timeout(60)

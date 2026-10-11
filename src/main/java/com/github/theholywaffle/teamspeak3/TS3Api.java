@@ -791,7 +791,7 @@ public class TS3Api {
 	 * @param type
 	 * 		the desired type of server group
 	 *
-	 * @return the ID of the newly created server group
+	 * @return the target group ID after a successful overwrite
 	 *
 	 * @throws TS3CommandFailedException
 	 * 		if the execution of a command fails
