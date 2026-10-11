@@ -4686,7 +4686,7 @@ public class TS3ApiAsync {
 
 	/**
 	 * Sends a text message either to the whole virtual server, a channel or specific client.
-	 * Your message may contain BB codes, but its length is limited to 1024 UTF-8 bytes.
+	 * Your message may contain BB codes. Message-size limits are enforced by the connected server.
 	 * <p>
 	 * To send a message to all virtual servers, use {@link #broadcast(String)}.
 	 * To send an offline message, use {@link #sendOfflineMessage(String, String, String)}.
@@ -4713,7 +4713,7 @@ public class TS3ApiAsync {
 
 	/**
 	 * Sends a text message to the channel with the specified ID.
-	 * Your message may contain BB codes, but its length is limited to 1024 UTF-8 bytes.
+	 * Your message may contain BB codes. Message-size limits are enforced by the connected server.
 	 * <p>
 	 * This will move the client into the channel with the specified channel ID,
 	 * <b>but will not move it back to the original channel!</b>
@@ -4728,7 +4728,7 @@ public class TS3ApiAsync {
 	 *
 	 * @throws TS3CommandFailedException
 	 * 		if the execution of a command fails
-	 * @querycommands 1
+	 * @querycommands 2
 	 * @see #sendChannelMessage(String)
 	 * @see Channel#getId()
 	 */
@@ -4739,7 +4739,7 @@ public class TS3ApiAsync {
 
 	/**
 	 * Sends a text message to the channel the server query is currently in.
-	 * Your message may contain BB codes, but its length is limited to 1024 UTF-8 bytes.
+	 * Your message may contain BB codes. Message-size limits are enforced by the connected server.
 	 *
 	 * @param message
 	 * 		the text message to send
@@ -4756,10 +4756,12 @@ public class TS3ApiAsync {
 
 	/**
 	 * Sends a text message to the virtual server with the specified ID.
-	 * Your message may contain BB codes, but its length is limited to 1024 UTF-8 bytes.
+	 * Your message may contain BB codes. Message-size limits are enforced by the connected server.
 	 * <p>
 	 * This will move the client to the virtual server with the specified server ID,
 	 * <b>but will not move it back to the original virtual server!</b>
+	 * A failed selection can leave no virtual server selected. Reselect a known server
+	 * before further server-scoped operations; the library does not restore the previous selection.
 	 * </p>
 	 *
 	 * @param serverId
@@ -4771,7 +4773,7 @@ public class TS3ApiAsync {
 	 *
 	 * @throws TS3CommandFailedException
 	 * 		if the execution of a command fails
-	 * @querycommands 1
+	 * @querycommands 2
 	 * @see #sendServerMessage(String)
 	 * @see VirtualServer#getId()
 	 */
@@ -4782,7 +4784,7 @@ public class TS3ApiAsync {
 
 	/**
 	 * Sends a text message to the virtual server the server query is currently in.
-	 * Your message may contain BB codes, but its length is limited to 1024 UTF-8 bytes.
+	 * Your message may contain BB codes. Message-size limits are enforced by the connected server.
 	 *
 	 * @param message
 	 * 		the text message to send
@@ -4799,7 +4801,7 @@ public class TS3ApiAsync {
 
 	/**
 	 * Sends a private message to the client with the specified client ID.
-	 * Your message may contain BB codes, but its length is limited to 1024 UTF-8 bytes.
+	 * Your message may contain BB codes. Message-size limits are enforced by the connected server.
 	 *
 	 * @param clientId
 	 * 		the ID of the client to send the message to
