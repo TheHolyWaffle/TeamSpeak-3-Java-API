@@ -309,6 +309,67 @@ class ServerQueryCompatibilityIT {
 		}
 	}
 
+
+	@ParameterizedTest(name = "{0}: ban-rule administration and errors")
+	@EnumSource(Target.class)
+	@Timeout(60)
+	void banRuleDomain(Target target) throws Exception {
+		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		var evidence = new java.util.ArrayList<String>();
+		try (var query = new TS3Query(server.config(target.protocol))) {
+			query.connect();
+			var api = query.getApi(); api.selectVirtualServerById(1);
+			var identity = api.whoAmI();
+			server.record(target.name(), api.getVersion());
+			for (String command : java.util.List.of("banadd", "banlist", "bandel")) {
+				String help = api.executeRawCommand("help " + command).getRawResponse();
+				assertTrue(help.startsWith("Usage: " + command)); evidence.add("help " + command + "\n" + help);
+			}
+			var initial = api.getBans().stream().map(com.github.theholywaffle.teamspeak3.api.wrapper.Ban::getId).collect(java.util.stream.Collectors.toSet());
+			String name = "^unconnected-ban-" + target + "$";
+			String ip = "198[.]51[.]100[.]44";
+			String uid = "AAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+			String reason = "ban 日本語 | literal \\s\\p\\n /";
+			int deletedId;
+			try (var nameBan = new CreatedResource(api.addBan(null, name, null, 0, reason), api::deleteBan);
+				 var ipBan = new CreatedResource(api.addBan(ip, null, null, (String) null, 3600, reason), api::deleteBan);
+				 var uidBan = new CreatedResource(api.addBan(null, null, uid, 0, null), api::deleteBan)) {
+				deletedId = nameBan.id();
+				var bans = api.getBans(); assertEquals(initial.size() + 3, bans.size());
+				var expected = new java.util.HashSet<>(initial);
+				expected.addAll(java.util.List.of(nameBan.id(), ipBan.id(), uidBan.id()));
+				assertEquals(expected, bans.stream().map(com.github.theholywaffle.teamspeak3.api.wrapper.Ban::getId).collect(java.util.stream.Collectors.toSet()));
+				for (var ban : bans) {
+					if (initial.contains(ban.getId())) continue;
+					evidence.add("ban " + new java.util.TreeMap<>(ban.getMap()));
+					assertTrue(Math.abs(System.currentTimeMillis() - ban.getCreatedDate().getTime()) < 60_000);
+					assertEquals(identity.getDatabaseId(), ban.getInvokerClientDBId());
+					assertEquals(identity.getUniqueIdentifier(), ban.getInvokerUId());
+					assertEquals(identity.getNickname(), ban.getInvokerName());
+					assertEquals(0, ban.getEnforcements());
+					assertEquals("", ban.getLastNickname());
+					assertTrue(ban.getMap().containsKey("mytsid")); assertEquals("", ban.getMap().get("mytsid"));
+					if (ban.getId() == nameBan.id()) {
+						assertEquals(name, ban.getBannedName()); assertEquals(0, ban.getDuration()); assertEquals(reason, ban.getReason());
+					} else if (ban.getId() == ipBan.id()) {
+						assertEquals(ip, ban.getBannedIp()); assertEquals(3600, ban.getDuration()); assertEquals(reason, ban.getReason());
+					} else {
+						assertEquals(uidBan.id(), ban.getId()); assertEquals(uid, ban.getBannedUId());
+						assertEquals(0, ban.getDuration()); assertEquals("", ban.getReason());
+					}
+				}
+			}
+			assertEquals(initial, api.getBans().stream().map(com.github.theholywaffle.teamspeak3.api.wrapper.Ban::getId).collect(java.util.stream.Collectors.toSet()));
+			var missing = assertThrows(TS3CommandFailedException.class, () -> api.deleteBan(deletedId));
+			evidence.add("delete removed ban " + new java.util.TreeMap<>(missing.getError().getMap()));
+			assertEquals(3328, missing.getError().getId()); assertEquals("invalid ban id", missing.getError().getMessage());
+			assertFalse(api.getVersion().getVersion().isBlank()); query.exit();
+		} finally {
+			Path path = Path.of("target", "compatibility", target + "-ban-rules.txt");
+			Files.createDirectories(path.getParent()); Files.write(path, evidence);
+		}
+	}
+
 	@ParameterizedTest(name = "{0}: privilege key administration and query-client rejection")
 	@EnumSource(Target.class)
 	@Timeout(60)
