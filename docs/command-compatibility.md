@@ -2,7 +2,7 @@
 
 Task #441 is being delivered in focused PRs. The implemented slices verify the core
 channel domain, named channel/group permission operations, online text messages,
-and selected server information/configuration operations.
+selected server information/configuration operations, and online query-client administration.
 These slices do not complete the issue or establish whole-API TS6 support.
 The inventory below is the release acceptance boundary, not a promise based on
 similar method names or server help alone.
@@ -30,7 +30,7 @@ Local Apple Silicon uses emulated amd64 TS3 and native arm64 TS6; CI tests amd64
 | --- | --- | --- |
 | Servers | Login/version/selection; server info/list/port lookup, host/instance/connection information; name/welcome/host-message edits and independent-session edit notifications. See [server evidence](server-compatibility.md); message tests document rejected selection and cleared context | Other server/instance edits, virtual-server lifecycle, snapshots, property combinations and restricted-account probes |
 | Channels | Permanent channel create/list/info/find, name/topic/description edit, parent move with first-sibling order, force delete; UTF-8 and literal protocol escapes; deleted channel error 768 | Other property combinations, temporary/semi-permanent/password/default channels, limits/codecs/banners; permission failures and extra description/password notifications |
-| Clients | Existing query-client identity, join/move/leave frames and reconnect probes | Client/database administration and properties, kicks/bans, voice-client fixture/manual verification |
+| Clients | Query-client list/info/name lookup, self nickname update, description edits, independent-session joins/admin moves/self moves/leaves and error recovery. See [client evidence](client-compatibility.md); existing reconnect probes | Database administration, other properties, UID lookup/multiple sessions, bulk/password moves, kicks/bans, voice-client fixture/manual verification |
 | Permissions/groups | Server metadata and name/ID lookup, effective-value lookup, assignment search; named channel/server-group/channel-group permission add/read/update/delete; group create/list/rename/delete. See [permission evidence and migration](permission-compatibility.md) | Client/channel-client permissions, permission overview, group copy/membership/automatic assignments, permission reset and denied-account probes |
 | Messages/events | Channel create/edit/move/delete and online server/channel/private text messages from an independent query session; text subscriptions/unregister/re-register, decoded payloads and invalid-target errors. See [message evidence](message-compatibility.md); existing overlapping subscription/reconnect probes | Broadcast/offline messages, pokes, additional server-edit properties, privilege keys and other event payloads; voice-client behavior requires a separate client fixture or manual evidence |
 | Files | No cross-server transfer claim | File command inventory, server output/error differences; transfer reliability and container/NAT endpoints belong to #442 |
