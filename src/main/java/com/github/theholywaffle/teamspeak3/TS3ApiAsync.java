@@ -2897,11 +2897,13 @@ public class TS3ApiAsync {
 	 * Fetches the specified amount of log entries from the server log.
 	 *
 	 * @param lines
-	 * 		the amount of log entries to fetch, in the range between 1 and 100.
-	 * 		Returns 100 entries if the argument is not in range
+	 * 		the maximum amount of log entries to fetch, from 1 to 100.
+	 * 		Nonpositive values use the server default of up to 100 entries; values above 100 are rejected
 	 *
 	 * @return a list of the latest log entries
 	 *
+	 * @throws IllegalArgumentException
+	 * 		if more than 100 entries are requested
 	 * @throws TS3CommandFailedException
 	 * 		if the execution of a command fails
 	 * @querycommands 1
@@ -3370,11 +3372,13 @@ public class TS3ApiAsync {
 	 * If no virtual server is selected, the entries will be read from the server log instead.
 	 *
 	 * @param lines
-	 * 		the amount of log entries to fetch, in the range between 1 and 100.
-	 * 		Returns 100 entries if the argument is not in range
+	 * 		the maximum amount of log entries to fetch, from 1 to 100.
+	 * 		Nonpositive values use the server default of up to 100 entries; values above 100 are rejected
 	 *
 	 * @return a list of the latest log entries
 	 *
+	 * @throws IllegalArgumentException
+	 * 		if more than 100 entries are requested
 	 * @throws TS3CommandFailedException
 	 * 		if the execution of a command fails
 	 * @querycommands 1

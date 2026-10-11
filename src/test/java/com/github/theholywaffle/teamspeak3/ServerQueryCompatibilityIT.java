@@ -941,6 +941,55 @@ class ServerQueryCompatibilityIT {
 
 
 
+	@ParameterizedTest(name = "{0}: instance and virtual-server logs")
+	@EnumSource(Target.class)
+	@Timeout(60)
+	void logDomain(Target target) throws Exception {
+		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		var evidence = new java.util.ArrayList<String>();
+		try (var query = new TS3Query(server.config(target.protocol))) {
+			query.connect(); var api = query.getApi(); var version = api.getVersion(); server.record(target.name(), version);
+			for (String command : java.util.List.of("logadd", "logview")) {
+				String help = api.executeRawCommand("help " + command).getRawResponse();
+				assertTrue(help.startsWith("Usage: " + command)); evidence.add("help " + command + "\n" + help);
+			}
+			var instanceRows = api.getInstanceLogEntries(100);
+			assertTrue(instanceRows.stream().anyMatch(line -> line.contains(version.getVersion())));
+			assertTrue(api.getVirtualServerLogEntries().stream().anyMatch(line -> line.contains("|ServerLibPriv")));
+			api.selectVirtualServerById(1);
+			var virtualRows = api.getVirtualServerLogEntries(100);
+			assertFalse(virtualRows.isEmpty());
+			assertTrue(virtualRows.stream().anyMatch(line -> line.contains("|1  |")));
+			assertFalse(virtualRows.stream().anyMatch(line -> line.contains("|ServerLibPriv")));
+			assertTrue(api.getInstanceLogEntries(100).stream().anyMatch(line -> line.contains("|ServerLibPriv")));
+			evidence.add("instance rows " + instanceRows.size() + " virtual rows " + virtualRows.size());
+			for (var rows : java.util.List.of(api.getInstanceLogEntries(1), api.getVirtualServerLogEntries(1))) {
+				assertEquals(1, rows.size());
+			}
+			for (var rows : java.util.List.of(api.getInstanceLogEntries(), api.getVirtualServerLogEntries(),
+				api.getInstanceLogEntries(0), api.getVirtualServerLogEntries(-1))) {
+				assertFalse(rows.isEmpty()); assertTrue(rows.size() <= 100);
+			}
+			for (String command : java.util.List.of("logview lines=1", "logview lines=1 instance=1")) {
+				var raw = api.executeRawCommand(command).getFirstResponse();
+				evidence.add(command + " fields " + new java.util.TreeSet<>(raw.getMap().keySet()));
+				assertTrue(raw.getMap().containsKey("l")); assertFalse(raw.get("l").isBlank());
+				assertTrue(raw.getLong("last_pos") >= 0); assertTrue(raw.getLong("file_size") > 0);
+			}
+			assertThrows(IllegalArgumentException.class, () -> api.getInstanceLogEntries(101));
+			assertThrows(IllegalArgumentException.class, () -> api.getVirtualServerLogEntries(101));
+			assertThrows(IllegalArgumentException.class, () -> query.getAsyncApi().getInstanceLogEntries(101));
+			assertThrows(IllegalArgumentException.class, () -> query.getAsyncApi().getVirtualServerLogEntries(101));
+			var invalid = assertThrows(TS3CommandFailedException.class, () -> api.executeRawCommand("logadd loglevel=5 logmsg=invalid-log-level"));
+			evidence.add("invalid log level " + new java.util.TreeMap<>(invalid.getError().getMap()));
+			assertEquals(1538, invalid.getError().getId()); assertEquals("invalid parameter", invalid.getError().getMessage());
+			assertFalse(api.getVersion().getVersion().isBlank()); query.exit();
+		} finally {
+			Path path = Path.of("target", "compatibility", target + "-logs.txt");
+			Files.createDirectories(path.getParent()); Files.write(path, evidence);
+		}
+	}
+
 	@ParameterizedTest(name = "{0}: global query-login administration")
 	@EnumSource(Target.class)
 	@Timeout(60)
