@@ -2,7 +2,8 @@
 
 Task #441 is being delivered in focused PRs. The implemented slices verify the core
 channel domain, named channel/group permission operations, online text messages,
-selected server information/configuration operations, and online query-client administration.
+selected server information/configuration operations, online query-client administration,
+and file-directory administration.
 These slices do not complete the issue or establish whole-API TS6 support.
 The inventory below is the release acceptance boundary, not a promise based on
 similar method names or server help alone.
@@ -33,7 +34,7 @@ Local Apple Silicon uses emulated amd64 TS3 and native arm64 TS6; CI tests amd64
 | Clients | Query-client list/info/name lookup, self nickname update, description edits, independent-session joins/admin moves/self moves/leaves and error recovery. See [client evidence](client-compatibility.md); existing reconnect probes | Database administration, other properties, UID lookup/multiple sessions, bulk/password moves, kicks/bans, voice-client fixture/manual verification |
 | Permissions/groups | Server metadata and name/ID lookup, effective-value lookup, assignment search; named channel/server-group/channel-group permission add/read/update/delete; group create/list/rename/delete. See [permission evidence and migration](permission-compatibility.md) | Client/channel-client permissions, permission overview, group copy/membership/automatic assignments, permission reset and denied-account probes |
 | Messages/events | Channel create/edit/move/delete and online server/channel/private text messages from an independent query session; text subscriptions/unregister/re-register, decoded payloads and invalid-target errors. See [message evidence](message-compatibility.md); existing overlapping subscription/reconnect probes | Broadcast/offline messages, pokes, additional server-edit properties, privilege keys and other event payloads; voice-client behavior requires a separate client fixture or manual evidence |
-| Files | No cross-server transfer claim | File command inventory, server output/error differences; transfer reliability and container/NAT endpoints belong to #442 |
+| Files | Directory create/list/nested rename/cross-channel move/scalar and bulk delete; list metadata, empty transfer list and path/file-info errors. See [file evidence](file-compatibility.md) | Actual files, positive/bulk file-info, icons, active-transfer metadata and remaining command/error inventory; transfer reliability and container/NAT endpoints belong to #442 |
 | Administrative utilities | Existing version/selection error recovery; `help` through the normal command queue | Logs, bans, complaints, tokens, query-login management and remaining utilities |
 
 Existing probes are in `ServerQueryCompatibilityIT`; scripted codec, lifecycle,
