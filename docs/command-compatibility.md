@@ -27,7 +27,7 @@ Local Apple Silicon uses emulated amd64 TS3 and native arm64 TS6; CI tests amd64
 
 | Domain | Verified operations across the three targets | Remaining #441 coverage |
 | --- | --- | --- |
-| Servers | Existing login/version, virtual-server selection, invalid server ID 2816 and post-error framing probes | Server/instance info and edits, virtual-server lifecycle, snapshots and differences |
+| Servers | Existing login/version, virtual-server selection, rejected selection 2816 and post-error framing probes; message tests document cleared selection and error 1024 | Server/instance info and edits, virtual-server lifecycle, snapshots and differences |
 | Channels | Permanent channel create/list/info/find, name/topic/description edit, parent move with first-sibling order, force delete; UTF-8 and literal protocol escapes; deleted channel error 768 | Other property combinations, temporary/semi-permanent/password/default channels, limits/codecs/banners; permission failures and extra description/password notifications |
 | Clients | Existing query-client identity, join/move/leave frames and reconnect probes | Client/database administration and properties, kicks/bans, voice-client fixture/manual verification |
 | Permissions/groups | Server metadata and name/ID lookup, effective-value lookup, assignment search; named channel/server-group/channel-group permission add/read/update/delete; group create/list/rename/delete. See [permission evidence and migration](permission-compatibility.md) | Client/channel-client permissions, permission overview, group copy/membership/automatic assignments, permission reset and denied-account probes |

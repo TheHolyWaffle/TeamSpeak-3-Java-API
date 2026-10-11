@@ -90,7 +90,7 @@ class ServerQueryCompatibilityIT {
 			} finally { api.deleteChannel(id, true); }
 			assertTrue(api.getChannels().stream().noneMatch(channel -> channel.getId() == id));
 			var error = assertThrows(TS3CommandFailedException.class, () -> api.selectVirtualServerById(999));
-			assertEquals(2816, error.getError().getId()); // invalid virtual server ID
+			assertEquals(2816, error.getError().getId()); // Selection is rejected by this fixture.
 			// A server error must leave response framing usable.
 			assertEquals(version.getVersion(), api.getVersion().getVersion());
 		} finally { exitAndAssertTerminated(query, server); }
