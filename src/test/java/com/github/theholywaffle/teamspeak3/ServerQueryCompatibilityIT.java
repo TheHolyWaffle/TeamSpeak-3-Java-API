@@ -1,6 +1,9 @@
 package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerStatus;
+import com.github.theholywaffle.teamspeak3.api.event.ServerEditedEvent;
 import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
 import com.github.theholywaffle.teamspeak3.api.BPermissionType;
@@ -297,6 +300,124 @@ class ServerQueryCompatibilityIT {
 			Path path = Path.of("target", "compatibility", target + "-channels.txt");
 			Files.createDirectories(path.getParent()); Files.write(path, evidence);
 		}
+	}
+
+	@ParameterizedTest(name = "{0}: server information and edits from an independent query session")
+	@EnumSource(Target.class)
+	@Timeout(60)
+	void serverDomain(Target target) throws Exception {
+		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		var evidence = new java.util.ArrayList<String>();
+		var edits = new java.util.concurrent.LinkedBlockingQueue<ServerEditedEvent>(16);
+		try (var observer = new TS3Query(server.config(target.protocol));
+			 var actor = new TS3Query(server.config(target.protocol))) {
+			observer.connect(); actor.connect();
+			var api = actor.getApi();
+			api.selectVirtualServerById(1); observer.getApi().selectVirtualServerById(1);
+			server.record(target.name(), api.getVersion());
+			api.setNickname("server-edit-" + target);
+			var actorInfo = api.whoAmI();
+			assertNotEquals(actorInfo.getId(), observer.getApi().whoAmI().getId());
+			for (String command : java.util.List.of("serverinfo", "serverlist", "serveridgetbyport",
+				"hostinfo", "instanceinfo", "serverrequestconnectioninfo", "serveredit", "servernotifyregister")) {
+				String help = api.executeRawCommand("help " + command).getRawResponse();
+				assertTrue(help.startsWith("Usage: " + command), "Live help must describe " + command);
+				evidence.add("help " + command + "\n" + help);
+			}
+			var info = api.getServerInfo();
+			evidence.add("serverinfo " + new java.util.TreeMap<>(info.getMap()));
+			assertEquals(target.ts6, info.getMap().containsKey("virtualserver_storage_quota"));
+			assertEquals(target.ts6, info.getMap().containsKey("virtualserver_canonical_name"));
+			assertEquals(!target.ts6, info.getMap().containsKey("virtualserver_file_storage_class"));
+			assertEquals(1, info.getId()); assertEquals(VirtualServerStatus.ONLINE, info.getStatus());
+			assertFalse(info.getName().isBlank()); assertFalse(info.getUniqueIdentifier().isBlank());
+			assertTrue(info.getPort() > 0); assertTrue(info.getMaxClients() > 0);
+			assertFalse(info.getVersion().isBlank()); assertFalse(info.getPlatform().isBlank());
+			var listed = api.getVirtualServers().stream().filter(v -> v.getId() == 1).findFirst().orElseThrow();
+			evidence.add("serverlist " + new java.util.TreeMap<>(listed.getMap()));
+			assertEquals(target.ts6, listed.getMap().containsKey("virtualserver_uuid"));
+			assertEquals(info.getName(), listed.getName()); assertEquals(info.getPort(), listed.getPort());
+			assertEquals(info.getUniqueIdentifier(), listed.getUniqueIdentifier());
+			assertEquals(info.getStatus(), listed.getStatus()); assertEquals(info.getMaxClients(), listed.getMaxClients());
+			assertEquals(1, api.getServerIdByPort(info.getPort()));
+			var host = api.getHostInfo();
+			evidence.add("hostinfo " + new java.util.TreeMap<>(host.getMap()));
+			assertEquals(target.ts6, host.getMap().containsKey("virtualservers_total_homebases"));
+			assertEquals(1, host.getTotalRunningServers()); assertTrue(host.getTotalChannels() > 0);
+			assertTrue(host.getUptime() >= 0); assertTrue(host.getTimeStamp().getTime() > 0);
+			var instance = api.getInstanceInfo();
+			evidence.add("instanceinfo " + new java.util.TreeMap<>(instance.getMap()));
+			assertEquals(target.ts6, instance.getMap().containsKey("serverinstance_max_homebases"));
+			assertTrue(instance.getDatabaseVersion() > 0); assertTrue(instance.getFileTransferPort() > 0);
+			var connection = api.getConnectionInfo();
+			evidence.add("connectioninfo " + new java.util.TreeMap<>(connection.getMap()));
+			assertTrue(connection.getTotalPacketsSent() >= 0); assertTrue(connection.getTotalPacketsReceived() >= 0);
+			assertTrue(connection.getTotalBytesSent() >= 0); assertTrue(connection.getTotalBytesReceived() >= 0);
+			var original = Map.of(VirtualServerProperty.VIRTUALSERVER_NAME, info.getName(),
+				VirtualServerProperty.VIRTUALSERVER_WELCOMEMESSAGE, info.getWelcomeMessage(),
+				VirtualServerProperty.VIRTUALSERVER_HOSTMESSAGE, info.getHostMessage());
+			observer.getApi().registerEvent(TS3EventType.SERVER);
+			try (var restoration = new ServerSettings(api, original);
+				 var subscription = observer.subscribe(new TS3EventAdapter() {
+					@Override public void onServerEdit(ServerEditedEvent event) { assertTrue(edits.offer(event)); }
+				 })) {
+				String name = "server-" + target + " 日本語 | \\s";
+				String welcome = "welcome | literal \\s\\p\\n / \n";
+				String hostMessage = "host | literal \\t\\r\\\\ / \t\r";
+				api.editServer(Map.of(VirtualServerProperty.VIRTUALSERVER_NAME, name,
+					VirtualServerProperty.VIRTUALSERVER_WELCOMEMESSAGE, welcome,
+					VirtualServerProperty.VIRTUALSERVER_HOSTMESSAGE, hostMessage));
+				assertServerEdit(edits, name, actorInfo, target, evidence);
+				var changed = api.getServerInfo();
+				assertEquals(name, changed.getName()); assertEquals(welcome, changed.getWelcomeMessage());
+				assertEquals(hostMessage, changed.getHostMessage());
+				assertEquals(name, api.getVirtualServers().stream().filter(v -> v.getId() == 1).findFirst().orElseThrow().getName());
+				var invalidValue = assertThrows(TS3CommandFailedException.class,
+					() -> api.editServer(Map.of(VirtualServerProperty.VIRTUALSERVER_MAXCLIENTS, "not-an-integer")));
+				evidence.add("invalid numeric edit " + new java.util.TreeMap<>(invalidValue.getError().getMap()));
+				assertEquals(1540, invalidValue.getError().getId());
+				assertEquals("convert error", invalidValue.getError().getMessage());
+				assertEquals(name, api.getServerInfo().getName());
+				String secondName = "updated " + name;
+				api.editServer(Map.of(VirtualServerProperty.VIRTUALSERVER_NAME, secondName));
+				assertServerEdit(edits, secondName, actorInfo, target, evidence);
+				assertTrue(edits.isEmpty(), "Rejected edits must not produce an extra server-edit notification");
+				assertEquals(secondName, api.getServerInfo().getName());
+				var missingPort = assertThrows(TS3CommandFailedException.class, () -> api.getServerIdByPort(65535));
+				evidence.add("unknown port " + new java.util.TreeMap<>(missingPort.getError().getMap()));
+				assertEquals(1024, missingPort.getError().getId());
+				assertEquals("invalid serverID", missingPort.getError().getMessage());
+				assertEquals(1, api.getServerIdByPort(info.getPort()));
+			}
+			var restored = api.getServerInfo();
+			assertEquals(info.getName(), restored.getName()); assertEquals(info.getWelcomeMessage(), restored.getWelcomeMessage());
+			assertEquals(info.getHostMessage(), restored.getHostMessage());
+			observer.exit(); actor.exit();
+			assertEquals(0, observer.getEventStatistics().malformedNotifications());
+			assertEquals(0, observer.getEventStatistics().listenerFailures());
+			assertEquals(0, observer.getEventStatistics().droppedEvents());
+		} finally {
+			Path path = Path.of("target", "compatibility", target + "-servers.txt");
+			Files.createDirectories(path.getParent()); Files.write(path, evidence);
+		}
+	}
+
+	private static void assertServerEdit(java.util.concurrent.BlockingQueue<ServerEditedEvent> edits,
+	                                     String name, ServerQueryInfo actorInfo, Target target, java.util.List<String> evidence) throws InterruptedException {
+		var event = edits.poll(5, TimeUnit.SECONDS);
+		assertNotNull(event, "Expected server-edit notification from independent actor");
+		evidence.add("server edit " + new java.util.TreeMap<>(event.getMap()));
+		assertEquals(name, event.get(VirtualServerProperty.VIRTUALSERVER_NAME));
+		assertEquals(actorInfo.getId(), event.getInvokerId()); assertEquals(actorInfo.getNickname(), event.getInvokerName());
+		assertEquals(actorInfo.getUniqueIdentifier(), event.getInvokerUniqueId());
+		assertEquals(!target.ts6, event.getMap().containsKey("reasonid"));
+		assertEquals(target.ts6 ? -1 : 10, event.getReasonId());
+		assertFalse(event.getMap().containsKey(VirtualServerProperty.VIRTUALSERVER_WELCOMEMESSAGE.getName()));
+		assertFalse(event.getMap().containsKey(VirtualServerProperty.VIRTUALSERVER_HOSTMESSAGE.getName()));
+	}
+
+	private record ServerSettings(TS3Api api, Map<VirtualServerProperty, String> values) implements AutoCloseable {
+		@Override public void close() { api.editServer(values); }
 	}
 
 	@ParameterizedTest(name = "{0}: online text messages from an independent query session")
