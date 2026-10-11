@@ -941,6 +941,75 @@ class ServerQueryCompatibilityIT {
 
 
 
+	@ParameterizedTest(name = "{0}: virtual-server lifecycle")
+	@EnumSource(Target.class)
+	@Timeout(120)
+	void serverLifecycleDomain(Target target) throws Exception {
+		var evidence = new java.util.ArrayList<String>();
+		try (var server = new TeamSpeakContainer(target.ts6)) {
+			server.start();
+			try (var query = new TS3Query(server.config(target.protocol))) {
+				query.connect(); var api = query.getApi(); server.record(target.name(), api.getVersion());
+				for (String command : java.util.List.of("servercreate", "serverstart", "serverstop", "serverdelete")) {
+					String help = api.executeRawCommand("help " + command).getRawResponse();
+					assertTrue(help.startsWith("Usage: " + command)); evidence.add("help " + command + "\n" + help);
+				}
+				var initial = api.getVirtualServers(); assertEquals(1, initial.size());
+				int originalId = initial.getFirst().getId();
+				api.selectVirtualServerById(originalId);
+				api.stopServer(originalId, "owned fixture replacement 日本語 | literal \\s");
+				var stoppedOriginal = api.getVirtualServers().getFirst();
+				evidence.add("stopped original " + stoppedOriginal.getStatus());
+				assertEquals(VirtualServerStatus.OFFLINE, stoppedOriginal.getStatus());
+				api.deleteServer(originalId); assertTrue(api.getVirtualServers().isEmpty());
+				String name = "lifecycle 日本語 | literal \\s " + target;
+				var created = api.createServer(name, Map.of(VirtualServerProperty.VIRTUALSERVER_MAXCLIENTS, "8"));
+				try (var cleanup = new CreatedResource(created.getId(), id -> {
+					var row = api.getVirtualServers().stream().filter(candidate -> candidate.getId() == id).findFirst().orElseThrow();
+					if (row.getStatus() != VirtualServerStatus.OFFLINE) api.stopServer(row);
+					api.deleteServer(id);
+				})) {
+					assertTrue(created.getId() > 0); assertTrue(created.getPort() > 0);
+					assertFalse(created.getServerAdminToken().isBlank());
+					evidence.add("created fields " + new java.util.TreeSet<>(created.getMap().keySet()));
+					var running = assertThrows(TS3CommandFailedException.class, () -> api.deleteServer(created.getId()));
+					evidence.add("delete running " + new java.util.TreeMap<>(running.getError().getMap()));
+					assertEquals(1035, running.getError().getId()); assertEquals("server got an invalid status for this operation", running.getError().getMessage());
+					for (int cycle = 0; cycle < 3; cycle++) {
+						var servers = api.getVirtualServers(); assertEquals(1, servers.size());
+						var row = servers.getFirst();
+						evidence.add("online " + Map.of("id", row.getId(), "port", row.getPort(), "status", row.getStatus(), "name", row.getName()));
+						assertEquals(created.getId(), row.getId()); assertEquals(created.getPort(), row.getPort());
+						assertEquals(name, row.getName()); assertEquals(8, row.getMaxClients());
+						assertEquals(VirtualServerStatus.ONLINE, row.getStatus());
+						api.selectVirtualServerById(created.getId()); assertEquals(name, api.getServerInfo().getName());
+						if (cycle == 2) api.stopServer(row);
+						else api.stopServer(row, "cycle " + cycle + " 日本語 | literal \\s");
+						var stopped = api.getVirtualServers().getFirst();
+						assertEquals(VirtualServerStatus.OFFLINE, stopped.getStatus());
+						int context = api.whoAmI().getVirtualServerId(); assertEquals(0, context);
+						evidence.add("offline " + created.getId() + " query context " + context);
+						if (cycle == 0) api.startServer(stopped);
+						else if (cycle == 1) api.startServer(created.getId());
+					}
+				}
+				assertTrue(api.getVirtualServers().isEmpty());
+				for (var operation : Map.<String, Runnable>of("serverstart", () -> api.startServer(created.getId()),
+					"serverstop", () -> api.stopServer(created.getId()), "serverdelete", () -> api.deleteServer(created.getId())).entrySet()) {
+					var missing = assertThrows(TS3CommandFailedException.class, operation.getValue()::run);
+					evidence.add("missing " + operation.getKey() + " " + new java.util.TreeMap<>(missing.getError().getMap()));
+					boolean stop = operation.getKey().equals("serverstop");
+					assertEquals(stop ? 1033 : 1024, missing.getError().getId());
+					assertEquals(stop ? "server is not running" : "invalid serverID", missing.getError().getMessage());
+				}
+				assertFalse(api.getVersion().getVersion().isBlank()); query.exit();
+			}
+		} finally {
+			Path path = Path.of("target", "compatibility", target + "-server-lifecycle.txt");
+			Files.createDirectories(path.getParent()); Files.write(path, evidence);
+		}
+	}
+
 	@ParameterizedTest(name = "{0}: instance and virtual-server logs")
 	@EnumSource(Target.class)
 	@Timeout(60)

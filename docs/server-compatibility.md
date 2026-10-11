@@ -107,9 +107,10 @@ Existing enum-based edit methods, raw access and getter defaults remain unchange
 
 ## Remaining scope and official sources
 
-Server start/stop/create/delete, snapshots, stopped/multiple-server behavior,
-other configuration combinations, instance edits and their permission failures
-remain in #441. Official [TS6 beta13.1 release notes](https://github.com/teamspeak/teamspeak6-server/releases/tag/v6.0.0-beta13.1)
+Sequential start/stop/create/delete and stopped-server listings are now covered
+by the separate [lifecycle slice](server-lifecycle-compatibility.md). Snapshots,
+concurrent/multi-running-server behavior, other configuration combinations,
+instance edits and their permission failures remain in #441. Official [TS6 beta13.1 release notes](https://github.com/teamspeak/teamspeak6-server/releases/tag/v6.0.0-beta13.1)
 fix virtual-server stop behavior, but these read/edit tests do not claim lifecycle
 coverage from that release note. This slice uses serveradmin query sessions,
 not voice clients or guest/restricted roles; TS6 RAW, Web Query and other versions
