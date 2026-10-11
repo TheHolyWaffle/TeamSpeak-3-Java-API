@@ -940,6 +940,80 @@ class ServerQueryCompatibilityIT {
 	}
 
 
+
+	@ParameterizedTest(name = "{0}: global query-login administration")
+	@EnumSource(Target.class)
+	@Timeout(60)
+	void queryLoginDomain(Target target) throws Exception {
+		var evidence = new java.util.ArrayList<String>();
+		try (var server = new TeamSpeakContainer(target.ts6)) {
+			server.start();
+			try (var administrator = new TS3Query(server.config(target.protocol))) {
+				administrator.connect(); var api = administrator.getApi();
+				assertEquals(0, api.whoAmI().getVirtualServerId());
+				server.record(target.name(), api.getVersion());
+				for (String command : java.util.List.of("queryloginadd", "queryloginlist", "querylogindel")) {
+					String help = api.executeRawCommand("help " + command).getRawResponse();
+					assertTrue(help.startsWith("Usage: " + command)); evidence.add("help " + command + "\n" + help);
+				}
+				var initial = api.getServerQueryLogins().stream().map(com.github.theholywaffle.teamspeak3.api.wrapper.QueryLogin::getMap).toList();
+				String name = "global-query-" + target;
+				var created = api.addServerQueryLogin(name, 0);
+				try (var cleanup = new CreatedResource(created.getClientDatabaseId(), api::deleteServerQueryLogin)) {
+					assertTrue(created.getClientDatabaseId() > 0);
+					assertFalse(created.getQueryClientLoginPassword().isBlank());
+					evidence.add("created fields " + new java.util.TreeSet<>(created.getMap().keySet()));
+					assertEquals(0, created.getVirtualServerId()); assertEquals(name, created.getQueryClientLoginName());
+					var all = api.getServerQueryLogins(); assertEquals(initial.size() + 1, all.size());
+					assertEquals(1, all.stream().filter(row -> row.getClientDatabaseId() == created.getClientDatabaseId() && row.getVirtualServerId() == 0 && row.getQueryClientLoginName().equals(name)).count());
+					var listed = api.getServerQueryLoginsByName(name); assertEquals(1, listed.size());
+					var row = listed.getFirst(); evidence.add("listed fields " + new java.util.TreeSet<>(row.getMap().keySet()));
+					evidence.add("listed " + Map.of("cldbid", row.getClientDatabaseId(), "sid", row.getVirtualServerId(), "name", row.getQueryClientLoginName()));
+					assertEquals(created.getClientDatabaseId(), row.getClientDatabaseId());
+					assertEquals(0, row.getVirtualServerId()); assertEquals(name, row.getQueryClientLoginName());
+					try (var actor = new TS3Query(server.config(target.protocol).setLoginCredentials(name, created.getQueryClientLoginPassword()))) {
+						actor.connect(); var identity = actor.getApi().whoAmI();
+						evidence.add("authenticated " + new java.util.TreeMap<>(identity.getMap()));
+						assertEquals(name, identity.getLoginName());
+						assertEquals(created.getClientDatabaseId(), identity.getDatabaseId());
+						assertEquals(0, identity.getOriginServerId()); assertEquals(0, identity.getVirtualServerId());
+						assertFalse(actor.getApi().getVersion().getVersion().isBlank());
+						actor.exit();
+					}
+				}
+				assertEquals(initial, api.getServerQueryLogins().stream().map(com.github.theholywaffle.teamspeak3.api.wrapper.QueryLogin::getMap).toList());
+				var missing = assertThrows(TS3CommandFailedException.class, () -> api.deleteServerQueryLogin(created.getClientDatabaseId()));
+				evidence.add("delete removed login " + new java.util.TreeMap<>(missing.getError().getMap()));
+				assertEquals(512, missing.getError().getId()); assertEquals("invalid clientID", missing.getError().getMessage());
+				try (var rejected = new TS3Query(server.config(target.protocol).setLoginCredentials(name, created.getQueryClientLoginPassword()))) {
+					var failure = assertThrows(TS3ConnectionFailedException.class, rejected::connect);
+					assertLoginAuthenticationFailure(failure, target, evidence);
+					assertFalse(rejected.isConnected());
+				}
+				assertFalse(api.getVersion().getVersion().isBlank()); administrator.exit();
+			}
+		} finally {
+			Path path = Path.of("target", "compatibility", target + "-query-logins.txt");
+			Files.createDirectories(path.getParent()); Files.write(path, evidence);
+		}
+	}
+
+	private static void assertLoginAuthenticationFailure(Throwable failure, Target target, java.util.List<String> evidence) {
+		for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
+			if (target.protocol == TS3Query.Protocol.RAW && cause instanceof TS3CommandFailedException command) {
+				evidence.add("deleted credentials rejected " + new java.util.TreeMap<>(command.getError().getMap()));
+				assertEquals(520, command.getError().getId());
+				assertEquals("invalid loginname or password", command.getError().getMessage());
+				return;
+			}
+			if (target.protocol == TS3Query.Protocol.SSH && cause instanceof net.schmizz.sshj.userauth.UserAuthException) {
+				evidence.add("deleted credentials rejected " + cause.getClass().getSimpleName());
+				return;
+			}
+		}
+		fail("Expected an authentication-specific failure", failure);
+	}
+
 	@ParameterizedTest(name = "{0}: named group copies and overwrites")
 	@EnumSource(Target.class)
 	@Timeout(60)
