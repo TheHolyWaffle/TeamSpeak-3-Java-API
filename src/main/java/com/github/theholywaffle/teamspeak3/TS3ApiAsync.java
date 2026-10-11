@@ -5444,6 +5444,12 @@ public class TS3ApiAsync {
 
 	/**
 	 * Uses an existing privilege key to join a server or channel group.
+	 * <p>
+	 * TS3 3.13.8 and TS6 6.0.0-beta13.1 reject this operation for serveradmin query
+	 * clients with error 516 ({@code invalid client type}). Such rejected requests
+	 * leave the key unused and do not emit a key-use notification. Listing a key
+	 * does not imply that this query session can consume it.
+	 * </p>
 	 *
 	 * @param token
 	 * 		the privilege key to use
@@ -5464,6 +5470,12 @@ public class TS3ApiAsync {
 
 	/**
 	 * Uses an existing privilege key to join a server or channel group.
+	 * <p>
+	 * TS3 3.13.8 and TS6 6.0.0-beta13.1 reject this operation for serveradmin query
+	 * clients with error 516 ({@code invalid client type}). Such rejected requests
+	 * leave the key unused and do not emit a key-use notification. Listing a key
+	 * does not imply that this query session can consume it.
+	 * </p>
 	 *
 	 * @param privilegeKey
 	 * 		the privilege key to use

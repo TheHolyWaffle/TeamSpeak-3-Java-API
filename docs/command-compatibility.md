@@ -3,7 +3,7 @@
 Task #441 is being delivered in focused PRs. The implemented slices verify the core
 channel domain, named channel/group permission operations, online text messages,
 selected server information/configuration operations, online query-client administration,
-and file-directory administration.
+file-directory administration, and privilege-key administration.
 These slices do not complete the issue or establish whole-API TS6 support.
 The inventory below is the release acceptance boundary, not a promise based on
 similar method names or server help alone.
@@ -33,9 +33,9 @@ Local Apple Silicon uses emulated amd64 TS3 and native arm64 TS6; CI tests amd64
 | Channels | Permanent channel create/list/info/find, name/topic/description edit, parent move with first-sibling order, force delete; UTF-8 and literal protocol escapes; deleted channel error 768 | Other property combinations, temporary/semi-permanent/password/default channels, limits/codecs/banners; permission failures and extra description/password notifications |
 | Clients | Query-client list/info/name lookup, self nickname update, description edits, independent-session joins/admin moves/self moves/leaves and error recovery. See [client evidence](client-compatibility.md); existing reconnect probes | Database administration, other properties, UID lookup/multiple sessions, bulk/password moves, kicks/bans, voice-client fixture/manual verification |
 | Permissions/groups | Server metadata and name/ID lookup, effective-value lookup, assignment search; named channel/server-group/channel-group permission add/read/update/delete; group create/list/rename/delete. See [permission evidence and migration](permission-compatibility.md) | Client/channel-client permissions, permission overview, group copy/membership/automatic assignments, permission reset and denied-account probes |
-| Messages/events | Channel create/edit/move/delete and online server/channel/private text messages from an independent query session; text subscriptions/unregister/re-register, decoded payloads and invalid-target errors. See [message evidence](message-compatibility.md); existing overlapping subscription/reconnect probes | Broadcast/offline messages, pokes, additional server-edit properties, privilege keys and other event payloads; voice-client behavior requires a separate client fixture or manual evidence |
+| Messages/events | Channel create/edit/move/delete and online server/channel/private text messages from an independent query session; text subscriptions/unregister/re-register, decoded payloads and invalid-target errors. See [message evidence](message-compatibility.md); existing overlapping subscription/reconnect probes | Broadcast/offline messages, pokes, additional server-edit properties, successful regular-client privilege-key-use payloads and other events; voice-client behavior requires a separate client fixture or manual evidence |
 | Files | Directory create/list/nested rename/cross-channel move/scalar and bulk delete; list metadata, empty transfer list and path/file-info errors. See [file evidence](file-compatibility.md) | Actual files, positive/bulk file-info, icons, active-transfer metadata and remaining command/error inventory; transfer reliability and container/NAT endpoints belong to #442 |
-| Administrative utilities | Existing version/selection error recovery; `help` through the normal command queue | Logs, bans, complaints, tokens, query-login management and remaining utilities |
+| Administrative utilities | Privilege-key create/list/delete for both types, metadata and query-client consumption rejection; see [key evidence](privilege-key-compatibility.md). Existing version/selection error recovery and controlled `help` | Successful regular-client key consumption/events/custom metadata, invalid references/limits/restricted roles; logs, bans, complaints, query-login management and remaining utilities |
 
 Existing probes are in `ServerQueryCompatibilityIT`; scripted codec, lifecycle,
 queue and event tests remain regression evidence, not live command acceptance.

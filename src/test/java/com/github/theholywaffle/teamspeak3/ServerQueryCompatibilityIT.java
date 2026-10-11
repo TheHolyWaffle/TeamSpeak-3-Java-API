@@ -1,6 +1,9 @@
 package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
+import com.github.theholywaffle.teamspeak3.api.PrivilegeKeyType;
+import com.github.theholywaffle.teamspeak3.api.event.PrivilegeKeyUsedEvent;
+import com.github.theholywaffle.teamspeak3.api.wrapper.PrivilegeKey;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 import com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ClientMovedEvent;
@@ -304,6 +307,102 @@ class ServerQueryCompatibilityIT {
 			Path path = Path.of("target", "compatibility", target + "-channels.txt");
 			Files.createDirectories(path.getParent()); Files.write(path, evidence);
 		}
+	}
+
+	@ParameterizedTest(name = "{0}: privilege key administration and query-client rejection")
+	@EnumSource(Target.class)
+	@Timeout(60)
+	void privilegeKeyDomain(Target target) throws Exception {
+		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		var evidence = new java.util.ArrayList<String>();
+		var used = new java.util.concurrent.LinkedBlockingQueue<PrivilegeKeyUsedEvent>(16);
+		var messages = new java.util.concurrent.LinkedBlockingQueue<TextMessageEvent>(16);
+		try (var observer = new TS3Query(server.config(target.protocol));
+			 var actor = new TS3Query(server.config(target.protocol))) {
+			observer.connect(); actor.connect();
+			var api = observer.getApi();
+			api.selectVirtualServerById(1); actor.getApi().selectVirtualServerById(1);
+			actor.getApi().setNickname("key-actor-" + target);
+			var identity = actor.getApi().whoAmI();
+			int observerId = api.whoAmI().getId();
+			assertNotEquals(observerId, identity.getId());
+			server.record(target.name(), api.getVersion());
+			for (String command : java.util.List.of("privilegekeyadd", "privilegekeylist", "privilegekeydelete", "privilegekeyuse")) {
+				String help = api.executeRawCommand("help " + command).getRawResponse();
+				assertTrue(help.startsWith("Usage: " + command), "Live help must describe " + command);
+				evidence.add("help " + command + "\n" + help);
+			}
+			var initial = api.getPrivilegeKeys().stream().map(PrivilegeKey::getToken).collect(java.util.stream.Collectors.toSet());
+			api.registerEvent(TS3EventType.SERVER); api.registerEvent(TS3EventType.TEXT_PRIVATE);
+			try (var channels = new ChannelCleanup(api);
+				 var serverGroup = new CreatedResource(api.addServerGroup("key-server-" + target), id -> api.deleteServerGroup(id, true));
+				 var channelGroup = new CreatedResource(api.addChannelGroup("key-channel-" + target), id -> api.deleteChannelGroup(id, true));
+				 var subscription = observer.subscribe(new TS3EventAdapter() {
+					@Override public void onPrivilegeKeyUsed(PrivilegeKeyUsedEvent event) { assertTrue(used.offer(event)); }
+					@Override public void onTextMessage(TextMessageEvent event) { assertTrue(messages.offer(event)); }
+				 })) {
+				int channel = channels.track(api.createChannel("key-channel-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
+				String description = "key 日本語 | literal \\s\\p\\n /";
+				String deletedToken;
+				try (var serverKey = new CreatedPrivilegeKey(api, api.addPrivilegeKeyServerGroup(serverGroup.id(), description));
+					 var channelKey = new CreatedPrivilegeKey(api, api.addPrivilegeKeyChannelGroup(channelGroup.id(), channel, description));
+					 var genericKey = new CreatedPrivilegeKey(api, api.addPrivilegeKey(PrivilegeKeyType.SERVER_GROUP, serverGroup.id(), 0, null))) {
+					deletedToken = serverKey.token();
+					var listed = api.getPrivilegeKeys();
+					assertEquals(initial.size() + 3, listed.size());
+					var serverEntry = listed.stream().filter(k -> k.getToken().equals(serverKey.token())).findFirst().orElseThrow();
+					assertPrivilegeKey(serverEntry, PrivilegeKeyType.SERVER_GROUP, serverGroup.id(), 0, description, evidence);
+					var channelEntry = listed.stream().filter(k -> k.getToken().equals(channelKey.token())).findFirst().orElseThrow();
+					assertPrivilegeKey(channelEntry, PrivilegeKeyType.CHANNEL_GROUP, channelGroup.id(), channel, description, evidence);
+					var genericEntry = listed.stream().filter(k -> k.getToken().equals(genericKey.token())).findFirst().orElseThrow();
+					assertPrivilegeKey(genericEntry, PrivilegeKeyType.SERVER_GROUP, serverGroup.id(), 0, "", evidence);
+					var serverUse = assertThrows(TS3CommandFailedException.class, () -> actor.getApi().usePrivilegeKey(serverEntry));
+					evidence.add("server key query use " + new java.util.TreeMap<>(serverUse.getError().getMap()));
+					assertEquals(516, serverUse.getError().getId()); assertEquals("invalid client type", serverUse.getError().getMessage());
+					var channelUse = assertThrows(TS3CommandFailedException.class, () -> actor.getApi().usePrivilegeKey(channelKey.token()));
+					evidence.add("channel key query use " + new java.util.TreeMap<>(channelUse.getError().getMap()));
+					assertEquals(516, channelUse.getError().getId()); assertEquals("invalid client type", channelUse.getError().getMessage());
+					// The later actor message fences preceding notification frames on this ordered subscription.
+					actor.getApi().sendPrivateMessage(observerId, "rejected-key-use-fence");
+					assertMessage(messages, TextMessageTargetMode.CLIENT, "rejected-key-use-fence", identity, observerId, evidence);
+					assertTrue(used.isEmpty(), "Rejected consumption must not produce a privilege-key-used event");
+					var retained = api.getPrivilegeKeys().stream().map(PrivilegeKey::getToken).collect(java.util.stream.Collectors.toSet());
+					assertTrue(retained.containsAll(java.util.List.of(serverKey.token(), channelKey.token(), genericKey.token())));
+				}
+				var restored = api.getPrivilegeKeys().stream().map(PrivilegeKey::getToken).collect(java.util.stream.Collectors.toSet());
+				assertEquals(initial, restored);
+				var missing = assertThrows(TS3CommandFailedException.class, () -> api.deletePrivilegeKey(deletedToken));
+				evidence.add("delete removed key " + new java.util.TreeMap<>(missing.getError().getMap()));
+				assertEquals(3, missing.getError().getId()); assertEquals("ok", missing.getError().getMessage());
+				var deletedUse = assertThrows(TS3CommandFailedException.class, () -> actor.getApi().usePrivilegeKey(deletedToken));
+				evidence.add("removed key query use " + new java.util.TreeMap<>(deletedUse.getError().getMap()));
+				assertEquals(516, deletedUse.getError().getId()); assertEquals("invalid client type", deletedUse.getError().getMessage());
+				assertFalse(api.getVersion().getVersion().isBlank());
+			}
+			observer.exit(); actor.exit();
+			assertEquals(0, observer.getEventStatistics().unknownNotifications());
+			assertEquals(0, observer.getEventStatistics().malformedNotifications());
+			assertEquals(0, observer.getEventStatistics().listenerFailures());
+			assertEquals(0, observer.getEventStatistics().droppedEvents());
+		} finally {
+			Path path = Path.of("target", "compatibility", target + "-privilege-keys.txt");
+			Files.createDirectories(path.getParent()); Files.write(path, evidence);
+		}
+	}
+
+	private static void assertPrivilegeKey(PrivilegeKey key, PrivilegeKeyType type, int group, int channel,
+	                                       String description, java.util.List<String> evidence) {
+		evidence.add("key " + new java.util.TreeMap<>(key.getMap()));
+		assertFalse(key.getToken().isBlank()); assertEquals(type.getIndex(), key.getType());
+		assertEquals(type == PrivilegeKeyType.SERVER_GROUP, key.isServerGroupToken());
+		assertEquals(type == PrivilegeKeyType.CHANNEL_GROUP, key.isChannelGroupToken());
+		assertEquals(group, key.getGroupId()); assertEquals(channel, key.getChannelId());
+		assertTrue(key.getMap().containsKey("token_description")); assertEquals(description, key.getDescription());
+		assertTrue(Math.abs(System.currentTimeMillis() - key.getCreated().getTime()) < 60_000);
+	}
+
+	private record CreatedPrivilegeKey(TS3Api api, String token) implements AutoCloseable {
+		@Override public void close() { api.deletePrivilegeKey(token); }
 	}
 
 	@ParameterizedTest(name = "{0}: file directory commands and metadata")
