@@ -306,6 +306,111 @@ class ServerQueryCompatibilityIT {
 		}
 	}
 
+	@ParameterizedTest(name = "{0}: file directory commands and metadata")
+	@EnumSource(Target.class)
+	@Timeout(60)
+	void fileDomain(Target target) throws Exception {
+		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		var evidence = new java.util.ArrayList<String>();
+		try (var query = new TS3Query(server.config(target.protocol))) {
+			query.connect();
+			var api = query.getApi();
+			api.selectVirtualServerById(1);
+			server.record(target.name(), api.getVersion());
+			for (String command : java.util.List.of("ftcreatedir", "ftgetfilelist", "ftgetfileinfo", "ftrenamefile", "ftdeletefile", "ftlist")) {
+				String help = api.executeRawCommand("help " + command).getRawResponse();
+				assertTrue(help.startsWith("Usage: " + command), "Live help must describe " + command);
+				evidence.add("help " + command + "\n" + help);
+			}
+			try (var channels = new ChannelCleanup(api)) {
+				int source = channels.track(api.createChannel("file-source-" + target,
+					Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
+				String password = "file password | \\s";
+				int destination = channels.track(api.createChannel("file-destination-" + target,
+					Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1", ChannelProperty.CHANNEL_PASSWORD, password)));
+				assertTrue(api.getChannelInfo(destination).hasPassword());
+				assertEquals(1, api.getPermissionValue(BPermissionType.B_FT_IGNORE_PASSWORD.getName()));
+				evidence.add("effective b_ft_ignore_password=1; destination channel is password protected");
+				assertTrue(api.getFileList("/", source).isEmpty());
+				assertTrue(api.getFileList("/", destination, password).isEmpty());
+				assertTrue(api.getFileTransfers().isEmpty());
+				var rejected = assertThrows(TS3CommandFailedException.class, () -> api.createFileDirectory("/literal\\s", source));
+				evidence.add("invalid path " + new java.util.TreeMap<>(rejected.getError().getMap()));
+				assertEquals(2054, rejected.getError().getId()); assertEquals("invalid file path", rejected.getError().getMessage());
+				assertTrue(api.getFileList("/", source).isEmpty());
+				String pipePath = "/directory | pipe";
+				api.createFileDirectory(pipePath, source);
+				var pipe = api.getFileList("/", source).getFirst();
+				evidence.add("pipe path " + new java.util.TreeMap<>(pipe.getMap()));
+				assertEquals(pipePath, pipe.getPath());
+				api.deleteFile(pipePath, source);
+				String unicodePath = "/directory 日本語 spaces";
+				if (target.ts6) {
+					var unicode = assertThrows(TS3CommandFailedException.class, () -> api.createFileDirectory(unicodePath, source));
+					evidence.add("Unicode path " + new java.util.TreeMap<>(unicode.getError().getMap()));
+					assertEquals(2054, unicode.getError().getId()); assertEquals("invalid file path", unicode.getError().getMessage());
+				} else {
+					api.createFileDirectory(unicodePath, source);
+					var unicode = api.getFileList("/", source).getFirst();
+					evidence.add("Unicode path " + new java.util.TreeMap<>(unicode.getMap()));
+					assertEquals(unicodePath, unicode.getPath());
+					api.deleteFile(unicodePath, source);
+				}
+				assertTrue(api.getFileList("/", source).isEmpty());
+				String name = "directory spaces";
+				String path = "/" + name;
+				api.createFileDirectory(name, source);
+				var directory = api.getFileList("/", source).getFirst();
+				evidence.add("root directory " + new java.util.TreeMap<>(directory.getMap()));
+				assertEquals(name, directory.getName()); assertEquals(path, directory.getPath());
+				assertEquals("/", directory.getParentPath()); assertEquals(source, directory.getChannelId());
+				assertEquals(0, directory.getType()); assertTrue(directory.isDirectory()); assertFalse(directory.isFile());
+				var timestampUnit = target.ts6 ? TimeUnit.MILLISECONDS : TimeUnit.SECONDS;
+				long modified = directory.getLastModifiedDate(timestampUnit).getTime();
+				assertTrue(Math.abs(System.currentTimeMillis() - modified) < 60_000, "New directory timestamp must represent current time");
+				assertFalse(directory.isStillUploading()); assertFalse(directory.getMap().containsKey("incompletesize"));
+				assertTrue(api.getFileList(name, source).isEmpty());
+				api.createFileDirectory(path + "/child", source, null);
+				var nested = api.getFileList(path, source).getFirst();
+				evidence.add("nested directory " + new java.util.TreeMap<>(nested.getMap()));
+				assertEquals("child", nested.getName()); assertEquals(path + "/child", nested.getPath());
+				assertEquals(path + "/", nested.getParentPath()); assertTrue(nested.isDirectory());
+				var directoryInfo = assertThrows(TS3CommandFailedException.class, () -> api.getFileInfo(path, source));
+				evidence.add("directory fileinfo " + new java.util.TreeMap<>(directoryInfo.getError().getMap()));
+				assertEquals(2048, directoryInfo.getError().getId()); assertEquals("invalid file name", directoryInfo.getError().getMessage());
+				String renamed = "/renamed spaces";
+				api.moveFile(path, renamed, source);
+				assertEquals(renamed, api.getFileList("/", source).getFirst().getPath());
+				assertEquals(renamed + "/child", api.getFileList(renamed, source).getFirst().getPath());
+				api.moveFile(renamed, "/moved", source, null, destination, password);
+				assertTrue(api.getFileList("/", source).isEmpty());
+				assertEquals("/moved", api.getFileList("/", destination, password).getFirst().getPath());
+				assertEquals("/moved/child", api.getFileList("moved", destination, password).getFirst().getPath());
+				api.deleteFile("/moved/child", destination, password);
+				assertTrue(api.getFileList("/moved", destination, password).isEmpty());
+				api.createFileDirectory("/second", destination, password);
+				api.deleteFiles(new String[]{"/moved", "/second"}, destination, password);
+				assertTrue(api.getFileList("/", destination, password).isEmpty());
+				var missing = assertThrows(TS3CommandFailedException.class, () -> api.getFileInfo("/absent.txt", source));
+				evidence.add("missing file " + new java.util.TreeMap<>(missing.getError().getMap()));
+				assertEquals(target.ts6 ? 2051 : 2052, missing.getError().getId());
+				assertEquals(target.ts6 ? "file not found" : "file input/output error", missing.getError().getMessage());
+				var missingDirectory = assertThrows(TS3CommandFailedException.class, () -> api.getFileList("/absent", source));
+				evidence.add("missing directory " + new java.util.TreeMap<>(missingDirectory.getError().getMap()));
+				assertEquals(target.ts6 ? 2051 : 2052, missingDirectory.getError().getId());
+				assertEquals(target.ts6 ? "file not found" : "file input/output error", missingDirectory.getError().getMessage());
+				assertTrue(api.getFileList("/", destination, "wrong").isEmpty());
+				evidence.add("serveradmin can list the password-protected channel with an incorrect password");
+				assertTrue(api.getFileList("/", destination, password).isEmpty());
+				assertFalse(api.getVersion().getVersion().isBlank());
+			}
+			query.exit();
+		} finally {
+			Path path = Path.of("target", "compatibility", target + "-files.txt");
+			Files.createDirectories(path.getParent()); Files.write(path, evidence);
+		}
+	}
+
 	@ParameterizedTest(name = "{0}: online query-client administration and independent notifications")
 	@EnumSource(Target.class)
 	@Timeout(60)
