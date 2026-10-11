@@ -1,0 +1,26 @@
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryCompatibilityIT.java
+  s_d757b21d401e7e::t_af64484c4932f7 966-968
+  s_d757b21d401e7e::t_ddd0be97a2c004 969-971
+  s_d757b21d401e7e::t_7a402a47047f86 943-965,972-1016
+docs/command-compatibility.md
+  s_d757b21d401e7e::t_af64484c4932f7 6,38
+docs/query-login-compatibility.md
+  s_d757b21d401e7e::t_af64484c4932f7 1-10,14-33,38-83
+  s_d757b21d401e7e::t_beadf7f31511be 11-13,34-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "61f060fb7069a97d286f34fc6a53d0279c9136b3",
+  "prompts": {},
+  "sessions": {
+    "s_d757b21d401e7e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12770-2877-7903-ba65-0fe168e7f6f9",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
