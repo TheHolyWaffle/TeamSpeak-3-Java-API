@@ -41,14 +41,14 @@ class GroupCopyTest {
 	@Test void cancellingQueuedOverwriteReleasesAdmissionBeforeCallbacks() throws Exception {
 		try (var peer = new FakeServerQuery(p -> {
 			p.expect("whoami"); p.write("clid=1\nerror id=0 msg=ok\n");
-			p.expect("version"); p.write("version=probe\nerror id=0 msg=ok\n");
+			p.expect("version"); p.write("version=probe build=1 platform=test\nerror id=0 msg=ok\n");
 			p.finishQuit();
 		}); var query = new TS3Query(config(peer).setCommandCapacity(1))) {
 			var cancelled = query.getAsyncApi().serverGroups().overwrite(9, 42, PermissionGroupDatabaseType.REGULAR);
 			var next = new java.util.concurrent.atomic.AtomicReference<java.util.concurrent.CompletableFuture<com.github.theholywaffle.teamspeak3.api.wrapper.Version>>();
 			cancelled.whenComplete((value, failure) -> next.set(query.getAsyncApi().instance().version()));
 			assertTrue(cancelled.cancel(false)); assertNotNull(next.get());
-			query.connect(); assertEquals("probe", next.get().get(5, TimeUnit.SECONDS).getVersion());
+			query.connect(); assertEquals("probe", next.get().get(5, TimeUnit.SECONDS).version());
 			FutureAssertions.awaitCommandAdmission(query);
 			query.exit(); peer.await();
 		}
@@ -59,7 +59,7 @@ class GroupCopyTest {
 		try (var peer = new FakeServerQuery(p -> {
 			p.expect("whoami"); p.write("clid=1\nerror id=0 msg=ok\n");
 			p.expect("servergroupcopy ssgid=9 tsgid=42 name=name type=1"); p.write("error id=0 msg=ok\n");
-			p.expect("version"); p.write("version=probe\nerror id=0 msg=ok\n");
+			p.expect("version"); p.write("version=probe build=1 platform=test\nerror id=0 msg=ok\n");
 			p.finishQuit();
 		}); var query = new TS3Query(config(peer).setCommandCapacity(1))) {
 			var result = query.getAsyncApi().serverGroups().overwrite(9, 42, PermissionGroupDatabaseType.REGULAR);
@@ -79,7 +79,7 @@ class GroupCopyTest {
 			} finally { releaseObserver.countDown(); }
 			observer.get(5, TimeUnit.SECONDS);
 			FutureAssertions.awaitCommandAdmission(query);
-			assertEquals("probe", query.getAsyncApi().instance().version().get(5, TimeUnit.SECONDS).getVersion());
+			assertEquals("probe", query.getAsyncApi().instance().version().get(5, TimeUnit.SECONDS).version());
 			FutureAssertions.awaitCommandAdmission(query);
 			query.exit(); peer.await();
 		}

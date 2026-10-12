@@ -26,9 +26,10 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.Map;
-
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
+
+import java.time.Duration;
+import java.util.Map;
 
 public class ConnectionInfo extends Wrapper {
 
@@ -37,63 +38,64 @@ public class ConnectionInfo extends Wrapper {
 	}
 
 	public long getFiletransferBandwidthSent() {
-		return getLong(VirtualServerProperty.CONNECTION_FILETRANSFER_BANDWIDTH_SENT);
+		return requireLong(VirtualServerProperty.CONNECTION_FILETRANSFER_BANDWIDTH_SENT);
 	}
 
 	public long getFiletransferBandwidthReceived() {
-		return getLong(VirtualServerProperty.CONNECTION_FILETRANSFER_BANDWIDTH_RECEIVED);
+		return requireLong(VirtualServerProperty.CONNECTION_FILETRANSFER_BANDWIDTH_RECEIVED);
 	}
 
 	public long getFiletransferBytesSent() {
-		return getLong(VirtualServerProperty.CONNECTION_FILETRANSFER_BYTES_SENT_TOTAL);
+		return requireLong(VirtualServerProperty.CONNECTION_FILETRANSFER_BYTES_SENT_TOTAL);
 	}
 
 	public long getFiletransferBytesReceived() {
-		return getLong(VirtualServerProperty.CONNECTION_FILETRANSFER_BYTES_RECEIVED_TOTAL);
+		return requireLong(VirtualServerProperty.CONNECTION_FILETRANSFER_BYTES_RECEIVED_TOTAL);
 	}
 
 	public long getTotalPacketsSent() {
-		return getLong(VirtualServerProperty.CONNECTION_PACKETS_SENT_TOTAL);
+		return requireLong(VirtualServerProperty.CONNECTION_PACKETS_SENT_TOTAL);
 	}
 
 	public long getTotalBytesSent() {
-		return getLong(VirtualServerProperty.CONNECTION_BYTES_SENT_TOTAL);
+		return requireLong(VirtualServerProperty.CONNECTION_BYTES_SENT_TOTAL);
 	}
 
 	public long getTotalPacketsReceived() {
-		return getLong(VirtualServerProperty.CONNECTION_PACKETS_RECEIVED_TOTAL);
+		return requireLong(VirtualServerProperty.CONNECTION_PACKETS_RECEIVED_TOTAL);
 	}
 
 	public long getTotalBytesReceived() {
-		return getLong(VirtualServerProperty.CONNECTION_BYTES_RECEIVED_TOTAL);
+		return requireLong(VirtualServerProperty.CONNECTION_BYTES_RECEIVED_TOTAL);
 	}
 
 	public long getBandwidthSentLastSecond() {
-		return getLong(VirtualServerProperty.CONNECTION_BANDWIDTH_SENT_LAST_SECOND_TOTAL);
+		return requireLong(VirtualServerProperty.CONNECTION_BANDWIDTH_SENT_LAST_SECOND_TOTAL);
 	}
 
 	public long getBandwidthSentLastMinute() {
-		return getLong(VirtualServerProperty.CONNECTION_BANDWIDTH_SENT_LAST_MINUTE_TOTAL);
+		return requireLong(VirtualServerProperty.CONNECTION_BANDWIDTH_SENT_LAST_MINUTE_TOTAL);
 	}
 
 	public long getBandwidthReceivedLastSecond() {
-		return getLong(VirtualServerProperty.CONNECTION_BANDWIDTH_RECEIVED_LAST_SECOND_TOTAL);
+		return requireLong(VirtualServerProperty.CONNECTION_BANDWIDTH_RECEIVED_LAST_SECOND_TOTAL);
 	}
 
 	public long getBandwidthReceivedLastMinute() {
-		return getLong(VirtualServerProperty.CONNECTION_BANDWIDTH_RECEIVED_LAST_MINUTE_TOTAL);
+		return requireLong(VirtualServerProperty.CONNECTION_BANDWIDTH_RECEIVED_LAST_MINUTE_TOTAL);
 	}
 
-	public long getConnectedTime() {
-		return getLong("connection_connected_time");
+	/** @return the virtual server's uptime as reported by this command */
+	public Duration getConnectedTime() {
+		return requireSeconds("connection_connected_time");
 	}
 
 	public double getPacketLoss() {
-		return getDouble("connection_packetloss_total");
+		return requireDouble("connection_packetloss_total");
 	}
 
 	public double getPing() {
-		return getDouble("connection_ping");
+		return requireDouble("connection_ping");
 	}
 
 }

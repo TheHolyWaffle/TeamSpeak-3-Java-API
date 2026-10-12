@@ -5,6 +5,10 @@ import net.schmizz.sshj.DefaultConfig;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.transport.verification.HostKeyVerifier;
+import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.AbstractWaitStrategy;
 import org.testcontainers.images.builder.Transferable;
@@ -25,8 +29,13 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
-/** Disposable server with no host data or fixed host ports. Credentials are test-only. */
-final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer> {
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+/**
+ * Disposable server with no host data or fixed host ports. Credentials are test-only.
+ * Register as a static {@code @RegisterExtension} field to share one server across a test class.
+ */
+final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer> implements BeforeAllCallback, AfterAllCallback {
 	static final String PASSWORD = "integration-test-only";
 	static final String TS3_IMAGE = "teamspeak:3.13.8@sha256:6dfdfb22869adf50e1b66d024b360b786d57a85ea09e8e8fdb6cca23949b2813";
 	PublicKey hostKey;
@@ -66,6 +75,21 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer> {
 				throw new IllegalStateException("Authenticated ServerQuery readiness failed for " + getDockerImageName(), last);
 			}
 		}.withStartupTimeout(Duration.ofSeconds(90)));
+	}
+
+	TeamSpeakContainer withFileTransferPort() {
+		addExposedPort(30033);
+		return this;
+	}
+
+	@Override public void beforeAll(ExtensionContext context) {
+		// Deliberately fail, never skip, when the integration profile cannot use Docker.
+		assertTrue(DockerClientFactory.instance().isDockerAvailable(), "Required Docker integration tests cannot run: start a Docker daemon");
+		start();
+	}
+
+	@Override public void afterAll(ExtensionContext context) {
+		close();
 	}
 
 	private void probeRaw() throws IOException {
@@ -136,8 +160,8 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer> {
 	void record(String name, Version version) throws IOException {
 		Path directory = Path.of("target", "compatibility");
 		Files.createDirectories(directory);
-		Files.writeString(directory.resolve(name + ".txt"), "image=" + getDockerImageName() + "\nversion=" + version.getVersion()
-				+ "\nbuild=" + version.getBuild() + "\nplatform=" + version.getPlatform() + "\ndaemonArchitecture="
+		Files.writeString(directory.resolve(name + ".txt"), "image=" + getDockerImageName() + "\nversion=" + version.version()
+				+ "\nbuild=" + version.build() + "\nplatform=" + version.platform() + "\ndaemonArchitecture="
 				+ getDockerClient().infoCmd().exec().getArchitecture() + "\nimageArchitecture="
 				+ getDockerClient().inspectImageCmd(getContainerInfo().getImageId()).exec().getArch() + "\nsshBanner=" + sshBanner
 				+ "\nalgorithms=" + algorithms + "\nqueryGreetingAndVersion=" + queryBanner);

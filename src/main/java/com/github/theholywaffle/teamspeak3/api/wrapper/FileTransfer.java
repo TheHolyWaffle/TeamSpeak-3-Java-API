@@ -26,6 +26,9 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.ClientId;
+
+import java.time.Duration;
 import java.util.Map;
 
 public class FileTransfer extends Wrapper {
@@ -39,8 +42,8 @@ public class FileTransfer extends Wrapper {
 	 *
 	 * @return the ID of the involved client
 	 */
-	public int getClientId() {
-		return getInt("clid");
+	public ClientId getClientId() {
+		return requireClientId("clid");
 	}
 
 	/**
@@ -50,7 +53,7 @@ public class FileTransfer extends Wrapper {
 	 * @return the disk path of the folder containing the transferring file
 	 */
 	public String getDiskFilePath() {
-		return get("path");
+		return require("path");
 	}
 
 	/**
@@ -59,7 +62,7 @@ public class FileTransfer extends Wrapper {
 	 * @return the file's name
 	 */
 	public String getFileName() {
-		return get("name");
+		return require("name");
 	}
 
 	/**
@@ -68,7 +71,7 @@ public class FileTransfer extends Wrapper {
 	 * @return the final file size in bytes
 	 */
 	public long getTotalFileSize() {
-		return getLong("size");
+		return requireLong("size");
 	}
 
 	/**
@@ -77,7 +80,7 @@ public class FileTransfer extends Wrapper {
 	 * @return the amount of transferred bytes
 	 */
 	public long getTransferredFileSize() {
-		return getLong("sizedone");
+		return requireLong("sizedone");
 	}
 
 	/**
@@ -86,7 +89,7 @@ public class FileTransfer extends Wrapper {
 	 * @return the client's file transfer ID
 	 */
 	public int getClientTransferId() {
-		return getInt("clientftfid");
+		return requireInt("clientftfid");
 	}
 
 	/**
@@ -96,7 +99,7 @@ public class FileTransfer extends Wrapper {
 	 * @return the server's file transfer ID
 	 */
 	public int getServerTransferId() {
-		return getInt("serverftfid");
+		return requireInt("serverftfid");
 	}
 
 	/**
@@ -113,7 +116,7 @@ public class FileTransfer extends Wrapper {
 	 * @return the current transfer status
 	 */
 	public int getStatus() {
-		return getInt("status");
+		return requireInt("status");
 	}
 
 	/**
@@ -141,7 +144,7 @@ public class FileTransfer extends Wrapper {
 	 * @return the current transfer speed
 	 */
 	public double getCurrentSpeed() {
-		return getDouble("current_speed");
+		return requireDouble("current_speed");
 	}
 
 	/**
@@ -150,17 +153,16 @@ public class FileTransfer extends Wrapper {
 	 * @return the current transfer speed
 	 */
 	public double getAverageSpeed() {
-		return getDouble("average_speed");
+		return requireDouble("average_speed");
 	}
 
 	/**
-	 * Returns how many milliseconds have elapsed since the file transfer was first announced to
-	 * the server. This value will count up even if the file transfer has not yet been started,
-	 * but will stop if the transfer has been paused or is complete.
+	 * Returns how long the file transfer has been running, with second precision.
+	 * TeamSpeak 3.13 reports this in seconds.
 	 *
-	 * @return the transfer runtime in milliseconds
+	 * @return the transfer runtime
 	 */
-	public long getRuntime() {
-		return getLong("runtime");
+	public Duration getRuntime() {
+		return requireSeconds("runtime");
 	}
 }

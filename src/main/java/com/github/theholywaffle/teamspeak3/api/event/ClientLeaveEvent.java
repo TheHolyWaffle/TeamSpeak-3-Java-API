@@ -26,6 +26,7 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 
 public class ClientLeaveEvent extends BaseEvent {
@@ -35,15 +36,15 @@ public class ClientLeaveEvent extends BaseEvent {
 	}
 
 	public int getClientFromId() {
-		return getInt("cfid");
+		return requireInt("cfid");
 	}
 
 	public int getClientTargetId() {
-		return getInt("ctid");
+		return requireInt("ctid");
 	}
 
-	public int getClientId() {
-		return getInt("clid");
+	public ClientId getClientId() {
+		return requireClientId("clid");
 	}
 
 	@Override

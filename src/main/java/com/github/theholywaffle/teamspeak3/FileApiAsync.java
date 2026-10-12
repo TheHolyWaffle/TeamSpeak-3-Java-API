@@ -208,9 +208,10 @@ public final class FileApiAsync {
 				operation.close(); work.completeExceptionally(failure); finished.complete(null); return;
 			}
 			runFileWork(operation, work, "File transfer aborted", failureMessage, op -> {
-				var params = new FileTransferParameters(response.getFirstResponse().getMap());
-				var error = FileTransferHelper.field(params::getQueryError);
-				if (!error.isSuccessful()) throw new TS3CommandFailedException(error, command.getName());
+				var row = response.getFirstResponse().orElseThrow(() -> new IOException(command.getName() + " returned no transfer parameters"));
+				var params = new FileTransferParameters(row.getMap());
+				var error = FileTransferHelper.field(params::findFailure);
+				if (error.isPresent()) throw new TS3CommandFailedException(error.get(), command.getName());
 				return transfer.run(params, op);
 			}, () -> finished.complete(null));
 		});

@@ -29,7 +29,10 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerStatus;
 
+import java.time.Duration;
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalInt;
 
 public class VirtualServer extends Wrapper {
 
@@ -38,48 +41,47 @@ public class VirtualServer extends Wrapper {
 	}
 
 	public int getId() {
-		return getInt(VirtualServerProperty.VIRTUALSERVER_ID);
+		return requireInt(VirtualServerProperty.VIRTUALSERVER_ID);
 	}
 
 	public int getPort() {
-		return getInt(VirtualServerProperty.VIRTUALSERVER_PORT);
+		return requireInt(VirtualServerProperty.VIRTUALSERVER_PORT);
 	}
 
+	/** @return the status, or {@link VirtualServerStatus#UNKNOWN} for a status this library does not know */
 	public VirtualServerStatus getStatus() {
-		final String status = get(VirtualServerProperty.VIRTUALSERVER_STATUS);
-		for (final VirtualServerStatus s : VirtualServerStatus.values()) {
-			if (status.equals(s.getName())) {
-				return s;
-			}
-		}
-		return VirtualServerStatus.UNKNOWN;
+		return VirtualServerStatus.fromName(require(VirtualServerProperty.VIRTUALSERVER_STATUS));
 	}
 
-	public int getClientsOnline() {
-		return getInt(VirtualServerProperty.VIRTUALSERVER_CLIENTSONLINE);
+	/** @return the number of connected clients, or empty for a server that is not running */
+	public OptionalInt getClientsOnline() {
+		return findInt(VirtualServerProperty.VIRTUALSERVER_CLIENTSONLINE);
 	}
 
-	public int getQueryClientsOnline() {
-		return getInt(VirtualServerProperty.VIRTUALSERVER_QUERYCLIENTSONLINE);
+	/** @return the number of connected query clients, or empty for a server that is not running */
+	public OptionalInt getQueryClientsOnline() {
+		return findInt(VirtualServerProperty.VIRTUALSERVER_QUERYCLIENTSONLINE);
 	}
 
-	public int getMaxClients() {
-		return getInt(VirtualServerProperty.VIRTUALSERVER_MAXCLIENTS);
+	/** @return the client limit, or empty for a server that is not running */
+	public OptionalInt getMaxClients() {
+		return findInt(VirtualServerProperty.VIRTUALSERVER_MAXCLIENTS);
 	}
 
 	public String getUniqueIdentifier() {
-		return get(VirtualServerProperty.VIRTUALSERVER_UNIQUE_IDENTIFIER);
+		return require(VirtualServerProperty.VIRTUALSERVER_UNIQUE_IDENTIFIER);
 	}
 
-	public long getUptime() {
-		return getLong(VirtualServerProperty.VIRTUALSERVER_UPTIME); // in seconds
+	/** @return the uptime, or empty for a server that is not running */
+	public Optional<Duration> getUptime() {
+		return findLong(VirtualServerProperty.VIRTUALSERVER_UPTIME).stream().mapToObj(Duration::ofSeconds).findFirst();
 	}
 
 	public String getName() {
-		return get(VirtualServerProperty.VIRTUALSERVER_NAME);
+		return require(VirtualServerProperty.VIRTUALSERVER_NAME);
 	}
 
 	public boolean isAutoStart() {
-		return getBoolean(VirtualServerProperty.VIRTUALSERVER_AUTOSTART);
+		return requireBoolean(VirtualServerProperty.VIRTUALSERVER_AUTOSTART);
 	}
 }

@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Complaint;
 
@@ -33,7 +34,7 @@ public final class ComplaintApi {
 	 * @param targetDatabaseId the database ID of the client complained about
 	 * @return the complaints; empty if there are none
 	 */
-	public List<Complaint> about(int targetDatabaseId) {
+	public List<Complaint> about(ClientDatabaseId targetDatabaseId) {
 		return CommandFutures.join(async.about(targetDatabaseId));
 	}
 
@@ -43,7 +44,7 @@ public final class ComplaintApi {
 	 * @param targetDatabaseId the database ID of the client to complain about
 	 * @param message the complaint message
 	 */
-	public void add(int targetDatabaseId, String message) {
+	public void add(ClientDatabaseId targetDatabaseId, String message) {
 		CommandFutures.join(async.add(targetDatabaseId, message));
 	}
 
@@ -53,7 +54,7 @@ public final class ComplaintApi {
 	 * @param targetDatabaseId the database ID of the client complained about
 	 * @param fromDatabaseId the database ID of the complaining client
 	 */
-	public void delete(int targetDatabaseId, int fromDatabaseId) {
+	public void delete(ClientDatabaseId targetDatabaseId, ClientDatabaseId fromDatabaseId) {
 		CommandFutures.join(async.delete(targetDatabaseId, fromDatabaseId));
 	}
 
@@ -62,7 +63,7 @@ public final class ComplaintApi {
 	 *
 	 * @param targetDatabaseId the database ID of the client complained about
 	 */
-	public void deleteAll(int targetDatabaseId) {
+	public void deleteAll(ClientDatabaseId targetDatabaseId) {
 		CommandFutures.join(async.deleteAll(targetDatabaseId));
 	}
 }

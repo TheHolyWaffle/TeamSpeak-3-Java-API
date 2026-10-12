@@ -26,7 +26,7 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.Map;
 
 public class FileInfo extends Wrapper {
@@ -41,7 +41,7 @@ public class FileInfo extends Wrapper {
 	 * @return the ID of the file's channel
 	 */
 	public int getChannelId() {
-		return getInt("cid");
+		return requireInt("cid");
 	}
 
 	/**
@@ -51,7 +51,7 @@ public class FileInfo extends Wrapper {
 	 * @return the path to the file or directory
 	 */
 	public String getPath() {
-		return get("name");
+		return require("name");
 	}
 
 	/**
@@ -88,7 +88,7 @@ public class FileInfo extends Wrapper {
 	 * @return the file's size
 	 */
 	public long getFileSize() {
-		return getLong("size");
+		return requireLong("size");
 	}
 
 	/**
@@ -98,8 +98,8 @@ public class FileInfo extends Wrapper {
 	 *
 	 * @return the file's last modification date, interpreting the field as seconds
 	 */
-	public Date getLastModifiedDate() {
-		return new Date(getLong("datetime") * 1000);
+	public Instant getLastModifiedDate() {
+		return requireInstant("datetime");
 	}
 
 	/**

@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
@@ -90,9 +91,9 @@ class ReconnectSemanticsTest {
 				assertTrue(received.await(1, TimeUnit.SECONDS));
 				var waiting = query.getAsyncApi().instance().version();
 				drop.countDown();
-				assertEquals(42, read.get(2, TimeUnit.SECONDS).getId());
+				assertEquals(ClientId.of(42), read.get(2, TimeUnit.SECONDS).getId());
 				assertEquals(7, read.get().getVirtualServerId());
-				assertEquals("test", waiting.get(2, TimeUnit.SECONDS).getVersion());
+				assertEquals("test", waiting.get(2, TimeUnit.SECONDS).version());
 				query.exit(); server.await(); closed(query);
 			}
 		}
@@ -105,7 +106,7 @@ class ReconnectSemanticsTest {
 		try (var server = new Peer(
 			p -> { p.restore(); p.expect("whoami"); received.countDown(); assertTrue(drop.await(2, TimeUnit.SECONDS)); },
 			p -> { p.restore(); p.expect("whoami"); },
-			p -> { p.restore(); p.expect("version"); p.reply("version=after-exhaustion"); p.quit(); })) {
+			p -> { p.restore(); p.expect("version"); p.reply("version=after-exhaustion build=1 platform=test"); p.quit(); })) {
 			try (var query = new TS3Query(config(server.port()).setCommandRetryPolicy(CommandRetryPolicy.safeReads(1, "whoami")))) {
 				query.connect();
 				var read = query.getAsyncApi().whoAmI();
@@ -113,7 +114,7 @@ class ReconnectSemanticsTest {
 				var waiting = query.getAsyncApi().instance().version();
 				drop.countDown();
 				assertThrows(TS3UnknownOutcomeException.class, () -> FutureAssertions.read(read, 2, TimeUnit.SECONDS));
-				assertEquals("after-exhaustion", waiting.get(2, TimeUnit.SECONDS).getVersion());
+				assertEquals("after-exhaustion", waiting.get(2, TimeUnit.SECONDS).version());
 				query.exit(); server.await(); closed(query);
 			}
 		}
@@ -144,7 +145,7 @@ class ReconnectSemanticsTest {
 		var drop = new CountDownLatch(1);
 		try (var server = new Peer(
 			p -> { p.restore(); p.expect("whoami"); received.countDown(); assertTrue(drop.await(2, TimeUnit.SECONDS)); },
-			p -> { p.restore(); p.expect("version"); p.reply("version=next"); p.quit(); })) {
+			p -> { p.restore(); p.expect("version"); p.reply("version=next build=1 platform=test"); p.quit(); })) {
 			try (var query = new TS3Query(config(server.port())
 				.setReconnectStrategy(ReconnectStrategy.constantBackoff(300).withMaxAttempts(2))
 				.setCommandRetryPolicy(CommandRetryPolicy.safeReads(1, "whoami")))) {
@@ -158,7 +159,7 @@ class ReconnectSemanticsTest {
 				while (query.getState() != TS3Query.State.DISCONNECTED && System.nanoTime() < until) Thread.sleep(2);
 				assertEquals(TS3Query.State.DISCONNECTED, query.getState());
 				assertTrue(read.cancel(true)); assertTrue(write.cancel(true));
-				assertEquals("next", next.get(2, TimeUnit.SECONDS).getVersion());
+				assertEquals("next", next.get(2, TimeUnit.SECONDS).version());
 				query.exit(); server.await(); closed(query);
 			}
 		}
@@ -211,13 +212,13 @@ class ReconnectSemanticsTest {
 	@Test
 	void serverErrorsDoNotRetryAndSessionChangesAreRejected() throws Exception {
 		try (var server = new Peer(p -> { p.restore(); p.expect("whoami"); p.write("error id=256 msg=error\n");
-			p.expect("version"); p.reply("version=framing-ok"); p.quit(); })) {
+			p.expect("version"); p.reply("version=framing-ok build=1 platform=test"); p.quit(); })) {
 			try (var query = new TS3Query(config(server.port()).setCommandRetryPolicy(CommandRetryPolicy.safeReads(2, "whoami")))) {
 				query.connect();
 				assertThrows(TS3CommandFailedException.class, () -> FutureAssertions.read(query.getAsyncApi().whoAmI(), 1, TimeUnit.SECONDS));
 				assertThrows(TS3UnsupportedOperationException.class, () -> query.getApi().selectVirtualServerById(8));
 				assertThrows(TS3UnsupportedOperationException.class, () -> query.getApi().setNickname("other"));
-				assertEquals("framing-ok", query.getApi().instance().version().getVersion());
+				assertEquals("framing-ok", query.getApi().instance().version().version());
 				query.exit(); server.await(); closed(query);
 			}
 		}

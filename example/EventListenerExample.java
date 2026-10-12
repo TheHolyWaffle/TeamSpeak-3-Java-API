@@ -59,7 +59,7 @@ public class EventListenerExample {
 
 			@Override
 			public void onServerEdit(ServerEditedEvent e) {
-				System.out.println("Server edited by " + e.getInvokerName());
+				System.out.println("Server edited by " + e.getInvokerName().orElse("the server"));
 			}
 
 			@Override

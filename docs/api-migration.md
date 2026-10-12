@@ -227,7 +227,7 @@ and previously rejected locally, is now accepted.
 
 | Previous documentation | Actual behavior before #443 | 2.0 |
 | --- | --- | --- |
-| `TS3Api` class: "many methods in this class will return `null` or `-1` if a command fails" | Inaccurate. Server errors always threw `TS3CommandFailedException` (sync) or failed the future (async). `-1`/`""`/default models appeared when a **successful** response had no row or field: an empty (1281) answer to a single-row read went through `Wrapper.EMPTY`. | Removed. Required rows/fields fail with `TS3Exception`; absent lookups are `Optional`. |
+| `TS3Api` class: "many methods in this class will return `null` or `-1` if a command fails" | Inaccurate. Server errors always threw `TS3CommandFailedException` (sync) or failed the future (async). `-1`/`""`/default models appeared when a **successful** response had no row or field: an empty (1281) answer to a single-row read went through `Wrapper.EMPTY`. | Removed. Required rows/fields fail with `TS3Exception` (`TS3InvalidValueException` since #444); absent lookups are `Optional`. |
 | `getChannelByNameExact`, `getClientByNameExact`: "`null` if no … was found" | Accurate | `Optional` |
 | `getDatabaseClientByUId`: "`null` if no client was found" | Accurate (1281) | `Optional` |
 | `getOfflineMessage`: "`null` if there was no message with that ID" | Accurate (1281); an explicit empty body was `""` | `Optional`; an empty body is `Optional.of("")` |
@@ -244,7 +244,9 @@ Every public operation of the previous `TS3Api` and `TS3ApiAsync` (identical set
 parameters. **Replaced**: moved to a domain or reshaped, same capability.
 **Removed**: an intentional convenience overload or variant with the replacement shown.
 No operation is deferred. `ApiMigrationInventoryTest` checks that this table covers
-238 distinct signatures and that every replacement exists in the 2.0 API.
+238 distinct signatures and that every replacement exists in the 2.0 API. Since #444,
+client (`clid`) and client database (`cldbid`) parameters below are `ClientId` and
+`ClientDatabaseId`; see the [response model guide](models-and-values.md#identifier-types).
 
 | Previous operation | Status | 2.0 replacement | Notes |
 | --- | --- | --- | --- |
@@ -268,7 +270,7 @@ No operation is deferred. `ApiMigrationInventoryTest` checks that this table cov
 | `addServerGroup(String)` | Replaced | `serverGroups().create(name)` |  |
 | `addServerGroup(String, PermissionGroupDatabaseType)` | Replaced | `serverGroups().create(name, type)` |  |
 | `addServerGroupPermission(int, String, int, boolean, boolean)` | Replaced | `permissions().add(PermissionTarget, PermissionGrant)` | `PermissionTarget.serverGroup(id)`; flags via `withNegated()`/`withSkip()` |
-| `addServerQueryLogin(String, int)` | Replaced | `queryLogins().create(loginName, cldbid)` |  |
+| `addServerQueryLogin(String, int)` | Replaced | `queryLogins().create(loginName, cldbid)` | `cldbid` 0 (new identity, no server selected) is `create(loginName)` since #444 |
 | `addTS3Listeners(TS3Listener...)` | Removed | `events().subscribe(listener)` | one listener per call; keep the returned `EventSubscription` (same as `TS3Query#subscribe`) |
 | `banClient(int, long)` | Replaced | `bans().banClients(ClientBan)` | `ClientBan.of(clid).withDuration(Duration.ofSeconds(s))`; returns `List<Integer>` |
 | `banClient(int, long, String)` | Replaced | `bans().banClients(ClientBan)` | add `withReason(..)` |
@@ -498,7 +500,8 @@ No operation is deferred. `ApiMigrationInventoryTest` checks that this table cov
   client permissions (512) or consume privilege keys (516).
 - The `commands` packages stay public. Consumers cannot execute their `Command` objects,
   so they are not operations of the API; hiding them needs JPMS exports, which #447
-  decides. Model immutability and typed values belong to #444.
+  decides. Model immutability and typed values are covered by the
+  [response model guide](models-and-values.md) (#444).
 
 ## Release intent and migration
 

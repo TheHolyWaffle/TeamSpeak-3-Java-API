@@ -32,6 +32,8 @@ public enum HostBannerMode {
 	KEEP_ASPECT(2),
 	UNKNOWN(-1);
 
+	private static final HostBannerMode[] VALUES = values();
+
 	private final int i;
 
 	HostBannerMode(int i) {
@@ -42,4 +44,11 @@ public enum HostBannerMode {
 		return i;
 	}
 
+	/**
+	 * @param index the ServerQuery code
+	 * @return the matching constant, or {@link #UNKNOWN} for a code this library does not know
+	 */
+	public static HostBannerMode fromIndex(int index) {
+		return CodeLookup.byIndex(VALUES, HostBannerMode::getIndex, index, UNKNOWN);
+	}
 }

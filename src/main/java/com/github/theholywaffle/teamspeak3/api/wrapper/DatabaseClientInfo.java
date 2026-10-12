@@ -26,9 +26,12 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalLong;
 
 public class DatabaseClientInfo extends DatabaseClient {
 
@@ -37,35 +40,38 @@ public class DatabaseClientInfo extends DatabaseClient {
 	}
 
 	@Override
-	public int getDatabaseId() {
-		return getInt(ClientProperty.CLIENT_DATABASE_ID);
+	public ClientDatabaseId getDatabaseId() {
+		return requireDatabaseId(ClientProperty.CLIENT_DATABASE_ID);
 	}
 
-	public String getAvatar() {
-		return get(ClientProperty.CLIENT_FLAG_AVATAR);
+	/** @return the avatar hash, or empty if the client has no avatar */
+	public Optional<String> getAvatar() {
+		return findText(ClientProperty.CLIENT_FLAG_AVATAR);
 	}
 
 	public long getMonthlyBytesUploaded() {
-		return getLong(ClientProperty.CLIENT_MONTH_BYTES_UPLOADED);
+		return requireLong(ClientProperty.CLIENT_MONTH_BYTES_UPLOADED);
 	}
 
 	public long getMonthlyBytesDownloaded() {
-		return getLong(ClientProperty.CLIENT_MONTH_BYTES_DOWNLOADED);
+		return requireLong(ClientProperty.CLIENT_MONTH_BYTES_DOWNLOADED);
 	}
 
 	public long getTotalBytesUploaded() {
-		return getLong(ClientProperty.CLIENT_TOTAL_BYTES_UPLOADED);
+		return requireLong(ClientProperty.CLIENT_TOTAL_BYTES_UPLOADED);
 	}
 
 	public long getTotalBytesDownloaded() {
-		return getLong(ClientProperty.CLIENT_TOTAL_BYTES_DOWNLOADED);
+		return requireLong(ClientProperty.CLIENT_TOTAL_BYTES_DOWNLOADED);
 	}
 
-	public long getIconId() {
-		return getLong(ClientProperty.CLIENT_ICON_ID);
+	/** @return the icon ID, or empty if the server omits it (TeamSpeak 3.13 does) */
+	public OptionalLong getIconId() {
+		return findLong(ClientProperty.CLIENT_ICON_ID);
 	}
 
-	public String getBase64HashClientUID() {
-		return get("client_base64HashClientUID");
+	/** @return the base64 hash of the unique ID, or empty if the server sends none */
+	public Optional<String> getBase64HashClientUID() {
+		return findText("client_base64HashClientUID");
 	}
 }

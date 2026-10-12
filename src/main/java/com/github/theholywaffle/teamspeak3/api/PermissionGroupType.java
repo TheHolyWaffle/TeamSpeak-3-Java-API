@@ -63,7 +63,12 @@ public enum PermissionGroupType {
 	 * {@code b_client_is_priority_speaker} to a client in a channel.
 	 * </p>
 	 */
-	CHANNEL_CLIENT(4);
+	CHANNEL_CLIENT(4),
+
+	/** A code this library does not know; read the raw value from the model's properties. */
+	UNKNOWN(-1);
+
+	private static final PermissionGroupType[] VALUES = values();
 
 	private final int i;
 
@@ -75,4 +80,11 @@ public enum PermissionGroupType {
 		return i;
 	}
 
+	/**
+	 * @param index the ServerQuery code
+	 * @return the matching constant, or {@link #UNKNOWN} for a code this library does not know
+	 */
+	public static PermissionGroupType fromIndex(int index) {
+		return CodeLookup.byIndex(VALUES, PermissionGroupType::getIndex, index, UNKNOWN);
+	}
 }

@@ -213,7 +213,7 @@ public class TS3ApiAsync {
 
 	/** @see TS3Api#moveQuery(int, String) */
 	public CompletableFuture<Void> moveQuery(int channelId, String channelPassword) {
-		return clients.move(0, channelId, channelPassword);
+		return requests.run(ClientCommands.clientMove(0, channelId, channelPassword));
 	}
 
 	CompletableFuture<Void> quit() {

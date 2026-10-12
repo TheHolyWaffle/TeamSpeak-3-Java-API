@@ -26,7 +26,9 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.Date;
+import com.github.theholywaffle.teamspeak3.api.PrivilegeKeyType;
+
+import java.time.Instant;
 import java.util.Map;
 
 public class PrivilegeKey extends Wrapper {
@@ -36,34 +38,35 @@ public class PrivilegeKey extends Wrapper {
 	}
 
 	public String getToken() {
-		return get("token");
+		return require("token");
 	}
 
-	public int getType() {
-		return getInt("token_type");
+	/** @return the key type, or {@link PrivilegeKeyType#UNKNOWN} for a type this library does not know */
+	public PrivilegeKeyType getType() {
+		return requireCode("token_type", PrivilegeKeyType::fromIndex);
 	}
 
 	public boolean isServerGroupToken() {
-		return getType() == 0;
+		return getType() == PrivilegeKeyType.SERVER_GROUP;
 	}
 
 	public boolean isChannelGroupToken() {
-		return !isServerGroupToken();
+		return getType() == PrivilegeKeyType.CHANNEL_GROUP;
 	}
 
 	public int getGroupId() {
-		return getInt("token_id1");
+		return requireInt("token_id1");
 	}
 
 	public int getChannelId() {
-		return getInt("token_id2");
+		return requireInt("token_id2");
 	}
 
-	public Date getCreated() {
-		return new Date(getLong("token_created") * 1000);
+	public Instant getCreated() {
+		return requireInstant("token_created");
 	}
 
 	public String getDescription() {
-		return get("token_description");
+		return require("token_description");
 	}
 }

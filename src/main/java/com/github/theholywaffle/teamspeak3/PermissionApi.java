@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.PermissionGrant;
 import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
@@ -91,7 +92,7 @@ public final class PermissionApi {
 	 * @param clientDatabaseId the client database ID
 	 * @return the effective assignments
 	 */
-	public List<PermissionAssignment> overview(int channelId, int clientDatabaseId) {
+	public List<PermissionAssignment> overview(int channelId, ClientDatabaseId clientDatabaseId) {
 		return CommandFutures.join(async.overview(channelId, clientDatabaseId));
 	}
 

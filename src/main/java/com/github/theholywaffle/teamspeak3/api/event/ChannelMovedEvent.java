@@ -36,15 +36,15 @@ public class ChannelMovedEvent extends BaseEvent {
 	}
 
 	public int getChannelId() {
-		return getInt(ChannelProperty.CID);
+		return requireInt(ChannelProperty.CID);
 	}
 
 	public int getChannelParentId() {
-		return getInt(ChannelProperty.CPID);
+		return requireInt(ChannelProperty.CPID);
 	}
 
 	public int getChannelOrder() {
-		return getInt("order");
+		return requireInt("order");
 	}
 
 	@Override

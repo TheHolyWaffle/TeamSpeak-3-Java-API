@@ -27,6 +27,7 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  */
 
 import java.util.Map;
+import java.util.OptionalLong;
 
 public class FileListEntry extends FileInfo {
 
@@ -41,24 +42,23 @@ public class FileListEntry extends FileInfo {
 
 	@Override
 	public String getName() {
-		return get("name");
+		return require("name");
 	}
 
 	@Override
 	public String getParentPath() {
-		return get("path");
+		return require("path");
 	}
 
 	@Override
 	public long getFileSize() {
 		// Present if still uploading and returns
-		final long finishedSize = getLong("incompletesize");
-		return (finishedSize > 0) ? finishedSize : super.getFileSize();
+		return incompleteSize().orElseGet(super::getFileSize);
 	}
 
 	@Override
 	public int getType() {
-		return getInt("type");
+		return requireInt("type");
 	}
 
 	@Override
@@ -79,7 +79,7 @@ public class FileListEntry extends FileInfo {
 	 * @return whether this file is actively being uploaded
 	 */
 	public boolean isStillUploading() {
-		return getLong("incompletesize") > 0;
+		return incompleteSize().isPresent();
 	}
 
 	/**
@@ -90,5 +90,11 @@ public class FileListEntry extends FileInfo {
 	 */
 	public long getUploadedBytes() {
 		return super.getFileSize();
+	}
+
+	/** TeamSpeak only sends {@code incompletesize} for files that are still being uploaded. */
+	private OptionalLong incompleteSize() {
+		OptionalLong size = findLong("incompletesize");
+		return size.isPresent() && size.getAsLong() > 0 ? size : OptionalLong.empty();
 	}
 }

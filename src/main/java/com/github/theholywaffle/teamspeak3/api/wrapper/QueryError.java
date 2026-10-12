@@ -27,6 +27,8 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  */
 
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalInt;
 
 public class QueryError extends Wrapper {
 
@@ -38,23 +40,32 @@ public class QueryError extends Wrapper {
 	}
 
 	public int getId() {
-		return getInt("id");
+		return requireInt("id");
 	}
 
 	public String getMessage() {
-		return get("msg");
+		return require("msg");
 	}
 
-	public String getExtraMessage() {
-		return get("extra_msg");
+	public Optional<String> getExtraMessage() {
+		return findText("extra_msg");
 	}
 
-	public int getFailedPermissionId() {
-		return getInt("failed_permid");
+	public OptionalInt getFailedPermissionId() {
+		return findInt("failed_permid");
 	}
 
 	public boolean isSuccessful() {
-		final int id = getId();
-		return (id == ERROR_ID_OK || id == ERROR_ID_EMPTY_RESULT_SET);
+		return isSuccessful(getId());
+	}
+
+	/**
+	 * Checks whether an error ID reports success: {@code 0} (ok) or {@code 1281} (empty result set).
+	 *
+	 * @param id the error ID
+	 * @return whether the ID reports success
+	 */
+	public static boolean isSuccessful(int id) {
+		return id == ERROR_ID_OK || id == ERROR_ID_EMPTY_RESULT_SET;
 	}
 }

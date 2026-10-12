@@ -29,6 +29,7 @@ import com.github.theholywaffle.teamspeak3.TS3ApiAsync;
 import com.github.theholywaffle.teamspeak3.TS3Config;
 import com.github.theholywaffle.teamspeak3.TS3Query;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
@@ -42,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -52,7 +54,7 @@ public class ReconnectExample {
 	// Since this ID changes when we reconnect, we need to keep track of it!
 	// It also needs to be volatile so that any changes are immediately visible
 	// in other threads, like the one executing our event handler.
-	private static volatile int clientId;
+	private static volatile ClientId clientId;
 
 	public static void main(String[] args) {
 		final TS3Config config = new TS3Config();
@@ -112,11 +114,11 @@ public class ReconnectExample {
 			@Override
 			public void onTextMessage(TextMessageEvent e) {
 				// Only react to channel messages not sent by the query itself
-				if (e.getTargetMode() == TextMessageTargetMode.CHANNEL && e.getInvokerId() != clientId) {
+				if (e.getTargetMode() == TextMessageTargetMode.CHANNEL && !e.getInvokerId().equals(Optional.ofNullable(clientId))) {
 					// Greet whoever sent a message in the default channel
 					// (Yes this isn't smart or useful, this is just an example)
 					// Message: "Hello <client name>!"
-					api.messages().sendChannel("Hello " + e.getInvokerName() + "!");
+					api.messages().sendChannel("Hello " + e.getInvokerName().orElse("there") + "!");
 				}
 			}
 		});

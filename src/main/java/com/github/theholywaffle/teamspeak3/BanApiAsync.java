@@ -34,7 +34,7 @@ public final class BanApiAsync {
 
 	/** @see BanApi#banClients(ClientBan) */
 	public CompletableFuture<List<Integer>> banClients(ClientBan ban) {
-		int[] ids = ban.clientIds().stream().mapToInt(Integer::intValue).toArray();
+		int[] ids = QueryRequests.values(ban.clientIds());
 		return requests.integers(BanCommands.banClient(ids, ban.duration().toSeconds(), ban.reason(), ban.continueOnError()), "banid");
 	}
 

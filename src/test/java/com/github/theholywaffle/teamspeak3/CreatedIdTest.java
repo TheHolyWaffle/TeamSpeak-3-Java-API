@@ -1,9 +1,13 @@
 package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class CreatedIdTest {
@@ -13,7 +17,7 @@ class CreatedIdTest {
             p.expect("whoami"); p.write("clid=1\nerror id=0 msg=ok\n");
             p.expect("servergroupadd name=probe type=1");
             p.write((response.isEmpty() ? "" : response + "\n") + "error id=0 msg=ok\n");
-            p.expect("version"); p.write("version=probe\nerror id=0 msg=ok\n");
+            p.expect("version"); p.write("version=probe build=1 platform=test\nerror id=0 msg=ok\n");
             p.finishQuit();
         }); var query = new TS3Query(new TS3Config().setHost("127.0.0.1").setQueryPort(peer.port())
                 .setFloodRate(TS3Query.FloodRate.UNLIMITED).setConnectionHandler(new ConnectionHandler() {
@@ -22,8 +26,10 @@ class CreatedIdTest {
                 }))) {
             query.connect();
             var failure = assertThrows(TS3Exception.class, () -> query.getApi().serverGroups().create("probe"));
-            assertEquals("servergroupadd response requires a positive sgid", failure.getMessage());
-            assertEquals("probe", query.getApi().instance().version().getVersion());
+            if (response.isEmpty()) assertEquals("servergroupadd returned no result", failure.getMessage());
+            else assertEquals(Optional.of(response.substring("sgid=".length())),
+                    assertInstanceOf(TS3InvalidValueException.class, failure).getRawValue());
+            assertEquals("probe", query.getApi().instance().version().version());
             query.exit(); peer.await();
         }
     }

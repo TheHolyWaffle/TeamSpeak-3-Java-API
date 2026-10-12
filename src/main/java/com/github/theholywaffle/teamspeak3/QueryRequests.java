@@ -1,12 +1,15 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -14,7 +17,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.Function;
-import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
 /** The single command execution path shared by every asynchronous domain API. */
@@ -66,62 +68,40 @@ final class QueryRequests {
 
 	/** An empty result (including error 1281) means absent. */
 	<T> CompletableFuture<Optional<T>> optional(Command command, Function<Wrapper, T> fn) {
-		return response(command, response -> response.getResponses().isEmpty()
-			? Optional.empty() : Optional.ofNullable(fn.apply(response.getFirstResponse())));
+		return response(command, response -> response.getFirstResponse().map(fn));
 	}
 
 	CompletableFuture<Optional<Integer>> optionalInteger(Command command, String property) {
-		return optional(command, row -> parse(command, property, required(command, row, property)));
+		return optional(command, row -> row.requireInt(property));
 	}
 
 	CompletableFuture<String> string(Command command, String property) {
-		return one(command, row -> required(command, row, property));
+		return one(command, row -> row.require(property));
 	}
 
 	CompletableFuture<Integer> integer(Command command, String property) {
-		return one(command, row -> parse(command, property, required(command, row, property)));
+		return one(command, row -> row.requireInt(property));
 	}
 
 	CompletableFuture<List<Integer>> integers(Command command, String property) {
-		return rows(command, row -> parse(command, property, required(command, row, property)));
+		return rows(command, row -> row.requireInt(property));
 	}
 
 	CompletableFuture<Integer> createdId(Command command, String property) {
-		return response(command, response -> {
-			String message = command.getName() + " response requires a positive " + property;
-			String value = response.getResponses().isEmpty() ? null : response.getFirstResponse().getMap().get(property);
-			int id = parse(value, message);
-			if (id <= 0) throw new TS3Exception(message);
+		return one(command, row -> {
+			int id = row.requireInt(property);
+			if (id <= 0) throw new TS3InvalidValueException(property, row.require(property), "a positive ID", null);
 			return id;
 		});
 	}
 
 	private static Wrapper firstRow(Command command, DefaultArrayResponse response) {
-		if (response.getResponses().isEmpty()) throw new TS3Exception(command.getName() + " returned no result");
-		return response.getFirstResponse();
-	}
-
-	private static String required(Command command, Wrapper row, String property) {
-		String value = row.getMap().get(property);
-		if (value == null) throw new TS3Exception(command.getName() + " response lacks " + property);
-		return value;
-	}
-
-	private static int parse(Command command, String property, String value) {
-		return parse(value, command.getName() + " response requires an integer " + property);
-	}
-
-	private static int parse(String value, String message) {
-		try {
-			return Integer.parseInt(value);
-		} catch (NumberFormatException failure) {
-			throw new TS3Exception(message, failure);
-		}
+		return response.getFirstResponse().orElseThrow(() -> new TS3Exception(command.getName() + " returned no result"));
 	}
 
 	/** Looks up the entity with a found ID; an absent ID stays absent. */
-	static <T> CompletableFuture<Optional<T>> thenLookup(CompletableFuture<Optional<Integer>> id,
-	                                                     IntFunction<CompletableFuture<T>> lookup) {
+	static <K, T> CompletableFuture<Optional<T>> thenLookup(CompletableFuture<Optional<K>> id,
+	                                                        Function<K, CompletableFuture<T>> lookup) {
 		return CommandFutures.compose(id, found -> found.isEmpty()
 			? CompletableFuture.completedFuture(Optional.empty())
 			: CommandFutures.map(lookup.apply(found.get()), Optional::of));
@@ -146,6 +126,10 @@ final class QueryRequests {
 				throw error;
 			} catch (Throwable other) { throw new CompletionException(other); }
 		}), request);
+	}
+
+	static int[] values(Collection<ClientId> clientIds) {
+		return clientIds.stream().mapToInt(ClientId::value).toArray();
 	}
 
 	static CompletableFuture<Void> discard(CompletableFuture<?> request) {

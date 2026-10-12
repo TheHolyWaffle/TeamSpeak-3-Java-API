@@ -26,6 +26,7 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Channel;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 
@@ -43,11 +44,11 @@ public class ClientMovedEvent extends BaseEvent {
 	 * @see Channel#getId()
 	 */
 	public int getTargetChannelId() {
-		return getInt("ctid");
+		return requireInt("ctid");
 	}
 
-	public int getClientId() {
-		return getInt("clid");
+	public ClientId getClientId() {
+		return requireClientId("clid");
 	}
 
 	@Override

@@ -42,17 +42,17 @@ class RawCommandTest {
 			p.expect("futurecommand value=hello\\sworld");
 			p.write("new_property=hello\\sworld\nerror id=0 msg=ok\n");
 			p.expect("unsupportedcommand"); p.write("error id=256 msg=command\\snot\\sfound\n");
-			p.expect("version"); p.write("version=probe\nerror id=0 msg=ok\n");
+			p.expect("version"); p.write("version=probe build=1 platform=test\nerror id=0 msg=ok\n");
 			p.finishQuit();
 		}); var query = new TS3Query(config(peer).setFloodRate(TS3Query.FloodRate.UNLIMITED))) {
 			query.connect();
 			var response = query.getAsyncApi().executeRawCommand("futurecommand value=hello\\sworld").get(5, TimeUnit.SECONDS);
-			assertEquals("hello world", response.getFirstResponse().get("new_property"));
+			assertEquals("hello world", response.getFirstResponse().orElseThrow().require("new_property"));
 			assertEquals("new_property=hello\\sworld", response.getRawResponse());
 			var error = assertThrows(TS3CommandFailedException.class, () -> query.getApi().executeRawCommand("unsupportedcommand"));
 			assertEquals(256, error.getError().getId());
 			assertEquals("command not found", error.getError().getMessage());
-			assertEquals("probe", query.getApi().executeRawCommand("version").getFirstResponse().get("version"));
+			assertEquals("probe", query.getApi().executeRawCommand("version").getFirstResponse().orElseThrow().require("version"));
 			query.exit(); peer.await();
 		}
 	}
@@ -60,7 +60,7 @@ class RawCommandTest {
 	@Test void unsentCancellationReleasesAdmissionBeforeApplicationCallbacks() throws Exception {
 		try (var peer = new FakeServerQuery(p -> {
 			p.expect("whoami"); p.write("clid=1\nerror id=0 msg=ok\n");
-			p.expect("version"); p.write("version=probe\nerror id=0 msg=ok\n");
+			p.expect("version"); p.write("version=probe build=1 platform=test\nerror id=0 msg=ok\n");
 			p.finishQuit();
 		}); var query = new TS3Query(config(peer).setCommandCapacity(1))) {
 			var cancelled = query.getAsyncApi().executeRawCommand("channeldelete cid=5 force=1");
@@ -72,7 +72,7 @@ class RawCommandTest {
 			var next = replacement.get();
 			assertNotNull(next);
 			assertFalse(next.isDone(), "Application callback must acquire the capacity released by cancellation");
-			query.connect(); assertEquals("probe", next.get(5, TimeUnit.SECONDS).getFirstResponse().get("version"));
+			query.connect(); assertEquals("probe", next.get(5, TimeUnit.SECONDS).getFirstResponse().orElseThrow().require("version"));
 			query.exit(); peer.await();
 		}
 	}

@@ -45,17 +45,9 @@ public class TS3CommandFailedException extends TS3Exception {
 	private static String buildMessage(QueryError error, String cmdName) {
 		final StringBuilder msg = new StringBuilder();
 		msg.append("A \"").append(cmdName).append("\" command returned with a server error.\n");
-		msg.append(">> ").append(error.getMessage()).append(" (ID ").append(error.getId()).append(')');
-
-		final String extra = error.getExtraMessage();
-		if (extra != null && !extra.isEmpty()) {
-			msg.append(": ").append(extra);
-		}
-
-		final int failedPermissionId = error.getFailedPermissionId();
-		if (failedPermissionId > 0) {
-			msg.append(", failed permission with ID ").append(failedPermissionId);
-		}
+		msg.append(">> ").append(error.find("msg").orElse("")).append(" (ID ").append(error.getId()).append(')');
+		error.getExtraMessage().ifPresent(extra -> msg.append(": ").append(extra));
+		error.getFailedPermissionId().ifPresent(id -> msg.append(", failed permission with ID ").append(id));
 
 		return msg.toString();
 	}

@@ -44,7 +44,7 @@ public final class ServerGroupCommands {
 		CommandBuilder builder = new CommandBuilder("servergroupadd", 2);
 		builder.add(new KeyValueParam("name", groupName));
 		if (type != null) {
-			builder.add(new KeyValueParam("type", type.getIndex()));
+			builder.add(new KeyValueParam("type", KnownCodes.require(type.getIndex())));
 		}
 		return builder.build();
 	}
@@ -83,7 +83,7 @@ public final class ServerGroupCommands {
 		builder.add(new KeyValueParam("ssgid", sourceGroupId));
 		builder.add(new KeyValueParam("tsgid", targetGroupId));
 		builder.add(new KeyValueParam("name", groupName));
-		builder.add(new KeyValueParam("type", type.getIndex()));
+		builder.add(new KeyValueParam("type", KnownCodes.require(type.getIndex())));
 		return builder.build();
 	}
 

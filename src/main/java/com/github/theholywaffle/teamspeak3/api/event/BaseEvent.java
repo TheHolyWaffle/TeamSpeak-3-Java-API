@@ -26,14 +26,16 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 
-import java.util.Collections;
+import java.util.Optional;
+import java.util.OptionalInt;
 
 public abstract class BaseEvent extends Wrapper implements TS3Event {
 
 	protected BaseEvent(Wrapper wrapper) {
-		super(Collections.unmodifiableMap(wrapper.getMap()));
+		super(wrapper);
 	}
 
 	/**
@@ -45,13 +47,13 @@ public abstract class BaseEvent extends Wrapper implements TS3Event {
 	 * quit or changed channels themselves. These values are only present if another client
 	 * caused the event to happen by moving, kicking or banning a client.
 	 * </p><p>
-	 * If the event response does not contain an invoker, this method will return {@code -1}.
+	 * Client ID {@code 0} identifies the server itself, for example when creating a channel moves its creator.
 	 * </p>
 	 *
-	 * @return the client ID of the invoker or {@code -1} if the event does not contain an invoker
+	 * @return the client ID of the invoker, or empty if the event does not contain an invoker
 	 */
-	public int getInvokerId() {
-		return getInt("invokerid");
+	public Optional<ClientId> getInvokerId() {
+		return findClientId("invokerid");
 	}
 
 	/**
@@ -63,13 +65,12 @@ public abstract class BaseEvent extends Wrapper implements TS3Event {
 	 * quit or changed channels themselves. These values are only present if another client
 	 * caused the event to happen by moving, kicking or banning a client.
 	 * </p><p>
-	 * If the event response does not contain an invoker, this method will return an empty string.
 	 * </p>
 	 *
-	 * @return the nickname of the invoker or an empty string if the event does not contain an invoker
+	 * @return the nickname of the invoker, or empty if the event does not contain an invoker
 	 */
-	public String getInvokerName() {
-		return get("invokername");
+	public Optional<String> getInvokerName() {
+		return find("invokername");
 	}
 
 	/**
@@ -81,13 +82,13 @@ public abstract class BaseEvent extends Wrapper implements TS3Event {
 	 * quit or changed channels themselves. These values are only present if another client
 	 * caused the event to happen by moving, kicking or banning a client.
 	 * </p><p>
-	 * If the event response does not contain an invoker, this method will return an empty string.
+	 * The server as invoker has no unique ID.
 	 * </p>
 	 *
-	 * @return the unique ID the invoker or an empty string if the event does not contain an invoker
+	 * @return the unique ID of the invoker, or empty if the event does not contain one
 	 */
-	public String getInvokerUniqueId() {
-		return get("invokeruid");
+	public Optional<String> getInvokerUniqueId() {
+		return find("invokeruid");
 	}
 
 	/**
@@ -98,7 +99,6 @@ public abstract class BaseEvent extends Wrapper implements TS3Event {
 	 * <table>
 	 * <caption>Incomplete list of known reason IDs</caption>
 	 * <tr><th>ID</th><th>Description</th></tr>
-	 * <tr><td>-1</td><td>No reason present</td></tr>
 	 * <tr><td>0</td><td>No external cause</td></tr>
 	 * <tr><td>1</td><td>Client was moved (by other client / by creating a new channel)</td></tr>
 	 * <tr><td>3</td><td>Client timed out</td></tr>
@@ -110,10 +110,10 @@ public abstract class BaseEvent extends Wrapper implements TS3Event {
 	 * <tr><td>11</td><td>Server shut down</td></tr>
 	 * </table>
 	 *
-	 * @return the reason ID for this event
+	 * @return the reason ID for this event, or empty if the event does not contain one
 	 */
-	public int getReasonId() {
-		return getInt("reasonid");
+	public OptionalInt getReasonId() {
+		return findInt("reasonid");
 	}
 
 	/**
@@ -123,9 +123,9 @@ public abstract class BaseEvent extends Wrapper implements TS3Event {
 	 * In case of a client getting kicked or banned, this will return the user-provided reason.
 	 * </p>
 	 *
-	 * @return the reason for this event or an empty string if no reason message is present
+	 * @return the reason for this event, or empty if no reason message is present
 	 */
-	public String getReasonMessage() {
-		return get("reasonmsg");
+	public Optional<String> getReasonMessage() {
+		return find("reasonmsg");
 	}
 }

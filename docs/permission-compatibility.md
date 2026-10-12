@@ -31,9 +31,9 @@ version/build/image/transport reports. Help alone is not an operation guarantee.
 
 The ordinary `permfind` response contains `t`, `id1`, `id2` and `p`, but omits
 `v`, `n` and `s` on both TS3 targets. `PermissionAssignment` also represents
-`permoverview` responses. Check `getMap()` field presence before interpreting
-values or flags; use the corresponding permission-list operation for actual
-assignment values. Wrapper defaults do not establish that a property was supplied.
+`permoverview` responses. Since #444 its value and flags are empty optionals for
+`permfind` rows; use the corresponding permission-list operation for actual
+assignment values.
 Permission overview itself remains outside this slice's live acceptance boundary.
 
 ## Observed server differences and errors

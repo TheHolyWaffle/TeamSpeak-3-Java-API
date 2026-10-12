@@ -26,10 +26,12 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.Map;
+import java.util.Optional;
 
 public class DatabaseClient extends Wrapper {
 
@@ -37,35 +39,38 @@ public class DatabaseClient extends Wrapper {
 		super(map);
 	}
 
-	public int getDatabaseId() {
-		return getInt("cldbid");
+	public ClientDatabaseId getDatabaseId() {
+		return requireDatabaseId("cldbid");
 	}
 
 	public String getUniqueIdentifier() {
-		return get(ClientProperty.CLIENT_UNIQUE_IDENTIFIER);
+		return require(ClientProperty.CLIENT_UNIQUE_IDENTIFIER);
 	}
 
 	public String getNickname() {
-		return get(ClientProperty.CLIENT_NICKNAME);
+		return require(ClientProperty.CLIENT_NICKNAME);
 	}
 
-	public Date getCreatedDate() {
-		return new Date(getLong(ClientProperty.CLIENT_CREATED) * 1000);
+	/** @return when the identity was first seen, or empty if not recorded */
+	public Optional<Instant> getCreatedDate() {
+		return requireTimestamp(ClientProperty.CLIENT_CREATED);
 	}
 
-	public Date getLastConnectedDate() {
-		return new Date(getLong(ClientProperty.CLIENT_LASTCONNECTED) * 1000);
+	/** @return when the identity last connected, or empty if not recorded */
+	public Optional<Instant> getLastConnectedDate() {
+		return requireTimestamp(ClientProperty.CLIENT_LASTCONNECTED);
 	}
 
 	public int getTotalConnections() {
-		return getInt(ClientProperty.CLIENT_TOTALCONNECTIONS);
+		return requireInt(ClientProperty.CLIENT_TOTALCONNECTIONS);
 	}
 
 	public String getDescription() {
-		return get(ClientProperty.CLIENT_DESCRIPTION);
+		return require(ClientProperty.CLIENT_DESCRIPTION);
 	}
 
-	public String getLastIp() {
-		return get("client_lastip");
+	/** @return the last IP address, or empty if none is recorded */
+	public Optional<String> getLastIp() {
+		return findText("client_lastip");
 	}
 }

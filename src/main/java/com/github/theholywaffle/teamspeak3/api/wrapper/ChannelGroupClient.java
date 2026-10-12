@@ -26,24 +26,25 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.Map;
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 
-public class ChannelGroupClient extends Wrapper {
+import java.util.Objects;
 
-	public ChannelGroupClient(Map<String, String> map) {
-		super(map);
+/**
+ * A channel group membership from {@code channelgroupclientlist}.
+ *
+ * @param channelId the channel in which the client has the group
+ * @param clientDatabaseId the member
+ * @param channelGroupId the channel group
+ */
+public record ChannelGroupClient(int channelId, ClientDatabaseId clientDatabaseId, int channelGroupId) {
+
+	public ChannelGroupClient {
+		Objects.requireNonNull(clientDatabaseId, "clientDatabaseId");
 	}
 
-	public int getChannelId() {
-		return getInt("cid");
+	/** @throws com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException if a property is missing or malformed */
+	public static ChannelGroupClient from(Wrapper row) {
+		return new ChannelGroupClient(row.requireInt("cid"), row.requireDatabaseId("cldbid"), row.requireInt("cgid"));
 	}
-
-	public int getClientDatabaseId() {
-		return getInt("cldbid");
-	}
-
-	public int getChannelGroupId() {
-		return getInt("cgid");
-	}
-
 }

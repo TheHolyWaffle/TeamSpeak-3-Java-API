@@ -41,7 +41,7 @@ public final class PrivilegeKeyCommands {
 		}
 
 		CommandBuilder builder = new CommandBuilder("privilegekeyadd", 4);
-		builder.add(new KeyValueParam("tokentype", type.getIndex()));
+		builder.add(new KeyValueParam("tokentype", KnownCodes.require(type.getIndex())));
 		builder.add(new KeyValueParam("tokenid1", groupId));
 		builder.add(new KeyValueParam("tokenid2", channelId));
 		builder.addIf(description != null, new KeyValueParam("tokendescription", description));

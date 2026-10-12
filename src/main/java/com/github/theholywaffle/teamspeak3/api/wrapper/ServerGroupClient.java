@@ -26,24 +26,28 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.Map;
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 
-public class ServerGroupClient extends Wrapper {
+import java.util.Objects;
 
-	public ServerGroupClient(Map<String, String> map) {
-		super(map);
+/**
+ * A server group member from {@code servergroupclientlist -names}.
+ *
+ * @param clientDatabaseId the member
+ * @param nickname the member's last nickname
+ * @param uniqueIdentifier the member's unique identifier
+ */
+public record ServerGroupClient(ClientDatabaseId clientDatabaseId, String nickname, String uniqueIdentifier) {
+
+	public ServerGroupClient {
+		Objects.requireNonNull(clientDatabaseId, "clientDatabaseId");
+		Objects.requireNonNull(nickname, "nickname");
+		Objects.requireNonNull(uniqueIdentifier, "uniqueIdentifier");
 	}
 
-	public int getClientDatabaseId() {
-		return getInt("cldbid");
+	/** @throws com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException if a property is missing or malformed */
+	public static ServerGroupClient from(Wrapper row) {
+		return new ServerGroupClient(row.requireDatabaseId("cldbid"),
+			row.require("client_nickname"), row.require("client_unique_identifier"));
 	}
-
-	public String getNickname() {
-		return get("client_nickname");
-	}
-
-	public String getUniqueIdentifier() {
-		return get("client_unique_identifier");
-	}
-
 }

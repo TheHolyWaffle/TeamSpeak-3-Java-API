@@ -29,13 +29,14 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupType;
 
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalInt;
 
 /**
  * Describes a single permission that is assigned to a varying target.
  * <p>
- * Permission searches ({@code permfind}) return only type, source IDs and permission ID.
- * Values and flags are supplied by {@code permoverview}; check {@link #getMap()}
- * for field presence before interpreting optional values.
+ * Permission searches ({@code permfind}) return only type, source IDs and permission ID, so
+ * value and flags are empty for them. {@code permoverview} supplies all of them.
  * This class is used when a lot of permissions are sent at once.
  * To reduce bandwidth usage, the TS3 server only transmit the numeric
  * permission ID and not the permission name.
@@ -54,16 +55,10 @@ public class PermissionAssignment extends Wrapper {
 	/**
 	 * Where this permission assignment originates from.
 	 *
-	 * @return the type of this permission assignment
+	 * @return the type of this permission assignment, or {@link PermissionGroupType#UNKNOWN} for a type this library does not know
 	 */
 	public PermissionGroupType getType() {
-		final int type = getInt("t");
-		for (final PermissionGroupType p : PermissionGroupType.values()) {
-			if (p.getIndex() == type) {
-				return p;
-			}
-		}
-		return null;
+		return requireCode("t", PermissionGroupType::fromIndex);
 	}
 
 	/**
@@ -82,7 +77,7 @@ public class PermissionAssignment extends Wrapper {
 	 * @return the major ID of the source of this assignment as described above
 	 */
 	public int getMajorId() {
-		return getInt("id1");
+		return requireInt("id1");
 	}
 
 	/**
@@ -94,13 +89,13 @@ public class PermissionAssignment extends Wrapper {
 	 * {@linkplain PermissionGroupType#CHANNEL_GROUP CHANNEL_GROUP} {@code ->} {@linkplain ChannelGroup#getId() Channel group ID}<br>
 	 * {@linkplain PermissionGroupType#CHANNEL_CLIENT CHANNEL_CLIENT} {@code ->} {@linkplain Client#getDatabaseId() Client database ID}
 	 * </p><p>
-	 * Otherwise {@code getMinorId()} is undefined should return {@code 0}.
+	 * Otherwise TeamSpeak sends {@code 0}.
 	 * </p>
 	 *
 	 * @return the minor ID of the source of this assignment as described above
 	 */
 	public int getMinorId() {
-		return getInt("id2");
+		return requireInt("id2");
 	}
 
 	/**
@@ -110,7 +105,7 @@ public class PermissionAssignment extends Wrapper {
 	 * @return this permission's numerical ID
 	 */
 	public int getId() {
-		return getInt("p");
+		return requireInt("p");
 	}
 
 	/**
@@ -127,10 +122,10 @@ public class PermissionAssignment extends Wrapper {
 	 * {@code false} and {@code 1} to represent {@code true}.
 	 * </p>
 	 *
-	 * @return the value of this permission assignment
+	 * @return the value of this permission assignment, or empty for {@code permfind} results
 	 */
-	public int getValue() {
-		return getInt("v");
+	public OptionalInt getValue() {
+		return findInt("v");
 	}
 
 	/**
@@ -140,10 +135,10 @@ public class PermissionAssignment extends Wrapper {
 	 * value will be selected for this permission instead.
 	 * </p>
 	 *
-	 * @return whether this permission is negated or not
+	 * @return whether this permission is negated, or empty for {@code permfind} results
 	 */
-	public boolean isNegated() {
-		return getBoolean("n");
+	public Optional<Boolean> isNegated() {
+		return findBoolean("n");
 	}
 
 	/**
@@ -158,9 +153,9 @@ public class PermissionAssignment extends Wrapper {
 	 * channel group or client permissions.
 	 * </p>
 	 *
-	 * @return whether this permission is negated or not
+	 * @return whether this permission is skipped, or empty for {@code permfind} results
 	 */
-	public boolean isSkipped() {
-		return getBoolean("s");
+	public Optional<Boolean> isSkipped() {
+		return findBoolean("s");
 	}
 }

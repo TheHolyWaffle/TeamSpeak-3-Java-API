@@ -65,6 +65,8 @@ public enum CodecEncryptionMode {
 	 */
 	UNKNOWN(-1);
 
+	private static final CodecEncryptionMode[] VALUES = values();
+
 	private final int i;
 
 	CodecEncryptionMode(int i) {
@@ -73,5 +75,13 @@ public enum CodecEncryptionMode {
 
 	public int getIndex() {
 		return i;
+	}
+
+	/**
+	 * @param index the ServerQuery code
+	 * @return the matching constant, or {@link #UNKNOWN} for a code this library does not know
+	 */
+	public static CodecEncryptionMode fromIndex(int index) {
+		return CodeLookup.byIndex(VALUES, CodecEncryptionMode::getIndex, index, UNKNOWN);
 	}
 }

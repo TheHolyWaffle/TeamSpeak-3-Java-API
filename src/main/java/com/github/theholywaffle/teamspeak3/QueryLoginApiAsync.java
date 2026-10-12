@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.wrapper.CreatedQueryLogin;
 import com.github.theholywaffle.teamspeak3.api.wrapper.QueryLogin;
 import com.github.theholywaffle.teamspeak3.commands.ClientCommands;
@@ -31,14 +32,19 @@ public final class QueryLoginApiAsync {
 		return requests.models(QueryLoginCommands.queryLoginList(loginNamePattern), QueryLogin::new);
 	}
 
-	/** @see QueryLoginApi#create(String, int) */
-	public CompletableFuture<CreatedQueryLogin> create(String loginName, int clientDatabaseId) {
-		return requests.model(QueryLoginCommands.queryLoginAdd(loginName, clientDatabaseId), CreatedQueryLogin::new);
+	/** @see QueryLoginApi#create(String) */
+	public CompletableFuture<CreatedQueryLogin> create(String loginName) {
+		return requests.model(QueryLoginCommands.queryLoginAdd(loginName, 0), CreatedQueryLogin::new);
 	}
 
-	/** @see QueryLoginApi#delete(int) */
-	public CompletableFuture<Void> delete(int clientDatabaseId) {
-		return requests.run(QueryLoginCommands.queryLoginDel(clientDatabaseId));
+	/** @see QueryLoginApi#create(String, ClientDatabaseId) */
+	public CompletableFuture<CreatedQueryLogin> create(String loginName, ClientDatabaseId clientDatabaseId) {
+		return requests.model(QueryLoginCommands.queryLoginAdd(loginName, clientDatabaseId.value()), CreatedQueryLogin::new);
+	}
+
+	/** @see QueryLoginApi#delete(ClientDatabaseId) */
+	public CompletableFuture<Void> delete(ClientDatabaseId clientDatabaseId) {
+		return requests.run(QueryLoginCommands.queryLoginDel(clientDatabaseId.value()));
 	}
 
 	/** @see QueryLoginApi#updateOwn(String) */

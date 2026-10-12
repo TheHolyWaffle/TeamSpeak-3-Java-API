@@ -28,11 +28,14 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
 
 import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3ApiAsync;
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerStatus;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * A class containing information about a server query, returned by the
@@ -56,7 +59,7 @@ public class ServerQueryInfo extends Wrapper {
 	 * @return the ID of the current channel
 	 */
 	public int getChannelId() {
-		return getInt("client_channel_id");
+		return requireInt("client_channel_id");
 	}
 
 	/**
@@ -66,19 +69,19 @@ public class ServerQueryInfo extends Wrapper {
 	 * its database ID will be identical to the client's database ID.
 	 * </p>
 	 *
-	 * @return the server query's database ID
+	 * @return the server query's database ID, or empty before login (TeamSpeak sends {@code 0})
 	 */
-	public int getDatabaseId() {
-		return getInt(ClientProperty.CLIENT_DATABASE_ID);
+	public Optional<ClientDatabaseId> getDatabaseId() {
+		return findDatabaseId(ClientProperty.CLIENT_DATABASE_ID);
 	}
 
 	/**
 	 * Gets the client ID of the server query.
 	 *
-	 * @return the server query's client ID
+	 * @return the server query's client ID; {@code 0} until a virtual server is selected
 	 */
-	public int getId() {
-		return getInt("client_id");
+	public ClientId getId() {
+		return requireClientId("client_id");
 	}
 
 	/**
@@ -86,16 +89,14 @@ public class ServerQueryInfo extends Wrapper {
 	 * <p>
 	 * This username was set when creating the server query login and doesn't have to be related to
 	 * the client who created the server query login.
-	 * <br>
-	 * In case a server query is not logged in yet, this method will return an empty string.
 	 * </p>
 	 *
-	 * @return the username used when logging this query in
+	 * @return the username used when logging this query in, or empty before login
 	 *
 	 * @see TS3Api#login(String, String) TS3Api#login(username, password) - logging in server queries
 	 */
-	public String getLoginName() {
-		return get(ClientProperty.CLIENT_LOGIN_NAME);
+	public Optional<String> getLoginName() {
+		return findText(ClientProperty.CLIENT_LOGIN_NAME);
 	}
 
 	/**
@@ -104,13 +105,13 @@ public class ServerQueryInfo extends Wrapper {
 	 * <pre><i>username</i> from <i>ip</i>:<i>port</i></pre>
 	 * <p>
 	 * Nicknames are only assigned after a virtual server has been selected.
-	 * Until then, this method will return an empty string.
+	 * Until then, TeamSpeak sends an empty nickname.
 	 * </p>
 	 *
 	 * @return the current nickname of the server query
 	 */
 	public String getNickname() {
-		return get(ClientProperty.CLIENT_NICKNAME);
+		return require(ClientProperty.CLIENT_NICKNAME);
 	}
 
 	/**
@@ -123,7 +124,7 @@ public class ServerQueryInfo extends Wrapper {
 	 * @return the ID of the virtual server this server query belongs to
 	 */
 	public int getOriginServerId() {
-		return getInt("client_origin_server_id");
+		return requireInt("client_origin_server_id");
 	}
 
 	/**
@@ -136,7 +137,7 @@ public class ServerQueryInfo extends Wrapper {
 	 * @return the server query's unique ID
 	 */
 	public String getUniqueIdentifier() {
-		return get(ClientProperty.CLIENT_UNIQUE_IDENTIFIER);
+		return require(ClientProperty.CLIENT_UNIQUE_IDENTIFIER);
 	}
 
 	/**
@@ -151,7 +152,7 @@ public class ServerQueryInfo extends Wrapper {
 	 * @return the ID of the current virtual server or {@code 0} if none is selected
 	 */
 	public int getVirtualServerId() {
-		return getInt(VirtualServerProperty.VIRTUALSERVER_ID);
+		return requireInt(VirtualServerProperty.VIRTUALSERVER_ID);
 	}
 
 	/**
@@ -163,36 +164,31 @@ public class ServerQueryInfo extends Wrapper {
 	 * @return the port used by the current virtual server or {@code 0} if none is selected
 	 */
 	public int getVirtualServerPort() {
-		return getInt(VirtualServerProperty.VIRTUALSERVER_PORT);
+		return requireInt(VirtualServerProperty.VIRTUALSERVER_PORT);
 	}
 
 	/**
 	 * Gets the status of the currently selected virtual server.
 	 * <p>
-	 * If no virtual server has been selected yet, this method will return {@link VirtualServerStatus#UNKNOWN}.
+	 * If no virtual server has been selected yet, TeamSpeak reports the status {@code unknown},
+	 * which maps to {@link VirtualServerStatus#UNKNOWN}.
 	 * </p>
 	 *
 	 * @return the status of the current virtual server
 	 */
 	public VirtualServerStatus getVirtualServerStatus() {
-		final String status = get(VirtualServerProperty.VIRTUALSERVER_STATUS);
-		for (final VirtualServerStatus s : VirtualServerStatus.values()) {
-			if (s.getName().equals(status)) {
-				return s;
-			}
-		}
-		return VirtualServerStatus.UNKNOWN;
+		return VirtualServerStatus.fromName(require(VirtualServerProperty.VIRTUALSERVER_STATUS));
 	}
 
 	/**
 	 * Gets the unique identifier of the currently selected virtual server.
 	 * <p>
-	 * If no virtual server has been selected yet, this method will return an empty string.
+	 * If no virtual server has been selected yet, TeamSpeak sends an empty value.
 	 * </p>
 	 *
 	 * @return the unique ID of the current virtual server
 	 */
 	public String getVirtualServerUniqueIdentifier() {
-		return get(VirtualServerProperty.VIRTUALSERVER_UNIQUE_IDENTIFIER);
+		return require(VirtualServerProperty.VIRTUALSERVER_UNIQUE_IDENTIFIER);
 	}
 }

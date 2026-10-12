@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Message;
@@ -25,9 +26,9 @@ public final class MessageApiAsync {
 		this.requests = requests;
 	}
 
-	/** @see MessageApi#sendPrivate(int, String) */
-	public CompletableFuture<Void> sendPrivate(int clientId, String message) {
-		return send(TextMessageTargetMode.CLIENT, clientId, message);
+	/** @see MessageApi#sendPrivate(ClientId, String) */
+	public CompletableFuture<Void> sendPrivate(ClientId clientId, String message) {
+		return send(TextMessageTargetMode.CLIENT, clientId.value(), message);
 	}
 
 	/** @see MessageApi#sendChannel(String) */

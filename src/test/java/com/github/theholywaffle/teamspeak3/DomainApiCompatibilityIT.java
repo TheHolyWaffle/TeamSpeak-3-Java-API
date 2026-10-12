@@ -1,5 +1,7 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.BanRequest;
 import com.github.theholywaffle.teamspeak3.api.ChannelGroupFilter;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
@@ -12,13 +14,11 @@ import com.github.theholywaffle.teamspeak3.api.exception.TS3QueryShutDownExcepti
 import com.github.theholywaffle.teamspeak3.api.exception.TS3UnsupportedOperationException;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 import com.github.theholywaffle.teamspeak3.api.reconnect.SessionConfiguration;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.testcontainers.DockerClientFactory;
 
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -37,18 +37,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class DomainApiCompatibilityIT {
 	private static final String UNKNOWN_UID = "AAAAAAAAAAAAAAAAAAAAAAAAAAA=";
 	private static final byte[] RULES = "Be nice | literal \\s 日本語".getBytes(StandardCharsets.UTF_8);
-	static TeamSpeakContainer ts3;
-
-	@BeforeAll static void start() {
-		assertTrue(DockerClientFactory.instance().isDockerAvailable(), "Required Docker integration tests cannot run: start a Docker daemon");
-		ts3 = new TeamSpeakContainer();
-		ts3.addExposedPort(30033);
-		ts3.start();
-	}
-
-	@AfterAll static void stop() {
-		if (ts3 != null) ts3.close();
-	}
+	@RegisterExtension static final TeamSpeakContainer ts3 = new TeamSpeakContainer().withFileTransferPort();
 
 	@ParameterizedTest(name = "{0}: documented common workflow, sync and async")
 	@EnumSource(ServerQueryCompatibilityIT.Target.class) @Timeout(120)
@@ -67,7 +56,7 @@ class DomainApiCompatibilityIT {
 			var api = actor.getApi();
 			api.selectVirtualServerById(1);
 			ts3.record(target + "-domain-api", api.instance().version());
-			int observerId = observer.getApi().whoAmI().getId();
+			ClientId observerId = observer.getApi().whoAmI().getId();
 			String sharedUid = observer.getApi().whoAmI().getUniqueIdentifier();
 			assertEquals(observerId, api.clients().findByUniqueId(sharedUid).orElseThrow().getId(),
 				"Both serveradmin sessions share a UID; the earlier observer session is listed first");
@@ -125,17 +114,17 @@ class DomainApiCompatibilityIT {
 			evidence.add("Optional.empty: unknown UID (online/database), message 999999, port 1, absent names; empty lists: channel/client search, custom search");
 
 			failsWith(768, "channelinfo", () -> api.channels().info(9_999), evidence);
-			failsWith(512, "clientinfo", () -> api.clients().info(9_999), evidence);
-			failsWith(1540, "clientinfo", () -> api.clients().info(999_999), evidence);
-			failsWith(512, "clientdbinfo", () -> api.databaseClients().info(9_999), evidence);
+			failsWith(512, "clientinfo", () -> api.clients().info(ClientId.of(9_999)), evidence);
+			failsWith(1540, "clientinfo", () -> api.clients().info(ClientId.of(999_999)), evidence);
+			failsWith(512, "clientdbinfo", () -> api.databaseClients().info(ClientDatabaseId.of(9_999)), evidence);
 			failsWith(2052, "ftgetfileinfo", () -> api.files().info(FileLocation.of(1, "/" + absent)), evidence);
 			failsWith(2560, "servergroupclientlist", () -> api.serverGroups().members(9_999), evidence);
 			failsWith(1538, "banadd", () -> api.bans().add(BanRequest.myTeamSpeakId("not-a-valid-id")), evidence);
 			failsWith(512, "messageadd", () -> api.messages().sendOffline(UNKNOWN_UID, "absent", "absent"), evidence);
 
-			try (var ban = new ServerQueryCompatibilityIT.CreatedResource(
+			try (var ban = new ServerQueryCompatibilityIT.CreatedResource<>(
 				api.bans().add(BanRequest.myTeamSpeakId("empty").withReason("domain " + target)), api.bans()::delete)) {
-				assertTrue(api.bans().list().stream().anyMatch(row -> row.getId() == ban.id() && "empty".equals(row.getMap().get("mytsid"))));
+				assertTrue(api.bans().list().stream().anyMatch(row -> row.getId() == ban.id() && row.getBannedMyTeamSpeakId().equals(java.util.Optional.of("empty"))));
 			}
 			evidence.add("myTeamSpeak-only ban rule mytsid=empty accepted and deleted");
 			query.exit();

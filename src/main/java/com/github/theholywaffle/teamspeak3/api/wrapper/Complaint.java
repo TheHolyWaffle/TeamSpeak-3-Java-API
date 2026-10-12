@@ -26,7 +26,9 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.Date;
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
+
+import java.time.Instant;
 import java.util.Map;
 
 public class Complaint extends Wrapper {
@@ -35,28 +37,28 @@ public class Complaint extends Wrapper {
 		super(map);
 	}
 
-	public int getTargetClientDatabaseId() {
-		return getInt("tcldbid");
+	public ClientDatabaseId getTargetClientDatabaseId() {
+		return requireDatabaseId("tcldbid");
 	}
 
 	public String getTargetName() {
-		return get("tname");
+		return require("tname");
 	}
 
-	public int getSourceClientDatabaseId() {
-		return getInt("fcldbid");
+	public ClientDatabaseId getSourceClientDatabaseId() {
+		return requireDatabaseId("fcldbid");
 	}
 
 	public String getSourceName() {
-		return get("fname");
+		return require("fname");
 	}
 
 	public String getMessage() {
-		return get("message");
+		return require("message");
 	}
 
-	public Date getTimestamp() {
-		return new Date(getLong("timestamp") * 1000);
+	public Instant getTimestamp() {
+		return requireInstant("timestamp");
 	}
 
 }

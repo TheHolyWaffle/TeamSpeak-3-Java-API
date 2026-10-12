@@ -45,6 +45,8 @@ public enum ChannelBannerMode {
 	 */
 	UNKNOWN(-1);
 
+	private static final ChannelBannerMode[] VALUES = values();
+
 	private final int i;
 
 	ChannelBannerMode(int i) {
@@ -53,5 +55,13 @@ public enum ChannelBannerMode {
 
 	public int getIndex() {
 		return i;
+	}
+
+	/**
+	 * @param index the ServerQuery code
+	 * @return the matching constant, or {@link #UNKNOWN} for a code this library does not know
+	 */
+	public static ChannelBannerMode fromIndex(int index) {
+		return CodeLookup.byIndex(VALUES, ChannelBannerMode::getIndex, index, UNKNOWN);
 	}
 }
