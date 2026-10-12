@@ -1,6 +1,9 @@
 package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
+import com.github.theholywaffle.teamspeak3.api.Codec;
+import com.github.theholywaffle.teamspeak3.api.event.ChannelDescriptionEditedEvent;
+import com.github.theholywaffle.teamspeak3.api.event.ChannelPasswordChangedEvent;
 import com.github.theholywaffle.teamspeak3.api.PrivilegeKeyType;
 import com.github.theholywaffle.teamspeak3.api.event.PrivilegeKeyUsedEvent;
 import com.github.theholywaffle.teamspeak3.api.wrapper.PrivilegeKey;
@@ -309,6 +312,104 @@ class ServerQueryCompatibilityIT {
 		}
 	}
 
+
+	@ParameterizedTest(name = "{0}: channel modes, passwords, limits and codec settings")
+	@EnumSource(Target.class)
+	@Timeout(60)
+	void channelConfigurationDomain(Target target) throws Exception {
+		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		var evidence = new java.util.ArrayList<String>();
+		var descriptions = new java.util.concurrent.LinkedBlockingQueue<ChannelDescriptionEditedEvent>(16);
+		var passwords = new java.util.concurrent.LinkedBlockingQueue<ChannelPasswordChangedEvent>(16);
+		try (var observer = new TS3Query(server.config(target.protocol));
+			 var actor = new TS3Query(server.config(target.protocol))) {
+			observer.connect(); actor.connect();
+			var api = actor.getApi();
+			api.selectVirtualServerById(1); observer.getApi().selectVirtualServerById(1);
+			server.record(target.name(), api.getVersion());
+			for (String command : java.util.List.of("channelcreate", "channeledit", "channelinfo")) {
+				String help = api.executeRawCommand("help " + command).getRawResponse();
+				assertTrue(help.startsWith("Usage: " + command)); evidence.add("help " + command + "\n" + help);
+			}
+			int observerId = observer.getApi().whoAmI().getId();
+			assertNotEquals(observerId, api.whoAmI().getId());
+			try (var channels = new ChannelCleanup(api)) {
+				int channel = channels.track(api.createChannel("configuration-" + target, Map.of(
+					ChannelProperty.CHANNEL_FLAG_SEMI_PERMANENT, "1", ChannelProperty.CHANNEL_CODEC, Integer.toString(Codec.OPUS_VOICE.getIndex()),
+					ChannelProperty.CHANNEL_CODEC_QUALITY, "6", ChannelProperty.CHANNEL_FLAG_MAXCLIENTS_UNLIMITED, "1",
+					ChannelProperty.CHANNEL_FLAG_MAXFAMILYCLIENTS_INHERITED, "1")));
+				var initial = api.getChannelInfo(channel);
+				assertTrue(initial.isSemiPermanent()); assertFalse(initial.isPermanent()); assertFalse(initial.hasPassword());
+				assertTrue(initial.hasUnlimitedClients()); assertTrue(initial.hasInheritedMaxFamilyClients());
+				assertEquals(Codec.OPUS_VOICE, initial.getCodec()); assertEquals(6, initial.getCodecQuality());
+				api.moveClient(observerId, channel);
+				observer.getApi().registerEvent(TS3EventType.CHANNEL, channel);
+				try (var subscription = observer.subscribe(new TS3EventAdapter() {
+					@Override public void onChannelDescriptionChanged(ChannelDescriptionEditedEvent e) { assertTrue(descriptions.offer(e)); }
+					@Override public void onChannelPasswordChanged(ChannelPasswordChangedEvent e) { assertTrue(passwords.offer(e)); }
+				})) {
+					String description = "configuration 日本語 | literal \\n";
+					api.editChannel(channel, Map.of(ChannelProperty.CHANNEL_DESCRIPTION, description));
+					var described = descriptions.poll(5, TimeUnit.SECONDS);
+					assertNotNull(described); assertEquals(channel, described.getChannelId());
+					assertEquals(java.util.Set.of("cid"), described.getMap().keySet());
+					evidence.add("description event " + new java.util.TreeMap<>(described.getMap()));
+					assertEquals(description, api.getChannelInfo(channel).getDescription());
+					String password = "configuration 日本語 | literal \\s";
+					api.editChannel(channel, Map.of(ChannelProperty.CHANNEL_PASSWORD, password));
+					var protectedEvent = passwords.poll(5, TimeUnit.SECONDS);
+					assertNotNull(protectedEvent); assertEquals(channel, protectedEvent.getChannelId());
+					assertEquals(java.util.Set.of("cid"), protectedEvent.getMap().keySet());
+					evidence.add("password event fields " + new java.util.TreeSet<>(protectedEvent.getMap().keySet()));
+					assertTrue(api.getChannelInfo(channel).hasPassword());
+					api.editChannel(channel, Map.of(ChannelProperty.CHANNEL_PASSWORD, ""));
+					var cleared = passwords.poll(5, TimeUnit.SECONDS);
+					assertNotNull(cleared); assertEquals(channel, cleared.getChannelId());
+					assertEquals(java.util.Set.of("cid"), cleared.getMap().keySet());
+					assertFalse(api.getChannelInfo(channel).hasPassword());
+				}
+				var conflicting = assertThrows(TS3CommandFailedException.class,
+					() -> api.editChannel(channel, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
+				assertEquals(775, conflicting.getError().getId()); assertEquals("invalid channel flags", conflicting.getError().getMessage());
+				evidence.add("conflicting mode " + new java.util.TreeMap<>(conflicting.getError().getMap()));
+				var rejected = api.getChannelInfo(channel);
+				assertTrue(rejected.isSemiPermanent()); assertFalse(rejected.isPermanent());
+				api.editChannel(channel, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1", ChannelProperty.CHANNEL_FLAG_SEMI_PERMANENT, "0",
+					ChannelProperty.CHANNEL_MAXCLIENTS, "2", ChannelProperty.CHANNEL_FLAG_MAXCLIENTS_UNLIMITED, "0",
+					ChannelProperty.CHANNEL_MAXFAMILYCLIENTS, "3", ChannelProperty.CHANNEL_FLAG_MAXFAMILYCLIENTS_INHERITED, "0",
+					ChannelProperty.CHANNEL_FLAG_MAXFAMILYCLIENTS_UNLIMITED, "0",
+					ChannelProperty.CHANNEL_CODEC, Integer.toString(Codec.OPUS_MUSIC.getIndex()), ChannelProperty.CHANNEL_CODEC_QUALITY, "8"));
+				var limited = api.getChannelInfo(channel);
+				assertTrue(limited.isPermanent()); assertFalse(limited.isSemiPermanent());
+				assertFalse(limited.hasUnlimitedClients()); assertEquals(2, limited.getMaxClients());
+				assertFalse(limited.hasInheritedMaxFamilyClients()); assertFalse(limited.hasUnlimitedFamilyClients());
+				assertEquals(3, limited.getMaxFamilyClients()); assertEquals(Codec.OPUS_MUSIC, limited.getCodec());
+				assertEquals(8, limited.getCodecQuality());
+				evidence.add("limited fields " + new java.util.TreeSet<>(limited.getMap().keySet()));
+				evidence.add("limited values " + Map.of("permanent", limited.isPermanent(), "semiPermanent", limited.isSemiPermanent(),
+					"clients", limited.getMaxClients(), "familyClients", limited.getMaxFamilyClients(), "codec", limited.getCodec(), "quality", limited.getCodecQuality()));
+				var invalid = assertThrows(TS3CommandFailedException.class,
+					() -> api.editChannel(channel, Map.of(ChannelProperty.CHANNEL_CODEC_QUALITY, "11")));
+				evidence.add("invalid quality " + new java.util.TreeMap<>(invalid.getError().getMap()));
+				assertEquals(2568, invalid.getError().getId()); assertEquals("insufficient client permissions", invalid.getError().getMessage());
+				assertEquals(api.getPermissionIdByName(IPermissionType.I_CHANNEL_CREATE_MODIFY_WITH_CODEC_MAXQUALITY.getName()),
+					invalid.getError().getFailedPermissionId());
+				assertEquals(8, api.getChannelInfo(channel).getCodecQuality());
+				api.editChannel(channel, Map.of(ChannelProperty.CHANNEL_FLAG_SEMI_PERMANENT, "1", ChannelProperty.CHANNEL_FLAG_PERMANENT, "0",
+					ChannelProperty.CHANNEL_FLAG_MAXCLIENTS_UNLIMITED, "1", ChannelProperty.CHANNEL_FLAG_MAXFAMILYCLIENTS_INHERITED, "1"));
+				var restored = api.getChannelInfo(channel);
+				assertTrue(restored.isSemiPermanent()); assertFalse(restored.isPermanent());
+				assertTrue(restored.hasUnlimitedClients()); assertTrue(restored.hasInheritedMaxFamilyClients());
+			}
+			observer.exit(); actor.exit();
+			assertEquals(0, observer.getEventStatistics().malformedNotifications());
+			assertEquals(0, observer.getEventStatistics().listenerFailures());
+			assertEquals(0, observer.getEventStatistics().droppedEvents());
+		} finally {
+			Path path = Path.of("target", "compatibility", target + "-channel-configuration.txt");
+			Files.createDirectories(path.getParent()); Files.write(path, evidence);
+		}
+	}
 
 	@ParameterizedTest(name = "{0}: ban-rule administration and errors")
 	@EnumSource(Target.class)

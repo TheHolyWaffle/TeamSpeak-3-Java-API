@@ -4,8 +4,8 @@ Task #441 is being delivered in focused PRs. The implemented slices verify the c
 channel domain, named channel/group permission operations, online text messages,
 selected server information/configuration operations, online query-client administration,
 file-directory administration, privilege-key administration, ban-rule administration,
-global query-login administration, instance/virtual-server log retrieval, and
-sequential virtual-server lifecycle.
+global query-login administration, instance/virtual-server log retrieval,
+sequential virtual-server lifecycle, and channel configuration.
 These slices do not complete the issue or establish whole-API TS6 support.
 The inventory below is the release acceptance boundary, not a promise based on
 similar method names or server help alone.
@@ -32,7 +32,7 @@ Local Apple Silicon uses emulated amd64 TS3 and native arm64 TS6; CI tests amd64
 | Domain | Verified operations across the three targets | Remaining #441 coverage |
 | --- | --- | --- |
 | Servers | Login/version/selection; server info/list/port lookup, host/instance/connection information; name/welcome/host-message edits and independent-session edit notifications. See [server evidence](server-compatibility.md); sequential create/start/stop/delete and lifecycle errors in [lifecycle evidence](server-lifecycle-compatibility.md); message tests document rejected selection and cleared context | Other server/instance edits, snapshots, concurrent/multi-running-server lifecycle, nondefault creation, property combinations and restricted-account probes |
-| Channels | Permanent channel create/list/info/find, name/topic/description edit, parent move with first-sibling order, force delete; UTF-8 and literal protocol escapes; deleted channel error 768 | Other property combinations, temporary/semi-permanent/password/default channels, limits/codecs/banners; permission failures and extra description/password notifications |
+| Channels | Permanent channel create/list/info/find, name/topic/description edit, parent move with first-sibling order, force delete; UTF-8 and literal protocol escapes; deleted channel error 768; semi-permanent/permanent transitions, password flags, limits and Opus settings with independent description/password notifications. See [configuration evidence](channel-configuration-compatibility.md) | Temporary/default channels, restart persistence, password/limit enforcement, other codecs/quality boundaries, banners, other property combinations and restricted-role probes |
 | Clients | Query-client list/info/name lookup, self nickname update, description edits, independent-session joins/admin moves/self moves/leaves and error recovery. See [client evidence](client-compatibility.md); existing reconnect probes | Database administration, other properties, UID lookup/multiple sessions, bulk/password moves, kicks/bans, voice-client fixture/manual verification |
 | Permissions/groups | Server metadata and name/ID lookup, effective-value lookup, assignment search; named channel/server-group/channel-group permission add/read/update/delete; group create/list/rename/delete and regular group copy/overwrite. See [permission evidence and migration](permission-compatibility.md) | Client/channel-client permissions, permission overview, template/query group copies, membership/automatic assignments, permission reset and denied-account probes |
 | Messages/events | Channel create/edit/move/delete and online server/channel/private text messages from an independent query session; text subscriptions/unregister/re-register, decoded payloads and invalid-target errors. See [message evidence](message-compatibility.md); existing overlapping subscription/reconnect probes | Broadcast/offline messages, pokes, additional server-edit properties, successful regular-client privilege-key-use payloads and other events; voice-client behavior requires a separate client fixture or manual evidence |
