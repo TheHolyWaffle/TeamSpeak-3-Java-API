@@ -32,6 +32,7 @@ import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3FileTransferFailedException;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3QueueFullException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.*;
 import com.github.theholywaffle.teamspeak3.commands.*;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
@@ -67,7 +68,10 @@ import java.util.stream.Collectors;
  * </p><p>
  * Cancel the original API result to remove an unsent request. Sent requests still consume
  * their eventual responses; cancellation cannot undo a server-side mutation. Cancelling
- * an application-created dependent stage does not cancel its source. Timed get limits
+ * an application-created dependent stage does not cancel its source. Original file-transfer result
+ * cancellation closes the plaintext file socket and interrupts the worker, leaving caller streams
+ * open. FileTransferConfig bounds socket I/O and in-memory downloads/icons. SSH query encryption
+ * does not encrypt the separate file socket. Timed get limits
  * only the wait; orTimeout changes the future's result without aborting the request.
  * </p><p>
  * You won't be able to execute most commands while you're not logged in due to missing permissions.
@@ -1754,12 +1758,27 @@ public class TS3ApiAsync {
 	 * @see #downloadFileDirect(String, int, String)
 	 */
 	public CompletableFuture<Long> downloadFile(OutputStream dataOut, String filePath, int channelId, String channelPassword) {
+		return downloadFile(dataOut, filePath, channelId, channelPassword, 0);
+	}
+
+	/**
+	 * Downloads from a byte offset into the caller's current output position. Does not seek, flush
+	 * or close the output. Returns bytes written (full server file size minus offset).
+	 * @param dataOut caller-owned output
+	 * @param filePath repository path
+	 * @param channelId channel ID
+	 * @param channelPassword channel password
+	 * @param seekPosition nonnegative byte offset, at most the server file size
+	 * @return cancellable download result
+	 */
+	public CompletableFuture<Long> downloadFile(OutputStream dataOut, String filePath, int channelId, String channelPassword, long seekPosition) {
+		java.util.Objects.requireNonNull(dataOut, "dataOut");
 		FileTransferHelper helper = query.getFileTransferHelper();
-		Command cmd = FileCommands.ftInitDownload(helper.getClientTransferId(), filePath, channelId, channelPassword);
-		return executeTransfer(cmd, params -> {
-			try { helper.downloadFile(dataOut, params); }
-			catch (IOException failure) { throw new TS3FileTransferFailedException("Download failed", failure); }
-			return params.getFileSize();
+		Command cmd = FileCommands.ftInitDownload(helper.getClientTransferId(), filePath, channelId, channelPassword, seekPosition);
+		return executeTransfer(cmd, (params, operation) -> {
+			try { helper.downloadFile(dataOut, params, seekPosition, operation); }
+			catch (IOException failure) { throw new TS3FileTransferFailedException("Download failed", operation.failureCause(failure)); }
+			return params.getFileSize() - seekPosition;
 		});
 	}
 
@@ -1768,8 +1787,8 @@ public class TS3ApiAsync {
 	 * and returns the file's bytes as a byte array.
 	 * <p>
 	 * Note that this method <strong>will read the entire file to memory</strong>.
-	 * That means that if a file is larger than 2<sup>31</sup>-1 bytes in size,
-	 * the download will fail.
+	 * Files exceeding {@link FileTransferConfig#maxInMemoryBytes()} fail before allocation.
+	 * The default limit is 16 MiB; use a streaming download for larger files.
 	 * </p>
 	 *
 	 * @param filePath
@@ -1797,8 +1816,8 @@ public class TS3ApiAsync {
 	 * and returns the file's bytes as a byte array.
 	 * <p>
 	 * Note that this method <strong>will read the entire file to memory</strong>.
-	 * That means that if a file is larger than 2<sup>31</sup>-1 bytes in size,
-	 * the download will fail.
+	 * Files exceeding {@link FileTransferConfig#maxInMemoryBytes()} fail before allocation.
+	 * The default limit is 16 MiB; use a streaming download for larger files.
 	 * </p>
 	 *
 	 * @param filePath
@@ -1822,12 +1841,12 @@ public class TS3ApiAsync {
 	public CompletableFuture<byte[]> downloadFileDirect(String filePath, int channelId, String channelPassword) {
 		FileTransferHelper helper = query.getFileTransferHelper();
 		Command cmd = FileCommands.ftInitDownload(helper.getClientTransferId(), filePath, channelId, channelPassword);
-		return executeTransfer(cmd, params -> {
+		return executeTransfer(cmd, (params, operation) -> {
 			long fileSize = params.getFileSize();
-			if (fileSize > Integer.MAX_VALUE) throw new TS3FileTransferFailedException("File too big for byte array");
+			if (fileSize < 0 || fileSize > query.getConfig().getFileTransferConfig().maxInMemoryBytes()) throw new TS3FileTransferFailedException("Invalid file size or in-memory limit exceeded");
 			ByteArrayOutputStream dataOut = new ByteArrayOutputStream((int) fileSize);
-			try { helper.downloadFile(dataOut, params); }
-			catch (IOException failure) { throw new TS3FileTransferFailedException("Download failed", failure); }
+			try { helper.downloadFile(dataOut, params, 0, operation); }
+			catch (IOException failure) { throw new TS3FileTransferFailedException("Download failed", operation.failureCause(failure)); }
 			return dataOut.toByteArray();
 		});
 	}
@@ -5312,11 +5331,31 @@ public class TS3ApiAsync {
 	 * @see #uploadFileDirect(byte[], String, boolean, int, String)
 	 */
 	public CompletableFuture<Void> uploadFile(InputStream dataIn, long dataLength, String filePath, boolean overwrite, int channelId, String channelPassword) {
+		return uploadFile(dataIn, dataLength, filePath, overwrite, channelId, channelPassword, false);
+	}
+
+	/**
+	 * Uploads exactly dataLength bytes. With resume, dataIn must start at the beginning of the
+	 * entire file; the server's seekpos prefix is consumed locally before sending the remainder.
+	 * Resume and overwrite are mutually exclusive. No automatic retry or rollback occurs.
+	 * @param dataIn caller-owned full source
+	 * @param dataLength total intended file size
+	 * @param filePath repository path
+	 * @param overwrite replace existing file (must be false for resume)
+	 * @param channelId channel ID
+	 * @param channelPassword channel password
+	 * @param resume request continuation of an existing partial file
+	 * @return cancellable upload result; socket write completion is not a server durability acknowledgment
+	 */
+	public CompletableFuture<Void> uploadFile(InputStream dataIn, long dataLength, String filePath, boolean overwrite,
+	                                         int channelId, String channelPassword, boolean resume) {
+		if (dataLength < 0) throw new IllegalArgumentException("Negative upload length");
+		java.util.Objects.requireNonNull(dataIn, "dataIn");
 		FileTransferHelper helper = query.getFileTransferHelper();
-		Command cmd = FileCommands.ftInitUpload(helper.getClientTransferId(), filePath, channelId, channelPassword, dataLength, overwrite);
-		return executeTransfer(cmd, params -> {
-			try { helper.uploadFile(dataIn, dataLength, params); }
-			catch (IOException failure) { throw new TS3FileTransferFailedException("Upload failed", failure); }
+		Command cmd = FileCommands.ftInitUpload(helper.getClientTransferId(), filePath, channelId, channelPassword, dataLength, overwrite, resume);
+		return executeTransfer(cmd, (params, operation) -> {
+			try { helper.uploadFile(dataIn, dataLength, params, resume, operation); }
+			catch (IOException failure) { throw new TS3FileTransferFailedException("Upload failed", operation.failureCause(failure)); }
 			return null;
 		});
 	}
@@ -5412,13 +5451,35 @@ public class TS3ApiAsync {
 	 * @see #downloadIcon(OutputStream, long)
 	 */
 	public CompletableFuture<Long> uploadIcon(InputStream dataIn, long dataLength) {
-		byte[] data;
+		java.util.Objects.requireNonNull(dataIn, "dataIn");
+		if (dataLength < 0) throw new IllegalArgumentException("Negative icon length");
+		var admission = query.commandAdmission(true);
+		if (!admission.tryAcquire()) return CompletableFuture.failedFuture(new TS3QueueFullException());
+		var helper = query.getFileTransferHelper();
+		var operation = helper.newOperation();
+		var work = new CompletableFuture<byte[]>();
+		var cancellation = new CompletableFuture<Void>();
+		cancellation.whenComplete((value, failure) -> operation.abort());
+		var preparation = CommandFutures.link(work, cancellation);
 		try {
-			data = FileTransferHelper.readFully(dataIn, dataLength);
-		} catch (IOException e) {
-			throw new TS3FileTransferFailedException("Reading stream failed", e);
+			query.callbackExecutor().execute(() -> {
+				byte[] data = null;
+				Throwable failure = null;
+				try (operation) {
+					operation.start(() -> query.callbackExecutor().execute(() -> work.completeExceptionally(
+						new TS3FileTransferFailedException("Icon buffering aborted", operation.abortCause()))));
+					data = FileTransferHelper.readFully(dataIn, dataLength,
+						query.getConfig().getFileTransferConfig().maxInMemoryBytes(), operation);
+				} catch (IOException exception) {
+					failure = new TS3FileTransferFailedException("Icon buffering failed", operation.failureCause(exception));
+				} catch (Throwable exception) { failure = exception; }
+				finally { admission.release(); }
+				if (failure == null) work.complete(data); else work.completeExceptionally(failure);
+			});
+		} catch (RuntimeException rejected) {
+			operation.close(); admission.release(); work.completeExceptionally(rejected);
 		}
-		return uploadIconDirect(data);
+		return CommandFutures.compose(preparation, this::uploadIconDirect);
 	}
 
 	/**
@@ -5512,26 +5573,41 @@ public class TS3ApiAsync {
 		return executeAndTransformFirst(cmd, ServerQueryInfo::new);
 	}
 
-	/** Retains admission until actual transfer work finishes, even if its public result is cancelled. */
-	private <T> CompletableFuture<T> executeTransfer(Command command, Function<FileTransferParameters, T> transfer) {
+	/** Admission is released only after actual I/O ends, including uncooperative caller streams. */
+	private <T> CompletableFuture<T> executeTransfer(Command command,
+	        java.util.function.BiFunction<FileTransferParameters, FileTransferHelper.Operation, T> transfer) {
 		var finished = new CompletableFuture<Void>();
-		command.getFuture().whenComplete((value, failure) -> {
-			if (failure != null) finished.complete(null);
-		});
-		java.util.concurrent.Executor executor = action -> {
+		var work = new CompletableFuture<T>();
+		var cancellation = new CompletableFuture<Void>();
+		var operation = query.getFileTransferHelper().newOperation();
+		cancellation.whenComplete((value, failure) -> operation.abort());
+		var result = CommandFutures.link(work, cancellation, command.getFuture());
+		command.getFuture().whenComplete((response, failure) -> {
+			if (failure != null) {
+				operation.close(); work.completeExceptionally(failure); finished.complete(null); return;
+			}
 			try {
 				query.callbackExecutor().execute(() -> {
-					try { action.run(); } finally { finished.complete(null); }
+					try {
+						T value;
+						try (operation) {
+							operation.start(() -> query.callbackExecutor().execute(() -> work.completeExceptionally(
+							new TS3FileTransferFailedException("File transfer aborted", operation.abortCause()))));
+							var params = new FileTransferParameters(response.getFirstResponse().getMap());
+							var error = params.getQueryError();
+							if (!error.isSuccessful()) throw new TS3CommandFailedException(error, command.getName());
+							value = transfer.apply(params, operation);
+						}
+						work.complete(value);
+					} catch (IOException transferFailure) {
+						work.completeExceptionally(new TS3FileTransferFailedException("File transfer aborted", transferFailure));
+					} catch (Throwable transferFailure) { work.completeExceptionally(transferFailure); }
+					finally { finished.complete(null); }
 				});
-			} catch (RuntimeException rejected) { finished.complete(null); throw rejected; }
-		};
-		var work = command.getFuture().thenApplyAsync(response -> {
-			var params = new FileTransferParameters(response.getFirstResponse().getMap());
-			var error = params.getQueryError();
-			if (!error.isSuccessful()) throw new TS3CommandFailedException(error, command.getName());
-			return transfer.apply(params);
-		}, executor);
-		var result = CommandFutures.link(work, command.getFuture(), work);
+			} catch (RuntimeException rejected) {
+				operation.close(); work.completeExceptionally(rejected); finished.complete(null);
+			}
+		});
 		commandQueue.enqueueCommand(command, finished);
 		return result;
 	}

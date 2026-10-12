@@ -1564,13 +1564,26 @@ public class TS3Api {
 		return CommandFutures.join(asyncApi.downloadFile(dataOut, filePath, channelId, channelPassword));
 	}
 
+
+	/** Downloads a suffix into a caller-owned output; returns bytes written. See the async contract.
+	 * @param dataOut output stream
+	 * @param filePath repository path
+	 * @param channelId channel
+	 * @param channelPassword password
+	 * @param seekPosition byte offset
+	 * @return bytes written
+	 */
+	public long downloadFile(OutputStream dataOut, String filePath, int channelId, String channelPassword, long seekPosition) {
+		return CommandFutures.join(asyncApi.downloadFile(dataOut, filePath, channelId, channelPassword, seekPosition));
+	}
+
 	/**
 	 * Downloads a file from the file repository at a given path and channel
 	 * and returns the file's bytes as a byte array.
 	 * <p>
 	 * Note that this method <strong>will read the entire file to memory</strong>.
-	 * That means that if a file is larger than 2<sup>31</sup>-1 bytes in size,
-	 * the download will fail.
+	 * Files exceeding {@link FileTransferConfig#maxInMemoryBytes()} fail before allocation.
+	 * The default limit is 16 MiB; use a streaming download for larger files.
 	 * </p>
 	 *
 	 * @param filePath
@@ -1598,8 +1611,8 @@ public class TS3Api {
 	 * and returns the file's bytes as a byte array.
 	 * <p>
 	 * Note that this method <strong>will read the entire file to memory</strong>.
-	 * That means that if a file is larger than 2<sup>31</sup>-1 bytes in size,
-	 * the download will fail.
+	 * Files exceeding {@link FileTransferConfig#maxInMemoryBytes()} fail before allocation.
+	 * The default limit is 16 MiB; use a streaming download for larger files.
 	 * </p>
 	 *
 	 * @param filePath
@@ -4668,6 +4681,21 @@ public class TS3Api {
 	 */
 	public void uploadFile(InputStream dataIn, long dataLength, String filePath, boolean overwrite, int channelId, String channelPassword) {
 		CommandFutures.join(asyncApi.uploadFile(dataIn, dataLength, filePath, overwrite, channelId, channelPassword));
+	}
+
+
+	/** Uploads/resumes from a caller-owned full source. See the async resume contract.
+	 * @param dataIn full source
+	 * @param dataLength total size
+	 * @param filePath repository path
+	 * @param overwrite replace file
+	 * @param channelId channel
+	 * @param channelPassword password
+	 * @param resume continue existing partial upload
+	 */
+	public void uploadFile(InputStream dataIn, long dataLength, String filePath, boolean overwrite,
+	                       int channelId, String channelPassword, boolean resume) {
+		CommandFutures.join(asyncApi.uploadFile(dataIn, dataLength, filePath, overwrite, channelId, channelPassword, resume));
 	}
 
 	/**

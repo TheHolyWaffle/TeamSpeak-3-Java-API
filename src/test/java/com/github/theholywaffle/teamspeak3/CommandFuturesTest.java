@@ -330,7 +330,11 @@ class CommandFuturesTest {
 			var output = new java.io.OutputStream() {
 				@Override public void write(int value) throws java.io.IOException {
 					entered.countDown();
-					try { await(release); } catch (InterruptedException e) { throw new java.io.IOException(e); }
+					boolean interrupted = false;
+					while (release.getCount() != 0) {
+						try { await(release); } catch (InterruptedException e) { interrupted = true; }
+					}
+					if (interrupted) Thread.currentThread().interrupt();
 				}
 			};
 			query.connect(); var transfer = query.getAsyncApi().downloadFile(output, "/test", 0);

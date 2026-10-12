@@ -27,129 +27,191 @@ package com.github.theholywaffle.teamspeak3;
  */
 
 import com.github.theholywaffle.teamspeak3.api.wrapper.FileTransferParameters;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.InterruptedIOException;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.CRC32;
 
-class FileTransferHelper {
-
-	private static final Logger log = LoggerFactory.getLogger(FileTransferHelper.class);
-	private static final int BUFFER_SIZE = 16_384; // 16 kB
-
-	// Can only be in the range 0 - 65535
-	private final AtomicInteger clientTransferId = new AtomicInteger(0);
+/** Owns only file sockets; caller streams are never flushed or closed. */
+class FileTransferHelper implements AutoCloseable {
+	private static final int BUFFER_SIZE = 16_384;
+	private final AtomicInteger clientTransferId = new AtomicInteger();
 	private final String defaultHost;
+	private final FileTransferConfig config;
+	private final ScheduledExecutorService deadlines;
+	private final Set<Operation> operations = ConcurrentHashMap.newKeySet();
+	private boolean closed;
 
-	FileTransferHelper(String host) {
-		defaultHost = host;
+	FileTransferHelper(String host, FileTransferConfig config, ScheduledExecutorService deadlines) {
+		this.defaultHost = host; this.config = config; this.deadlines = deadlines;
 	}
 
-	// FILES
+	synchronized Operation newOperation() {
+		var operation = new Operation();
+		if (closed) operation.abort();
+		else operations.add(operation);
+		return operation;
+	}
 
-	void downloadFile(OutputStream dataOut, FileTransferParameters params) throws IOException {
-		final String host = getHostFromResponse(params.getFileServerHost());
-		final int port = params.getFileServerPort();
-		final long dataLength = params.getFileSize();
-		final int downloadId = params.getClientTransferId() + 1;
+	@Override public synchronized void close() {
+		closed = true;
+		for (var operation : operations) operation.abort();
+	}
 
-		log.info("[Download {}] Download started", downloadId);
-		try (Socket socket = new Socket(host, port)) {
-			socket.setReceiveBufferSize(BUFFER_SIZE);
-			int actualSize = socket.getReceiveBufferSize();
+	final class Operation implements AutoCloseable {
+		private Socket socket;
+		private Thread worker;
+		private boolean aborted;
+		private boolean expired;
+		private boolean ended;
+		private ScheduledFuture<?> timer;
+		private Runnable onAbort;
 
-			OutputStream out = socket.getOutputStream();
-			out.write(params.getFileTransferKey().getBytes(StandardCharsets.UTF_8));
-			out.flush();
+		synchronized void start(Runnable onAbort) throws IOException {
+			check();
+			worker = Thread.currentThread();
+			this.onAbort = onAbort;
+			timer = deadlines.schedule(() -> {
+				synchronized (this) { if (ended) return; expired = true; abort(); }
+			}, config.transferTimeout().toNanos(), TimeUnit.NANOSECONDS);
+		}
 
+		synchronized void abort() {
+			if (ended || aborted) return;
+			aborted = true;
+			if (socket != null) {
+				try { socket.close(); } catch (IOException ignored) { }
+			}
+			if (worker != null) worker.interrupt();
+			if (onAbort != null) onAbort.run();
+		}
+
+		synchronized IOException abortCause() {
+			return expired ? new SocketTimeoutException("File transfer deadline exceeded")
+				: new InterruptedIOException("File transfer aborted");
+		}
+
+		synchronized IOException failureCause(IOException failure) {
+			return aborted ? abortCause() : failure;
+		}
+
+		synchronized void check() throws IOException {
+			if (expired) throw new SocketTimeoutException("File transfer deadline exceeded");
+			if (aborted || Thread.currentThread().isInterrupted())
+				throw new InterruptedIOException("File transfer aborted");
+		}
+
+		Socket connect(FileTransferParameters params) throws IOException {
+			check();
+			int port = params.getFileServerPort();
+			if (port < 1 || port > 65535 || params.getFileTransferKey().isEmpty())
+				throw new IOException("Invalid file transfer endpoint or key");
+			var endpoint = config.endpointResolver().resolve(defaultHost, params.getFileServerHost(), port);
+			if (endpoint == null || endpoint.getPort() < 1) throw new IOException("Invalid resolved file endpoint");
+			Socket connected;
+			synchronized (this) {
+				check(); socket = new Socket(); connected = socket;
+			}
+			connected.connect(endpoint, TS3Config.socketTimeout(config.connectTimeout()));
+			connected.setSoTimeout(TS3Config.socketTimeout(config.readTimeout()));
+			connected.getOutputStream().write(params.getFileTransferKey().getBytes(StandardCharsets.UTF_8));
+			connected.getOutputStream().flush();
+			check();
+			return connected;
+		}
+
+		@Override public synchronized void close() {
+			ended = true;
+			if (timer != null) timer.cancel(false);
+			if (socket != null) {
+				try { socket.close(); } catch (IOException ignored) { }
+			}
+			worker = null;
+			operations.remove(this);
+		}
+	}
+
+	void downloadFile(OutputStream dataOut, FileTransferParameters params, long seekPosition, Operation operation) throws IOException {
+		long size = params.getFileSize();
+		if (size < 0 || seekPosition < 0 || seekPosition > size) throw new IOException("Invalid download length or seek position");
+		try (Socket socket = operation.connect(params)) {
 			InputStream in = socket.getInputStream();
-			byte[] buffer = new byte[actualSize];
-			long total = 0;
-			while (total < dataLength) {
-				int read = in.read(buffer);
+			byte[] buffer = new byte[BUFFER_SIZE];
+			long remaining = size - seekPosition;
+			while (remaining > 0) {
+				operation.check();
+				int read = in.read(buffer, 0, (int) Math.min(buffer.length, remaining));
 				if (read < 0) throw new IOException("Server response contained less data than specified");
-				total += read;
-				if (total > dataLength) throw new IOException("Server response contained more data than specified");
-				dataOut.write(buffer, 0, read);
+				if (read == 0) throw new IOException("File socket made no progress");
+				operation.check(); dataOut.write(buffer, 0, read); remaining -= read;
 			}
-			log.info("[Download {}] Download finished", downloadId);
-		} catch (IOException e) {
-			// Log and re-throw
-			log.warn("[Download {}] Download failed: {}", downloadId, e.getMessage());
-			throw e;
+			operation.check();
+			if (in.read() != -1) throw new IOException("Server response contained more data than specified");
+			operation.check();
 		}
 	}
 
-	void uploadFile(InputStream dataIn, long dataLength, FileTransferParameters params) throws IOException {
-		final String host = getHostFromResponse(params.getFileServerHost());
-		final int port = params.getFileServerPort();
-		final int uploadId = params.getClientTransferId() + 1;
-
-		log.info("[Upload {}] Upload started", uploadId);
-		try (Socket socket = new Socket(host, port)) {
-			socket.setSendBufferSize(BUFFER_SIZE);
-			int actualSize = socket.getSendBufferSize();
-
+	void uploadFile(InputStream dataIn, long dataLength, FileTransferParameters params, boolean resume, Operation operation) throws IOException {
+		if (dataLength < 0) throw new IOException("Negative upload length");
+		long position = params.getLong("seekpos");
+		if (position < 0 || position > dataLength || (!resume && position != 0))
+			throw new IOException("Invalid server upload seek position");
+		byte[] buffer = new byte[BUFFER_SIZE];
+		// Resume callers provide the entire source; discard precisely the server-acknowledged prefix.
+		copyPrefix(dataIn, position, buffer, operation);
+		try (Socket socket = operation.connect(params)) {
 			OutputStream out = socket.getOutputStream();
-			out.write(params.getFileTransferKey().getBytes(StandardCharsets.UTF_8));
-			out.flush();
-
-			byte[] buffer = new byte[actualSize];
-			long total = 0;
-			while (total < dataLength) {
-				int toRead = (int) Math.min(actualSize, dataLength - total);
-				int read = dataIn.read(buffer, 0, toRead);
-				if (read < 0) throw new IOException("User stream did not contain enough data");
-				total += read;
-				out.write(buffer, 0, read);
+			long remaining = dataLength - position;
+			while (remaining > 0) {
+				operation.check();
+				int read = dataIn.read(buffer, 0, (int) Math.min(buffer.length, remaining));
+				if (read <= 0) throw new IOException("User stream did not contain enough data or made no progress");
+				operation.check(); out.write(buffer, 0, read); remaining -= read;
 			}
-			log.info("[Upload {}] Upload finished", uploadId);
-		} catch (IOException e) {
-			// Log and re-throw
-			log.warn("[Upload {}] Upload failed: {}", uploadId, e.getMessage());
-			throw e;
+			out.flush(); operation.check();
 		}
 	}
 
-	// ICONS
+	private static void copyPrefix(InputStream input, long size, byte[] buffer, Operation operation) throws IOException {
+		while (size > 0) {
+			operation.check();
+			int read = input.read(buffer, 0, (int) Math.min(buffer.length, size));
+			if (read <= 0) throw new IOException("User stream did not contain resume prefix or made no progress");
+			size -= read;
+		}
+	}
 
 	static long getIconId(byte[] data) {
-		final CRC32 crc32 = new CRC32();
-		crc32.update(data);
-		return crc32.getValue();
+		final CRC32 crc32 = new CRC32(); crc32.update(data); return crc32.getValue();
 	}
 
-	// UTIL
+	static byte[] readFully(InputStream dataIn, long dataLength, int limit) throws IOException {
+		return readFully(dataIn, dataLength, limit, null);
+	}
 
-	static byte[] readFully(InputStream dataIn, long dataLength) throws IOException {
-		if (dataLength > Integer.MAX_VALUE - 64) throw new IOException("File too large");
-
-		final int len = (int) dataLength;
-		byte[] data = new byte[len];
+	static byte[] readFully(InputStream dataIn, long dataLength, int limit, Operation operation) throws IOException {
+		if (dataLength < 0 || dataLength > limit) throw new IOException("File exceeds in-memory limit or has negative length");
+		byte[] data = new byte[(int) dataLength];
 		int total = 0;
-		while (total < len) {
-			int read = dataIn.read(data, total, len - total);
-			if (read < 0) throw new IOException("User stream did not contain enough data");
+		while (total < data.length) {
+			if (operation != null) operation.check();
+			int read = dataIn.read(data, total, data.length - total);
+			if (read <= 0) throw new IOException("User stream did not contain enough data or made no progress");
 			total += read;
 		}
+		if (operation != null) operation.check();
 		return data;
 	}
 
-	int getClientTransferId() {
-		return clientTransferId.getAndUpdate(id -> (id + 1) & 0xFFFF);
-	}
-
-	private String getHostFromResponse(String raw) {
-		if (raw == null || raw.isEmpty()) return defaultHost;
-		if (raw.startsWith("0.0.0.0")) return defaultHost;
-		int firstComma = raw.indexOf(',');
-		if (firstComma <= 0) return defaultHost;
-		return raw.substring(0, firstComma);
-	}
+	int getClientTransferId() { return clientTransferId.getAndUpdate(id -> (id + 1) & 0xFFFF); }
 }

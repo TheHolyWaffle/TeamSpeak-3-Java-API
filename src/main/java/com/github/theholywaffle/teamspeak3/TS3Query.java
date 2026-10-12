@@ -158,7 +158,7 @@ public class TS3Query implements AutoCloseable {
 			Thread.ofVirtual().name("[TeamSpeak-3-Java-API] Completions").factory());
 		this.deadlines = Executors.newSingleThreadScheduledExecutor(
 			Thread.ofPlatform().name("[TeamSpeak-3-Java-API] Deadlines").factory());
-		this.fileTransferHelper = new FileTransferHelper(config.getHost());
+		this.fileTransferHelper = new FileTransferHelper(config.getHost(), config.getFileTransferConfig(), deadlines);
 		this.connectionHandler = config.getReconnectStrategy().create(config.getConnectionHandler());
 		this.globalQueue = CommandQueue.newGlobalQueue(this, !isReconnectEnabled());
 		deadlines.scheduleWithFixedDelay(() -> {
@@ -271,6 +271,7 @@ public class TS3Query implements AutoCloseable {
 		if (drain && con != null && !con.isStopped() && !initializing.get()) {
 			globalQueue.quit(new Deadline(config.getCloseTimeout().dividedBy(2)));
 		}
+		fileTransferHelper.close();
 		if (con != null) con.disconnect(deadline);
 		Future<?> task = initializationTask;
 		if (task != null && !task.isDone()) task.cancel(true);
