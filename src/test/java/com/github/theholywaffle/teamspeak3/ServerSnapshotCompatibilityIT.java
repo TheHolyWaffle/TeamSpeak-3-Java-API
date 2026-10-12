@@ -19,7 +19,7 @@ class ServerSnapshotCompatibilityIT {
     @Timeout(90)
     void snapshotRoundtrip(ServerQueryCompatibilityIT.Target target) throws Exception {
         var evidence = new ArrayList<String>();
-        try (var server = new TeamSpeakContainer(target.ts6)) {
+        try (var server = new TeamSpeakContainer()) {
             server.start();
             try (var query = new TS3Query(server.config(target.protocol))) {
                 query.connect(); var api = query.getApi(); api.selectVirtualServerById(1);

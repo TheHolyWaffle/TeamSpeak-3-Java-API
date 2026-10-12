@@ -1,8 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,14 +47,12 @@ class QueryConfigurationTest {
 		assertThrows(IllegalArgumentException.class, () -> new TS3Config().setLoginCredentials("user", null).build());
 		assertThrows(IllegalArgumentException.class, () -> new TS3Config().setLoginCredentials("", "password").build());
 		assertThrows(IllegalArgumentException.class, () -> new TS3Config().setProtocol(TS3Query.Protocol.SSH).build());
-		var mismatch = assertThrows(IllegalArgumentException.class, () -> new TS3Config().setServerType(ServerType.TS6).build());
-		assertTrue(mismatch.getMessage().contains("TS6 with RAW"));
 		assertThrows(IllegalArgumentException.class, () -> new TS3Config().setTransportFactory(QueryTransports.SSH).build());
 	}
 
-	@ParameterizedTest @EnumSource(ServerType.class)
-	void bothGenerationsSelectTheSameSshFactory(ServerType server) {
-		var config = new TS3Config().setServerType(server).setProtocol(TS3Query.Protocol.SSH)
+	@Test
+	void sshProtocolSelectsTheSshFactory() {
+		var config = new TS3Config().setProtocol(TS3Query.Protocol.SSH)
 			.setLoginCredentials("user", "password").build();
 		assertSame(QueryTransports.SSH, config.getTransportFactory());
 		assertEquals(10022, config.getQueryPort());
@@ -70,7 +66,7 @@ class QueryConfigurationTest {
 			server.expect("login user space\\s\\p\\s\\\\s");
 			server.write("error id=0 msg=ok\n");
 			server.expect("version");
-			server.write("version=6.0.0-test build=42 platform=Linux\nerror id=0 msg=ok\n");
+			server.write("version=3.13.8-test build=42 platform=Linux\nerror id=0 msg=ok\n");
 			server.finishQuit();
 		})) {
 			QueryTransportFactory factory = config -> {
@@ -90,7 +86,7 @@ class QueryConfigurationTest {
 				.setLoginCredentials("user", "space | \\s").setFloodRate(TS3Query.FloodRate.UNLIMITED).build();
 			try (var query = new TS3Query(config)) {
 				query.connect();
-				assertEquals("6.0.0-test", query.getApi().getVersion().getVersion());
+				assertEquals("3.13.8-test", query.getApi().getVersion().getVersion());
 				query.exit();
 				// Shutdown signals may precede the worker termination flag on a busy CI runner.
 				long until = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(1);

@@ -4,7 +4,7 @@ on:
   workflow_call:
   workflow_dispatch:
   schedule:
-    - cron: '23 6 * * 1' # Weekly: pinned TS6 beta licenses need revalidation.
+    - cron: '23 6 * * 1' # Weekly verification of pinned TS3 compatibility.
 
 permissions:
   contents: read
@@ -28,7 +28,6 @@ jobs:
           docker version
           docker info --format '{{.Architecture}}'
           docker buildx imagetools inspect teamspeak:3.13.8@sha256:6dfdfb22869adf50e1b66d024b360b786d57a85ea09e8e8fdb6cca23949b2813
-          docker buildx imagetools inspect teamspeaksystems/teamspeak6-server:6.0.0-beta13.1@sha256:d845f803aecf842c2df034c959c23ff2462357bacafb3807500885c5ec170fa1
           docker buildx imagetools inspect eclipse-temurin:25-jre@sha256:fcd7fd7b387f94bb2ac461478a7436ad8e349924c374ea8313919624dceae636
       - name: Run required authenticated ServerQuery and regular-client suite
         shell: bash

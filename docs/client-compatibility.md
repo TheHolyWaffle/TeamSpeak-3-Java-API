@@ -1,7 +1,10 @@
 # Verified online query-client administration
 
-This focused #441 slice tests TS3 **3.13.8 RAW**, TS3 **3.13.8 SSH** and TS6
-**6.0.0-beta13.1 SSH** with the existing pinned containers. See the
+> Current scope: TS3 RAW and SSH only. TS6 functionality and tests are removed.
+> Any TS6 observations below are retained historical findings from merged PRs,
+> not current support claims or release acceptance requirements.
+
+This focused #441 slice tests TS3 **3.13.8 RAW** and TS3 **3.13.8 SSH** with the existing pinned containers. See the
 [overall inventory](command-compatibility.md) and [integration setup](integration-tests.md).
 It covers authenticated query clients, not actual voice clients or the entire
 client administration API.
@@ -80,6 +83,10 @@ session-specific administration, and inspect event field presence before
 interpreting default invoker values. No client-side normalization is added.
 
 ## Remaining scope and official sources
+
+These paragraphs record the original slice boundary. The current whole-issue
+TS3 evidence and follow-up ownership are in the [acceptance inventory](command-compatibility.md)
+and [additional command tests](additional-command-compatibility.md).
 
 Database administration, other client properties, UID lookup, bulk/password moves,
 kicks/bans and restricted-account behavior remain in #441. Query-client events

@@ -27,6 +27,12 @@ final class RegularClientContainer extends GenericContainer<RegularClientContain
         waitingFor(Wait.forHttp("/ready").forPort(18080).withStartupTimeout(Duration.ofSeconds(60)));
     }
 
+    static final class CommandFailure extends IllegalStateException {
+        private final int errorId;
+        CommandFailure(int errorId) { super("Regular-client command failed with server error " + errorId); this.errorId = errorId; }
+        int errorId() { return errorId; }
+    }
+
     void connect() throws Exception { request("connect", ""); }
     void disconnect() throws Exception { request("disconnect", ""); }
     String command(String text) throws Exception { return request("command", text); }
@@ -44,6 +50,9 @@ final class RegularClientContainer extends GenericContainer<RegularClientContain
         catch (java.io.IOException failure) {
             String diagnostics = getLogs().lines().filter(line -> line.equals("regular-client control ready")).collect(java.util.stream.Collectors.joining("\n"));
             throw new java.io.IOException("Regular-client control failed: " + diagnostics, failure);
+        }
+        if (endpoint.equals("command") && response.statusCode() == 500 && response.body().startsWith("CommandException id=")) {
+            throw new CommandFailure(Integer.parseInt(response.body().substring("CommandException id=".length())));
         }
         if (response.statusCode() != 200) throw new IllegalStateException("Regular-client " + endpoint + " failed: " + response.body() + "\n" + getLogs().lines().filter(line -> line.stripLeading().startsWith("at ")).collect(java.util.stream.Collectors.joining("\n")));
         return response.body();

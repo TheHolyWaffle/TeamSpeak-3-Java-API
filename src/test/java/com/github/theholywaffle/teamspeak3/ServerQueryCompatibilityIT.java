@@ -56,42 +56,36 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ServerQueryCompatibilityIT {
 	enum Target {
-		TS3_RAW(false, TS3Query.Protocol.RAW), TS3_SSH(false, TS3Query.Protocol.SSH), TS6_SSH(true, TS3Query.Protocol.SSH);
-		final boolean ts6;
+		TS3_RAW(TS3Query.Protocol.RAW), TS3_SSH(TS3Query.Protocol.SSH);
 		final TS3Query.Protocol protocol;
-		Target(boolean ts6, TS3Query.Protocol protocol) { this.ts6 = ts6; this.protocol = protocol; }
+		Target(TS3Query.Protocol protocol) { this.protocol = protocol; }
 	}
 
 	@TempDir static Path home;
 	static TeamSpeakContainer ts3;
-	static TeamSpeakContainer ts6;
 
 	@BeforeAll static void start() throws Exception {
 		// Deliberately fail, never skip, when the integration profile cannot use Docker.
 		assertTrue(DockerClientFactory.instance().isDockerAvailable(), "Required Docker integration tests cannot run: start a Docker daemon");
-		ts3 = new TeamSpeakContainer(false);
-		ts6 = new TeamSpeakContainer(true);
+		ts3 = new TeamSpeakContainer();
 		ts3.start();
-		ts6.start();
 	}
 
 	@AfterAll static void stop() {
-		try { if (ts6 != null) ts6.close(); } finally {
-			if (ts3 != null) ts3.close();
-		}
+		if (ts3 != null) ts3.close();
 	}
 
 	@ParameterizedTest(name = "{0}: login, version, selection, channel CRUD and server errors")
 	@EnumSource(Target.class)
 	void smoke(Target target) throws Exception {
-		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		TeamSpeakContainer server = ts3;
 		TS3Query query = new TS3Query(server.config(target.protocol));
 		try {
 			query.connect();
 			assertTrue(query.isConnected());
 			TS3Api api = query.getApi();
 			var version = api.getVersion();
-			assertEquals(target.ts6 ? "6.0.0-beta13.1" : "3.13.8", version.getVersion());
+			assertEquals("3.13.8", version.getVersion());
 			assertFalse(version.getBuild().isBlank());
 			server.record(target.name(), version);
 			api.selectVirtualServerById(1);
@@ -113,7 +107,7 @@ class ServerQueryCompatibilityIT {
 	@EnumSource(Target.class)
 	@Timeout(30)
 	void reconnectSession(Target target) throws Exception {
-		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		TeamSpeakContainer server = ts3;
 		try (var proxy = new DisconnectingProxy(server.getHost(), server.getMappedPort(target.protocol == TS3Query.Protocol.RAW ? 10011 : 10022))) {
 			var connected = new AtomicInteger();
 			var restored = new CountDownLatch(1);
@@ -134,8 +128,8 @@ class ServerQueryCompatibilityIT {
 					transports.add(transport);
 					return transport;
 				}
-				@Override public boolean supports(ServerType serverType, TS3Query.Protocol protocol) {
-					return factory.supports(serverType, protocol);
+				@Override public boolean supports(TS3Query.Protocol protocol) {
+					return factory.supports(protocol);
 				}
 				@Override public boolean authenticates() { return factory.authenticates(); }
 			});
@@ -168,7 +162,7 @@ class ServerQueryCompatibilityIT {
 	@EnumSource(Target.class)
 	@Timeout(30)
 	void notificationFrames(Target target) throws Exception {
-		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		TeamSpeakContainer server = ts3;
 		var rows = new java.util.concurrent.CopyOnWriteArrayList<String>();
 		var joined = new CountDownLatch(1);
 		var moved = new CountDownLatch(1);
@@ -224,7 +218,7 @@ class ServerQueryCompatibilityIT {
 	@EnumSource(Target.class)
 	@Timeout(60)
 	void channelDomain(Target target) throws Exception {
-		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		TeamSpeakContainer server = ts3;
 		var evidence = new java.util.ArrayList<String>();
 		var created = new java.util.concurrent.LinkedBlockingQueue<ChannelCreateEvent>();
 		var edited = new java.util.concurrent.LinkedBlockingQueue<ChannelEditedEvent>();
@@ -259,7 +253,6 @@ class ServerQueryCompatibilityIT {
 					var create = created.poll(5, TimeUnit.SECONDS);
 					assertNotNull(create); assertEquals(channel, create.getChannelId());
 					assertEquals(name, create.get("channel_name"));
-					assertEquals(target.ts6, create.getMap().containsKey("channel_unique_identifier"));
 					assertEquals(actorId, create.getInvokerId());
 					evidence.add("create event " + new java.util.TreeMap<>(create.getMap()));
 					var list = api.getChannels().stream().filter(c -> c.getId() == channel).findFirst().orElseThrow();
@@ -279,8 +272,6 @@ class ServerQueryCompatibilityIT {
 					assertEquals(renamed, info.getName()); assertEquals(topic, info.getTopic());
 					assertEquals("description 日本語 | literal \\s", info.getDescription());
 					assertNotNull(info.getUniqueIdentifier());
-					assertEquals(target.ts6, info.getMap().containsKey("channel_storage_quota"));
-					if (target.ts6) assertEquals("4294967295", info.get("channel_storage_quota"));
 					evidence.add("channelinfo " + new java.util.TreeMap<>(info.getMap()));
 					api.moveChannel(channel, parent, 0);
 					var move = moved.poll(5, TimeUnit.SECONDS);
@@ -317,7 +308,7 @@ class ServerQueryCompatibilityIT {
 	@EnumSource(Target.class)
 	@Timeout(60)
 	void channelConfigurationDomain(Target target) throws Exception {
-		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		TeamSpeakContainer server = ts3;
 		var evidence = new java.util.ArrayList<String>();
 		var descriptions = new java.util.concurrent.LinkedBlockingQueue<ChannelDescriptionEditedEvent>(16);
 		var passwords = new java.util.concurrent.LinkedBlockingQueue<ChannelPasswordChangedEvent>(16);
@@ -415,7 +406,7 @@ class ServerQueryCompatibilityIT {
 	@EnumSource(Target.class)
 	@Timeout(60)
 	void banRuleDomain(Target target) throws Exception {
-		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		TeamSpeakContainer server = ts3;
 		var evidence = new java.util.ArrayList<String>();
 		try (var query = new TS3Query(server.config(target.protocol))) {
 			query.connect();
@@ -475,7 +466,7 @@ class ServerQueryCompatibilityIT {
 	@EnumSource(Target.class)
 	@Timeout(60)
 	void privilegeKeyDomain(Target target) throws Exception {
-		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		TeamSpeakContainer server = ts3;
 		var evidence = new java.util.ArrayList<String>();
 		var used = new java.util.concurrent.LinkedBlockingQueue<PrivilegeKeyUsedEvent>(16);
 		var messages = new java.util.concurrent.LinkedBlockingQueue<TextMessageEvent>(16);
@@ -571,7 +562,7 @@ class ServerQueryCompatibilityIT {
 	@EnumSource(Target.class)
 	@Timeout(60)
 	void fileDomain(Target target) throws Exception {
-		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		TeamSpeakContainer server = ts3;
 		var evidence = new java.util.ArrayList<String>();
 		try (var query = new TS3Query(server.config(target.protocol))) {
 			query.connect();
@@ -606,17 +597,11 @@ class ServerQueryCompatibilityIT {
 				assertEquals(pipePath, pipe.getPath());
 				api.deleteFile(pipePath, source);
 				String unicodePath = "/directory 日本語 spaces";
-				if (target.ts6) {
-					var unicode = assertThrows(TS3CommandFailedException.class, () -> api.createFileDirectory(unicodePath, source));
-					evidence.add("Unicode path " + new java.util.TreeMap<>(unicode.getError().getMap()));
-					assertEquals(2054, unicode.getError().getId()); assertEquals("invalid file path", unicode.getError().getMessage());
-				} else {
-					api.createFileDirectory(unicodePath, source);
-					var unicode = api.getFileList("/", source).getFirst();
-					evidence.add("Unicode path " + new java.util.TreeMap<>(unicode.getMap()));
-					assertEquals(unicodePath, unicode.getPath());
-					api.deleteFile(unicodePath, source);
-				}
+				api.createFileDirectory(unicodePath, source);
+				var unicode = api.getFileList("/", source).getFirst();
+				evidence.add("Unicode path " + new java.util.TreeMap<>(unicode.getMap()));
+				assertEquals(unicodePath, unicode.getPath());
+				api.deleteFile(unicodePath, source);
 				assertTrue(api.getFileList("/", source).isEmpty());
 				String name = "directory spaces";
 				String path = "/" + name;
@@ -626,8 +611,7 @@ class ServerQueryCompatibilityIT {
 				assertEquals(name, directory.getName()); assertEquals(path, directory.getPath());
 				assertEquals("/", directory.getParentPath()); assertEquals(source, directory.getChannelId());
 				assertEquals(0, directory.getType()); assertTrue(directory.isDirectory()); assertFalse(directory.isFile());
-				var timestampUnit = target.ts6 ? TimeUnit.MILLISECONDS : TimeUnit.SECONDS;
-				long modified = directory.getLastModifiedDate(timestampUnit).getTime();
+				long modified = directory.getLastModifiedDate().getTime();
 				assertTrue(Math.abs(System.currentTimeMillis() - modified) < 60_000, "New directory timestamp must represent current time");
 				assertFalse(directory.isStillUploading()); assertFalse(directory.getMap().containsKey("incompletesize"));
 				assertTrue(api.getFileList(name, source).isEmpty());
@@ -654,12 +638,12 @@ class ServerQueryCompatibilityIT {
 				assertTrue(api.getFileList("/", destination, password).isEmpty());
 				var missing = assertThrows(TS3CommandFailedException.class, () -> api.getFileInfo("/absent.txt", source));
 				evidence.add("missing file " + new java.util.TreeMap<>(missing.getError().getMap()));
-				assertEquals(target.ts6 ? 2051 : 2052, missing.getError().getId());
-				assertEquals(target.ts6 ? "file not found" : "file input/output error", missing.getError().getMessage());
+				assertEquals(2052, missing.getError().getId());
+				assertEquals("file input/output error", missing.getError().getMessage());
 				var missingDirectory = assertThrows(TS3CommandFailedException.class, () -> api.getFileList("/absent", source));
 				evidence.add("missing directory " + new java.util.TreeMap<>(missingDirectory.getError().getMap()));
-				assertEquals(target.ts6 ? 2051 : 2052, missingDirectory.getError().getId());
-				assertEquals(target.ts6 ? "file not found" : "file input/output error", missingDirectory.getError().getMessage());
+				assertEquals(2052, missingDirectory.getError().getId());
+				assertEquals("file input/output error", missingDirectory.getError().getMessage());
 				assertTrue(api.getFileList("/", destination, "wrong").isEmpty());
 				evidence.add("serveradmin can list the password-protected channel with an incorrect password");
 				assertTrue(api.getFileList("/", destination, password).isEmpty());
@@ -676,7 +660,7 @@ class ServerQueryCompatibilityIT {
 	@EnumSource(Target.class)
 	@Timeout(60)
 	void clientDomain(Target target) throws Exception {
-		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		TeamSpeakContainer server = ts3;
 		var evidence = new java.util.ArrayList<String>();
 		var joins = new java.util.concurrent.LinkedBlockingQueue<ClientJoinEvent>(16);
 		var moves = new java.util.concurrent.LinkedBlockingQueue<ClientMovedEvent>(16);
@@ -714,17 +698,12 @@ class ServerQueryCompatibilityIT {
 				assertEquals(identity.getNickname(), join.getClientNickname());
 				assertEquals(identity.getUniqueIdentifier(), join.getUniqueClientIdentifier());
 				assertEquals(identity.getDatabaseId(), join.getClientDatabaseId()); assertEquals(1, join.getClientType());
-				assertEquals(target.ts6, join.getMap().containsKey("client_is_streaming"));
-				assertEquals(target.ts6, join.getMap().containsKey("client_user_tag"));
 				assertFalse(join.getMap().containsKey("invokerid")); assertEquals(-1, join.getInvokerId());
 				String name = "query-" + target + " 日本語 | \\s";
 				subject.getApi().updateClient(Map.of(ClientProperty.CLIENT_NICKNAME, name));
 				assertEquals(name, subject.getApi().whoAmI().getNickname());
 				var info = api.getClientInfo(id);
 				evidence.add("clientinfo " + new java.util.TreeMap<>(info.getMap()));
-				assertEquals(target.ts6, info.getMap().containsKey("client_public_key_raw"));
-				assertEquals(target.ts6, info.getMap().containsKey("client_is_streaming"));
-				assertEquals(target.ts6, info.getMap().containsKey("client_user_tag"));
 				assertEquals(id, info.getId()); assertEquals(name, info.getNickname()); assertEquals(1, info.getType());
 				assertFalse(info.isRegularClient()); assertEquals(identity.getChannelId(), info.getChannelId());
 				assertEquals(identity.getDatabaseId(), info.getDatabaseId());
@@ -809,7 +788,7 @@ class ServerQueryCompatibilityIT {
 	@EnumSource(Target.class)
 	@Timeout(60)
 	void serverDomain(Target target) throws Exception {
-		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		TeamSpeakContainer server = ts3;
 		var evidence = new java.util.ArrayList<String>();
 		var edits = new java.util.concurrent.LinkedBlockingQueue<ServerEditedEvent>(16);
 		try (var observer = new TS3Query(server.config(target.protocol));
@@ -829,28 +808,22 @@ class ServerQueryCompatibilityIT {
 			}
 			var info = api.getServerInfo();
 			evidence.add("serverinfo " + new java.util.TreeMap<>(info.getMap()));
-			assertEquals(target.ts6, info.getMap().containsKey("virtualserver_storage_quota"));
-			assertEquals(target.ts6, info.getMap().containsKey("virtualserver_canonical_name"));
-			assertEquals(!target.ts6, info.getMap().containsKey("virtualserver_file_storage_class"));
 			assertEquals(1, info.getId()); assertEquals(VirtualServerStatus.ONLINE, info.getStatus());
 			assertFalse(info.getName().isBlank()); assertFalse(info.getUniqueIdentifier().isBlank());
 			assertTrue(info.getPort() > 0); assertTrue(info.getMaxClients() > 0);
 			assertFalse(info.getVersion().isBlank()); assertFalse(info.getPlatform().isBlank());
 			var listed = api.getVirtualServers().stream().filter(v -> v.getId() == 1).findFirst().orElseThrow();
 			evidence.add("serverlist " + new java.util.TreeMap<>(listed.getMap()));
-			assertEquals(target.ts6, listed.getMap().containsKey("virtualserver_uuid"));
 			assertEquals(info.getName(), listed.getName()); assertEquals(info.getPort(), listed.getPort());
 			assertEquals(info.getUniqueIdentifier(), listed.getUniqueIdentifier());
 			assertEquals(info.getStatus(), listed.getStatus()); assertEquals(info.getMaxClients(), listed.getMaxClients());
 			assertEquals(1, api.getServerIdByPort(info.getPort()));
 			var host = api.getHostInfo();
 			evidence.add("hostinfo " + new java.util.TreeMap<>(host.getMap()));
-			assertEquals(target.ts6, host.getMap().containsKey("virtualservers_total_homebases"));
 			assertEquals(1, host.getTotalRunningServers()); assertTrue(host.getTotalChannels() > 0);
 			assertTrue(host.getUptime() >= 0); assertTrue(host.getTimeStamp().getTime() > 0);
 			var instance = api.getInstanceInfo();
 			evidence.add("instanceinfo " + new java.util.TreeMap<>(instance.getMap()));
-			assertEquals(target.ts6, instance.getMap().containsKey("serverinstance_max_homebases"));
 			assertTrue(instance.getDatabaseVersion() > 0); assertTrue(instance.getFileTransferPort() > 0);
 			var connection = api.getConnectionInfo();
 			evidence.add("connectioninfo " + new java.util.TreeMap<>(connection.getMap()));
@@ -913,8 +886,8 @@ class ServerQueryCompatibilityIT {
 		assertEquals(name, event.get(VirtualServerProperty.VIRTUALSERVER_NAME));
 		assertEquals(actorInfo.getId(), event.getInvokerId()); assertEquals(actorInfo.getNickname(), event.getInvokerName());
 		assertEquals(actorInfo.getUniqueIdentifier(), event.getInvokerUniqueId());
-		assertEquals(!target.ts6, event.getMap().containsKey("reasonid"));
-		assertEquals(target.ts6 ? -1 : 10, event.getReasonId());
+		assertTrue(event.getMap().containsKey("reasonid"));
+		assertEquals(10, event.getReasonId());
 		assertFalse(event.getMap().containsKey(VirtualServerProperty.VIRTUALSERVER_WELCOMEMESSAGE.getName()));
 		assertFalse(event.getMap().containsKey(VirtualServerProperty.VIRTUALSERVER_HOSTMESSAGE.getName()));
 	}
@@ -927,7 +900,7 @@ class ServerQueryCompatibilityIT {
 	@EnumSource(Target.class)
 	@Timeout(60)
 	void messageDomain(Target target) throws Exception {
-		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		TeamSpeakContainer server = ts3;
 		var evidence = new java.util.ArrayList<String>();
 		var messages = new java.util.concurrent.LinkedBlockingQueue<TextMessageEvent>(16);
 		try (var observer = new TS3Query(server.config(target.protocol));
@@ -1047,7 +1020,7 @@ class ServerQueryCompatibilityIT {
 	@Timeout(120)
 	void serverLifecycleDomain(Target target) throws Exception {
 		var evidence = new java.util.ArrayList<String>();
-		try (var server = new TeamSpeakContainer(target.ts6)) {
+		try (var server = new TeamSpeakContainer()) {
 			server.start();
 			try (var query = new TS3Query(server.config(target.protocol))) {
 				query.connect(); var api = query.getApi(); server.record(target.name(), api.getVersion());
@@ -1115,7 +1088,7 @@ class ServerQueryCompatibilityIT {
 	@EnumSource(Target.class)
 	@Timeout(60)
 	void logDomain(Target target) throws Exception {
-		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		TeamSpeakContainer server = ts3;
 		var evidence = new java.util.ArrayList<String>();
 		try (var query = new TS3Query(server.config(target.protocol))) {
 			query.connect(); var api = query.getApi(); var version = api.getVersion(); server.record(target.name(), version);
@@ -1165,7 +1138,7 @@ class ServerQueryCompatibilityIT {
 	@Timeout(60)
 	void queryLoginDomain(Target target) throws Exception {
 		var evidence = new java.util.ArrayList<String>();
-		try (var server = new TeamSpeakContainer(target.ts6)) {
+		try (var server = new TeamSpeakContainer()) {
 			server.start();
 			try (var administrator = new TS3Query(server.config(target.protocol))) {
 				administrator.connect(); var api = administrator.getApi();
@@ -1217,16 +1190,16 @@ class ServerQueryCompatibilityIT {
 		}
 	}
 
-	private static void assertLoginAuthenticationFailure(Throwable failure, Target target, java.util.List<String> evidence) {
+	static void assertLoginAuthenticationFailure(Throwable failure, Target target, java.util.List<String> evidence) {
 		for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
 			if (target.protocol == TS3Query.Protocol.RAW && cause instanceof TS3CommandFailedException command) {
-				evidence.add("deleted credentials rejected " + new java.util.TreeMap<>(command.getError().getMap()));
+				evidence.add("credentials rejected " + new java.util.TreeMap<>(command.getError().getMap()));
 				assertEquals(520, command.getError().getId());
 				assertEquals("invalid loginname or password", command.getError().getMessage());
 				return;
 			}
 			if (target.protocol == TS3Query.Protocol.SSH && cause instanceof net.schmizz.sshj.userauth.UserAuthException) {
-				evidence.add("deleted credentials rejected " + cause.getClass().getSimpleName());
+				evidence.add("credentials rejected " + cause.getClass().getSimpleName());
 				return;
 			}
 		}
@@ -1237,7 +1210,7 @@ class ServerQueryCompatibilityIT {
 	@EnumSource(Target.class)
 	@Timeout(60)
 	void groupCopyDomain(Target target) throws Exception {
-		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		TeamSpeakContainer server = ts3;
 		var evidence = new java.util.ArrayList<String>();
 		var regular = com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType.REGULAR;
 		try (var query = new TS3Query(server.config(target.protocol))) {
@@ -1321,7 +1294,7 @@ class ServerQueryCompatibilityIT {
 	@EnumSource(Target.class)
 	@Timeout(60)
 	void permissionDomain(Target target) throws Exception {
-		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		TeamSpeakContainer server = ts3;
 		var evidence = new java.util.ArrayList<String>();
 		try (var query = new TS3Query(server.config(target.protocol))) {
 			query.connect();
@@ -1350,9 +1323,7 @@ class ServerQueryCompatibilityIT {
 			String integerName = IPermissionType.I_CHANNEL_NEEDED_JOIN_POWER.getName();
 			String booleanName = BPermissionType.B_CHANNEL_CREATE_PERMANENT.getName();
 			assertTrue(byName.containsKey(integerName)); assertTrue(byName.containsKey(booleanName));
-			assertEquals(target.ts6, byName.containsKey("i_ft_max_file_size_mb"));
-			if (target.ts6) assertEquals(byName.get("i_ft_max_file_size_mb").getId(), api.getPermissionIdByName("i_ft_max_file_size_mb"));
-			else assertEquals(2562, assertThrows(TS3CommandFailedException.class, () -> api.getPermissionIdByName("i_ft_max_file_size_mb")).getError().getId());
+			assertEquals(2562, assertThrows(TS3CommandFailedException.class, () -> api.getPermissionIdByName("i_issue441_nonexistent")).getError().getId());
 			assertEquals(byName.get(integerName).getId(), api.getPermissionIdByName(integerName));
 			assertArrayEquals(new int[]{byName.get(booleanName).getId(), byName.get(integerName).getId()},
 				api.getPermissionIdsByName(booleanName, integerName));
@@ -1405,7 +1376,8 @@ class ServerQueryCompatibilityIT {
 				assertEquals(2562, lookupError.getError().getId());
 				var findError = assertThrows(TS3CommandFailedException.class, () -> api.getPermissionAssignments("i_issue441_missing_permission"));
 				assertEquals(2562, findError.getError().getId());
-				assertEquals(byName.get(integerName).getId(), api.getPermissionIdByName(integerName));
+				assertEquals(2562, assertThrows(TS3CommandFailedException.class, () -> api.getPermissionIdByName("i_issue441_nonexistent")).getError().getId());
+			assertEquals(byName.get(integerName).getId(), api.getPermissionIdByName(integerName));
 			}
 			assertTrue(api.getServerGroups().stream().noneMatch(g -> g.getName().equals("renamed server " + target)));
 			assertTrue(api.getChannelGroups().stream().noneMatch(g -> g.getName().equals("renamed channel " + target)));
@@ -1481,9 +1453,9 @@ class ServerQueryCompatibilityIT {
 	}
 
 	@ParameterizedTest(name = "{0}: transport shutdown excludes the connecting caller")
-	@EnumSource(value = Target.class, names = {"TS3_SSH", "TS6_SSH"})
+	@EnumSource(value = Target.class, names = {"TS3_SSH"})
 	void sshTransportShutdownDoesNotJoinConnectingCaller(Target target) throws Exception {
-		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		TeamSpeakContainer server = ts3;
 		var config = server.config(target.protocol).build();
 		var transport = config.getTransportFactory().create(config);
 		try (transport) { transport.connect(() -> {}); }
@@ -1492,9 +1464,9 @@ class ServerQueryCompatibilityIT {
 	}
 
 	@ParameterizedTest(name = "{0}: SSH authentication and host-key regressions")
-	@EnumSource(value = Target.class, names = {"TS3_SSH", "TS6_SSH"})
+	@EnumSource(value = Target.class, names = {"TS3_SSH"})
 	void sshSecurity(Target target) throws Exception {
-		TeamSpeakContainer server = target.ts6 ? ts6 : ts3;
+		TeamSpeakContainer server = ts3;
 		assertTrue(server.sshBanner.startsWith("SSH-2.0-"));
 		assertNotNull(server.algorithms);
 		Path trust = home.resolve(target + "-known_hosts");

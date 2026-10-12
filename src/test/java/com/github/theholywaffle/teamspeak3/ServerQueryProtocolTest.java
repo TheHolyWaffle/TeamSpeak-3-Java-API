@@ -31,7 +31,7 @@ class ServerQueryProtocolTest {
 	}
 
 	@ParameterizedTest
-	@ValueSource(strings = {"", "TS3\n", "TS3\n\rWelcome to the TeamSpeak 3 ServerQuery interface.\n\r\n\r", "TS6\r\nWelcome to ServerQuery\r\nextra banner with example=value\r\nanother line\r\n\r\n"})
+	@ValueSource(strings = {"", "TS3\n", "TS3\n\rWelcome to the TeamSpeak 3 ServerQuery interface.\n\r\n\r", "TS3\r\nWelcome to ServerQuery\r\nextra banner with example=value\r\nanother line\r\n\r\n"})
 	void variableBannersDoNotConsumeResponses(String banner) throws Exception {
 		try (var peer = new FakeServerQuery(p -> {
 			// Startup must send commands without waiting for a fixed banner count.

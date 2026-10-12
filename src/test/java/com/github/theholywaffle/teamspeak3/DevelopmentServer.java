@@ -9,11 +9,11 @@ public final class DevelopmentServer {
 	private DevelopmentServer() {}
 
 	public static void main(String[] args) throws Exception {
-		if (args.length != 2 || !(args[0].equals("ts3") || args[0].equals("ts6"))
+		if (args.length != 2 || !args[0].equals("ts3")
 				|| !(args[1].equals("true") || args[1].equals("false"))) {
-			throw new IllegalArgumentException("Use -Ddev.server=ts3|ts6 and -Ddev.once=true|false");
+			throw new IllegalArgumentException("Use -Ddev.server=ts3 and -Ddev.once=true|false");
 		}
-		try (Resources resources = new Resources(new TeamSpeakContainer(args[0].equals("ts6")))) {
+		try (Resources resources = new Resources(new TeamSpeakContainer())) {
 			Thread hook = new Thread(resources::close, "teamspeak-dev-cleanup");
 			Runtime.getRuntime().addShutdownHook(hook);
 			try {
@@ -22,7 +22,7 @@ public final class DevelopmentServer {
 				System.out.println("Development server ready: " + args[0] + " container=" + server.getContainerId());
 				System.out.println("Image: " + server.getDockerImageName());
 				System.out.println("SSH ServerQuery: " + server.getHost() + ":" + server.getMappedPort(10022));
-				if (!server.ts6) System.out.println("Raw ServerQuery: " + server.getHost() + ":" + server.getMappedPort(10011));
+				System.out.println("Raw ServerQuery: " + server.getHost() + ":" + server.getMappedPort(10011));
 				System.out.println("Disposable login: serveradmin / " + TeamSpeakContainer.PASSWORD + "; virtual server: 1");
 				DevelopmentServerExample.run(server.config(TS3Query.Protocol.SSH));
 				if (!Boolean.parseBoolean(args[1])) {

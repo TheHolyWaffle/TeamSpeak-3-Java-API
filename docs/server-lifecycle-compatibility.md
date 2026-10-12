@@ -1,7 +1,10 @@
 # Verified virtual-server lifecycle
 
-This focused #441 slice verifies TS3 **3.13.8 RAW**, TS3 **3.13.8 SSH** and TS6
-**6.0.0-beta13.1 SSH** with the existing pinned images. See the
+> Current scope: TS3 RAW and SSH only. TS6 functionality and tests are removed.
+> Any TS6 observations below are retained historical findings from merged PRs,
+> not current support claims or release acceptance requirements.
+
+This focused #441 slice verifies TS3 **3.13.8 RAW** and TS3 **3.13.8 SSH** with the existing pinned images. See the
 [overall inventory](command-compatibility.md), [server read/edit evidence](server-compatibility.md)
 and [integration setup](integration-tests.md).
 
@@ -65,6 +68,10 @@ acceptance does not establish an event payload or voice-client disconnect reason
 A voice port in a response is not proof of host/container reachability.
 
 ## Remaining scope and official sources
+
+These paragraphs record the original slice boundary. The current whole-issue
+TS3 evidence and follow-up ownership are in the [acceptance inventory](command-compatibility.md)
+and [additional command tests](additional-command-compatibility.md).
 
 This covers serveradmin and sequential lifecycle operations on the pinned
 fixtures. Concurrent or multi-running-server operations, repeated create/delete

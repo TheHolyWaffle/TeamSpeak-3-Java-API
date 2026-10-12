@@ -1,7 +1,10 @@
 # Verified channel configuration
 
-This focused #441 slice verifies TS3 **3.13.8 RAW**, TS3 **3.13.8 SSH** and TS6
-**6.0.0-beta13.1 SSH** using the existing pinned fixtures. It extends the core
+> Current scope: TS3 RAW and SSH only. TS6 functionality and tests are removed.
+> Any TS6 observations below are retained historical findings from merged PRs,
+> not current support claims or release acceptance requirements.
+
+This focused #441 slice verifies TS3 **3.13.8 RAW** and TS3 **3.13.8 SSH** using the existing pinned fixtures. It extends the core
 channel CRUD evidence in the [overall inventory](command-compatibility.md).
 
 ## Verified operations
@@ -60,6 +63,10 @@ about delivery to unsubscribed or out-of-channel sessions. Keep passwords out of
 reports and do not interpret an administrator move as proof of password checks.
 
 ## Remaining scope and official documentation
+
+These paragraphs record the original slice boundary. The current whole-issue
+TS3 evidence and follow-up ownership are in the [acceptance inventory](command-compatibility.md)
+and [additional command tests](additional-command-compatibility.md).
 
 Temporary-channel creation/empty deletion, default designation, restart persistence
 of semi-permanent channels, password verification/enforcement, client/family limit

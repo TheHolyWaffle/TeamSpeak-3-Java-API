@@ -134,7 +134,7 @@ Java 25 Javadoc JAR under `target`. To also build the standalone JAR:
 ./mvnw -B -ntp -Pfull verify
 ```
 
-Docker-dependent TS3 raw, TS3 SSH and TS6 SSH smoke tests run separately:
+Docker-dependent TS3 raw and TS3 SSH smoke tests run separately:
 
 ```sh
 ./mvnw -B -ntp -Pintegration verify
@@ -144,7 +144,7 @@ See the [command/event compatibility inventory](docs/command-compatibility.md) f
 verified domains, server differences and the controlled command escape hatch.
 
 See [integration tests](docs/integration-tests.md) for pinned official images,
-license configuration, Apple Silicon emulation requirements and beta revalidation.
+license configuration, Apple Silicon emulation requirements and scheduled revalidation.
 The profile fails when required Docker tests cannot run; ordinary unit builds
 need no Docker.
 
@@ -154,7 +154,7 @@ To start a disposable local server and run a compiled Java example:
 ./mvnw -ntp -Pdev-server test-compile exec:exec
 ```
 
-Add `-Ddev.server=ts6` for TS6. The launcher prints connection details and keeps
+The TS3 launcher prints connection details and keeps
 the server running until Enter or Ctrl+C. See [local development server](docs/development-server.md)
 for stop/reset behavior, noninteractive runs and fixture requirements.
 
@@ -192,8 +192,8 @@ file and rejects changes, including a different key algorithm, after first trust
 The library never creates a trust directory or silently falls back to the working directory.
 
 Configuration is captured in an immutable `QueryConfig` snapshot without freezing
-`TS3Config`. Set `ServerType.TS6` and `Protocol.SSH` for TS6; TS3 retains raw TCP and
-uses the same SSH implementation. See [configuration and transport migration](docs/configuration-and-transports.md).
+`TS3Config`. TS3 supports raw TCP and SSH through `Protocol`; server-generation
+selection has been removed. See [configuration and transport migration](docs/configuration-and-transports.md).
 
 The client uses SSHJ's default algorithms, which still include legacy algorithms;
 this update does not enforce a modern-only algorithm policy. Compression is disabled.

@@ -1,7 +1,10 @@
 # Verified regular group copying
 
-This #441 slice covers TS3 **3.13.8 RAW**, TS3 **3.13.8 SSH** and TS6
-**6.0.0-beta13.1 SSH** on the existing pinned fixtures. See the
+> Current scope: TS3 RAW and SSH only. TS6 functionality and tests are removed.
+> Any TS6 observations below are retained historical findings from merged PRs,
+> not current support claims or release acceptance requirements.
+
+This #441 slice covers TS3 **3.13.8 RAW** and TS3 **3.13.8 SSH** on the existing pinned fixtures. See the
 [overall inventory](command-compatibility.md) and [permission migration](permission-compatibility.md).
 
 ## Verified operations and evidence

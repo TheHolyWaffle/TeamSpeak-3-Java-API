@@ -1,5 +1,9 @@
 # Verified online messages and text subscriptions
 
+> Current scope: TS3 RAW and SSH only. TS6 functionality and tests are removed.
+> Any TS6 observations below are retained historical findings from merged PRs,
+> not current support claims or release acceptance requirements.
+
 This focused portion of #441 verifies TS3 **3.13.8 RAW**, TS3 **3.13.8 SSH** and
 TS6 **6.0.0-beta13.1 SSH**, using the exact image pins and readiness checks in
 [integration tests](integration-tests.md). The overall
@@ -45,7 +49,7 @@ Help is the syntax source; actual operations establish the supported subset.
 
 ## Observed behavior and errors
 
-All three targets supply `targetmode`, `msg`, `invokerid`, `invokername` and
+All two TS3 targets supply `targetmode`, `msg`, `invokerid`, `invokername` and
 `invokeruid`. Private events additionally supply `target`. No new event property
 was observed in this slice. Unknown fields remain accessible through `getMap()`;
 missing optional fields are not evidence that a default value came from the server.

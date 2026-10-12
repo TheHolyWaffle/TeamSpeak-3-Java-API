@@ -22,11 +22,17 @@ class RegularClientCompatibilityIT {
         return matches.getFirst();
     }
 
+    // Full UDP clients send SHA-1/base64 passwords; ServerQuery typed APIs take plaintext.
+    private static String passwordHash(String password) throws Exception {
+        return java.util.Base64.getEncoder().encodeToString(java.security.MessageDigest.getInstance("SHA-1")
+            .digest(password.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+    }
+
     @ParameterizedTest @EnumSource(ServerQueryCompatibilityIT.Target.class) @Timeout(180)
     void persistentClientAdministration(ServerQueryCompatibilityIT.Target target) throws Exception {
         var evidence = new java.util.ArrayList<String>();
         try (var network = org.testcontainers.containers.Network.newNetwork();
-             var server = new TeamSpeakContainer(target.ts6).withNetwork(network).withNetworkAliases("server");
+             var server = new TeamSpeakContainer().withNetwork(network).withNetworkAliases("server");
              var fixture = new RegularClientContainer(network)) {
             server.start(); fixture.start(); fixture.connect();
             try (var query = new TS3Query(server.config(target.protocol))) {
@@ -121,11 +127,94 @@ class RegularClientCompatibilityIT {
     }
 
 
+    @ParameterizedTest @EnumSource(ServerQueryCompatibilityIT.Target.class) @Timeout(120)
+    void movesKicksAndClientBans(ServerQueryCompatibilityIT.Target target) throws Exception {
+        var evidence = new java.util.ArrayList<String>();
+        try (var network = org.testcontainers.containers.Network.newNetwork();
+             var server = new TeamSpeakContainer().withNetwork(network).withNetworkAliases("server");
+             var fixture = new RegularClientContainer(network)) {
+            server.start(); fixture.start(); fixture.connect();
+            try (var observer = new TS3Query(server.config(target.protocol));
+                 var actor = new TS3Query(server.config(target.protocol))) {
+                observer.connect(); actor.connect(); var api = observer.getApi(); var actions = actor.getApi();
+                api.selectVirtualServerById(1); actions.selectVirtualServerById(1);
+                var client = regular(api); int original = client.getChannelId(); int actorId = actions.whoAmI().getId();
+                var moves = new EventProbe<com.github.theholywaffle.teamspeak3.api.event.ClientMovedEvent>(8);
+                var leaves = new EventProbe<com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent>(8);
+                api.addTS3Listeners(new com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter() {
+                    @Override public void onClientMoved(com.github.theholywaffle.teamspeak3.api.event.ClientMovedEvent event) {
+                        moves.capture(() -> { if (event.getClientId() == client.getId()) moves.publish(event); });
+                    }
+                    @Override public void onClientLeave(com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent event) {
+                        leaves.capture(() -> { if (event.getClientId() == client.getId()) leaves.publish(event); });
+                    }
+                });
+                api.registerEvent(com.github.theholywaffle.teamspeak3.api.event.TS3EventType.SERVER);
+                api.registerEvent(com.github.theholywaffle.teamspeak3.api.event.TS3EventType.CHANNEL, 0);
+                int channel = actions.createChannel("moves-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1", ChannelProperty.CHANNEL_PASSWORD, "fixture-password"));
+                try (var cleanup = new Cleanup(() -> actions.deleteChannel(channel, true))) {
+                    var wrongPassword = assertThrows(RegularClientContainer.CommandFailure.class, () -> fixture.command("clientmove clid=" + client.getId() + " cid=" + channel + " cpw=" + passwordHash("wrong")));
+                    evidence.add("wrong channel password server error=" + wrongPassword.errorId());
+                    assertEquals(781, wrongPassword.errorId());
+                    assertEquals(original, api.getClientInfo(client.getId()).getChannelId());
+                    fixture.command("clientmove clid=" + client.getId() + " cid=" + channel + " cpw=" + passwordHash("fixture-password"));
+                    assertEquals(channel, moves.await().getTargetChannelId());
+                    actions.moveClient(client.getId(), original); assertEquals(original, moves.await().getTargetChannelId());
+                    actions.moveClients(new int[]{client.getId(), actorId}, channel, "fixture-password");
+                    var moved = moves.await(); assertEquals(channel, moved.getTargetChannelId()); assertEquals(actorId, moved.getInvokerId());
+                    assertEquals(channel, api.getClientInfo(client.getId()).getChannelId()); assertEquals(channel, actions.whoAmI().getChannelId());
+                    actions.kickClientFromChannel("channel kick 日本語", client.getId());
+                    var kicked = moves.await(); assertEquals(original, kicked.getTargetChannelId()); assertEquals(4, kicked.getReasonId());
+                    assertEquals("channel kick 日本語", kicked.getReasonMessage()); assertEquals(actorId, kicked.getInvokerId());
+                    actions.moveClient(client.getId(), channel);
+                    assertEquals(channel, moves.await().getTargetChannelId());
+                    int[] bans = actions.banClient(client.getId(), 60, "client ban 日本語");
+                    assertTrue(bans.length > 0);
+                    var banned = leaves.await(); assertEquals(6, banned.getReasonId()); assertEquals("client ban 日本語", banned.getReasonMessage());
+                    assertEquals(actorId, banned.getInvokerId()); assertFalse(api.isClientOnline(client.getId()));
+                    var listed = actions.getBans();
+                    for (int ban : bans) assertTrue(listed.stream().anyMatch(row -> row.getId() == ban));
+                    actions.deleteAllBans(); assertTrue(actions.getBans().isEmpty());
+                    evidence.add("bulk password move, channel kick, regular-client ban leave reason6 and bulk ban deletion passed");
+                    int nameBan = actions.addBan(null, "^issue441-regular-fixture$", null, 60, "owned nickname enforcement");
+                    try (var banCleanup = new Cleanup(() -> actions.deleteBan(nameBan));
+                         var rejected = new RegularClientContainer(network)) {
+                        rejected.start();
+                        var failure = assertThrows(IllegalStateException.class, rejected::connect);
+                        assertTrue(failure.getMessage().startsWith("Regular-client connect failed:"));
+                        assertTrue(api.getClients().stream().noneMatch(row -> row.isRegularClient() && row.getNickname().equals("issue441-regular-fixture")));
+                        evidence.add("fresh regular-client connection failed while nickname ban exists; after removing it the following fresh connection succeeds (no ban-specific handshake error claimed)");
+                    }
+                    // Server kick uses a new disposable identity, independent of the banned socket's asynchronous teardown.
+                    try (var second = new RegularClientContainer(network)) {
+                        second.start(); second.connect(); var victim = regular(api);
+                        var kickedServer = new EventProbe<com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent>(2);
+                        try (var subscription = observer.subscribe(new com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter() {
+                            @Override public void onClientLeave(com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent event) {
+                                kickedServer.capture(() -> { if (event.getClientId() == victim.getId()) kickedServer.publish(event); });
+                            }
+                        })) {
+                            actions.kickClientFromServer("server kick 日本語", victim.getId());
+                            var left = kickedServer.await(); assertEquals(5, left.getReasonId());
+                            assertEquals("server kick 日本語", left.getReasonMessage()); assertEquals(actorId, left.getInvokerId());
+                            assertFalse(api.isClientOnline(victim.getId()));
+                        }
+                    }
+                    evidence.add("independent regular-client server kick reason5 passed");
+                }
+                actor.exit(); observer.exit();
+            }
+        } finally {
+            var path = Path.of("target", "compatibility", target + "-regular-actions.txt");
+            Files.createDirectories(path.getParent()); Files.write(path, evidence);
+        }
+    }
+
     @ParameterizedTest @EnumSource(ServerQueryCompatibilityIT.Target.class) @Timeout(180)
     void regularEventsPrivilegeKeysAndOfflineMessages(ServerQueryCompatibilityIT.Target target) throws Exception {
         var evidence = new java.util.ArrayList<String>();
         try (var network = org.testcontainers.containers.Network.newNetwork();
-             var server = new TeamSpeakContainer(target.ts6).withNetwork(network).withNetworkAliases("server");
+             var server = new TeamSpeakContainer().withNetwork(network).withNetworkAliases("server");
              var fixture = new RegularClientContainer(network)) {
             server.start(); fixture.start();
             var joins = new EventProbe<com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent>(8);

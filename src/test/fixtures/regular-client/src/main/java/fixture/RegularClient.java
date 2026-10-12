@@ -75,6 +75,8 @@ public final class RegularClient {
                 failed.set(true);
                 try { client.close(); } catch (Exception ignored) { }
                 status = 500; result = "fixture deadline exceeded; session closed";
+            } catch (com.github.manevolent.ts3j.command.CommandException failure) {
+                status = 500; result = "CommandException id=" + failure.getErrorId();
             } catch (Error failure) {
                 failed.set(true);
                 status = 500; result = failure.getClass().getSimpleName();

@@ -14,7 +14,6 @@ import com.github.theholywaffle.teamspeak3.api.reconnect.SessionConfiguration;
  */
 public final class QueryConfig {
 	private final String host;
-	private final ServerType serverType;
 	private final SshHostKeyPolicy sshHostKeyPolicy;
 	private final QueryTransportFactory transportFactory;
 	private final int queryPort;
@@ -39,7 +38,6 @@ public final class QueryConfig {
 
 	QueryConfig(TS3Config builder) {
 		host = builder.getHost() == null ? "127.0.0.1" : builder.getHost();
-		serverType = builder.getServerType();
 		sshHostKeyPolicy = builder.getSshHostKeyPolicy();
 		transportFactory = builder.getTransportFactory();
 		queryPort = builder.getQueryPort();
@@ -64,8 +62,8 @@ public final class QueryConfig {
 		if (host.isBlank()) throw new IllegalArgumentException("Host must not be blank");
 		if ((username == null) != (password == null) || (username != null && username.isBlank()))
 			throw new IllegalArgumentException("Provide both query username and password, or neither");
-		if (!transportFactory.supports(serverType, protocol))
-			throw new IllegalArgumentException("Transport does not support " + serverType + " with " + protocol);
+		if (!transportFactory.supports(protocol))
+			throw new IllegalArgumentException("Transport does not support " + protocol);
 		if (transportFactory.authenticates() && !hasLoginCredentials())
 			throw new IllegalArgumentException("Authenticated transport requires query login credentials");
 		if (commandRetryPolicy.getMaxRetries() > 0 && sessionConfiguration == null)
@@ -73,8 +71,6 @@ public final class QueryConfig {
 	}
 	/** @return configured host */
 	public String getHost() { return host; }
-	/** @return configured serverType */
-	public ServerType getServerType() { return serverType; }
 	/** @return configured sshHostKeyPolicy */
 	public SshHostKeyPolicy getSshHostKeyPolicy() { return sshHostKeyPolicy; }
 	/** @return configured transportFactory */
@@ -120,6 +116,6 @@ public final class QueryConfig {
 	/** @return whether a complete login is configured */
 	public boolean hasLoginCredentials() { return username != null && password != null; }
 	@Override public String toString() {
-		return "QueryConfig[server=" + serverType + ", protocol=" + protocol + ", port=" + queryPort + "]";
+		return "QueryConfig[protocol=" + protocol + ", port=" + queryPort + "]";
 	}
 }

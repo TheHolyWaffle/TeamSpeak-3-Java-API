@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /** Exercise the real forked launcher, including its JVM shutdown hook. */
 class DevelopmentServerIT {
 	@ParameterizedTest(name = "{0}: launcher example and {1} cleanup")
-	@CsvSource({"ts3,ENTER", "ts6,EOF", "ts6,SIGNAL", "ts3,ONCE", "ts6,ONCE"})
+	@CsvSource({"ts3,ENTER", "ts3,EOF", "ts3,SIGNAL", "ts3,ONCE"})
 	void exampleAndCleanup(String server, String stop) throws Exception {
 		assertTrue(DockerClientFactory.instance().isDockerAvailable(), "Launcher validation requires Docker");
 		Process process = new ProcessBuilder(Path.of(System.getProperty("java.home"), "bin", "java").toString(),
@@ -47,7 +47,7 @@ class DevelopmentServerIT {
 			reader.join(5000);
 			if (!stop.equals("SIGNAL")) assertEquals(0, process.exitValue(), output.toString());
 			assertTrue(output.stream().anyMatch(line -> line.startsWith("Compiled example succeeded: version="
-					+ (server.equals("ts3") ? "3.13.8" : "6.0.0-beta13.1"))), output.toString());
+					+ "3.13.8")), output.toString());
 			String ready = output.stream().filter(line -> line.startsWith("Development server ready:")).findFirst().orElseThrow();
 			String id = ready.substring(ready.indexOf("container=") + "container=".length());
 			assertThrows(NotFoundException.class, () -> DockerClientFactory.instance().client().inspectContainerCmd(id).exec(),

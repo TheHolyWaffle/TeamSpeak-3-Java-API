@@ -1,7 +1,11 @@
 # Snapshot and instance-edit compatibility
 
+> Current scope: TS3 RAW and SSH only. TS6 functionality and tests are removed.
+> Any TS6 observations below are retained historical findings from merged PRs,
+> not current support claims or release acceptance requirements.
+
 `ServerSnapshotCompatibilityIT.snapshotRoundtrip` uses an owned disposable server
-for TS3 3.13.8 RAW, TS3 3.13.8 SSH and TS6 6.0.0-beta13.1 SSH. Run with Java 25
+for TS3 3.13.8 RAW and TS3 3.13.8 SSH. Run with Java 25
 and `./mvnw -B -ntp -Pintegration verify`; no preview or manual steps are used.
 
 It records live snapshot/instance-edit help, edits and restores the instance download
@@ -15,7 +19,7 @@ before deployment avoids treating a license limit as snapshot incompatibility.
 Snapshots contain identities and credentials and are never written into acceptance
 reports. `target/compatibility/<TARGET>-snapshots.txt` records help and assertions.
 The group name is kept within the server's size boundary; an oversized test name
-initially returned **1541**, `invalid parameter size`, on all three targets.
+initially returned **1541**, `invalid parameter size`, on both TS3 targets.
 
 This is internal `test:` coverage, with no runtime or API change. The operation
 acceptance concerns configuration roundtrips, not filesystem backup, transferred

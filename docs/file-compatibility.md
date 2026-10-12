@@ -1,7 +1,10 @@
 # Verified file-directory commands
 
-This focused #441 slice covers TS3 **3.13.8 RAW**, TS3 **3.13.8 SSH** and TS6
-**6.0.0-beta13.1 SSH** with the existing pinned containers. See the
+> Current scope: TS3 RAW and SSH only. TS6 functionality and tests are removed.
+> Any TS6 observations below are retained historical findings from merged PRs,
+> not current support claims or release acceptance requirements.
+
+This focused #441 slice covers TS3 **3.13.8 RAW** and TS3 **3.13.8 SSH** with the existing pinned containers. See the
 [overall inventory](command-compatibility.md) and [integration setup](integration-tests.md).
 It verifies directory administration through ServerQuery; file payload transfers,
 endpoint resolution and reliability remain #442 work.
@@ -53,7 +56,7 @@ establish the supported subset rather than help examples alone.
 Directory list rows on these pins supply `cid`, `path`, `name`, `size`, `datetime`
 and `type`. Root/nested paths end with a slash; `FileListEntry.getPath()` combines
 that parent path and the name. Type `0` means directory. TS3's `datetime` is epoch **seconds**; TS6's is epoch
-**milliseconds**. The live tests use the new explicit-unit overload and require
+**milliseconds**. The live TS3 tests use the seconds getter and require
 the date to be within one minute of directory creation. The exercised new
 entries have no `incompletesize` field and are not uploading. This does not
 establish file-size accounting, timestamp updates, active/paused transfers or
@@ -75,19 +78,12 @@ Empty directories return empty lists; absent directories fail. Do not treat a
 `getFileInfo` is a file-only operation here; obtain directory metadata from a
 parent listing. Positive file-info and bulk file-info calls remain unverified.
 
-This slice has additive **`feat:`** release intent, included in the planned 2.0.0
-release. `FileInfo.getLastModifiedDate(TimeUnit)` is also inherited by
-`FileListEntry`. The existing no-argument getter continues to interpret epoch
-seconds. For the verified TS6 directory rows, migrate to:
-
-```java
-Date modified = entry.getLastModifiedDate(TimeUnit.MILLISECONDS);
-```
-
-Use `TimeUnit.SECONDS` or the existing getter for TS3. The response does not label
-the timestamp unit; choose it from your verified server combination. No magnitude
-heuristic or automatic server/version detection is introduced. Positive TS6
-file-info timestamps remain unverified; this acceptance covers directory rows.
+TS3 file and directory timestamps use epoch seconds through the existing
+`getLastModifiedDate()` getter. The `TimeUnit` overload added for historical TS6
+millisecond responses is removed with TS6 functionality. Remove calls to that
+overload and use the existing TS3 getter. This intentional source/binary removal
+is included in #477's breaking 2.0 migration notes. There is no unit heuristic or
+automatic server-version detection.
 
 Handle actual errors for path names accepted by one version and rejected by
 another, and choose names verified on your target server. No automatic renaming,
@@ -96,6 +92,10 @@ password bypass must not be interpreted as a guarantee that a supplied password
 was checked. Dependencies and existing default behavior are unchanged.
 
 ## Remaining scope and official sources
+
+These paragraphs record the original slice boundary. The current whole-issue
+TS3 evidence and follow-up ownership are in the [acceptance inventory](command-compatibility.md)
+and [additional command tests](additional-command-compatibility.md).
 
 Actual files, payload upload/download, positive scalar/bulk file info, icons,
 active-transfer rows, overwrite/resume/stop semantics, cross-server storage

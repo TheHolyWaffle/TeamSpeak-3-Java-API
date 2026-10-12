@@ -1,5 +1,9 @@
 # Reproducible regular-client compatibility
 
+> Current scope: TS3 RAW and SSH only. TS6 functionality and tests are removed.
+> Any TS6 observations below are retained historical findings from merged PRs,
+> not current support claims or release acceptance requirements.
+
 Run `./mvnw -B -ntp -Pintegration verify` with Java 25 and Docker. Maven builds
 the isolated [full UDP client fixture](../src/test/fixtures/regular-client/README.md),
 then each test owns a fresh server, private Docker network and client container.
@@ -7,8 +11,8 @@ All ports are dynamic; identities are generated in memory. There are no desktop
 automation, installed-client, microphone, personal-account or manual prerequisites.
 Fixture dependency resolution needs Maven Central and JitPack network access.
 
-`RegularClientCompatibilityIT` runs both cases against TS3 3.13.8 RAW, TS3 3.13.8
-SSH and TS6 6.0.0-beta13.1 SSH. The UDP fixture supplies the regular client;
+`RegularClientCompatibilityIT` runs both cases against TS3 3.13.8 RAW and TS3 3.13.8
+SSH. The UDP fixture supplies the regular client;
 ServerQuery observers and administrators use this library over the stated transport.
 TS6 RAW, Web Query, audio and official desktop-client feature parity are not claimed.
 
@@ -27,7 +31,7 @@ TS6 joins additionally expose `client_is_streaming` and `client_user_tag` on the
 pinned fixture. Unknown fields remain accessible through the event map. Custom
 property searches use SQL wildcard `%`, as live help specifies. Deleting a
 disconnected client's database record makes `clientdbinfo` fail with error **512**,
-`invalid clientID`, on all three targets.
+`invalid clientID`, on both TS3 targets.
 
 Event probes have bounded queues and deadlines. Overflow and callback exceptions
 reach the test thread immediately; deterministic unit tests cover both failure

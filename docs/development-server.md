@@ -7,13 +7,7 @@ daemon, start TS3 and run a compiled Java example in one command:
 ./mvnw -ntp -Pdev-server test-compile exec:exec
 ```
 
-For TS6, select its profile:
-
-```sh
-./mvnw -ntp -Pdev-server test-compile exec:exec -Ddev.server=ts6
-```
-
-`dev.server` accepts only `ts3` (default) or `ts6`. Each command compiles the
+`dev.server` accepts only `ts3` (default). Each command compiles the
 library, harness and [example](../src/test/java/com/github/theholywaffle/teamspeak3/DevelopmentServerExample.java),
 starts a fresh server, waits for authenticated ServerQuery readiness and runs the
 example over SSH. The example selects virtual server 1, reads the version and
@@ -25,7 +19,7 @@ TS3 raw query port and disposable serveradmin login. Use those details from
 another terminal to test query clients while the launcher remains open. Ports
 are allocated dynamically, so multiple launchers and integration tests can run
 independently. This launcher exposes ServerQuery only; it does not expose voice
-or file transfer ports. TS6 raw query is not enabled by the fixture.
+or file transfer ports.
 
 ## Stop and reset
 
@@ -39,7 +33,7 @@ container's SSH key in memory; it does not change `user.home` or write host trus
 For a noninteractive run that exits after the example:
 
 ```sh
-./mvnw -B -ntp -Pdev-server test-compile exec:exec -Ddev.server=ts6 -Ddev.once=true
+./mvnw -B -ntp -Pdev-server test-compile exec:exec -Ddev.once=true
 ```
 
 The launcher forks a dedicated JVM with an explicit shutdown hook. Testcontainers
@@ -58,10 +52,9 @@ and credentials; do not reuse the fixed test password or fixture allowlist.
 
 The launcher directly uses `TeamSpeakContainer`, so image digests, environment,
 allowlist, tmpfs and readiness are identical to the [integration fixtures](integration-tests.md).
-Read the TS3/TS6 licenses before starting: the fixture accepts them explicitly.
-TS3 runs Linux amd64 and needs Docker emulation on Apple Silicon; TS6 uses the
-daemon's native architecture. The pinned TS6 beta license needs periodic
-revalidation as described in the integration guide.
+Read the TS3 license before starting: the fixture accepts it explicitly.
+TS3 runs Linux amd64 and needs Docker emulation on Apple Silicon.
+The former `-Ddev.server=ts6` option is removed and rejected before Docker starts.
 
 This is internal development tooling (`chore:` release intent). There are no
 production API, dependency or runtime changes and no consumer migration steps.

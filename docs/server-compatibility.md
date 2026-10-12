@@ -1,5 +1,9 @@
 # Verified server information and edit notifications
 
+> Current scope: TS3 RAW and SSH only. TS6 functionality and tests are removed.
+> Any TS6 observations below are retained historical findings from merged PRs,
+> not current support claims or release acceptance requirements.
+
 This focused portion of #441 verifies TS3 **3.13.8 RAW**, TS3 **3.13.8 SSH** and
 TS6 **6.0.0-beta13.1 SSH** using the existing pinned fixtures. See the
 [overall inventory](command-compatibility.md) and [integration setup](integration-tests.md).
@@ -106,6 +110,10 @@ changed property as an empty new value; check presence and fetch server info.
 Existing enum-based edit methods, raw access and getter defaults remain unchanged.
 
 ## Remaining scope and official sources
+
+These paragraphs record the original slice boundary. The current whole-issue
+TS3 evidence and follow-up ownership are in the [acceptance inventory](command-compatibility.md)
+and [additional command tests](additional-command-compatibility.md).
 
 Sequential start/stop/create/delete and stopped-server listings are now covered
 by the separate [lifecycle slice](server-lifecycle-compatibility.md). Snapshots,

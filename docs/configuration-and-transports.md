@@ -8,7 +8,6 @@ The builder is not thread safe. Share a completed snapshot between queries.
 
 ```java
 QueryConfig config = new TS3Config()
-    .setServerType(ServerType.TS6)
     .setHost("query.example.org")
     .setProtocol(TS3Query.Protocol.SSH)
     .setQueryPort(10022)
@@ -27,15 +26,18 @@ try (TS3Query query = new TS3Query(config)) {
 }
 ```
 
-The API and package names remain `TS3Query`, `TS3Api` and `teamspeak3` for both
-server generations. Both use one SSH transport, reader/framing implementation,
-codec, command queue and synchronous/asynchronous API. TS3 defaults to raw TCP
-on port 10011; SSH defaults to port 10022. A null host resolves to `127.0.0.1`.
-Set `ServerType.TS6` explicitly; TS6 with the built-in raw transport fails at
-configuration build time. Blank hosts, partial credentials and missing SSH
-credentials also fail before connection resources are created. The declared
-server generation describes transport compatibility; it does not negotiate
-individual command capabilities (task #441).
+The API and package names remain `TS3Query`, `TS3Api` and `teamspeak3`.
+TS3 RAW and SSH share the reader, codec, command queue and sync/async APIs.
+Raw TCP defaults to port 10011; SSH defaults to 10022. A null host resolves to
+`127.0.0.1`. Blank hosts, partial credentials, unsupported protocol/factory
+combinations and missing SSH credentials fail before allocating connection resources.
+
+**2.0 migration:** TS6 support has been removed by maintainer direction. Remove
+`setServerType(...)` calls; `ServerType` and both configuration getters/setters
+are removed. Custom factories now override `supports(Protocol)` rather than
+`supports(ServerType, Protocol)`. TS3 transport selection remains explicit through
+`setProtocol`. The `FileInfo.getLastModifiedDate(TimeUnit)` overload added for TS6
+millisecond responses is removed; use the TS3 seconds getter. This is an intentional source/binary break on the modernization branch.
 
 ## SSH host trust
 
@@ -85,10 +87,10 @@ own implementation state and must follow their thread-safety contracts.
 
 Supply a `QueryTransportFactory` through `setTransportFactory`. It creates a
 fresh unopened `QueryTransport` for every connection, including reconnects.
-The factory declares supported server/protocol settings and whether it handles
+The factory declares supported protocol settings and whether it handles
 authentication. An unauthenticated transport receives the shared ServerQuery
 login command when credentials are configured. Built-in factories validate
-their server/protocol combinations; custom factories must declare their own
+their protocol combinations; custom factories must declare their own
 compatibility through `supports`.
 
 A transport opens ordered UTF-8 input/output streams, calls `Connected` once
