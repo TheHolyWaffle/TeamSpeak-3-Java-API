@@ -39,7 +39,6 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
@@ -75,7 +74,6 @@ class CommandQueue {
 	private static final Set<String> SESSION_COMMANDS = Set.of(
 		"login", "logout", "use", "clientupdate", "servernotifyregister", "servernotifyunregister");
 	private final Map<Command, Integer> retries = new IdentityHashMap<>();
-	private final Set<Command> timedOut = Collections.newSetFromMap(new IdentityHashMap<>());
 	private final TS3Query query;
 	private final Map<Command, CompletionStage<?>> completionWork = new IdentityHashMap<>();
 	private final Map<Command, Long> enqueued = new IdentityHashMap<>();
@@ -239,7 +237,7 @@ class CommandQueue {
 				if (restore && !command.getFuture().isCancelled()) recovered.add(command);
 				else fail(command, new TS3QueryShutDownException());
 			}
-			sendQueue.clear(); sendQueue.addAll(recovered); receiveQueue.clear(); sent.clear(); owners.clear(); timedOut.clear();
+			sendQueue.clear(); sendQueue.addAll(recovered); receiveQueue.clear(); sent.clear(); owners.clear();
 			canTransfer.signalAll();
 		} finally { queueLock.unlock(); }
 	}
@@ -266,21 +264,25 @@ class CommandQueue {
 		}
 	}
 
-	// Marks expired commands so the following disconnect reports their deadline rather than a lost transport.
-	boolean expireResponses() {
+	boolean responseExpired() {
 		queueLock.lock();
 		try {
 			long now = System.nanoTime();
-			long timeout = query.getConfig().getCommandResponseTimeout().toNanos();
-			for (var entry : sent.entrySet()) {
-				if (now - entry.getValue() >= timeout) timedOut.add(entry.getKey());
+			for (long start : sent.values()) {
+				if (responseExpired(start, now)) return true;
 			}
-			return !timedOut.isEmpty();
+			return false;
 		} finally { queueLock.unlock(); }
 	}
 
+	private boolean responseExpired(long sentAt, long now) {
+		return now - sentAt >= query.getConfig().getCommandResponseTimeout().toNanos();
+	}
+
+	// Only call this when holding queueLock, before clearing sent
 	private TS3Exception unknownOutcome(Command command) {
-		return timedOut.contains(command)
+		Long sentAt = sent.get(command);
+		return sentAt != null && responseExpired(sentAt, System.nanoTime())
 			? new TS3TimeoutException(TS3TimeoutException.Phase.RESPONSE, command.getName())
 			: new TS3UnknownOutcomeException(command.getName());
 	}
@@ -335,7 +337,7 @@ class CommandQueue {
 			allCommands = getAllCommands();
 			for (Command command : allCommands) fail(command, sent.containsKey(command)
 				? unknownOutcome(command) : new TS3QueryShutDownException());
-			sendQueue.clear(); receiveQueue.clear(); enqueued.clear(); sent.clear(); owners.clear(); retries.clear(); timedOut.clear();
+			sendQueue.clear(); receiveQueue.clear(); enqueued.clear(); sent.clear(); owners.clear(); retries.clear();
 			canTransfer.signalAll();
 		} finally { queueLock.unlock(); }
 	}

@@ -36,8 +36,7 @@ public final class EventApiAsync {
 
 	/** @see EventApi#registerAll() */
 	public CompletableFuture<Void> registerAll() {
-		return register(TS3EventType.SERVER, TS3EventType.TEXT_SERVER, TS3EventType.CHANNEL,
-			TS3EventType.TEXT_CHANNEL, TS3EventType.TEXT_PRIVATE, TS3EventType.PRIVILEGE_KEY_USED);
+		return register(TS3EventType.values());
 	}
 
 	/** @see EventApi#unregisterAll() */

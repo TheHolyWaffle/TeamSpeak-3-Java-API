@@ -37,11 +37,15 @@ public record PermissionGrant(String permissionName, int value, boolean negated,
 	public PermissionGrant withSkip() { return new PermissionGrant(permissionName, value, negated, true); }
 
 	/**
-	 * @param target the holder that receives this grant
+	 * @param holder the type of holder that receives this grant
 	 * @throws IllegalArgumentException if the holder does not accept this grant's flags
 	 */
-	public void requireSupportedBy(PermissionTarget.Kind target) {
-		if (negated && !target.supportsNegated()) throw new IllegalArgumentException(target + " permissions cannot be negated");
-		if (skipped && !target.supportsSkip()) throw new IllegalArgumentException(target + " permissions cannot be skipped");
+	public void requireSupportedBy(PermissionGroupType holder) {
+		if (negated && holder != PermissionGroupType.SERVER_GROUP) {
+			throw new IllegalArgumentException(holder + " permissions cannot be negated");
+		}
+		if (skipped && holder != PermissionGroupType.SERVER_GROUP && holder != PermissionGroupType.GLOBAL_CLIENT) {
+			throw new IllegalArgumentException(holder + " permissions cannot be skipped");
+		}
 	}
 }

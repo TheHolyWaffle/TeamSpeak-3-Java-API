@@ -21,8 +21,6 @@ import java.util.concurrent.CompletableFuture;
  */
 public final class VirtualServerApiAsync {
 
-	private static final int INVALID_SERVER_ID = 1024;
-
 	private final QueryRequests requests;
 
 	VirtualServerApiAsync(QueryRequests requests) {
@@ -37,7 +35,7 @@ public final class VirtualServerApiAsync {
 	/** @see VirtualServerApi#findIdByPort(int) */
 	public CompletableFuture<Optional<Integer>> findIdByPort(int port) {
 		var id = requests.optionalInteger(VirtualServerCommands.serverIdGetByPort(port), "server_id");
-		return QueryRequests.recover(id, INVALID_SERVER_ID, Optional.empty());
+		return QueryRequests.recover(id, QueryRequests.INVALID_SERVER_ID, Optional.empty());
 	}
 
 	/** @see VirtualServerApi#create(String, Map) */

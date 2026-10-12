@@ -5,6 +5,7 @@ import com.github.theholywaffle.teamspeak3.api.ChannelGroupFilter;
 import com.github.theholywaffle.teamspeak3.api.ClientBan;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
 import com.github.theholywaffle.teamspeak3.api.PermissionGrant;
+import com.github.theholywaffle.teamspeak3.api.PermissionGroupType;
 import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
 import com.github.theholywaffle.teamspeak3.api.ServerGroupType;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
@@ -21,8 +22,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Timeout(10)
 class DomainApiTest {
-	private static final String EMPTY = "error id=1281 msg=database\\sempty\\sresult\\sset\n";
-	private static final String OK = "error id=0 msg=ok\n";
+	private static final String EMPTY = FakeServerQuery.EMPTY;
+	private static final String OK = FakeServerQuery.OK;
 
 	private static TS3Query query(FakeServerQuery peer) {
 		return new TS3Query(new TS3Config().setHost("127.0.0.1").setQueryPort(peer.port()).setFloodRate(TS3Query.FloodRate.UNLIMITED));
@@ -154,8 +155,8 @@ class DomainApiTest {
 		assertThrows(IllegalArgumentException.class, () -> BanRequest.ip("x").withDuration(Duration.ofSeconds(-1)));
 		assertThrows(IllegalArgumentException.class, ClientBan::of);
 		assertThrows(IllegalArgumentException.class, () -> PermissionTarget.channel(0));
-		assertThrows(IllegalArgumentException.class, () -> new PermissionTarget(PermissionTarget.Kind.CHANNEL, 1, 2));
-		assertThrows(IllegalArgumentException.class, () -> new PermissionTarget(PermissionTarget.Kind.CHANNEL_CLIENT, 1, 0));
+		assertThrows(IllegalArgumentException.class, () -> new PermissionTarget(PermissionGroupType.CHANNEL, 1, 2));
+		assertThrows(IllegalArgumentException.class, () -> new PermissionTarget(PermissionGroupType.CHANNEL_CLIENT, 1, 0));
 		assertThrows(IllegalArgumentException.class, () -> PermissionGrant.of("", 1));
 		assertThrows(IllegalArgumentException.class, () -> FileLocation.of(-1, "/a"));
 		assertThrows(IllegalArgumentException.class, () -> FileLocation.of(1, ""));

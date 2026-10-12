@@ -8,15 +8,22 @@ import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayRespons
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
 /** The single command execution path shared by every asynchronous domain API. */
 final class QueryRequests {
+
+	static final int INVALID_CLIENT_ID = 512;
+	static final int INVALID_CHANNEL_ID = 768;
+	static final int INVALID_SERVER_ID = 1024;
+	static final int FILE_EXISTS = 2050;
 
 	private final TS3Query query;
 	private final CommandQueue queue;
@@ -81,14 +88,9 @@ final class QueryRequests {
 
 	CompletableFuture<Integer> createdId(Command command, String property) {
 		return response(command, response -> {
-			String value = response.getResponses().isEmpty() ? null : response.getFirstResponse().getMap().get(property);
 			String message = command.getName() + " response requires a positive " + property;
-			int id;
-			try {
-				id = Integer.parseInt(value);
-			} catch (NumberFormatException malformed) {
-				throw new TS3Exception(message, malformed);
-			}
+			String value = response.getResponses().isEmpty() ? null : response.getFirstResponse().getMap().get(property);
+			int id = parse(value, message);
 			if (id <= 0) throw new TS3Exception(message);
 			return id;
 		});
@@ -106,11 +108,31 @@ final class QueryRequests {
 	}
 
 	private static int parse(Command command, String property, String value) {
+		return parse(value, command.getName() + " response requires an integer " + property);
+	}
+
+	private static int parse(String value, String message) {
 		try {
 			return Integer.parseInt(value);
 		} catch (NumberFormatException failure) {
-			throw new TS3Exception(command.getName() + " response requires an integer " + property, failure);
+			throw new TS3Exception(message, failure);
 		}
+	}
+
+	/** Looks up the entity with a found ID; an absent ID stays absent. */
+	static <T> CompletableFuture<Optional<T>> thenLookup(CompletableFuture<Optional<Integer>> id,
+	                                                     IntFunction<CompletableFuture<T>> lookup) {
+		return CommandFutures.compose(id, found -> found.isEmpty()
+			? CompletableFuture.completedFuture(Optional.empty())
+			: CommandFutures.map(lookup.apply(found.get()), Optional::of));
+	}
+
+	static <T> Optional<T> firstNamed(List<T> items, Function<T, String> name, String expected, boolean ignoreCase) {
+		String wanted = ignoreCase ? expected.toLowerCase(Locale.ROOT) : expected;
+		return items.stream().filter(item -> {
+			String actual = name.apply(item);
+			return (ignoreCase ? actual.toLowerCase(Locale.ROOT) : actual).equals(wanted);
+		}).findFirst();
 	}
 
 	/** Replaces one specific server error with a successful value, keeping request cancellation linked. */

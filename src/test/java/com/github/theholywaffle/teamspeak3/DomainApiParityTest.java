@@ -24,12 +24,13 @@ class DomainApiParityTest {
 		sync.forEach((name, type) -> {
 			assertEquals(type.getSimpleName() + "Async", async.get(name).getSimpleName(), name);
 			assertTrue(Modifier.isFinal(type.getModifiers()) && Modifier.isFinal(async.get(name).getModifiers()), name);
-			assertEquals(0, publicConstructors(type) + publicConstructors(async.get(name)), "Domains are created by the query only");
+			assertEquals(0, type.getConstructors().length + async.get(name).getConstructors().length, "Domains are created by the query only");
 		});
 	}
 
 	@Test void syncAndAsyncOperationsMatchExactly() {
-		accessors(TS3Api.class).forEach((name, sync) -> assertParity(sync, accessors(TS3ApiAsync.class).get(name)));
+		Map<String, Class<?>> async = accessors(TS3ApiAsync.class);
+		accessors(TS3Api.class).forEach((name, sync) -> assertParity(sync, async.get(name)));
 		assertParity(TS3Api.class, TS3ApiAsync.class);
 	}
 
@@ -74,9 +75,5 @@ class DomainApiParityTest {
 			methods.put(method.getName() + Arrays.toString(method.getGenericParameterTypes()), method);
 		}
 		return methods;
-	}
-
-	private static int publicConstructors(Class<?> type) {
-		return (int) Arrays.stream(type.getConstructors()).count();
 	}
 }

@@ -1,6 +1,7 @@
 package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.PermissionGrant;
+import com.github.theholywaffle.teamspeak3.api.PermissionGroupType;
 import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
 import com.github.theholywaffle.teamspeak3.api.ServerGroupType;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Permission;
@@ -67,11 +68,11 @@ public final class PermissionApiAsync {
 
 	/** @see PermissionApi#assigned(PermissionTarget) */
 	public CompletableFuture<List<Permission>> assigned(PermissionTarget target) {
-		Command command = switch (target.kind()) {
+		Command command = switch (target.type()) {
 			case SERVER_GROUP -> PermissionCommands.serverGroupPermList(target.id());
 			case CHANNEL_GROUP -> PermissionCommands.channelGroupPermList(target.id());
 			case CHANNEL -> PermissionCommands.channelPermList(target.id());
-			case CLIENT -> PermissionCommands.clientPermList(target.id());
+			case GLOBAL_CLIENT -> PermissionCommands.clientPermList(target.id());
 			case CHANNEL_CLIENT -> PermissionCommands.channelClientPermList(target.id(), target.clientDatabaseId());
 		};
 		return requests.models(command, Permission::new);
@@ -84,26 +85,24 @@ public final class PermissionApiAsync {
 
 	/** @see PermissionApi#add(PermissionTarget, PermissionGrant) */
 	public CompletableFuture<Void> add(PermissionTarget target, PermissionGrant grant) {
-		grant.requireSupportedBy(target.kind());
-		String name = grant.permissionName();
-		int value = grant.value();
-		Command command = switch (target.kind()) {
-			case SERVER_GROUP -> PermissionCommands.serverGroupAddPerm(target.id(), name, value, grant.negated(), grant.skipped());
-			case CHANNEL_GROUP -> PermissionCommands.channelGroupAddPerm(target.id(), name, value);
-			case CHANNEL -> PermissionCommands.channelAddPerm(target.id(), name, value);
-			case CLIENT -> PermissionCommands.clientAddPerm(target.id(), name, value, grant.skipped());
-			case CHANNEL_CLIENT -> PermissionCommands.channelClientAddPerm(target.id(), target.clientDatabaseId(), name, value);
+		grant.requireSupportedBy(target.type());
+		Command command = switch (target.type()) {
+			case SERVER_GROUP -> PermissionCommands.serverGroupAddPerm(target.id(), grant.permissionName(), grant.value(), grant.negated(), grant.skipped());
+			case CHANNEL_GROUP -> PermissionCommands.channelGroupAddPerm(target.id(), grant.permissionName(), grant.value());
+			case CHANNEL -> PermissionCommands.channelAddPerm(target.id(), grant.permissionName(), grant.value());
+			case GLOBAL_CLIENT -> PermissionCommands.clientAddPerm(target.id(), grant.permissionName(), grant.value(), grant.skipped());
+			case CHANNEL_CLIENT -> PermissionCommands.channelClientAddPerm(target.id(), target.clientDatabaseId(), grant.permissionName(), grant.value());
 		};
 		return requests.run(command);
 	}
 
 	/** @see PermissionApi#delete(PermissionTarget, String) */
 	public CompletableFuture<Void> delete(PermissionTarget target, String permissionName) {
-		Command command = switch (target.kind()) {
+		Command command = switch (target.type()) {
 			case SERVER_GROUP -> PermissionCommands.serverGroupDelPerm(target.id(), permissionName);
 			case CHANNEL_GROUP -> PermissionCommands.channelGroupDelPerm(target.id(), permissionName);
 			case CHANNEL -> PermissionCommands.channelDelPerm(target.id(), permissionName);
-			case CLIENT -> PermissionCommands.clientDelPerm(target.id(), permissionName);
+			case GLOBAL_CLIENT -> PermissionCommands.clientDelPerm(target.id(), permissionName);
 			case CHANNEL_CLIENT -> PermissionCommands.channelClientDelPerm(target.id(), target.clientDatabaseId(), permissionName);
 		};
 		return requests.run(command);
@@ -111,7 +110,7 @@ public final class PermissionApiAsync {
 
 	/** @see PermissionApi#addToAllServerGroups(ServerGroupType, PermissionGrant) */
 	public CompletableFuture<Void> addToAllServerGroups(ServerGroupType type, PermissionGrant grant) {
-		grant.requireSupportedBy(PermissionTarget.Kind.SERVER_GROUP);
+		grant.requireSupportedBy(PermissionGroupType.SERVER_GROUP);
 		return requests.run(PermissionCommands.serverGroupAutoAddPerm(type, grant.permissionName(), grant.value(),
 			grant.negated(), grant.skipped()));
 	}

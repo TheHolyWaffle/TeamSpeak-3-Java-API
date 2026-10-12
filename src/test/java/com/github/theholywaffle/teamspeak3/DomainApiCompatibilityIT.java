@@ -87,9 +87,8 @@ class DomainApiCompatibilityIT {
 			int created = lobby;
 			evidence.add("async: reused Lobby " + reused + ", stored an offline message for the offline guest identity");
 
-			var join = api.permissions().assigned(PermissionTarget.channel(created)).stream()
-				.filter(p -> p.getName().equals("i_channel_needed_join_power")).findFirst().orElseThrow();
-			assertEquals(10, join.getValue());
+			CompatibilityAssertions.permission(api.permissions().assigned(PermissionTarget.channel(created)),
+				"i_channel_needed_join_power", 10, false, false);
 			assertArrayEquals(RULES, api.files().downloadBytes(FileLocation.of(created, "/rules.txt")));
 			api.channels().delete(created, true);
 			lobby = 0;
@@ -134,9 +133,10 @@ class DomainApiCompatibilityIT {
 			failsWith(1538, "banadd", () -> api.bans().add(BanRequest.myTeamSpeakId("not-a-valid-id")), evidence);
 			failsWith(512, "messageadd", () -> api.messages().sendOffline(UNKNOWN_UID, "absent", "absent"), evidence);
 
-			int ban = api.bans().add(BanRequest.myTeamSpeakId("empty").withReason("domain " + target));
-			assertTrue(api.bans().list().stream().anyMatch(row -> row.getId() == ban && "empty".equals(row.getMap().get("mytsid"))));
-			api.bans().delete(ban);
+			try (var ban = new ServerQueryCompatibilityIT.CreatedResource(
+				api.bans().add(BanRequest.myTeamSpeakId("empty").withReason("domain " + target)), api.bans()::delete)) {
+				assertTrue(api.bans().list().stream().anyMatch(row -> row.getId() == ban.id() && "empty".equals(row.getMap().get("mytsid"))));
+			}
 			evidence.add("myTeamSpeak-only ban rule mytsid=empty accepted and deleted");
 			query.exit();
 		}

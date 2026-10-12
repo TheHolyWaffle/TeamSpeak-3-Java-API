@@ -18,6 +18,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -33,8 +34,6 @@ import java.util.concurrent.CompletableFuture;
  * @see FileApi the synchronous form and full documentation
  */
 public final class FileApiAsync {
-
-	private static final int FILE_EXISTS = 2050;
 
 	private final QueryRequests requests;
 
@@ -167,7 +166,7 @@ public final class FileApiAsync {
 	public CompletableFuture<Long> uploadIcon(byte[] data) {
 		long iconId = FileTransferHelper.getIconId(data);
 		var upload = CommandFutures.map(upload(iconLocation(iconId), data, UploadMode.CREATE), ignored -> iconId);
-		return QueryRequests.recover(upload, FILE_EXISTS, iconId);
+		return QueryRequests.recover(upload, QueryRequests.FILE_EXISTS, iconId);
 	}
 
 	/** @see FileApi#downloadIcon(long, OutputStream) */
@@ -182,7 +181,7 @@ public final class FileApiAsync {
 
 	/** @see FileApi#deleteIcons(long...) */
 	public CompletableFuture<Void> deleteIcons(long... iconIds) {
-		return delete(java.util.Arrays.stream(iconIds).mapToObj(FileApiAsync::iconLocation).toList());
+		return delete(Arrays.stream(iconIds).mapToObj(FileApiAsync::iconLocation).toList());
 	}
 
 	private static FileLocation iconLocation(long iconId) {

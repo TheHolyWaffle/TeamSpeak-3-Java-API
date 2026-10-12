@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -44,7 +45,7 @@ class ApiMigrationInventoryTest {
 		for (String form : List.of("sync", "async")) {
 			String body = source.split("// workflow-" + form + "-start\n")[1].split("\t// workflow-" + form + "-end")[0];
 			String unindented = Arrays.stream(body.stripTrailing().split("\n"))
-				.map(line -> line.startsWith("\t") ? line.substring(1) : line).reduce((a, b) -> a + "\n" + b).orElseThrow();
+				.map(line -> line.startsWith("\t") ? line.substring(1) : line).collect(Collectors.joining("\n"));
 			assertTrue(guide.contains("```java\n" + unindented + "\n```"), form + " workflow in the guide must match CommonWorkflow");
 		}
 	}
@@ -76,7 +77,7 @@ class ApiMigrationInventoryTest {
 	}
 
 	private static String simpleName(java.lang.reflect.Type type) {
-		return type.getTypeName().replaceAll("[\\w.]+\\.(\\w+)", "$1").replace(",", ", ").replace(",  ", ", ");
+		return type.getTypeName().replaceAll("[\\w.]+\\.(\\w+)", "$1");
 	}
 
 	private static Method method(Class<?> type, String name, String row) {

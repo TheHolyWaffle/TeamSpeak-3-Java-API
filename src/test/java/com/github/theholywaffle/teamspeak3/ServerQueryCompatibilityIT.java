@@ -1402,7 +1402,7 @@ class ServerQueryCompatibilityIT {
 		evidence.add(label + " " + new java.util.TreeMap<>(permission.getMap()));
 	}
 
-	private record CreatedResource(int id, java.util.function.IntConsumer deletion) implements AutoCloseable {
+	record CreatedResource(int id, java.util.function.IntConsumer deletion) implements AutoCloseable {
 		@Override public void close() { deletion.accept(id); }
 	}
 

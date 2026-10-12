@@ -10,6 +10,7 @@ import com.github.theholywaffle.teamspeak3.commands.CustomPropertyCommands;
 import com.github.theholywaffle.teamspeak3.commands.DatabaseClientCommands;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,10 +62,7 @@ public final class DatabaseClientApiAsync {
 
 	/** @see DatabaseClientApi#findByUniqueId(String) */
 	public CompletableFuture<Optional<DatabaseClientInfo>> findByUniqueId(String uniqueId) {
-		var id = requests.optionalInteger(DatabaseClientCommands.clientDBFind(uniqueId, true), "cldbid");
-		return CommandFutures.compose(id, found -> found.isEmpty()
-			? CompletableFuture.completedFuture(Optional.empty())
-			: CommandFutures.map(info(found.get()), Optional::of));
+		return QueryRequests.thenLookup(requests.optionalInteger(DatabaseClientCommands.clientDBFind(uniqueId, true), "cldbid"), this::info);
 	}
 
 	/** @see DatabaseClientApi#edit(int, Map) */
@@ -82,7 +80,7 @@ public final class DatabaseClientApiAsync {
 		return requests.response(CustomPropertyCommands.customInfo(databaseId), response -> {
 			Map<String, String> properties = new LinkedHashMap<>();
 			for (Wrapper row : response.getResponses()) properties.put(row.get("ident"), row.get("value"));
-			return java.util.Collections.unmodifiableMap(properties);
+			return Collections.unmodifiableMap(properties);
 		});
 	}
 

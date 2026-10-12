@@ -13,6 +13,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /** A loopback peer with scripted writes and bounded, observable completion. */
 final class FakeServerQuery implements AutoCloseable {
+	static final String OK = "error id=0 msg=ok\n";
+	/** "database empty result set": success without rows. */
+	static final String EMPTY = "error id=1281 msg=database\\sempty\\sresult\\sset\n";
+
 	@FunctionalInterface
 	interface Script { void run(FakeServerQuery peer) throws Exception; }
 

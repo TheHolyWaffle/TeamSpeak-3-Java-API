@@ -7,7 +7,6 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.ChannelInfo;
 import com.github.theholywaffle.teamspeak3.commands.ChannelCommands;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -39,14 +38,13 @@ public final class ChannelApiAsync {
 	/** @see ChannelApi#findByName(String, boolean) */
 	public CompletableFuture<Optional<Channel>> findByName(String name, boolean ignoreCase) {
 		Objects.requireNonNull(name, "name");
-		return CommandFutures.map(list(), channels -> channels.stream()
-			.filter(channel -> sameName(channel.getName(), name, ignoreCase)).findFirst());
+		return CommandFutures.map(list(), channels -> QueryRequests.firstNamed(channels, Channel::getName, name, ignoreCase));
 	}
 
 	/** @see ChannelApi#search(String) */
 	public CompletableFuture<List<Channel>> search(String namePart) {
 		var ids = requests.integers(ChannelCommands.channelFind(namePart), "cid");
-		return QueryRequests.recover(QueryRequests.findByKey(ids, list(), Channel::getId), 768, List.of());
+		return QueryRequests.recover(QueryRequests.findByKey(ids, list(), Channel::getId), QueryRequests.INVALID_CHANNEL_ID, List.of());
 	}
 
 	/** @see ChannelApi#create(String, Map) */
@@ -77,9 +75,5 @@ public final class ChannelApiAsync {
 	/** @see ChannelApi#move(int, int, int) */
 	public CompletableFuture<Void> move(int channelId, int parentChannelId, int order) {
 		return requests.run(ChannelCommands.channelMove(channelId, parentChannelId, order));
-	}
-
-	static boolean sameName(String actual, String expected, boolean ignoreCase) {
-		return ignoreCase ? actual.toLowerCase(Locale.ROOT).equals(expected.toLowerCase(Locale.ROOT)) : actual.equals(expected);
 	}
 }

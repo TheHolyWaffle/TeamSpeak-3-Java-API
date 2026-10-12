@@ -40,27 +40,24 @@ public final class ClientApiAsync {
 	/** @see ClientApi#findByName(String, boolean) */
 	public CompletableFuture<Optional<Client>> findByName(String nickname, boolean ignoreCase) {
 		Objects.requireNonNull(nickname, "nickname");
-		return CommandFutures.map(list(), clients -> clients.stream()
-			.filter(client -> ChannelApiAsync.sameName(client.getNickname(), nickname, ignoreCase)).findFirst());
+		return CommandFutures.map(list(), clients -> QueryRequests.firstNamed(clients, Client::getNickname, nickname, ignoreCase));
 	}
 
 	/** @see ClientApi#search(String) */
 	public CompletableFuture<List<Client>> search(String nicknamePart) {
 		var ids = requests.integers(ClientCommands.clientFind(nicknamePart), "clid");
-		return QueryRequests.recover(QueryRequests.findByKey(ids, list(), Client::getId), 512, List.of());
+		return QueryRequests.recover(QueryRequests.findByKey(ids, list(), Client::getId), QueryRequests.INVALID_CLIENT_ID, List.of());
 	}
 
 	/** @see ClientApi#findByUniqueId(String) */
 	public CompletableFuture<Optional<ClientInfo>> findByUniqueId(String uniqueId) {
 		var id = requests.optionalInteger(ClientCommands.clientGetIds(uniqueId), "clid");
-		return CommandFutures.compose(id, found -> found.isEmpty()
-			? CompletableFuture.completedFuture(Optional.empty())
-			: QueryRequests.recover(CommandFutures.map(info(found.get()), Optional::of), 512, Optional.empty()));
+		return QueryRequests.recover(QueryRequests.thenLookup(id, this::info), QueryRequests.INVALID_CLIENT_ID, Optional.empty());
 	}
 
 	/** @see ClientApi#isOnline(int) */
 	public CompletableFuture<Boolean> isOnline(int clientId) {
-		return QueryRequests.recover(requests.response(ClientCommands.clientInfo(clientId), ignored -> true), 512, false);
+		return QueryRequests.recover(requests.response(ClientCommands.clientInfo(clientId), ignored -> true), QueryRequests.INVALID_CLIENT_ID, false);
 	}
 
 	/** @see ClientApi#isOnline(String) */

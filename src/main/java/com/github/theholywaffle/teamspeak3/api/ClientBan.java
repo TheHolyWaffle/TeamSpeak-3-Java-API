@@ -1,6 +1,7 @@
 package com.github.theholywaffle.teamspeak3.api;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -23,7 +24,7 @@ public record ClientBan(List<Integer> clientIds, Duration duration, String reaso
 
 	/** @return a permanent ban without reason for the given clients */
 	public static ClientBan of(int... clientIds) {
-		return new ClientBan(java.util.Arrays.stream(clientIds).boxed().toList(), Duration.ZERO, null, false);
+		return new ClientBan(Arrays.stream(clientIds).boxed().toList(), Duration.ZERO, null, false);
 	}
 
 	/** @param banDuration the ban duration, truncated to seconds; {@link Duration#ZERO} is permanent */

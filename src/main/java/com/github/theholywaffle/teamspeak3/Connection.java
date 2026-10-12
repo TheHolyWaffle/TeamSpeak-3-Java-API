@@ -74,7 +74,7 @@ class Connection {
 
 	void checkDeadlines() {
 		Deadline init = initialization;
-		if (!stopped.get() && ((init != null && init.expired()) || queue.get().expireResponses())) {
+		if (!stopped.get() && ((init != null && init.expired()) || queue.get().responseExpired())) {
 			internalDisconnect();
 		}
 		CommandQueue currentQueue = queue.get();
@@ -131,5 +131,5 @@ class Connection {
 	}
 	long getIdleTime() { return (System.nanoTime() - lastSent.get()) / 1_000_000L; }
 	void resetIdleTime() { lastSent.set(System.nanoTime()); }
-	boolean isTimedOut() { return queue.get().expireResponses(); }
+	boolean isTimedOut() { return queue.get().responseExpired(); }
 }

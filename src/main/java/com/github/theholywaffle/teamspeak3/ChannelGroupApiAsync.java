@@ -65,8 +65,8 @@ public final class ChannelGroupApiAsync {
 
 	/** @see ChannelGroupApi#members(ChannelGroupFilter) */
 	public CompletableFuture<List<ChannelGroupClient>> members(ChannelGroupFilter filter) {
-		return requests.models(ChannelGroupCommands.channelGroupClientList(filter.channelId().orElse(-1),
-			filter.clientDatabaseId().orElse(-1), filter.groupId().orElse(-1)), ChannelGroupClient::new);
+		return requests.models(ChannelGroupCommands.channelGroupClientList(filter.channelId().orElse(0),
+			filter.clientDatabaseId().orElse(0), filter.groupId().orElse(0)), ChannelGroupClient::new);
 	}
 
 	/** @see ChannelGroupApi#assign(int, int, int) */
