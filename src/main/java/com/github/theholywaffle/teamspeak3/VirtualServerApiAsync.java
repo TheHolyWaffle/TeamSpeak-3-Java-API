@@ -36,7 +36,7 @@ public final class VirtualServerApiAsync {
 
 	/** @see VirtualServerApi#findIdByPort(int) */
 	public CompletableFuture<Optional<Integer>> findIdByPort(int port) {
-		var id = requests.optional(VirtualServerCommands.serverIdGetByPort(port), row -> Integer.parseInt(row.get("server_id")));
+		var id = requests.optionalInteger(VirtualServerCommands.serverIdGetByPort(port), "server_id");
 		return QueryRequests.recover(id, INVALID_SERVER_ID, Optional.empty());
 	}
 

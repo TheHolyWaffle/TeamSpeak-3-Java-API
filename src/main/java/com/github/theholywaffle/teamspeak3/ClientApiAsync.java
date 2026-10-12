@@ -52,7 +52,7 @@ public final class ClientApiAsync {
 
 	/** @see ClientApi#findByUniqueId(String) */
 	public CompletableFuture<Optional<ClientInfo>> findByUniqueId(String uniqueId) {
-		var id = requests.optional(ClientCommands.clientGetIds(uniqueId), row -> Integer.parseInt(row.get("clid")));
+		var id = requests.optionalInteger(ClientCommands.clientGetIds(uniqueId), "clid");
 		return CommandFutures.compose(id, found -> found.isEmpty()
 			? CompletableFuture.completedFuture(Optional.empty())
 			: QueryRequests.recover(CommandFutures.map(info(found.get()), Optional::of), 512, Optional.empty()));

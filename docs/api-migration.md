@@ -487,6 +487,19 @@ No operation is deferred. `ApiMigrationInventoryTest` checks that this table cov
 | `usePrivilegeKey(PrivilegeKey)` | Removed | `privilegeKeys().use(token)` | pass `key.getToken()` |
 | `whoAmI()` | Retained | `whoAmI()` |  |
 
+## Verification and boundaries
+
+- Live (TS3 3.13.8 RAW and SSH): the common workflow in both forms, every absent/failure
+  row above, myTeamSpeak-only ban rules, local unsupported/closed-query failures, and the
+  existing compatibility suites, which now call the domain methods.
+- Scripted only: response/queue timeouts, permission commands per holder, `ClientBan`
+  (banning a client needs a regular voice client) and request-object validation.
+  Earlier live boundaries still apply, for example query clients cannot receive
+  client permissions (512) or consume privilege keys (516).
+- The `commands` packages stay public. Consumers cannot execute their `Command` objects,
+  so they are not operations of the API; hiding them needs JPMS exports, which #447
+  decides. Model immutability and typed values belong to #444.
+
 ## Release intent and migration
 
 `feat!`, planned **2.0.0**. BREAKING CHANGE: `TS3Api`/`TS3ApiAsync` operations move to

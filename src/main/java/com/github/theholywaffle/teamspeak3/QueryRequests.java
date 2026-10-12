@@ -63,6 +63,10 @@ final class QueryRequests {
 			? Optional.empty() : Optional.ofNullable(fn.apply(response.getFirstResponse())));
 	}
 
+	CompletableFuture<Optional<Integer>> optionalInteger(Command command, String property) {
+		return optional(command, row -> parse(command, property, required(command, row, property)));
+	}
+
 	CompletableFuture<String> string(Command command, String property) {
 		return one(command, row -> required(command, row, property));
 	}

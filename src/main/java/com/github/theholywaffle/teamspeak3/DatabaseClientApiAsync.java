@@ -61,7 +61,7 @@ public final class DatabaseClientApiAsync {
 
 	/** @see DatabaseClientApi#findByUniqueId(String) */
 	public CompletableFuture<Optional<DatabaseClientInfo>> findByUniqueId(String uniqueId) {
-		var id = requests.optional(DatabaseClientCommands.clientDBFind(uniqueId, true), row -> Integer.parseInt(row.get("cldbid")));
+		var id = requests.optionalInteger(DatabaseClientCommands.clientDBFind(uniqueId, true), "cldbid");
 		return CommandFutures.compose(id, found -> found.isEmpty()
 			? CompletableFuture.completedFuture(Optional.empty())
 			: CommandFutures.map(info(found.get()), Optional::of));

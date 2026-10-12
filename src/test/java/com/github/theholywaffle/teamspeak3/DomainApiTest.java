@@ -63,6 +63,7 @@ class DomainApiTest {
 			p.expect("permidgetbyname permsid=i_empty"); p.write(EMPTY);
 			p.expect("privilegekeyadd tokentype=0 tokenid1=6 tokenid2=0"); p.write("unexpected=1\n" + OK);
 			p.expect("channelinfo cid=99"); p.write("error id=768 msg=invalid\\schannelID\n");
+			p.expect("clientgetids cluid=malformed"); p.write("cluid=malformed clid=x\n" + OK);
 			p.finishQuit();
 		}); var query = query(peer)) {
 			query.connect();
@@ -73,6 +74,8 @@ class DomainApiTest {
 			assertEquals("privilegekeyadd response lacks token",
 				assertThrows(TS3Exception.class, () -> api.privilegeKeys().createForServerGroup(6, null)).getMessage());
 			assertEquals(768, assertThrows(TS3CommandFailedException.class, () -> api.channels().info(99)).getErrorId());
+			assertEquals("clientgetids response requires an integer clid",
+				assertThrows(TS3Exception.class, () -> api.clients().findByUniqueId("malformed")).getMessage());
 			query.exit(); peer.await();
 		}
 	}
