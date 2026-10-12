@@ -1564,7 +1564,6 @@ public class TS3Api {
 		return CommandFutures.join(asyncApi.downloadFile(dataOut, filePath, channelId, channelPassword));
 	}
 
-
 	/** Downloads a suffix into a caller-owned output; returns bytes written. See the async contract.
 	 * @param dataOut output stream
 	 * @param filePath repository path
@@ -4682,7 +4681,6 @@ public class TS3Api {
 	public void uploadFile(InputStream dataIn, long dataLength, String filePath, boolean overwrite, int channelId, String channelPassword) {
 		CommandFutures.join(asyncApi.uploadFile(dataIn, dataLength, filePath, overwrite, channelId, channelPassword));
 	}
-
 
 	/** Uploads/resumes from a caller-owned full source. See the async resume contract.
 	 * @param dataIn full source

@@ -1772,12 +1772,11 @@ public class TS3ApiAsync {
 	 * @return cancellable download result
 	 */
 	public CompletableFuture<Long> downloadFile(OutputStream dataOut, String filePath, int channelId, String channelPassword, long seekPosition) {
-		java.util.Objects.requireNonNull(dataOut, "dataOut");
+		Objects.requireNonNull(dataOut, "dataOut");
 		FileTransferHelper helper = query.getFileTransferHelper();
 		Command cmd = FileCommands.ftInitDownload(helper.getClientTransferId(), filePath, channelId, channelPassword, seekPosition);
-		return executeTransfer(cmd, (params, operation) -> {
-			try { helper.downloadFile(dataOut, params, seekPosition, operation); }
-			catch (IOException failure) { throw new TS3FileTransferFailedException("Download failed", operation.failureCause(failure)); }
+		return executeTransfer(cmd, "Download failed", (params, operation) -> {
+			helper.downloadFile(dataOut, params, seekPosition, operation);
 			return params.getFileSize() - seekPosition;
 		});
 	}
@@ -1841,12 +1840,11 @@ public class TS3ApiAsync {
 	public CompletableFuture<byte[]> downloadFileDirect(String filePath, int channelId, String channelPassword) {
 		FileTransferHelper helper = query.getFileTransferHelper();
 		Command cmd = FileCommands.ftInitDownload(helper.getClientTransferId(), filePath, channelId, channelPassword);
-		return executeTransfer(cmd, (params, operation) -> {
+		return executeTransfer(cmd, "Download failed", (params, operation) -> {
 			long fileSize = params.getFileSize();
 			if (fileSize < 0 || fileSize > query.getConfig().getFileTransferConfig().maxInMemoryBytes()) throw new TS3FileTransferFailedException("Invalid file size or in-memory limit exceeded");
 			ByteArrayOutputStream dataOut = new ByteArrayOutputStream((int) fileSize);
-			try { helper.downloadFile(dataOut, params, 0, operation); }
-			catch (IOException failure) { throw new TS3FileTransferFailedException("Download failed", operation.failureCause(failure)); }
+			helper.downloadFile(dataOut, params, 0, operation);
 			return dataOut.toByteArray();
 		});
 	}
@@ -5350,12 +5348,11 @@ public class TS3ApiAsync {
 	public CompletableFuture<Void> uploadFile(InputStream dataIn, long dataLength, String filePath, boolean overwrite,
 	                                         int channelId, String channelPassword, boolean resume) {
 		if (dataLength < 0) throw new IllegalArgumentException("Negative upload length");
-		java.util.Objects.requireNonNull(dataIn, "dataIn");
+		Objects.requireNonNull(dataIn, "dataIn");
 		FileTransferHelper helper = query.getFileTransferHelper();
 		Command cmd = FileCommands.ftInitUpload(helper.getClientTransferId(), filePath, channelId, channelPassword, dataLength, overwrite, resume);
-		return executeTransfer(cmd, (params, operation) -> {
-			try { helper.uploadFile(dataIn, dataLength, params, resume, operation); }
-			catch (IOException failure) { throw new TS3FileTransferFailedException("Upload failed", operation.failureCause(failure)); }
+		return executeTransfer(cmd, "Upload failed", (params, operation) -> {
+			helper.uploadFile(dataIn, dataLength, params, resume, operation);
 			return null;
 		});
 	}
@@ -5451,34 +5448,16 @@ public class TS3ApiAsync {
 	 * @see #downloadIcon(OutputStream, long)
 	 */
 	public CompletableFuture<Long> uploadIcon(InputStream dataIn, long dataLength) {
-		java.util.Objects.requireNonNull(dataIn, "dataIn");
+		Objects.requireNonNull(dataIn, "dataIn");
 		if (dataLength < 0) throw new IllegalArgumentException("Negative icon length");
 		var admission = query.commandAdmission(commandQueue.isGlobal());
 		if (!admission.tryAcquire()) return CompletableFuture.failedFuture(new TS3QueueFullException());
-		var helper = query.getFileTransferHelper();
-		var operation = helper.newOperation();
+		var operation = query.getFileTransferHelper().newOperation();
 		var work = new CompletableFuture<byte[]>();
-		var cancellation = new CompletableFuture<Void>();
-		cancellation.whenComplete((value, failure) -> operation.abort());
-		var preparation = CommandFutures.link(work, cancellation);
-		try {
-			query.callbackExecutor().execute(() -> {
-				byte[] data = null;
-				Throwable failure = null;
-				try (operation) {
-					operation.start(() -> query.callbackExecutor().execute(() -> work.completeExceptionally(
-						new TS3FileTransferFailedException("Icon buffering aborted", operation.abortCause()))));
-					data = FileTransferHelper.readFully(dataIn, dataLength,
-						query.getConfig().getFileTransferConfig().maxInMemoryBytes(), operation);
-				} catch (IOException exception) {
-					failure = new TS3FileTransferFailedException("Icon buffering failed", operation.failureCause(exception));
-				} catch (Throwable exception) { failure = exception; }
-				finally { admission.release(); }
-				if (failure == null) work.complete(data); else work.completeExceptionally(failure);
-			});
-		} catch (RuntimeException rejected) {
-			operation.close(); admission.release(); work.completeExceptionally(rejected);
-		}
+		var preparation = CommandFutures.link(work, abortOnCancel(operation));
+		int limit = query.getConfig().getFileTransferConfig().maxInMemoryBytes();
+		runFileWork(operation, work, "Icon buffering aborted", "Icon buffering failed",
+			op -> FileTransferHelper.readFully(dataIn, dataLength, limit, op), admission::release);
 		return CommandFutures.compose(preparation, this::uploadIconDirect);
 	}
 
@@ -5573,46 +5552,69 @@ public class TS3ApiAsync {
 		return executeAndTransformFirst(cmd, ServerQueryInfo::new);
 	}
 
+	@FunctionalInterface
+	private interface FileWork<T> {
+		T run(FileTransferHelper.Operation operation) throws IOException;
+	}
+
+	@FunctionalInterface
+	private interface TransferWork<T> {
+		T run(FileTransferParameters params, FileTransferHelper.Operation operation) throws IOException;
+	}
+
 	/** Admission is released only after actual I/O ends, including uncooperative caller streams. */
-	private <T> CompletableFuture<T> executeTransfer(Command command,
-	        java.util.function.BiFunction<FileTransferParameters, FileTransferHelper.Operation, T> transfer) {
+	private <T> CompletableFuture<T> executeTransfer(Command command, String failureMessage, TransferWork<T> transfer) {
 		var finished = new CompletableFuture<Void>();
 		var work = new CompletableFuture<T>();
-		var cancellation = new CompletableFuture<Void>();
 		var operation = query.getFileTransferHelper().newOperation();
-		cancellation.whenComplete((value, failure) -> operation.abort());
-		var result = CommandFutures.link(work, cancellation, command.getFuture());
+		var result = CommandFutures.link(work, abortOnCancel(operation), command.getFuture());
 		command.getFuture().whenComplete((response, failure) -> {
 			if (failure != null) {
 				operation.close(); work.completeExceptionally(failure); finished.complete(null); return;
 			}
-			try {
-				query.callbackExecutor().execute(() -> {
-					try {
-						T value;
-						try (operation) {
-							operation.start(() -> query.callbackExecutor().execute(() -> work.completeExceptionally(
-							new TS3FileTransferFailedException("File transfer aborted", operation.abortCause()))));
-							var params = new FileTransferParameters(response.getFirstResponse().getMap());
-							var error = params.getQueryError();
-							if (!error.isSuccessful()) throw new TS3CommandFailedException(error, command.getName());
-							value = transfer.apply(params, operation);
-						}
-						work.complete(value);
-					} catch (IOException transferFailure) {
-						work.completeExceptionally(new TS3FileTransferFailedException("File transfer aborted", transferFailure));
-					} catch (NumberFormatException malformed) {
-						work.completeExceptionally(new TS3FileTransferFailedException("Invalid numeric file response",
-							new IOException("Malformed file transfer field", malformed)));
-					} catch (Throwable transferFailure) { work.completeExceptionally(transferFailure); }
-					finally { finished.complete(null); }
-				});
-			} catch (RuntimeException rejected) {
-				operation.close(); work.completeExceptionally(rejected); finished.complete(null);
-			}
+			runFileWork(operation, work, "File transfer aborted", failureMessage, op -> {
+				try {
+					var params = new FileTransferParameters(response.getFirstResponse().getMap());
+					var error = params.getQueryError();
+					if (!error.isSuccessful()) throw new TS3CommandFailedException(error, command.getName());
+					return transfer.run(params, op);
+				} catch (NumberFormatException malformed) {
+					throw new TS3FileTransferFailedException("Invalid numeric file response",
+						new IOException("Malformed file transfer field", malformed));
+				}
+			}, () -> finished.complete(null));
 		});
 		commandQueue.enqueueCommand(command, finished);
 		return result;
+	}
+
+	/** @return a future whose cancellation aborts the operation */
+	private static CompletableFuture<Void> abortOnCancel(FileTransferHelper.Operation operation) {
+		var cancellation = new CompletableFuture<Void>();
+		cancellation.whenComplete((value, failure) -> operation.abort());
+		return cancellation;
+	}
+
+	/** Runs on a callback thread; onFinish runs once the work itself has ended, before work completes. */
+	private <T> void runFileWork(FileTransferHelper.Operation operation, CompletableFuture<T> work, String abortMessage,
+	                             String failureMessage, FileWork<T> body, Runnable onFinish) {
+		try {
+			query.callbackExecutor().execute(() -> {
+				T value = null;
+				Throwable failure = null;
+				try (operation) {
+					operation.start(() -> query.callbackExecutor().execute(() -> work.completeExceptionally(
+						new TS3FileTransferFailedException(abortMessage, operation.abortCause()))));
+					value = body.run(operation);
+				} catch (IOException exception) {
+					failure = new TS3FileTransferFailedException(failureMessage, operation.failureCause(exception));
+				} catch (Throwable exception) { failure = exception; }
+				finally { onFinish.run(); }
+				if (failure == null) work.complete(value); else work.completeExceptionally(failure);
+			});
+		} catch (RuntimeException rejected) {
+			operation.close(); onFinish.run(); work.completeExceptionally(rejected);
+		}
 	}
 
 	/**

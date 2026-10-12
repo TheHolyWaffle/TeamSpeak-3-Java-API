@@ -1,6 +1,7 @@
 package com.github.theholywaffle.teamspeak3;
 
 import java.net.InetSocketAddress;
+import java.util.Set;
 
 /**
  * Maps only the separate, plaintext TS3 file socket endpoint. Does not change query transport,
@@ -20,7 +21,7 @@ public interface FileTransferEndpointResolver {
 	static FileTransferEndpointResolver advertised() {
 		return (queryHost, hosts, port) -> {
 			String host = hosts == null ? "" : hosts.split(",", -1)[0].trim();
-			if (host.isEmpty() || host.equals("0.0.0.0") || host.equals("::") || host.equals("[::]") || host.equals("0:0:0:0:0:0:0:0")) host = queryHost;
+			if (host.isEmpty() || Set.of("0.0.0.0", "::", "[::]", "0:0:0:0:0:0:0:0").contains(host)) host = queryHost;
 			return new InetSocketAddress(host, port);
 		};
 	}

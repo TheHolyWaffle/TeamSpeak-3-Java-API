@@ -89,9 +89,7 @@ class FileTransferHelper implements AutoCloseable {
 		synchronized void abort() {
 			if (ended || aborted) return;
 			aborted = true;
-			if (socket != null) {
-				try { socket.close(); } catch (IOException ignored) { }
-			}
+			closeSocket();
 			if (worker != null) worker.interrupt();
 			if (onAbort != null) onAbort.run();
 		}
@@ -106,9 +104,7 @@ class FileTransferHelper implements AutoCloseable {
 		}
 
 		synchronized void check() throws IOException {
-			if (expired) throw new SocketTimeoutException("File transfer deadline exceeded");
-			if (aborted || Thread.currentThread().isInterrupted())
-				throw new InterruptedIOException("File transfer aborted");
+			if (aborted || Thread.currentThread().isInterrupted()) throw abortCause();
 		}
 
 		Socket connect(FileTransferParameters params) throws IOException {
@@ -133,12 +129,16 @@ class FileTransferHelper implements AutoCloseable {
 		@Override public synchronized void close() {
 			ended = true;
 			if (timer != null) timer.cancel(false);
-			if (socket != null) {
-				try { socket.close(); } catch (IOException ignored) { }
-			}
+			closeSocket();
 			worker = null;
 			onAbort = null;
 			operations.remove(this);
+		}
+
+		private void closeSocket() {
+			if (socket != null) {
+				try { socket.close(); } catch (IOException ignored) { }
+			}
 		}
 	}
 
@@ -147,15 +147,8 @@ class FileTransferHelper implements AutoCloseable {
 		if (size < 0 || seekPosition < 0 || seekPosition > size) throw new IOException("Invalid download length or seek position");
 		try (Socket socket = operation.connect(params)) {
 			InputStream in = socket.getInputStream();
-			byte[] buffer = new byte[BUFFER_SIZE];
-			long remaining = size - seekPosition;
-			while (remaining > 0) {
-				operation.check();
-				int read = in.read(buffer, 0, (int) Math.min(buffer.length, remaining));
-				if (read < 0) throw new IOException("Server response contained less data than specified");
-				if (read == 0) throw new IOException("File socket made no progress");
-				operation.check(); dataOut.write(buffer, 0, read); remaining -= read;
-			}
+			copy(in, dataOut, size - seekPosition, new byte[BUFFER_SIZE], operation,
+				"Server response contained less data than specified or made no progress");
 			operation.check();
 			if (in.read() != -1) throw new IOException("Server response contained more data than specified");
 			operation.check();
@@ -169,35 +162,28 @@ class FileTransferHelper implements AutoCloseable {
 			throw new IOException("Invalid server upload seek position");
 		byte[] buffer = new byte[BUFFER_SIZE];
 		// Resume callers provide the entire source; discard precisely the server-acknowledged prefix.
-		copyPrefix(dataIn, position, buffer, operation);
+		copy(dataIn, OutputStream.nullOutputStream(), position, buffer, operation,
+			"User stream did not contain resume prefix or made no progress");
 		try (Socket socket = operation.connect(params)) {
 			OutputStream out = socket.getOutputStream();
-			long remaining = dataLength - position;
-			while (remaining > 0) {
-				operation.check();
-				int read = dataIn.read(buffer, 0, (int) Math.min(buffer.length, remaining));
-				if (read <= 0) throw new IOException("User stream did not contain enough data or made no progress");
-				operation.check(); out.write(buffer, 0, read); remaining -= read;
-			}
+			copy(dataIn, out, dataLength - position, buffer, operation,
+				"User stream did not contain enough data or made no progress");
 			out.flush(); operation.check();
 		}
 	}
 
-	private static void copyPrefix(InputStream input, long size, byte[] buffer, Operation operation) throws IOException {
+	private static void copy(InputStream in, OutputStream out, long size, byte[] buffer, Operation operation,
+	                         String shortReadMessage) throws IOException {
 		while (size > 0) {
 			operation.check();
-			int read = input.read(buffer, 0, (int) Math.min(buffer.length, size));
-			if (read <= 0) throw new IOException("User stream did not contain resume prefix or made no progress");
-			size -= read;
+			int read = in.read(buffer, 0, (int) Math.min(buffer.length, size));
+			if (read <= 0) throw new IOException(shortReadMessage);
+			operation.check(); out.write(buffer, 0, read); size -= read;
 		}
 	}
 
 	static long getIconId(byte[] data) {
 		final CRC32 crc32 = new CRC32(); crc32.update(data); return crc32.getValue();
-	}
-
-	static byte[] readFully(InputStream dataIn, long dataLength, int limit) throws IOException {
-		return readFully(dataIn, dataLength, limit, null);
 	}
 
 	static byte[] readFully(InputStream dataIn, long dataLength, int limit, Operation operation) throws IOException {

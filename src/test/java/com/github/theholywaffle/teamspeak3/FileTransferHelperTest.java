@@ -1,5 +1,7 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.CallerStreams.Input;
+import com.github.theholywaffle.teamspeak3.CallerStreams.Output;
 import com.github.theholywaffle.teamspeak3.api.wrapper.FileTransferParameters;
 import java.io.*;
 import java.net.*;
@@ -19,18 +21,6 @@ class FileTransferHelperTest {
     private static FileTransferParameters parameters(int port, long size, long position) {
         return new FileTransferParameters(Map.of("ip", "127.0.0.1", "port", "" + port,
             "ftkey", "k", "size", "" + size, "seekpos", "" + position));
-    }
-
-    private static class Output extends ByteArrayOutputStream {
-        boolean closed, flushed;
-        @Override public void close() { closed = true; }
-        @Override public void flush() { flushed = true; }
-    }
-
-    private static class Input extends ByteArrayInputStream {
-        boolean closed;
-        Input(byte[] bytes) { super(bytes); }
-        @Override public void close() { closed = true; }
     }
 
     private static final class Fixture implements AutoCloseable {
@@ -168,15 +158,15 @@ class FileTransferHelperTest {
     }
 
     @Test void lengthsMemoryLimitsAndNoProgressFailBeforeAllocationOrSocket() throws Exception {
-        assertThrows(IOException.class, () -> FileTransferHelper.readFully(InputStream.nullInputStream(), -1, 1024));
-        assertThrows(IOException.class, () -> FileTransferHelper.readFully(InputStream.nullInputStream(), Long.MAX_VALUE, 1024));
-        assertArrayEquals(new byte[0], FileTransferHelper.readFully(InputStream.nullInputStream(), 0, 0));
-        assertThrows(IOException.class, () -> FileTransferHelper.readFully(InputStream.nullInputStream(), 1, 1024));
+        assertThrows(IOException.class, () -> FileTransferHelper.readFully(InputStream.nullInputStream(), -1, 1024, null));
+        assertThrows(IOException.class, () -> FileTransferHelper.readFully(InputStream.nullInputStream(), Long.MAX_VALUE, 1024, null));
+        assertArrayEquals(new byte[0], FileTransferHelper.readFully(InputStream.nullInputStream(), 0, 0, null));
+        assertThrows(IOException.class, () -> FileTransferHelper.readFully(InputStream.nullInputStream(), 1, 1024, null));
         var noProgress = new InputStream() {
             @Override public int read() { return 0; }
             @Override public int read(byte[] bytes, int offset, int length) { return 0; }
         };
-        assertThrows(IOException.class, () -> FileTransferHelper.readFully(noProgress, 1, 1024));
+        assertThrows(IOException.class, () -> FileTransferHelper.readFully(noProgress, 1, 1024, null));
         try (var fixture = new Fixture(); var operation = fixture.operation()) {
             assertThrows(IOException.class, () -> fixture.helper.downloadFile(new Output(), parameters(1, -1, 0), 0, operation));
             assertThrows(IOException.class, () -> fixture.helper.downloadFile(new Output(), parameters(1, 1, 0), 2, operation));

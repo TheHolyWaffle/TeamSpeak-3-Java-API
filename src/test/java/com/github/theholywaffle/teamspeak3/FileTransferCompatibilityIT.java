@@ -1,5 +1,7 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.CallerStreams.Input;
+import com.github.theholywaffle.teamspeak3.CallerStreams.Output;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
@@ -17,16 +19,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 import static org.junit.jupiter.api.Assertions.*;
 
 class FileTransferCompatibilityIT {
-    private static class Input extends ByteArrayInputStream {
-        boolean closed;
-        Input(byte[] bytes) { super(bytes); }
-        @Override public void close() { closed = true; }
-    }
-    private static class Output extends ByteArrayOutputStream {
-        boolean closed, flushed;
-        @Override public void close() { closed = true; }
-        @Override public void flush() { flushed = true; }
-    }
     private static void eventually(Callable<Boolean> condition, String message) throws Exception {
         long until = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
         while (!condition.call()) {
