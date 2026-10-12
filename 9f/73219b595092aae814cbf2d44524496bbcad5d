@@ -1,0 +1,25 @@
+src/main/java/com/github/theholywaffle/teamspeak3/FileTransferConfig.java
+  s_e3fc1179668ebc::t_68e5825e492df2 1-37
+src/main/java/com/github/theholywaffle/teamspeak3/FileTransferEndpointResolver.java
+  s_e3fc1179668ebc::t_ceaf4039890319 1-27
+src/main/java/com/github/theholywaffle/teamspeak3/QueryConfig.java
+  s_e3fc1179668ebc::t_92b549e5fe3ef4 16,41,74-75
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Config.java
+  s_e3fc1179668ebc::t_f9776283a8a125 45,108-116
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9f73219b595092aae814cbf2d44524496bbcad5d",
+  "prompts": {},
+  "sessions": {
+    "s_e3fc1179668ebc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a13043-758d-76b3-b6c1-26a5d44e7795",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
