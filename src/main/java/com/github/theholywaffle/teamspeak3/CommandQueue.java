@@ -29,7 +29,9 @@ package com.github.theholywaffle.teamspeak3;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3QueryShutDownException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3QueueFullException;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3TimeoutException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3UnknownOutcomeException;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3UnsupportedOperationException;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 
 import java.util.ArrayDeque;
@@ -126,11 +128,11 @@ class CommandQueue {
 			}
 
 			if (paused && query.getConfig().getSessionConfiguration() == null) {
-				command.getFuture().completeExceptionally(new TS3Exception("Disconnected query has no restorable session"));
+				command.getFuture().completeExceptionally(new TS3QueryShutDownException("Disconnected query has no restorable session"));
 				return;
 			}
 			if (contextSealed && SESSION_COMMANDS.contains(command.getName())) {
-				command.getFuture().completeExceptionally(new TS3Exception("Session changes require SessionConfiguration when reconnect is enabled"));
+				command.getFuture().completeExceptionally(new TS3UnsupportedOperationException("Session changes require SessionConfiguration when reconnect is enabled"));
 				return;
 			}
 			if (!admission.tryAcquire()) {
@@ -172,7 +174,7 @@ class CommandQueue {
 				Command command = sendQueue.remove();
 				if (command.getFuture().isCancelled()) { enqueued.remove(command); retries.remove(command); completionWork.remove(command); admission.release(); continue; }
 				if (System.nanoTime() - enqueued.get(command) >= query.getConfig().getQueueWaitTimeout().toNanos()) {
-					fail(command, new TS3Exception("Command queue wait deadline exceeded"));
+					fail(command, new TS3TimeoutException(TS3TimeoutException.Phase.QUEUE_WAIT, command.getName()));
 					continue;
 				}
 				// Conservative boundary: any failure from encoding through flush has an unknown outcome.
@@ -228,7 +230,7 @@ class CommandQueue {
 					enqueued.put(command, System.nanoTime());
 					recovered.add(command);
 				} else {
-					fail(command, new TS3UnknownOutcomeException(command.getName()));
+					fail(command, unknownOutcome(command));
 				}
 			}
 			for (Command command : sendQueue) {
@@ -266,12 +268,23 @@ class CommandQueue {
 		queueLock.lock();
 		try {
 			long now = System.nanoTime();
-			long timeout = query.getConfig().getCommandResponseTimeout().toNanos();
 			for (long start : sent.values()) {
-				if (now - start >= timeout) return true;
+				if (responseExpired(start, now)) return true;
 			}
 			return false;
 		} finally { queueLock.unlock(); }
+	}
+
+	private boolean responseExpired(long sentAt, long now) {
+		return now - sentAt >= query.getConfig().getCommandResponseTimeout().toNanos();
+	}
+
+	// Only call this when holding queueLock, before clearing sent
+	private TS3Exception unknownOutcome(Command command) {
+		Long sentAt = sent.get(command);
+		return sentAt != null && responseExpired(sentAt, System.nanoTime())
+			? new TS3TimeoutException(TS3TimeoutException.Phase.RESPONSE, command.getName())
+			: new TS3UnknownOutcomeException(command.getName());
 	}
 
 	void expireWaitingCommands() {
@@ -288,7 +301,7 @@ class CommandQueue {
 					iterator.remove();
 					enqueued.remove(command); retries.remove(command);
 					complete(command, () ->
-						command.getFuture().completeExceptionally(new TS3Exception("Command queue wait deadline exceeded")));
+						command.getFuture().completeExceptionally(new TS3TimeoutException(TS3TimeoutException.Phase.QUEUE_WAIT, command.getName())));
 					changed = true;
 				}
 			}
@@ -323,7 +336,7 @@ class CommandQueue {
 			rejectNew = true;
 			allCommands = getAllCommands();
 			for (Command command : allCommands) fail(command, sent.containsKey(command)
-				? new TS3UnknownOutcomeException(command.getName()) : new TS3QueryShutDownException());
+				? unknownOutcome(command) : new TS3QueryShutDownException());
 			sendQueue.clear(); receiveQueue.clear(); enqueued.clear(); sent.clear(); owners.clear(); retries.clear();
 			canTransfer.signalAll();
 		} finally { queueLock.unlock(); }

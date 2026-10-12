@@ -21,9 +21,9 @@ class CreatedIdTest {
                     @Override public void onDisconnect(TS3Query ignored) { }
                 }))) {
             query.connect();
-            var failure = assertThrows(TS3Exception.class, () -> query.getApi().addServerGroup("probe"));
+            var failure = assertThrows(TS3Exception.class, () -> query.getApi().serverGroups().create("probe"));
             assertEquals("servergroupadd response requires a positive sgid", failure.getMessage());
-            assertEquals("probe", query.getApi().getVersion().getVersion());
+            assertEquals("probe", query.getApi().instance().version().getVersion());
             query.exit(); peer.await();
         }
     }

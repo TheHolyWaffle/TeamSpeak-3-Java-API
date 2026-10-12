@@ -86,7 +86,7 @@ class QueryConfigurationTest {
 				.setLoginCredentials("user", "space | \\s").setFloodRate(TS3Query.FloodRate.UNLIMITED).build();
 			try (var query = new TS3Query(config)) {
 				query.connect();
-				assertEquals("3.13.8-test", query.getApi().getVersion().getVersion());
+				assertEquals("3.13.8-test", query.getApi().instance().version().getVersion());
 				query.exit();
 				// Shutdown signals may precede the worker termination flag on a busy CI runner.
 				long until = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(1);

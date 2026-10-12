@@ -81,9 +81,9 @@ class EventResilienceTest {
 			try {
 				query.getEventManager().fireEvent(event(0)); await(entered); blocked.close();
 				var listener = new TS3EventAdapter() { @Override public void onTextMessage(TextMessageEvent e) { resumed.countDown(); } };
-				query.subscribe(listener); query.getEventManager().fireEvent(event(1));
+				var queued = query.getApi().events().subscribe(listener); query.getEventManager().fireEvent(event(1));
 				// Removing the queued registration frees its executor task slot.
-				query.getApi().removeTS3Listeners(listener);
+				queued.close();
 				query.subscribe(listener); query.getEventManager().fireEvent(event(2));
 				assertEquals(0, query.getEventStatistics().rejectedTasks());
 				release.countDown(); await(resumed);
@@ -200,7 +200,7 @@ class EventResilienceTest {
 		try (var query = new TS3Query(config)) {
 			config.setCommandCapacity(2);
 			assertEquals(1024, query.getConfig().getCommandCapacity());
-			assertThrows(NullPointerException.class, () -> query.getApi().addTS3Listeners(new TS3EventAdapter() {}, null));
+			assertThrows(NullPointerException.class, () -> query.getApi().events().subscribe(null));
 			try (var subscription = query.subscribe(new TS3EventAdapter() {})) { }
 		}
 	}

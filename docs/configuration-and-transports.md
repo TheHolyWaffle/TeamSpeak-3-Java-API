@@ -22,7 +22,7 @@ QueryConfig config = new TS3Config()
 try (TS3Query query = new TS3Query(config)) {
     query.connect();
     query.getApi().selectVirtualServerById(1);
-    System.out.println(query.getApi().getVersion().getVersion());
+    System.out.println(query.getApi().instance().version().getVersion());
 }
 ```
 

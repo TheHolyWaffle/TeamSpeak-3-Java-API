@@ -45,7 +45,7 @@ fixtures and are deleted by the test. No production key is used.
 ## Query-client rejection and event boundary
 
 Both known-valid key types fail with **`516 / invalid client type`** when the
-actor's serveradmin query session calls `usePrivilegeKey`. The test exercises
+actor's serveradmin query session calls `privilegeKeys().use`. The test exercises
 both the wrapper and string overloads. No key is consumed by these failures.
 The same session also returns 516 for a removed token, so this error does not
 prove that a supplied token exists or is valid.

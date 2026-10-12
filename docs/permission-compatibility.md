@@ -71,7 +71,7 @@ permission methods. Do not infer permission availability from an enum constant.
 
 An unknown name in `channeladdperm`, `permidgetbyname` or `permfind` produces
 `TS3CommandFailedException` with **2562**, **`invalid permission ID`**, on every
-target. `getPermissionAssignments` now preserves that error instead of silently
+target. `permissions().assignments` now preserves that error instead of silently
 returning an empty list. A valid but unassigned permission's empty-result response
 (**1281**) still becomes an empty list through the existing response parser;
 this distinction is covered by a scripted regression test.
@@ -87,31 +87,31 @@ permission enforcement for every role, or voice-client behavior.
 Release intent is **`feat!:`**, an intentional breaking change for the planned
 2.0.0 release. `BPermissionType.getId()` and `IPermissionType.getId()` are removed,
 including the embedded numeric tables. Enum constants, names and descriptions
-remain. Existing mutation overloads that accept enums already send names. String-based
+remain. `PermissionGrant.of` accepts enums and sends their names. String-based
 methods use the same names:
 
 ```java
-api.addChannelPermission(channelId, IPermissionType.I_CHANNEL_NEEDED_JOIN_POWER.getName(), 23);
+api.permissions().add(PermissionTarget.channel(channelId), PermissionGrant.of(IPermissionType.I_CHANNEL_NEEDED_JOIN_POWER, 23));
 ```
 
 Replace an enum ID lookup with a lookup on the connected server:
 
 ```java
 // Before: int id = IPermissionType.I_CHANNEL_NEEDED_JOIN_POWER.getId();
-int id = api.getPermissionIdByName(IPermissionType.I_CHANNEL_NEEDED_JOIN_POWER.getName());
+int id = api.permissions().idByName(IPermissionType.I_CHANNEL_NEEDED_JOIN_POWER.getName());
 ```
 
 For `PermissionInfo.getId()`, `PermissionAssignment.getId()` and error
-`failed_permid`, use `api.getPermissions()` from that same server to resolve names.
+`failed_permid`, use `api.permissions().list()` from that same server to resolve names.
 Do not reuse numeric IDs across servers or versions. Prefer names for mutations.
 For newer permissions, pass a name discovered in that server's metadata:
 
 ```java
-api.addChannelPermission(channelId, permissionInfo.getName(), value);
+api.permissions().add(PermissionTarget.channel(channelId), permissionInfo.getName(), value);
 ```
 
 Handle `TS3CommandFailedException` for unknown names passed to
-`getPermissionAssignments`; previously those names were indistinguishable from
+`permissions().assignments`; previously those names were indistinguishable from
 valid unassigned permissions. No dependencies or transport defaults change.
 The controlled raw-command escape hatch from the channel slice remains available.
 

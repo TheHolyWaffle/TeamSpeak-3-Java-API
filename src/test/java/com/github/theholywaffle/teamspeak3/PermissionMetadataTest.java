@@ -1,5 +1,7 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.PermissionGrant;
+import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
 import com.github.theholywaffle.teamspeak3.api.BPermissionType;
 import com.github.theholywaffle.teamspeak3.api.IPermissionType;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
@@ -32,19 +34,19 @@ class PermissionMetadataTest {
 		}); var query = new TS3Query(new TS3Config().setHost("127.0.0.1").setQueryPort(peer.port()).setFloodRate(TS3Query.FloodRate.UNLIMITED))) {
 			query.connect();
 			var api = query.getApi();
-			var permissions = api.getPermissions();
+			var permissions = api.permissions().list();
 			assertEquals(3, permissions.size());
 			assertEquals("Join power", permissions.get(0).getDescription());
-			assertEquals(7001, api.getPermissionIdByName(IPermissionType.I_CHANNEL_NEEDED_JOIN_POWER.getName()));
-			assertArrayEquals(new int[]{9002, 12003}, api.getPermissionIdsByName(BPermissionType.B_CHANNEL_CREATE_PERMANENT.getName(), permissions.get(2).getName()));
-			api.addClientPermission(17, IPermissionType.I_CHANNEL_NEEDED_JOIN_POWER, 23, false);
-			api.addClientPermission(17, BPermissionType.B_CHANNEL_CREATE_PERMANENT, true, true);
-			api.addChannelPermission(4, permissions.get(2).getName(), 41);
-			var error = assertThrows(TS3CommandFailedException.class, () -> api.getPermissionIdByName("i_unknown_permission"));
+			assertEquals(7001, api.permissions().idByName(IPermissionType.I_CHANNEL_NEEDED_JOIN_POWER.getName()));
+			assertEquals(java.util.List.of(9002, 12003), api.permissions().idsByName(BPermissionType.B_CHANNEL_CREATE_PERMANENT.getName(), permissions.get(2).getName()));
+			api.permissions().add(PermissionTarget.client(17), PermissionGrant.of(IPermissionType.I_CHANNEL_NEEDED_JOIN_POWER, 23));
+			api.permissions().add(PermissionTarget.client(17), PermissionGrant.of(BPermissionType.B_CHANNEL_CREATE_PERMANENT, true).withSkip());
+			api.permissions().add(PermissionTarget.channel(4), PermissionGrant.of(permissions.get(2).getName(), 41));
+			var error = assertThrows(TS3CommandFailedException.class, () -> api.permissions().idByName("i_unknown_permission"));
 			assertEquals(2562, error.getError().getId());
 			assertEquals("invalid permission ID", error.getError().getMessage());
-			assertEquals(2562, assertThrows(TS3CommandFailedException.class, () -> api.getPermissionAssignments("i_unknown_permission")).getError().getId());
-			assertTrue(api.getPermissionAssignments("i_valid_unassigned").isEmpty());
+			assertEquals(2562, assertThrows(TS3CommandFailedException.class, () -> api.permissions().assignments("i_unknown_permission")).getError().getId());
+			assertTrue(api.permissions().assignments("i_valid_unassigned").isEmpty());
 			FutureAssertions.awaitCommandAdmission(query);
 			query.exit(); peer.await();
 		}
@@ -60,11 +62,11 @@ class PermissionMetadataTest {
 		}); var query = new TS3Query(new TS3Config().setHost("127.0.0.1").setQueryPort(peer.port()).setFloodRate(TS3Query.FloodRate.UNLIMITED))) {
 			query.connect();
 			var api = query.getApi();
-			var error = assertThrows(TS3CommandFailedException.class, () -> api.addChannelPermission(4, IPermissionType.I_CHANNEL_NEEDED_JOIN_POWER.getName(), 41));
+			var error = assertThrows(TS3CommandFailedException.class, () -> api.permissions().add(PermissionTarget.channel(4), PermissionGrant.of(IPermissionType.I_CHANNEL_NEEDED_JOIN_POWER.getName(), 41)));
 			assertEquals(2568, error.getError().getId());
 			int failedId = error.getError().getFailedPermissionId();
 			assertEquals(7359, failedId);
-			assertEquals("i_channel_permission_modify_power", api.getPermissions().stream().filter(p -> p.getId() == failedId).findFirst().orElseThrow().getName());
+			assertEquals("i_channel_permission_modify_power", api.permissions().list().stream().filter(p -> p.getId() == failedId).findFirst().orElseThrow().getName());
 			FutureAssertions.awaitCommandAdmission(query);
 			query.exit(); peer.await();
 		}

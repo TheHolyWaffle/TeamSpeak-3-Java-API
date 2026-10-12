@@ -29,7 +29,6 @@ import com.github.theholywaffle.teamspeak3.TS3ApiAsync;
 import com.github.theholywaffle.teamspeak3.TS3Config;
 import com.github.theholywaffle.teamspeak3.TS3Query;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
-import com.github.theholywaffle.teamspeak3.api.CommandFuture;
 import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
@@ -43,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * An example demonstrating the reconnect feature, based on the already present ChatBotExample.
@@ -103,11 +103,11 @@ public class ReconnectExample {
 
 	private static void stuffThatOnlyEverNeedsToBeRunOnce(final TS3Api api) {
 		// We only want to greet people once
-		api.sendChannelMessage("PutPutBot is online!");
+		api.messages().sendChannel("PutPutBot is online!");
 
 		// On the API side of things, you only need to register your TS3Listeners once!
 		// These are not affected when the query disconnects.
-		api.addTS3Listeners(new TS3EventAdapter() {
+		api.events().subscribe(new TS3EventAdapter() {
 
 			@Override
 			public void onTextMessage(TextMessageEvent e) {
@@ -116,7 +116,7 @@ public class ReconnectExample {
 					// Greet whoever sent a message in the default channel
 					// (Yes this isn't smart or useful, this is just an example)
 					// Message: "Hello <client name>!"
-					api.sendChannelMessage("Hello " + e.getInvokerName() + "!");
+					api.messages().sendChannel("Hello " + e.getInvokerName() + "!");
 				}
 			}
 		});
@@ -136,11 +136,13 @@ public class ReconnectExample {
 			String name = String.valueOf(counter++) + " - " + c;
 
 			// Create a permanent channel with that name
-			CommandFuture<Integer> create = api.createChannel(name, channelOptions);
+			CompletableFuture<Integer> create = api.channels().create(name, channelOptions);
 			// and store its ID (once it's created) in a list so we can delete it later
-			create.onSuccess(channelId -> createdChannelIds.add(channelId));
-			create.onFailure(error -> System.err.println("Channel creation failed: " + error.getMessage()
-				+ "; reconcile server state before retrying."));
+			create.whenComplete((channelId, error) -> {
+				if (error == null) createdChannelIds.add(channelId);
+				else System.err.println("Channel creation failed: " + error.getMessage()
+					+ "; reconcile server state before retrying.");
+			});
 
 			// Artificial delay
 			api.whoAmI();
@@ -154,7 +156,7 @@ public class ReconnectExample {
 		// - channels with unknown outcomes need reconciliation; this example cannot clean them up blindly
 
 		// Wait 5 seconds after everything's done, then undo the mess we've created
-		api.whoAmI().getUninterruptibly(); // Wait for all previous commands to complete
+		api.whoAmI().join(); // Wait for all previous commands to complete
 		try {
 			Thread.sleep(5000);
 		} catch (InterruptedException ignored) {
@@ -162,9 +164,9 @@ public class ReconnectExample {
 		}
 
 		for (int channelId : createdChannelIds) {
-			api.deleteChannel(channelId, true);
+			api.channels().delete(channelId, true);
 		}
 
-		api.whoAmI().getUninterruptibly(); // Wait for all previous commands to complete
+		api.whoAmI().join(); // Wait for all previous commands to complete
 	}
 }

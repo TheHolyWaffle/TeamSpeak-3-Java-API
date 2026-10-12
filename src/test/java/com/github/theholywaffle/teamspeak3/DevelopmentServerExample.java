@@ -14,15 +14,15 @@ final class DevelopmentServerExample {
 			query.connect();
 			TS3Api api = query.getApi();
 			api.selectVirtualServerById(1);
-			int channel = api.createChannel("Development example | literal \\s",
+			int channel = api.channels().create("Development example | literal \\s",
 					Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"));
 			try {
-				if (api.getChannels().stream().noneMatch(c -> c.getId() == channel)) {
+				if (api.channels().list().stream().noneMatch(c -> c.getId() == channel)) {
 					throw new IllegalStateException("Example channel was not listed by the server");
 				}
-				System.out.println("Compiled example succeeded: version=" + api.getVersion().getVersion()
+				System.out.println("Compiled example succeeded: version=" + api.instance().version().getVersion()
 						+ ", virtualServer=" + api.whoAmI().getVirtualServerId() + ", channel=" + channel);
-			} finally { api.deleteChannel(channel, true); }
+			} finally { api.channels().delete(channel, true); }
 		} finally { query.exit(); }
 	}
 }

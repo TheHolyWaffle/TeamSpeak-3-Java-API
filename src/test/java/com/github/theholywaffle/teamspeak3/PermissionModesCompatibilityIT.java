@@ -1,5 +1,7 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.PermissionGrant;
+import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
 import com.github.theholywaffle.teamspeak3.api.ServerGroupType;
 import com.github.theholywaffle.teamspeak3.api.IPermissionType;
@@ -26,47 +28,47 @@ class PermissionModesCompatibilityIT {
                 }
                 for (var type : PermissionGroupDatabaseType.values()) {
                     String name = "mode-source-" + type;
-                    int source = api.addServerGroup(name, type);
-                    api.addServerGroupPermission(source, IPermissionType.I_CLIENT_TALK_POWER.getName(), 47, false, true);
-                    int copy = api.copyServerGroup(source, "mode-copy-" + type, type);
-                    var row = api.getServerGroups().stream().filter(group -> group.getId() == copy).findFirst().orElseThrow();
+                    int source = api.serverGroups().create(name, type);
+                    api.permissions().add(PermissionTarget.serverGroup(source), PermissionGrant.of(IPermissionType.I_CLIENT_TALK_POWER.getName(), 47).withSkip());
+                    int copy = api.serverGroups().copy(source, "mode-copy-" + type, type);
+                    var row = api.serverGroups().list().stream().filter(group -> group.getId() == copy).findFirst().orElseThrow();
                     assertEquals(type, row.getType());
-                    CompatibilityAssertions.permission(api.getServerGroupPermissions(copy), IPermissionType.I_CLIENT_TALK_POWER.getName(), 47, false, true);
-                    api.deleteServerGroup(copy, true); api.deleteServerGroup(source, true);
+                    CompatibilityAssertions.permission(api.permissions().assigned(PermissionTarget.serverGroup(copy)), IPermissionType.I_CLIENT_TALK_POWER.getName(), 47, false, true);
+                    api.serverGroups().delete(copy, true); api.serverGroups().delete(source, true);
                     evidence.add("server group " + type + " create/copy/permission/delete passed");
                 }
                 for (var type : List.of(PermissionGroupDatabaseType.TEMPLATE, PermissionGroupDatabaseType.REGULAR)) {
-                    int source = api.addChannelGroup("channel-source-" + type, type);
-                    api.addChannelGroupPermission(source, IPermissionType.I_CLIENT_TALK_POWER.getName(), 48);
-                    int copy = api.copyChannelGroup(source, "channel-copy-" + type, type);
-                    var row = api.getChannelGroups().stream().filter(group -> group.getId() == copy).findFirst().orElseThrow();
+                    int source = api.channelGroups().create("channel-source-" + type, type);
+                    api.permissions().add(PermissionTarget.channelGroup(source), PermissionGrant.of(IPermissionType.I_CLIENT_TALK_POWER.getName(), 48));
+                    int copy = api.channelGroups().copy(source, "channel-copy-" + type, type);
+                    var row = api.channelGroups().list().stream().filter(group -> group.getId() == copy).findFirst().orElseThrow();
                     assertEquals(type, row.getType());
-                    CompatibilityAssertions.permission(api.getChannelGroupPermissions(copy), IPermissionType.I_CLIENT_TALK_POWER.getName(), 48, false, false);
-                    api.deleteChannelGroup(copy, true); api.deleteChannelGroup(source, true);
+                    CompatibilityAssertions.permission(api.permissions().assigned(PermissionTarget.channelGroup(copy)), IPermissionType.I_CLIENT_TALK_POWER.getName(), 48, false, false);
+                    api.channelGroups().delete(copy, true); api.channelGroups().delete(source, true);
                     evidence.add("channel group " + type + " create/copy/permission/delete passed");
                 }
                 var queryChannelGroup = assertThrows(com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException.class,
-                    () -> api.addChannelGroup("unsupported-query-channel", PermissionGroupDatabaseType.QUERY));
+                    () -> api.channelGroups().create("unsupported-query-channel", PermissionGroupDatabaseType.QUERY));
                 assertEquals(1538, queryChannelGroup.getError().getId());
                 evidence.add("channelgroupadd typeQUERY rejected1538 despite live help listing type2");
-                int automatic = api.addServerGroup("mode-auto"); int unrelated = api.addServerGroup("mode-unrelated");
-                api.addServerGroupPermission(automatic, IPermissionType.I_GROUP_AUTO_UPDATE_TYPE.getName(), ServerGroupType.SERVER_NORMAL.getIndex(), false, false);
-                api.addServerGroupPermission(automatic, IPermissionType.I_GROUP_AUTO_UPDATE_MAX_VALUE.getName(), 100, false, false);
-                api.addPermissionToAllServerGroups(ServerGroupType.SERVER_NORMAL, IPermissionType.I_CLIENT_TALK_POWER.getName(), 49, false, true);
-                CompatibilityAssertions.permission(api.getServerGroupPermissions(automatic), IPermissionType.I_CLIENT_TALK_POWER.getName(), 49, false, true);
-                assertTrue(api.getServerGroupPermissions(unrelated).stream().noneMatch(permission -> permission.getName().equals(IPermissionType.I_CLIENT_TALK_POWER.getName())));
+                int automatic = api.serverGroups().create("mode-auto"); int unrelated = api.serverGroups().create("mode-unrelated");
+                api.permissions().add(PermissionTarget.serverGroup(automatic), PermissionGrant.of(IPermissionType.I_GROUP_AUTO_UPDATE_TYPE.getName(), ServerGroupType.SERVER_NORMAL.getIndex()));
+                api.permissions().add(PermissionTarget.serverGroup(automatic), PermissionGrant.of(IPermissionType.I_GROUP_AUTO_UPDATE_MAX_VALUE.getName(), 100));
+                api.permissions().addToAllServerGroups(ServerGroupType.SERVER_NORMAL, PermissionGrant.of(IPermissionType.I_CLIENT_TALK_POWER.getName(), 49).withSkip());
+                CompatibilityAssertions.permission(api.permissions().assigned(PermissionTarget.serverGroup(automatic)), IPermissionType.I_CLIENT_TALK_POWER.getName(), 49, false, true);
+                assertTrue(api.permissions().assigned(PermissionTarget.serverGroup(unrelated)).stream().noneMatch(permission -> permission.getName().equals(IPermissionType.I_CLIENT_TALK_POWER.getName())));
                 evidence.add("automatic permission targeted configured group classification; unclassified group unchanged");
-                api.deletePermissionFromAllServerGroups(ServerGroupType.SERVER_NORMAL, IPermissionType.I_CLIENT_TALK_POWER.getName());
-                assertTrue(api.getServerGroupPermissions(automatic).stream().noneMatch(permission -> permission.getName().equals(IPermissionType.I_CLIENT_TALK_POWER.getName())));
+                api.permissions().deleteFromAllServerGroups(ServerGroupType.SERVER_NORMAL, IPermissionType.I_CLIENT_TALK_POWER.getName());
+                assertTrue(api.permissions().assigned(PermissionTarget.serverGroup(automatic)).stream().noneMatch(permission -> permission.getName().equals(IPermissionType.I_CLIENT_TALK_POWER.getName())));
                 evidence.add("automatic permission deletion removed configured assignment");
-                String token = api.resetPermissions(); assertFalse(token.isBlank());
+                String token = api.permissions().reset(); assertFalse(token.isBlank());
                 assertEquals(0, api.whoAmI().getVirtualServerId(), "Permission reset clears query selection");
                 api.selectVirtualServerById(1);
-                assertTrue(api.getPrivilegeKeys().stream().anyMatch(key -> key.getToken().equals(token)));
-                var restoredGroups = api.getServerGroups();
+                assertTrue(api.privilegeKeys().list().stream().anyMatch(key -> key.getToken().equals(token)));
+                var restoredGroups = api.serverGroups().list();
                 assertTrue(restoredGroups.stream().noneMatch(group -> group.getName().equals("mode-auto") || group.getName().equals("mode-unrelated")));
                 assertTrue(restoredGroups.stream().anyMatch(group -> group.getName().equals("Server Admin")));
-                assertFalse(api.getPermissions().isEmpty()); assertFalse(api.getVersion().getVersion().isBlank());
+                assertFalse(api.permissions().list().isEmpty()); assertFalse(api.instance().version().getVersion().isBlank());
                 evidence.add("permission reset removed owned custom regular groups, restored defaults and returned an administrator key (redacted)");
                 query.exit();
             }

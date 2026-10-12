@@ -19,7 +19,7 @@ class GroupCopyTest {
 			});
 	}
 
-	@Test void overwriteWithoutResponseRowReturnsTargetAndPreservesFailure() throws Exception {
+	@Test void overwriteWithoutResponseRowSucceedsAndPreservesFailure() throws Exception {
 		try (var peer = new FakeServerQuery(p -> {
 			p.expect("whoami"); p.write("clid=1\nerror id=0 msg=ok\n");
 			p.expect("servergroupcopy ssgid=9 tsgid=42 name=name type=1"); p.write("error id=0 msg=ok\n");
@@ -28,10 +28,10 @@ class GroupCopyTest {
 			p.finishQuit();
 		}); var query = new TS3Query(config(peer))) {
 			query.connect();
-			assertEquals(42, query.getApi().copyServerGroup(9, 42, PermissionGroupDatabaseType.REGULAR));
-			assertEquals(43, query.getAsyncApi().copyServerGroup(9, 43, PermissionGroupDatabaseType.REGULAR).get(5, TimeUnit.SECONDS));
+			query.getApi().serverGroups().overwrite(9, 42, PermissionGroupDatabaseType.REGULAR);
+			assertNull(query.getAsyncApi().serverGroups().overwrite(9, 43, PermissionGroupDatabaseType.REGULAR).get(5, TimeUnit.SECONDS));
 			var error = assertThrows(TS3CommandFailedException.class,
-				() -> query.getApi().copyServerGroup(9, 44, PermissionGroupDatabaseType.REGULAR));
+				() -> query.getApi().serverGroups().overwrite(9, 44, PermissionGroupDatabaseType.REGULAR));
 			assertEquals(2560, error.getError().getId()); assertEquals("invalid group ID", error.getError().getMessage());
 			FutureAssertions.awaitCommandAdmission(query);
 			query.exit(); peer.await();
@@ -44,9 +44,9 @@ class GroupCopyTest {
 			p.expect("version"); p.write("version=probe\nerror id=0 msg=ok\n");
 			p.finishQuit();
 		}); var query = new TS3Query(config(peer).setCommandCapacity(1))) {
-			var cancelled = query.getAsyncApi().copyServerGroup(9, 42, PermissionGroupDatabaseType.REGULAR);
+			var cancelled = query.getAsyncApi().serverGroups().overwrite(9, 42, PermissionGroupDatabaseType.REGULAR);
 			var next = new java.util.concurrent.atomic.AtomicReference<java.util.concurrent.CompletableFuture<com.github.theholywaffle.teamspeak3.api.wrapper.Version>>();
-			cancelled.whenComplete((value, failure) -> next.set(query.getAsyncApi().getVersion()));
+			cancelled.whenComplete((value, failure) -> next.set(query.getAsyncApi().instance().version()));
 			assertTrue(cancelled.cancel(false)); assertNotNull(next.get());
 			query.connect(); assertEquals("probe", next.get().get(5, TimeUnit.SECONDS).getVersion());
 			FutureAssertions.awaitCommandAdmission(query);
@@ -62,7 +62,7 @@ class GroupCopyTest {
 			p.expect("version"); p.write("version=probe\nerror id=0 msg=ok\n");
 			p.finishQuit();
 		}); var query = new TS3Query(config(peer).setCommandCapacity(1))) {
-			var result = query.getAsyncApi().copyServerGroup(9, 42, PermissionGroupDatabaseType.REGULAR);
+			var result = query.getAsyncApi().serverGroups().overwrite(9, 42, PermissionGroupDatabaseType.REGULAR);
 			var observer = result.whenComplete((value, failure) -> {
 				published.countDown();
 				try { assertTrue(releaseObserver.await(5, TimeUnit.SECONDS)); }
@@ -70,16 +70,16 @@ class GroupCopyTest {
 			});
 			try {
 				query.connect(); assertTrue(published.await(5, TimeUnit.SECONDS));
-				assertEquals(42, result.get(5, TimeUnit.SECONDS));
+				assertNull(result.get(5, TimeUnit.SECONDS));
 				assertEquals(0, query.commandAdmission(true).availablePermits());
-				var rejected = query.getAsyncApi().getVersion();
+				var rejected = query.getAsyncApi().instance().version();
 				assertTrue(rejected.isCompletedExceptionally(), "Admission failure must be immediate");
 				assertThrows(com.github.theholywaffle.teamspeak3.api.exception.TS3QueueFullException.class,
 					() -> FutureAssertions.read(rejected));
 			} finally { releaseObserver.countDown(); }
 			observer.get(5, TimeUnit.SECONDS);
 			FutureAssertions.awaitCommandAdmission(query);
-			assertEquals("probe", query.getAsyncApi().getVersion().get(5, TimeUnit.SECONDS).getVersion());
+			assertEquals("probe", query.getAsyncApi().instance().version().get(5, TimeUnit.SECONDS).getVersion());
 			FutureAssertions.awaitCommandAdmission(query);
 			query.exit(); peer.await();
 		}

@@ -20,7 +20,7 @@ stopped or deleted.
   it with a Unicode/literal-escape reason, verifies its OFFLINE listing, deletes
   it and checks an empty list. This makes room within the fixture's one-server
   license before creating the test server.
-- `createServer` returns a positive server-assigned ID and voice port plus a
+- `servers().create` returns a positive server-assigned ID and voice port plus a
   nonempty admin token. Only creation field names are recorded, never the token.
   The test sets eight slots and a name with Unicode, pipe and literal backslash
   escape text. It accepts the port chosen by the server, without a fixed host

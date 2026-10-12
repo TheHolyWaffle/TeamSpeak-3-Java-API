@@ -15,7 +15,7 @@ endpoint resolution and reliability remain #442 work.
 
 - List a new channel's empty root and query an empty active-transfer list.
   The latter establishes empty-result handling, not active-transfer metadata.
-- Create directories through `createFileDirectory` with and without an explicit
+- Create directories through `files().createDirectory` with and without an explicit
   password argument. Paths without a leading slash are normalized by the existing
   command builder. List a root and nested directory, checking name, full/parent
   path, channel ID, directory type, timestamp and inactive-upload status.
@@ -67,15 +67,15 @@ an exhaustive schema for every entry. Unknown fields remain available via
 | --- | --- | --- |
 | Create directory with literal backslash | 2054 | `invalid file path` |
 | Create the exercised Japanese directory name on TS6 | 2054 | `invalid file path` |
-| `getFileInfo` for an existing directory | 2048 | `invalid file name` |
-| `getFileInfo` for an absent file, TS3 | 2052 | `file input/output error` |
-| `getFileInfo` for an absent file, TS6 | 2051 | `file not found` |
+| `files().info` for an existing directory | 2048 | `invalid file name` |
+| `files().info` for an absent file, TS3 | 2052 | `file input/output error` |
+| `files().info` for an absent file, TS6 (historical) | 2051 | `file not found` |
 | List an absent directory, TS3 | 2052 | `file input/output error` |
 | List an absent directory, TS6 | 2051 | `file not found` |
 
 Empty directories return empty lists; absent directories fail. Do not treat a
 `2052` failure as an empty directory or assume it universally means absence.
-`getFileInfo` is a file-only operation here; obtain directory metadata from a
+`files().info` is a file-only operation here; obtain directory metadata from a
 parent listing. Positive file-info and bulk file-info calls remain unverified.
 
 TS3 file and directory timestamps use epoch seconds through the existing

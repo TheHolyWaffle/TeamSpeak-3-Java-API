@@ -2,6 +2,7 @@ package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import org.junit.jupiter.api.Test;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -19,9 +20,9 @@ class OfflineMessageTest {
                     @Override public void onDisconnect(TS3Query ignored) { }
                 }))) {
             query.connect();
-            assertNull(query.getApi().getOfflineMessage(1));
-            assertEquals("", query.getAsyncApi().getOfflineMessage(2).get(5, TimeUnit.SECONDS));
-            assertEquals("hello world|\\s", query.getApi().getOfflineMessage(3));
+            assertEquals(Optional.empty(), query.getApi().messages().getOffline(1));
+            assertEquals(Optional.of(""), query.getAsyncApi().messages().getOffline(2).get(5, TimeUnit.SECONDS));
+            assertEquals(Optional.of("hello world|\\s"), query.getApi().messages().getOffline(3));
             query.exit(); peer.await();
         }
     }

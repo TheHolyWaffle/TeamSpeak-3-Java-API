@@ -15,13 +15,14 @@ TS6 **6.0.0-beta13.1 SSH**, using the exact image pins and readiness checks in
 The actor sends messages and the observer subscribes to `TEXT_SERVER`,
 `TEXT_CHANNEL` and `TEXT_PRIVATE`. The test verifies:
 
-- `sendServerMessage(String)` and `sendServerMessage(1, String)` on the selected
-  fixture virtual server; `sendChannelMessage(String)` and
-  `sendChannelMessage(channelId, String)` in a disposable permanent channel;
-  `sendPrivateMessage(clientId, String)` to the observer.
-- Generic `sendTextMessage` in all three modes. The recipient ID is used for
+- `messages().sendServer(String)` and `messages().sendServer(1, String)` on the selected
+  fixture virtual server; `messages().sendChannel(String)` and
+  `messages().sendChannel(channelId, String)` in a disposable permanent channel;
+  `messages().sendPrivate(clientId, String)` to the observer.
+- Raw `sendtextmessage` in all three modes. The recipient ID is used for
   private messages, and an otherwise-invalid target ID is ignored for server and
-  current-channel messages, as live help specifies.
+  current-channel messages, as live help specifies. This is why the 2.0 typed API
+  has no target ID for server and channel messages (#443).
 - Each received event's exact text, target mode, invoker client ID, nickname and
   unique identifier. Only private events provide `target`, which matches the
   observer's client ID. Server/channel events omit that field and
@@ -31,7 +32,7 @@ The actor sends messages and the observer subscribes to `TEXT_SERVER`,
   and notification decoding unchanged. BB-code rendering is not tested.
 - Private payloads of 1024 and 1026 UTF-8 bytes arrive intact. This is positive
   evidence for those sizes, not a maximum-size or every-role guarantee.
-- `unregisterAllEvents()` removes server/channel text subscriptions. After
+- `events().unregisterAll()` removes server/channel text subscriptions. After
   re-registering private messages, a private event from the same actor fences
   prior unsubscribed server/channel sends on the same ordered listener. The
   test expects only that private event, rather than relying on a sleep to infer

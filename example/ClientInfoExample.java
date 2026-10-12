@@ -59,17 +59,17 @@ public class ClientInfoExample {
 		api.login("serveradmin", "serveradminpassword");
 		api.selectVirtualServerById(1);
 		api.setNickname("PutPutBot");
-		api.sendChannelMessage("PutPutBot is online!");
+		api.messages().sendChannel("PutPutBot is online!");
 
 		// Get all channels and map their channel IDs to them
-		List<Channel> channels = api.getChannels();
+		List<Channel> channels = api.channels().list();
 		Map<Integer, Channel> channelMap = new HashMap<>(channels.size());
 		for (Channel channel : channels) {
 			channelMap.put(channel.getId(), channel);
 		}
 
 		// List all clients in the console
-		for (Client c : api.getClients()) {
+		for (Client c : api.clients().list()) {
 			// Get the client's channel
 			Channel channel = channelMap.get(c.getChannelId());
 

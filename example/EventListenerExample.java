@@ -47,10 +47,10 @@ public class EventListenerExample {
 		api.login("serveradmin", "serveradminpassword");
 		api.selectVirtualServerById(1);
 		api.setNickname("PutPutBot");
-		api.sendChannelMessage("PutPutBot is online!");
+		api.messages().sendChannel("PutPutBot is online!");
 
-		api.registerAllEvents();
-		api.addTS3Listeners(new TS3Listener() {
+		api.events().registerAll();
+		api.events().subscribe(new TS3Listener() {
 
 			@Override
 			public void onTextMessage(TextMessageEvent e) {

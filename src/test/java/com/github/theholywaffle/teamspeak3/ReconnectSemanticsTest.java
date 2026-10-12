@@ -3,7 +3,10 @@ package com.github.theholywaffle.teamspeak3;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3QueryShutDownException;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3TimeoutException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3UnknownOutcomeException;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3UnsupportedOperationException;
 import com.github.theholywaffle.teamspeak3.api.reconnect.CommandRetryPolicy;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectingConnectionHandler;
@@ -59,10 +62,10 @@ class ReconnectSemanticsTest {
 				p.expect("channelcreate channel_name=third"); p.reply("cid=23"); p.quit(); })) {
 			try (var query = new TS3Query(config(server.port()))) {
 				query.connect();
-				var first = query.getAsyncApi().createChannel("first", Map.of());
+				var first = query.getAsyncApi().channels().create("first", Map.of());
 				assertTrue(received.await(1, TimeUnit.SECONDS));
-				var second = query.getAsyncApi().createChannel("second", Map.of());
-				var third = query.getAsyncApi().createChannel("third", Map.of());
+				var second = query.getAsyncApi().channels().create("second", Map.of());
+				var third = query.getAsyncApi().channels().create("third", Map.of());
 				drop.countDown();
 				var unknown = assertThrows(TS3UnknownOutcomeException.class, () -> FutureAssertions.read(first, 2, TimeUnit.SECONDS));
 				assertEquals("channelcreate", unknown.getCommandName());
@@ -85,7 +88,7 @@ class ReconnectSemanticsTest {
 				query.connect();
 				var read = query.getAsyncApi().whoAmI();
 				assertTrue(received.await(1, TimeUnit.SECONDS));
-				var waiting = query.getAsyncApi().getVersion();
+				var waiting = query.getAsyncApi().instance().version();
 				drop.countDown();
 				assertEquals(42, read.get(2, TimeUnit.SECONDS).getId());
 				assertEquals(7, read.get().getVirtualServerId());
@@ -107,7 +110,7 @@ class ReconnectSemanticsTest {
 				query.connect();
 				var read = query.getAsyncApi().whoAmI();
 				assertTrue(received.await(1, TimeUnit.SECONDS));
-				var waiting = query.getAsyncApi().getVersion();
+				var waiting = query.getAsyncApi().instance().version();
 				drop.countDown();
 				assertThrows(TS3UnknownOutcomeException.class, () -> FutureAssertions.read(read, 2, TimeUnit.SECONDS));
 				assertEquals("after-exhaustion", waiting.get(2, TimeUnit.SECONDS).getVersion());
@@ -148,8 +151,8 @@ class ReconnectSemanticsTest {
 				query.connect();
 				var read = query.getAsyncApi().whoAmI();
 				assertTrue(received.await(1, TimeUnit.SECONDS));
-				var write = query.getAsyncApi().createChannel("cancelled", Map.of());
-				var next = query.getAsyncApi().getVersion();
+				var write = query.getAsyncApi().channels().create("cancelled", Map.of());
+				var next = query.getAsyncApi().instance().version();
 				drop.countDown();
 				long until = System.nanoTime() + TimeUnit.SECONDS.toNanos(1);
 				while (query.getState() != TS3Query.State.DISCONNECTED && System.nanoTime() < until) Thread.sleep(2);
@@ -172,7 +175,7 @@ class ReconnectSemanticsTest {
 				query.connect();
 				var read = query.getAsyncApi().whoAmI();
 				assertTrue(received.await(1, TimeUnit.SECONDS));
-				var waiting = query.getAsyncApi().createChannel("never-sent", Map.of());
+				var waiting = query.getAsyncApi().channels().create("never-sent", Map.of());
 				drop.countDown();
 				assertThrows(TS3Exception.class, () -> FutureAssertions.read(waiting, 3, TimeUnit.SECONDS));
 				assertThrows(TS3Exception.class, () -> FutureAssertions.read(read, 1, TimeUnit.SECONDS));
@@ -192,7 +195,7 @@ class ReconnectSemanticsTest {
 				query.connect();
 				var read = query.getAsyncApi().whoAmI();
 				assertTrue(received.await(1, TimeUnit.SECONDS));
-				var waiting = query.getAsyncApi().getVersion();
+				var waiting = query.getAsyncApi().instance().version();
 				drop.countDown();
 				long until = System.nanoTime() + TimeUnit.SECONDS.toNanos(1);
 				while (query.getState() != TS3Query.State.DISCONNECTED && System.nanoTime() < until) Thread.sleep(2);
@@ -212,9 +215,9 @@ class ReconnectSemanticsTest {
 			try (var query = new TS3Query(config(server.port()).setCommandRetryPolicy(CommandRetryPolicy.safeReads(2, "whoami")))) {
 				query.connect();
 				assertThrows(TS3CommandFailedException.class, () -> FutureAssertions.read(query.getAsyncApi().whoAmI(), 1, TimeUnit.SECONDS));
-				assertThrows(TS3Exception.class, () -> query.getApi().selectVirtualServerById(8));
-				assertThrows(TS3Exception.class, () -> query.getApi().setNickname("other"));
-				assertEquals("framing-ok", query.getApi().getVersion().getVersion());
+				assertThrows(TS3UnsupportedOperationException.class, () -> query.getApi().selectVirtualServerById(8));
+				assertThrows(TS3UnsupportedOperationException.class, () -> query.getApi().setNickname("other"));
+				assertEquals("framing-ok", query.getApi().instance().version().getVersion());
 				query.exit(); server.await(); closed(query);
 			}
 		}
@@ -232,11 +235,11 @@ class ReconnectSemanticsTest {
 				query.connect();
 				var read = query.getAsyncApi().whoAmI();
 				assertTrue(received.await(1, TimeUnit.SECONDS));
-				var waiting = query.getAsyncApi().createChannel("expired", Map.of());
+				var waiting = query.getAsyncApi().channels().create("expired", Map.of());
 				drop.countDown();
 				assertThrows(TS3UnknownOutcomeException.class, () -> FutureAssertions.read(read, 1, TimeUnit.SECONDS));
-				var failure = assertThrows(TS3Exception.class, () -> FutureAssertions.read(waiting, 1, TimeUnit.SECONDS));
-				assertTrue(failure.getMessage().contains("queue wait"));
+				var failure = assertThrows(TS3TimeoutException.class, () -> FutureAssertions.read(waiting, 1, TimeUnit.SECONDS));
+				assertEquals(TS3TimeoutException.Phase.QUEUE_WAIT, failure.getPhase());
 				assertTrue(server.secondSession.await(2, TimeUnit.SECONDS));
 				awaitConnected(query); query.exit(); server.await(); closed(query);
 			}
@@ -257,7 +260,7 @@ class ReconnectSemanticsTest {
 				query.connect();
 				var read = query.getAsyncApi().whoAmI();
 				assertTrue(received.await(1, TimeUnit.SECONDS));
-				var waiting = query.getAsyncApi().createChannel("never-sent", Map.of());
+				var waiting = query.getAsyncApi().channels().create("never-sent", Map.of());
 				drop.countDown();
 				assertTrue(login.await(2, TimeUnit.SECONDS));
 				assertTimeout(Duration.ofMillis(700), query::close);
@@ -281,13 +284,13 @@ class ReconnectSemanticsTest {
 				query.connect();
 				var sent = query.getAsyncApi().whoAmI();
 				assertTrue(received.await(1, TimeUnit.SECONDS));
-				var unsent = query.getAsyncApi().createChannel("never-sent", Map.of());
+				var unsent = query.getAsyncApi().channels().create("never-sent", Map.of());
 				drop.countDown();
-				assertThrows(TS3Exception.class, () -> FutureAssertions.read(unsent, 1, TimeUnit.SECONDS));
+				assertThrows(TS3QueryShutDownException.class, () -> FutureAssertions.read(unsent, 1, TimeUnit.SECONDS));
 				assertThrows(TS3UnknownOutcomeException.class, () -> FutureAssertions.read(sent, 1, TimeUnit.SECONDS));
 				long until = System.nanoTime() + TimeUnit.SECONDS.toNanos(1);
 				while (query.getState() != TS3Query.State.DISCONNECTED && System.nanoTime() < until) Thread.sleep(2);
-				assertThrows(TS3Exception.class, () -> FutureAssertions.read(query.getAsyncApi().createChannel("during-backoff", Map.of())));
+				assertThrows(TS3Exception.class, () -> FutureAssertions.read(query.getAsyncApi().channels().create("during-backoff", Map.of())));
 				awaitConnected(query); query.exit(); server.await(); closed(query);
 			}
 		}

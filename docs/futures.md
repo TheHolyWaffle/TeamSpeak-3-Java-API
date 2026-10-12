@@ -27,8 +27,9 @@ Each future has one terminal result: a successful value (including `null`), an
 exception or cancellation. Multiple observers and dependent stages are allowed.
 `get()` and timed `get` throw `ExecutionException` with the underlying failure as
 the cause; `join()` throws `CompletionException`. A cancelled result throws
-`CancellationException`. Server error causes remain `TS3CommandFailedException`;
-transport/deadline/queue failures retain their existing TS3 exception types.
+`CancellationException`. Causes are the [TS3 failure categories](api-migration.md#errors):
+`TS3CommandFailedException`, `TS3TransportException` subtypes, `TS3TimeoutException`,
+`TS3QueueFullException` and `TS3UnsupportedOperationException`.
 Exceptions from a mapping or callback fail that dependent stage, leaving the
 source result intact; retain and observe the stage returned by your callback.
 The library does not mutate an exception's stack trace on retrieval.

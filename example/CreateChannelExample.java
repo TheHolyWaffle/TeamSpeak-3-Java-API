@@ -49,7 +49,7 @@ public class CreateChannelExample {
 		api.login("serveradmin", "serveradminpassword");
 		api.selectVirtualServerById(1);
 		api.setNickname("PutPutBot");
-		api.sendChannelMessage("PutPutBot is online!");
+		api.messages().sendChannel("PutPutBot is online!");
 
 		// Let's customize our channel
 		final Map<ChannelProperty, String> properties = new HashMap<>();
@@ -62,7 +62,7 @@ public class CreateChannelExample {
 		properties.put(ChannelProperty.CHANNEL_TOPIC, "PutPut discussion");
 
 		// Done customizing, let's create the channel with our properties
-		api.createChannel("PutPut Channel", properties);
+		api.channels().create("PutPut Channel", properties);
 
 		// We're done, disconnect
 		query.exit();
