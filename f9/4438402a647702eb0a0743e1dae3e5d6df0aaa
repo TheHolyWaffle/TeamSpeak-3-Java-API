@@ -1,0 +1,51 @@
+README.md
+  s_e3fc1179668ebc::t_4a581cd0a2fd9c 221-224
+src/main/java/com/github/theholywaffle/teamspeak3/TS3ApiAsync.java
+  s_e3fc1179668ebc::t_daf6f4c40f5bd7 35,1790-1791,1819-1820
+  s_e3fc1179668ebc::t_4a581cd0a2fd9c 71-74,5594-5598
+  s_e3fc1179668ebc::t_7aa9049e05b7a8 1761-1775,1777-1781,1844,1846,1848-1849,5334-5353,5355-5358,5454-5463,5465-5480,5482,5576-5578,5580-5588,5591-5593,5599-5605,5607-5610
+src/main/java/com/github/theholywaffle/teamspeak3/FileTransferEndpointResolver.java
+  s_e3fc1179668ebc::t_0d6f4b15d33bec 11-17,19-22,24-26
+  s_e3fc1179668ebc::t_3c9db2be05e664 23
+src/main/java/com/github/theholywaffle/teamspeak3/FileTransferHelper.java
+  s_e3fc1179668ebc::t_0d6f4b15d33bec 47-53,55-57,59-64,66-68,71-87,89-97,99-102,104-106,108-147,149-153,155-156,158-160,164-165,167-172,174-179,181,185-192,195,198-200,202-204,206-209,212,216
+  s_e3fc1179668ebc::t_f2beae61ae2c9c 33,35,37-41,45-46,166
+docs/futures.md
+  s_e3fc1179668ebc::t_4a581cd0a2fd9c 111-112
+src/test/java/com/github/theholywaffle/teamspeak3/FileTransferApiTest.java
+  s_e3fc1179668ebc::t_daf6f4c40f5bd7 20,23,26,31,33-56,65-66,80,85,103-105,115-116,130-133,135-137,142-143,157-158,174,186
+  s_e3fc1179668ebc::t_9df6214e979ceb 1-19,21-22,24-25,27-30,32,57-64,67-79,81-84,86-102,106-114,117-129,134,138-141,144-156,159-173,175-185,187
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Api.java
+  s_e3fc1179668ebc::t_daf6f4c40f5bd7 1585-1586,1614-1615
+  s_e3fc1179668ebc::t_c5e433860a2e9d 1567-1579,4686-4700
+docs/file-transfers.md
+  s_e3fc1179668ebc::t_4a581cd0a2fd9c 1-125
+src/main/java/com/github/theholywaffle/teamspeak3/FileTransferConfig.java
+  s_e3fc1179668ebc::t_0d6f4b15d33bec 16-22,24-30,32-36
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Query.java
+  s_e3fc1179668ebc::t_8bc89f19e233ef 161,274
+src/main/java/com/github/theholywaffle/teamspeak3/commands/FileCommands.java
+  s_e3fc1179668ebc::t_1ae78d8642e310 125-129,135,142-148,156
+src/test/java/com/github/theholywaffle/teamspeak3/CommandFuturesTest.java
+  s_e3fc1179668ebc::t_ebe74ce0a6e87b 333-337
+src/test/java/com/github/theholywaffle/teamspeak3/FileTransferCompatibilityIT.java
+  s_e3fc1179668ebc::t_9863988ba6410e 1-146
+src/test/java/com/github/theholywaffle/teamspeak3/FileTransferHelperTest.java
+  s_e3fc1179668ebc::t_9df658571e2212 1-297
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f94438402a647702eb0a0743e1dae3e5d6df0aaa",
+  "prompts": {},
+  "sessions": {
+    "s_e3fc1179668ebc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a13043-758d-76b3-b6c1-26a5d44e7795",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
