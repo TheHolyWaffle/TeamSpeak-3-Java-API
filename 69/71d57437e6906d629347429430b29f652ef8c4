@@ -1,0 +1,54 @@
+README.md
+  h_b0b95817cb397c 7-9,70-76,99
+docs/api-migration.md
+  h_b0b95817cb397c 1-497
+docs/ban-compatibility.md
+  h_b0b95817cb397c 33
+docs/client-compatibility.md
+  h_b0b95817cb397c 25,27-29
+docs/configuration-and-transports.md
+  h_b0b95817cb397c 25
+docs/connection-lifecycle.md
+  h_b0b95817cb397c 14,77-79
+docs/events-and-capacity.md
+  h_b0b95817cb397c 43,52-53
+docs/file-compatibility.md
+  h_b0b95817cb397c 18,70-72,78
+docs/file-transfers.md
+  h_b0b95817cb397c 84,90
+docs/futures.md
+  h_b0b95817cb397c 30-32
+docs/log-compatibility.md
+  h_b0b95817cb397c 16,19
+docs/message-compatibility.md
+  h_b0b95817cb397c 18-22,24-25,35
+docs/permission-compatibility.md
+  h_b0b95817cb397c 74,90,94,101,105,110,114
+docs/privilege-key-compatibility.md
+  h_b0b95817cb397c 48
+docs/query-login-compatibility.md
+  h_b0b95817cb397c 20,78
+docs/reconnect-and-retry.md
+  h_b0b95817cb397c 9-11,34,50
+docs/releases.md
+  h_b0b95817cb397c 116-121
+docs/server-compatibility.md
+  h_b0b95817cb397c 16,18,21,23-25,28
+docs/server-lifecycle-compatibility.md
+  h_b0b95817cb397c 23
+src/test/java/com/github/theholywaffle/teamspeak3/ApiMigrationInventoryTest.java
+  h_b0b95817cb397c 1-86
+src/test/java/com/github/theholywaffle/teamspeak3/DomainApiCompatibilityIT.java
+  h_b0b95817cb397c 1-177
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6971d57437e6906d629347429430b29f652ef8c4",
+  "prompts": {},
+  "humans": {
+    "h_b0b95817cb397c": {
+      "author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
