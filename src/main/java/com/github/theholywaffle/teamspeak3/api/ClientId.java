@@ -13,4 +13,8 @@ public record ClientId(int value) {
 	}
 
 	public static ClientId of(int value) { return new ClientId(value); }
+
+	/** @return the plain number, as used in ServerQuery commands */
+	@Override
+	public String toString() { return Integer.toString(value); }
 }

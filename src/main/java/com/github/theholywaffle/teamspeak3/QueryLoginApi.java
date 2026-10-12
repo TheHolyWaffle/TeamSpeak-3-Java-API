@@ -41,7 +41,9 @@ public final class QueryLoginApi {
 
 	/**
 	 * Creates a ServerQuery login with a new query client identity, which is not tied to a
-	 * virtual server and can be used instance-wide.
+	 * virtual server and can be used instance-wide. Call this before selecting a virtual server:
+	 * with a selected server, TeamSpeak 3.13 requires a client database ID and rejects the
+	 * command with error 1539.
 	 *
 	 * @param loginName the login name
 	 * @return the login, its new client database ID and its generated password

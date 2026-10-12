@@ -27,10 +27,13 @@
 import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3Config;
 import com.github.theholywaffle.teamspeak3.TS3Query;
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
+
+import java.util.Optional;
 
 /**
  * A simple chat bot that responds to any channel messages starting with "hello"
@@ -54,7 +57,7 @@ public class ChatBotExample {
 		api.messages().sendChannel("PutPutBot is online!");
 
 		// Get our own client ID by running the "whoami" command
-		final int clientId = api.whoAmI().getId();
+		final ClientId clientId = api.whoAmI().getId();
 
 		// Listen to chat in the channel the query is currently in
 		// As we never changed the channel, this will be the default channel of the server
@@ -66,7 +69,7 @@ public class ChatBotExample {
 			@Override
 			public void onTextMessage(TextMessageEvent e) {
 				// Only react to channel messages not sent by the query itself
-				if (e.getTargetMode() == TextMessageTargetMode.CHANNEL && e.getInvokerId() != clientId) {
+				if (e.getTargetMode() == TextMessageTargetMode.CHANNEL && !e.getInvokerId().equals(Optional.of(clientId))) {
 					String message = e.getMessage().toLowerCase();
 
 					if (message.equals("!ping")) {
@@ -75,7 +78,7 @@ public class ChatBotExample {
 					} else if (message.startsWith("hello")) {
 						// Greet whoever said hello
 						// Message: "Hello <client name>!"
-						api.messages().sendChannel("Hello " + e.getInvokerName() + "!");
+						api.messages().sendChannel("Hello " + e.getInvokerName().orElse("there") + "!");
 					}
 				}
 			}

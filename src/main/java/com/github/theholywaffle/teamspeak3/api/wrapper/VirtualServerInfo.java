@@ -55,6 +55,22 @@ public class VirtualServerInfo extends VirtualServer {
 		return requireInt(VirtualServerProperty.VIRTUALSERVER_ANTIFLOOD_POINTS_TICK_REDUCE);
 	}
 
+	public long getBandwidthReceivedLastMinute() {
+		return requireLong(VirtualServerProperty.CONNECTION_BANDWIDTH_RECEIVED_LAST_MINUTE_TOTAL);
+	}
+
+	public long getBandwidthReceivedLastSecond() {
+		return requireLong(VirtualServerProperty.CONNECTION_BANDWIDTH_RECEIVED_LAST_SECOND_TOTAL);
+	}
+
+	public long getBandwidthSentLastMinute() {
+		return requireLong(VirtualServerProperty.CONNECTION_BANDWIDTH_SENT_LAST_MINUTE_TOTAL);
+	}
+
+	public long getBandwidthSentLastSecond() {
+		return requireLong(VirtualServerProperty.CONNECTION_BANDWIDTH_SENT_LAST_SECOND_TOTAL);
+	}
+
 	public int getChannelsOnline() {
 		return requireInt(VirtualServerProperty.VIRTUALSERVER_CHANNELSONLINE);
 	}
@@ -74,6 +90,22 @@ public class VirtualServerInfo extends VirtualServer {
 
 	public Duration getComplaintRemoveTime() {
 		return requireSeconds(VirtualServerProperty.VIRTUALSERVER_COMPLAIN_REMOVE_TIME);
+	}
+
+	public long getControlBytesReceived() {
+		return requireLong(VirtualServerProperty.CONNECTION_BYTES_RECEIVED_CONTROL);
+	}
+
+	public long getControlBytesSent() {
+		return requireLong(VirtualServerProperty.CONNECTION_BYTES_SENT_CONTROL);
+	}
+
+	public long getControlPacketsReceived() {
+		return requireLong(VirtualServerProperty.CONNECTION_PACKETS_RECEIVED_CONTROL);
+	}
+
+	public long getControlPacketsSent() {
+		return requireLong(VirtualServerProperty.CONNECTION_PACKETS_SENT_CONTROL);
 	}
 
 	public Instant getCreatedDate() {
@@ -101,9 +133,8 @@ public class VirtualServerInfo extends VirtualServer {
 		return require(VirtualServerProperty.VIRTUALSERVER_FILEBASE);
 	}
 
-	/** TeamSpeak 3.13 names this {@code connection_filetransfer_bandwidth_receive} in {@code serverinfo}. */
 	public long getFiletransferBandwidthReceived() {
-		return requireLong("connection_filetransfer_bandwidth_receive");
+		return requireLong(VirtualServerProperty.CONNECTION_FILETRANSFER_BANDWIDTH_RECEIVED);
 	}
 
 	public long getFiletransferBandwidthSent() {
@@ -160,9 +191,25 @@ public class VirtualServerInfo extends VirtualServer {
 		return requireLong(VirtualServerProperty.VIRTUALSERVER_ICON_ID);
 	}
 
-	/** @return the configured bind addresses, or empty if the server listens on all addresses */
+	/** @return the configured bind addresses, comma separated, or empty if none are configured */
 	public Optional<String> getIp() {
 		return findText(VirtualServerProperty.VIRTUALSERVER_IP);
+	}
+
+	public long getKeepAliveBytesReceived() {
+		return requireLong(VirtualServerProperty.CONNECTION_BYTES_RECEIVED_KEEPALIVE);
+	}
+
+	public long getKeepAliveBytesSent() {
+		return requireLong(VirtualServerProperty.CONNECTION_BYTES_SENT_KEEPALIVE);
+	}
+
+	public long getKeepAlivePacketsReceived() {
+		return requireLong(VirtualServerProperty.CONNECTION_PACKETS_RECEIVED_KEEPALIVE);
+	}
+
+	public long getKeepAlivePacketsSent() {
+		return requireLong(VirtualServerProperty.CONNECTION_PACKETS_SENT_KEEPALIVE);
 	}
 
 	public String getMachineId() {
@@ -224,8 +271,32 @@ public class VirtualServerInfo extends VirtualServer {
 		return requireInt(VirtualServerProperty.VIRTUALSERVER_RESERVED_SLOTS);
 	}
 
+	public long getSpeechBytesReceived() {
+		return requireLong(VirtualServerProperty.CONNECTION_BYTES_RECEIVED_SPEECH);
+	}
+
+	public long getSpeechBytesSent() {
+		return requireLong(VirtualServerProperty.CONNECTION_BYTES_SENT_SPEECH);
+	}
+
+	public long getSpeechPacketsReceived() {
+		return requireLong(VirtualServerProperty.CONNECTION_PACKETS_RECEIVED_SPEECH);
+	}
+
+	public long getSpeechPacketsSent() {
+		return requireLong(VirtualServerProperty.CONNECTION_PACKETS_SENT_SPEECH);
+	}
+
 	public long getTotalBytesDownloaded() {
 		return requireLong(VirtualServerProperty.VIRTUALSERVER_TOTAL_BYTES_DOWNLOADED);
+	}
+
+	public long getTotalBytesReceived() {
+		return requireLong(VirtualServerProperty.CONNECTION_BYTES_RECEIVED_TOTAL);
+	}
+
+	public long getTotalBytesSent() {
+		return requireLong(VirtualServerProperty.CONNECTION_BYTES_SENT_TOTAL);
 	}
 
 	public long getTotalBytesUploaded() {
@@ -246,6 +317,14 @@ public class VirtualServerInfo extends VirtualServer {
 
 	public double getTotalPacketloss() {
 		return requireDouble(VirtualServerProperty.VIRTUALSERVER_TOTAL_PACKETLOSS_TOTAL);
+	}
+
+	public long getTotalPacketsReceived() {
+		return requireLong(VirtualServerProperty.CONNECTION_PACKETS_RECEIVED_TOTAL);
+	}
+
+	public long getTotalPacketsSent() {
+		return requireLong(VirtualServerProperty.CONNECTION_PACKETS_SENT_TOTAL);
 	}
 
 	public int getTotalQueryClientConnections() {

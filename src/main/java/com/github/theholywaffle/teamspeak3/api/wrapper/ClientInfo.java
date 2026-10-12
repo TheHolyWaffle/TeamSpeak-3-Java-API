@@ -183,8 +183,9 @@ public class ClientInfo extends Client {
 		return requireLong(ClientProperty.CONNECTION_PACKETS_SENT_TOTAL);
 	}
 
-	public int getUnreadMessages() {
-		return requireInt(ClientProperty.CLIENT_UNREAD_MESSAGES);
+	/** @return the number of unread offline messages; TeamSpeak only reports it for the query's own client */
+	public OptionalInt getUnreadMessages() {
+		return findInt(ClientProperty.CLIENT_UNREAD_MESSAGES);
 	}
 
 	public boolean isOutputOnlyMuted() {

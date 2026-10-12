@@ -26,7 +26,7 @@ class PermissionModesCompatibilityIT {
                     var help = api.executeRawCommand("help " + command).getRawResponse();
                     assertTrue(help.startsWith("Usage: " + command)); evidence.add("help " + command + "\n" + help);
                 }
-                for (var type : PermissionGroupDatabaseType.values()) {
+                for (var type : List.of(PermissionGroupDatabaseType.TEMPLATE, PermissionGroupDatabaseType.REGULAR, PermissionGroupDatabaseType.QUERY)) {
                     String name = "mode-source-" + type;
                     int source = api.serverGroups().create(name, type);
                     api.permissions().add(PermissionTarget.serverGroup(source), PermissionGrant.of(IPermissionType.I_CLIENT_TALK_POWER.getName(), 47).withSkip());

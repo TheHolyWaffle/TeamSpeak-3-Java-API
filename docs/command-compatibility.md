@@ -54,7 +54,8 @@ tests provide no guarantee of those behaviors or audio transmission.
 
 - `notifychannelmoved` uses **`order`**, while channel list/info/create use
   **`channel_order`**, on both TS3 targets. The event accessor now reads `order`.
-  A missing order still returns `-1`; zero is a valid first-sibling order.
+  A missing order fails with `TS3InvalidValueException` since #444 (it returned `-1`
+  before); zero is a valid first-sibling order.
 - TS6 channel info includes `channel_storage_quota` (4294967295 in the disposable
   default fixture); TS3 channel info omits it. TS6 channel-create notifications
   include `channel_unique_identifier`; TS3 notifications omit it. Both servers

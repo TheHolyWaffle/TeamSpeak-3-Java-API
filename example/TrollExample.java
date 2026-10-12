@@ -28,6 +28,7 @@ import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3ApiAsync;
 import com.github.theholywaffle.teamspeak3.TS3Config;
 import com.github.theholywaffle.teamspeak3.TS3Query;
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
@@ -69,7 +70,7 @@ public class TrollExample {
 
 	private final TS3Query query;
 	private final ScheduledExecutorService executor;
-	private final HashMap<Integer, ClientTrollWorker> workers;
+	private final HashMap<ClientId, ClientTrollWorker> workers;
 
 	public TrollExample() {
 		// Start the query
@@ -95,7 +96,7 @@ public class TrollExample {
 
 			@Override
 			public void onClientJoin(ClientJoinEvent e) {
-				final int clientId = e.getClientId();
+				final ClientId clientId = e.getClientId();
 				final ClientTrollWorker worker = new ClientTrollWorker(clientId);
 				workers.put(clientId, worker);
 
@@ -115,10 +116,10 @@ public class TrollExample {
 
 	private class ClientTrollWorker implements Runnable {
 
-		private final int clientId;
+		private final ClientId clientId;
 		private boolean cancelled;
 
-		private ClientTrollWorker(int clientId) {
+		private ClientTrollWorker(ClientId clientId) {
 			this.clientId = clientId;
 			cancelled = false;
 		}

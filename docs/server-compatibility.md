@@ -50,11 +50,11 @@ reports. Live help establishes syntax; actual operations establish this subset.
 ## Observed field differences
 
 Server-edit notifications on TS3 contain **`reasonid=10`**; TS6 omits **`reasonid`**,
-so `getReasonId()` returns its existing absent-field default **`-1`**. Both servers
+so `getReasonId()` returned the absent-field default **`-1`** (an empty `OptionalInt` since #444). Both servers
 include the changed name and invoker fields but omit welcome and host messages
 from the bulk edit notification. A notification is a partial payload, not a full
 snapshot or a guarantee that every changed property is present. Fetch server info
-for current values; use `getMap()` to distinguish missing fields from defaults.
+for current values; since #444 optional getters and `getMap()` show which fields are present.
 
 The captured field inventories for these exact pins differ as follows:
 
@@ -105,7 +105,7 @@ code alone. Restricted-account permission failures remain unverified here.
 This slice has internal **`test:`** release intent for the planned 2.0.0 acceptance
 work. No runtime, public API, default or dependency changes are introduced.
 `ServerEditedEvent` Javadoc now documents the partial payload and optional reason.
-Consumers must not treat absent reason `-1` as a supplied reason, or an omitted
+Consumers must not treat an absent reason as a supplied reason, or an omitted
 changed property as an empty new value; check presence and fetch server info.
 Existing enum-based edit methods, raw access and getter defaults remain unchanged.
 

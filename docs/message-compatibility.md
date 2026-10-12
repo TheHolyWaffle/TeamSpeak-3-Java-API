@@ -26,7 +26,7 @@ The actor sends messages and the observer subscribes to `TEXT_SERVER`,
 - Each received event's exact text, target mode, invoker client ID, nickname and
   unique identifier. Only private events provide `target`, which matches the
   observer's client ID. Server/channel events omit that field and
-  `getTargetClientId()` returns `-1`.
+  `getTargetClientId()` is empty (it returned `-1` before #444).
 - UTF-8, BB-code text, pipe/slash characters, literal backslash escape sequences,
   and actual newline/tab/carriage-return characters survive command encoding
   and notification decoding unchanged. BB-code rendering is not tested.

@@ -66,7 +66,7 @@ All three sessions use the same serveradmin account. They have distinct online
 client IDs but share the account UID and database ID. Do not assume a UID or
 client database ID uniquely identifies one online query session. UID-based lookup
 and multiple-session selection semantics are not claimed by these tests.
-Absent invoker fields must be distinguished from the wrapper's `-1`/empty defaults.
+Absent invoker fields are empty `Optional`s since #444 ([models guide](models-and-values.md)).
 
 ## Errors and migration
 

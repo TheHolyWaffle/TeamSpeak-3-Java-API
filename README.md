@@ -6,7 +6,8 @@ A Java wrapper of the [TeamSpeak 3](http://media.teamspeak.com/ts3_literature/Te
 
 For the 2.0 domain APIs, error categories and a mapping of every 1.x operation, see the
 [domain API migration guide](docs/api-migration.md). For asynchronous results, see the
-[CompletableFuture migration and execution contract](docs/futures.md).
+[CompletableFuture migration and execution contract](docs/futures.md). Response models
+are immutable and use typed values; see the [response model guide](docs/models-and-values.md).
 
 ## Features
 

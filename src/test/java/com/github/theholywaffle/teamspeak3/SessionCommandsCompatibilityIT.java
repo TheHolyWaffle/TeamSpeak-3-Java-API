@@ -22,7 +22,7 @@ class SessionCommandsCompatibilityIT {
                 assertEquals(0, loggedOut.getVirtualServerId());
                 assertTrue(loggedOut.getLoginName().isEmpty());
                 api.login("serveradmin", TeamSpeakContainer.PASSWORD);
-                assertEquals("serveradmin", api.whoAmI().getLoginName());
+                assertEquals(java.util.Optional.of("serveradmin"), api.whoAmI().getLoginName());
                 api.selectVirtualServerById(1); assertEquals(1, api.whoAmI().getVirtualServerId());
                 assertEquals("3.13.8", api.instance().version().version()); query.exit();
             }

@@ -69,16 +69,16 @@ public class ServerQueryInfo extends Wrapper {
 	 * its database ID will be identical to the client's database ID.
 	 * </p>
 	 *
-	 * @return the server query's database ID
+	 * @return the server query's database ID, or empty before login (TeamSpeak sends {@code 0})
 	 */
-	public ClientDatabaseId getDatabaseId() {
-		return requireDatabaseId(ClientProperty.CLIENT_DATABASE_ID);
+	public Optional<ClientDatabaseId> getDatabaseId() {
+		return findDatabaseId(ClientProperty.CLIENT_DATABASE_ID.getName());
 	}
 
 	/**
 	 * Gets the client ID of the server query.
 	 *
-	 * @return the server query's client ID
+	 * @return the server query's client ID; {@code 0} until a virtual server is selected
 	 */
 	public ClientId getId() {
 		return requireClientId("client_id");
@@ -89,11 +89,9 @@ public class ServerQueryInfo extends Wrapper {
 	 * <p>
 	 * This username was set when creating the server query login and doesn't have to be related to
 	 * the client who created the server query login.
-	 * <br>
-	 * In case a server query is not logged in yet, this method will return an empty string.
 	 * </p>
 	 *
-	 * @return the username used when logging this query in
+	 * @return the username used when logging this query in, or empty before login
 	 *
 	 * @see TS3Api#login(String, String) TS3Api#login(username, password) - logging in server queries
 	 */
@@ -107,7 +105,7 @@ public class ServerQueryInfo extends Wrapper {
 	 * <pre><i>username</i> from <i>ip</i>:<i>port</i></pre>
 	 * <p>
 	 * Nicknames are only assigned after a virtual server has been selected.
-	 * Until then, this method will return an empty string.
+	 * Until then, TeamSpeak sends an empty nickname.
 	 * </p>
 	 *
 	 * @return the current nickname of the server query
@@ -172,7 +170,8 @@ public class ServerQueryInfo extends Wrapper {
 	/**
 	 * Gets the status of the currently selected virtual server.
 	 * <p>
-	 * If no virtual server has been selected yet, this method will return {@link VirtualServerStatus#UNKNOWN}.
+	 * If no virtual server has been selected yet, TeamSpeak reports the status {@code unknown},
+	 * which maps to {@link VirtualServerStatus#UNKNOWN}.
 	 * </p>
 	 *
 	 * @return the status of the current virtual server
@@ -184,7 +183,7 @@ public class ServerQueryInfo extends Wrapper {
 	/**
 	 * Gets the unique identifier of the currently selected virtual server.
 	 * <p>
-	 * If no virtual server has been selected yet, this method will return an empty string.
+	 * If no virtual server has been selected yet, TeamSpeak sends an empty value.
 	 * </p>
 	 *
 	 * @return the unique ID of the current virtual server
