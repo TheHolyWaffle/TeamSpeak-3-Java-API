@@ -22,7 +22,7 @@ class FileContentCompatibilityIT {
     void contentsAndTransferCommands(ServerQueryCompatibilityIT.Target target) throws Exception {
         var evidence = new ArrayList<String>();
         try (var server = new TeamSpeakContainer()) {
-            server.addExposedPort(30033); server.start();
+            server.withFileTransferPort().start();
             try (var query = new TS3Query(server.config(target.protocol))) {
                 query.connect(); var api = query.getApi(); api.selectVirtualServerById(1);
                 for (String command : List.of("ftinitupload", "ftinitdownload", "ftlist", "ftstop", "ftgetfileinfo")) {

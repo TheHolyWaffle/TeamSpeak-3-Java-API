@@ -31,7 +31,7 @@ class FileTransferCompatibilityIT {
     void publicTransfersAndResumeThroughMappedEndpoint(ServerQueryCompatibilityIT.Target target) throws Exception {
         var evidence = new ArrayList<String>(); var resolutions = new AtomicInteger();
         try (var server = new TeamSpeakContainer()) {
-            server.addExposedPort(30033); server.start();
+            server.withFileTransferPort().start();
             var settings = server.config(target.protocol).setFileTransferConfig(new FileTransferConfig(
                 Duration.ofSeconds(3), Duration.ofSeconds(3), Duration.ofSeconds(15), 1024,
                 (host, advertised, port) -> {

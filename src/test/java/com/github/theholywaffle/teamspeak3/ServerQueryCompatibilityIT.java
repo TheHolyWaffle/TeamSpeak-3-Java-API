@@ -51,10 +51,10 @@ import net.schmizz.sshj.common.KeyType;
 import net.schmizz.sshj.transport.TransportException;
 import net.schmizz.sshj.transport.verification.OpenSSHKnownHosts;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.testcontainers.DockerClientFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -71,18 +71,7 @@ class ServerQueryCompatibilityIT {
 	}
 
 	@TempDir static Path home;
-	static TeamSpeakContainer ts3;
-
-	@BeforeAll static void start() throws Exception {
-		// Deliberately fail, never skip, when the integration profile cannot use Docker.
-		assertTrue(DockerClientFactory.instance().isDockerAvailable(), "Required Docker integration tests cannot run: start a Docker daemon");
-		ts3 = new TeamSpeakContainer();
-		ts3.start();
-	}
-
-	@AfterAll static void stop() {
-		if (ts3 != null) ts3.close();
-	}
+	@RegisterExtension static final TeamSpeakContainer ts3 = new TeamSpeakContainer();
 
 	@ParameterizedTest(name = "{0}: login, version, selection, channel CRUD and server errors")
 	@EnumSource(Target.class)

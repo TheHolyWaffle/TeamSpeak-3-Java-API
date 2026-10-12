@@ -23,12 +23,10 @@ import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3UnsupportedOperationException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.FileCommands;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.testcontainers.DockerClientFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -60,17 +58,7 @@ class ModelCompatibilityIT {
 	/** Getters that intentionally fail for the producing command. */
 	private static final Set<String> UNSUPPORTED = Set.of("ClientInfo#isTalking");
 
-	static TeamSpeakContainer ts3;
-
-	@BeforeAll static void start() {
-		assertTrue(DockerClientFactory.instance().isDockerAvailable(), "Required Docker integration tests cannot run: start a Docker daemon");
-		ts3 = new TeamSpeakContainer();
-		ts3.start();
-	}
-
-	@AfterAll static void stop() {
-		if (ts3 != null) ts3.close();
-	}
+	@RegisterExtension static final TeamSpeakContainer ts3 = new TeamSpeakContainer();
 
 	@ParameterizedTest(name = "{0}: typed getters of received models and events")
 	@EnumSource(ServerQueryCompatibilityIT.Target.class) @Timeout(120)

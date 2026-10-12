@@ -14,13 +14,11 @@ import com.github.theholywaffle.teamspeak3.api.exception.TS3QueryShutDownExcepti
 import com.github.theholywaffle.teamspeak3.api.exception.TS3UnsupportedOperationException;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 import com.github.theholywaffle.teamspeak3.api.reconnect.SessionConfiguration;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.testcontainers.DockerClientFactory;
 
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -39,18 +37,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class DomainApiCompatibilityIT {
 	private static final String UNKNOWN_UID = "AAAAAAAAAAAAAAAAAAAAAAAAAAA=";
 	private static final byte[] RULES = "Be nice | literal \\s 日本語".getBytes(StandardCharsets.UTF_8);
-	static TeamSpeakContainer ts3;
-
-	@BeforeAll static void start() {
-		assertTrue(DockerClientFactory.instance().isDockerAvailable(), "Required Docker integration tests cannot run: start a Docker daemon");
-		ts3 = new TeamSpeakContainer();
-		ts3.addExposedPort(30033);
-		ts3.start();
-	}
-
-	@AfterAll static void stop() {
-		if (ts3 != null) ts3.close();
-	}
+	@RegisterExtension static final TeamSpeakContainer ts3 = new TeamSpeakContainer().withFileTransferPort();
 
 	@ParameterizedTest(name = "{0}: documented common workflow, sync and async")
 	@EnumSource(ServerQueryCompatibilityIT.Target.class) @Timeout(120)
