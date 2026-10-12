@@ -1,0 +1,257 @@
+src/main/java/com/github/theholywaffle/teamspeak3/BanApiAsync.java
+  s_4df28355134b3e::t_a625acbc561fc6 5,38
+src/main/java/com/github/theholywaffle/teamspeak3/ChannelGroupApi.java
+  s_4df28355134b3e::t_790b60052c49b6 4,125
+src/main/java/com/github/theholywaffle/teamspeak3/ChannelGroupApiAsync.java
+  s_4df28355134b3e::t_b92b248ef5168b 4,69-70,73-75
+src/main/java/com/github/theholywaffle/teamspeak3/ClientApi.java
+  s_4df28355134b3e::t_9db0019d1503e6 3,48,87,105,116,127,137,147,157,167
+src/main/java/com/github/theholywaffle/teamspeak3/ClientApiAsync.java
+  s_4df28355134b3e::t_28e6bdce32eafb 3,11,37-39,50,56,60-62,70-71,75-77,81-82,87-89,92-94,97-99,102-108
+src/main/java/com/github/theholywaffle/teamspeak3/ComplaintApi.java
+  s_4df28355134b3e::t_cb6b5a603f18c0 3,37,47,57,66
+src/main/java/com/github/theholywaffle/teamspeak3/ComplaintApiAsync.java
+  s_4df28355134b3e::t_a4617816801f97 3,28-30,33-35,38-40,43-45
+src/main/java/com/github/theholywaffle/teamspeak3/DatabaseClientApi.java
+  s_4df28355134b3e::t_4bf49257dff32f 3,54,84,93,103,114,124,134
+src/main/java/com/github/theholywaffle/teamspeak3/DatabaseClientApiAsync.java
+  s_4df28355134b3e::t_a103158c06e0ea 3,53-55,60,66-67,70-72,75-77,80-82,84,89-90,92,95-96,102-103,105,111
+src/main/java/com/github/theholywaffle/teamspeak3/FileApiAsync.java
+  s_4df28355134b3e::t_6f29be87b59cb8 14,24,213,215-217
+src/main/java/com/github/theholywaffle/teamspeak3/FileTransferHelper.java
+  s_4df28355134b3e::t_787109dbbdf644 29,31,35,117-119,127,152,189
+src/main/java/com/github/theholywaffle/teamspeak3/InstanceApiAsync.java
+  s_4df28355134b3e::t_b142d473e3588a 44,49,54
+src/main/java/com/github/theholywaffle/teamspeak3/MessageApi.java
+  s_4df28355134b3e::t_c5853b788ec462 3,29
+src/main/java/com/github/theholywaffle/teamspeak3/MessageApiAsync.java
+  s_4df28355134b3e::t_41f2cd24477909 3,29-31
+src/main/java/com/github/theholywaffle/teamspeak3/PermissionApi.java
+  s_4df28355134b3e::t_1173cf62d05179 3,95
+src/main/java/com/github/theholywaffle/teamspeak3/PermissionApiAsync.java
+  s_4df28355134b3e::t_6707ee09ed952d 3,32,60-62,78,80,97,110
+src/main/java/com/github/theholywaffle/teamspeak3/QueryLoginApi.java
+  s_4df28355134b3e::t_d4d8d63663e6ca 3,43-54,60,69
+src/main/java/com/github/theholywaffle/teamspeak3/QueryLoginApiAsync.java
+  s_4df28355134b3e::t_b6a838cd78726e 3,35-37,40-47
+src/main/java/com/github/theholywaffle/teamspeak3/QueryRequests.java
+  s_4df28355134b3e::t_059942ffae286b 5,54,64,71,75,79,83,87,91-93,99,103-104
+src/main/java/com/github/theholywaffle/teamspeak3/ServerGroupApi.java
+  s_4df28355134b3e::t_e300af6ef654d6 3,124,134,144
+src/main/java/com/github/theholywaffle/teamspeak3/ServerGroupApiAsync.java
+  s_4df28355134b3e::t_ac4abe1caa0249 3,68,71-73,76-78,81-83
+src/main/java/com/github/theholywaffle/teamspeak3/TS3ApiAsync.java
+  s_4df28355134b3e::t_09cd727f7f386d 216
+src/main/java/com/github/theholywaffle/teamspeak3/VirtualServerApiAsync.java
+  s_4df28355134b3e::t_0728903848149f 43,88,93
+src/main/java/com/github/theholywaffle/teamspeak3/api/ChannelBannerMode.java
+  s_4df28355134b3e::t_bb23c5f2cc6a8c 57-67
+src/main/java/com/github/theholywaffle/teamspeak3/api/ChannelGroupFilter.java
+  s_4df28355134b3e::t_7a413ca0f6ffe9 3-4,14,16,19-20,30
+src/main/java/com/github/theholywaffle/teamspeak3/api/ClientBan.java
+  s_4df28355134b3e::t_64399de746cc6f 15,25-26
+src/main/java/com/github/theholywaffle/teamspeak3/api/ClientDatabaseId.java
+  s_4df28355134b3e::t_ecfbb142f8b381 1-16
+src/main/java/com/github/theholywaffle/teamspeak3/api/ClientId.java
+  s_4df28355134b3e::t_cdc54ab25e3576 1-16
+src/main/java/com/github/theholywaffle/teamspeak3/api/Codec.java
+  s_4df28355134b3e::t_b2897f6b86ac91 132-142
+src/main/java/com/github/theholywaffle/teamspeak3/api/CodecEncryptionMode.java
+  s_4df28355134b3e::t_c974d18a200724 77-87
+src/main/java/com/github/theholywaffle/teamspeak3/api/HostBannerMode.java
+  s_4df28355134b3e::t_63b377b0a99694 45-54
+src/main/java/com/github/theholywaffle/teamspeak3/api/HostMessageMode.java
+  s_4df28355134b3e::t_b80264392d05b3 46-55
+src/main/java/com/github/theholywaffle/teamspeak3/api/PermissionGroupDatabaseType.java
+  s_4df28355134b3e::t_b9c6573507e336 33-36,48-57
+src/main/java/com/github/theholywaffle/teamspeak3/api/PermissionGroupType.java
+  s_4df28355134b3e::t_83ff9b9098f4fe 66-69,81-90
+src/main/java/com/github/theholywaffle/teamspeak3/api/PermissionTarget.java
+  s_4df28355134b3e::t_ed0759fc4f955b 7-8,14,27-29,31-32
+src/main/java/com/github/theholywaffle/teamspeak3/api/PrivilegeKeyType.java
+  s_4df28355134b3e::t_1026e41d7a2476 32-35,47-56
+src/main/java/com/github/theholywaffle/teamspeak3/api/Snapshot.java
+  s_4df28355134b3e::t_44e0509b4fc8a2 29,31-36,38-39,42-45
+src/main/java/com/github/theholywaffle/teamspeak3/api/TextMessageTargetMode.java
+  s_4df28355134b3e::t_2bf0289cf5c306 33-36,48-57
+src/main/java/com/github/theholywaffle/teamspeak3/api/VirtualServerStatus.java
+  s_4df28355134b3e::t_db26793411abc4 48-58
+src/main/java/com/github/theholywaffle/teamspeak3/api/event/BaseEvent.java
+  s_4df28355134b3e::t_2556830daeff26 29,32-33,38,50,53,55-56,70,72-73,85,88,90-91,113,115-116,126,128-129
+src/main/java/com/github/theholywaffle/teamspeak3/api/event/ChannelCreateEvent.java
+  s_4df28355134b3e::t_1fcb64d8e039c0 1-46
+src/main/java/com/github/theholywaffle/teamspeak3/api/event/ChannelDeletedEvent.java
+  s_4df28355134b3e::t_5d1cb6f7fbc561 1-46
+src/main/java/com/github/theholywaffle/teamspeak3/api/event/ChannelDescriptionEditedEvent.java
+  s_4df28355134b3e::t_37b98f2a9f048f 39
+src/main/java/com/github/theholywaffle/teamspeak3/api/event/ChannelEditedEvent.java
+  s_4df28355134b3e::t_df300ac37f5d92 39
+src/main/java/com/github/theholywaffle/teamspeak3/api/event/ChannelMovedEvent.java
+  s_4df28355134b3e::t_2ec9b15a38fa19 39,43,47
+src/main/java/com/github/theholywaffle/teamspeak3/api/event/ChannelPasswordChangedEvent.java
+  s_4df28355134b3e::t_b35d330b715dd2 1-46
+src/main/java/com/github/theholywaffle/teamspeak3/api/event/ClientJoinEvent.java
+  s_4df28355134b3e::t_639c9e1bad9c49 29-30,34-36,44,48,51-52,56,60,64,68,72,76,80,84,88,91-92,96,100,103-105,109,113,117,120-122,126,129,131,135,139,143,147,151,155,159,163,167,170-172,176
+src/main/java/com/github/theholywaffle/teamspeak3/api/event/ClientLeaveEvent.java
+  s_4df28355134b3e::t_4674061656ca19 29,39,43,46-47
+src/main/java/com/github/theholywaffle/teamspeak3/api/event/ClientMovedEvent.java
+  s_4df28355134b3e::t_a4c052171f31b0 29,47,50-51
+src/main/java/com/github/theholywaffle/teamspeak3/api/event/PrivilegeKeyUsedEvent.java
+  s_4df28355134b3e::t_327003a1594cab 29-30,40-41,44-45,49,53,65,69
+src/main/java/com/github/theholywaffle/teamspeak3/api/event/TextMessageEvent.java
+  s_4df28355134b3e::t_36e6f2a6b96895 29,33-34,41,43,47,55,60-61
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3CommandFailedException.java
+  s_4df28355134b3e::t_21c250914b9fad 48-50
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3InvalidValueException.java
+  s_4df28355134b3e::t_af778ce378f97d 1-35
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/Ban.java
+  s_4df28355134b3e::t_c1ac305fa6cca6 29-32,34,36-39,47-57,60-62,65-67,70-72,75-76,79-81,84-85,89,92-94,98,101-103,107
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/Binding.java
+  s_4df28355134b3e::t_693e6022049861 29,31-36,38-39,42-44
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/Channel.java
+  s_4df28355134b3e::t_a0263219886555 31-32,41,45,49,53
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/ChannelBase.java
+  s_4df28355134b3e::t_7c6295384b12a0 32,34-35,46,50,54,58,62,66,70,74,77,79,83,87,91-96,99-101,104-107,110-112
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/ChannelGroup.java
+  s_4df28355134b3e::t_ffd06f2de39c61 40,44,47,49,53,57,61,65,69,73,77
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/ChannelGroupClient.java
+  s_4df28355134b3e::t_7e8fab1ff58fb5 29,31,33-40,42-43,46-48
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/ChannelInfo.java
+  s_4df28355134b3e::t_07daf79f2f5b4c 29-32,34,52-62,65-67,71,75-81,85,89,93,97,101,105,109,114-124
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/Client.java
+  s_4df28355134b3e::t_c3aef0502be18a 29-30,34-37,39,41-45,53,56,58,61-63,67,71,82-83,86-88,91-93,96-97,100-102,106,109-110,113-115,118,120,123-125,128-130,134,138,141-143,147,150,152,156,160,164,168,172,179,182,189,196,200,204,208,212,216,228-237
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/ClientInfo.java
+  s_4df28355134b3e::t_1db1a45230a3f9 29,31,34-35,37-39,41,44,46,48,52,56-58,62,66,70,74,78,81-95,98-100,104,108,112,115-117,121,125,129,132-134,138,142,145-147,151,154-155,159,163,167,171,175,179,183,187,191,195,202-211
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/Complaint.java
+  s_4df28355134b3e::t_48e329f4f83eaf 29-31,40-41,45,48-49,53,57,60-61
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/ConnectionInfo.java
+  s_4df28355134b3e::t_ef7256b5d9eb78 31-33,41,45,49,53,57,61,65,69,73,77,81,85,88-90,94,98
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/CreatedQueryLogin.java
+  s_4df28355134b3e::t_20b2160ef38354 38
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/CreatedVirtualServer.java
+  s_4df28355134b3e::t_4e514b924e5976 29,31-38,40-41,44-46
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/CustomPropertyAssignment.java
+  s_4df28355134b3e::t_ce6b38b07c6c62 29-31,34-38,40,42-45,48-50
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/DatabaseClient.java
+  s_4df28355134b3e::t_bc29239ec06478 29,32,34,42-43,47,51,54-56,59-61,65,69,72-74
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/DatabaseClientInfo.java
+  s_4df28355134b3e::t_52d64835aee026 29,33-34,43-44,47-49,53,57,61,65,68-70,73-75
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/FileInfo.java
+  s_4df28355134b3e::t_8cb0cfb7c833be 29,44,54,91,101-102
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/FileListEntry.java
+  s_4df28355134b3e::t_26a089e621206c 30,45,50,56,61,82,94-99
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/FileTransfer.java
+  s_4df28355134b3e::t_49da2cc9651105 29-31,45-46,56,65,74,83,92,102,119,147,156,160-161,163,165-166
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/FileTransferParameters.java
+  s_4df28355134b3e::t_1e95d53e1f15df 29,31-32,49,59,68,74,76-77,86,96,100,102,104-119,125,127-128,134,136-137
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/HostInfo.java
+  s_4df28355134b3e::t_c5fa4a63267b3b 31-34,41-42,45-46,50,54,58,62,66,70,74,78,82,86,90,94,98,102,106,110
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/IconFile.java
+  s_4df28355134b3e::t_fc6b1bf6663391 30,39,41,43,45,47-49
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/InstanceInfo.java
+  s_4df28355134b3e::t_cf44674c9db255 31-34,42,46,49-51,54-56,60,64,67-68,71-72,76,80,84,88,92
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/Message.java
+  s_4df28355134b3e::t_ad940d00f2bb31 29,39,43,47,50-51,55
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/Permission.java
+  s_4df28355134b3e::t_4932936cbaadba 29,32,34-37,39-43,45,47-48,51-54
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/PermissionAssignment.java
+  s_4df28355134b3e::t_1a4e8536b73b83 32-33,38-39,58,61,80,92,98,108,125,127-128,138,140-141,156,158-159
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/PermissionInfo.java
+  s_4df28355134b3e::t_1fb1ac787b7594 29,32-37,39,41-43,46-48
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/PrivilegeKey.java
+  s_4df28355134b3e::t_abf1cf2ea9f4f4 29-31,41,44-46,50,54,58,62,65-66,70
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/QueryError.java
+  s_4df28355134b3e::t_090cb76471aca3 30-31,43,47,50-51,54-55
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/QueryLogin.java
+  s_4df28355134b3e::t_9fe8486a069d4d 29-30,39-40,44,48
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/ServerGroup.java
+  s_4df28355134b3e::t_cdace65572db40 31-32,40,44,47,49,53,56-57,61,65,69,73,77
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/ServerGroupClient.java
+  s_4df28355134b3e::t_46c314a94e4a4e 29,31,33-40,42-45,48-51
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/ServerQueryInfo.java
+  s_4df28355134b3e::t_ebbb9b53e52f77 31-32,38,62,74-75,83-84,100-101,116,129,142,157,169,181,193
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/Version.java
+  s_4df28355134b3e::t_55248d03046ded 29-38,40-43,46-48
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/VirtualServer.java
+  s_4df28355134b3e::t_1b016cae179b58 32,34-35,44,48,51,53,56-58,61-63,66-68,72,75-77,81,85
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/VirtualServerInfo.java
+  s_4df28355134b3e::t_87f81d1ce86416 34-35,37-38,47,51,55,59,62,64,68,71-72,75-76,79-80,84,88,92,95-97,101,104,106,110,114,118,121-122,126,129,131,135,139,143,147,151,154,156,160,163-165,169,172-174,177-179,183,187,191,195,199,202-204,208,212,216,220,224,228,232,236,240,244,248,252,256,259-261,265,269,273,277,281,285,289,293,297,301,305
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/Wrapper.java
+  s_4df28355134b3e::t_d9b4c318353460 29-30,32,34-36,38-39,41-46,49,51-53,55-59,61-65,69,74,77,80-85,89,91,93,97-99,102-104,107-111,114-116,119-121,124-126,129-131,134-136,139-141,144-337,342
+src/main/java/com/github/theholywaffle/teamspeak3/commands/ChannelGroupCommands.java
+  s_4df28355134b3e::t_843f729e89ea79 46,79
+src/main/java/com/github/theholywaffle/teamspeak3/commands/KnownCodes.java
+  s_4df28355134b3e::t_ed51b7705e83c2 1-12
+src/main/java/com/github/theholywaffle/teamspeak3/commands/PrivilegeKeyCommands.java
+  s_4df28355134b3e::t_f0824543aad8af 44
+src/main/java/com/github/theholywaffle/teamspeak3/commands/ServerGroupCommands.java
+  s_4df28355134b3e::t_98e260561a7fa2 47,86
+src/main/java/com/github/theholywaffle/teamspeak3/commands/response/DefaultArrayResponse.java
+  s_4df28355134b3e::t_36cca84137b4f5 35,38,62,100,125,129,134-136
+src/test/java/com/github/theholywaffle/teamspeak3/CommandFuturesTest.java
+  s_4df28355134b3e::t_0400bde681f3fd 3-4,34-35,41,152,170,184,221,230,232,290,353
+src/test/java/com/github/theholywaffle/teamspeak3/CompatibilityAssertions.java
+  s_4df28355134b3e::t_c142576870bce2 11,14-16
+src/test/java/com/github/theholywaffle/teamspeak3/CreatedIdTest.java
+  s_4df28355134b3e::t_8470ab97b1ae1c 4,8-10,20,29-32
+src/test/java/com/github/theholywaffle/teamspeak3/DevelopmentServerExample.java
+  s_4df28355134b3e::t_29887916bef935 23
+src/test/java/com/github/theholywaffle/teamspeak3/DomainApiCompatibilityIT.java
+  s_4df28355134b3e::t_ea6b3626c03bd7 3-4,72,130-132,138,140
+src/test/java/com/github/theholywaffle/teamspeak3/DomainApiTest.java
+  s_4df28355134b3e::t_6d381359eaa055 3-4,16,78-79,81-83,110-111,114,118-119,122,124,145
+src/test/java/com/github/theholywaffle/teamspeak3/ErrorCategoriesTest.java
+  s_4df28355134b3e::t_cebf0430b71050 3,100
+src/test/java/com/github/theholywaffle/teamspeak3/EventResilienceTest.java
+  s_4df28355134b3e::t_9c1993d9892625 3,115,144
+src/test/java/com/github/theholywaffle/teamspeak3/FileContentCompatibilityIT.java
+  s_4df28355134b3e::t_452a3257960ee2 7,36-38,44,52-53,55-56,63,72,74-75,77,79,115
+src/test/java/com/github/theholywaffle/teamspeak3/FileTransferApiTest.java
+  s_4df28355134b3e::t_8e615e20ea7945 3,36,77
+src/test/java/com/github/theholywaffle/teamspeak3/FileTransferCompatibilityIT.java
+  s_4df28355134b3e::t_c0d43121b08df3 118,123
+src/test/java/com/github/theholywaffle/teamspeak3/GroupCopyTest.java
+  s_4df28355134b3e::t_e929bdbc2b3add 44,51,62,82
+src/test/java/com/github/theholywaffle/teamspeak3/LogWriteCompatibilityIT.java
+  s_4df28355134b3e::t_bd2673836ea631 54-55,73
+src/test/java/com/github/theholywaffle/teamspeak3/PermissionMetadataTest.java
+  s_4df28355134b3e::t_634c9e88a960c3 3,40,42-45,68,70
+src/test/java/com/github/theholywaffle/teamspeak3/PermissionModesCompatibilityIT.java
+  s_4df28355134b3e::t_67de28eea2e1a9 59,62,71
+src/test/java/com/github/theholywaffle/teamspeak3/QueryConfigurationTest.java
+  s_4df28355134b3e::t_25667a6ff1ebc5 89
+src/test/java/com/github/theholywaffle/teamspeak3/RawCommandTest.java
+  s_4df28355134b3e::t_3298b502dc4b14 45,50,55,63,75
+src/test/java/com/github/theholywaffle/teamspeak3/ReconnectSemanticsTest.java
+  s_4df28355134b3e::t_5138243f55f66c 3,94,96,109,117,148,162,215,221
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryCompatibilityIT.java
+  s_4df28355134b3e::t_75cf0454a799a2 3-4,97-98,111,179,189,192,196,214,242,264,278,302,334,435-437,446,467,489,500-501,542,563,623,659,701,720,726,763-764,778,782,785-786,788,792,822,833,896-898,927,968,972,1002,1015,1020-1021,1024,1052,1057-1060,1067-1068,1070,1076,1078,1082-1083,1090,1111,1128,1130-1131,1140,1164-1166,1171,1183,1196,1230,1243-1246,1251-1252,1274-1275,1289,1299,1327-1329,1331-1332,1337-1338,1343-1344,1353,1358,1362-1363,1370,1372,1378,1391,1406,1409,1443
+src/test/java/com/github/theholywaffle/teamspeak3/ServerSnapshotCompatibilityIT.java
+  s_4df28355134b3e::t_562c4830e0a351 50
+src/test/java/com/github/theholywaffle/teamspeak3/SessionCommandsCompatibilityIT.java
+  s_4df28355134b3e::t_077fe0db93c3e1 20,27
+src/test/java/com/github/theholywaffle/teamspeak3/TeamSpeakContainer.java
+  s_4df28355134b3e::t_24cf514e12746f 139-140
+src/test/java/com/github/theholywaffle/teamspeak3/api/event/ChannelMovedEventTest.java
+  s_4df28355134b3e::t_71a7dcc179cb8f 3-4,8-9,11,15,19,23-30
+src/test/java/com/github/theholywaffle/teamspeak3/api/wrapper/FileInfoTest.java
+  s_4df28355134b3e::t_621785f6b92c36 12-13
+src/test/java/com/github/theholywaffle/teamspeak3/commands/response/DefaultArrayResponseTest.java
+  s_4df28355134b3e::t_6eaec883816875 10-11,22,40,75-79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "47fad3a14f0f5426486bf6cb4a7c28733a1de192",
+  "prompts": {},
+  "sessions": {
+    "s_4df28355134b3e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c77e990a-5b2e-4283-8a8f-423ff1db5003",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
