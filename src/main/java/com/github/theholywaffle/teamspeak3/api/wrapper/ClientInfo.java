@@ -27,6 +27,7 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  */
 
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3UnsupportedOperationException;
 
 import java.util.Date;
 import java.util.Map;
@@ -175,6 +176,6 @@ public class ClientInfo extends Client {
 
 	@Override
 	public boolean isTalking() {
-		throw new UnsupportedOperationException();
+		throw new TS3UnsupportedOperationException("clientinfo does not report talk status; use Client#isTalking from clientlist");
 	}
 }

@@ -28,6 +28,10 @@ package com.github.theholywaffle.teamspeak3.api.exception;
 
 import java.io.IOException;
 
+/**
+ * The separate file-transfer socket or its local streams failed. An interrupted upload can leave
+ * a partial file on the server.
+ */
 public class TS3FileTransferFailedException extends TS3Exception {
 
 	private static final long serialVersionUID = 2819130214534186875L;

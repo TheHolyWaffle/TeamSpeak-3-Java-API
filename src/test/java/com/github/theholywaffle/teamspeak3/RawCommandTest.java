@@ -3,6 +3,7 @@ package com.github.theholywaffle.teamspeak3;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3QueueFullException;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3UnsupportedOperationException;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 import com.github.theholywaffle.teamspeak3.api.reconnect.SessionConfiguration;
@@ -85,7 +86,7 @@ class RawCommandTest {
 			.setFloodRate(TS3Query.FloodRate.UNLIMITED).setSessionConfiguration(SessionConfiguration.forServer(1))
 			.setReconnectStrategy(ReconnectStrategy.constantBackoff(50)))) {
 			query.connect();
-			assertThrows(TS3Exception.class, () -> query.getApi().executeRawCommand("use sid=2"));
+			assertThrows(TS3UnsupportedOperationException.class, () -> query.getApi().executeRawCommand("use sid=2"));
 			query.exit(); peer.await();
 		}
 	}

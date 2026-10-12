@@ -39,4 +39,7 @@ public class TS3UnknownOutcomeException extends TS3QueryShutDownException {
 
 	@Override
 	public String getMessage() { return "Outcome of " + commandName + " is unknown; it may have executed on the server"; }
+
+	@Override
+	public boolean isOutcomeUnknown() { return true; }
 }

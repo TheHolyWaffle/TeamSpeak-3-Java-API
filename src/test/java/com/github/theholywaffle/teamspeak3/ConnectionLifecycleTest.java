@@ -1,7 +1,9 @@
 package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3QueryShutDownException;
+import com.github.theholywaffle.teamspeak3.api.exception.TS3TimeoutException;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 import org.junit.jupiter.api.Test;
@@ -110,7 +112,8 @@ class ConnectionLifecycleTest {
 				query.connect();
 				var first = query.getAsyncApi().whoAmI();
 				for (int i = 0; i < 10; i++) { query.getAsyncApi().whoAmI(); Thread.sleep(20); }
-				assertThrows(TS3QueryShutDownException.class, () -> FutureAssertions.read(first, 700, TimeUnit.MILLISECONDS));
+				var failure = assertThrows(TS3TimeoutException.class, () -> FutureAssertions.read(first, 700, TimeUnit.MILLISECONDS));
+				assertEquals(TS3TimeoutException.Phase.RESPONSE, failure.getPhase());
 				terminated(query);
 			} finally { stop.countDown(); query.close(); }
 		}
@@ -131,9 +134,9 @@ class ConnectionLifecycleTest {
 				query.connect();
 				var first = query.getAsyncApi().whoAmI();
 				var waiting = query.getAsyncApi().whoAmI();
-				var failure = assertThrows(com.github.theholywaffle.teamspeak3.api.exception.TS3Exception.class,
+				var failure = assertThrows(com.github.theholywaffle.teamspeak3.api.exception.TS3TimeoutException.class,
 					() -> FutureAssertions.read(waiting, 500, TimeUnit.MILLISECONDS));
-				assertTrue(failure.getMessage().contains("queue wait"));
+				assertFalse(failure.isOutcomeUnknown());
 				assertFalse(first.isDone());
 				release.countDown();
 				assertNotNull(first.get(1, TimeUnit.SECONDS));
@@ -222,7 +225,9 @@ class ConnectionLifecycleTest {
 					}
 					assertTrue(blocked, "Test must observe the writer blocked in the socket write");
 					if (!timeout) assertTimeout(Duration.ofMillis(600), query::close);
-					assertThrows(TS3QueryShutDownException.class, () -> FutureAssertions.read(pending, 1, TimeUnit.SECONDS));
+					Class<? extends TS3Exception> expected = timeout ? TS3TimeoutException.class : TS3QueryShutDownException.class;
+					TS3Exception failure = assertThrows(expected, () -> FutureAssertions.read(pending, 1, TimeUnit.SECONDS));
+					assertTrue(failure.isOutcomeUnknown());
 					terminated(query);
 				} finally { query.close(); }
 			}

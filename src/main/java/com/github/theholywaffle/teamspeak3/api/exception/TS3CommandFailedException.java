@@ -28,15 +28,18 @@ package com.github.theholywaffle.teamspeak3.api.exception;
 
 import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
 
+/** The server answered a command with an error; the command was not executed. */
 public class TS3CommandFailedException extends TS3Exception {
 
 	private static final long serialVersionUID = 8179203326662268882L;
 
 	private final QueryError queryError;
+	private final String commandName;
 
 	public TS3CommandFailedException(QueryError error, String commandName) {
 		super(buildMessage(error, commandName));
 		queryError = error;
+		this.commandName = commandName;
 	}
 
 	private static String buildMessage(QueryError error, String cmdName) {
@@ -60,6 +63,13 @@ public class TS3CommandFailedException extends TS3Exception {
 	public QueryError getError() {
 		return queryError;
 	}
+
+	/** @return the server error ID, for example 768 for an invalid channel ID */
+	public int getErrorId() { return queryError.getId(); }
+
+	/** @return the protocol command name, excluding parameters */
+	public String getCommandName() { return commandName; }
+
 	@Override public boolean matchesQueryError(int errorId) { return queryError.getId() == errorId; }
 
 }
