@@ -270,16 +270,48 @@ class ConnectionLifecycleTest {
 
 	@Test
 	void sshHandshakeDeadlineAbortsSilentNegotiation() throws Exception {
-		try (var peer = new FakeServerQuery(p -> Thread.sleep(1000))) {
-			var query = new TS3Query(config(peer.port()).setProtocol(TS3Query.Protocol.SSH)
-				.setConnectTimeout(Duration.ofMillis(50)).setLoginCredentials("test", "test"));
-			long started = System.nanoTime();
-			assertTimeout(Duration.ofMillis(900), () -> assertThrows(TS3ConnectionFailedException.class, query::connect));
-			assertTrue(System.nanoTime() - started >= TimeUnit.MILLISECONDS.toNanos(200),
-				"TCP deadline must not be reused for SSH negotiation");
-			terminated(query);
-			assertTrue(Thread.getAllStackTraces().keySet().stream().noneMatch(thread ->
-				thread.getName().startsWith("sshj-Reader-") && thread.getName().contains(":" + peer.port() + "-")));
+		var connected = new CompletableFuture<Long>();
+		var disconnected = new CountDownLatch(1);
+		// Remain silent until the client closes, rather than ending negotiation via a peer timer.
+		try (var peer = new FakeServerQuery(p -> disconnected.await(5, TimeUnit.SECONDS))) {
+			var settings = config(peer.port()).setProtocol(TS3Query.Protocol.SSH)
+				.setConnectTimeout(Duration.ofMillis(50)).setLoginCredentials("test", "test");
+			// SSHJ/provider construction can take hundreds of milliseconds on a cold CI JVM.
+			// Observe the actual TCP-connected boundary where the handshake budget starts.
+			settings.setTransportFactory(new QueryTransportFactory() {
+				@Override public boolean authenticates() { return true; }
+				@Override public QueryTransport create(QueryConfig config) {
+					var delegate = new SSHChannel(config);
+					// Deterministically exercise a cold/slow provider setup beyond the old whole-call bound.
+					try { Thread.sleep(1000); } catch (InterruptedException failure) {
+						Thread.currentThread().interrupt(); throw new IllegalStateException(failure);
+					}
+					return new QueryTransport() {
+						@Override public void connect(Connected callback) throws java.io.IOException {
+							delegate.connect(() -> { callback.transportConnected(); connected.complete(System.nanoTime()); });
+						}
+						@Override public java.io.InputStream getInputStream() throws java.io.IOException { return delegate.getInputStream(); }
+						@Override public java.io.OutputStream getOutputStream() throws java.io.IOException { return delegate.getOutputStream(); }
+						@Override public void close() throws java.io.IOException { delegate.close(); disconnected.countDown(); }
+						@Override public void awaitTermination(Duration timeout) { delegate.awaitTermination(timeout); }
+						@Override public boolean isTerminated() { return delegate.isTerminated(); }
+					};
+				}
+			});
+			try (var query = new TS3Query(settings)) {
+				var attempt = CompletableFuture.supplyAsync(() -> {
+					assertThrows(TS3ConnectionFailedException.class, query::connect); return System.nanoTime();
+				});
+				long started = connected.get(3, TimeUnit.SECONDS);
+				long stopped = assertTimeout(Duration.ofMillis(900), () -> attempt.get(900, TimeUnit.MILLISECONDS));
+				assertTrue(stopped - started < TimeUnit.MILLISECONDS.toNanos(900),
+					"Handshake and cleanup must finish within the original 900 ms bound after TCP connection");
+				assertTrue(stopped - started >= TimeUnit.MILLISECONDS.toNanos(200),
+					"TCP deadline must not be reused for SSH negotiation");
+				terminated(query);
+				assertTrue(Thread.getAllStackTraces().keySet().stream().noneMatch(thread ->
+					thread.getName().startsWith("sshj-Reader-") && thread.getName().contains(":" + peer.port() + "-")));
+			}
 		}
 	}
 
