@@ -142,7 +142,8 @@ class FileTransferApiTest {
         }
     }
 
-    @ParameterizedTest @ValueSource(strings = {"size=-1", "size=17", "status=2050 msg=file_exists"})
+    @ParameterizedTest @ValueSource(strings = {"size=-1", "size=17", "size=not_a_number", "size=9223372036854775808",
+        "size=1 port=0", "size=1 port=65536", "size=1 port=bad", "status=invalid", "status=2050 msg=file_exists"})
     void malformedSizeMemoryLimitAndServerRejectionNeverResolve(String fields) throws Exception {
         var calls = new AtomicInteger();
         try (var peer = new FakeServerQuery(p -> { pCommand(p, "ftinitdownload"); response(p, 30033, fields); nextQuery(p); });
@@ -150,7 +151,7 @@ class FileTransferApiTest {
                  Duration.ofSeconds(1), Duration.ofSeconds(1), Duration.ofSeconds(1), 16,
                  (host, ip, port) -> { calls.incrementAndGet(); return new InetSocketAddress(host, port); })))) {
             query.connect(); var transfer = query.getAsyncApi().downloadFileDirect("/file", 0);
-            if (fields.startsWith("status")) assertEquals(2050, assertThrows(TS3CommandFailedException.class,
+            if (fields.startsWith("status=2050")) assertEquals(2050, assertThrows(TS3CommandFailedException.class,
                 () -> CommandFutures.join(transfer)).getError().getId());
             else assertThrows(TS3FileTransferFailedException.class, () -> CommandFutures.join(transfer));
             recovered(query); peer.await(); assertEquals(0, calls.get());

@@ -180,6 +180,12 @@ merge settings, snapshot convention, and JReleaser Central Portal publication an
 
 ## Extra notes
 
+### File transfers
+
+Reliable TS3 file transfers, endpoint mappings, stream ownership, cancellation and
+resume are documented in [the file-transfer guide](docs/file-transfers.md). SSH
+ServerQuery encryption does not encrypt the separate file socket.
+
 ### SSH security defaults
 
 SSH queries require credentials supplied through `TS3Config#setLoginCredentials`.
@@ -218,7 +224,3 @@ Only use `FloodRate.UNLIMITED` if you are sure that your query account is whitel
 Please let us know [here](../../issues). We'll try to help you as soon as we can.
 
 If you just have a simple question or want to talk to us about something else, please join the [repository chat](https://gitter.im/TheHolyWaffle/TeamSpeak-3-Java-API) on Gitter.
-
-Reliable TS3 file transfers, endpoint mappings, stream ownership, cancellation and
-resume are documented in [the file-transfer guide](docs/file-transfers.md). SSH
-ServerQuery encryption does not encrypt the separate file socket.

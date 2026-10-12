@@ -5601,6 +5601,9 @@ public class TS3ApiAsync {
 						work.complete(value);
 					} catch (IOException transferFailure) {
 						work.completeExceptionally(new TS3FileTransferFailedException("File transfer aborted", transferFailure));
+					} catch (NumberFormatException malformed) {
+						work.completeExceptionally(new TS3FileTransferFailedException("Invalid numeric file response",
+							new IOException("Malformed file transfer field", malformed)));
 					} catch (Throwable transferFailure) { work.completeExceptionally(transferFailure); }
 					finally { finished.complete(null); }
 				});
