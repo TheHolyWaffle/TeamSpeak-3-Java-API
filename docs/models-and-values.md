@@ -70,7 +70,7 @@ Optional because TeamSpeak genuinely omits or blanks the value (live-observed on
 | `Ban.getInvokerClientDBId()` | invoker database ID `0` |
 | `ServerQueryInfo.getDatabaseId()` | before login (`client_database_id=0`) |
 | `DatabaseClientInfo.getIconId()` | always on 3.13.8, which does not send it in `clientdbinfo` |
-| `FileTransferParameters.getQueryError()`, `getFileServerHost()` | the transfer started / the server advertises no address |
+| `FileTransferParameters.findFailure()`, `getFileServerHost()` | the transfer started (no status, or `0`/`1281`) / the server advertises no address |
 | `QueryError.getExtraMessage()`, `getFailedPermissionId()` | not part of the error |
 
 ## Time
@@ -150,7 +150,7 @@ group/privilege-key commands reject it as input. `PrivilegeKey.getType()` return
 | `ChannelBase.getBannerMode()`, `getBannerGraphicsUrl()` | only on `ChannelInfo` (`channellist` does not send them) |
 | `VirtualServerInfo.getBandwidthReceivedLastMinute()` read as `int` | `long`, like the other counters |
 | `ServerGroup.getSaveDb()` `int` | `isSavedInDatabase()` |
-| `FileTransferParameters.getStatus()` `0` default, `getQueryError()` | `OptionalInt`, `Optional<QueryError>`; `getSeekPosition()` added |
+| `FileTransferParameters.getStatus()` `0` default, `getQueryError()` (always present, check `isSuccessful()`) | `OptionalInt`, `findFailure()` (`Optional<QueryError>`, empty unless the status reports a failure); `getSeekPosition()` added |
 | `IconFile.getIconId()` `-1` | `OptionalLong` |
 | `ClientInfo(int, Map)`, `ClientInfo.getDefaultChannel()` `-1` | `ClientInfo(ClientId, Map)`, `OptionalInt` |
 | `Snapshot.get()` | `Snapshot.data()` |

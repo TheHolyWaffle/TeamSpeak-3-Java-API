@@ -176,10 +176,13 @@ class ModelValuesTest {
 		assertEquals(Optional.of(true), overview.isSkipped());
 
 		var parameters = new FileTransferParameters(Map.of("ftkey", "k", "port", "30033", "seekpos", "0"));
-		assertEquals(Optional.empty(), parameters.getQueryError());
+		assertEquals(Optional.empty(), parameters.findFailure());
 		assertEquals(Optional.empty(), parameters.getFileServerHost());
 		var rejected = new FileTransferParameters(Map.of("status", "2054", "msg", "file not found"));
-		assertEquals(2054, rejected.getQueryError().orElseThrow().getId());
+		assertEquals(2054, rejected.findFailure().orElseThrow().getId());
+		assertEquals("file not found", rejected.findFailure().orElseThrow().getMessage());
+		assertEquals(Optional.empty(), new FileTransferParameters(Map.of("status", "0", "msg", "ok")).findFailure());
+		assertEquals(Optional.empty(), new FileTransferParameters(Map.of("status", "1281")).findFailure());
 		assertEquals(OptionalInt.of(5), new ClientInfo(ClientId.of(1), Map.of("client_default_channel", "/5")).getDefaultChannel());
 		assertEquals(OptionalInt.empty(), new ClientInfo(ClientId.of(1), Map.of("client_default_channel", "")).getDefaultChannel());
 		assertEquals(Optional.empty(), new Client(Map.of("client_country", "")).getCountry());

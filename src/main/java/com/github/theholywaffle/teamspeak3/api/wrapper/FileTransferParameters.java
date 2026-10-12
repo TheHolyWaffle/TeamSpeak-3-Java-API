@@ -97,13 +97,15 @@ public class FileTransferParameters extends Wrapper {
 	}
 
 	/**
-	 * Gets the error the server reported inside an otherwise successful response.
+	 * Gets the failure the server reported inside an otherwise successful response,
+	 * built from {@link #getStatus()} and {@link #getMessage()}.
 	 *
-	 * @return the reported error, or empty if the response carries no status
+	 * @return the failure, or empty if the response carries no status or a successful one
+	 * @see QueryError#isSuccessful(int)
 	 */
-	public Optional<QueryError> getQueryError() {
+	public Optional<QueryError> findFailure() {
 		OptionalInt status = getStatus();
-		if (status.isEmpty()) return Optional.empty();
+		if (status.isEmpty() || QueryError.isSuccessful(status.getAsInt())) return Optional.empty();
 		Map<String, String> error = new LinkedHashMap<>();
 		error.put("id", Integer.toString(status.getAsInt()));
 		getMessage().ifPresent(message -> error.put("msg", message));

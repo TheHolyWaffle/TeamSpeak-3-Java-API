@@ -56,7 +56,16 @@ public class QueryError extends Wrapper {
 	}
 
 	public boolean isSuccessful() {
-		final int id = getId();
-		return (id == ERROR_ID_OK || id == ERROR_ID_EMPTY_RESULT_SET);
+		return isSuccessful(getId());
+	}
+
+	/**
+	 * Checks whether an error ID reports success: {@code 0} (ok) or {@code 1281} (empty result set).
+	 *
+	 * @param id the error ID
+	 * @return whether the ID reports success
+	 */
+	public static boolean isSuccessful(int id) {
+		return id == ERROR_ID_OK || id == ERROR_ID_EMPTY_RESULT_SET;
 	}
 }
