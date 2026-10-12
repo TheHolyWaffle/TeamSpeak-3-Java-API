@@ -1,0 +1,46 @@
+src/main/java/com/github/theholywaffle/teamspeak3/CommandQueue.java
+  h_b0b95817cb397c 32,34,42,78,133,137,179,235,242,269-270,275-276,278,282-287,302,337-338
+src/main/java/com/github/theholywaffle/teamspeak3/Connection.java
+  h_b0b95817cb397c 77,134
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3CommandFailedException.java
+  h_b0b95817cb397c 31,37,42,66-72
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3ConnectionFailedException.java
+  h_b0b95817cb397c 29-30
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3Exception.java
+  h_b0b95817cb397c 29-38,54-62
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3FileTransferFailedException.java
+  h_b0b95817cb397c 31-34
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3QueryShutDownException.java
+  h_b0b95817cb397c 29-30,35-39
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3QueueFullException.java
+  h_b0b95817cb397c 5
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3TimeoutException.java
+  h_b0b95817cb397c 3-13,16-38
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3TransportException.java
+  h_b0b95817cb397c 3-4,6,8-9,12-14
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3UnknownOutcomeException.java
+  h_b0b95817cb397c 42-44
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3UnsupportedOperationException.java
+  h_b0b95817cb397c 1-11
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/ClientInfo.java
+  h_b0b95817cb397c 30,179
+src/test/java/com/github/theholywaffle/teamspeak3/ConnectionLifecycleTest.java
+  h_b0b95817cb397c 4,6,115-116,137,139,228-230
+src/test/java/com/github/theholywaffle/teamspeak3/ErrorCategoriesTest.java
+  h_b0b95817cb397c 1-102
+src/test/java/com/github/theholywaffle/teamspeak3/RawCommandTest.java
+  h_b0b95817cb397c 6,89
+src/test/java/com/github/theholywaffle/teamspeak3/ReconnectSemanticsTest.java
+  h_b0b95817cb397c 6-7,9,218-219,241-242,289
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9198c77dc17f73e09b5d338f1de701de78539230",
+  "prompts": {},
+  "humans": {
+    "h_b0b95817cb397c": {
+      "author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
