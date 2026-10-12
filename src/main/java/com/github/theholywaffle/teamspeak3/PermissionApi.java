@@ -115,6 +115,17 @@ public final class PermissionApi {
 	}
 
 	/**
+	 * Adds or replaces a permission of a holder without the negated or skip flag.
+	 *
+	 * @param target the permission holder
+	 * @param permissionName the permission name
+	 * @param value the permission value; boolean permissions use 1 or 0
+	 */
+	public void add(PermissionTarget target, String permissionName, int value) {
+		CommandFutures.join(async.add(target, permissionName, value));
+	}
+
+	/**
 	 * Adds or replaces a permission of a holder.
 	 *
 	 * @param target the permission holder

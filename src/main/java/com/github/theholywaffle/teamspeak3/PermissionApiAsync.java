@@ -77,6 +77,11 @@ public final class PermissionApiAsync {
 		return requests.models(command, Permission::new);
 	}
 
+	/** @see PermissionApi#add(PermissionTarget, String, int) */
+	public CompletableFuture<Void> add(PermissionTarget target, String permissionName, int value) {
+		return add(target, PermissionGrant.of(permissionName, value));
+	}
+
 	/** @see PermissionApi#add(PermissionTarget, PermissionGrant) */
 	public CompletableFuture<Void> add(PermissionTarget target, PermissionGrant grant) {
 		grant.requireSupportedBy(target.kind());
