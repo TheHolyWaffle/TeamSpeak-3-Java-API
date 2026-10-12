@@ -135,7 +135,7 @@ public final class FileApiAsync {
 	/** @see FileApi#downloadBytes(FileLocation) */
 	public CompletableFuture<byte[]> downloadBytes(FileLocation file) {
 		FileTransferHelper helper = requests.query().getFileTransferHelper();
-		Command command = FileCommands.ftInitDownload(helper.getClientTransferId(), file.path(), file.channelId(), file.channelPassword());
+		Command command = FileCommands.ftInitDownload(helper.getClientTransferId(), file.path(), file.channelId(), file.channelPassword(), 0);
 		return executeTransfer(command, "Download failed", helper::downloadBytes);
 	}
 

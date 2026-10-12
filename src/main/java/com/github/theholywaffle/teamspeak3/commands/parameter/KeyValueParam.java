@@ -28,16 +28,12 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
 
 import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 
-public class KeyValueParam extends Parameter {
+/** A {@code key=value} pair; a {@code null} value is sent as an empty value. */
+public record KeyValueParam(String key, String value) implements Parameter {
 
-	private final String key;
-	private final String value;
-
-	public KeyValueParam(String key, String value) {
+	public KeyValueParam {
 		if (key == null) throw new IllegalArgumentException("Key was null");
-
-		this.key = key;
-		this.value = (value != null) ? value : "";
+		if (value == null) value = "";
 	}
 
 	public KeyValueParam(String key, int value) {
@@ -53,9 +49,7 @@ public class KeyValueParam extends Parameter {
 	}
 
 	@Override
-	public void appendTo(StringBuilder str) {
-		str.append(CommandEncoding.encode(key));
-		str.append('=');
-		str.append(CommandEncoding.encode(value));
+	public String encoded() {
+		return CommandEncoding.encode(key) + '=' + CommandEncoding.encode(value);
 	}
 }

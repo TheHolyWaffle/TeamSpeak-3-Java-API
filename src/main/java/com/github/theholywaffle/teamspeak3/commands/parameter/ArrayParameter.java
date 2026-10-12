@@ -26,47 +26,31 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
  * #L%
  */
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class ArrayParameter extends Parameter {
+/** Pipe-separated entries, each made of space-separated parameters. */
+public record ArrayParameter(List<List<Parameter>> entries) implements Parameter {
 
-	private final int parametersPerEntry;
-	private final List<Parameter> parameters;
-
-	public ArrayParameter(int numberOfEntries) {
-		this(numberOfEntries, 1);
+	public ArrayParameter {
+		entries = entries.stream().map(List::copyOf).toList();
 	}
 
-	public ArrayParameter(int numberOfEntries, int parametersPerEntry) {
-		this.parametersPerEntry = parametersPerEntry;
-		this.parameters = new ArrayList<>(numberOfEntries * parametersPerEntry);
+	/** @return one {@code key=value} entry per value */
+	public static ArrayParameter of(String key, List<String> values) {
+		return new ArrayParameter(values.stream().map(value -> List.<Parameter>of(new KeyValueParam(key, value))).toList());
 	}
 
-	public ArrayParameter add(Parameter p) {
-		parameters.add(p);
-		return this;
+	/** @return one {@code key=value} entry per value */
+	public static ArrayParameter of(String key, int[] values) {
+		return of(key, Arrays.stream(values).mapToObj(String::valueOf).toList());
 	}
 
 	@Override
-	public void appendTo(StringBuilder str) {
-		if (parameters.isEmpty()) return;
-
-		// First entry without |
-		parameters.get(0).appendTo(str);
-		for (int i = 1; i < parametersPerEntry; ++i) {
-			str.append(' ');
-			parameters.get(i).appendTo(str);
-		}
-
-		// Remaining entries separated with |
-		for (int offset = parametersPerEntry; offset < parameters.size(); offset += parametersPerEntry) {
-			str.append('|');
-			parameters.get(offset).appendTo(str);
-			for (int i = 1; i < parametersPerEntry; ++i) {
-				str.append(' ');
-				parameters.get(offset + i).appendTo(str);
-			}
-		}
+	public String encoded() {
+		return entries.stream()
+			.map(entry -> entry.stream().map(Parameter::encoded).collect(Collectors.joining(" ")))
+			.collect(Collectors.joining("|"));
 	}
 }

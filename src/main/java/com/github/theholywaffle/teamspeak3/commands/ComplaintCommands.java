@@ -35,24 +35,24 @@ public final class ComplaintCommands {
 	}
 
 	public static Command complainAdd(int clientDBId, String message) {
-		CommandBuilder builder = new CommandBuilder("complainadd", 2);
+		CommandBuilder builder = new CommandBuilder("complainadd");
 		builder.add(new KeyValueParam("tcldbid", clientDBId));
 		builder.add(new KeyValueParam("message", message));
 		return builder.build();
 	}
 
 	public static Command complainDel(int clientDBId, int fromClientDBId) {
-		CommandBuilder builder = new CommandBuilder("complaindel", 2);
+		CommandBuilder builder = new CommandBuilder("complaindel");
 		builder.add(new KeyValueParam("tcldbid", clientDBId));
 		builder.add(new KeyValueParam("fcldbid", fromClientDBId));
 		return builder.build();
 	}
 
 	public static Command complainDelAll(int clientDBId) {
-		return new CommandBuilder("complaindelall", 1).add(new KeyValueParam("tcldbid", clientDBId)).build();
+		return new CommandBuilder("complaindelall").add(new KeyValueParam("tcldbid", clientDBId)).build();
 	}
 
 	public static Command complainList(int clientDBId) {
-		return new CommandBuilder("complainlist", 1).addIf(clientDBId > 0, new KeyValueParam("tcldbid", clientDBId)).build();
+		return new CommandBuilder("complainlist").addIf(clientDBId > 0, new KeyValueParam("tcldbid", clientDBId)).build();
 	}
 }

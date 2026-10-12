@@ -31,20 +31,25 @@ public final class CommandEncoding {
 	private CommandEncoding() {}
 
 	public static String encode(String str) {
-		str = str.replace("\\", "\\\\");
-
-		str = str.replace(" ", "\\s");
-		str = str.replace("/", "\\/");
-		str = str.replace("|", "\\p");
-		str = str.replace("\b", "\\b");
-		str = str.replace("\f", "\\f");
-		str = str.replace("\n", "\\n");
-		str = str.replace("\r", "\\r");
-		str = str.replace("\t", "\\t");
-		str = str.replace(String.valueOf((char) 7), "\\a");
-		str = str.replace(String.valueOf((char) 11), "\\v");
-
-		return str;
+		StringBuilder encoded = new StringBuilder(str.length());
+		for (int i = 0; i < str.length(); i++) {
+			char ch = str.charAt(i);
+			switch (ch) {
+				case '\\' -> encoded.append("\\\\");
+				case ' ' -> encoded.append("\\s");
+				case '/' -> encoded.append("\\/");
+				case '|' -> encoded.append("\\p");
+				case '\b' -> encoded.append("\\b");
+				case '\f' -> encoded.append("\\f");
+				case '\n' -> encoded.append("\\n");
+				case '\r' -> encoded.append("\\r");
+				case '\t' -> encoded.append("\\t");
+				case 7 -> encoded.append("\\a");
+				case 11 -> encoded.append("\\v");
+				default -> encoded.append(ch);
+			}
+		}
+		return encoded.toString();
 	}
 
 	/**

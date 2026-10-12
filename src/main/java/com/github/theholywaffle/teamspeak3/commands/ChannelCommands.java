@@ -43,21 +43,21 @@ public final class ChannelCommands {
 			throw new IllegalArgumentException("Channel name must be a non-empty string");
 		}
 
-		CommandBuilder builder = new CommandBuilder("channelcreate", 2);
+		CommandBuilder builder = new CommandBuilder("channelcreate");
 		builder.add(new KeyValueParam("channel_name", name));
 		builder.addProperties(options);
 		return builder.build();
 	}
 
 	public static Command channelDelete(int channelId, boolean force) {
-		CommandBuilder builder = new CommandBuilder("channeldelete", 2);
+		CommandBuilder builder = new CommandBuilder("channeldelete");
 		builder.add(new KeyValueParam("cid", channelId));
 		builder.add(new KeyValueParam("force", force));
 		return builder.build();
 	}
 
 	public static Command channelEdit(int channelId, Map<ChannelProperty, String> options) {
-		CommandBuilder builder = new CommandBuilder("channeledit", 2);
+		CommandBuilder builder = new CommandBuilder("channeledit");
 		builder.add(new KeyValueParam("cid", channelId));
 		builder.addProperties(options);
 		return builder.build();
@@ -68,15 +68,15 @@ public final class ChannelCommands {
 			throw new IllegalArgumentException("Channel name pattern must be a non-empty string");
 		}
 
-		return new CommandBuilder("channelfind", 1).add(new KeyValueParam("pattern", pattern)).build();
+		return new CommandBuilder("channelfind").add(new KeyValueParam("pattern", pattern)).build();
 	}
 
 	public static Command channelInfo(int channelId) {
-		return new CommandBuilder("channelinfo", 1).add(new KeyValueParam("cid", channelId)).build();
+		return new CommandBuilder("channelinfo").add(new KeyValueParam("cid", channelId)).build();
 	}
 
 	public static Command channelList() {
-		CommandBuilder builder = new CommandBuilder("channellist", 7);
+		CommandBuilder builder = new CommandBuilder("channellist");
 		builder.add(new OptionParam("topic"));
 		builder.add(new OptionParam("flags"));
 		builder.add(new OptionParam("voice"));
@@ -88,10 +88,10 @@ public final class ChannelCommands {
 	}
 
 	public static Command channelMove(int channelId, int channelParentId, int order) {
-		CommandBuilder builder = new CommandBuilder("channelmove", 3);
+		CommandBuilder builder = new CommandBuilder("channelmove");
 		builder.add(new KeyValueParam("cid", channelId));
 		builder.add(new KeyValueParam("cpid", channelParentId));
-		builder.add(new KeyValueParam("order", order < 0 ? 0 : order));
+		builder.add(new KeyValueParam("order", Math.max(0, order)));
 		return builder.build();
 	}
 }

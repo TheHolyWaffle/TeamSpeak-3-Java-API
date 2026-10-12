@@ -40,7 +40,7 @@ public final class PrivilegeKeyCommands {
 			throw new IllegalArgumentException("Privilege key type cannot be null");
 		}
 
-		CommandBuilder builder = new CommandBuilder("privilegekeyadd", 4);
+		CommandBuilder builder = new CommandBuilder("privilegekeyadd");
 		builder.add(new KeyValueParam("tokentype", KnownCodes.require(type.getIndex())));
 		builder.add(new KeyValueParam("tokenid1", groupId));
 		builder.add(new KeyValueParam("tokenid2", channelId));
@@ -53,7 +53,7 @@ public final class PrivilegeKeyCommands {
 			throw new IllegalArgumentException("Privilege key must be a non-empty string");
 		}
 
-		return new CommandBuilder("privilegekeydelete", 1).add(new KeyValueParam("token", token)).build();
+		return new CommandBuilder("privilegekeydelete").add(new KeyValueParam("token", token)).build();
 	}
 
 	public static Command privilegeKeyList() {
@@ -65,6 +65,6 @@ public final class PrivilegeKeyCommands {
 			throw new IllegalArgumentException("Privilege key must be a non-empty string");
 		}
 
-		return new CommandBuilder("privilegekeyuse", 1).add(new KeyValueParam("token", token)).build();
+		return new CommandBuilder("privilegekeyuse").add(new KeyValueParam("token", token)).build();
 	}
 }

@@ -39,7 +39,7 @@ public final class MessageCommands {
 			throw new IllegalArgumentException("Client UId must be a non-empty string");
 		}
 
-		CommandBuilder builder = new CommandBuilder("messageadd", 3);
+		CommandBuilder builder = new CommandBuilder("messageadd");
 		builder.add(new KeyValueParam("cluid", clientUId));
 		builder.add(new KeyValueParam("subject", subject));
 		builder.add(new KeyValueParam("message", message));
@@ -47,11 +47,11 @@ public final class MessageCommands {
 	}
 
 	public static Command messageDel(int messageId) {
-		return new CommandBuilder("messagedel", 1).add(new KeyValueParam("msgid", messageId)).build();
+		return new CommandBuilder("messagedel").add(new KeyValueParam("msgid", messageId)).build();
 	}
 
 	public static Command messageGet(int messageId) {
-		return new CommandBuilder("messageget", 1).add(new KeyValueParam("msgid", messageId)).build();
+		return new CommandBuilder("messageget").add(new KeyValueParam("msgid", messageId)).build();
 	}
 
 	public static Command messageList() {
@@ -59,7 +59,7 @@ public final class MessageCommands {
 	}
 
 	public static Command messageUpdateFlag(int messageId, boolean read) {
-		CommandBuilder builder = new CommandBuilder("messageupdateflag", 2);
+		CommandBuilder builder = new CommandBuilder("messageupdateflag");
 		builder.add(new KeyValueParam("msgid", messageId));
 		builder.add(new KeyValueParam("flag", read));
 		return builder.build();

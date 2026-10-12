@@ -68,7 +68,7 @@ public final class QueryCommands {
 			throw new IllegalArgumentException("Password must be a non-empty string");
 		}
 
-		return new CommandBuilder("login", 2).add(new ValueParam(username)).add(new ValueParam(password)).build();
+		return new CommandBuilder("login").add(new ValueParam(username)).add(new ValueParam(password)).build();
 	}
 
 	public static Command logOut() {
@@ -84,7 +84,7 @@ public final class QueryCommands {
 			throw new IllegalArgumentException("Event type cannot be null");
 		}
 
-		CommandBuilder builder = new CommandBuilder("servernotifyregister", 2);
+		CommandBuilder builder = new CommandBuilder("servernotifyregister");
 		builder.add(new KeyValueParam("event", eventType.toString()));
 		builder.addIf(channelId >= 0, new KeyValueParam("id", channelId));
 		return builder.build();
@@ -95,7 +95,7 @@ public final class QueryCommands {
 	}
 
 	public static Command useId(int id, String nickname) {
-		CommandBuilder builder = new CommandBuilder("use", 3);
+		CommandBuilder builder = new CommandBuilder("use");
 		builder.add(new KeyValueParam("sid", id));
 		builder.add(new OptionParam("virtual"));
 		builder.addIf(nickname != null, new KeyValueParam("client_nickname", nickname));
@@ -103,7 +103,7 @@ public final class QueryCommands {
 	}
 
 	public static Command usePort(int port, String nickname) {
-		CommandBuilder builder = new CommandBuilder("use", 3);
+		CommandBuilder builder = new CommandBuilder("use");
 		builder.add(new KeyValueParam("port", port));
 		builder.add(new OptionParam("virtual"));
 		builder.addIf(nickname != null, new KeyValueParam("client_nickname", nickname));

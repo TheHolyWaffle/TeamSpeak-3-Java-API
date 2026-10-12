@@ -134,26 +134,26 @@ public class FileCommandsTest {
 
 	@Test
 	public void ftInitDownload_NullDirectoryPathException() {
-		Assertions.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftInitDownload(1, null, 1, null));
+		Assertions.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftInitDownload(1, null, 1, null, 0));
 	}
 
 	@Test
 	public void ftInitDownload() {
 		final String expected = "ftinitdownload clientftfid=1 name=\\/dir1 cid=1 cpw= seekpos=0 proto=0";
-		Assertions.assertEquals(expected, FileCommands.ftInitDownload(1, "/dir1", 1, null).toString());
-		Assertions.assertEquals(expected, FileCommands.ftInitDownload(1, "dir1", 1, null).toString());
+		Assertions.assertEquals(expected, FileCommands.ftInitDownload(1, "/dir1", 1, null, 0).toString());
+		Assertions.assertEquals(expected, FileCommands.ftInitDownload(1, "dir1", 1, null, 0).toString());
 	}
 
 	@Test
 	public void ftInitUpload_NullDirectoryPathException() {
-		Assertions.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftInitUpload(1, null, 1, null, 1024, true));
+		Assertions.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftInitUpload(1, null, 1, null, 1024, true, false));
 	}
 
 	@Test
 	public void ftInitUpload() {
 		final String expected = "ftinitupload clientftfid=1 name=\\/dir1 cid=1 cpw= size=1024 overwrite=1 resume=0 proto=0";
-		Assertions.assertEquals(expected, FileCommands.ftInitUpload(1, "/dir1", 1, null, 1024, true).toString());
-		Assertions.assertEquals(expected, FileCommands.ftInitUpload(1, "dir1", 1, null, 1024, true).toString());
+		Assertions.assertEquals(expected, FileCommands.ftInitUpload(1, "/dir1", 1, null, 1024, true, false).toString());
+		Assertions.assertEquals(expected, FileCommands.ftInitUpload(1, "dir1", 1, null, 1024, true, false).toString());
 	}
 
 	@Test

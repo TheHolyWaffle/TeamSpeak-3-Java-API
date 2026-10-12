@@ -111,7 +111,7 @@ class ModelCompatibilityIT {
 					api.channelGroups().assign(5, 1, databaseClient);
 					api.databaseClients().setCustomProperty(databaseClient, "models", target.name());
 					api.messages().sendOffline(api.databaseClients().info(databaseClient).getUniqueIdentifier(), "models", "offline " + target);
-					api.executeRawCommand(FileCommands.ftInitUpload(41, upload, 1, "", 8, true).toString());
+					api.executeRawCommand(FileCommands.ftInitUpload(41, upload, 1, "", 8, true, false).toString());
 
 					for (Object model : List.of(api.servers().info(), api.servers().connectionInfo(), api.instance().info(),
 						api.instance().hostInfo(), api.instance().version(), api.whoAmI(), api.clients().info(actorId),

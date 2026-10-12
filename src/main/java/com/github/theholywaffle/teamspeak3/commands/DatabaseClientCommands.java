@@ -39,11 +39,11 @@ public final class DatabaseClientCommands {
 	}
 
 	public static Command clientDBDelete(int clientDBId) {
-		return new CommandBuilder("clientdbdelete", 1).add(new KeyValueParam("cldbid", clientDBId)).build();
+		return new CommandBuilder("clientdbdelete").add(new KeyValueParam("cldbid", clientDBId)).build();
 	}
 
 	public static Command clientDBEdit(int clientDBId, Map<ClientProperty, String> options) {
-		CommandBuilder builder = new CommandBuilder("clientdbedit", 2);
+		CommandBuilder builder = new CommandBuilder("clientdbedit");
 		builder.add(new KeyValueParam("cldbid", clientDBId));
 		builder.addProperties(options);
 		return builder.build();
@@ -54,18 +54,18 @@ public final class DatabaseClientCommands {
 			throw new IllegalArgumentException("Pattern must be a non-empty string");
 		}
 
-		CommandBuilder builder = new CommandBuilder("clientdbfind", 2);
+		CommandBuilder builder = new CommandBuilder("clientdbfind");
 		builder.add(new KeyValueParam("pattern", pattern));
 		builder.addIf(uid, new OptionParam("uid"));
 		return builder.build();
 	}
 
 	public static Command clientDBInfo(int clientDBId) {
-		return new CommandBuilder("clientdbinfo", 1).add(new KeyValueParam("cldbid", clientDBId)).build();
+		return new CommandBuilder("clientdbinfo").add(new KeyValueParam("cldbid", clientDBId)).build();
 	}
 
 	public static Command clientDBList(int begin, int amount, boolean count) {
-		CommandBuilder builder = new CommandBuilder("clientdblist", 3);
+		CommandBuilder builder = new CommandBuilder("clientdblist");
 		builder.add(new KeyValueParam("start", begin));
 		builder.add(new KeyValueParam("duration", amount));
 		builder.addIf(count, new OptionParam("count"));

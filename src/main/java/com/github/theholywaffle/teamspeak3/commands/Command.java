@@ -26,22 +26,23 @@ package com.github.theholywaffle.teamspeak3.commands;
  * #L%
  */
 
-import java.util.concurrent.CompletableFuture;
 import com.github.theholywaffle.teamspeak3.commands.parameter.Parameter;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 
-import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public class Command {
+public final class Command {
 
 	private final String name;
-	private final Collection<Parameter> parameters;
-	private final CompletableFuture<DefaultArrayResponse> future;
+	private final List<Parameter> parameters;
+	private final CompletableFuture<DefaultArrayResponse> future = new CompletableFuture<>();
 
-	Command(String commandName, Collection<Parameter> parameters) {
-		this.name = commandName;
-		this.parameters = parameters;
-		this.future = new CompletableFuture<>();
+	Command(String name, List<Parameter> parameters) {
+		this.name = name;
+		this.parameters = List.copyOf(parameters);
 	}
 
 	public String getName() {
@@ -54,11 +55,7 @@ public class Command {
 
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder(name);
-		for (Parameter param : parameters) {
-			builder.append(' ');
-			param.appendTo(builder);
-		}
-		return builder.toString();
+		return Stream.concat(Stream.of(name), parameters.stream().map(Parameter::encoded))
+			.collect(Collectors.joining(" "));
 	}
 }
