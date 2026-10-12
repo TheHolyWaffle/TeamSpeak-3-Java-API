@@ -1419,8 +1419,7 @@ class ServerQueryCompatibilityIT {
 	private static void assertPermission(java.util.List<Permission> assignments,
 	                                    String name, int value, boolean negated, boolean skipped,
 	                                    java.util.List<String> evidence, String label) {
-		var permission = assignments.stream().filter(p -> p.getName().equals(name)).findFirst().orElseThrow();
-		assertEquals(value, permission.getValue()); assertEquals(negated, permission.isNegated()); assertEquals(skipped, permission.isSkipped());
+		var permission = CompatibilityAssertions.permission(assignments, name, value, negated, skipped);
 		evidence.add(label + " " + new java.util.TreeMap<>(permission.getMap()));
 	}
 

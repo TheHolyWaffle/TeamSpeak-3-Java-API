@@ -17,3 +17,6 @@
 
 # Idea Files
 /.idea
+
+# Independently built test fixture
+/src/test/fixtures/regular-client/target

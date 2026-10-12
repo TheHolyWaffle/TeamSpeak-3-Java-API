@@ -258,7 +258,7 @@ public class TS3ApiAsync {
 	 */
 	public CompletableFuture<Integer> addChannelGroup(String name, PermissionGroupDatabaseType type) {
 		Command cmd = ChannelGroupCommands.channelGroupAdd(name, type);
-		return executeAndReturnIntProperty(cmd, "cgid");
+		return executeAndReturnCreatedId(cmd, "cgid");
 	}
 
 	/**
@@ -581,7 +581,7 @@ public class TS3ApiAsync {
 	 */
 	public CompletableFuture<Integer> addServerGroup(String name, PermissionGroupDatabaseType type) {
 		Command cmd = ServerGroupCommands.serverGroupAdd(name, type);
-		return executeAndReturnIntProperty(cmd, "sgid");
+		return executeAndReturnCreatedId(cmd, "sgid");
 	}
 
 	/**
@@ -854,7 +854,7 @@ public class TS3ApiAsync {
 	 */
 	public CompletableFuture<Integer> copyChannelGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
 		Command cmd = ChannelGroupCommands.channelGroupCopy(sourceGroupId, targetName, type);
-		return executeAndReturnIntProperty(cmd, "cgid");
+		return executeAndReturnCreatedId(cmd, "cgid");
 	}
 
 	/**
@@ -907,7 +907,7 @@ public class TS3ApiAsync {
 	 */
 	public CompletableFuture<Integer> copyServerGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
 		Command cmd = ServerGroupCommands.serverGroupCopy(sourceGroupId, targetName, type);
-		return executeAndReturnIntProperty(cmd, "sgid");
+		return executeAndReturnCreatedId(cmd, "sgid");
 	}
 
 	/**
@@ -927,7 +927,7 @@ public class TS3ApiAsync {
 	 */
 	public CompletableFuture<Integer> createChannel(String name, Map<ChannelProperty, String> options) {
 		Command cmd = ChannelCommands.channelCreate(name, options);
-		return executeAndReturnIntProperty(cmd, "cid");
+		return executeAndReturnCreatedId(cmd, "cid");
 	}
 
 	/**
@@ -2942,7 +2942,10 @@ public class TS3ApiAsync {
 	 */
 	public CompletableFuture<String> getOfflineMessage(int messageId) {
 		Command cmd = MessageCommands.messageGet(messageId);
-		return executeAndReturnStringProperty(cmd, "message");
+		CompletableFuture<String> future = CommandFutures.map(cmd.getFuture(),
+                result -> result.getFirstResponse().getMap().get("message"));
+        commandQueue.enqueueCommand(cmd);
+        return future;
 	}
 
 	/**
@@ -5619,6 +5622,22 @@ public class TS3ApiAsync {
 		commandQueue.enqueueCommand(command);
 		return future;
 	}
+
+    private CompletableFuture<Integer> executeAndReturnCreatedId(Command command, String property) {
+        CompletableFuture<Integer> future = CommandFutures.map(command.getFuture(), result -> {
+            String value = result.getFirstResponse().getMap().get(property);
+            try {
+                int id = Integer.parseInt(value);
+                if (id <= 0) throw new NumberFormatException("nonpositive ID");
+                return id;
+            } catch (NumberFormatException failure) {
+                throw new TS3Exception(
+                    command.getName() + " response requires a positive " + property, failure);
+            }
+        });
+        commandQueue.enqueueCommand(command);
+        return future;
+    }
 
 	private CompletableFuture<int[]> executeAndReturnIntArray(Command command, String property) {
 		CompletableFuture<int[]> future = CommandFutures.map(command.getFuture(),

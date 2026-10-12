@@ -1,6 +1,7 @@
 # Verified ServerQuery command and event inventory
 
-Task #441 is being delivered in focused PRs. The implemented slices verify the core
+Task #441 accumulates its remaining acceptance work on one implementation PR.
+Previously merged slices verify the core
 channel domain, named channel/group permission operations, online text messages,
 selected server information/configuration operations, online query-client administration,
 file-directory administration, privilege-key administration, ban-rule administration,
@@ -33,15 +34,23 @@ Local Apple Silicon uses emulated amd64 TS3 and native arm64 TS6; CI tests amd64
 | --- | --- | --- |
 | Servers | Login/version/selection; server info/list/port lookup, host/instance/connection information; name/welcome/host-message edits and independent-session edit notifications. See [server evidence](server-compatibility.md); sequential create/start/stop/delete and lifecycle errors in [lifecycle evidence](server-lifecycle-compatibility.md); message tests document rejected selection and cleared context | Other server/instance edits, snapshots, concurrent/multi-running-server lifecycle, nondefault creation, property combinations and restricted-account probes |
 | Channels | Permanent channel create/list/info/find, name/topic/description edit, parent move with first-sibling order, force delete; UTF-8 and literal protocol escapes; deleted channel error 768; semi-permanent/permanent transitions, password flags, limits and Opus settings with independent description/password notifications. See [configuration evidence](channel-configuration-compatibility.md) | Temporary/default channels, restart persistence, password/limit enforcement, other codecs/quality boundaries, banners, other property combinations and restricted-role probes |
-| Clients | Query-client list/info/name lookup, self nickname update, description edits, independent-session joins/admin moves/self moves/leaves and error recovery. See [client evidence](client-compatibility.md); existing reconnect probes | Database administration, other properties, UID lookup/multiple sessions, bulk/password moves, kicks/bans, voice-client fixture/manual verification |
-| Permissions/groups | Server metadata and name/ID lookup, effective-value lookup, assignment search; named channel/server-group/channel-group permission add/read/update/delete; group create/list/rename/delete and regular group copy/overwrite. See [permission evidence and migration](permission-compatibility.md) | Client/channel-client permissions, permission overview, template/query group copies, membership/automatic assignments, permission reset and denied-account probes |
-| Messages/events | Channel create/edit/move/delete and online server/channel/private text messages from an independent query session; text subscriptions/unregister/re-register, decoded payloads and invalid-target errors. See [message evidence](message-compatibility.md); existing overlapping subscription/reconnect probes | Broadcast/offline messages, pokes, additional server-edit properties, successful regular-client privilege-key-use payloads and other events; voice-client behavior requires a separate client fixture or manual evidence |
+| Clients | Query-client list/info/name lookup, self nickname update, description edits, independent-session joins/admin moves/self moves/leaves and error recovery. See [client evidence](client-compatibility.md); existing reconnect probes | Other properties, multiple sessions, bulk/password moves and kicks/bans |
+| Permissions/groups | Server metadata and name/ID lookup, effective-value lookup, assignment search; named channel/server-group/channel-group permission add/read/update/delete; group create/list/rename/delete and regular group copy/overwrite. See [permission evidence and migration](permission-compatibility.md) | Template/query group copies, automatic assignments, permission reset and denied-account probes |
+| Messages/events | Channel create/edit/move/delete and online server/channel/private text messages from an independent query session; text subscriptions/unregister/re-register, decoded payloads and invalid-target errors. See [message evidence](message-compatibility.md); existing overlapping subscription/reconnect probes | Additional server-edit properties and other events; audio remains outside ServerQuery scope |
 | Files | Directory create/list/nested rename/cross-channel move/scalar and bulk delete; list metadata, empty transfer list and path/file-info errors. See [file evidence](file-compatibility.md) | Actual files, positive/bulk file-info, icons, active-transfer metadata and remaining command/error inventory; transfer reliability and container/NAT endpoints belong to #442 |
 | Administrative utilities | Privilege-key create/list/delete for both types, metadata and query-client consumption rejection; see [key evidence](privilege-key-compatibility.md). Ban-rule create/list/delete and metadata/errors; see [ban evidence](ban-compatibility.md). Global query-login create/list/authenticate/delete and deleted-credential rejection; see [login evidence](query-login-compatibility.md). Instance/virtual-server log reads, limits/metadata and invalid-severity errors; see [log evidence](log-compatibility.md). Existing version/selection error recovery and controlled `help` | Successful regular-client key consumption/events/custom metadata, invalid references/limits/restricted roles; custom log-write visibility, log pagination/rotation/severities/denied roles, ban enforcement/client bans/bulk deletion, complaints, virtual-server query logins/rotation/pattern limits and remaining utilities |
 
-Existing probes are in `ServerQueryCompatibilityIT`; scripted codec, lifecycle,
+The [headless regular-client suite](regular-client-compatibility.md) additionally verifies
+persistent database/custom-property administration, UID lookup, client/channel-client
+permissions and overview, memberships, complaints, offline messages, actual poke and
+broadcast receipt, privilege-key consumption, and regular-client joins/leaves on all
+three targets. These use a separate full UDP fixture, never desktop automation.
+
+Existing query probes are in `ServerQueryCompatibilityIT`; scripted codec, lifecycle,
 queue and event tests remain regression evidence, not live command acceptance.
-No Testcontainers result here guarantees actual voice-client join/leave behavior.
+`RegularClientCompatibilityIT` tests actual regular-client join/leave behavior through
+the full UDP protocol. Query-only tests provide no such guarantee; neither suite
+claims audio transmission or official desktop-client feature compatibility.
 
 ## Observed channel differences and errors
 
@@ -99,7 +108,7 @@ order instead of incorrectly returning `-1`. Consumers that treated every move
 order as absent should use the real sibling ID or zero. No other channel model
 schema/default changes are introduced. The permission slice intentionally removes embedded enum IDs and corrects unknown-name
 errors; see its [breaking migration notes](permission-compatibility.md#migration-for-200).
-Remaining operations stay within #441 and require subsequent focused PRs before it can be closed.
+Remaining operations stay within the same #441 implementation PR before it can be closed.
 
 Tool documentation reviewed: [JUnit parameterized tests](https://docs.junit.org/6.1.3/overview.html),
 [Testcontainers authenticated waits](https://java.testcontainers.org/features/startup_and_waits/),

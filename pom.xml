@@ -282,6 +282,20 @@
 			<id>integration</id>
 			<build>
 				<plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-invoker-plugin</artifactId>
+                        <version>3.10.1</version>
+                        <configuration>
+                            <projectsDirectory>src/test/fixtures</projectsDirectory>
+                            <cloneProjectsTo>${project.build.directory}/fixtures</cloneProjectsTo>
+                            <pomIncludes><pomInclude>regular-client/pom.xml</pomInclude></pomIncludes>
+                            <goals><goal>package</goal></goals>
+                            <failIfNoProjects>true</failIfNoProjects>
+                            <timeoutInSeconds>180</timeoutInSeconds>
+                        </configuration>
+                        <executions><execution><id>build-headless-client</id><phase>pre-integration-test</phase><goals><goal>run</goal></goals></execution></executions>
+                    </plugin>
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-failsafe-plugin</artifactId>
