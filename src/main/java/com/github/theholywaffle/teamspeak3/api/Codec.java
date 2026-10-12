@@ -120,6 +120,8 @@ public enum Codec {
 	 */
 	UNKNOWN(-1);
 
+	private static final Codec[] VALUES = values();
+
 	private final int i;
 
 	Codec(int i) {
@@ -135,9 +137,6 @@ public enum Codec {
 	 * @return the matching constant, or {@link #UNKNOWN} for a code this library does not know
 	 */
 	public static Codec fromIndex(int index) {
-		for (Codec value : values()) {
-			if (value != UNKNOWN && value.i == index) return value;
-		}
-		return UNKNOWN;
+		return CodeLookup.byIndex(VALUES, Codec::getIndex, index, UNKNOWN);
 	}
 }

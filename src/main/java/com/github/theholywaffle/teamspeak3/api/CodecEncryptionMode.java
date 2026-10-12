@@ -65,6 +65,8 @@ public enum CodecEncryptionMode {
 	 */
 	UNKNOWN(-1);
 
+	private static final CodecEncryptionMode[] VALUES = values();
+
 	private final int i;
 
 	CodecEncryptionMode(int i) {
@@ -80,9 +82,6 @@ public enum CodecEncryptionMode {
 	 * @return the matching constant, or {@link #UNKNOWN} for a code this library does not know
 	 */
 	public static CodecEncryptionMode fromIndex(int index) {
-		for (CodecEncryptionMode value : values()) {
-			if (value != UNKNOWN && value.i == index) return value;
-		}
-		return UNKNOWN;
+		return CodeLookup.byIndex(VALUES, CodecEncryptionMode::getIndex, index, UNKNOWN);
 	}
 }

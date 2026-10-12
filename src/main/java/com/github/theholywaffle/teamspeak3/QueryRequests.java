@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException;
@@ -8,6 +9,7 @@ import com.github.theholywaffle.teamspeak3.commands.Command;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -51,7 +53,6 @@ final class QueryRequests {
 		return response(command, response -> response.getResponses().stream().map(fn).toList());
 	}
 
-
 	<T> CompletableFuture<List<T>> models(Command command, Function<Map<String, String>, T> fn) {
 		return rows(command, row -> fn.apply(row.getMap()));
 	}
@@ -60,7 +61,6 @@ final class QueryRequests {
 	<T> CompletableFuture<T> one(Command command, Function<Wrapper, T> fn) {
 		return response(command, response -> fn.apply(firstRow(command, response)));
 	}
-
 
 	<T> CompletableFuture<T> model(Command command, Function<Map<String, String>, T> fn) {
 		return one(command, row -> fn.apply(row.getMap()));
@@ -90,7 +90,7 @@ final class QueryRequests {
 	CompletableFuture<Integer> createdId(Command command, String property) {
 		return one(command, row -> {
 			int id = row.requireInt(property);
-			if (id <= 0) throw new TS3InvalidValueException(property, Integer.toString(id), "a positive ID", null);
+			if (id <= 0) throw new TS3InvalidValueException(property, row.require(property), "a positive ID", null);
 			return id;
 		});
 	}
@@ -126,6 +126,10 @@ final class QueryRequests {
 				throw error;
 			} catch (Throwable other) { throw new CompletionException(other); }
 		}), request);
+	}
+
+	static int[] values(Collection<ClientId> clientIds) {
+		return clientIds.stream().mapToInt(ClientId::value).toArray();
 	}
 
 	static CompletableFuture<Void> discard(CompletableFuture<?> request) {

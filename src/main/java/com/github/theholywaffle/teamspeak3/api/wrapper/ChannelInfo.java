@@ -28,7 +28,6 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelBannerMode;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
-import com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException;
 
 import java.util.Map;
 import java.util.Optional;
@@ -72,13 +71,7 @@ public class ChannelInfo extends ChannelBase {
 	}
 
 	public UUID getUniqueIdentifier() {
-		String name = ChannelProperty.CHANNEL_UNIQUE_IDENTIFIER.getName();
-		String value = require(name);
-		try {
-			return UUID.fromString(value);
-		} catch (IllegalArgumentException failure) {
-			throw new TS3InvalidValueException(name, value, "a UUID", failure);
-		}
+		return requireParsed(ChannelProperty.CHANNEL_UNIQUE_IDENTIFIER.getName(), "a UUID", UUID::fromString);
 	}
 
 	public boolean isEncrypted() {

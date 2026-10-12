@@ -8,7 +8,6 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ClientInfo;
 import com.github.theholywaffle.teamspeak3.commands.ClientCommands;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -79,19 +78,19 @@ public final class ClientApiAsync {
 
 	/** @see ClientApi#moveAll(Collection, int, String) */
 	public CompletableFuture<Void> moveAll(Collection<ClientId> clientIds, int channelId, String channelPassword) {
-		int[] ids = clientIds.stream().mapToInt(ClientId::value).toArray();
+		int[] ids = QueryRequests.values(clientIds);
 		if (ids.length == 0) return CompletableFuture.completedFuture(null);
 		return requests.run(ClientCommands.clientMove(ids, channelId, channelPassword));
 	}
 
 	/** @see ClientApi#kickFromChannel(String, ClientId...) */
 	public CompletableFuture<Void> kickFromChannel(String reason, ClientId... clientIds) {
-		return requests.run(ClientCommands.clientKick(ReasonIdentifier.REASON_KICK_CHANNEL, reason, values(clientIds)));
+		return requests.run(ClientCommands.clientKick(ReasonIdentifier.REASON_KICK_CHANNEL, reason, QueryRequests.values(List.of(clientIds))));
 	}
 
 	/** @see ClientApi#kickFromServer(String, ClientId...) */
 	public CompletableFuture<Void> kickFromServer(String reason, ClientId... clientIds) {
-		return requests.run(ClientCommands.clientKick(ReasonIdentifier.REASON_KICK_SERVER, reason, values(clientIds)));
+		return requests.run(ClientCommands.clientKick(ReasonIdentifier.REASON_KICK_SERVER, reason, QueryRequests.values(List.of(clientIds))));
 	}
 
 	/** @see ClientApi#poke(ClientId, String) */
@@ -102,9 +101,5 @@ public final class ClientApiAsync {
 	/** @see ClientApi#edit(ClientId, Map) */
 	public CompletableFuture<Void> edit(ClientId clientId, Map<ClientProperty, String> properties) {
 		return requests.run(ClientCommands.clientEdit(clientId.value(), properties));
-	}
-
-	private static int[] values(ClientId... clientIds) {
-		return Arrays.stream(clientIds).mapToInt(ClientId::value).toArray();
 	}
 }

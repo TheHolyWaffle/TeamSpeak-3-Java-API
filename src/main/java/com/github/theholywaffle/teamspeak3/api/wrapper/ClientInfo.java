@@ -83,16 +83,8 @@ public class ClientInfo extends Client {
 	 * @throws TS3InvalidValueException if the value is not a {@code /}-prefixed channel ID
 	 */
 	public OptionalInt getDefaultChannel() {
-		String name = ClientProperty.CLIENT_DEFAULT_CHANNEL.getName();
-		Optional<String> channel = findText(name);
-		if (channel.isEmpty()) return OptionalInt.empty();
-		String value = channel.get();
-		try {
-			if (!value.startsWith("/")) throw new NumberFormatException("Missing / prefix");
-			return OptionalInt.of(Integer.parseInt(value.substring(1)));
-		} catch (NumberFormatException failure) {
-			throw new TS3InvalidValueException(name, value, "a /-prefixed channel ID", failure);
-		}
+		return findParsed(ClientProperty.CLIENT_DEFAULT_CHANNEL.getName(), "a /-prefixed channel ID", ClientInfo::parseDefaultChannel)
+			.map(OptionalInt::of).orElse(OptionalInt.empty());
 	}
 
 	/** @return the privilege key the client used on connect, or empty if none */
@@ -193,12 +185,17 @@ public class ClientInfo extends Client {
 	}
 
 	public boolean isRequestingToTalk() {
-		return requireLong(ClientProperty.CLIENT_TALK_REQUEST) != 0L;
+		return getTalkRequestCreatedDate().isPresent();
 	}
 
 	@Override
 	public boolean isTalking() {
 		throw new TS3UnsupportedOperationException("clientinfo does not report talk status; use Client#isTalking from clientlist");
+	}
+
+	private static int parseDefaultChannel(String value) {
+		if (!value.startsWith("/")) throw new IllegalArgumentException("Missing / prefix");
+		return Integer.parseInt(value.substring(1));
 	}
 
 	@Override

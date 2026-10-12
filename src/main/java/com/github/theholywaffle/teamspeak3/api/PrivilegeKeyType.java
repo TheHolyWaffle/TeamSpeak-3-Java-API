@@ -34,6 +34,8 @@ public enum PrivilegeKeyType {
 	/** A code this library does not know; read the raw value from the model's properties. */
 	UNKNOWN(-1);
 
+	private static final PrivilegeKeyType[] VALUES = values();
+
 	private final int i;
 
 	PrivilegeKeyType(int i) {
@@ -49,9 +51,6 @@ public enum PrivilegeKeyType {
 	 * @return the matching constant, or {@link #UNKNOWN} for a code this library does not know
 	 */
 	public static PrivilegeKeyType fromIndex(int index) {
-		for (PrivilegeKeyType value : values()) {
-			if (value != UNKNOWN && value.i == index) return value;
-		}
-		return UNKNOWN;
+		return CodeLookup.byIndex(VALUES, PrivilegeKeyType::getIndex, index, UNKNOWN);
 	}
 }

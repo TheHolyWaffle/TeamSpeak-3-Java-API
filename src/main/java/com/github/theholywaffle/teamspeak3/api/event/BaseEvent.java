@@ -35,7 +35,7 @@ import java.util.OptionalInt;
 public abstract class BaseEvent extends Wrapper implements TS3Event {
 
 	protected BaseEvent(Wrapper wrapper) {
-		super(wrapper.getMap());
+		super(wrapper);
 	}
 
 	/**

@@ -33,6 +33,8 @@ public enum HostMessageMode {
 	MODAL_QUIT(3),
 	UNKNOWN(-1);
 
+	private static final HostMessageMode[] VALUES = values();
+
 	private final int i;
 
 	HostMessageMode(int i) {
@@ -48,9 +50,6 @@ public enum HostMessageMode {
 	 * @return the matching constant, or {@link #UNKNOWN} for a code this library does not know
 	 */
 	public static HostMessageMode fromIndex(int index) {
-		for (HostMessageMode value : values()) {
-			if (value != UNKNOWN && value.i == index) return value;
-		}
-		return UNKNOWN;
+		return CodeLookup.byIndex(VALUES, HostMessageMode::getIndex, index, UNKNOWN);
 	}
 }

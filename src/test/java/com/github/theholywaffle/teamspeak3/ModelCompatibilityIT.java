@@ -41,7 +41,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.OptionalLong;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -153,8 +156,9 @@ class ModelCompatibilityIT {
 						}
 						recipient.exit();
 					}
-					assertTrue(api.databaseClients().customProperties(databaseClient).containsKey("models"));
-					assertThrows(UnsupportedOperationException.class, () -> api.databaseClients().customProperties(databaseClient).clear());
+					var customProperties = api.databaseClients().customProperties(databaseClient);
+					assertTrue(customProperties.containsKey("models"));
+					assertThrows(UnsupportedOperationException.class, customProperties::clear);
 				} finally {
 					api.queryLogins().delete(login.getClientDatabaseId());
 					api.privilegeKeys().delete(key);
@@ -200,7 +204,7 @@ class ModelCompatibilityIT {
 				if (UNSUPPORTED.contains(name) && cause instanceof TS3UnsupportedOperationException) {
 					evidence.add(name + " -> unsupported");
 				} else {
-					failures.add(name + ": " + cause + " in " + new java.util.TreeMap<>(rawOf(model)));
+					failures.add(name + ": " + cause + " in " + new TreeMap<>(rawOf(model)));
 				}
 			} catch (IllegalAccessException e) {
 				throw new AssertionError(e);
@@ -215,8 +219,8 @@ class ModelCompatibilityIT {
 	/** Records presence and type, not values, so generated secrets stay out of the report. */
 	private static String describe(Object value) {
 		if (value instanceof Optional<?> optional) return optional.isPresent() ? "present " + optional.get().getClass().getSimpleName() : "empty";
-		if (value instanceof java.util.OptionalInt optional) return optional.isPresent() ? "present int" : "empty";
-		if (value instanceof java.util.OptionalLong optional) return optional.isPresent() ? "present long" : "empty";
+		if (value instanceof OptionalInt optional) return optional.isPresent() ? "present int" : "empty";
+		if (value instanceof OptionalLong optional) return optional.isPresent() ? "present long" : "empty";
 		if (value instanceof Enum<?> constant) return constant.getDeclaringClass().getSimpleName() + "." + constant.name();
 		return value == null ? "null" : value.getClass().getSimpleName();
 	}

@@ -35,6 +35,8 @@ public enum PermissionGroupDatabaseType {
 	/** A code this library does not know; read the raw value from the model's properties. */
 	UNKNOWN(-1);
 
+	private static final PermissionGroupDatabaseType[] VALUES = values();
+
 	private final int i;
 
 	PermissionGroupDatabaseType(int i) {
@@ -50,9 +52,6 @@ public enum PermissionGroupDatabaseType {
 	 * @return the matching constant, or {@link #UNKNOWN} for a code this library does not know
 	 */
 	public static PermissionGroupDatabaseType fromIndex(int index) {
-		for (PermissionGroupDatabaseType value : values()) {
-			if (value != UNKNOWN && value.i == index) return value;
-		}
-		return UNKNOWN;
+		return CodeLookup.byIndex(VALUES, PermissionGroupDatabaseType::getIndex, index, UNKNOWN);
 	}
 }

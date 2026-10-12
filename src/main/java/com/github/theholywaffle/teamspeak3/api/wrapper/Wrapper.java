@@ -44,6 +44,7 @@ import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 
 /**
  * An immutable snapshot of the properties of one ServerQuery response row or event.
@@ -77,12 +78,19 @@ public class Wrapper {
 	 * 		the properties to copy; neither the map nor its keys or values may be {@code null}
 	 */
 	public Wrapper(Map<String, String> map) {
-		LinkedHashMap<String, String> copy = new LinkedHashMap<>(map);
-		copy.forEach((key, value) -> {
-			Objects.requireNonNull(key, "property name");
-			Objects.requireNonNull(value, "property value");
-		});
+		LinkedHashMap<String, String> copy = LinkedHashMap.newLinkedHashMap(map.size());
+		map.forEach((key, value) -> copy.put(Objects.requireNonNull(key, "property name"), Objects.requireNonNull(value, "property value")));
 		this.map = Collections.unmodifiableMap(copy);
+	}
+
+	/**
+	 * Shares the already immutable properties of another wrapper.
+	 *
+	 * @param properties
+	 * 		the wrapper whose properties to use
+	 */
+	protected Wrapper(Wrapper properties) {
+		this.map = properties.map;
 	}
 
 	/**
@@ -146,7 +154,7 @@ public class Wrapper {
 	 * @throws TS3InvalidValueException if the value is not an integer
 	 */
 	public final OptionalInt findInt(String propertyName) {
-		return parse(propertyName, "an integer", Integer::parseInt).map(OptionalInt::of).orElse(OptionalInt.empty());
+		return findParsed(propertyName, "an integer", Integer::parseInt).map(OptionalInt::of).orElse(OptionalInt.empty());
 	}
 
 	/**
@@ -168,7 +176,7 @@ public class Wrapper {
 	 * @throws TS3InvalidValueException if the property is missing, has no value or is not an integer
 	 */
 	public final int requireInt(String propertyName) {
-		return required(propertyName, "an integer", Integer::parseInt);
+		return requireParsed(propertyName, "an integer", Integer::parseInt);
 	}
 
 	/**
@@ -190,7 +198,7 @@ public class Wrapper {
 	 * @throws TS3InvalidValueException if the value is not a 64-bit integer
 	 */
 	public final OptionalLong findLong(String propertyName) {
-		return parse(propertyName, "a 64-bit integer", Long::parseLong).map(OptionalLong::of).orElse(OptionalLong.empty());
+		return findParsed(propertyName, "a 64-bit integer", Long::parseLong).map(OptionalLong::of).orElse(OptionalLong.empty());
 	}
 
 	/**
@@ -212,7 +220,7 @@ public class Wrapper {
 	 * @throws TS3InvalidValueException if the property is missing, has no value or is not a 64-bit integer
 	 */
 	public final long requireLong(String propertyName) {
-		return required(propertyName, "a 64-bit integer", Long::parseLong);
+		return requireParsed(propertyName, "a 64-bit integer", Long::parseLong);
 	}
 
 	/**
@@ -234,7 +242,7 @@ public class Wrapper {
 	 * @throws TS3InvalidValueException if the value is not a number
 	 */
 	public final OptionalDouble findDouble(String propertyName) {
-		return parse(propertyName, "a number", Wrapper::parseDouble).map(OptionalDouble::of).orElse(OptionalDouble.empty());
+		return findParsed(propertyName, "a number", Wrapper::parseDouble).map(OptionalDouble::of).orElse(OptionalDouble.empty());
 	}
 
 	/**
@@ -256,7 +264,7 @@ public class Wrapper {
 	 * @throws TS3InvalidValueException if the property is missing, has no value or is not a number
 	 */
 	public final double requireDouble(String propertyName) {
-		return required(propertyName, "a number", Wrapper::parseDouble);
+		return requireParsed(propertyName, "a number", Wrapper::parseDouble);
 	}
 
 	/**
@@ -278,7 +286,7 @@ public class Wrapper {
 	 * @throws TS3InvalidValueException if the value is not 0 or 1
 	 */
 	public final Optional<Boolean> findBoolean(String propertyName) {
-		return parse(propertyName, "0 or 1", Wrapper::parseBoolean);
+		return findParsed(propertyName, "0 or 1", Wrapper::parseBoolean);
 	}
 
 	/**
@@ -300,7 +308,7 @@ public class Wrapper {
 	 * @throws TS3InvalidValueException if the property is missing, has no value or is not 0 or 1
 	 */
 	public final boolean requireBoolean(String propertyName) {
-		return required(propertyName, "0 or 1", Wrapper::parseBoolean);
+		return requireParsed(propertyName, "0 or 1", Wrapper::parseBoolean);
 	}
 
 	/**
@@ -448,6 +456,17 @@ public class Wrapper {
 	}
 
 	/**
+	 * Gets a client session ID.
+	 *
+	 * @param property the property
+	 * @return the client ID
+	 * @throws TS3InvalidValueException if the property is missing or not a nonnegative integer
+	 */
+	public final ClientId requireClientId(Property property) {
+		return requireClientId(property.getName());
+	}
+
+	/**
 	 * Gets an optional client session ID.
 	 *
 	 * @param propertyName the property name
@@ -455,7 +474,8 @@ public class Wrapper {
 	 * @throws TS3InvalidValueException if the value is not a nonnegative integer
 	 */
 	protected final Optional<ClientId> findClientId(String propertyName) {
-		return findInt(propertyName).isEmpty() ? Optional.empty() : Optional.of(requireClientId(propertyName));
+		OptionalInt id = findInt(propertyName);
+		return id.isEmpty() ? Optional.empty() : Optional.of(new ClientId(nonNegative(propertyName, id.getAsInt())));
 	}
 
 	/**
@@ -491,13 +511,26 @@ public class Wrapper {
 	 */
 	protected final Optional<ClientDatabaseId> findDatabaseId(String propertyName) {
 		OptionalInt id = findInt(propertyName);
-		if (id.isEmpty() || id.getAsInt() == 0) return Optional.empty();
-		if (id.getAsInt() < 0) throw new TS3InvalidValueException(propertyName, map.get(propertyName), "a client database ID", null);
+		if (id.isEmpty() || nonNegative(propertyName, id.getAsInt()) == 0) return Optional.empty();
 		return Optional.of(new ClientDatabaseId(id.getAsInt()));
 	}
 
+	/**
+	 * Gets a client database ID where {@code 0} means none.
+	 *
+	 * @param property the property
+	 * @return the client database ID, or empty if the property is missing, empty or {@code 0}
+	 * @throws TS3InvalidValueException if the value is not a nonnegative integer
+	 */
+	protected final Optional<ClientDatabaseId> findDatabaseId(Property property) {
+		return findDatabaseId(property.getName());
+	}
+
 	private int requireNonNegative(String propertyName) {
-		int value = requireInt(propertyName);
+		return nonNegative(propertyName, requireInt(propertyName));
+	}
+
+	private int nonNegative(String propertyName, int value) {
 		if (value < 0) throw new TS3InvalidValueException(propertyName, map.get(propertyName), "a nonnegative ID", null);
 		return value;
 	}
@@ -513,11 +546,7 @@ public class Wrapper {
 		String name = property.getName();
 		String value = require(name);
 		if (value.isEmpty()) return List.of();
-		try {
-			return Arrays.stream(value.split(",")).map(Integer::valueOf).toList();
-		} catch (NumberFormatException failure) {
-			throw new TS3InvalidValueException(name, value, "a comma-separated integer list", failure);
-		}
+		return requireParsed(name, "a comma-separated integer list", list -> Arrays.stream(list.split(",")).map(Integer::valueOf).toList());
 	}
 
 	/**
@@ -529,7 +558,7 @@ public class Wrapper {
 	 * @return the decoded constant
 	 * @throws TS3InvalidValueException if the property is missing or not an integer
 	 */
-	protected final <E extends Enum<E>> E requireCode(String propertyName, Function<Integer, E> decoder) {
+	protected final <E extends Enum<E>> E requireCode(String propertyName, IntFunction<E> decoder) {
 		return decoder.apply(requireInt(propertyName));
 	}
 
@@ -542,16 +571,36 @@ public class Wrapper {
 	 * @return the decoded constant
 	 * @throws TS3InvalidValueException if the property is missing or not an integer
 	 */
-	protected final <E extends Enum<E>> E requireCode(Property property, Function<Integer, E> decoder) {
+	protected final <E extends Enum<E>> E requireCode(Property property, IntFunction<E> decoder) {
 		return requireCode(property.getName(), decoder);
 	}
 
-	private <T> T required(String propertyName, String expected, Function<String, T> parser) {
-		return parse(propertyName, expected, parser).orElseThrow(
+	/**
+	 * Gets a property parsed by the given parser, which must be present.
+	 *
+	 * @param propertyName the property name
+	 * @param expected a description of valid values for error messages, such as {@code "an integer"}
+	 * @param parser parses a nonempty raw value, throwing {@link IllegalArgumentException} for invalid values
+	 * @param <T> the parsed type
+	 * @return the parsed value
+	 * @throws TS3InvalidValueException if the property is missing, has no value or cannot be parsed
+	 */
+	protected final <T> T requireParsed(String propertyName, String expected, Function<String, T> parser) {
+		return findParsed(propertyName, expected, parser).orElseThrow(
 			() -> new TS3InvalidValueException(propertyName, map.get(propertyName), expected, null));
 	}
 
-	private <T> Optional<T> parse(String propertyName, String expected, Function<String, T> parser) {
+	/**
+	 * Gets a property parsed by the given parser.
+	 *
+	 * @param propertyName the property name
+	 * @param expected a description of valid values for error messages, such as {@code "an integer"}
+	 * @param parser parses a nonempty raw value, throwing {@link IllegalArgumentException} for invalid values
+	 * @param <T> the parsed type
+	 * @return the parsed value, or empty if the property is missing or has no value
+	 * @throws TS3InvalidValueException if the value cannot be parsed
+	 */
+	protected final <T> Optional<T> findParsed(String propertyName, String expected, Function<String, T> parser) {
 		String value = map.get(propertyName);
 		if (value == null || value.isEmpty()) return Optional.empty();
 		try {

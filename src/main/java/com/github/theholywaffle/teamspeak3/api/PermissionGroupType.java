@@ -68,6 +68,8 @@ public enum PermissionGroupType {
 	/** A code this library does not know; read the raw value from the model's properties. */
 	UNKNOWN(-1);
 
+	private static final PermissionGroupType[] VALUES = values();
+
 	private final int i;
 
 	PermissionGroupType(int i) {
@@ -83,9 +85,6 @@ public enum PermissionGroupType {
 	 * @return the matching constant, or {@link #UNKNOWN} for a code this library does not know
 	 */
 	public static PermissionGroupType fromIndex(int index) {
-		for (PermissionGroupType value : values()) {
-			if (value != UNKNOWN && value.i == index) return value;
-		}
-		return UNKNOWN;
+		return CodeLookup.byIndex(VALUES, PermissionGroupType::getIndex, index, UNKNOWN);
 	}
 }

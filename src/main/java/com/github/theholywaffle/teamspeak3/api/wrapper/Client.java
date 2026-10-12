@@ -37,6 +37,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 /**
  * A connected client as listed by {@code clientlist}. The library requests every list option,
@@ -44,6 +45,8 @@ import java.util.Optional;
  * that a client or server may leave unset.
  */
 public class Client extends Wrapper {
+
+	private static final Pattern BADGE_SEPARATOR = Pattern.compile("[\\s:;]");
 
 	public Client(Map<String, String> map) {
 		super(map);
@@ -107,7 +110,7 @@ public class Client extends Wrapper {
 	}
 
 	public ClientId getId() {
-		return requireClientId(ClientProperty.CLID.getName());
+		return requireClientId(ClientProperty.CLID);
 	}
 
 	/** @return the time since the client last sent voice or text */
@@ -231,7 +234,7 @@ public class Client extends Wrapper {
 	/** Badge entries look like {@code overwolf=0:badges=guid1,guid2}. */
 	private Optional<String> badge(String key) {
 		String prefix = key + "=";
-		for (String entry : require(ClientProperty.CLIENT_BADGES).split("[\\s:;]")) {
+		for (String entry : BADGE_SEPARATOR.split(require(ClientProperty.CLIENT_BADGES))) {
 			if (entry.startsWith(prefix)) return Optional.of(entry.substring(prefix.length()));
 		}
 		return Optional.empty();

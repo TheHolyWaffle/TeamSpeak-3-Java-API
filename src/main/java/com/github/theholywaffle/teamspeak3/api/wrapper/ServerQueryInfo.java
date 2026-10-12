@@ -72,7 +72,7 @@ public class ServerQueryInfo extends Wrapper {
 	 * @return the server query's database ID, or empty before login (TeamSpeak sends {@code 0})
 	 */
 	public Optional<ClientDatabaseId> getDatabaseId() {
-		return findDatabaseId(ClientProperty.CLIENT_DATABASE_ID.getName());
+		return findDatabaseId(ClientProperty.CLIENT_DATABASE_ID);
 	}
 
 	/**

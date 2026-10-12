@@ -1,6 +1,5 @@
 package com.github.theholywaffle.teamspeak3;
 
-import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import java.util.Map;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;

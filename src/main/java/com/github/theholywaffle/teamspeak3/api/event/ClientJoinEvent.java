@@ -128,7 +128,7 @@ public class ClientJoinEvent extends BaseEvent {
 
 	/** {@code client_talk_request} holds the request time in epoch seconds, or {@code 0} without a request. */
 	public boolean isClientRequestingToTalk() {
-		return requireLong(ClientProperty.CLIENT_TALK_REQUEST) != 0;
+		return requireTimestamp(ClientProperty.CLIENT_TALK_REQUEST).isPresent();
 	}
 
 	public String getClientTalkRequestMessage() {

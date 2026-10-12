@@ -21,12 +21,14 @@ import org.junit.jupiter.api.function.Executable;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
+import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -52,7 +54,7 @@ class ModelValuesTest {
 		assertUnsupported(() -> response.getResponses().clear());
 		assertUnsupported(() -> response.getResponses().getLast().getMap().remove("cid"));
 		assertEquals("1", response.getResponses().getLast().require("cid"));
-		assertThrows(NullPointerException.class, () -> new Wrapper(new HashMap<>(java.util.Collections.singletonMap("k", null))));
+		assertThrows(NullPointerException.class, () -> new Wrapper(new HashMap<>(Collections.singletonMap("k", null))));
 	}
 
 	@Test void missingMalformedAndValuelessPropertiesStayDistinct() {
@@ -202,7 +204,7 @@ class ModelValuesTest {
 		assertEquals(new ChannelInfo(4, Map.of()).hashCode(), new ChannelInfo(4, Map.of()).hashCode());
 	}
 
-	private static <T> T event(java.util.function.Function<Wrapper, T> constructor, String raw) {
+	private static <T> T event(Function<Wrapper, T> constructor, String raw) {
 		return constructor.apply(DefaultArrayResponse.parse(raw).getFirstResponse().orElseThrow());
 	}
 

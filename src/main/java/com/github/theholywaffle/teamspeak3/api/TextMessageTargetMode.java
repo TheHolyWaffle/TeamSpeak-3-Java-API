@@ -35,6 +35,8 @@ public enum TextMessageTargetMode {
 	/** A code this library does not know; read the raw value from the model's properties. */
 	UNKNOWN(-1);
 
+	private static final TextMessageTargetMode[] VALUES = values();
+
 	private final int i;
 
 	TextMessageTargetMode(int i) {
@@ -50,9 +52,6 @@ public enum TextMessageTargetMode {
 	 * @return the matching constant, or {@link #UNKNOWN} for a code this library does not know
 	 */
 	public static TextMessageTargetMode fromIndex(int index) {
-		for (TextMessageTargetMode value : values()) {
-			if (value != UNKNOWN && value.i == index) return value;
-		}
-		return UNKNOWN;
+		return CodeLookup.byIndex(VALUES, TextMessageTargetMode::getIndex, index, UNKNOWN);
 	}
 }
