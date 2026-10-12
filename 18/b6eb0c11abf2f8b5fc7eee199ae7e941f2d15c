@@ -1,0 +1,19 @@
+src/test/java/com/github/theholywaffle/teamspeak3/ModelCompatibilityIT.java
+  s_4df28355134b3e::t_bf72d650c89ee3 154,176
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "18b6eb0c11abf2f8b5fc7eee199ae7e941f2d15c",
+  "prompts": {},
+  "sessions": {
+    "s_4df28355134b3e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c77e990a-5b2e-4283-8a8f-423ff1db5003",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
