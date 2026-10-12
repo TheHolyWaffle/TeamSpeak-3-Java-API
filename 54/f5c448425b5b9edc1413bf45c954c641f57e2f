@@ -1,0 +1,27 @@
+docs/models-and-values.md
+  s_4df28355134b3e::t_bdaf70269d8a0e 73,153
+src/main/java/com/github/theholywaffle/teamspeak3/FileApiAsync.java
+  s_4df28355134b3e::t_654404725904f6 213-214
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/FileTransferParameters.java
+  s_4df28355134b3e::t_70b65be973e050 100-101,103-104,106,108
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/QueryError.java
+  s_4df28355134b3e::t_6f343d74790330 59-69
+src/test/java/com/github/theholywaffle/teamspeak3/api/wrapper/ModelValuesTest.java
+  s_4df28355134b3e::t_1f718833e8c113 179,182-185
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "54f5c448425b5b9edc1413bf45c954c641f57e2f",
+  "prompts": {},
+  "sessions": {
+    "s_4df28355134b3e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c77e990a-5b2e-4283-8a8f-423ff1db5003",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
