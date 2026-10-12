@@ -18,8 +18,9 @@ class SessionCommandsCompatibilityIT {
                 for (String name : List.of("login", "logout", "whoami", "bindinglist")) assertTrue(api.executeRawCommand("help " + name).getRawResponse().startsWith("Usage: " + name));
                 var bindings = api.getBindings(); assertFalse(bindings.isEmpty());
                 assertTrue(bindings.stream().allMatch(binding -> !binding.getIp().isBlank()));
-                api.logout(); assertEquals(0, api.whoAmI().getVirtualServerId());
-                assertTrue(api.whoAmI().getLoginName().isEmpty());
+                api.logout(); var loggedOut = api.whoAmI();
+                assertEquals(0, loggedOut.getVirtualServerId());
+                assertTrue(loggedOut.getLoginName().isEmpty());
                 api.login("serveradmin", TeamSpeakContainer.PASSWORD);
                 assertEquals("serveradmin", api.whoAmI().getLoginName());
                 api.selectVirtualServerById(1); assertEquals(1, api.whoAmI().getVirtualServerId());

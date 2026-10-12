@@ -2942,10 +2942,7 @@ public class TS3ApiAsync {
 	 */
 	public CompletableFuture<String> getOfflineMessage(int messageId) {
 		Command cmd = MessageCommands.messageGet(messageId);
-		CompletableFuture<String> future = CommandFutures.map(cmd.getFuture(),
-                result -> result.getFirstResponse().getMap().get("message"));
-        commandQueue.enqueueCommand(cmd);
-        return future;
+		return executeAndMapFirst(cmd, response -> response.getMap().get("message"));
 	}
 
 	/**
@@ -5623,21 +5620,19 @@ public class TS3ApiAsync {
 		return future;
 	}
 
-    private CompletableFuture<Integer> executeAndReturnCreatedId(Command command, String property) {
-        CompletableFuture<Integer> future = CommandFutures.map(command.getFuture(), result -> {
-            String value = result.getFirstResponse().getMap().get(property);
-            try {
-                int id = Integer.parseInt(value);
-                if (id <= 0) throw new NumberFormatException("nonpositive ID");
-                return id;
-            } catch (NumberFormatException failure) {
-                throw new TS3Exception(
-                    command.getName() + " response requires a positive " + property, failure);
-            }
-        });
-        commandQueue.enqueueCommand(command);
-        return future;
-    }
+	private CompletableFuture<Integer> executeAndReturnCreatedId(Command command, String property) {
+		return executeAndMapFirst(command, response -> {
+			String value = response.getMap().get(property);
+			try {
+				int id = Integer.parseInt(value);
+				if (id <= 0) throw new NumberFormatException("nonpositive ID");
+				return id;
+			} catch (NumberFormatException failure) {
+				throw new TS3Exception(
+						command.getName() + " response requires a positive " + property, failure);
+			}
+		});
+	}
 
 	private CompletableFuture<int[]> executeAndReturnIntArray(Command command, String property) {
 		CompletableFuture<int[]> future = CommandFutures.map(command.getFuture(),

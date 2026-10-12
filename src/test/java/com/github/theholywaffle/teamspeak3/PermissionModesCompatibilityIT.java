@@ -63,8 +63,9 @@ class PermissionModesCompatibilityIT {
                 assertEquals(0, api.whoAmI().getVirtualServerId(), "Permission reset clears query selection");
                 api.selectVirtualServerById(1);
                 assertTrue(api.getPrivilegeKeys().stream().anyMatch(key -> key.getToken().equals(token)));
-                assertTrue(api.getServerGroups().stream().noneMatch(group -> group.getName().equals("mode-auto") || group.getName().equals("mode-unrelated")));
-                assertTrue(api.getServerGroups().stream().anyMatch(group -> group.getName().equals("Server Admin")));
+                var restoredGroups = api.getServerGroups();
+                assertTrue(restoredGroups.stream().noneMatch(group -> group.getName().equals("mode-auto") || group.getName().equals("mode-unrelated")));
+                assertTrue(restoredGroups.stream().anyMatch(group -> group.getName().equals("Server Admin")));
                 assertFalse(api.getPermissions().isEmpty()); assertFalse(api.getVersion().getVersion().isBlank());
                 evidence.add("permission reset removed owned custom regular groups, restored defaults and returned an administrator key (redacted)");
                 query.exit();

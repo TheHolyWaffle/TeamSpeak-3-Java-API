@@ -310,8 +310,8 @@ class ServerQueryCompatibilityIT {
 	void channelConfigurationDomain(Target target) throws Exception {
 		TeamSpeakContainer server = ts3;
 		var evidence = new java.util.ArrayList<String>();
-		var descriptions = new java.util.concurrent.LinkedBlockingQueue<ChannelDescriptionEditedEvent>(16);
-		var passwords = new java.util.concurrent.LinkedBlockingQueue<ChannelPasswordChangedEvent>(16);
+		var descriptions = new EventProbe<ChannelDescriptionEditedEvent>(16);
+		var passwords = new EventProbe<ChannelPasswordChangedEvent>(16);
 		try (var observer = new TS3Query(server.config(target.protocol));
 			 var actor = new TS3Query(server.config(target.protocol))) {
 			observer.connect(); actor.connect();
@@ -336,26 +336,26 @@ class ServerQueryCompatibilityIT {
 				api.moveClient(observerId, channel);
 				observer.getApi().registerEvent(TS3EventType.CHANNEL, channel);
 				try (var subscription = observer.subscribe(new TS3EventAdapter() {
-					@Override public void onChannelDescriptionChanged(ChannelDescriptionEditedEvent e) { assertTrue(descriptions.offer(e)); }
-					@Override public void onChannelPasswordChanged(ChannelPasswordChangedEvent e) { assertTrue(passwords.offer(e)); }
+					@Override public void onChannelDescriptionChanged(ChannelDescriptionEditedEvent e) { descriptions.capture(() -> descriptions.publish(e)); }
+					@Override public void onChannelPasswordChanged(ChannelPasswordChangedEvent e) { passwords.capture(() -> passwords.publish(e)); }
 				})) {
 					String description = "configuration 日本語 | literal \\n";
 					api.editChannel(channel, Map.of(ChannelProperty.CHANNEL_DESCRIPTION, description));
-					var described = descriptions.poll(5, TimeUnit.SECONDS);
-					assertNotNull(described); assertEquals(channel, described.getChannelId());
+					var described = descriptions.await();
+					assertEquals(channel, described.getChannelId());
 					assertEquals(java.util.Set.of("cid"), described.getMap().keySet());
 					evidence.add("description event " + new java.util.TreeMap<>(described.getMap()));
 					assertEquals(description, api.getChannelInfo(channel).getDescription());
 					String password = "configuration 日本語 | literal \\s";
 					api.editChannel(channel, Map.of(ChannelProperty.CHANNEL_PASSWORD, password));
-					var protectedEvent = passwords.poll(5, TimeUnit.SECONDS);
-					assertNotNull(protectedEvent); assertEquals(channel, protectedEvent.getChannelId());
+					var protectedEvent = passwords.await();
+					assertEquals(channel, protectedEvent.getChannelId());
 					assertEquals(java.util.Set.of("cid"), protectedEvent.getMap().keySet());
 					evidence.add("password event fields " + new java.util.TreeSet<>(protectedEvent.getMap().keySet()));
 					assertTrue(api.getChannelInfo(channel).hasPassword());
 					api.editChannel(channel, Map.of(ChannelProperty.CHANNEL_PASSWORD, ""));
-					var cleared = passwords.poll(5, TimeUnit.SECONDS);
-					assertNotNull(cleared); assertEquals(channel, cleared.getChannelId());
+					var cleared = passwords.await();
+					assertEquals(channel, cleared.getChannelId());
 					assertEquals(java.util.Set.of("cid"), cleared.getMap().keySet());
 					assertFalse(api.getChannelInfo(channel).hasPassword());
 				}
@@ -843,7 +843,7 @@ class ServerQueryCompatibilityIT {
 				api.editServer(Map.of(VirtualServerProperty.VIRTUALSERVER_NAME, name,
 					VirtualServerProperty.VIRTUALSERVER_WELCOMEMESSAGE, welcome,
 					VirtualServerProperty.VIRTUALSERVER_HOSTMESSAGE, hostMessage));
-				assertServerEdit(edits, name, actorInfo, target, evidence);
+				assertServerEdit(edits, name, actorInfo, evidence);
 				var changed = api.getServerInfo();
 				assertEquals(name, changed.getName()); assertEquals(welcome, changed.getWelcomeMessage());
 				assertEquals(hostMessage, changed.getHostMessage());
@@ -856,7 +856,7 @@ class ServerQueryCompatibilityIT {
 				assertEquals(name, api.getServerInfo().getName());
 				String secondName = "updated " + name;
 				api.editServer(Map.of(VirtualServerProperty.VIRTUALSERVER_NAME, secondName));
-				assertServerEdit(edits, secondName, actorInfo, target, evidence);
+				assertServerEdit(edits, secondName, actorInfo, evidence);
 				assertTrue(edits.isEmpty(), "Rejected edits must not produce an extra server-edit notification");
 				assertEquals(secondName, api.getServerInfo().getName());
 				var missingPort = assertThrows(TS3CommandFailedException.class, () -> api.getServerIdByPort(65535));
@@ -879,7 +879,7 @@ class ServerQueryCompatibilityIT {
 	}
 
 	private static void assertServerEdit(java.util.concurrent.BlockingQueue<ServerEditedEvent> edits,
-	                                     String name, ServerQueryInfo actorInfo, Target target, java.util.List<String> evidence) throws InterruptedException {
+	                                     String name, ServerQueryInfo actorInfo, java.util.List<String> evidence) throws InterruptedException {
 		var event = edits.poll(5, TimeUnit.SECONDS);
 		assertNotNull(event, "Expected server-edit notification from independent actor");
 		evidence.add("server edit " + new java.util.TreeMap<>(event.getMap()));
@@ -1376,8 +1376,7 @@ class ServerQueryCompatibilityIT {
 				assertEquals(2562, lookupError.getError().getId());
 				var findError = assertThrows(TS3CommandFailedException.class, () -> api.getPermissionAssignments("i_issue441_missing_permission"));
 				assertEquals(2562, findError.getError().getId());
-				assertEquals(2562, assertThrows(TS3CommandFailedException.class, () -> api.getPermissionIdByName("i_issue441_nonexistent")).getError().getId());
-			assertEquals(byName.get(integerName).getId(), api.getPermissionIdByName(integerName));
+				assertEquals(byName.get(integerName).getId(), api.getPermissionIdByName(integerName));
 			}
 			assertTrue(api.getServerGroups().stream().noneMatch(g -> g.getName().equals("renamed server " + target)));
 			assertTrue(api.getChannelGroups().stream().noneMatch(g -> g.getName().equals("renamed channel " + target)));

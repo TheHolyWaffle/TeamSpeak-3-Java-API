@@ -69,8 +69,9 @@ class RestrictedClientCompatibilityIT {
                     }
                     try (var replacementQuery = new TS3Query(server.config(target.protocol).setLoginCredentials(replacement, password))) {
                         replacementQuery.connect(); var rotated = replacementQuery.getApi(); rotated.selectVirtualServerById(1);
-                        assertEquals(dbid, rotated.whoAmI().getDatabaseId());
-                        assertEquals(replacement, rotated.whoAmI().getLoginName()); replacementQuery.exit();
+                        var rotatedInfo = rotated.whoAmI();
+                        assertEquals(dbid, rotatedInfo.getDatabaseId());
+                        assertEquals(replacement, rotatedInfo.getLoginName()); replacementQuery.exit();
                     }
                     evidence.add("old credentials rejected; new credentials authenticated; exact/wildcard/absent login matching verified");
                 }
@@ -129,7 +130,8 @@ class RestrictedClientCompatibilityIT {
                 int temporary = actions.createChannel("owned-temporary", Map.of());
                 actions.moveClient(client.getId(), temporary);
                 assertEquals(temporary, actions.getClientInfo(client.getId()).getChannelId());
-                assertFalse(actions.getChannelInfo(temporary).isPermanent()); assertFalse(actions.getChannelInfo(temporary).isSemiPermanent());
+                var temporaryInfo = actions.getChannelInfo(temporary);
+                assertFalse(temporaryInfo.isPermanent()); assertFalse(temporaryInfo.isSemiPermanent());
                 actions.moveQuery(client.getChannelId());
                 assertEquals(1, actions.getClients().stream().filter(row -> row.getChannelId() == temporary).count(), "Only the regular fixture remains in the temporary channel");
                 actions.moveClient(client.getId(), client.getChannelId());

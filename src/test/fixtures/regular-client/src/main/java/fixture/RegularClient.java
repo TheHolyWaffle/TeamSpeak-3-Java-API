@@ -64,7 +64,7 @@ public final class RegularClient {
                     byte[] input = exchange.getRequestBody().readNBytes(8193);
                     if (input.length > 8192) throw new IllegalArgumentException("command too long");
                     String text = StandardCharsets.UTF_8.newDecoder().decode(java.nio.ByteBuffer.wrap(input)).toString();
-                    if (text.length() > 8192 || text.contains("\n") || text.contains("\r")) throw new IllegalArgumentException("invalid command");
+                    if (text.contains("\n") || text.contains("\r")) throw new IllegalArgumentException("invalid command");
                     var command = SingleCommand.parse(ProtocolRole.CLIENT, text);
                     if (!COMMANDS.contains(command.getName())) throw new IllegalArgumentException("command not permitted");
                     var response = new StringBuilder();

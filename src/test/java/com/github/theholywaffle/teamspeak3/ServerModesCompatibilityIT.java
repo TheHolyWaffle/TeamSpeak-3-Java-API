@@ -27,8 +27,10 @@ class ServerModesCompatibilityIT {
                 assertTrue(api.getChannelInfo(permanent).isDefault()); assertFalse(api.getChannelInfo(originalDefault).isDefault());
                 api.stopServer(1); assertEquals(VirtualServerStatus.OFFLINE, api.getVirtualServers().getFirst().getStatus());
                 api.startServer(1); api.selectVirtualServerByPort(api.getVirtualServers().getFirst().getPort(), "restart-query");
-                assertEquals(1, api.whoAmI().getVirtualServerId()); assertEquals("restart-query", api.whoAmI().getNickname());
-                assertTrue(api.getChannelInfo(permanent).isPermanent()); assertTrue(api.getChannelInfo(permanent).isDefault());
+                var restartedQuery = api.whoAmI();
+                assertEquals(1, restartedQuery.getVirtualServerId()); assertEquals("restart-query", restartedQuery.getNickname());
+                var restartedChannel = api.getChannelInfo(permanent);
+                assertTrue(restartedChannel.isPermanent()); assertTrue(restartedChannel.isDefault());
                 assertTrue(api.getChannels().stream().noneMatch(row -> row.getId() == semi));
                 api.editChannel(originalDefault, Map.of(ChannelProperty.CHANNEL_FLAG_DEFAULT, "1"));
                 assertTrue(api.getChannelInfo(originalDefault).isDefault()); api.deleteChannel(permanent, true);

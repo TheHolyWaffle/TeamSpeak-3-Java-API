@@ -263,8 +263,9 @@ class RegularClientCompatibilityIT {
                     try (var loginCleanup = new Cleanup(() -> api.deleteServerQueryLogin(client.getDatabaseId()));
                          var reader = new TS3Query(server.config(target.protocol).setLoginCredentials("regular-inbox", login.getQueryClientLoginPassword()))) {
                         reader.connect(); var inbox = reader.getApi(); inbox.selectVirtualServerById(1);
-                        assertEquals(client.getDatabaseId(), inbox.whoAmI().getDatabaseId());
-                        assertEquals(1, inbox.whoAmI().getOriginServerId());
+                        var inboxInfo = inbox.whoAmI();
+                        assertEquals(client.getDatabaseId(), inboxInfo.getDatabaseId());
+                        assertEquals(1, inboxInfo.getOriginServerId());
                         assertTrue(inbox.getOfflineMessages().isEmpty());
                         String subject = "offline 日本語 | literal \\s"; String body = "body 日本語 | literal \\n";
                         api.sendOfflineMessage(client.getUniqueIdentifier(), subject, body);
