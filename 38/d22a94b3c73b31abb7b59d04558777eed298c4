@@ -1,0 +1,24 @@
+src/main/java/com/github/theholywaffle/teamspeak3/PermissionApi.java
+  h_b0b95817cb397c 117-127
+src/main/java/com/github/theholywaffle/teamspeak3/PermissionApiAsync.java
+  h_b0b95817cb397c 80-84
+src/test/java/com/github/theholywaffle/teamspeak3/CommonWorkflow.java
+  h_b0b95817cb397c 1-43
+src/test/java/com/github/theholywaffle/teamspeak3/CommonWorkflowTest.java
+  h_b0b95817cb397c 1-63
+src/test/java/com/github/theholywaffle/teamspeak3/DomainApiParityTest.java
+  h_b0b95817cb397c 1-82
+src/test/java/com/github/theholywaffle/teamspeak3/DomainApiTest.java
+  h_b0b95817cb397c 1-164
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "38d22a94b3c73b31abb7b59d04558777eed298c4",
+  "prompts": {},
+  "humans": {
+    "h_b0b95817cb397c": {
+      "author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
