@@ -60,8 +60,8 @@ key-use notifications; it does not verify successful consumption payloads.
 
 Do not infer regular/voice-client behavior from serveradmin query sessions.
 Successful key consumption, one-time deletion, resulting membership, custom client
-metadata and `PrivilegeKeyUsedEvent` field decoding require a separate suitable
-regular-client fixture or manual evidence. No Testcontainers guarantee is made
+metadata and `PrivilegeKeyUsedEvent` field decoding require evidence from the
+official TeamSpeak client. No Testcontainers guarantee is made
 for those operations.
 
 ## Fields, errors and migration

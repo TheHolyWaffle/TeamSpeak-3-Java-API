@@ -28,8 +28,7 @@ jobs:
           docker version
           docker info --format '{{.Architecture}}'
           docker buildx imagetools inspect teamspeak:3.13.8@sha256:6dfdfb22869adf50e1b66d024b360b786d57a85ea09e8e8fdb6cca23949b2813
-          docker buildx imagetools inspect eclipse-temurin:25-jre@sha256:fcd7fd7b387f94bb2ac461478a7436ad8e349924c374ea8313919624dceae636
-      - name: Run required authenticated ServerQuery and regular-client suite
+      - name: Run required authenticated ServerQuery suite
         shell: bash
         run: |
           set -o pipefail
@@ -45,7 +44,5 @@ jobs:
             target/ci-logs/
             target/failsafe-reports/
             target/surefire-reports/
-            target/fixtures/regular-client/target/surefire-reports/
-            target/fixtures/regular-client/build.log
           if-no-files-found: error
           retention-days: 14

@@ -7,12 +7,6 @@ server, persistent data, query account or SSH trust file is needed:
 ./mvnw -B -ntp -Pintegration verify
 ```
 
-The profile also builds an isolated [headless regular-client fixture](regular-client-compatibility.md)
-with Maven Invoker and runs it inside a digest-pinned Java 25 container on a private
-Docker network. Dependency resolution requires Maven Central and JitPack access.
-No desktop, installed client, personal identity, audio hardware or manual action is needed.
-Fixture crypto regression reports and Invoker build logs are uploaded with CI evidence.
-
 The default `./mvnw -B -ntp verify` runs fast Surefire tests without starting
 Docker. The integration profile adds Failsafe `*IT` tests; use `verify`, not just
 `integration-test`, so failures fail the build. Docker absence, image pull or

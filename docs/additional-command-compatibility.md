@@ -39,42 +39,24 @@ A second concurrently running server is rejected with 2816 by the bundled licens
 licensed multi-running-server operation is not claimed. `processStop` verifies the
 typed instance-stop command terminates the owned server/query within five seconds.
 
-## Moderation and enforced bans
-
-`RegularClientCompatibilityIT.movesKicksAndClientBans` uses a full UDP client and
-independent query actor/observer. Incorrect channel passwords return exact error
-781; SHA-1/base64 passwords permit UDP self-moves, while typed query bulk moves take
-plaintext. Channel kicks return reason 4, bans reason 6 and server kicks reason 5,
-with exact decoded reasons and actor IDs. Ban rules are listed and bulk-deleted.
-A fresh client connection fails while an owned nickname ban exists and another
-fresh client connects after its removal. The fixture does not expose a ban-specific
-error code for this handshake failure. This does not claim reconnecting the same banned UID/IP fixture.
-Fixture command failures expose a typed error ID; callback and socket waits are bounded.
-
 Reports are under `target/compatibility/*-file-contents.txt`, `*-permission-modes.txt`,
-`*-server-modes.txt`, `*-process-stop.txt`, and `*-regular-actions.txt`.
+`*-server-modes.txt` and `*-process-stop.txt`.
 Server help/output and assertions define the tested operations; arbitrary property
 combinations, licensed concurrency and all possible permissions are not implied.
 
-## Restricted accounts, credentials and temporary channels
-
-`RestrictedClientCompatibilityIT.deniedOperationsAndCredentialRotation` authenticates
-an owned server-bound query account for the UDP client's persistent identity.
-Server-name edits and virtual-server log reads fail with 2568; `failed_permid` is
-resolved through administrator metadata by name, and rejected edits leave state
-unchanged. Granting the named own-login permission allows `clientsetserverquerylogin`
-to replace credentials. The existing session stays usable; old name and old password fail,
-new credentials authenticate, and query-login matching uses SQL `%`, not shell `*`. One-row offset/limit windows recover the
-owned login and then an empty next page.
-
-`channelKeyCustomMetadataAndTemporaryLifetime` consumes a channel-group key via the
-full UDP client, verifies membership, event identity/type/channel and double-encoded
-custom-property text. Consuming the used key again fails with exact error 3840.
-It creates a temporary channel, moves the client in/out and observes automatic deletion
-from a separately subscribed query session; subsequent `channelinfo` returns 768.
-Channel notifications require the CHANNEL subscription, not SERVER alone.
+## Session commands
 
 `SessionCommandsCompatibilityIT.logoutAndRelogin` verifies nonempty binding-list IP rows and explicit logout clears
 server context and login, then same-stream login restores administrator access on
-RAW and SSH. All error branches leave framing usable or produce an authentication-
-specific connection failure (RAW 520 / SSH UserAuthException), without logging secrets.
+RAW and SSH.
+
+## Remaining regular-client coverage
+
+Regular-client moves, kicks, ban enforcement, persistent client administration,
+complaints, custom properties, successful privilege-key consumption and events,
+offline-message CRUD, poke/broadcast receipt and temporary-channel deletion after
+the last regular client leaves are unverified by the automated integration suite.
+Server-bound restricted query accounts, own-login credential replacement and denied
+operations also lack current live evidence. These require verification with the
+official TeamSpeak client where a regular client is needed; query-only tests do not
+establish those behaviors.

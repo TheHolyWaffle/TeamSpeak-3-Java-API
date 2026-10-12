@@ -7,7 +7,8 @@
 Task #441 verifies the library's ServerQuery command families and notifications
 against TS3. Previously merged #465–#476 and the final accumulated #477 changes
 provide evidence; historical TS6 observations are not part of current acceptance.
-Each operation below has executed tests, including expected rejection boundaries.
+The inventory distinguishes executed tests, expected rejection boundaries and
+remaining coverage gaps.
 Help alone or a similar method name does not establish compatibility.
 
 ## Exact targets and evidence
@@ -31,23 +32,23 @@ Local Apple Silicon uses emulated amd64 TS3; CI tests amd64.
 | Domain | Verified operations on TS3 RAW and SSH | Explicit boundaries / follow-up |
 | --- | --- | --- |
 | Servers | Info/list/port selection, host/instance/connection/binding metadata; configuration edits and independent edit events; owned create/start/stop/delete, snapshots, instance edits, restart/default-channel persistence and process stop | Bundled license rejects a second concurrently running server with 2816; licensed concurrency is not claimed. [Server](server-compatibility.md), [lifecycle](server-lifecycle-compatibility.md), [snapshot](server-snapshot-compatibility.md), [additional evidence](additional-command-compatibility.md) |
-| Channels | Permanent/semi-permanent/temporary/default creation and lifetime; list/info/find/edit/move/delete; Unicode/escape text, password flags and actual password moves, capacity/Opus metadata, description/password and create/edit/move/delete events | Generic property editing does not imply every combination or desktop rendering. Invalid flags 775; invalid quality permission 2568; deleted channel 768. [Configuration](channel-configuration-compatibility.md), [temporary lifetime](additional-command-compatibility.md) |
-| Clients | Query-client CRUD and independent join/move/leave; full UDP regular-client join/leave; persistent database/UID/custom properties; bulk/password moves, channel/server kicks, bans and complaints | Query whoami database IDs are not persistent regular identities. Full UDP fixture has no audio source and is not desktop-client feature parity. [Client](client-compatibility.md), [regular client](regular-client-compatibility.md), [moderation](additional-command-compatibility.md) |
-| Permissions/groups | Server metadata/name/ID/effective-value lookup and search; all five permission scopes; overview/memberships; regular/template/query server groups; regular/template channel groups; copies/overwrite/rename/delete; automatic add/delete/reset; denied-account metadata | Query channel-group creation rejected1538 despite help. Permission IDs come from server metadata, never embedded universal constants. Reset clears selection; reselect before server-specific commands. [Permission](permission-compatibility.md), [copies](group-copy-compatibility.md), [modes](additional-command-compatibility.md) |
-| Messages/events | Independent-session server/channel/private messages, overlapping subscriptions and unregister/re-register; regular-client actual poke/broadcast receipts; offline message CRUD/read flags; successful single-use server/channel keys and events/custom properties | Absent offline body is null; empty body remains empty. Used regular-client key returns3840. Query-client key use rejects516. Voice/audio and screen sharing are outside ServerQuery scope. [Message](message-compatibility.md), [regular client](regular-client-compatibility.md), [channel keys](additional-command-compatibility.md) |
+| Channels | Permanent/semi-permanent/default configuration; list/info/find/edit/move/delete; Unicode/escape text, password flags, capacity/Opus metadata, description/password and create/edit/move/delete events; restart persistence | Temporary-channel lifetime and regular-client password enforcement are unverified. Invalid flags 775; invalid quality permission 2568; deleted channel 768. [Configuration](channel-configuration-compatibility.md), [additional evidence](additional-command-compatibility.md) |
+| Clients | Query-client CRUD and independent join/move/leave | Regular-client administration, persistent database/UID/custom properties, bulk/password moves, kicks, ban enforcement and complaints are unverified. Query whoami database IDs are not persistent regular identities. [Client](client-compatibility.md), [remaining coverage](additional-command-compatibility.md#remaining-regular-client-coverage) |
+| Permissions/groups | Server metadata/name/ID/effective-value lookup and search; channel/server-group/channel-group permission assignments; regular/template/query server groups; regular/template channel groups; copies/overwrite/rename/delete; automatic add/delete/reset | Positive client/channel-client permissions, overview, regular-client memberships and restricted-account behavior are unverified. Query channel-group creation rejected1538 despite help. Permission IDs come from server metadata. Reset clears selection. [Permission](permission-compatibility.md), [copies](group-copy-compatibility.md), [modes](additional-command-compatibility.md) |
+| Messages/events | Independent-session server/channel/private messages, overlapping subscriptions and unregister/re-register; privilege-key create/list/delete and rejected query-client consumption | Regular-client poke/broadcast receipt, offline-message CRUD and successful key consumption/events/custom properties are unverified. Scripted tests distinguish absent and empty offline bodies. Query-client key use rejects516. Voice/audio and screen sharing are outside ServerQuery scope. [Message](message-compatibility.md), [privilege keys](privilege-key-compatibility.md) |
 | Files | Directory create/list/rename/move/delete; positive scalar/two-file bulk metadata; Unicode content upload/exact download; active-transfer owner/ID/state and stop; icon CRC/list/download/delete | Bounded test sockets explicitly adapt Docker endpoint. Production helper reliability, resume/cancellation/length limits/NAT remain #442. [Directory](file-compatibility.md), [content evidence](additional-command-compatibility.md) |
-| Administrative utilities | Query-login create/list/auth/delete/replacement, SQL pattern matching; explicit logout/re-login; ban CRUD/client enforcement condition/bulk delete, complaints; four custom log severities/routing/reverse/cursor continuation and denied log reads | Nickname-ban test observes connection failure with rule present and success after removal; no ban-specific handshake code or same-UID reconnect guarantee. Log windows are not durability, rotation or a full-file guarantee. [Login](query-login-compatibility.md), [ban](ban-compatibility.md), [log](log-compatibility.md), [additional evidence](additional-command-compatibility.md) |
+| Administrative utilities | Global query-login create/list/auth/delete; explicit logout/re-login; ban-rule CRUD; four custom log severities/routing/reverse/cursor continuation | Server-bound login replacement, restricted-account denied operations, client ban enforcement and complaints are unverified. Log windows are not durability, rotation or a full-file guarantee. [Login](query-login-compatibility.md), [ban](ban-compatibility.md), [log](log-compatibility.md), [additional evidence](additional-command-compatibility.md) |
 
-The [complete protocol-builder mapping](command-coverage-map.md) accounts for every
-command family in production, including expected unsupported outcomes. Remaining
-release checks are kept explicitly in PR #477 until green at final HEAD. Future API
+The [protocol-builder mapping](command-coverage-map.md) lists every command family
+in production, including expected unsupported outcomes and unverified operations.
+Remaining release checks are kept explicitly in PR #477 until green at final HEAD. Future API
 facades/models and production transfer reliability keep their own #443/#444/#442 scope.
 
 Existing query probes are in `ServerQueryCompatibilityIT`; scripted codec, lifecycle,
 queue and event tests remain regression evidence, not live command acceptance.
-`RegularClientCompatibilityIT` tests actual regular-client join/leave behavior through
-the full UDP protocol. Query-only tests provide no such guarantee; neither suite
-claims audio transmission or official desktop-client feature compatibility.
+There is no regular-client fixture in the automated suite. Behaviors requiring a
+regular client need verification with the official TeamSpeak client. Query-only
+tests provide no guarantee of those behaviors or audio transmission.
 
 ## Observed channel differences and errors
 
@@ -105,6 +106,10 @@ order instead of incorrectly returning `-1`. Consumers that treated every move
 order as absent should use the real sibling ID or zero. No other channel model
 schema/default changes are introduced. The permission slice intentionally removes embedded enum IDs and corrects unknown-name
 errors; see its [breaking migration notes](permission-compatibility.md#migration-for-200).
+Scripted `OfflineMessageTest` preserves the distinction between an absent body
+(`null`) and an explicit empty body (`""`); this is not live offline-message CRUD
+acceptance. `CreatedIdTest` verifies that missing, malformed, zero or negative
+creation IDs fail with `TS3Exception`, rather than reaching a subsequent command.
 Remaining operations stay within the same #441 implementation PR before it can be closed.
 
 Tool documentation reviewed: [JUnit parameterized tests](https://docs.junit.org/6.1.3/overview.html),

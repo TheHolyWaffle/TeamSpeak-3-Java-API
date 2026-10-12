@@ -73,7 +73,7 @@ of semi-permanent channels, password verification/enforcement, client/family lim
 enforcement, denied roles, other codecs/quality boundaries, encrypted audio,
 banners, delay timers and other property combinations remain unverified. Opus
 settings here are ServerQuery metadata only, not voice encoding/audio evidence.
-Actual voice clients need a suitable fixture/manual verification. TS6 RAW and Web
+Actual voice-client behavior needs verification with the official TeamSpeak client. TS6 RAW and Web
 Query remain unclaimed; other #441 gaps stay in the overall inventory.
 
 Reviewed official [TS6 beta13.1 release notes](https://github.com/teamspeak/teamspeak6-server/releases/tag/v6.0.0-beta13.1),
