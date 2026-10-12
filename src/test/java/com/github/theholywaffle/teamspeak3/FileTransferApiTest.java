@@ -54,6 +54,48 @@ class FileTransferApiTest {
         }
     }
 
+    @Test void startupIconPreparationUsesStartupAdmissionEvenWhenApplicationQueueIsFull() throws Exception {
+        byte[] bytes = {7}; long iconId = FileTransferHelper.getIconId(bytes);
+        var received = new CompletableFuture<byte[]>();
+        try (var files = new ServerSocket(0, 1, InetAddress.getLoopbackAddress());
+             var peer = new FakeServerQuery(p -> {
+                 p.expect("ftinitupload clientftfid=0 name=\\/icon_" + iconId + " cid=0 cpw= size=1 overwrite=0 resume=0 proto=0");
+                 response(p, files.getLocalPort(), "seekpos=0"); nextQuery(p);
+             }); var query = new TS3Query(config(peer.port()).setCommandCapacity(1).setConnectionHandler(
+                 new com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler() {
+                     @Override public void onConnect(TS3Api api) {
+                         assertEquals(iconId, api.uploadIcon(new ByteArrayInputStream(bytes), bytes.length));
+                     }
+                     @Override public void onDisconnect(TS3Query query) { }
+                 }))) {
+            files.setSoTimeout(2000);
+            var server = Thread.ofVirtual().start(() -> {
+                try (var socket = files.accept()) {
+                    socket.setSoTimeout(2000); assertEquals('k', socket.getInputStream().read());
+                    received.complete(socket.getInputStream().readAllBytes());
+                } catch (Throwable failure) { received.completeExceptionally(failure); }
+            });
+            var pending = query.getAsyncApi().whoAmI(); assertEquals(0, query.commandAdmission(true).availablePermits());
+            query.connect(); assertEquals(42, pending.get(2, TimeUnit.SECONDS).getId());
+            assertArrayEquals(bytes, received.get(2, TimeUnit.SECONDS)); FutureAssertions.awaitCommandAdmission(query);
+            query.exit(); peer.await(); server.join(2000); assertFalse(server.isAlive());
+        }
+    }
+
+    @Test void completedIconPreparationsDoNotAccumulateDelayedTimers() throws Exception {
+        try (var query = new TS3Query(config(1))) {
+            for (int count = 0; count < 16; count++) {
+                assertThrows(TS3FileTransferFailedException.class, () -> CommandFutures.join(
+                    query.getAsyncApi().uploadIcon(InputStream.nullInputStream(), 1)));
+            }
+            FutureAssertions.awaitCommandAdmission(query);
+            var field = TS3Query.class.getDeclaredField("deadlines"); field.setAccessible(true);
+            var scheduler = (ScheduledThreadPoolExecutor) field.get(query);
+            assertTrue(scheduler.getQueue().size() <= 1,
+                "Only the periodic query deadline task may remain; completed file timers must be removed");
+        }
+    }
+
     @Test void unsentCancellationDoesNotResolveOrOpenFileSocket() throws Exception {
         var calls = new AtomicInteger();
         try (var peer = new FakeServerQuery(FileTransferApiTest::nextQuery);

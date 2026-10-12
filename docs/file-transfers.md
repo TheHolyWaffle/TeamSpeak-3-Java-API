@@ -111,7 +111,8 @@ Loopback tests independently check single/list/wildcard/IPv6 host selection,
 negative and malformed lengths/seek positions, premature/surplus EOF, nonprogress,
 TCP backlog connect timeout, read/total deadlines, blocked writes, pre-init/active
 cancellation, late-response alignment, bounded icon preparation, shutdown and
-admission retained by uncooperative caller code. Existing command/content/icon
+admission retained by uncooperative caller code, independent startup admission for
+icon preparation and prompt removal of completed deadline tasks. Existing command/content/icon
 compatibility tests remain part of the full suite.
 
 Breaking changes for 2.0: finite file deadlines, a default 16 MiB in-memory limit,

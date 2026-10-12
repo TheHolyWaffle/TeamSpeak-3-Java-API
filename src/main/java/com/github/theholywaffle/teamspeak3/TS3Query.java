@@ -39,7 +39,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -121,7 +121,7 @@ public class TS3Query implements AutoCloseable {
 	/** Observable lifecycle. CLOSED is terminal; DISCONNECTED may reconnect. */
 	public enum State { NEW, CONNECTING, CONNECTED, DISCONNECTED, CLOSING, CLOSED }
 	private final AtomicReference<State> state = new AtomicReference<>(State.NEW);
-	private final ScheduledExecutorService deadlines;
+	private final ScheduledThreadPoolExecutor deadlines;
 	private final ThreadLocal<Boolean> userTask = ThreadLocal.withInitial(() -> false);
 	private final ThreadLocal<Boolean> initializing = ThreadLocal.withInitial(() -> false);
 	private volatile Connection connection;
@@ -156,8 +156,9 @@ public class TS3Query implements AutoCloseable {
 			Thread.ofVirtual().name("[TeamSpeak-3-Java-API] Callback-", 0).factory());
 		this.completions = Executors.newSingleThreadExecutor(
 			Thread.ofVirtual().name("[TeamSpeak-3-Java-API] Completions").factory());
-		this.deadlines = Executors.newSingleThreadScheduledExecutor(
+		this.deadlines = new ScheduledThreadPoolExecutor(1,
 			Thread.ofPlatform().name("[TeamSpeak-3-Java-API] Deadlines").factory());
+		this.deadlines.setRemoveOnCancelPolicy(true);
 		this.fileTransferHelper = new FileTransferHelper(config.getHost(), config.getFileTransferConfig(), deadlines);
 		this.connectionHandler = config.getReconnectStrategy().create(config.getConnectionHandler());
 		this.globalQueue = CommandQueue.newGlobalQueue(this, !isReconnectEnabled());

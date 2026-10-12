@@ -137,6 +137,7 @@ class FileTransferHelper implements AutoCloseable {
 				try { socket.close(); } catch (IOException ignored) { }
 			}
 			worker = null;
+			onAbort = null;
 			operations.remove(this);
 		}
 	}

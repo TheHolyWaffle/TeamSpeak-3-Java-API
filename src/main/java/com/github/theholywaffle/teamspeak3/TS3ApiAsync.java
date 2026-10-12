@@ -5453,7 +5453,7 @@ public class TS3ApiAsync {
 	public CompletableFuture<Long> uploadIcon(InputStream dataIn, long dataLength) {
 		java.util.Objects.requireNonNull(dataIn, "dataIn");
 		if (dataLength < 0) throw new IllegalArgumentException("Negative icon length");
-		var admission = query.commandAdmission(true);
+		var admission = query.commandAdmission(commandQueue.isGlobal());
 		if (!admission.tryAcquire()) return CompletableFuture.failedFuture(new TS3QueueFullException());
 		var helper = query.getFileTransferHelper();
 		var operation = helper.newOperation();
