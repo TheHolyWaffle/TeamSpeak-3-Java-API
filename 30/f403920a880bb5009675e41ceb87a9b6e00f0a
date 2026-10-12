@@ -1,0 +1,158 @@
+docs/events-and-capacity.md
+  s_d757b21d401e7e::t_12e67af4241888 75
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/FileInfo.java
+  s_d757b21d401e7e::t_c92ab86aefe9e7 97
+docs/regular-client-compatibility.md
+  s_d757b21d401e7e::t_1384938dffbc62 14-15
+  s_d757b21d401e7e::t_7674e0e1922587 3-6,34
+src/main/java/com/github/theholywaffle/teamspeak3/QueryTransports.java
+  s_d757b21d401e7e::t_aac2f503570fc2 3,8-9,15
+src/test/java/com/github/theholywaffle/teamspeak3/PermissionModesCompatibilityIT.java
+  s_d757b21d401e7e::t_deeacbb5c80656 59-61
+  s_d757b21d401e7e::t_aac2f503570fc2 19
+  s_d757b21d401e7e::t_2123750c880a76 1-4,6-18,20-22,24-29,31-33,35-37,39,41-43,45-52,58,62,65-77
+  s_d757b21d401e7e::t_acd93862279142 5,30,34,40,44,53-57
+  s_d757b21d401e7e::t_7524d4ccd425a1 63-64
+  s_d757b21d401e7e::t_260f821fcf2ae5 23,38
+src/test/java/com/github/theholywaffle/teamspeak3/ServerSnapshotCompatibilityIT.java
+  s_d757b21d401e7e::t_aac2f503570fc2 22
+src/main/java/com/github/theholywaffle/teamspeak3/TS3ApiAsync.java
+  s_d757b21d401e7e::t_aac2f503570fc2 5455,5481
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Api.java
+  s_d757b21d401e7e::t_aac2f503570fc2 4789,4812
+src/test/java/com/github/theholywaffle/teamspeak3/DevelopmentServerIT.java
+  s_d757b21d401e7e::t_aac2f503570fc2 21,50
+src/test/java/com/github/theholywaffle/teamspeak3/QueryConfigurationTest.java
+  s_d757b21d401e7e::t_aac2f503570fc2 53-55,69,89
+docs/file-compatibility.md
+  s_d757b21d401e7e::t_1384938dffbc62 96-99
+  s_d757b21d401e7e::t_c92ab86aefe9e7 59,81-86
+  s_d757b21d401e7e::t_310aa0b1fba509 3-7
+docs/channel-configuration-compatibility.md
+  s_d757b21d401e7e::t_1384938dffbc62 67-70
+  s_d757b21d401e7e::t_97ca3360c184f4 3-7
+src/test/java/com/github/theholywaffle/teamspeak3/FileContentCompatibilityIT.java
+  s_d757b21d401e7e::t_acd93862279142 5,33,37,57,59-60,81-82,90-91,101-132
+  s_d757b21d401e7e::t_7dc55a7aec5ec1 1-4,6-20,23-30,36,38-43,56,58,61-65,78,94-100,133-141
+  s_d757b21d401e7e::t_aac2f503570fc2 21-22
+  s_d757b21d401e7e::t_22a7a514d78fe9 44-55,86,93
+  s_d757b21d401e7e::t_2360e21fd3e4a2 66-77,79-80,87-89,92
+  s_d757b21d401e7e::t_423a85a9795434 31-32,34-35,83-85
+src/test/java/com/github/theholywaffle/teamspeak3/TeamSpeakContainer.java
+  s_d757b21d401e7e::t_aac2f503570fc2 37-38,41-47,55,132
+docs/configuration-and-transports.md
+  s_d757b21d401e7e::t_c92ab86aefe9e7 39-40
+  s_d757b21d401e7e::t_7627b89b56a6d8 29-38,90,93
+docs/command-coverage-map.md
+  s_d757b21d401e7e::t_09dfc09dcd4e9e 1-23,25-40
+  s_d757b21d401e7e::t_139847103ffc4d 24
+docs/server-lifecycle-compatibility.md
+  s_d757b21d401e7e::t_1384938dffbc62 72-75
+  s_d757b21d401e7e::t_163ccf2fad8193 3-7
+docs/server-snapshot-compatibility.md
+  s_d757b21d401e7e::t_1384938dffbc62 8
+  s_d757b21d401e7e::t_49f428ea3fe529 3-6,22
+.github/workflows/compatibility.yml
+  s_d757b21d401e7e::t_aac2f503570fc2 7
+src/test/java/com/github/theholywaffle/teamspeak3/api/wrapper/FileInfoTest.java
+  s_d757b21d401e7e::t_c92ab86aefe9e7 6,9-14
+src/test/java/com/github/theholywaffle/teamspeak3/LogWriteCompatibilityIT.java
+  s_d757b21d401e7e::t_07e17a438c1a35 5,10,17,28,31,34-38,41-62,70-73
+  s_d757b21d401e7e::t_aac2f503570fc2 22
+  s_d757b21d401e7e::t_6e55626e32ea6a 1-3,6-9,11-16,18-21,23-27,33,64-69,74-75
+  s_d757b21d401e7e::t_acd93862279142 4,29-30,32
+  s_d757b21d401e7e::t_6ed134d3c20bde 39-40
+  s_d757b21d401e7e::t_89ac6b55a22413 63
+src/test/java/com/github/theholywaffle/teamspeak3/RegularClientCompatibilityIT.java
+  s_d757b21d401e7e::t_f981c23e960b3b 159,161-162,170
+  s_d757b21d401e7e::t_a3f88cd72d5cfb 25-30,160,211
+  s_d757b21d401e7e::t_deeacbb5c80656 186
+  s_d757b21d401e7e::t_aac2f503570fc2 35,130-134,217
+  s_d757b21d401e7e::t_2ca2729435ac21 135-158,163-169,171-185,187-210,212
+src/test/java/com/github/theholywaffle/teamspeak3/RestrictedClientCompatibilityIT.java
+  s_d757b21d401e7e::t_12e67af4241888 1-32,35-42,44-46,48-55,62-65,70-100,102-122,124-132,135-155
+  s_d757b21d401e7e::t_22a7a514d78fe9 66-69
+  s_d757b21d401e7e::t_139847103ffc4d 47,58-61
+  s_d757b21d401e7e::t_04ae68550d37c9 33,43
+  s_d757b21d401e7e::t_09ba990543495d 34,56-57,101,123,133-134
+docs/privilege-key-compatibility.md
+  s_d757b21d401e7e::t_1384938dffbc62 97-100
+  s_d757b21d401e7e::t_509c9a546205a1 3-7
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Config.java
+  s_d757b21d401e7e::t_aac2f503570fc2 490
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryCompatibilityIT.java
+  s_d757b21d401e7e::t_c92ab86aefe9e7 614
+  s_d757b21d401e7e::t_12e67af4241888 1193,1196,1202,1213,1297,1326,1379-1380
+  s_d757b21d401e7e::t_aac2f503570fc2 70,1023,1091,1141
+  s_d757b21d401e7e::t_7a7843636fc096 59,61,75,81,88,110,131-132,165,221,311,409,469,565,600-604,641-642,645-646,663,791,889-890,903,1456,1458,1467,1469
+src/test/java/com/github/theholywaffle/teamspeak3/DevelopmentServer.java
+  s_d757b21d401e7e::t_aac2f503570fc2 12,14,16,25
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryProtocolTest.java
+  s_d757b21d401e7e::t_aac2f503570fc2 34
+docs/additional-command-compatibility.md
+  s_d757b21d401e7e::t_139847103ffc4d 66-77
+  s_d757b21d401e7e::t_deeacbb5c80656 9-51
+  s_d757b21d401e7e::t_a3c10cb3fe1611 1-8,52-65,78-80
+src/test/java/com/github/theholywaffle/teamspeak3/ServerModesCompatibilityIT.java
+  s_d757b21d401e7e::t_8c4a4f40bf4e57 1-18,20-35,37-48,50-64
+  s_d757b21d401e7e::t_aac2f503570fc2 19,49
+  s_d757b21d401e7e::t_8f1899925a8549 36
+docs/log-compatibility.md
+  s_d757b21d401e7e::t_362771b68ea9be 39-45,47-52,83
+  s_d757b21d401e7e::t_1384938dffbc62 78-81
+  s_d757b21d401e7e::t_3fc345a6a422b7 3-7,54-59
+src/main/java/com/github/theholywaffle/teamspeak3/QueryConfig.java
+  s_d757b21d401e7e::t_aac2f503570fc2 65-66,119
+docs/client-compatibility.md
+  s_d757b21d401e7e::t_1384938dffbc62 87-90
+  s_d757b21d401e7e::t_90fe297cc23737 3-7
+docs/server-compatibility.md
+  s_d757b21d401e7e::t_1384938dffbc62 114-117
+  s_d757b21d401e7e::t_65067c3cf368f3 3-6
+src/test/fixtures/regular-client/src/main/java/fixture/RegularClient.java
+  s_d757b21d401e7e::t_f2a0dafc40f531 78-79
+src/main/java/com/github/theholywaffle/teamspeak3/QueryTransportFactory.java
+  s_d757b21d401e7e::t_aac2f503570fc2 10-11
+docs/query-login-compatibility.md
+  s_d757b21d401e7e::t_1384938dffbc62 73-76
+  s_d757b21d401e7e::t_b2e6e321770410 3-7
+docs/command-compatibility.md
+  s_d757b21d401e7e::t_139847103ffc4d 27
+  s_d757b21d401e7e::t_09dfc09dcd4e9e 7-11,31,33-39,41-44
+  s_d757b21d401e7e::t_efbc96a44da6f3 3-6,18,55
+src/test/java/com/github/theholywaffle/teamspeak3/SessionCommandsCompatibilityIT.java
+  s_d757b21d401e7e::t_139847103ffc4d 12-30
+  s_d757b21d401e7e::t_6c97145f2869db 3-11,31-33
+README.md
+  s_d757b21d401e7e::t_db558f0ae90155 137,147,157,195-196
+docs/ban-compatibility.md
+  s_d757b21d401e7e::t_0c58a9356cebfc 3-7,37
+docs/development-server.md
+  s_d757b21d401e7e::t_8231e44a5bbb16 10,22,36,55-57
+docs/group-copy-compatibility.md
+  s_d757b21d401e7e::t_b540cea3319043 3-7
+docs/integration-tests.md
+  s_d757b21d401e7e::t_a06beb394b85c8 36,39-40,56,67,77-80,88,100,110-112
+docs/message-compatibility.md
+  s_d757b21d401e7e::t_6286679a0f37a6 3-6,52
+docs/permission-compatibility.md
+  s_d757b21d401e7e::t_1010d93eb1bbf1 3-6,33
+src/test/java/com/github/theholywaffle/teamspeak3/RegularClientContainer.java
+  s_d757b21d401e7e::t_f285effdbfc712 30-35,54-56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "30f403920a880bb5009675e41ceb87a9b6e00f0a",
+  "prompts": {},
+  "sessions": {
+    "s_d757b21d401e7e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12770-2877-7903-ba65-0fe168e7f6f9",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
