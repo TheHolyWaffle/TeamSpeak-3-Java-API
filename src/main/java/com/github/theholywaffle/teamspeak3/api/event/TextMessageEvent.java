@@ -58,7 +58,7 @@ public class TextMessageEvent extends BaseEvent {
 	 * @return the client ID of the recipient
 	 */
 	public Optional<ClientId> getTargetClientId() {
-		return find("target").isEmpty() ? Optional.empty() : Optional.of(requireClientId("target"));
+		return findClientId("target");
 	}
 
 	@Override

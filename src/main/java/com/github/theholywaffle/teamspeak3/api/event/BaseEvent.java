@@ -53,7 +53,7 @@ public abstract class BaseEvent extends Wrapper implements TS3Event {
 	 * @return the client ID of the invoker, or empty if the event does not contain an invoker
 	 */
 	public Optional<ClientId> getInvokerId() {
-		return find("invokerid").isEmpty() ? Optional.empty() : Optional.of(requireClientId("invokerid"));
+		return findClientId("invokerid");
 	}
 
 	/**

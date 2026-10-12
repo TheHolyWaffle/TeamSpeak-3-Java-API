@@ -225,7 +225,7 @@ public class TS3Api {
 	}
 
 	/**
-	 * Changes properties of this query client. Use {@link ClientApi#edit(int, Map)} for other clients.
+	 * Changes properties of this query client. Use {@link ClientApi#edit(com.github.theholywaffle.teamspeak3.api.ClientId, Map)} for other clients.
 	 *
 	 * @param properties the properties to change
 	 */

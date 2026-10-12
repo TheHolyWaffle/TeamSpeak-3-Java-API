@@ -94,176 +94,401 @@ public class Wrapper {
 		return map;
 	}
 
-	/** @return the raw value, or empty if the property is missing */
+	/**
+	 * Gets a property's raw value.
+	 *
+	 * @param propertyName the property name
+	 * @return the raw value, or empty if the property is missing
+	 */
 	public final Optional<String> find(String propertyName) {
 		return Optional.ofNullable(map.get(propertyName));
 	}
 
-	/** @return the raw value, or empty if the property is missing */
+	/**
+	 * Gets a property's raw value.
+	 *
+	 * @param property the property
+	 * @return the raw value, or empty if the property is missing
+	 */
 	public final Optional<String> find(Property property) {
 		return find(property.getName());
 	}
 
-	/** @throws TS3InvalidValueException if the property is missing */
+	/**
+	 * Gets a property's raw value, which must be present.
+	 *
+	 * @param propertyName the property name
+	 * @return the raw value, possibly empty
+	 * @throws TS3InvalidValueException if the property is missing
+	 */
 	public final String require(String propertyName) {
 		String value = map.get(propertyName);
 		if (value == null) throw new TS3InvalidValueException(propertyName, null, "present", null);
 		return value;
 	}
 
-	/** @throws TS3InvalidValueException if the property is missing */
+	/**
+	 * Gets a property's raw value, which must be present.
+	 *
+	 * @param property the property
+	 * @return the raw value, possibly empty
+	 * @throws TS3InvalidValueException if the property is missing
+	 */
 	public final String require(Property property) {
 		return require(property.getName());
 	}
 
-	/** @throws TS3InvalidValueException if the value is not an integer */
+	/**
+	 * Gets a property as an integer.
+	 *
+	 * @param propertyName the property name
+	 * @return the value, or empty if the property is missing or has no value
+	 * @throws TS3InvalidValueException if the value is not an integer
+	 */
 	public final OptionalInt findInt(String propertyName) {
 		return parse(propertyName, "an integer", Integer::parseInt).map(OptionalInt::of).orElse(OptionalInt.empty());
 	}
 
-	/** @throws TS3InvalidValueException if the value is not an integer */
+	/**
+	 * Gets a property as an integer.
+	 *
+	 * @param property the property
+	 * @return the value, or empty if the property is missing or has no value
+	 * @throws TS3InvalidValueException if the value is not an integer
+	 */
 	public final OptionalInt findInt(Property property) {
 		return findInt(property.getName());
 	}
 
-	/** @throws TS3InvalidValueException if the property is missing or not an integer */
+	/**
+	 * Gets a property as an integer, which must be present.
+	 *
+	 * @param propertyName the property name
+	 * @return the value
+	 * @throws TS3InvalidValueException if the property is missing, has no value or is not an integer
+	 */
 	public final int requireInt(String propertyName) {
 		return required(propertyName, "an integer", Integer::parseInt);
 	}
 
-	/** @throws TS3InvalidValueException if the property is missing or not an integer */
+	/**
+	 * Gets a property as an integer, which must be present.
+	 *
+	 * @param property the property
+	 * @return the value
+	 * @throws TS3InvalidValueException if the property is missing, has no value or is not an integer
+	 */
 	public final int requireInt(Property property) {
 		return requireInt(property.getName());
 	}
 
-	/** @throws TS3InvalidValueException if the value is not a 64-bit integer */
+	/**
+	 * Gets a property as a 64-bit integer.
+	 *
+	 * @param propertyName the property name
+	 * @return the value, or empty if the property is missing or has no value
+	 * @throws TS3InvalidValueException if the value is not a 64-bit integer
+	 */
 	public final OptionalLong findLong(String propertyName) {
 		return parse(propertyName, "a 64-bit integer", Long::parseLong).map(OptionalLong::of).orElse(OptionalLong.empty());
 	}
 
-	/** @throws TS3InvalidValueException if the value is not a 64-bit integer */
+	/**
+	 * Gets a property as a 64-bit integer.
+	 *
+	 * @param property the property
+	 * @return the value, or empty if the property is missing or has no value
+	 * @throws TS3InvalidValueException if the value is not a 64-bit integer
+	 */
 	public final OptionalLong findLong(Property property) {
 		return findLong(property.getName());
 	}
 
-	/** @throws TS3InvalidValueException if the property is missing or not a 64-bit integer */
+	/**
+	 * Gets a property as a 64-bit integer, which must be present.
+	 *
+	 * @param propertyName the property name
+	 * @return the value
+	 * @throws TS3InvalidValueException if the property is missing, has no value or is not a 64-bit integer
+	 */
 	public final long requireLong(String propertyName) {
 		return required(propertyName, "a 64-bit integer", Long::parseLong);
 	}
 
-	/** @throws TS3InvalidValueException if the property is missing or not a 64-bit integer */
+	/**
+	 * Gets a property as a 64-bit integer, which must be present.
+	 *
+	 * @param property the property
+	 * @return the value
+	 * @throws TS3InvalidValueException if the property is missing, has no value or is not a 64-bit integer
+	 */
 	public final long requireLong(Property property) {
 		return requireLong(property.getName());
 	}
 
-	/** @throws TS3InvalidValueException if the value is not a number */
+	/**
+	 * Gets a property as a number.
+	 *
+	 * @param propertyName the property name
+	 * @return the value, or empty if the property is missing or has no value
+	 * @throws TS3InvalidValueException if the value is not a number
+	 */
 	public final OptionalDouble findDouble(String propertyName) {
 		return parse(propertyName, "a number", Wrapper::parseDouble).map(OptionalDouble::of).orElse(OptionalDouble.empty());
 	}
 
-	/** @throws TS3InvalidValueException if the value is not a number */
+	/**
+	 * Gets a property as a number.
+	 *
+	 * @param property the property
+	 * @return the value, or empty if the property is missing or has no value
+	 * @throws TS3InvalidValueException if the value is not a number
+	 */
 	public final OptionalDouble findDouble(Property property) {
 		return findDouble(property.getName());
 	}
 
-	/** @throws TS3InvalidValueException if the property is missing or not a number */
+	/**
+	 * Gets a property as a number, which must be present.
+	 *
+	 * @param propertyName the property name
+	 * @return the value
+	 * @throws TS3InvalidValueException if the property is missing, has no value or is not a number
+	 */
 	public final double requireDouble(String propertyName) {
 		return required(propertyName, "a number", Wrapper::parseDouble);
 	}
 
-	/** @throws TS3InvalidValueException if the property is missing or not a number */
+	/**
+	 * Gets a property as a number, which must be present.
+	 *
+	 * @param property the property
+	 * @return the value
+	 * @throws TS3InvalidValueException if the property is missing, has no value or is not a number
+	 */
 	public final double requireDouble(Property property) {
 		return requireDouble(property.getName());
 	}
 
-	/** @throws TS3InvalidValueException if the value is neither {@code 0} nor {@code 1} */
+	/**
+	 * Gets a property as a flag ({@code 1} or {@code 0}).
+	 *
+	 * @param propertyName the property name
+	 * @return the value, or empty if the property is missing or has no value
+	 * @throws TS3InvalidValueException if the value is not 0 or 1
+	 */
 	public final Optional<Boolean> findBoolean(String propertyName) {
 		return parse(propertyName, "0 or 1", Wrapper::parseBoolean);
 	}
 
-	/** @throws TS3InvalidValueException if the value is neither {@code 0} nor {@code 1} */
+	/**
+	 * Gets a property as a flag ({@code 1} or {@code 0}).
+	 *
+	 * @param property the property
+	 * @return the value, or empty if the property is missing or has no value
+	 * @throws TS3InvalidValueException if the value is not 0 or 1
+	 */
 	public final Optional<Boolean> findBoolean(Property property) {
 		return findBoolean(property.getName());
 	}
 
-	/** @throws TS3InvalidValueException if the property is missing or neither {@code 0} nor {@code 1} */
+	/**
+	 * Gets a property as a flag ({@code 1} or {@code 0}), which must be present.
+	 *
+	 * @param propertyName the property name
+	 * @return the value
+	 * @throws TS3InvalidValueException if the property is missing, has no value or is not 0 or 1
+	 */
 	public final boolean requireBoolean(String propertyName) {
 		return required(propertyName, "0 or 1", Wrapper::parseBoolean);
 	}
 
-	/** @throws TS3InvalidValueException if the property is missing or neither {@code 0} nor {@code 1} */
+	/**
+	 * Gets a property as a flag ({@code 1} or {@code 0}), which must be present.
+	 *
+	 * @param property the property
+	 * @return the value
+	 * @throws TS3InvalidValueException if the property is missing, has no value or is not 0 or 1
+	 */
 	public final boolean requireBoolean(Property property) {
 		return requireBoolean(property.getName());
 	}
 
-	/** Text where an empty value means not set. */
+	/**
+	 * Gets text that TeamSpeak leaves empty when it is not set.
+	 *
+	 * @param propertyName the property name
+	 * @return the text, or empty if the property is missing or empty
+	 */
 	protected final Optional<String> findText(String propertyName) {
 		return find(propertyName).filter(value -> !value.isEmpty());
 	}
 
+	/**
+	 * Gets text that TeamSpeak leaves empty when it is not set.
+	 *
+	 * @param property the property
+	 * @return the text, or empty if the property is missing or empty
+	 */
 	protected final Optional<String> findText(Property property) {
 		return findText(property.getName());
 	}
 
+	/**
+	 * Gets a time sent as epoch seconds.
+	 *
+	 * @param propertyName the property name
+	 * @return the time
+	 * @throws TS3InvalidValueException if the property is missing or not an integer
+	 */
 	protected final Instant requireInstant(String propertyName) {
 		return Instant.ofEpochSecond(requireLong(propertyName));
 	}
 
+	/**
+	 * Gets a time sent as epoch seconds.
+	 *
+	 * @param property the property
+	 * @return the time
+	 * @throws TS3InvalidValueException if the property is missing or not an integer
+	 */
 	protected final Instant requireInstant(Property property) {
 		return requireInstant(property.getName());
 	}
 
-	/** Epoch seconds, where {@code 0} means the server has not recorded the time. */
+	/**
+	 * Gets a time sent as epoch seconds, where {@code 0} means the server has not recorded it.
+	 *
+	 * @param propertyName the property name
+	 * @return the time, or empty for {@code 0}
+	 * @throws TS3InvalidValueException if the property is missing or not an integer
+	 */
 	protected final Optional<Instant> requireTimestamp(String propertyName) {
 		long seconds = requireLong(propertyName);
 		return seconds == 0 ? Optional.empty() : Optional.of(Instant.ofEpochSecond(seconds));
 	}
 
+	/**
+	 * Gets a time sent as epoch seconds, where {@code 0} means the server has not recorded it.
+	 *
+	 * @param property the property
+	 * @return the time, or empty for {@code 0}
+	 * @throws TS3InvalidValueException if the property is missing or not an integer
+	 */
 	protected final Optional<Instant> requireTimestamp(Property property) {
 		return requireTimestamp(property.getName());
 	}
 
+	/**
+	 * Gets a duration sent in seconds.
+	 *
+	 * @param propertyName the property name
+	 * @return the duration
+	 * @throws TS3InvalidValueException if the property is missing or not an integer
+	 */
 	protected final Duration requireSeconds(String propertyName) {
 		return Duration.ofSeconds(requireLong(propertyName));
 	}
 
+	/**
+	 * Gets a duration sent in seconds.
+	 *
+	 * @param property the property
+	 * @return the duration
+	 * @throws TS3InvalidValueException if the property is missing or not an integer
+	 */
 	protected final Duration requireSeconds(Property property) {
 		return requireSeconds(property.getName());
 	}
 
+	/**
+	 * Gets a duration sent in milliseconds.
+	 *
+	 * @param propertyName the property name
+	 * @return the duration
+	 * @throws TS3InvalidValueException if the property is missing or not an integer
+	 */
 	protected final Duration requireMillis(String propertyName) {
 		return Duration.ofMillis(requireLong(propertyName));
 	}
 
+	/**
+	 * Gets a duration sent in milliseconds.
+	 *
+	 * @param property the property
+	 * @return the duration
+	 * @throws TS3InvalidValueException if the property is missing or not an integer
+	 */
 	protected final Duration requireMillis(Property property) {
 		return requireMillis(property.getName());
 	}
 
-	/** An unsigned 64-bit limit, where the maximum value means unlimited. */
+	/**
+	 * Gets an unsigned 64-bit limit, where the maximum value 2<sup>64</sup>-1 means unlimited.
+	 *
+	 * @param property the property
+	 * @return the limit, or empty if unlimited
+	 * @throws TS3InvalidValueException if the property is missing or not a 64-bit integer
+	 */
 	protected final OptionalLong requireLimit(Property property) {
 		String name = property.getName();
 		if (UNSIGNED_64_MAX.equals(map.get(name))) return OptionalLong.empty();
 		return OptionalLong.of(requireLong(name));
 	}
 
-	/** @throws TS3InvalidValueException if the property is missing or not a nonnegative integer */
+	/**
+	 * Gets a client session ID.
+	 *
+	 * @param propertyName the property name
+	 * @return the client ID
+	 * @throws TS3InvalidValueException if the property is missing or not a nonnegative integer
+	 */
 	public final ClientId requireClientId(String propertyName) {
 		return new ClientId(requireNonNegative(propertyName));
 	}
 
-	/** @throws TS3InvalidValueException if the property is missing or not a positive integer */
+	/**
+	 * Gets an optional client session ID.
+	 *
+	 * @param propertyName the property name
+	 * @return the client ID, or empty if the property is missing or empty
+	 * @throws TS3InvalidValueException if the value is not a nonnegative integer
+	 */
+	protected final Optional<ClientId> findClientId(String propertyName) {
+		return findInt(propertyName).isEmpty() ? Optional.empty() : Optional.of(requireClientId(propertyName));
+	}
+
+	/**
+	 * Gets a client database ID.
+	 *
+	 * @param propertyName the property name
+	 * @return the client database ID
+	 * @throws TS3InvalidValueException if the property is missing or not a positive integer
+	 */
 	public final ClientDatabaseId requireDatabaseId(String propertyName) {
 		int id = requireNonNegative(propertyName);
 		if (id == 0) throw new TS3InvalidValueException(propertyName, "0", "a positive client database ID", null);
 		return new ClientDatabaseId(id);
 	}
 
-	/** @throws TS3InvalidValueException if the property is missing or not a positive integer */
+	/**
+	 * Gets a client database ID.
+	 *
+	 * @param property the property
+	 * @return the client database ID
+	 * @throws TS3InvalidValueException if the property is missing or not a positive integer
+	 */
 	public final ClientDatabaseId requireDatabaseId(Property property) {
 		return requireDatabaseId(property.getName());
 	}
 
-	/** A client database ID where {@code 0} means none, such as the server as invoker. */
+	/**
+	 * Gets a client database ID where {@code 0} means none, such as the server as invoker.
+	 *
+	 * @param propertyName the property name
+	 * @return the client database ID, or empty if the property is missing, empty or {@code 0}
+	 * @throws TS3InvalidValueException if the value is not a nonnegative integer
+	 */
 	protected final Optional<ClientDatabaseId> findDatabaseId(String propertyName) {
 		OptionalInt id = findInt(propertyName);
 		if (id.isEmpty() || id.getAsInt() == 0) return Optional.empty();
@@ -277,7 +502,13 @@ public class Wrapper {
 		return value;
 	}
 
-	/** Comma-separated integers, where an empty value is an empty list. */
+	/**
+	 * Gets comma-separated integers, where an empty value is an empty list.
+	 *
+	 * @param property the property
+	 * @return the unmodifiable integers in received order
+	 * @throws TS3InvalidValueException if the property is missing or an element is not an integer
+	 */
 	protected final List<Integer> requireIntList(Property property) {
 		String name = property.getName();
 		String value = require(name);
@@ -289,11 +520,28 @@ public class Wrapper {
 		}
 	}
 
-	/** Maps a code with the given decoder, which returns the enum's {@code UNKNOWN} constant for unknown codes. */
+	/**
+	 * Gets an integer code as an enum constant.
+	 *
+	 * @param propertyName the property name
+	 * @param decoder maps a code to its constant, or to the enum's {@code UNKNOWN} constant
+	 * @param <E> the enum type
+	 * @return the decoded constant
+	 * @throws TS3InvalidValueException if the property is missing or not an integer
+	 */
 	protected final <E extends Enum<E>> E requireCode(String propertyName, Function<Integer, E> decoder) {
 		return decoder.apply(requireInt(propertyName));
 	}
 
+	/**
+	 * Gets an integer code as an enum constant.
+	 *
+	 * @param property the property
+	 * @param decoder maps a code to its constant, or to the enum's {@code UNKNOWN} constant
+	 * @param <E> the enum type
+	 * @return the decoded constant
+	 * @throws TS3InvalidValueException if the property is missing or not an integer
+	 */
 	protected final <E extends Enum<E>> E requireCode(Property property, Function<Integer, E> decoder) {
 		return requireCode(property.getName(), decoder);
 	}
