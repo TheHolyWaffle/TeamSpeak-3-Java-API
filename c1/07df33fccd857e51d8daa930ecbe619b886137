@@ -1,0 +1,65 @@
+README.md
+  s_4df28355134b3e::t_e01a9078ccf79b 9-10
+docs/api-migration.md
+  s_4df28355134b3e::t_d825ce13a860f2 230,247-249,273,503-504
+docs/client-compatibility.md
+  s_4df28355134b3e::t_197334dac148bc 69
+docs/command-compatibility.md
+  s_4df28355134b3e::t_5d495c8ed48d7f 57-58
+docs/message-compatibility.md
+  s_4df28355134b3e::t_d8c24b867a1d9b 29
+docs/models-and-values.md
+  s_4df28355134b3e::t_65c638156042cb 1-180
+docs/permission-compatibility.md
+  s_4df28355134b3e::t_b1162d4bbfaaae 34-36
+docs/server-compatibility.md
+  s_4df28355134b3e::t_f81c759a41754f 53,57,108
+example/ChatBotExample.java
+  s_4df28355134b3e::t_54b71f9028fea6 30,36-37,60,72,81
+example/EventListenerExample.java
+  s_4df28355134b3e::t_f6d97a8b97c819 62
+example/ReconnectExample.java
+  s_4df28355134b3e::t_a2a7b9188f224f 32,46,57,117,121
+example/TrollExample.java
+  s_4df28355134b3e::t_cd7205806862cd 31,73,99,119,122
+src/main/java/com/github/theholywaffle/teamspeak3/QueryLoginApi.java
+  s_4df28355134b3e::t_5ee4dd9863d4a5 44-46
+src/main/java/com/github/theholywaffle/teamspeak3/api/ClientDatabaseId.java
+  s_4df28355134b3e::t_79c6042541bafb 16-19
+src/main/java/com/github/theholywaffle/teamspeak3/api/ClientId.java
+  s_4df28355134b3e::t_4b758a957c1249 16-19
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/ClientInfo.java
+  s_4df28355134b3e::t_6e0b65e2336fec 186-188
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/ServerQueryInfo.java
+  s_4df28355134b3e::t_440b7979f9e4c5 72,74-75,81,94,108,173-174,186
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/VirtualServerInfo.java
+  s_4df28355134b3e::t_8efb1ed60cda9d 58-73,95-110,137,194,199-214,274-289,294-301,322-329
+src/test/java/com/github/theholywaffle/teamspeak3/ModelCompatibilityIT.java
+  s_4df28355134b3e::t_008a787f74c27c 1-221
+src/test/java/com/github/theholywaffle/teamspeak3/PermissionModesCompatibilityIT.java
+  s_4df28355134b3e::t_20d50f2e4893f6 29
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryCompatibilityIT.java
+  s_4df28355134b3e::t_5ec902a65c9d35 265,277,289,295,384,386,395,451-452,454-455,457,459-460,559,707,710-711,719,759-760,901,1050-1054,1186-1187,1236
+src/test/java/com/github/theholywaffle/teamspeak3/SessionCommandsCompatibilityIT.java
+  s_4df28355134b3e::t_c0d27c50ccbc4f 25
+src/test/java/com/github/theholywaffle/teamspeak3/api/wrapper/ModelImmutabilityTest.java
+  s_4df28355134b3e::t_57dfb61698576c 1-64
+src/test/java/com/github/theholywaffle/teamspeak3/api/wrapper/ModelValuesTest.java
+  s_4df28355134b3e::t_b19e978708daf2 1-212
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c107df33fccd857e51d8daa930ecbe619b886137",
+  "prompts": {},
+  "sessions": {
+    "s_4df28355134b3e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c77e990a-5b2e-4283-8a8f-423ff1db5003",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
