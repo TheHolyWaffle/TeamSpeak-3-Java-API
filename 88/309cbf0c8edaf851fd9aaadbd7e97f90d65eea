@@ -1,0 +1,30 @@
+docs/channel-configuration-compatibility.md
+  s_ac51726a7bf17a::t_262d7ab42b2382 76
+docs/privilege-key-compatibility.md
+  s_ac51726a7bf17a::t_262d7ab42b2382 63-64
+docs/command-coverage-map.md
+  s_ac51726a7bf17a::t_91720a4752e662 4-5,9,11-17,19-21,23-25,29,33-34,38
+.github/workflows/compatibility.yml
+  s_ac51726a7bf17a::t_354423d5deee3b 31
+docs/additional-command-compatibility.md
+  s_ac51726a7bf17a::t_354423d5deee3b 43,47,51-62
+docs/command-compatibility.md
+  s_ac51726a7bf17a::t_262d7ab42b2382 43-44
+  s_ac51726a7bf17a::t_354423d5deee3b 10-11,35-38,40,42,49-51,109-112
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "88309cbf0c8edaf851fd9aaadbd7e97f90d65eea",
+  "prompts": {},
+  "sessions": {
+    "s_ac51726a7bf17a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a13014-aa58-7af2-9d0c-fdc59cc16d09",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
