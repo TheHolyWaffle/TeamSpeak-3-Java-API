@@ -1,0 +1,74 @@
+docs/integration-tests.md
+  s_d757b21d401e7e::t_af98f088fbb55d 10-15
+.github/workflows/compatibility.yml
+  s_d757b21d401e7e::t_af98f088fbb55d 32-33,49-50
+src/test/java/com/github/theholywaffle/teamspeak3/RegularClientContainer.java
+  s_d757b21d401e7e::t_271c7015c83d10 48
+  s_d757b21d401e7e::t_cfa79453096e7b 1-47,49-53
+src/main/java/com/github/theholywaffle/teamspeak3/TS3ApiAsync.java
+  s_d757b21d401e7e::t_36ccb924e6f65c 261,584,857,910,930,2945-2948,5626-5633,5635-5640
+  s_d757b21d401e7e::t_8821d28c283fa5 5634,5641
+src/test/fixtures/regular-client/README.md
+  s_d757b21d401e7e::t_7a89bd5c76168c 1-47
+src/test/fixtures/regular-client/src/main/java/com/github/manevolent/ts3j/protocol/packet/transformation/PacketTransformation.java
+  s_d757b21d401e7e::t_b8f4eec7999e46 100-131,163
+  s_d757b21d401e7e::t_7a89bd5c76168c 98-99
+  s_d757b21d401e7e::t_56c1a842de1923 1-97,132-162,164-167
+docs/command-compatibility.md
+  s_d757b21d401e7e::t_af98f088fbb55d 3-4,37-39,43-49,51-53,111
+src/test/java/com/github/theholywaffle/teamspeak3/CompatibilityAssertions.java
+  s_d757b21d401e7e::t_4c4407db3a56ba 1-19
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryCompatibilityIT.java
+  s_d757b21d401e7e::t_4c4407db3a56ba 1422
+src/test/java/com/github/theholywaffle/teamspeak3/EventProbe.java
+  s_d757b21d401e7e::t_b8f4eec7999e46 13-30,34
+  s_d757b21d401e7e::t_ef792bdd2edf9d 1-12,31-33,35
+docs/regular-client-compatibility.md
+  s_d757b21d401e7e::t_9b6fdf71990293 1-55
+src/test/fixtures/regular-client/src/main/java/fixture/RegularClient.java
+  s_d757b21d401e7e::t_499f72affe44cc 78
+  s_d757b21d401e7e::t_816cc4f11b2c80 1-77,79-94
+src/test/fixtures/regular-client/pom.xml
+  s_d757b21d401e7e::t_1668d40f613cca 15-21
+  s_d757b21d401e7e::t_d1d4bfc598347c 1-14,22-29
+src/test/java/com/github/theholywaffle/teamspeak3/CreatedIdTest.java
+  s_d757b21d401e7e::t_36ccb924e6f65c 1-30
+src/test/fixtures/regular-client/src/test/java/fixture/PacketTransformationTest.java
+  s_d757b21d401e7e::t_1668d40f613cca 1-22,24-29,31-33,35-39,56,58,61-66
+  s_d757b21d401e7e::t_b8f4eec7999e46 40-51
+  s_d757b21d401e7e::t_e5a260bea47f76 23,30,34,52-55,57,59-60
+src/test/java/com/github/theholywaffle/teamspeak3/EventProbeTest.java
+  s_d757b21d401e7e::t_b8f4eec7999e46 9,12,14-20,26
+  s_d757b21d401e7e::t_4ee8e5dc95e9da 1-8,10-11,13,21-25,27
+src/test/java/com/github/theholywaffle/teamspeak3/RegularClientCompatibilityIT.java
+  s_d757b21d401e7e::t_271c7015c83d10 42,155-167
+  s_d757b21d401e7e::t_4c4407db3a56ba 86-89,218
+  s_d757b21d401e7e::t_b8f4eec7999e46 143-146
+  s_d757b21d401e7e::t_601de71a70470d 1-41,43-85,90-142,147-154,168-217,219-224
+.gitignore
+  s_d757b21d401e7e::t_16da453f91ee24 20-22
+pom.xml
+  s_d757b21d401e7e::t_988372d3add3c7 285-298
+src/test/fixtures/regular-client/LICENSE
+  s_d757b21d401e7e::t_395dd4d7a8b128 1-201
+src/test/fixtures/regular-client/src/main/java/com/github/manevolent/ts3j/protocol/packet/transformation/InitPacketTransformation.java
+  s_d757b21d401e7e::t_b73cb58df9bd56 1-34
+src/test/java/com/github/theholywaffle/teamspeak3/OfflineMessageTest.java
+  s_d757b21d401e7e::t_6637a7c2cbf311 1-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b687fd5706b61e8bba9c9b88af64c9d1524c8478",
+  "prompts": {},
+  "sessions": {
+    "s_d757b21d401e7e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a12770-2877-7903-ba65-0fe168e7f6f9",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
