@@ -28,8 +28,6 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
 
 import java.util.Date;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 public class FileInfo extends Wrapper {
 
@@ -96,26 +94,12 @@ public class FileInfo extends Wrapper {
 	/**
 	 * Gets the date of the last modification to this file.
 	 * Interprets the server's {@code datetime} field as epoch seconds, as supplied
-	 * by TS3. For a server supplying epoch milliseconds (including the verified
-	 * TS6 directory listings), use {@link #getLastModifiedDate(TimeUnit)} with
-	 * {@link TimeUnit#MILLISECONDS}.
+	 * by TS3.
 	 *
 	 * @return the file's last modification date, interpreting the field as seconds
 	 */
 	public Date getLastModifiedDate() {
 		return new Date(getLong("datetime") * 1000);
-	}
-
-	/**
-	 * Gets the last modification date using the server's timestamp unit.
-	 * The unit is explicit because file response fields do not identify it.
-	 *
-	 * @param unit the unit of the server's epoch timestamp, never {@code null}
-	 * @return the file's last modification date
-	 * @throws NullPointerException if {@code unit} is {@code null}
-	 */
-	public Date getLastModifiedDate(TimeUnit unit) {
-		return new Date(Objects.requireNonNull(unit, "unit").toMillis(getLong("datetime")));
 	}
 
 	/**

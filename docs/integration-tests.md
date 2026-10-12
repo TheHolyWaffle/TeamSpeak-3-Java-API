@@ -25,16 +25,13 @@ each launcher owns a separate disposable server.
 | Server | Image version | Manifest digest | Advertised platforms |
 | --- | --- | --- | --- |
 | TS3 | `teamspeak:3.13.8` | `sha256:6dfdfb22869adf50e1b66d024b360b786d57a85ea09e8e8fdb6cca23949b2813` | Linux amd64 |
-| TS6 | `teamspeaksystems/teamspeak6-server:6.0.0-beta13.1` | `sha256:d845f803aecf842c2df034c959c23ff2462357bacafb3807500885c5ec170fa1` | Linux amd64, arm64 |
 
 TS3 explicitly requests `linux/amd64`: Apple Silicon needs Docker amd64
-emulation. This is not native TS3 arm64 support. TS6 uses the daemon's native
-architecture. The Linux CI suite uses amd64; local Apple Silicon validation is
+emulation. This is not native TS3 arm64 support. The Linux CI suite uses amd64; local Apple Silicon validation is
 recorded in the PR acceptance evidence. A manifest alone is not a runtime test.
 
-The fixture explicitly accepts each server's license (`TS3SERVER_LICENSE=accept`
-and `TSSERVER_LICENSE_ACCEPTED=accept`). Read the respective licenses before
-running the profile. The bundled limited TS3 license and TS6 beta license suffice
+The fixture explicitly accepts the TS3 license (`TS3SERVER_LICENSE=accept`).
+Read the license before running the profile. The bundled limited TS3 license suffices
 for one virtual server; no private license or publishing credentials are used.
 The test-only serveradmin password is fixed, ports are assigned dynamically, and
 data lives in container tmpfs. A fixture-only allowlist exempts Docker bridge
@@ -50,7 +47,7 @@ fixture. Normal library connections pin that key in memory. TOFU security tests
 use an explicit JUnit temporary trust file. Neither path changes `user.home`
 or writes to the developer's home directory.
 
-The same parameterized API smoke test covers TS3 raw, TS3 SSH and TS6 SSH:
+The same parameterized API smoke test covers TS3 raw and TS3 SSH:
 initial authenticated connection, exact server version, virtual server selection,
 channel create/list/delete (including protocol escapes), typed server errors and
 usable framing after an error. Additional live SSH regressions cover first-key
@@ -61,7 +58,7 @@ and the query greeting before any transport/API redesign. Reports under
 image digest and daemon architecture. CI uploads them even on failure. Generated
 server credentials are redacted from container startup diagnostics.
 
-## CI and beta revalidation
+## CI and scheduled revalidation
 
 The required Maven CI calls `compatibility.yml` on Linux with Java 25, and the
 aggregate `CI required` job requires its success. The workflow also supports
@@ -71,12 +68,10 @@ on `modernization/2.0`, manually run **ServerQuery compatibility** on that branc
 weekly; cron becomes active after final integration into `master`. No workflow
 here publishes artifacts or upgrades the pin silently.
 
-TS6 is a beta. Its upstream README says the bundled beta license is refreshed
-every two months. A pinned image can therefore stop being usable without any
-code change. Review a newer official version/digest, inspect its manifest, rerun
-this suite on Linux amd64 and Apple Silicon, update the expected version and pins
-(including the CI manifest probes), and review the negotiation evidence before
-accepting an update. Scheduled failures require investigation, not skipped tests.
+Review a newer official TS3 version/digest, inspect its manifest, rerun this suite
+on Linux amd64 and Apple Silicon, update the expected version and pins (including
+the CI manifest probe), and review negotiation evidence before accepting an update.
+Scheduled failures require investigation, not skipped tests.
 
 ## Migration and scope
 
@@ -84,21 +79,19 @@ This is test/build infrastructure (`test:` release intent), with no production A
 or default changes. Testcontainers is test-scoped and is excluded from published
 runtime dependencies and the standalone artifact. The integration profile is
 opt-in locally and mandatory in modernization CI. This baseline verifies only
-the exact three combinations above; it does not promise all TS6 commands,
+the exact two TS3 combinations above; it does not promise untested commands,
 notifications, file transfers, voice or Web Query. Broader command/event coverage
 and transport redesign remain with their later owning tasks.
 
 Sources: [official TS3 image documentation](https://hub.docker.com/_/teamspeak),
 [TS3 image entrypoint](https://github.com/TeamSpeak-Systems/teamspeak-linux-docker-images/blob/e03f9a91761c389d42568b7c0cdee63e77d38fb0/alpine/entrypoint.sh),
-[official TS6 README](https://github.com/teamspeak/teamspeak6-server),
-[TS6 configuration](https://github.com/teamspeak/teamspeak6-server/blob/main/CONFIG.md),
 [Testcontainers waits](https://java.testcontainers.org/features/startup_and_waits/),
 [Testcontainers 2.0.5 release](https://github.com/testcontainers/testcontainers-java/releases/tag/2.0.5),
 [FailSafe usage](https://maven.apache.org/surefire/maven-failsafe-plugin/usage.html).
 
 The task #438 notification probe additionally registers overlapping server/channel
 subscriptions and checks query-client join, move and leave frames on TS3 RAW,
-TS3 SSH and TS6 SSH. It records decoded payloads in
+and TS3 SSH. It records decoded payloads in
 `target/compatibility/*-notifications.txt` and asserts one frame per tested action,
 no malformed notifications, callback failures or event loss. Scripted tests cover
 unknown/malformed notifications and repeated identical frames that real servers
@@ -108,3 +101,6 @@ Task #441 expands the baseline with independent-session channel domain tests,
 live command help, decoded field inventories and typed channel-error checks. See
 the [command/event inventory and migration notes](command-compatibility.md) for
 the exact supported subset and remaining domains.
+
+TS6 server selection, fixtures, image pins, launcher options and CI coverage have
+been removed from this release scope. Historical PR evidence remains historical.

@@ -43,7 +43,6 @@ import java.util.Objects;
 public final class TS3Config {
 
 	private String host = null;
-	private ServerType serverType = ServerType.TS3;
 	private SshHostKeyPolicy sshHostKeyPolicy = SshHostKeyPolicy.defaultKnownHosts();
 	private QueryTransportFactory transportFactory;
 	private int queryPort = -1;
@@ -478,10 +477,6 @@ public final class TS3Config {
 	 */
 	public QueryConfig build() { return new QueryConfig(this); }
 
-	/** @param type server generation @return this builder */
-	public TS3Config setServerType(ServerType type) { serverType = Objects.requireNonNull(type); return this; }
-	/** @return configured server generation */
-	public ServerType getServerType() { return serverType; }
 	/** @param policy explicit SSH trust policy @return this builder */
 	public TS3Config setSshHostKeyPolicy(SshHostKeyPolicy policy) { sshHostKeyPolicy = Objects.requireNonNull(policy); return this; }
 	/** @return SSH trust policy */
@@ -492,5 +487,5 @@ public final class TS3Config {
 	public QueryTransportFactory getTransportFactory() {
 		return transportFactory == null ? (protocol == Protocol.SSH ? QueryTransports.SSH : QueryTransports.RAW) : transportFactory;
 	}
-	@Override public String toString() { return "TS3Config[server=" + serverType + ", protocol=" + protocol + "]"; }
+	@Override public String toString() { return "TS3Config[protocol=" + protocol + "]"; }
 }

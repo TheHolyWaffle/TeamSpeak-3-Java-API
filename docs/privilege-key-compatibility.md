@@ -1,7 +1,10 @@
 # Verified privilege-key administration
 
-This focused #441 slice covers TS3 **3.13.8 RAW**, TS3 **3.13.8 SSH** and TS6
-**6.0.0-beta13.1 SSH** using the existing pinned fixtures. See the
+> Current scope: TS3 RAW and SSH only. TS6 functionality and tests are removed.
+> Any TS6 observations below are retained historical findings from merged PRs,
+> not current support claims or release acceptance requirements.
+
+This focused #441 slice covers TS3 **3.13.8 RAW** and TS3 **3.13.8 SSH** using the existing pinned fixtures. See the
 [overall inventory](command-compatibility.md) and [integration setup](integration-tests.md).
 It verifies administrative create/list/delete operations and serveradmin query-client
 rejection of key consumption. Successful regular-client consumption and its
@@ -57,8 +60,8 @@ key-use notifications; it does not verify successful consumption payloads.
 
 Do not infer regular/voice-client behavior from serveradmin query sessions.
 Successful key consumption, one-time deletion, resulting membership, custom client
-metadata and `PrivilegeKeyUsedEvent` field decoding require a separate suitable
-regular-client fixture or manual evidence. No Testcontainers guarantee is made
+metadata and `PrivilegeKeyUsedEvent` field decoding require evidence from the
+official TeamSpeak client. No Testcontainers guarantee is made
 for those operations.
 
 ## Fields, errors and migration
@@ -90,6 +93,10 @@ missing keys. Sync/async Javadocs document that boundary. No automatic retry,
 consumption emulation or group assignment is added.
 
 ## Remaining scope and official sources
+
+These paragraphs record the original slice boundary. The current whole-issue
+TS3 evidence and follow-up ownership are in the [acceptance inventory](command-compatibility.md)
+and [additional command tests](additional-command-compatibility.md).
 
 Successful regular-client consumption/events, automatic membership/deletion,
 custom metadata, invalid group/channel references, description limits,

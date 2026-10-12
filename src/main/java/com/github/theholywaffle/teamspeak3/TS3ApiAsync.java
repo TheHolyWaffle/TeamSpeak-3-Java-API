@@ -258,7 +258,7 @@ public class TS3ApiAsync {
 	 */
 	public CompletableFuture<Integer> addChannelGroup(String name, PermissionGroupDatabaseType type) {
 		Command cmd = ChannelGroupCommands.channelGroupAdd(name, type);
-		return executeAndReturnIntProperty(cmd, "cgid");
+		return executeAndReturnCreatedId(cmd, "cgid");
 	}
 
 	/**
@@ -581,7 +581,7 @@ public class TS3ApiAsync {
 	 */
 	public CompletableFuture<Integer> addServerGroup(String name, PermissionGroupDatabaseType type) {
 		Command cmd = ServerGroupCommands.serverGroupAdd(name, type);
-		return executeAndReturnIntProperty(cmd, "sgid");
+		return executeAndReturnCreatedId(cmd, "sgid");
 	}
 
 	/**
@@ -854,7 +854,7 @@ public class TS3ApiAsync {
 	 */
 	public CompletableFuture<Integer> copyChannelGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
 		Command cmd = ChannelGroupCommands.channelGroupCopy(sourceGroupId, targetName, type);
-		return executeAndReturnIntProperty(cmd, "cgid");
+		return executeAndReturnCreatedId(cmd, "cgid");
 	}
 
 	/**
@@ -907,7 +907,7 @@ public class TS3ApiAsync {
 	 */
 	public CompletableFuture<Integer> copyServerGroup(int sourceGroupId, String targetName, PermissionGroupDatabaseType type) {
 		Command cmd = ServerGroupCommands.serverGroupCopy(sourceGroupId, targetName, type);
-		return executeAndReturnIntProperty(cmd, "sgid");
+		return executeAndReturnCreatedId(cmd, "sgid");
 	}
 
 	/**
@@ -927,7 +927,7 @@ public class TS3ApiAsync {
 	 */
 	public CompletableFuture<Integer> createChannel(String name, Map<ChannelProperty, String> options) {
 		Command cmd = ChannelCommands.channelCreate(name, options);
-		return executeAndReturnIntProperty(cmd, "cid");
+		return executeAndReturnCreatedId(cmd, "cid");
 	}
 
 	/**
@@ -2942,7 +2942,7 @@ public class TS3ApiAsync {
 	 */
 	public CompletableFuture<String> getOfflineMessage(int messageId) {
 		Command cmd = MessageCommands.messageGet(messageId);
-		return executeAndReturnStringProperty(cmd, "message");
+		return executeAndMapFirst(cmd, response -> response.getMap().get("message"));
 	}
 
 	/**
@@ -5449,7 +5449,7 @@ public class TS3ApiAsync {
 	/**
 	 * Uses an existing privilege key to join a server or channel group.
 	 * <p>
-	 * TS3 3.13.8 and TS6 6.0.0-beta13.1 reject this operation for serveradmin query
+	 * TS3 3.13.8 rejects this operation for serveradmin query
 	 * clients with error 516 ({@code invalid client type}). Such rejected requests
 	 * leave the key unused and do not emit a key-use notification. Listing a key
 	 * does not imply that this query session can consume it.
@@ -5475,7 +5475,7 @@ public class TS3ApiAsync {
 	/**
 	 * Uses an existing privilege key to join a server or channel group.
 	 * <p>
-	 * TS3 3.13.8 and TS6 6.0.0-beta13.1 reject this operation for serveradmin query
+	 * TS3 3.13.8 rejects this operation for serveradmin query
 	 * clients with error 516 ({@code invalid client type}). Such rejected requests
 	 * leave the key unused and do not emit a key-use notification. Listing a key
 	 * does not imply that this query session can consume it.
@@ -5618,6 +5618,20 @@ public class TS3ApiAsync {
 
 		commandQueue.enqueueCommand(command);
 		return future;
+	}
+
+	private CompletableFuture<Integer> executeAndReturnCreatedId(Command command, String property) {
+		return executeAndMapFirst(command, response -> {
+			String value = response.getMap().get(property);
+			try {
+				int id = Integer.parseInt(value);
+				if (id <= 0) throw new NumberFormatException("nonpositive ID");
+				return id;
+			} catch (NumberFormatException failure) {
+				throw new TS3Exception(
+						command.getName() + " response requires a positive " + property, failure);
+			}
+		});
 	}
 
 	private CompletableFuture<int[]> executeAndReturnIntArray(Command command, String property) {

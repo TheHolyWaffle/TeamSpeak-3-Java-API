@@ -29,32 +29,22 @@ import java.util.Map;
 final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer> {
 	static final String PASSWORD = "integration-test-only";
 	static final String TS3_IMAGE = "teamspeak:3.13.8@sha256:6dfdfb22869adf50e1b66d024b360b786d57a85ea09e8e8fdb6cca23949b2813";
-	static final String TS6_IMAGE = "teamspeaksystems/teamspeak6-server:6.0.0-beta13.1@sha256:d845f803aecf842c2df034c959c23ff2462357bacafb3807500885c5ec170fa1";
-	final boolean ts6;
 	PublicKey hostKey;
 	String sshBanner;
 	String algorithms;
 	String queryBanner;
 
-	TeamSpeakContainer(boolean ts6) {
-		super(DockerImageName.parse(ts6 ? TS6_IMAGE : TS3_IMAGE));
-		this.ts6 = ts6;
+	TeamSpeakContainer() {
+		super(DockerImageName.parse(TS3_IMAGE));
 		// Only this disposable server: permit Docker's dynamically assigned bridge peers.
 		withCopyToContainer(Transferable.of("0.0.0.0/0\n::/0\n"), "/tmp/query-allowlist.txt");
-		withExposedPorts(ts6 ? new Integer[]{10022} : new Integer[]{10011, 10022});
-		withTmpFs(Map.of(ts6 ? "/var/tsserver" : "/var/ts3server", ts6 ? "rw,uid=9987,gid=9987,mode=0700" : "rw"));
-		if (ts6) {
-			withEnv("TSSERVER_LICENSE_ACCEPTED", "accept");
-			withEnv("TSSERVER_QUERY_SSH_ENABLED", "1");
-			withEnv("TSSERVER_QUERY_ADMIN_PASSWORD", PASSWORD);
-			withEnv("TSSERVER_QUERY_ALLOW_LIST", "/tmp/query-allowlist.txt");
-		} else {
-			withCreateContainerCmdModifier(cmd -> cmd.withPlatform("linux/amd64"));
-			withEnv("TS3SERVER_LICENSE", "accept");
-			withEnv("TS3SERVER_QUERY_PROTOCOLS", "raw,ssh");
-			withEnv("TS3SERVER_SERVERADMIN_PASSWORD", PASSWORD);
-			withEnv("TS3SERVER_IP_ALLOWLIST", "/tmp/query-allowlist.txt");
-		}
+		withExposedPorts(10011, 10022);
+		withTmpFs(Map.of("/var/ts3server", "rw"));
+		withCreateContainerCmdModifier(cmd -> cmd.withPlatform("linux/amd64"));
+		withEnv("TS3SERVER_LICENSE", "accept");
+		withEnv("TS3SERVER_QUERY_PROTOCOLS", "raw,ssh");
+		withEnv("TS3SERVER_SERVERADMIN_PASSWORD", PASSWORD);
+		withEnv("TS3SERVER_IP_ALLOWLIST", "/tmp/query-allowlist.txt");
 		waitingFor(new AbstractWaitStrategy() {
 			@Override protected void waitUntilReady() {
 				long deadline = System.nanoTime() + startupTimeout.toNanos();
@@ -62,7 +52,7 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer> {
 				do {
 					try {
 						probeSsh();
-						if (!ts6) probeRaw();
+						probeRaw();
 						return;
 					} catch (Exception e) {
 						last = e;
@@ -139,7 +129,7 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer> {
 
 	TS3Config config(TS3Query.Protocol protocol) {
 		return new TS3Config().setHost(getHost()).setQueryPort(getMappedPort(protocol == TS3Query.Protocol.RAW ? 10011 : 10022))
-				.setServerType(ts6 ? ServerType.TS6 : ServerType.TS3).setSshHostKeyPolicy(SshHostKeyPolicy.pinnedKey(hostKey))
+				.setSshHostKeyPolicy(SshHostKeyPolicy.pinnedKey(hostKey))
 				.setFloodRate(TS3Query.FloodRate.UNLIMITED).setProtocol(protocol).setLoginCredentials("serveradmin", PASSWORD).setCommandTimeout(5000);
 	}
 

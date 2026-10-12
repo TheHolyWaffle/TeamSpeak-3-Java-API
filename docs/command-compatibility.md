@@ -1,22 +1,22 @@
 # Verified ServerQuery command and event inventory
 
-Task #441 is being delivered in focused PRs. The implemented slices verify the core
-channel domain, named channel/group permission operations, online text messages,
-selected server information/configuration operations, online query-client administration,
-file-directory administration, privilege-key administration, ban-rule administration,
-global query-login administration, instance/virtual-server log retrieval, and
-sequential virtual-server lifecycle.
-These slices do not complete the issue or establish whole-API TS6 support.
-The inventory below is the release acceptance boundary, not a promise based on
-similar method names or server help alone.
+> Current scope: TS3 RAW and SSH only. TS6 functionality and tests are removed.
+> Any TS6 observations below are retained historical findings from merged PRs,
+> not current support claims or release acceptance requirements.
+
+Task #441 verifies the library's ServerQuery command families and notifications
+against TS3. Previously merged #465–#476 and the final accumulated #477 changes
+provide evidence; historical TS6 observations are not part of current acceptance.
+The inventory distinguishes executed tests, expected rejection boundaries and
+remaining coverage gaps.
+Help alone or a similar method name does not establish compatibility.
 
 ## Exact targets and evidence
 
 Use Java 25 without preview features and `./mvnw -B -ntp -Pintegration verify`.
 The pinned versions, digests, architectures, authenticated readiness and required
 CI setup are documented in [integration tests](integration-tests.md). Every tested
-operation below runs against TS3 **3.13.8 RAW**, TS3 **3.13.8 SSH**, and TS6
-**6.0.0-beta13.1 SSH**. TS6 RAW and Web Query are not claimed.
+operation below runs against TS3 **3.13.8 RAW** and TS3 **3.13.8 SSH**. TS6 RAW and Web Query are not claimed.
 
 `ServerQueryCompatibilityIT.channelDomain` uses a separate actor query session to
 create, edit, move and delete channels observed by a subscribed query session.
@@ -25,28 +25,35 @@ event payloads and errors in `target/compatibility/<target>-channels.txt`.
 `<target>.txt` records version/build, image and transport negotiation evidence.
 The required Docker CI uploads these reports even after failures. Help establishes
 syntax; assertions against actual operations establish the supported subset.
-Local Apple Silicon uses emulated amd64 TS3 and native arm64 TS6; CI tests amd64.
+Local Apple Silicon uses emulated amd64 TS3; CI tests amd64.
 
 ## Inventory by domain
 
-| Domain | Verified operations across the three targets | Remaining #441 coverage |
+| Domain | Verified operations on TS3 RAW and SSH | Explicit boundaries / follow-up |
 | --- | --- | --- |
-| Servers | Login/version/selection; server info/list/port lookup, host/instance/connection information; name/welcome/host-message edits and independent-session edit notifications. See [server evidence](server-compatibility.md); sequential create/start/stop/delete and lifecycle errors in [lifecycle evidence](server-lifecycle-compatibility.md); message tests document rejected selection and cleared context | Other server/instance edits, snapshots, concurrent/multi-running-server lifecycle, nondefault creation, property combinations and restricted-account probes |
-| Channels | Permanent channel create/list/info/find, name/topic/description edit, parent move with first-sibling order, force delete; UTF-8 and literal protocol escapes; deleted channel error 768 | Other property combinations, temporary/semi-permanent/password/default channels, limits/codecs/banners; permission failures and extra description/password notifications |
-| Clients | Query-client list/info/name lookup, self nickname update, description edits, independent-session joins/admin moves/self moves/leaves and error recovery. See [client evidence](client-compatibility.md); existing reconnect probes | Database administration, other properties, UID lookup/multiple sessions, bulk/password moves, kicks/bans, voice-client fixture/manual verification |
-| Permissions/groups | Server metadata and name/ID lookup, effective-value lookup, assignment search; named channel/server-group/channel-group permission add/read/update/delete; group create/list/rename/delete and regular group copy/overwrite. See [permission evidence and migration](permission-compatibility.md) | Client/channel-client permissions, permission overview, template/query group copies, membership/automatic assignments, permission reset and denied-account probes |
-| Messages/events | Channel create/edit/move/delete and online server/channel/private text messages from an independent query session; text subscriptions/unregister/re-register, decoded payloads and invalid-target errors. See [message evidence](message-compatibility.md); existing overlapping subscription/reconnect probes | Broadcast/offline messages, pokes, additional server-edit properties, successful regular-client privilege-key-use payloads and other events; voice-client behavior requires a separate client fixture or manual evidence |
-| Files | Directory create/list/nested rename/cross-channel move/scalar and bulk delete; list metadata, empty transfer list and path/file-info errors. See [file evidence](file-compatibility.md) | Actual files, positive/bulk file-info, icons, active-transfer metadata and remaining command/error inventory; transfer reliability and container/NAT endpoints belong to #442 |
-| Administrative utilities | Privilege-key create/list/delete for both types, metadata and query-client consumption rejection; see [key evidence](privilege-key-compatibility.md). Ban-rule create/list/delete and metadata/errors; see [ban evidence](ban-compatibility.md). Global query-login create/list/authenticate/delete and deleted-credential rejection; see [login evidence](query-login-compatibility.md). Instance/virtual-server log reads, limits/metadata and invalid-severity errors; see [log evidence](log-compatibility.md). Existing version/selection error recovery and controlled `help` | Successful regular-client key consumption/events/custom metadata, invalid references/limits/restricted roles; custom log-write visibility, log pagination/rotation/severities/denied roles, ban enforcement/client bans/bulk deletion, complaints, virtual-server query logins/rotation/pattern limits and remaining utilities |
+| Servers | Info/list/port selection, host/instance/connection/binding metadata; configuration edits and independent edit events; owned create/start/stop/delete, snapshots, instance edits, restart/default-channel persistence and process stop | Bundled license rejects a second concurrently running server with 2816; licensed concurrency is not claimed. [Server](server-compatibility.md), [lifecycle](server-lifecycle-compatibility.md), [snapshot](server-snapshot-compatibility.md), [additional evidence](additional-command-compatibility.md) |
+| Channels | Permanent/semi-permanent/default configuration; list/info/find/edit/move/delete; Unicode/escape text, password flags, capacity/Opus metadata, description/password and create/edit/move/delete events; restart persistence | Temporary-channel lifetime and regular-client password enforcement are unverified. Invalid flags 775; invalid quality permission 2568; deleted channel 768. [Configuration](channel-configuration-compatibility.md), [additional evidence](additional-command-compatibility.md) |
+| Clients | Query-client CRUD and independent join/move/leave | Regular-client administration, persistent database/UID/custom properties, bulk/password moves, kicks, ban enforcement and complaints are unverified. Query whoami database IDs are not persistent regular identities. [Client](client-compatibility.md), [remaining coverage](additional-command-compatibility.md#remaining-regular-client-coverage) |
+| Permissions/groups | Server metadata/name/ID/effective-value lookup and search; channel/server-group/channel-group permission assignments; regular/template/query server groups; regular/template channel groups; copies/overwrite/rename/delete; automatic add/delete/reset | Positive client/channel-client permissions, overview, regular-client memberships and restricted-account behavior are unverified. Query channel-group creation rejected1538 despite help. Permission IDs come from server metadata. Reset clears selection. [Permission](permission-compatibility.md), [copies](group-copy-compatibility.md), [modes](additional-command-compatibility.md) |
+| Messages/events | Independent-session server/channel/private messages, overlapping subscriptions and unregister/re-register; privilege-key create/list/delete and rejected query-client consumption | Regular-client poke/broadcast receipt, offline-message CRUD and successful key consumption/events/custom properties are unverified. Scripted tests distinguish absent and empty offline bodies. Query-client key use rejects516. Voice/audio and screen sharing are outside ServerQuery scope. [Message](message-compatibility.md), [privilege keys](privilege-key-compatibility.md) |
+| Files | Directory create/list/rename/move/delete; positive scalar/two-file bulk metadata; Unicode content upload/exact download; active-transfer owner/ID/state and stop; icon CRC/list/download/delete | Bounded test sockets explicitly adapt Docker endpoint. Production helper reliability, resume/cancellation/length limits/NAT remain #442. [Directory](file-compatibility.md), [content evidence](additional-command-compatibility.md) |
+| Administrative utilities | Global query-login create/list/auth/delete; explicit logout/re-login; ban-rule CRUD; four custom log severities/routing/reverse/cursor continuation | Server-bound login replacement, restricted-account denied operations, client ban enforcement and complaints are unverified. Log windows are not durability, rotation or a full-file guarantee. [Login](query-login-compatibility.md), [ban](ban-compatibility.md), [log](log-compatibility.md), [additional evidence](additional-command-compatibility.md) |
 
-Existing probes are in `ServerQueryCompatibilityIT`; scripted codec, lifecycle,
+The [protocol-builder mapping](command-coverage-map.md) lists every command family
+in production, including expected unsupported outcomes and unverified operations.
+Remaining release checks are kept explicitly in PR #477 until green at final HEAD. Future API
+facades/models and production transfer reliability keep their own #443/#444/#442 scope.
+
+Existing query probes are in `ServerQueryCompatibilityIT`; scripted codec, lifecycle,
 queue and event tests remain regression evidence, not live command acceptance.
-No Testcontainers result here guarantees actual voice-client join/leave behavior.
+There is no regular-client fixture in the automated suite. Behaviors requiring a
+regular client need verification with the official TeamSpeak client. Query-only
+tests provide no guarantee of those behaviors or audio transmission.
 
 ## Observed channel differences and errors
 
 - `notifychannelmoved` uses **`order`**, while channel list/info/create use
-  **`channel_order`**, on all three targets. The event accessor now reads `order`.
+  **`channel_order`**, on both TS3 targets. The event accessor now reads `order`.
   A missing order still returns `-1`; zero is a valid first-sibling order.
 - TS6 channel info includes `channel_storage_quota` (4294967295 in the disposable
   default fixture); TS3 channel info omits it. TS6 channel-create notifications
@@ -99,7 +106,11 @@ order instead of incorrectly returning `-1`. Consumers that treated every move
 order as absent should use the real sibling ID or zero. No other channel model
 schema/default changes are introduced. The permission slice intentionally removes embedded enum IDs and corrects unknown-name
 errors; see its [breaking migration notes](permission-compatibility.md#migration-for-200).
-Remaining operations stay within #441 and require subsequent focused PRs before it can be closed.
+Scripted `OfflineMessageTest` preserves the distinction between an absent body
+(`null`) and an explicit empty body (`""`); this is not live offline-message CRUD
+acceptance. `CreatedIdTest` verifies that missing, malformed, zero or negative
+creation IDs fail with `TS3Exception`, rather than reaching a subsequent command.
+Remaining operations stay within the same #441 implementation PR before it can be closed.
 
 Tool documentation reviewed: [JUnit parameterized tests](https://docs.junit.org/6.1.3/overview.html),
 [Testcontainers authenticated waits](https://java.testcontainers.org/features/startup_and_waits/),

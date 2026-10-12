@@ -1,5 +1,9 @@
 # Verified permission metadata and group operations
 
+> Current scope: TS3 RAW and SSH only. TS6 functionality and tests are removed.
+> Any TS6 observations below are retained historical findings from merged PRs,
+> not current support claims or release acceptance requirements.
+
 This focused portion of #441 verifies TS3 **3.13.8 RAW**, TS3 **3.13.8 SSH** and
 TS6 **6.0.0-beta13.1 SSH** using the pinned fixtures in
 [integration tests](integration-tests.md). It does not complete #441.
@@ -26,7 +30,7 @@ permission metadata, selected assignment rows and errors in
 version/build/image/transport reports. Help alone is not an operation guarantee.
 
 The ordinary `permfind` response contains `t`, `id1`, `id2` and `p`, but omits
-`v`, `n` and `s` on all three targets. `PermissionAssignment` also represents
+`v`, `n` and `s` on both TS3 targets. `PermissionAssignment` also represents
 `permoverview` responses. Check `getMap()` field presence before interpreting
 values or flags; use the corresponding permission-list operation for actual
 assignment values. Wrapper defaults do not establish that a property was supplied.

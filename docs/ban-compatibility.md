@@ -1,7 +1,10 @@
 # Verified ban-rule administration
 
-This focused #441 slice verifies TS3 **3.13.8 RAW**, TS3 **3.13.8 SSH** and TS6
-**6.0.0-beta13.1 SSH** with the existing pinned fixtures. See the
+> Current scope: TS3 RAW and SSH only. TS6 functionality and tests are removed.
+> Any TS6 observations below are retained historical findings from merged PRs,
+> not current support claims or release acceptance requirements.
+
+This focused #441 slice verifies TS3 **3.13.8 RAW** and TS3 **3.13.8 SSH** with the existing pinned fixtures. See the
 [overall inventory](command-compatibility.md) and [integration setup](integration-tests.md).
 It covers administrative rules, not client disconnection or enforcement.
 
@@ -31,7 +34,7 @@ The test never calls `deleteAllBans` or bans a connected client.
 
 ## Output and errors
 
-All three combinations supply the same observed row fields:
+All two TS3 combinations supply the same observed row fields:
 `banid`, `ip`, `name`, `uid`, `mytsid`, `lastnickname`, `created`, `duration`,
 `invokername`, `invokercldbid`, `invokeruid`, `reason` and `enforcements`.
 Unused targets, myTeamSpeak ID and last nickname are empty in these rows.
