@@ -81,13 +81,13 @@ aborting transfer work. Configure the transfer deadline or cancel the original
 result before it is already terminal.
 
 Download continuation uses the overload
-`downloadFile(output, path, channel, password, seekPosition)`. Position must be
+`files().download(FileLocation.of(channel, path).withChannelPassword(password), output, seekPosition)`. Position must be
 nonnegative and no greater than the server file size. The caller positions its
 output itself; the library writes only the suffix and returns bytes written.
 An offset exactly at EOF writes zero bytes.
 
 Upload continuation uses
-`uploadFile(input, totalSize, path, false, channel, password, true)`. Supply the
+`files().upload(location, input, totalSize, UploadMode.RESUME)`. Supply the
 **entire original source from its beginning**, not just the suffix. The server's
 `seekpos` is validated against totalSize; that prefix is consumed locally and
 only the remainder is sent. Resume and overwrite are mutually exclusive. There

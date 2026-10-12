@@ -22,11 +22,11 @@ The three target cases verify:
 - Subject joins with a distinct live client ID, matching channel/database IDs,
   nickname, UID and query-client type (`1`). The join has reason `0` and no invoker.
 - Self nickname update through `updateClient(Map)` preserves Japanese text, pipes
-  and literal backslash escapes. `whoAmI`, `getClientInfo` and `getClients` agree
+  and literal backslash escapes. `whoAmI`, `clients().info` and `clients().list` agree
   on the subject's identity and nickname.
-- Exact case-sensitive and case-insensitive name lookup, and `getClientsByName`
-  for the exercised full name, return the subject. An absent name returns `null`
-  for exact lookup and an empty list for search. This does not establish every
+- Exact case-sensitive and case-insensitive name lookup, and `clients().search`
+  for the exercised full name, return the subject. An absent name returns an empty
+  `Optional` for exact lookup and an empty list for search. This does not establish every
   search pattern's semantics.
 - Administrator description edits through scalar and map overloads preserve
   UTF-8, pipes, slashes and literal protocol escapes. Actual newline, tab and

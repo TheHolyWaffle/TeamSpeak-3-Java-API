@@ -11,7 +11,7 @@ TS3Config config = new TS3Config()
     .setCloseTimeout(Duration.ofSeconds(2));
 try (TS3Query query = new TS3Query(config)) {
     query.connect();
-    query.getApi().getVersion();
+    query.getApi().instance().version();
 }
 ```
 
@@ -74,7 +74,9 @@ and stream lifecycle changes remain assigned to #442.
 - Queue wait is now finite. Increase it for long flood-rate-limited queues.
 - Explicit termination fails outstanding requests with `TS3QueryShutDownException`;
   commands whose transmission began use its `TS3UnknownOutcomeException` subtype.
-  Expired unsent commands fail with `TS3Exception` describing queue expiry.
+  A command whose own response deadline expired fails with `TS3TimeoutException`
+  (`Phase.RESPONSE`, outcome unknown); expired unsent commands fail with
+  `TS3TimeoutException` (`Phase.QUEUE_WAIT`). See [errors and absent results](api-migration.md#errors).
   Failed requests never revive. On unexpected loss, explicit session configuration
   can retain unsent commands and an opt-in safe-read policy can replay eligible
   commands; see [safe reconnect and retry](reconnect-and-retry.md).

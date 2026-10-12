@@ -17,7 +17,7 @@ command tests or transports.
 It captures live help for `queryloginadd`, `queryloginlist` and `querylogindel`,
 then verifies:
 
-- Global login creation with `addServerQueryLogin(name, 0)`. The nonpositive
+- Global login creation with `queryLogins().create(name, 0)`. The nonpositive
   client database argument is omitted from the command; global context creates
   a new query identity instead of replacing a regular client's login.
 - Creation returns a positive server-assigned database ID, `sid=0`, exact name
@@ -75,7 +75,7 @@ TS3 evidence and follow-up ownership are in the [acceptance inventory](command-c
 and [additional command tests](additional-command-compatibility.md).
 
 Virtual-server/client-bound logins, replacement/rotation (including
-`updateServerQueryLogin`), name character/length constraints, wildcard/pagination
+`queryLogins().updateOwn`), name character/length constraints, wildcard/pagination
 behavior, duplicate names, denied roles, permissions/memberships, revocation of
 already connected sessions and other versions remain #441 scope. No notification
 or voice-client guarantee is introduced. TS6 RAW and Web Query are unclaimed;

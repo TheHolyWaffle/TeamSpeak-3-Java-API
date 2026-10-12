@@ -40,7 +40,7 @@ try (TS3Query query = new TS3Query(new TS3Config()
         .setListenerQueueCapacity(128))) {
     try (EventSubscription subscription = query.subscribe(listener)) {
         query.connect();
-        query.getApi().registerAllEvents();
+        query.getApi().events().registerAll();
         // Use the API while the local listener is installed.
     }
 }
@@ -49,8 +49,8 @@ try (TS3Query query = new TS3Query(new TS3Config()
 `subscribe` does not register notification types on the server. Closing its handle
 is idempotent, removes that registration and discards waiting events without
 waiting for user code. A callback already claimed by a worker may finish after
-close. The existing `addTS3Listeners` / `removeTS3Listeners` methods remain;
-removal now also discards waiting events. Closing the query removes all local
+close. `TS3Api.events().subscribe(listener)` returns the same handle; the former
+`addTS3Listeners` / `removeTS3Listeners` methods were removed in #443. Closing the query removes all local
 registrations and rejects new ones. Removed blocked callbacks retain at most the
 fixed event worker count, even if registrations are repeatedly replaced.
 

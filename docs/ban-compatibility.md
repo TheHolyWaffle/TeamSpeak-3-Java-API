@@ -30,7 +30,7 @@ Each new ID is registered with the existing cleanup resource immediately after
 creation. All three deletions are attempted even after an assertion failure,
 with the original failure preserved through try-with-resources suppression.
 Listing returns to exactly the initial ID set; pre-existing rules are preserved.
-The test never calls `deleteAllBans` or bans a connected client.
+The test never calls `bans().deleteAll()` or bans a connected client.
 
 ## Output and errors
 

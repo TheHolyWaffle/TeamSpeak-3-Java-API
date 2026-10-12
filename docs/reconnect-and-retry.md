@@ -6,6 +6,9 @@ another channel. Commands enter the **unknown-outcome** phase when the writer
 claims them, before encoding/writing/flushing; partial writes are ambiguous too.
 `TS3UnknownOutcomeException` identifies the protocol command name without its
 parameters and extends `TS3QueryShutDownException` for existing failure handlers.
+A command that exceeded its own response deadline instead fails with
+`TS3TimeoutException` (`Phase.RESPONSE`). Test `TS3Exception.isOutcomeUnknown()`
+to cover both; see [errors](api-migration.md#errors).
 Reconcile mutations with server state before deciding what to do next.
 
 Configure the session before constructing a query:
@@ -28,7 +31,7 @@ TS3Config config = new TS3Config()
     .setCommandRetryPolicy(CommandRetryPolicy.safeReads(1, "whoami", "version"));
 try (TS3Query query = new TS3Query(config)) {
     query.connect();
-    query.getApi().getVersion();
+    query.getApi().instance().version();
 }
 ```
 
@@ -44,7 +47,7 @@ Application event listeners belong to the query and need registration only once.
 | Command at disconnect | Result |
 | --- | --- |
 | Sent, with a complete response accepted | Completes once; never replayed |
-| Sent, no complete response, default policy | Fails with `TS3UnknownOutcomeException`; never replayed |
+| Sent, no complete response, default policy | Fails with `TS3UnknownOutcomeException` (or `TS3TimeoutException` if its own response deadline expired); never replayed |
 | Sent, explicitly selected safe read, retries remaining | Returns to the head of the queue; replays after restoration |
 | Sent, safe read whose retry allowance is exhausted | Fails with `TS3UnknownOutcomeException`; later unsent commands can continue |
 | Queued and unsent, explicit session configured | Keeps its position and original queue deadline; sends after restoration |

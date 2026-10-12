@@ -13,19 +13,19 @@ It does not complete the server domain or the issue.
 
 `ServerQueryCompatibilityIT.serverDomain` verifies these operations on each target:
 
-- `getServerInfo()` supplies the selected server's ID, online status, name,
+- `servers().info()` supplies the selected server's ID, online status, name,
   unique identifier, port, max clients, version and platform.
-- `getVirtualServers()` (`serverlist -uid -all`) includes the fixture server,
+- `servers().list()` (`serverlist -uid -all`) includes the fixture server,
   agreeing with its detailed info on ID, name, port, unique identifier, status
   and maximum clients. This does not establish stopped/other-server listings.
-- `getServerIdByPort()` resolves the fixture's internal voice port. The port is
+- `servers().findIdByPort()` resolves the fixture's internal voice port. The port is
   read from server info, not assumed to be a host-mapped Docker endpoint.
-- `getHostInfo()` supplies running-server/channel counts, uptime and timestamp;
-  `getInstanceInfo()` supplies database version and configured file-transfer
-  port; `getConnectionInfo()` supplies nonnegative total packet/byte counters.
+- `instance().hostInfo()` supplies running-server/channel counts, uptime and timestamp;
+  `instance().info()` supplies database version and configured file-transfer
+  port; `servers().connectionInfo()` supplies nonnegative total packet/byte counters.
   Captured remaining fields are an inventory, not validation of every accessor,
   traffic accounting or file-transfer endpoint reachability.
-- `editServer()` changes name, welcome message and host message in one command;
+- `servers().edit()` changes name, welcome message and host message in one command;
   detailed info returns each exact value, and server list reflects the new name.
   UTF-8, pipes, slash characters, literal backslash escapes and actual
   newline/tab/carriage-return characters are preserved in the exercised fields.

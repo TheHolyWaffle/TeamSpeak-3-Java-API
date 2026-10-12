@@ -13,10 +13,10 @@ unchanged; see [integration setup](integration-tests.md) and the
 `ServerQueryCompatibilityIT.logDomain` captures actual `logadd` and `logview`
 help, then reads existing logs from the authenticated disposable fixtures:
 
-- With no virtual server selected, `getInstanceLogEntries(100)` includes the
+- With no virtual server selected, `instance().logEntries(100)` includes the
   connected server's version. The virtual-server getter reads the instance log
   in this context, including its `ServerLibPriv` startup category.
-- After selecting server 1, `getVirtualServerLogEntries(100)` returns rows with
+- After selecting server 1, `servers().logEntries(100)` returns rows with
   its server-ID prefix and excludes the instance startup category. Explicit
   instance reads still return the instance category while a server is selected.
 - A one-line request returns one row. Default and nonpositive requests return a

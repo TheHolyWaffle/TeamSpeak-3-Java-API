@@ -4,7 +4,9 @@ TeamSpeak 3 Java API
 
 A Java wrapper of the [TeamSpeak 3](http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Server%20Query%20Manual.pdf)  Server Query API
 
-For the 2.0 asynchronous API, see the [CompletableFuture migration and execution contract](docs/futures.md).
+For the 2.0 domain APIs, error categories and a mapping of every 1.x operation, see the
+[domain API migration guide](docs/api-migration.md). For asynchronous results, see the
+[CompletableFuture migration and execution contract](docs/futures.md).
 
 ## Features
 
@@ -65,7 +67,13 @@ For the 2.0 asynchronous API, see the [CompletableFuture migration and execution
 
 ### Usage
 
-All functionality is contained in the [TS3Api](src/main/java/com/github/theholywaffle/teamspeak3/TS3Api.java) object.
+[TS3Api](src/main/java/com/github/theholywaffle/teamspeak3/TS3Api.java) holds the session operations
+(login, server selection, nickname) and one domain API per area: `channels()`, `clients()`,
+`databaseClients()`, `serverGroups()`, `channelGroups()`, `permissions()`, `bans()`,
+`complaints()`, `messages()`, `files()`, `privilegeKeys()`, `queryLogins()`, `servers()`,
+`instance()` and `events()`. `TS3ApiAsync` offers the same operations returning
+`CompletableFuture`. Lookups that may find nothing return `Optional`; failures throw a
+`TS3Exception` subtype.
 
 1. Create a [TS3Config](src/main/java/com/github/theholywaffle/teamspeak3/TS3Config.java) object and customize it.
 2. Create a [TS3Query](src/main/java/com/github/theholywaffle/teamspeak3/TS3Query.java) object with your TS3Config as argument.
@@ -88,7 +96,7 @@ final TS3Api api = query.getApi();
 api.login("serveradmin", "serveradminpassword");
 api.selectVirtualServerById(1);
 api.setNickname("PutPutBot");
-api.sendChannelMessage("PutPutBot is online!");
+api.messages().sendChannel("PutPutBot is online!");
 ...
 ```
 

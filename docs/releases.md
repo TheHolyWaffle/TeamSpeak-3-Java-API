@@ -113,6 +113,12 @@ Task #439 removes `CommandFuture` in favor of JDK `CompletableFuture` and
 for callback execution, exception wrappers, chaining, waiting and cancellation.
 The async return-type change is an intentional 2.0 source/binary break.
 
+Task #443 moves `TS3Api`/`TS3ApiAsync` operations into domain APIs such as
+`channels()`, `clients()`, `permissions()`, `servers()` and `files()`, returns `Optional`
+for absent lookups and defines the `TS3Exception` categories. Every previous operation is
+mapped in the [domain API migration guide](api-migration.md), an intentional 2.0
+source/binary break.
+
 ## Central Portal publication (#433)
 
 JReleaser **1.26.0**, pinned in Maven, is the sole owner of signing, Central Portal
