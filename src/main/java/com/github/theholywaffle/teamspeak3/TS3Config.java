@@ -42,6 +42,7 @@ import java.util.Objects;
  */
 public final class TS3Config {
 
+	private FileTransferConfig fileTransferConfig = FileTransferConfig.defaults();
 	private String host = null;
 	private SshHostKeyPolicy sshHostKeyPolicy = SshHostKeyPolicy.defaultKnownHosts();
 	private QueryTransportFactory transportFactory;
@@ -103,6 +104,15 @@ public final class TS3Config {
 	public TS3Config setEventCallbackThreads(int threads) {
 		eventCallbackThreads = positiveCapacity(threads); return this;
 	}
+
+	/** @param config immutable file limits and endpoint mapping
+	 * @return this builder
+	 */
+	public TS3Config setFileTransferConfig(FileTransferConfig config) {
+		fileTransferConfig = Objects.requireNonNull(config, "config"); return this;
+	}
+	/** @return file limits and endpoint mapping */
+	public FileTransferConfig getFileTransferConfig() { return fileTransferConfig; }
 
 	private static int positiveCapacity(int value) {
 		if (value <= 0) throw new IllegalArgumentException("Capacity must be positive");
@@ -323,7 +333,7 @@ public final class TS3Config {
 		return setCommandResponseTimeout(Duration.ofMillis(commandTimeout));
 	}
 
-	private Duration timeout(Duration value) {
+	static Duration timeout(Duration value) {
 		if (value == null || value.isZero() || value.isNegative()) {
 			throw new IllegalArgumentException("Deadline must be positive");
 		}

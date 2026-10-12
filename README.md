@@ -180,6 +180,12 @@ merge settings, snapshot convention, and JReleaser Central Portal publication an
 
 ## Extra notes
 
+### File transfers
+
+Reliable TS3 file transfers, endpoint mappings, stream ownership, cancellation and
+resume are documented in [the file-transfer guide](docs/file-transfers.md). SSH
+ServerQuery encryption does not encrypt the separate file socket.
+
 ### SSH security defaults
 
 SSH queries require credentials supplied through `TS3Config#setLoginCredentials`.

@@ -108,7 +108,8 @@ also cancel all underlying requests before publishing cancellation. If the write
 cannot retract the bytes: the request remains in the receive queue, its eventual
 response is consumed, and subsequent commands stay aligned. The cancelled request
 is not replayed on reconnect. `cancel(true)` and `cancel(false)` have the same
-request semantics; JDK cancellation does not interrupt transport or file I/O.
+request semantics. Cancelling the original file-transfer result closes its separate
+socket and interrupts its worker; see [file transfers](file-transfers.md).
 Cancellation cannot undo a server-side mutation, including a file transfer already
 in progress. A completion/cancellation race has one winner according to JDK rules.
 

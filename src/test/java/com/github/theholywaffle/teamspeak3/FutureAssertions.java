@@ -2,6 +2,7 @@ package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -15,6 +16,13 @@ final class FutureAssertions {
 		int capacity = query.getConfig().getCommandCapacity();
 		while (query.commandAdmission(true).availablePermits() != capacity && System.nanoTime() < until) Thread.sleep(1);
 		org.junit.jupiter.api.Assertions.assertEquals(capacity, query.commandAdmission(true).availablePermits());
+	}
+
+	static void eventually(Callable<Boolean> condition, String message) throws Exception {
+		long until = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+		while (!condition.call()) {
+			org.junit.jupiter.api.Assertions.assertTrue(System.nanoTime() < until, message); Thread.sleep(20);
+		}
 	}
 
 	static <T> T read(CompletableFuture<T> future) throws InterruptedException, TimeoutException {

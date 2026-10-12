@@ -12,6 +12,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import static com.github.theholywaffle.teamspeak3.FutureAssertions.eventually;
 import static org.junit.jupiter.api.Assertions.*;
 
 class FileContentCompatibilityIT {
@@ -35,20 +36,12 @@ class FileContentCompatibilityIT {
                 assertFalse(upload.get("ftkey").isBlank(), "Upload initialization failed: status=" + upload.get("status") + " message=" + upload.get("msg")); assertEquals(30033, upload.getInt("port"));
                 evidence.add("upload fields=" + new java.util.TreeSet<>(upload.getMap().keySet()));
                 upload(bytes, mapped(server, upload.getMap()));
-                long deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(5);
-                while (api.getFileInfo(name, cid).getFileSize() != bytes.length) {
-                    assertTrue(System.nanoTime() < deadline, "Uploaded size must become visible");
-                    java.util.concurrent.TimeUnit.MILLISECONDS.sleep(25);
-                }
+                eventually(() -> api.getFileInfo(name, cid).getFileSize() == bytes.length, "Uploaded size must become visible");
                 var info = api.getFileInfo(name, cid); assertTrue(info.isFile()); assertEquals(name, info.getPath());
                 String second = "/contents/second.bin";
                 var secondUpload = api.executeRawCommand(FileCommands.ftInitUpload(6, second, cid, "", 1, true).toString()).getFirstResponse();
                 upload(new byte[]{42}, mapped(server, secondUpload.getMap()));
-                long secondDeadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(5);
-                while (api.getFileInfo(second, cid).getFileSize() != 1) {
-                    assertTrue(System.nanoTime() < secondDeadline, "Second uploaded file must become complete");
-                    java.util.concurrent.TimeUnit.MILLISECONDS.sleep(25);
-                }
+                eventually(() -> api.getFileInfo(second, cid).getFileSize() == 1, "Second uploaded file must become complete");
                 var bulk = api.getFileInfos(new String[]{name, second}, new int[]{cid, cid}, new String[]{"", ""});
                 assertEquals(2, bulk.size());
                 var sizes = bulk.stream().collect(java.util.stream.Collectors.toMap(row -> row.getPath(), row -> row.getFileSize()));
@@ -67,11 +60,7 @@ class FileContentCompatibilityIT {
                     socket.connect(new java.net.InetSocketAddress(server.getHost(), server.getMappedPort(30033)), 5000);
                     socket.setSoTimeout(5000); socket.getOutputStream().write(pending.get("ftkey").getBytes(java.nio.charset.StandardCharsets.UTF_8));
                     socket.getOutputStream().flush();
-                    long activeDeadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(5);
-                    while (api.getFileTransfers().stream().noneMatch(row -> row.getServerTransferId() == transfer && row.isActive())) {
-                        assertTrue(System.nanoTime() < activeDeadline, "Authenticated partial upload must become active");
-                        java.util.concurrent.TimeUnit.MILLISECONDS.sleep(25);
-                    }
+                    eventually(() -> api.getFileTransfers().stream().anyMatch(row -> row.getServerTransferId() == transfer && row.isActive()), "Authenticated partial upload must become active");
                     api.executeRawCommand("ftstop serverftfid=" + transfer + " delete=1");
                     assertEquals(-1, socket.getInputStream().read(), "Stopped upload must close its data socket");
                 }
@@ -80,11 +69,7 @@ class FileContentCompatibilityIT {
                 long iconId = FileTransferHelper.getIconId(icon);
                 var iconUpload = api.executeRawCommand(FileCommands.ftInitUpload(4, "/icon_" + iconId, 0, "", icon.length, true).toString()).getFirstResponse();
                 upload(icon, mapped(server, iconUpload.getMap()));
-                long iconDeadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(5);
-                while (api.getIconList().stream().noneMatch(row -> row.getIconId() == iconId && row.getFileSize() == icon.length)) {
-                    assertTrue(System.nanoTime() < iconDeadline, "Uploaded icon must become complete");
-                    java.util.concurrent.TimeUnit.MILLISECONDS.sleep(25);
-                }
+                eventually(() -> api.getIconList().stream().anyMatch(row -> row.getIconId() == iconId && row.getFileSize() == icon.length), "Uploaded icon must become complete");
                 var icons = api.getIconList().stream().filter(row -> row.getIconId() == iconId).toList();
                 assertEquals(1, icons.size()); assertEquals(icon.length, icons.getFirst().getFileSize());
                 var iconDownload = api.executeRawCommand(FileCommands.ftInitDownload(5, "/icon_" + iconId, 0, "").toString()).getFirstResponse();

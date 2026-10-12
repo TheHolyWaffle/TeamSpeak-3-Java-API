@@ -122,18 +122,30 @@ public final class FileCommands {
 	}
 
 	public static Command ftInitDownload(int transferId, String path, int channelId, String channelPassword) {
+		return ftInitDownload(transferId, path, channelId, channelPassword, 0);
+	}
+
+	public static Command ftInitDownload(int transferId, String path, int channelId, String channelPassword, long seekPosition) {
+		if (seekPosition < 0) throw new IllegalArgumentException("Negative download seek position");
 		CommandBuilder builder = new CommandBuilder("ftinitdownload", 6);
 		builder.add(new KeyValueParam("clientftfid", transferId));
 		builder.add(new KeyValueParam("name", prefixSlash(path)));
 		builder.add(new KeyValueParam("cid", channelId));
 		builder.add(new KeyValueParam("cpw", channelPassword));
-		builder.add(new KeyValueParam("seekpos", 0));
+		builder.add(new KeyValueParam("seekpos", seekPosition));
 		builder.add(new KeyValueParam("proto", 0)); // Use current (old) protocol for as long as possible
 		return builder.build();
 	}
 
 	public static Command ftInitUpload(int transferId, String path, int channelId, String channelPassword,
 	                                   long size, boolean overwrite) {
+		return ftInitUpload(transferId, path, channelId, channelPassword, size, overwrite, false);
+	}
+
+	public static Command ftInitUpload(int transferId, String path, int channelId, String channelPassword,
+	                                   long size, boolean overwrite, boolean resume) {
+		if (size < 0) throw new IllegalArgumentException("Negative upload length");
+		if (resume && overwrite) throw new IllegalArgumentException("Resume cannot overwrite a file");
 		CommandBuilder builder = new CommandBuilder("ftinitupload", 8);
 		builder.add(new KeyValueParam("clientftfid", transferId));
 		builder.add(new KeyValueParam("name", prefixSlash(path)));
@@ -141,7 +153,7 @@ public final class FileCommands {
 		builder.add(new KeyValueParam("cpw", channelPassword));
 		builder.add(new KeyValueParam("size", size));
 		builder.add(new KeyValueParam("overwrite", overwrite));
-		builder.add(new KeyValueParam("resume", 0));
+		builder.add(new KeyValueParam("resume", resume));
 		builder.add(new KeyValueParam("proto", 0)); // Use current (old) protocol for as long as possible
 		return builder.build();
 	}

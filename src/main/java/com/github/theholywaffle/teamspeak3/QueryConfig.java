@@ -13,6 +13,7 @@ import com.github.theholywaffle.teamspeak3.api.reconnect.SessionConfiguration;
  * Credentials are deliberately excluded from diagnostic output.
  */
 public final class QueryConfig {
+	private final FileTransferConfig fileTransferConfig;
 	private final String host;
 	private final SshHostKeyPolicy sshHostKeyPolicy;
 	private final QueryTransportFactory transportFactory;
@@ -37,6 +38,7 @@ public final class QueryConfig {
 	private final int eventCallbackThreads;
 
 	QueryConfig(TS3Config builder) {
+		fileTransferConfig = builder.getFileTransferConfig();
 		host = builder.getHost() == null ? "127.0.0.1" : builder.getHost();
 		sshHostKeyPolicy = builder.getSshHostKeyPolicy();
 		transportFactory = builder.getTransportFactory();
@@ -69,6 +71,8 @@ public final class QueryConfig {
 		if (commandRetryPolicy.getMaxRetries() > 0 && sessionConfiguration == null)
 			throw new IllegalStateException("Command replay requires explicit session configuration");
 	}
+	/** @return immutable file limits and endpoint mapping */
+	public FileTransferConfig getFileTransferConfig() { return fileTransferConfig; }
 	/** @return configured host */
 	public String getHost() { return host; }
 	/** @return configured sshHostKeyPolicy */
