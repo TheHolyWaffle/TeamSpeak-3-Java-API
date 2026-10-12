@@ -1,0 +1,33 @@
+src/main/java/com/github/theholywaffle/teamspeak3/TS3ApiAsync.java
+  s_ac51726a7bf17a::t_bf9e6929e10098 2945,5623-5635
+src/test/java/com/github/theholywaffle/teamspeak3/SessionCommandsCompatibilityIT.java
+  s_ac51726a7bf17a::t_bf9e6929e10098 21-23
+src/test/java/com/github/theholywaffle/teamspeak3/ServerModesCompatibilityIT.java
+  s_ac51726a7bf17a::t_bf9e6929e10098 30-33
+src/test/java/com/github/theholywaffle/teamspeak3/RegularClientCompatibilityIT.java
+  s_ac51726a7bf17a::t_bf9e6929e10098 266-268
+src/test/fixtures/regular-client/src/main/java/fixture/RegularClient.java
+  s_ac51726a7bf17a::t_bf9e6929e10098 67
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryCompatibilityIT.java
+  s_ac51726a7bf17a::t_bf9e6929e10098 313-314,339-340,344-345,351-352,357-358,846,859,882,1379
+src/test/java/com/github/theholywaffle/teamspeak3/PermissionModesCompatibilityIT.java
+  s_ac51726a7bf17a::t_bf9e6929e10098 66-68
+src/test/java/com/github/theholywaffle/teamspeak3/RestrictedClientCompatibilityIT.java
+  s_ac51726a7bf17a::t_bf9e6929e10098 72-74,133-134
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8f60d3c09cea450c51d42a6ecc89452c41951285",
+  "prompts": {},
+  "sessions": {
+    "s_ac51726a7bf17a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a13014-aa58-7af2-9d0c-fdc59cc16d09",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
