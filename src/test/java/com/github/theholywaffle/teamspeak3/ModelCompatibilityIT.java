@@ -151,6 +151,7 @@ class ModelCompatibilityIT {
 							inspect(message, evidence, failures);
 							recipient.getApi().messages().deleteOffline(message.getId());
 						}
+						recipient.exit();
 					}
 					assertTrue(api.databaseClients().customProperties(databaseClient).containsKey("models"));
 					assertThrows(UnsupportedOperationException.class, () -> api.databaseClients().customProperties(databaseClient).clear());
@@ -172,6 +173,7 @@ class ModelCompatibilityIT {
 				}
 				assertEquals(databaseClient, login.getClientDatabaseId());
 			}
+			observer.exit();
 			assertEquals(0, observer.getEventStatistics().listenerFailures());
 		}
 		Path report = Path.of("target", "compatibility", target + "-models.txt");
