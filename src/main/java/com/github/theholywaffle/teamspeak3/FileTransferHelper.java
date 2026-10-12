@@ -40,11 +40,13 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.zip.CRC32;
 
 /** Owns only file sockets; caller streams are never flushed or closed. */
 class FileTransferHelper implements AutoCloseable {
 	private static final int BUFFER_SIZE = 16_384;
+	private static final long SKIP_CHUNK = 1 << 20;
 	private final AtomicInteger clientTransferId = new AtomicInteger();
 	private final String defaultHost;
 	private final FileTransferConfig config;
@@ -109,7 +111,7 @@ class FileTransferHelper implements AutoCloseable {
 
 		Socket connect(FileTransferParameters params) throws IOException {
 			check();
-			int port = params.getFileServerPort();
+			int port = field(params::getFileServerPort);
 			if (port < 1 || port > 65535 || params.getFileTransferKey().isEmpty())
 				throw new IOException("Invalid file transfer endpoint or key");
 			var endpoint = config.endpointResolver().resolve(defaultHost, params.getFileServerHost(), port);
@@ -142,28 +144,52 @@ class FileTransferHelper implements AutoCloseable {
 		}
 	}
 
+	/** Converts a malformed numeric server field into an I/O failure. */
+	static <T> T field(Supplier<T> parse) throws IOException {
+		try { return parse.get(); }
+		catch (NumberFormatException malformed) { throw new IOException("Malformed file transfer field", malformed); }
+	}
+
 	void downloadFile(OutputStream dataOut, FileTransferParameters params, long seekPosition, Operation operation) throws IOException {
-		long size = params.getFileSize();
+		long size = field(params::getFileSize);
 		if (size < 0 || seekPosition < 0 || seekPosition > size) throw new IOException("Invalid download length or seek position");
 		try (Socket socket = operation.connect(params)) {
 			InputStream in = socket.getInputStream();
 			copy(in, dataOut, size - seekPosition, new byte[BUFFER_SIZE], operation,
 				"Server response contained less data than specified or made no progress");
-			operation.check();
-			if (in.read() != -1) throw new IOException("Server response contained more data than specified");
-			operation.check();
+			expectEnd(in, operation);
 		}
+	}
+
+	byte[] downloadBytes(FileTransferParameters params, Operation operation) throws IOException {
+		long size = field(params::getFileSize);
+		if (size < 0 || size > config.maxInMemoryBytes()) throw new IOException("Invalid file size or in-memory limit exceeded");
+		try (Socket socket = operation.connect(params)) {
+			InputStream in = socket.getInputStream();
+			byte[] data = readFully(in, size, config.maxInMemoryBytes(), operation);
+			expectEnd(in, operation);
+			return data;
+		}
+	}
+
+	byte[] bufferFully(InputStream dataIn, long dataLength, Operation operation) throws IOException {
+		return readFully(dataIn, dataLength, config.maxInMemoryBytes(), operation);
+	}
+
+	private static void expectEnd(InputStream in, Operation operation) throws IOException {
+		operation.check();
+		if (in.read() != -1) throw new IOException("Server response contained more data than specified");
+		operation.check();
 	}
 
 	void uploadFile(InputStream dataIn, long dataLength, FileTransferParameters params, boolean resume, Operation operation) throws IOException {
 		if (dataLength < 0) throw new IOException("Negative upload length");
-		long position = params.getLong("seekpos");
+		long position = field(() -> params.getLong("seekpos"));
 		if (position < 0 || position > dataLength || (!resume && position != 0))
 			throw new IOException("Invalid server upload seek position");
 		byte[] buffer = new byte[BUFFER_SIZE];
 		// Resume callers provide the entire source; discard precisely the server-acknowledged prefix.
-		copy(dataIn, OutputStream.nullOutputStream(), position, buffer, operation,
-			"User stream did not contain resume prefix or made no progress");
+		skip(dataIn, position, buffer, operation);
 		try (Socket socket = operation.connect(params)) {
 			OutputStream out = socket.getOutputStream();
 			copy(dataIn, out, dataLength - position, buffer, operation,
@@ -182,6 +208,20 @@ class FileTransferHelper implements AutoCloseable {
 		}
 	}
 
+	private static void skip(InputStream in, long size, byte[] buffer, Operation operation) throws IOException {
+		while (size > 0) {
+			operation.check();
+			long skipped = in.skip(Math.min(size, SKIP_CHUNK));
+			if (skipped <= 0) {
+				// skip cannot signal end of stream; a read can
+				int read = in.read(buffer, 0, (int) Math.min(buffer.length, size));
+				if (read <= 0) throw new IOException("User stream did not contain resume prefix or made no progress");
+				skipped = read;
+			}
+			size -= skipped;
+		}
+	}
+
 	static long getIconId(byte[] data) {
 		final CRC32 crc32 = new CRC32(); crc32.update(data); return crc32.getValue();
 	}
@@ -193,7 +233,7 @@ class FileTransferHelper implements AutoCloseable {
 		while (total < data.length) {
 			if (operation != null) operation.check();
 			int read = dataIn.read(data, total, data.length - total);
-			if (read <= 0) throw new IOException("User stream did not contain enough data or made no progress");
+			if (read <= 0) throw new IOException("Stream did not contain enough data or made no progress");
 			total += read;
 		}
 		if (operation != null) operation.check();

@@ -24,6 +24,10 @@ class FileTransferApiTest {
     private static void nextQuery(FakeServerQuery peer) throws Exception {
         peer.expect("whoami"); peer.write("client_id=42\nerror id=0 msg=ok\n"); peer.finishQuit();
     }
+    private static FileTransferConfig countingConfig(AtomicInteger calls, int maxInMemoryBytes) {
+        return new FileTransferConfig(Duration.ofSeconds(1), Duration.ofSeconds(1), Duration.ofSeconds(1), maxInMemoryBytes,
+            (host, ip, port) -> { calls.incrementAndGet(); return new InetSocketAddress(host, port); });
+    }
     private static void recovered(TS3Query query) throws Exception {
         FutureAssertions.awaitCommandAdmission(query);
         assertEquals(42, query.getAsyncApi().whoAmI().get(2, TimeUnit.SECONDS).getId());
@@ -37,18 +41,9 @@ class FileTransferApiTest {
             assertThrows(TS3FileTransferFailedException.class, () -> CommandFutures.join(
                 query.getAsyncApi().uploadIcon(InputStream.nullInputStream(), 17)));
             FutureAssertions.awaitCommandAdmission(query);
-            var entered = new CountDownLatch(1);
-            var stream = new InputStream() {
-                boolean closed;
-                @Override public int read() throws IOException {
-                    entered.countDown();
-                    try { new CountDownLatch(1).await(); throw new AssertionError(); }
-                    catch (InterruptedException failure) { throw new InterruptedIOException(); }
-                }
-                @Override public void close() { closed = true; }
-            };
+            var stream = new CallerStreams.BlockingInput();
             var request = query.getAsyncApi().uploadIcon(stream, 1);
-            assertTrue(entered.await(2, TimeUnit.SECONDS));
+            assertTrue(stream.entered.await(2, TimeUnit.SECONDS));
             assertThrows(TS3QueueFullException.class, () -> CommandFutures.join(query.getAsyncApi().whoAmI()));
             assertTrue(request.cancel(false)); FutureAssertions.awaitCommandAdmission(query); assertFalse(stream.closed);
         }
@@ -99,9 +94,7 @@ class FileTransferApiTest {
     @Test void unsentCancellationDoesNotResolveOrOpenFileSocket() throws Exception {
         var calls = new AtomicInteger();
         try (var peer = new FakeServerQuery(FileTransferApiTest::nextQuery);
-             var query = new TS3Query(config(peer.port()).setFileTransferConfig(new FileTransferConfig(
-                 Duration.ofSeconds(1), Duration.ofSeconds(1), Duration.ofSeconds(1), 10,
-                 (host, ip, port) -> { calls.incrementAndGet(); return new InetSocketAddress(host, port); })))) {
+             var query = new TS3Query(config(peer.port()).setFileTransferConfig(countingConfig(calls, 10)))) {
             var transfer = query.getAsyncApi().downloadFile(new ByteArrayOutputStream(), "/file", 0);
             assertTrue(transfer.cancel(false)); query.connect(); recovered(query); peer.await(); assertEquals(0, calls.get());
         }
@@ -112,9 +105,7 @@ class FileTransferApiTest {
         try (var peer = new FakeServerQuery(p -> {
             pCommand(p, "ftinitdownload"); received.countDown(); assertTrue(release.await(3, TimeUnit.SECONDS));
             response(p, 30033, "size=1"); nextQuery(p);
-        }); var query = new TS3Query(config(peer.port()).setFileTransferConfig(new FileTransferConfig(
-            Duration.ofSeconds(1), Duration.ofSeconds(1), Duration.ofSeconds(1), 10,
-            (host, ip, port) -> { calls.incrementAndGet(); return new InetSocketAddress(host, port); })))) {
+        }); var query = new TS3Query(config(peer.port()).setFileTransferConfig(countingConfig(calls, 10)))) {
             query.connect(); var transfer = query.getAsyncApi().downloadFile(new ByteArrayOutputStream(), "/file", 0);
             assertTrue(received.await(2, TimeUnit.SECONDS)); assertTrue(transfer.cancel(true)); release.countDown();
             recovered(query); peer.await(); assertEquals(0, calls.get());
@@ -158,7 +149,7 @@ class FileTransferApiTest {
     }
 
     @Test void cancellationInterruptsCallerUploadReadAndClosesSocket() throws Exception {
-        var entered = new CountDownLatch(1); var eof = new CompletableFuture<byte[]>();
+        var eof = new CompletableFuture<byte[]>();
         try (var files = new ServerSocket(0, 1, InetAddress.getLoopbackAddress());
              var peer = new FakeServerQuery(p -> { pCommand(p, "ftinitupload"); response(p, files.getLocalPort(), "seekpos=0"); nextQuery(p); });
              var query = new TS3Query(config(peer.port()))) {
@@ -168,17 +159,9 @@ class FileTransferApiTest {
                     socket.setSoTimeout(2000); assertEquals('k', socket.getInputStream().read()); eof.complete(socket.getInputStream().readAllBytes());
                 } catch (Throwable failure) { eof.completeExceptionally(failure); }
             });
-            var input = new InputStream() {
-                boolean closed;
-                @Override public int read() throws IOException {
-                    entered.countDown();
-                    try { new CountDownLatch(1).await(); throw new AssertionError(); }
-                    catch (InterruptedException interrupted) { throw new InterruptedIOException(); }
-                }
-                @Override public void close() { closed = true; }
-            };
+            var input = new CallerStreams.BlockingInput();
             query.connect(); var transfer = query.getAsyncApi().uploadFile(input, 2, "/file", true, 0);
-            assertTrue(entered.await(2, TimeUnit.SECONDS)); assertTrue(transfer.cancel(false));
+            assertTrue(input.entered.await(2, TimeUnit.SECONDS)); assertTrue(transfer.cancel(false));
             recovered(query); peer.await(); assertFalse(input.closed); assertArrayEquals(new byte[0], eof.get(2, TimeUnit.SECONDS));
             server.join(2000); assertFalse(server.isAlive());
         }
@@ -189,9 +172,7 @@ class FileTransferApiTest {
     void malformedSizeMemoryLimitAndServerRejectionNeverResolve(String fields) throws Exception {
         var calls = new AtomicInteger();
         try (var peer = new FakeServerQuery(p -> { pCommand(p, "ftinitdownload"); response(p, 30033, fields); nextQuery(p); });
-             var query = new TS3Query(config(peer.port()).setFileTransferConfig(new FileTransferConfig(
-                 Duration.ofSeconds(1), Duration.ofSeconds(1), Duration.ofSeconds(1), 16,
-                 (host, ip, port) -> { calls.incrementAndGet(); return new InetSocketAddress(host, port); })))) {
+             var query = new TS3Query(config(peer.port()).setFileTransferConfig(countingConfig(calls, 16)))) {
             query.connect(); var transfer = query.getAsyncApi().downloadFileDirect("/file", 0);
             if (fields.startsWith("status=2050")) assertEquals(2050, assertThrows(TS3CommandFailedException.class,
                 () -> CommandFutures.join(transfer)).getError().getId());

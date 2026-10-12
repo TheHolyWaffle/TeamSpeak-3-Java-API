@@ -333,7 +333,7 @@ public final class TS3Config {
 		return setCommandResponseTimeout(Duration.ofMillis(commandTimeout));
 	}
 
-	private Duration timeout(Duration value) {
+	static Duration timeout(Duration value) {
 		if (value == null || value.isZero() || value.isNegative()) {
 			throw new IllegalArgumentException("Deadline must be positive");
 		}

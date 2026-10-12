@@ -38,7 +38,6 @@ import com.github.theholywaffle.teamspeak3.commands.*;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -1840,13 +1839,7 @@ public class TS3ApiAsync {
 	public CompletableFuture<byte[]> downloadFileDirect(String filePath, int channelId, String channelPassword) {
 		FileTransferHelper helper = query.getFileTransferHelper();
 		Command cmd = FileCommands.ftInitDownload(helper.getClientTransferId(), filePath, channelId, channelPassword);
-		return executeTransfer(cmd, "Download failed", (params, operation) -> {
-			long fileSize = params.getFileSize();
-			if (fileSize < 0 || fileSize > query.getConfig().getFileTransferConfig().maxInMemoryBytes()) throw new TS3FileTransferFailedException("Invalid file size or in-memory limit exceeded");
-			ByteArrayOutputStream dataOut = new ByteArrayOutputStream((int) fileSize);
-			helper.downloadFile(dataOut, params, 0, operation);
-			return dataOut.toByteArray();
-		});
+		return executeTransfer(cmd, "Download failed", helper::downloadBytes);
 	}
 
 	/**
@@ -5347,7 +5340,6 @@ public class TS3ApiAsync {
 	 */
 	public CompletableFuture<Void> uploadFile(InputStream dataIn, long dataLength, String filePath, boolean overwrite,
 	                                         int channelId, String channelPassword, boolean resume) {
-		if (dataLength < 0) throw new IllegalArgumentException("Negative upload length");
 		Objects.requireNonNull(dataIn, "dataIn");
 		FileTransferHelper helper = query.getFileTransferHelper();
 		Command cmd = FileCommands.ftInitUpload(helper.getClientTransferId(), filePath, channelId, channelPassword, dataLength, overwrite, resume);
@@ -5452,12 +5444,12 @@ public class TS3ApiAsync {
 		if (dataLength < 0) throw new IllegalArgumentException("Negative icon length");
 		var admission = query.commandAdmission(commandQueue.isGlobal());
 		if (!admission.tryAcquire()) return CompletableFuture.failedFuture(new TS3QueueFullException());
-		var operation = query.getFileTransferHelper().newOperation();
+		var helper = query.getFileTransferHelper();
+		var operation = helper.newOperation();
 		var work = new CompletableFuture<byte[]>();
 		var preparation = CommandFutures.link(work, abortOnCancel(operation));
-		int limit = query.getConfig().getFileTransferConfig().maxInMemoryBytes();
 		runFileWork(operation, work, "Icon buffering aborted", "Icon buffering failed",
-			op -> FileTransferHelper.readFully(dataIn, dataLength, limit, op), admission::release);
+			op -> helper.bufferFully(dataIn, dataLength, op), admission::release);
 		return CommandFutures.compose(preparation, this::uploadIconDirect);
 	}
 
@@ -5573,15 +5565,10 @@ public class TS3ApiAsync {
 				operation.close(); work.completeExceptionally(failure); finished.complete(null); return;
 			}
 			runFileWork(operation, work, "File transfer aborted", failureMessage, op -> {
-				try {
-					var params = new FileTransferParameters(response.getFirstResponse().getMap());
-					var error = params.getQueryError();
-					if (!error.isSuccessful()) throw new TS3CommandFailedException(error, command.getName());
-					return transfer.run(params, op);
-				} catch (NumberFormatException malformed) {
-					throw new TS3FileTransferFailedException("Invalid numeric file response",
-						new IOException("Malformed file transfer field", malformed));
-				}
+				var params = new FileTransferParameters(response.getFirstResponse().getMap());
+				var error = FileTransferHelper.field(params::getQueryError);
+				if (!error.isSuccessful()) throw new TS3CommandFailedException(error, command.getName());
+				return transfer.run(params, op);
 			}, () -> finished.complete(null));
 		});
 		commandQueue.enqueueCommand(command, finished);

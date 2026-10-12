@@ -16,15 +16,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import static com.github.theholywaffle.teamspeak3.FutureAssertions.eventually;
 import static org.junit.jupiter.api.Assertions.*;
 
 class FileTransferCompatibilityIT {
-    private static void eventually(Callable<Boolean> condition, String message) throws Exception {
-        long until = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
-        while (!condition.call()) {
-            assertTrue(System.nanoTime() < until, message); Thread.sleep(20);
-        }
-    }
     private static TS3CommandFailedException rejected(CompletableFuture<?> request) {
         var error = assertThrows(TS3CommandFailedException.class, () -> CommandFutures.join(request));
         assertFalse(error.getError().isSuccessful()); return error;
