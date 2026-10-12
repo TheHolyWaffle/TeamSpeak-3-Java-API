@@ -1,0 +1,23 @@
+README.md
+  s_e3fc1179668ebc::t_58e7bf6cfe2f84 183-188
+src/main/java/com/github/theholywaffle/teamspeak3/TS3ApiAsync.java
+  s_e3fc1179668ebc::t_58e7bf6cfe2f84 5604-5606
+src/test/java/com/github/theholywaffle/teamspeak3/FileTransferApiTest.java
+  s_e3fc1179668ebc::t_534e783473b71a 145-146,154
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "139078d671bfcf77d5831e1c69b94f21354548ec",
+  "prompts": {},
+  "sessions": {
+    "s_e3fc1179668ebc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a13043-758d-76b3-b6c1-26a5d44e7795",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
