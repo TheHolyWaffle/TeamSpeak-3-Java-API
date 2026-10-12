@@ -1,0 +1,20 @@
+src/test/java/com/github/theholywaffle/teamspeak3/ConnectionLifecycleTest.java
+  s_e3fc1179668ebc::t_0d6f4b15d33bec 302-309
+  s_e3fc1179668ebc::t_e1d8cbdfff6e7e 273-301,310-314
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1dbf154201aa511f874a848e705a472d057283e1",
+  "prompts": {},
+  "sessions": {
+    "s_e3fc1179668ebc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a13043-758d-76b3-b6c1-26a5d44e7795",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
