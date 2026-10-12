@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Message;
 
@@ -25,7 +26,7 @@ public final class MessageApi {
 	 * @param clientId the client ID
 	 * @param message the message
 	 */
-	public void sendPrivate(int clientId, String message) {
+	public void sendPrivate(ClientId clientId, String message) {
 		CommandFutures.join(async.sendPrivate(clientId, message));
 	}
 

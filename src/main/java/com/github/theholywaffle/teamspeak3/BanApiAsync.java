@@ -2,6 +2,7 @@ package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.BanRequest;
 import com.github.theholywaffle.teamspeak3.api.ClientBan;
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Ban;
 import com.github.theholywaffle.teamspeak3.commands.BanCommands;
 
@@ -34,7 +35,7 @@ public final class BanApiAsync {
 
 	/** @see BanApi#banClients(ClientBan) */
 	public CompletableFuture<List<Integer>> banClients(ClientBan ban) {
-		int[] ids = ban.clientIds().stream().mapToInt(Integer::intValue).toArray();
+		int[] ids = ban.clientIds().stream().mapToInt(ClientId::value).toArray();
 		return requests.integers(BanCommands.banClient(ids, ban.duration().toSeconds(), ban.reason(), ban.continueOnError()), "banid");
 	}
 

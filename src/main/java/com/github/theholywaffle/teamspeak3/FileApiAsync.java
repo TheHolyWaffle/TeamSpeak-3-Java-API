@@ -11,6 +11,7 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.FileListEntry;
 import com.github.theholywaffle.teamspeak3.api.wrapper.FileTransfer;
 import com.github.theholywaffle.teamspeak3.api.wrapper.FileTransferParameters;
 import com.github.theholywaffle.teamspeak3.api.wrapper.IconFile;
+import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 import com.github.theholywaffle.teamspeak3.commands.FileCommands;
 
@@ -20,6 +21,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -208,9 +210,11 @@ public final class FileApiAsync {
 				operation.close(); work.completeExceptionally(failure); finished.complete(null); return;
 			}
 			runFileWork(operation, work, "File transfer aborted", failureMessage, op -> {
-				var params = new FileTransferParameters(response.getFirstResponse().getMap());
+				var params = new FileTransferParameters(response.getFirstResponse().map(Wrapper::getMap).orElse(Map.of()));
 				var error = FileTransferHelper.field(params::getQueryError);
-				if (!error.isSuccessful()) throw new TS3CommandFailedException(error, command.getName());
+				if (error.isPresent() && !FileTransferHelper.field(error.get()::isSuccessful)) {
+					throw new TS3CommandFailedException(error.get(), command.getName());
+				}
 				return transfer.run(params, op);
 			}, () -> finished.complete(null));
 		});

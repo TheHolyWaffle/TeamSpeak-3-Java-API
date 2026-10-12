@@ -136,8 +136,8 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer> {
 	void record(String name, Version version) throws IOException {
 		Path directory = Path.of("target", "compatibility");
 		Files.createDirectories(directory);
-		Files.writeString(directory.resolve(name + ".txt"), "image=" + getDockerImageName() + "\nversion=" + version.getVersion()
-				+ "\nbuild=" + version.getBuild() + "\nplatform=" + version.getPlatform() + "\ndaemonArchitecture="
+		Files.writeString(directory.resolve(name + ".txt"), "image=" + getDockerImageName() + "\nversion=" + version.version()
+				+ "\nbuild=" + version.build() + "\nplatform=" + version.platform() + "\ndaemonArchitecture="
 				+ getDockerClient().infoCmd().exec().getArchitecture() + "\nimageArchitecture="
 				+ getDockerClient().inspectImageCmd(getContainerInfo().getImageId()).exec().getArch() + "\nsshBanner=" + sshBanner
 				+ "\nalgorithms=" + algorithms + "\nqueryGreetingAndVersion=" + queryBanner);

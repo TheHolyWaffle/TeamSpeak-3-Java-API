@@ -40,7 +40,7 @@ public final class VirtualServerApiAsync {
 
 	/** @see VirtualServerApi#create(String, Map) */
 	public CompletableFuture<CreatedVirtualServer> create(String name, Map<VirtualServerProperty, String> properties) {
-		return requests.model(VirtualServerCommands.serverCreate(name, properties), CreatedVirtualServer::new);
+		return requests.one(VirtualServerCommands.serverCreate(name, properties), CreatedVirtualServer::from);
 	}
 
 	/** @see VirtualServerApi#delete(int) */
@@ -85,11 +85,11 @@ public final class VirtualServerApiAsync {
 
 	/** @see VirtualServerApi#deploySnapshot(Snapshot) */
 	public CompletableFuture<Void> deploySnapshot(Snapshot snapshot) {
-		return requests.run(VirtualServerCommands.serverSnapshotDeploy(snapshot.get()));
+		return requests.run(VirtualServerCommands.serverSnapshotDeploy(snapshot.data()));
 	}
 
 	/** @see VirtualServerApi#logEntries(int) */
 	public CompletableFuture<List<String>> logEntries(int lines) {
-		return requests.rows(ServerCommands.logView(lines, false), row -> row.get("l"));
+		return requests.rows(ServerCommands.logView(lines, false), row -> row.require("l"));
 	}
 }

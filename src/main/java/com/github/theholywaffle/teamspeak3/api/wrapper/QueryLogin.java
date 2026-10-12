@@ -26,6 +26,8 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
+
 import java.util.Map;
 
 public class QueryLogin extends Wrapper {
@@ -34,15 +36,15 @@ public class QueryLogin extends Wrapper {
 		super(map);
 	}
 
-	public int getClientDatabaseId() {
-		return getInt("cldbid");
+	public ClientDatabaseId getClientDatabaseId() {
+		return requireDatabaseId("cldbid");
 	}
 
 	public int getVirtualServerId() {
-		return getInt("sid");
+		return requireInt("sid");
 	}
 
 	public String getQueryClientLoginName() {
-		return get("client_login_name");
+		return require("client_login_name");
 	}
 }

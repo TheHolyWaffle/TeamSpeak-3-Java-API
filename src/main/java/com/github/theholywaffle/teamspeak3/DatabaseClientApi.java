@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.wrapper.CustomPropertyAssignment;
@@ -50,7 +51,7 @@ public final class DatabaseClientApi {
 	 * @return the client information
 	 * @throws com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException with error 512 if the client does not exist
 	 */
-	public DatabaseClientInfo info(int databaseId) {
+	public DatabaseClientInfo info(ClientDatabaseId databaseId) {
 		return CommandFutures.join(async.info(databaseId));
 	}
 
@@ -80,7 +81,7 @@ public final class DatabaseClientApi {
 	 * @param databaseId the client database ID
 	 * @param properties the properties to change
 	 */
-	public void edit(int databaseId, Map<ClientProperty, String> properties) {
+	public void edit(ClientDatabaseId databaseId, Map<ClientProperty, String> properties) {
 		CommandFutures.join(async.edit(databaseId, properties));
 	}
 
@@ -89,7 +90,7 @@ public final class DatabaseClientApi {
 	 *
 	 * @param databaseId the client database ID
 	 */
-	public void delete(int databaseId) {
+	public void delete(ClientDatabaseId databaseId) {
 		CommandFutures.join(async.delete(databaseId));
 	}
 
@@ -99,7 +100,7 @@ public final class DatabaseClientApi {
 	 * @param databaseId the client database ID
 	 * @return an unmodifiable map of property keys to values
 	 */
-	public Map<String, String> customProperties(int databaseId) {
+	public Map<String, String> customProperties(ClientDatabaseId databaseId) {
 		return CommandFutures.join(async.customProperties(databaseId));
 	}
 
@@ -110,7 +111,7 @@ public final class DatabaseClientApi {
 	 * @param key the property key
 	 * @param value the property value
 	 */
-	public void setCustomProperty(int databaseId, String key, String value) {
+	public void setCustomProperty(ClientDatabaseId databaseId, String key, String value) {
 		CommandFutures.join(async.setCustomProperty(databaseId, key, value));
 	}
 
@@ -120,7 +121,7 @@ public final class DatabaseClientApi {
 	 * @param databaseId the client database ID
 	 * @param properties the property keys and values
 	 */
-	public void setCustomProperties(int databaseId, Map<String, String> properties) {
+	public void setCustomProperties(ClientDatabaseId databaseId, Map<String, String> properties) {
 		CommandFutures.join(async.setCustomProperties(databaseId, properties));
 	}
 
@@ -130,7 +131,7 @@ public final class DatabaseClientApi {
 	 * @param databaseId the client database ID
 	 * @param key the property key
 	 */
-	public void deleteCustomProperty(int databaseId, String key) {
+	public void deleteCustomProperty(ClientDatabaseId databaseId, String key) {
 		CommandFutures.join(async.deleteCustomProperty(databaseId, key));
 	}
 

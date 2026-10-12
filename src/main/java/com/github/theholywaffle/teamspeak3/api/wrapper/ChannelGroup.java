@@ -37,49 +37,44 @@ public class ChannelGroup extends Wrapper {
 	}
 
 	public int getId() {
-		return getInt("cgid");
+		return requireInt("cgid");
 	}
 
 	public String getName() {
-		return get("name");
+		return require("name");
 	}
 
+	/** @return the group type, or {@link PermissionGroupDatabaseType#UNKNOWN} for a type this library does not know */
 	public PermissionGroupDatabaseType getType() {
-		final int type = getInt("type");
-		for (final PermissionGroupDatabaseType t : PermissionGroupDatabaseType.values()) {
-			if (t.getIndex() == type) {
-				return t;
-			}
-		}
-		return null;
+		return requireCode("type", PermissionGroupDatabaseType::fromIndex);
 	}
 
 	public long getIconId() {
-		return getLong("iconid");
+		return requireLong("iconid");
 	}
 
 	public boolean isSavedInDatabase() {
-		return getBoolean("savedb");
+		return requireBoolean("savedb");
 	}
 
 	public int getSortId() {
-		return getInt("sortid");
+		return requireInt("sortid");
 	}
 
 	public int getNameMode() {
-		return getInt("namemode");
+		return requireInt("namemode");
 	}
 
 	public int getModifyPower() {
-		return getInt("n_modifyp");
+		return requireInt("n_modifyp");
 	}
 
 	public int getMemberAddPower() {
-		return getInt("n_member_addp");
+		return requireInt("n_member_addp");
 	}
 
 	public int getMemberRemovePower() {
-		return getInt("n_member_removep");
+		return requireInt("n_member_removep");
 	}
 
 }

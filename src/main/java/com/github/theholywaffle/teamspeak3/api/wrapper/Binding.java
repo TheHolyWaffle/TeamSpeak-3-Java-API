@@ -26,16 +26,21 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.Map;
+import java.util.Objects;
 
-public class Binding extends Wrapper {
+/**
+ * An address the ServerQuery interface is bound to, from {@code bindinglist}.
+ *
+ * @param ip the bound IP address
+ */
+public record Binding(String ip) {
 
-	public Binding(Map<String, String> map) {
-		super(map);
+	public Binding {
+		Objects.requireNonNull(ip, "ip");
 	}
 
-	public String getIp() {
-		return get("ip");
+	/** @throws com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException if the row lacks {@code ip} */
+	public static Binding from(Wrapper row) {
+		return new Binding(row.require("ip"));
 	}
-
 }

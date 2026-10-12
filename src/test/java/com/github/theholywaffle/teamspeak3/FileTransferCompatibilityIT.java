@@ -115,12 +115,12 @@ class FileTransferCompatibilityIT {
                 FutureAssertions.awaitCommandAdmission(query);
                 assertFalse(cancelledOutput.closed); assertFalse(cancelledOutput.flushed); assertEquals(0, cancelledOutput.size());
                 assertTrue(download.isCancelled());
-                assertFalse(api.instance().version().getVersion().isBlank());
+                assertFalse(api.instance().version().version().isBlank());
                 evidence.add("active upload/download cancellation, caller stream ownership, retained-prefix resume and query recovery passed");
                 byte[] icon = Base64.getDecoder().decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aXh8AAAAASUVORK5CYII=");
                 var iconSource = new Input(icon); long iconId = api.files().uploadIcon(iconSource, icon.length);
                 assertEquals(FileTransferHelper.getIconId(icon), iconId); assertFalse(iconSource.closed);
-                eventually(() -> api.files().icons().stream().anyMatch(row -> row.getIconId() == iconId && row.getFileSize() == icon.length), "Icon size");
+                eventually(() -> api.files().icons().stream().anyMatch(row -> row.getIconId().equals(java.util.OptionalLong.of(iconId)) && row.getFileSize() == icon.length), "Icon size");
                 assertArrayEquals(icon, api.files().downloadIcon(iconId));
                 assertEquals(iconId, api.files().uploadIcon(icon)); api.files().deleteIcons(iconId);
                 evidence.add("bounded asynchronous icon stream buffering, exact icon bytes, duplicate-icon recovery and ownership passed");

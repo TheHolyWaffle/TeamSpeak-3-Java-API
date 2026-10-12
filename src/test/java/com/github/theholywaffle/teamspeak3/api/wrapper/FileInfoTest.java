@@ -9,7 +9,7 @@ class FileInfoTest {
     @Test void ts3FileAndDirectoryTimestampsUseEpochSeconds() {
         var expected = Instant.parse("2026-10-11T10:00:00Z");
         var fields = Map.of("datetime", Long.toString(expected.getEpochSecond()));
-        assertEquals(expected, new FileInfo(fields).getLastModifiedDate().toInstant());
-        assertEquals(expected, new FileListEntry(fields).getLastModifiedDate().toInstant());
+        assertEquals(expected, new FileInfo(fields).getLastModifiedDate());
+        assertEquals(expected, new FileListEntry(fields).getLastModifiedDate());
     }
 }

@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.PermissionGrant;
 import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
 import com.github.theholywaffle.teamspeak3.api.BPermissionType;
@@ -36,12 +37,12 @@ class PermissionMetadataTest {
 			var api = query.getApi();
 			var permissions = api.permissions().list();
 			assertEquals(3, permissions.size());
-			assertEquals("Join power", permissions.get(0).getDescription());
+			assertEquals("Join power", permissions.get(0).description());
 			assertEquals(7001, api.permissions().idByName(IPermissionType.I_CHANNEL_NEEDED_JOIN_POWER.getName()));
-			assertEquals(java.util.List.of(9002, 12003), api.permissions().idsByName(BPermissionType.B_CHANNEL_CREATE_PERMANENT.getName(), permissions.get(2).getName()));
-			api.permissions().add(PermissionTarget.client(17), PermissionGrant.of(IPermissionType.I_CHANNEL_NEEDED_JOIN_POWER, 23));
-			api.permissions().add(PermissionTarget.client(17), PermissionGrant.of(BPermissionType.B_CHANNEL_CREATE_PERMANENT, true).withSkip());
-			api.permissions().add(PermissionTarget.channel(4), PermissionGrant.of(permissions.get(2).getName(), 41));
+			assertEquals(java.util.List.of(9002, 12003), api.permissions().idsByName(BPermissionType.B_CHANNEL_CREATE_PERMANENT.getName(), permissions.get(2).name()));
+			api.permissions().add(PermissionTarget.client(ClientDatabaseId.of(17)), PermissionGrant.of(IPermissionType.I_CHANNEL_NEEDED_JOIN_POWER, 23));
+			api.permissions().add(PermissionTarget.client(ClientDatabaseId.of(17)), PermissionGrant.of(BPermissionType.B_CHANNEL_CREATE_PERMANENT, true).withSkip());
+			api.permissions().add(PermissionTarget.channel(4), PermissionGrant.of(permissions.get(2).name(), 41));
 			var error = assertThrows(TS3CommandFailedException.class, () -> api.permissions().idByName("i_unknown_permission"));
 			assertEquals(2562, error.getError().getId());
 			assertEquals("invalid permission ID", error.getError().getMessage());
@@ -64,9 +65,9 @@ class PermissionMetadataTest {
 			var api = query.getApi();
 			var error = assertThrows(TS3CommandFailedException.class, () -> api.permissions().add(PermissionTarget.channel(4), PermissionGrant.of(IPermissionType.I_CHANNEL_NEEDED_JOIN_POWER.getName(), 41)));
 			assertEquals(2568, error.getError().getId());
-			int failedId = error.getError().getFailedPermissionId();
+			int failedId = error.getError().getFailedPermissionId().orElseThrow();
 			assertEquals(7359, failedId);
-			assertEquals("i_channel_permission_modify_power", api.permissions().list().stream().filter(p -> p.getId() == failedId).findFirst().orElseThrow().getName());
+			assertEquals("i_channel_permission_modify_power", api.permissions().list().stream().filter(p -> p.id() == failedId).findFirst().orElseThrow().name());
 			FutureAssertions.awaitCommandAdmission(query);
 			query.exit(); peer.await();
 		}

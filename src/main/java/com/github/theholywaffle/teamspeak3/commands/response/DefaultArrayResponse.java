@@ -32,9 +32,10 @@ import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class DefaultArrayResponse {
 
@@ -58,7 +59,7 @@ public class DefaultArrayResponse {
 
 		// Array response: use "default" values from the first response, then add the parsed map
 		for (int i = 1; i < rawMaps.length; ++i) {
-			final Map<String, String> responseMap = new HashMap<>(firstResponse);
+			final Map<String, String> responseMap = new LinkedHashMap<>(firstResponse);
 			final Map<String, String> ithResponse = parseMap(rawMaps[i]);
 			responseMap.putAll(ithResponse);
 
@@ -96,7 +97,7 @@ public class DefaultArrayResponse {
 		if (rawMap == null || rawMap.isEmpty()) return Collections.emptyMap();
 
 		final String[] parameters = rawMap.split(" ");
-		final Map<String, String> map = new HashMap<>(parameters.length);
+		final Map<String, String> map = new LinkedHashMap<>(parameters.length);
 
 		for (String param : parameters) {
 			if (param.isEmpty()) continue;
@@ -121,17 +122,18 @@ public class DefaultArrayResponse {
 	private final String rawResponse;
 
 	private DefaultArrayResponse(List<Wrapper> responses, String rawResponse) {
-		this.responses = Collections.unmodifiableList(responses);
+		this.responses = List.copyOf(responses);
 		this.rawResponse = rawResponse;
 	}
 
+	/** @return the immutable rows, in received order */
 	public List<Wrapper> getResponses() {
 		return responses;
 	}
 
-	public Wrapper getFirstResponse() {
-		if (responses.isEmpty()) return Wrapper.EMPTY;
-		return responses.get(0);
+	/** @return the first row, or empty if the response has no rows */
+	public Optional<Wrapper> getFirstResponse() {
+		return responses.stream().findFirst();
 	}
 
 	public String getRawResponse() {

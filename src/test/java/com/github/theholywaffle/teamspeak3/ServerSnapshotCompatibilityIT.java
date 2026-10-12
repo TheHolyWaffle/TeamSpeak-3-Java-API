@@ -47,7 +47,7 @@ class ServerSnapshotCompatibilityIT {
                 String groupName = "snapshot-" + target;
                 int group = api.serverGroups().create(groupName);
                 api.permissions().add(PermissionTarget.serverGroup(group), PermissionGrant.of("i_client_talk_power", 47).withSkip());
-                var snapshot = api.servers().createSnapshot(); assertFalse(snapshot.get().isBlank());
+                var snapshot = api.servers().createSnapshot(); assertFalse(snapshot.data().isBlank());
                 evidence.add("snapshot contains configuration; contents redacted (identities and keys)");
                 api.servers().stop(1); api.servers().delete(1); assertTrue(api.servers().list().isEmpty());
                 api.servers().deploySnapshot(snapshot);

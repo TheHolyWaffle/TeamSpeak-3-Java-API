@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
@@ -44,7 +45,7 @@ public final class ClientApi {
 	 * @return the client information
 	 * @throws com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException with error 512 if the client is not connected
 	 */
-	public ClientInfo info(int clientId) {
+	public ClientInfo info(ClientId clientId) {
 		return CommandFutures.join(async.info(clientId));
 	}
 
@@ -83,7 +84,7 @@ public final class ClientApi {
 	 * @param clientId the client ID
 	 * @return whether a client with this ID is connected
 	 */
-	public boolean isOnline(int clientId) {
+	public boolean isOnline(ClientId clientId) {
 		return CommandFutures.join(async.isOnline(clientId));
 	}
 
@@ -101,7 +102,7 @@ public final class ClientApi {
 	 * @param clientId the client ID
 	 * @param channelId the target channel
 	 */
-	public void move(int clientId, int channelId) {
+	public void move(ClientId clientId, int channelId) {
 		CommandFutures.join(async.move(clientId, channelId));
 	}
 
@@ -112,7 +113,7 @@ public final class ClientApi {
 	 * @param channelId the target channel
 	 * @param channelPassword the channel password, or {@code null}
 	 */
-	public void move(int clientId, int channelId, String channelPassword) {
+	public void move(ClientId clientId, int channelId, String channelPassword) {
 		CommandFutures.join(async.move(clientId, channelId, channelPassword));
 	}
 
@@ -123,7 +124,7 @@ public final class ClientApi {
 	 * @param channelId the target channel
 	 * @param channelPassword the channel password, or {@code null}
 	 */
-	public void moveAll(Collection<Integer> clientIds, int channelId, String channelPassword) {
+	public void moveAll(Collection<ClientId> clientIds, int channelId, String channelPassword) {
 		CommandFutures.join(async.moveAll(clientIds, channelId, channelPassword));
 	}
 
@@ -133,7 +134,7 @@ public final class ClientApi {
 	 * @param reason the reason shown to the clients, or {@code null}
 	 * @param clientIds at least one client ID
 	 */
-	public void kickFromChannel(String reason, int... clientIds) {
+	public void kickFromChannel(String reason, ClientId... clientIds) {
 		CommandFutures.join(async.kickFromChannel(reason, clientIds));
 	}
 
@@ -143,7 +144,7 @@ public final class ClientApi {
 	 * @param reason the reason shown to the clients, or {@code null}
 	 * @param clientIds at least one client ID
 	 */
-	public void kickFromServer(String reason, int... clientIds) {
+	public void kickFromServer(String reason, ClientId... clientIds) {
 		CommandFutures.join(async.kickFromServer(reason, clientIds));
 	}
 
@@ -153,7 +154,7 @@ public final class ClientApi {
 	 * @param clientId the client ID
 	 * @param message the message
 	 */
-	public void poke(int clientId, String message) {
+	public void poke(ClientId clientId, String message) {
 		CommandFutures.join(async.poke(clientId, message));
 	}
 
@@ -163,7 +164,7 @@ public final class ClientApi {
 	 * @param clientId the client ID
 	 * @param properties the properties to change
 	 */
-	public void edit(int clientId, Map<ClientProperty, String> properties) {
+	public void edit(ClientId clientId, Map<ClientProperty, String> properties) {
 		CommandFutures.join(async.edit(clientId, properties));
 	}
 }

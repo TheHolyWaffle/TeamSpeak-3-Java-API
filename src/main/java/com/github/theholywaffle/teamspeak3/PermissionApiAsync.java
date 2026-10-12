@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.PermissionGrant;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupType;
 import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
@@ -28,7 +29,7 @@ public final class PermissionApiAsync {
 
 	/** @see PermissionApi#list() */
 	public CompletableFuture<List<PermissionInfo>> list() {
-		return requests.models(PermissionCommands.permissionList(), PermissionInfo::new);
+		return requests.rows(PermissionCommands.permissionList(), PermissionInfo::from);
 	}
 
 	/** @see PermissionApi#idByName(String) */
@@ -56,9 +57,9 @@ public final class PermissionApiAsync {
 		return requests.models(PermissionCommands.permFind(permissionName), PermissionAssignment::new);
 	}
 
-	/** @see PermissionApi#overview(int, int) */
-	public CompletableFuture<List<PermissionAssignment>> overview(int channelId, int clientDatabaseId) {
-		return requests.models(PermissionCommands.permOverview(channelId, clientDatabaseId), PermissionAssignment::new);
+	/** @see PermissionApi#overview(int, ClientDatabaseId) */
+	public CompletableFuture<List<PermissionAssignment>> overview(int channelId, ClientDatabaseId clientDatabaseId) {
+		return requests.models(PermissionCommands.permOverview(channelId, clientDatabaseId.value()), PermissionAssignment::new);
 	}
 
 	/** @see PermissionApi#reset() */
@@ -74,8 +75,9 @@ public final class PermissionApiAsync {
 			case CHANNEL -> PermissionCommands.channelPermList(target.id());
 			case GLOBAL_CLIENT -> PermissionCommands.clientPermList(target.id());
 			case CHANNEL_CLIENT -> PermissionCommands.channelClientPermList(target.id(), target.clientDatabaseId());
+			case UNKNOWN -> throw new IllegalArgumentException("Unknown permission holder type");
 		};
-		return requests.models(command, Permission::new);
+		return requests.rows(command, Permission::from);
 	}
 
 	/** @see PermissionApi#add(PermissionTarget, String, int) */
@@ -92,6 +94,7 @@ public final class PermissionApiAsync {
 			case CHANNEL -> PermissionCommands.channelAddPerm(target.id(), grant.permissionName(), grant.value());
 			case GLOBAL_CLIENT -> PermissionCommands.clientAddPerm(target.id(), grant.permissionName(), grant.value(), grant.skipped());
 			case CHANNEL_CLIENT -> PermissionCommands.channelClientAddPerm(target.id(), target.clientDatabaseId(), grant.permissionName(), grant.value());
+			case UNKNOWN -> throw new IllegalArgumentException("Unknown permission holder type");
 		};
 		return requests.run(command);
 	}
@@ -104,6 +107,7 @@ public final class PermissionApiAsync {
 			case CHANNEL -> PermissionCommands.channelDelPerm(target.id(), permissionName);
 			case GLOBAL_CLIENT -> PermissionCommands.clientDelPerm(target.id(), permissionName);
 			case CHANNEL_CLIENT -> PermissionCommands.channelClientDelPerm(target.id(), target.clientDatabaseId(), permissionName);
+			case UNKNOWN -> throw new IllegalArgumentException("Unknown permission holder type");
 		};
 		return requests.run(command);
 	}

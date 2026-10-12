@@ -1,7 +1,6 @@
 package com.github.theholywaffle.teamspeak3.api;
 
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -13,7 +12,7 @@ import java.util.Objects;
  * @param reason the ban reason, or {@code null}
  * @param continueOnError whether to continue with the remaining clients after one fails
  */
-public record ClientBan(List<Integer> clientIds, Duration duration, String reason, boolean continueOnError) {
+public record ClientBan(List<ClientId> clientIds, Duration duration, String reason, boolean continueOnError) {
 
 	public ClientBan {
 		clientIds = List.copyOf(clientIds);
@@ -23,8 +22,8 @@ public record ClientBan(List<Integer> clientIds, Duration duration, String reaso
 	}
 
 	/** @return a permanent ban without reason for the given clients */
-	public static ClientBan of(int... clientIds) {
-		return new ClientBan(Arrays.stream(clientIds).boxed().toList(), Duration.ZERO, null, false);
+	public static ClientBan of(ClientId... clientIds) {
+		return new ClientBan(List.of(clientIds), Duration.ZERO, null, false);
 	}
 
 	/** @param banDuration the ban duration, truncated to seconds; {@link Duration#ZERO} is permanent */

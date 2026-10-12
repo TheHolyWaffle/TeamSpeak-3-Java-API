@@ -27,6 +27,8 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  */
 
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalInt;
 
 public class QueryError extends Wrapper {
 
@@ -38,19 +40,19 @@ public class QueryError extends Wrapper {
 	}
 
 	public int getId() {
-		return getInt("id");
+		return requireInt("id");
 	}
 
 	public String getMessage() {
-		return get("msg");
+		return require("msg");
 	}
 
-	public String getExtraMessage() {
-		return get("extra_msg");
+	public Optional<String> getExtraMessage() {
+		return findText("extra_msg");
 	}
 
-	public int getFailedPermissionId() {
-		return getInt("failed_permid");
+	public OptionalInt getFailedPermissionId() {
+		return findInt("failed_permid");
 	}
 
 	public boolean isSuccessful() {

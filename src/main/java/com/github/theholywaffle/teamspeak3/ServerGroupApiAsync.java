@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ServerGroup;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ServerGroupClient;
@@ -64,22 +65,22 @@ public final class ServerGroupApiAsync {
 
 	/** @see ServerGroupApi#members(int) */
 	public CompletableFuture<List<ServerGroupClient>> members(int groupId) {
-		return requests.models(ServerGroupCommands.serverGroupClientList(groupId), ServerGroupClient::new);
+		return requests.rows(ServerGroupCommands.serverGroupClientList(groupId), ServerGroupClient::from);
 	}
 
-	/** @see ServerGroupApi#addMember(int, int) */
-	public CompletableFuture<Void> addMember(int groupId, int clientDatabaseId) {
-		return requests.run(ServerGroupCommands.serverGroupAddClient(groupId, clientDatabaseId));
+	/** @see ServerGroupApi#addMember(int, ClientDatabaseId) */
+	public CompletableFuture<Void> addMember(int groupId, ClientDatabaseId clientDatabaseId) {
+		return requests.run(ServerGroupCommands.serverGroupAddClient(groupId, clientDatabaseId.value()));
 	}
 
-	/** @see ServerGroupApi#removeMember(int, int) */
-	public CompletableFuture<Void> removeMember(int groupId, int clientDatabaseId) {
-		return requests.run(ServerGroupCommands.serverGroupDelClient(groupId, clientDatabaseId));
+	/** @see ServerGroupApi#removeMember(int, ClientDatabaseId) */
+	public CompletableFuture<Void> removeMember(int groupId, ClientDatabaseId clientDatabaseId) {
+		return requests.run(ServerGroupCommands.serverGroupDelClient(groupId, clientDatabaseId.value()));
 	}
 
-	/** @see ServerGroupApi#ofClient(int) */
-	public CompletableFuture<List<ServerGroup>> ofClient(int clientDatabaseId) {
-		var ids = requests.integers(ServerGroupCommands.serverGroupsByClientId(clientDatabaseId), "sgid");
+	/** @see ServerGroupApi#ofClient(ClientDatabaseId) */
+	public CompletableFuture<List<ServerGroup>> ofClient(ClientDatabaseId clientDatabaseId) {
+		var ids = requests.integers(ServerGroupCommands.serverGroupsByClientId(clientDatabaseId.value()), "sgid");
 		return QueryRequests.findByKey(ids, list(), ServerGroup::getId);
 	}
 }

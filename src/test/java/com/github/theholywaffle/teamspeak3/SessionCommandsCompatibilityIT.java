@@ -17,14 +17,14 @@ class SessionCommandsCompatibilityIT {
                 query.connect(); var api = query.getApi(); api.selectVirtualServerById(1);
                 for (String name : List.of("login", "logout", "whoami", "bindinglist")) assertTrue(api.executeRawCommand("help " + name).getRawResponse().startsWith("Usage: " + name));
                 var bindings = api.instance().bindings(); assertFalse(bindings.isEmpty());
-                assertTrue(bindings.stream().allMatch(binding -> !binding.getIp().isBlank()));
+                assertTrue(bindings.stream().allMatch(binding -> !binding.ip().isBlank()));
                 api.logout(); var loggedOut = api.whoAmI();
                 assertEquals(0, loggedOut.getVirtualServerId());
                 assertTrue(loggedOut.getLoginName().isEmpty());
                 api.login("serveradmin", TeamSpeakContainer.PASSWORD);
                 assertEquals("serveradmin", api.whoAmI().getLoginName());
                 api.selectVirtualServerById(1); assertEquals(1, api.whoAmI().getVirtualServerId());
-                assertEquals("3.13.8", api.instance().version().getVersion()); query.exit();
+                assertEquals("3.13.8", api.instance().version().version()); query.exit();
             }
             var report = Path.of("target", "compatibility", target + "-session-commands.txt");
             Files.createDirectories(report.getParent());

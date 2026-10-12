@@ -1,6 +1,7 @@
 package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelGroupFilter;
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ChannelGroup;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ChannelGroupClient;
@@ -65,12 +66,12 @@ public final class ChannelGroupApiAsync {
 
 	/** @see ChannelGroupApi#members(ChannelGroupFilter) */
 	public CompletableFuture<List<ChannelGroupClient>> members(ChannelGroupFilter filter) {
-		return requests.models(ChannelGroupCommands.channelGroupClientList(filter.channelId().orElse(0),
-			filter.clientDatabaseId().orElse(0), filter.groupId().orElse(0)), ChannelGroupClient::new);
+		return requests.rows(ChannelGroupCommands.channelGroupClientList(filter.channelId().orElse(0),
+			filter.clientDatabaseId().map(ClientDatabaseId::value).orElse(0), filter.groupId().orElse(0)), ChannelGroupClient::from);
 	}
 
-	/** @see ChannelGroupApi#assign(int, int, int) */
-	public CompletableFuture<Void> assign(int groupId, int channelId, int clientDatabaseId) {
-		return requests.run(ChannelGroupCommands.setClientChannelGroup(groupId, channelId, clientDatabaseId));
+	/** @see ChannelGroupApi#assign(int, int, ClientDatabaseId) */
+	public CompletableFuture<Void> assign(int groupId, int channelId, ClientDatabaseId clientDatabaseId) {
+		return requests.run(ChannelGroupCommands.setClientChannelGroup(groupId, channelId, clientDatabaseId.value()));
 	}
 }

@@ -35,6 +35,6 @@ public class CreatedQueryLogin extends QueryLogin {
 	}
 
 	public String getQueryClientLoginPassword() {
-		return get("client_login_password");
+		return require("client_login_password");
 	}
 }

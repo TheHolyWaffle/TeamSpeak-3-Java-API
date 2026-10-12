@@ -56,10 +56,10 @@ class PermissionModesCompatibilityIT {
                 api.permissions().add(PermissionTarget.serverGroup(automatic), PermissionGrant.of(IPermissionType.I_GROUP_AUTO_UPDATE_MAX_VALUE.getName(), 100));
                 api.permissions().addToAllServerGroups(ServerGroupType.SERVER_NORMAL, PermissionGrant.of(IPermissionType.I_CLIENT_TALK_POWER.getName(), 49).withSkip());
                 CompatibilityAssertions.permission(api.permissions().assigned(PermissionTarget.serverGroup(automatic)), IPermissionType.I_CLIENT_TALK_POWER.getName(), 49, false, true);
-                assertTrue(api.permissions().assigned(PermissionTarget.serverGroup(unrelated)).stream().noneMatch(permission -> permission.getName().equals(IPermissionType.I_CLIENT_TALK_POWER.getName())));
+                assertTrue(api.permissions().assigned(PermissionTarget.serverGroup(unrelated)).stream().noneMatch(permission -> permission.name().equals(IPermissionType.I_CLIENT_TALK_POWER.getName())));
                 evidence.add("automatic permission targeted configured group classification; unclassified group unchanged");
                 api.permissions().deleteFromAllServerGroups(ServerGroupType.SERVER_NORMAL, IPermissionType.I_CLIENT_TALK_POWER.getName());
-                assertTrue(api.permissions().assigned(PermissionTarget.serverGroup(automatic)).stream().noneMatch(permission -> permission.getName().equals(IPermissionType.I_CLIENT_TALK_POWER.getName())));
+                assertTrue(api.permissions().assigned(PermissionTarget.serverGroup(automatic)).stream().noneMatch(permission -> permission.name().equals(IPermissionType.I_CLIENT_TALK_POWER.getName())));
                 evidence.add("automatic permission deletion removed configured assignment");
                 String token = api.permissions().reset(); assertFalse(token.isBlank());
                 assertEquals(0, api.whoAmI().getVirtualServerId(), "Permission reset clears query selection");
@@ -68,7 +68,7 @@ class PermissionModesCompatibilityIT {
                 var restoredGroups = api.serverGroups().list();
                 assertTrue(restoredGroups.stream().noneMatch(group -> group.getName().equals("mode-auto") || group.getName().equals("mode-unrelated")));
                 assertTrue(restoredGroups.stream().anyMatch(group -> group.getName().equals("Server Admin")));
-                assertFalse(api.permissions().list().isEmpty()); assertFalse(api.instance().version().getVersion().isBlank());
+                assertFalse(api.permissions().list().isEmpty()); assertFalse(api.instance().version().version().isBlank());
                 evidence.add("permission reset removed owned custom regular groups, restored defaults and returned an administrator key (redacted)");
                 query.exit();
             }

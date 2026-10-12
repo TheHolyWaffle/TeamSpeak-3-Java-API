@@ -26,7 +26,7 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.Map;
 
 public class Message extends Wrapper {
@@ -36,22 +36,22 @@ public class Message extends Wrapper {
 	}
 
 	public int getId() {
-		return getInt("msgid");
+		return requireInt("msgid");
 	}
 
 	public String getSenderUniqueIdentifier() {
-		return get("cluid");
+		return require("cluid");
 	}
 
 	public String getSubject() {
-		return get("subject");
+		return require("subject");
 	}
 
-	public Date getReceivedDate() {
-		return new Date(getLong("timestamp") * 1000);
+	public Instant getReceivedDate() {
+		return requireInstant("timestamp");
 	}
 
 	public boolean hasBeenRead() {
-		return getBoolean("flag_read");
+		return requireBoolean("flag_read");
 	}
 }

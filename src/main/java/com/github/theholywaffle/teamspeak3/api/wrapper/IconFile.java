@@ -27,6 +27,7 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  */
 
 import java.util.Map;
+import java.util.OptionalLong;
 
 public class IconFile extends FileListEntry {
 
@@ -35,16 +36,16 @@ public class IconFile extends FileListEntry {
 	}
 
 	/**
-	 * Gets the icon ID corresponding to this file, or {@code -1} if the file name
-	 * doesn't follow the standard format.
+	 * Gets the icon ID corresponding to this file.
 	 *
-	 * @return this file's icon ID
+	 * @return this file's icon ID, or empty if the file name does not follow the {@code icon_<crc32>} format
 	 */
-	public long getIconId() {
+	public OptionalLong getIconId() {
 		String fileName = getName();
-		if (!fileName.matches("icon_\\d{1,10}")) return -1L; // Doesn't match standard pattern
+		if (!fileName.matches("icon_\\d{1,10}")) return OptionalLong.empty();
 		long id = Long.parseLong(fileName.substring("icon_".length()));
-		if ((id & 0xFFFF_FFFF_0000_0000L) != 0) return -1L; // CRC32 is 32 bits, so needs to fit into an int
-		return id;
+		// CRC32 IDs are 32 bits
+		if ((id & 0xFFFF_FFFF_0000_0000L) != 0) return OptionalLong.empty();
+		return OptionalLong.of(id);
 	}
 }

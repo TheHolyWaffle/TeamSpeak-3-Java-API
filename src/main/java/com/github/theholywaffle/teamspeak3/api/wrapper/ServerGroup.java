@@ -26,9 +26,9 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.Map;
-
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
+
+import java.util.Map;
 
 public class ServerGroup extends Wrapper {
 
@@ -37,49 +37,44 @@ public class ServerGroup extends Wrapper {
 	}
 
 	public int getId() {
-		return getInt("sgid");
+		return requireInt("sgid");
 	}
 
 	public String getName() {
-		return get("name");
+		return require("name");
 	}
 
+	/** @return the group type, or {@link PermissionGroupDatabaseType#UNKNOWN} for a type this library does not know */
 	public PermissionGroupDatabaseType getType() {
-		final int type = getInt("type");
-		for (final PermissionGroupDatabaseType p : PermissionGroupDatabaseType.values()) {
-			if (p.getIndex() == type) {
-				return p;
-			}
-		}
-		return null;
+		return requireCode("type", PermissionGroupDatabaseType::fromIndex);
 	}
 
 	public long getIconId() {
-		return getLong("iconid");
+		return requireLong("iconid");
 	}
 
-	public int getSaveDb() {
-		return getInt("savedb");
+	public boolean isSavedInDatabase() {
+		return requireBoolean("savedb");
 	}
 
 	public int getSortId() {
-		return getInt("sortid");
+		return requireInt("sortid");
 	}
 
 	public int getNameMode() {
-		return getInt("namemode");
+		return requireInt("namemode");
 	}
 
 	public int getModifyPower() {
-		return getInt("n_modifyp");
+		return requireInt("n_modifyp");
 	}
 
 	public int getMemberAddPower() {
-		return getInt("n_member_addp");
+		return requireInt("n_member_addp");
 	}
 
 	public int getMemberRemovePower() {
-		return getInt("n_member_removep");
+		return requireInt("n_member_removep");
 	}
 
 }

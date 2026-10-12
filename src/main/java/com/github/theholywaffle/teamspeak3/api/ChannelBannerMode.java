@@ -54,4 +54,15 @@ public enum ChannelBannerMode {
 	public int getIndex() {
 		return i;
 	}
+
+	/**
+	 * @param index the ServerQuery code
+	 * @return the matching constant, or {@link #UNKNOWN} for a code this library does not know
+	 */
+	public static ChannelBannerMode fromIndex(int index) {
+		for (ChannelBannerMode value : values()) {
+			if (value != UNKNOWN && value.i == index) return value;
+		}
+		return UNKNOWN;
+	}
 }

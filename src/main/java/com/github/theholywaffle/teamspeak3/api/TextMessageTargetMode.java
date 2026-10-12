@@ -30,7 +30,10 @@ public enum TextMessageTargetMode {
 
 	CLIENT(1),
 	CHANNEL(2),
-	SERVER(3);
+	SERVER(3),
+
+	/** A code this library does not know; read the raw value from the model's properties. */
+	UNKNOWN(-1);
 
 	private final int i;
 
@@ -42,4 +45,14 @@ public enum TextMessageTargetMode {
 		return i;
 	}
 
+	/**
+	 * @param index the ServerQuery code
+	 * @return the matching constant, or {@link #UNKNOWN} for a code this library does not know
+	 */
+	public static TextMessageTargetMode fromIndex(int index) {
+		for (TextMessageTargetMode value : values()) {
+			if (value != UNKNOWN && value.i == index) return value;
+		}
+		return UNKNOWN;
+	}
 }

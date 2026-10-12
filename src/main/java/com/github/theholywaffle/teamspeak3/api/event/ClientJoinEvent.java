@@ -26,8 +26,13 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
+
+import java.util.List;
+import java.util.Optional;
 
 public class ClientJoinEvent extends BaseEvent {
 
@@ -36,139 +41,139 @@ public class ClientJoinEvent extends BaseEvent {
 	}
 
 	public int getClientFromId() {
-		return getInt("cfid");
+		return requireInt("cfid");
 	}
 
 	public int getClientTargetId() {
-		return getInt("ctid");
+		return requireInt("ctid");
 	}
 
-	public int getClientId() {
-		return getInt("clid");
+	public ClientId getClientId() {
+		return requireClientId("clid");
 	}
 
 	public String getUniqueClientIdentifier() {
-		return get(ClientProperty.CLIENT_UNIQUE_IDENTIFIER);
+		return require(ClientProperty.CLIENT_UNIQUE_IDENTIFIER);
 	}
 
 	public String getClientNickname() {
-		return get(ClientProperty.CLIENT_NICKNAME);
+		return require(ClientProperty.CLIENT_NICKNAME);
 	}
 
 	public boolean isClientInputMuted() {
-		return getBoolean(ClientProperty.CLIENT_INPUT_MUTED);
+		return requireBoolean(ClientProperty.CLIENT_INPUT_MUTED);
 	}
 
 	public boolean isClientOutputMuted() {
-		return getBoolean(ClientProperty.CLIENT_OUTPUT_MUTED);
+		return requireBoolean(ClientProperty.CLIENT_OUTPUT_MUTED);
 	}
 
 	public boolean isClientOutputOnlyMuted() {
-		return getBoolean(ClientProperty.CLIENT_OUTPUTONLY_MUTED);
+		return requireBoolean(ClientProperty.CLIENT_OUTPUTONLY_MUTED);
 	}
 
 	public boolean isClientUsingHardwareInput() {
-		return getBoolean(ClientProperty.CLIENT_INPUT_HARDWARE);
+		return requireBoolean(ClientProperty.CLIENT_INPUT_HARDWARE);
 	}
 
 	public boolean isClientUsingHardwareOutput() {
-		return getBoolean(ClientProperty.CLIENT_OUTPUT_HARDWARE);
+		return requireBoolean(ClientProperty.CLIENT_OUTPUT_HARDWARE);
 	}
 
 	public String getClientMetadata() {
-		return get(ClientProperty.CLIENT_META_DATA);
+		return require(ClientProperty.CLIENT_META_DATA);
 	}
 
 	public boolean isClientRecording() {
-		return getBoolean(ClientProperty.CLIENT_IS_RECORDING);
+		return requireBoolean(ClientProperty.CLIENT_IS_RECORDING);
 	}
 
-	public int getClientDatabaseId() {
-		return getInt(ClientProperty.CLIENT_DATABASE_ID);
+	public ClientDatabaseId getClientDatabaseId() {
+		return requireDatabaseId(ClientProperty.CLIENT_DATABASE_ID);
 	}
 
 	public int getClientChannelGroupId() {
-		return getInt(ClientProperty.CLIENT_CHANNEL_GROUP_ID);
+		return requireInt(ClientProperty.CLIENT_CHANNEL_GROUP_ID);
 	}
 
 	public int getAmountOfServerGroups() {
-		//getInt was turning the String 1,2,3,.. to a int which wasn't right.
-		//Now it gets the Amount even if the ID is <=10
-		String[] split = get(ClientProperty.CLIENT_SERVERGROUPS).split(",");
-		return split.length;
+		return getClientServerGroups().size();
 	}
 
-	public String getClientServerGroups() {
-		//getClientServerGroups returns a string containing the server group ID for example 1,2,3,...
-		return get(ClientProperty.CLIENT_SERVERGROUPS);
+	/** @return the IDs of the client's server groups, in received order */
+	public List<Integer> getClientServerGroups() {
+		return requireIntList(ClientProperty.CLIENT_SERVERGROUPS);
 	}
 
 	public boolean isClientAway() {
-		return getBoolean(ClientProperty.CLIENT_AWAY);
+		return requireBoolean(ClientProperty.CLIENT_AWAY);
 	}
 
 	public String getClientAwayMessage() {
-		return get(ClientProperty.CLIENT_AWAY_MESSAGE);
+		return require(ClientProperty.CLIENT_AWAY_MESSAGE);
 	}
 
 	public int getClientType() {
-		return getInt(ClientProperty.CLIENT_TYPE);
+		return requireInt(ClientProperty.CLIENT_TYPE);
 	}
 
-	public String getClientFlagAvatarId() {
-		return get(ClientProperty.CLIENT_FLAG_AVATAR);
+	/** @return the avatar hash, or empty if the client has no avatar */
+	public Optional<String> getClientFlagAvatarId() {
+		return findText(ClientProperty.CLIENT_FLAG_AVATAR);
 	}
 
 	public int getClientTalkPower() {
-		return getInt(ClientProperty.CLIENT_TALK_POWER);
+		return requireInt(ClientProperty.CLIENT_TALK_POWER);
 	}
 
+	/** {@code client_talk_request} holds the request time in epoch seconds, or {@code 0} without a request. */
 	public boolean isClientRequestingToTalk() {
-		return getBoolean(ClientProperty.CLIENT_TALK_REQUEST);
+		return requireLong(ClientProperty.CLIENT_TALK_REQUEST) != 0;
 	}
 
 	public String getClientTalkRequestMessage() {
-		return get(ClientProperty.CLIENT_TALK_REQUEST_MSG);
+		return require(ClientProperty.CLIENT_TALK_REQUEST_MSG);
 	}
 
 	public String getClientDescription() {
-		return get(ClientProperty.CLIENT_DESCRIPTION);
+		return require(ClientProperty.CLIENT_DESCRIPTION);
 	}
 
 	public boolean isClientTalking() {
-		return getBoolean(ClientProperty.CLIENT_IS_TALKER);
+		return requireBoolean(ClientProperty.CLIENT_IS_TALKER);
 	}
 
 	public boolean isClientPrioritySpeaker() {
-		return getBoolean(ClientProperty.CLIENT_IS_PRIORITY_SPEAKER);
+		return requireBoolean(ClientProperty.CLIENT_IS_PRIORITY_SPEAKER);
 	}
 
 	public int getClientUnreadMessages() {
-		return getInt(ClientProperty.CLIENT_UNREAD_MESSAGES);
+		return requireInt(ClientProperty.CLIENT_UNREAD_MESSAGES);
 	}
 
 	public String getClientPhoneticNickname() {
-		return get(ClientProperty.CLIENT_NICKNAME_PHONETIC);
+		return require(ClientProperty.CLIENT_NICKNAME_PHONETIC);
 	}
 
 	public int getClientNeededServerQueryViewPower() {
-		return getInt(ClientProperty.CLIENT_NEEDED_SERVERQUERY_VIEW_POWER);
+		return requireInt(ClientProperty.CLIENT_NEEDED_SERVERQUERY_VIEW_POWER);
 	}
 
 	public long getClientIconId() {
-		return getLong(ClientProperty.CLIENT_ICON_ID);
+		return requireLong(ClientProperty.CLIENT_ICON_ID);
 	}
 
 	public boolean isClientChannelCommander() {
-		return getBoolean(ClientProperty.CLIENT_IS_CHANNEL_COMMANDER);
+		return requireBoolean(ClientProperty.CLIENT_IS_CHANNEL_COMMANDER);
 	}
 
-	public String getClientCountry() {
-		return get(ClientProperty.CLIENT_COUNTRY);
+	/** @return the two-letter country code, or empty if the server could not determine it */
+	public Optional<String> getClientCountry() {
+		return findText(ClientProperty.CLIENT_COUNTRY);
 	}
 
 	public int getClientInheritedChannelGroupId() {
-		return getInt(ClientProperty.CLIENT_CHANNEL_GROUP_INHERITED_CHANNEL_ID);
+		return requireInt(ClientProperty.CLIENT_CHANNEL_GROUP_INHERITED_CHANNEL_ID);
 	}
 
 	@Override

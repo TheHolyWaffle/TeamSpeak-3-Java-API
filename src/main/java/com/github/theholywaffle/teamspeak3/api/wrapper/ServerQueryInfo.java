@@ -28,11 +28,14 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
 
 import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3ApiAsync;
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerStatus;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * A class containing information about a server query, returned by the
@@ -56,7 +59,7 @@ public class ServerQueryInfo extends Wrapper {
 	 * @return the ID of the current channel
 	 */
 	public int getChannelId() {
-		return getInt("client_channel_id");
+		return requireInt("client_channel_id");
 	}
 
 	/**
@@ -68,8 +71,8 @@ public class ServerQueryInfo extends Wrapper {
 	 *
 	 * @return the server query's database ID
 	 */
-	public int getDatabaseId() {
-		return getInt(ClientProperty.CLIENT_DATABASE_ID);
+	public ClientDatabaseId getDatabaseId() {
+		return requireDatabaseId(ClientProperty.CLIENT_DATABASE_ID);
 	}
 
 	/**
@@ -77,8 +80,8 @@ public class ServerQueryInfo extends Wrapper {
 	 *
 	 * @return the server query's client ID
 	 */
-	public int getId() {
-		return getInt("client_id");
+	public ClientId getId() {
+		return requireClientId("client_id");
 	}
 
 	/**
@@ -94,8 +97,8 @@ public class ServerQueryInfo extends Wrapper {
 	 *
 	 * @see TS3Api#login(String, String) TS3Api#login(username, password) - logging in server queries
 	 */
-	public String getLoginName() {
-		return get(ClientProperty.CLIENT_LOGIN_NAME);
+	public Optional<String> getLoginName() {
+		return findText(ClientProperty.CLIENT_LOGIN_NAME);
 	}
 
 	/**
@@ -110,7 +113,7 @@ public class ServerQueryInfo extends Wrapper {
 	 * @return the current nickname of the server query
 	 */
 	public String getNickname() {
-		return get(ClientProperty.CLIENT_NICKNAME);
+		return require(ClientProperty.CLIENT_NICKNAME);
 	}
 
 	/**
@@ -123,7 +126,7 @@ public class ServerQueryInfo extends Wrapper {
 	 * @return the ID of the virtual server this server query belongs to
 	 */
 	public int getOriginServerId() {
-		return getInt("client_origin_server_id");
+		return requireInt("client_origin_server_id");
 	}
 
 	/**
@@ -136,7 +139,7 @@ public class ServerQueryInfo extends Wrapper {
 	 * @return the server query's unique ID
 	 */
 	public String getUniqueIdentifier() {
-		return get(ClientProperty.CLIENT_UNIQUE_IDENTIFIER);
+		return require(ClientProperty.CLIENT_UNIQUE_IDENTIFIER);
 	}
 
 	/**
@@ -151,7 +154,7 @@ public class ServerQueryInfo extends Wrapper {
 	 * @return the ID of the current virtual server or {@code 0} if none is selected
 	 */
 	public int getVirtualServerId() {
-		return getInt(VirtualServerProperty.VIRTUALSERVER_ID);
+		return requireInt(VirtualServerProperty.VIRTUALSERVER_ID);
 	}
 
 	/**
@@ -163,7 +166,7 @@ public class ServerQueryInfo extends Wrapper {
 	 * @return the port used by the current virtual server or {@code 0} if none is selected
 	 */
 	public int getVirtualServerPort() {
-		return getInt(VirtualServerProperty.VIRTUALSERVER_PORT);
+		return requireInt(VirtualServerProperty.VIRTUALSERVER_PORT);
 	}
 
 	/**
@@ -175,13 +178,7 @@ public class ServerQueryInfo extends Wrapper {
 	 * @return the status of the current virtual server
 	 */
 	public VirtualServerStatus getVirtualServerStatus() {
-		final String status = get(VirtualServerProperty.VIRTUALSERVER_STATUS);
-		for (final VirtualServerStatus s : VirtualServerStatus.values()) {
-			if (s.getName().equals(status)) {
-				return s;
-			}
-		}
-		return VirtualServerStatus.UNKNOWN;
+		return VirtualServerStatus.fromName(require(VirtualServerProperty.VIRTUALSERVER_STATUS));
 	}
 
 	/**
@@ -193,6 +190,6 @@ public class ServerQueryInfo extends Wrapper {
 	 * @return the unique ID of the current virtual server
 	 */
 	public String getVirtualServerUniqueIdentifier() {
-		return get(VirtualServerProperty.VIRTUALSERVER_UNIQUE_IDENTIFIER);
+		return require(VirtualServerProperty.VIRTUALSERVER_UNIQUE_IDENTIFIER);
 	}
 }

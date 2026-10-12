@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.event.*;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3QueueFullException;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
@@ -111,7 +112,7 @@ class EventResilienceTest {
 			query.subscribe(new TS3EventAdapter() { @Override public void onClientMoved(ClientMovedEvent e) { assertFalse(Thread.currentThread().getName().contains("StreamReader")); e.getTargetChannelId(); duplicateMoves.countDown(); } });
 			try {
 				query.connect(); await(entered); await(duplicateMoves);
-				assertEquals(2, query.getAsyncApi().whoAmI().get(3, TimeUnit.SECONDS).getId());
+				assertEquals(ClientId.of(2), query.getAsyncApi().whoAmI().get(3, TimeUnit.SECONDS).getId());
 				assertEquals(1, query.getEventStatistics().unknownNotifications());
 				assertEquals(1, query.getEventStatistics().malformedNotifications());
 				assertEquals(1, query.getEventStatistics().listenerFailures());
@@ -140,7 +141,7 @@ class EventResilienceTest {
 				// Wait for completion to release admission; rejected commands never reach the wire.
 				long until = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
 				while (true) {
-					try { assertEquals(2, FutureAssertions.read(query.getAsyncApi().whoAmI()).getId()); break; }
+					try { assertEquals(ClientId.of(2), FutureAssertions.read(query.getAsyncApi().whoAmI()).getId()); break; }
 					catch (TS3QueueFullException full) { if (System.nanoTime() >= until) throw full; Thread.sleep(1); }
 				}
 				FutureAssertions.awaitCommandAdmission(query);

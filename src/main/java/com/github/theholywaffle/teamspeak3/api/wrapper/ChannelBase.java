@@ -26,11 +26,13 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import com.github.theholywaffle.teamspeak3.api.ChannelBannerMode;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.Codec;
 
+import java.time.Duration;
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalInt;
 
 public abstract class ChannelBase extends Wrapper {
 
@@ -41,83 +43,73 @@ public abstract class ChannelBase extends Wrapper {
 	public abstract int getId();
 
 	public int getParentChannelId() {
-		return getInt(ChannelProperty.PID);
+		return requireInt(ChannelProperty.PID);
 	}
 
 	public int getOrder() {
-		return getInt(ChannelProperty.CHANNEL_ORDER);
+		return requireInt(ChannelProperty.CHANNEL_ORDER);
 	}
 
 	public String getName() {
-		return get(ChannelProperty.CHANNEL_NAME);
+		return require(ChannelProperty.CHANNEL_NAME);
 	}
 
 	public String getTopic() {
-		return get(ChannelProperty.CHANNEL_TOPIC);
+		return require(ChannelProperty.CHANNEL_TOPIC);
 	}
 
 	public boolean isDefault() {
-		return getBoolean(ChannelProperty.CHANNEL_FLAG_DEFAULT);
+		return requireBoolean(ChannelProperty.CHANNEL_FLAG_DEFAULT);
 	}
 
 	public boolean hasPassword() {
-		return getBoolean(ChannelProperty.CHANNEL_FLAG_PASSWORD);
+		return requireBoolean(ChannelProperty.CHANNEL_FLAG_PASSWORD);
 	}
 
 	public boolean isPermanent() {
-		return getBoolean(ChannelProperty.CHANNEL_FLAG_PERMANENT);
+		return requireBoolean(ChannelProperty.CHANNEL_FLAG_PERMANENT);
 	}
 
 	public boolean isSemiPermanent() {
-		return getBoolean(ChannelProperty.CHANNEL_FLAG_SEMI_PERMANENT);
+		return requireBoolean(ChannelProperty.CHANNEL_FLAG_SEMI_PERMANENT);
 	}
 
-	public ChannelBannerMode getBannerMode() {
-		final int mode = getInt(ChannelProperty.CHANNEL_BANNER_MODE);
-		for (final ChannelBannerMode m : ChannelBannerMode.values()) {
-			if (m.getIndex() == mode) {
-				return m;
-			}
-		}
-		return ChannelBannerMode.UNKNOWN;
-	}
-
-	public String getBannerGraphicsUrl() {
-		return get(ChannelProperty.CHANNEL_BANNER_GFX_URL);
-	}
-
+	/** @return the codec, or {@link Codec#UNKNOWN} for a codec this library does not know */
 	public Codec getCodec() {
-		final int codec = getInt(ChannelProperty.CHANNEL_CODEC);
-		for (final Codec c : Codec.values()) {
-			if (c.getIndex() == codec) {
-				return c;
-			}
-		}
-		return Codec.UNKNOWN;
+		return requireCode(ChannelProperty.CHANNEL_CODEC, Codec::fromIndex);
 	}
 
 	public int getCodecQuality() {
-		return getInt(ChannelProperty.CHANNEL_CODEC_QUALITY);
+		return requireInt(ChannelProperty.CHANNEL_CODEC_QUALITY);
 	}
 
 	public int getNeededTalkPower() {
-		return getInt(ChannelProperty.CHANNEL_NEEDED_TALK_POWER);
+		return requireInt(ChannelProperty.CHANNEL_NEEDED_TALK_POWER);
 	}
 
 	public long getIconId() {
-		return getLong(ChannelProperty.CHANNEL_ICON_ID);
+		return requireLong(ChannelProperty.CHANNEL_ICON_ID);
 	}
 
-	public int getMaxClients() {
-		return getInt(ChannelProperty.CHANNEL_MAXCLIENTS);
+	/** @return the client limit, or empty if the channel is unlimited ({@code -1}) */
+	public OptionalInt getMaxClients() {
+		return limit(ChannelProperty.CHANNEL_MAXCLIENTS);
 	}
 
-	public int getMaxFamilyClients() {
-		return getInt(ChannelProperty.CHANNEL_MAXFAMILYCLIENTS);
+	/** @return the client limit of the channel family, or empty if unlimited ({@code -1}) */
+	public OptionalInt getMaxFamilyClients() {
+		return limit(ChannelProperty.CHANNEL_MAXFAMILYCLIENTS);
 	}
 
-	public int getSecondsEmpty() {
-		return getInt(ChannelProperty.SECONDS_EMPTY);
+	/** @return how long the channel has been empty, or empty while clients are in it ({@code -1}) */
+	public Optional<Duration> getTimeEmpty() {
+		long seconds = requireLong(ChannelProperty.SECONDS_EMPTY);
+		return seconds < 0 ? Optional.empty() : Optional.of(Duration.ofSeconds(seconds));
+	}
+
+	private OptionalInt limit(ChannelProperty property) {
+		int limit = requireInt(property);
+		return limit < 0 ? OptionalInt.empty() : OptionalInt.of(limit);
 	}
 
 	/**

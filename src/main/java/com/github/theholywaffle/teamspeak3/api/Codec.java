@@ -129,4 +129,15 @@ public enum Codec {
 	public int getIndex() {
 		return i;
 	}
+
+	/**
+	 * @param index the ServerQuery code
+	 * @return the matching constant, or {@link #UNKNOWN} for a code this library does not know
+	 */
+	public static Codec fromIndex(int index) {
+		for (Codec value : values()) {
+			if (value != UNKNOWN && value.i == index) return value;
+		}
+		return UNKNOWN;
+	}
 }

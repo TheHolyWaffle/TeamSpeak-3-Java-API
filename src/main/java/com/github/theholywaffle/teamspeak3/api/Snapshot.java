@@ -26,16 +26,22 @@ package com.github.theholywaffle.teamspeak3.api;
  * #L%
  */
 
-public class Snapshot {
+import java.util.Objects;
 
-	private final String snapshot;
+/**
+ * An encoded virtual server snapshot, as returned by {@code serversnapshotcreate}.
+ *
+ * @param data the encoded snapshot, passed back unchanged when deploying
+ */
+public record Snapshot(String data) {
 
-	public Snapshot(String snapshot) {
-		this.snapshot = snapshot;
+	public Snapshot {
+		Objects.requireNonNull(data, "data");
 	}
 
-	public String get() {
-		return snapshot;
+	/** Omits the data, which contains server configuration such as password hashes. */
+	@Override
+	public String toString() {
+		return "Snapshot[" + data.length() + " characters]";
 	}
-
 }

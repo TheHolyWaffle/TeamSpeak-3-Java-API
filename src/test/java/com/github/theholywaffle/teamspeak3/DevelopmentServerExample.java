@@ -20,7 +20,7 @@ final class DevelopmentServerExample {
 				if (api.channels().list().stream().noneMatch(c -> c.getId() == channel)) {
 					throw new IllegalStateException("Example channel was not listed by the server");
 				}
-				System.out.println("Compiled example succeeded: version=" + api.instance().version().getVersion()
+				System.out.println("Compiled example succeeded: version=" + api.instance().version().version()
 						+ ", virtualServer=" + api.whoAmI().getVirtualServerId() + ", channel=" + channel);
 			} finally { api.channels().delete(channel, true); }
 		} finally { query.exit(); }

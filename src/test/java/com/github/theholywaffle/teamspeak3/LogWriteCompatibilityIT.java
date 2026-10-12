@@ -51,8 +51,8 @@ class LogWriteCompatibilityIT {
                     long position = 0; var seen = new java.util.HashSet<String>();
                     for (int page = 0; page < 30; page++) {
                         var result = api.executeRawCommand("logview lines=1 reverse=1 begin_pos=" + position + scope);
-                        var row = result.getFirstResponse(); long next = row.getLong("last_pos");
-                        assertTrue(row.getLong("file_size") > 0); assertTrue(next >= 0);
+                        var row = result.getFirstResponse().orElseThrow(); long next = row.requireLong("last_pos");
+                        assertTrue(row.requireLong("file_size") > 0); assertTrue(next >= 0);
                         for (String line : lines(result)) for (String marker : markers) if (line.endsWith(marker)) seen.add(marker);
                         if (next == 0) break;
                         assertTrue(position == 0 || next < position, "Log cursor must progress toward the start of the file");
@@ -70,6 +70,6 @@ class LogWriteCompatibilityIT {
     }
 
     private static List<String> lines(DefaultArrayResponse response) {
-        return response.getResponses().stream().map(row -> row.get("l")).toList();
+        return response.getResponses().stream().map(row -> row.require("l")).toList();
     }
 }

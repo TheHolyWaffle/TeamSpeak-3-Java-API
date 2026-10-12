@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ServerGroup;
@@ -120,7 +121,7 @@ public final class ServerGroupApi {
 	 * @param groupId the group ID
 	 * @param clientDatabaseId the client database ID
 	 */
-	public void addMember(int groupId, int clientDatabaseId) {
+	public void addMember(int groupId, ClientDatabaseId clientDatabaseId) {
 		CommandFutures.join(async.addMember(groupId, clientDatabaseId));
 	}
 
@@ -130,7 +131,7 @@ public final class ServerGroupApi {
 	 * @param groupId the group ID
 	 * @param clientDatabaseId the client database ID
 	 */
-	public void removeMember(int groupId, int clientDatabaseId) {
+	public void removeMember(int groupId, ClientDatabaseId clientDatabaseId) {
 		CommandFutures.join(async.removeMember(groupId, clientDatabaseId));
 	}
 
@@ -140,7 +141,7 @@ public final class ServerGroupApi {
 	 * @param clientDatabaseId the client database ID
 	 * @return the client's server groups
 	 */
-	public List<ServerGroup> ofClient(int clientDatabaseId) {
+	public List<ServerGroup> ofClient(ClientDatabaseId clientDatabaseId) {
 		return CommandFutures.join(async.ofClient(clientDatabaseId));
 	}
 }

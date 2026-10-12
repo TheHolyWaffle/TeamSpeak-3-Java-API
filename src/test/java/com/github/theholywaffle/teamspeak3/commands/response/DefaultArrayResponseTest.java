@@ -7,6 +7,8 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -17,7 +19,7 @@ class DefaultArrayResponseTest {
 	@NullAndEmptySource
 	void emptyResponseHasNoRows(String raw) {
 		assertTrue(DefaultArrayResponse.parse(raw).getResponses().isEmpty());
-		assertEquals(Map.of(), DefaultArrayResponse.parse(raw).getFirstResponse().getMap());
+		assertEquals(Optional.empty(), DefaultArrayResponse.parse(raw).getFirstResponse());
 	}
 
 	static Stream<Arguments> fields() {
@@ -35,7 +37,7 @@ class DefaultArrayResponseTest {
 	@ParameterizedTest
 	@MethodSource("fields")
 	void fieldsDecodeAfterSplitting(String raw, Map<String, String> expected) {
-		assertEquals(expected, DefaultArrayResponse.parse(raw).getFirstResponse().getMap());
+		assertEquals(expected, DefaultArrayResponse.parse(raw).getFirstResponse().orElseThrow().getMap());
 	}
 
 	static Stream<Arguments> rows() {
@@ -70,8 +72,11 @@ class DefaultArrayResponseTest {
 		assertEquals(message, error.getMessage());
 		assertEquals(successful, error.isSuccessful());
 		if (id == 256) {
-			assertEquals("\\n", error.getExtraMessage());
-			assertEquals(42, error.getFailedPermissionId());
+			assertEquals(Optional.of("\\n"), error.getExtraMessage());
+			assertEquals(OptionalInt.of(42), error.getFailedPermissionId());
+		} else {
+			assertEquals(Optional.empty(), error.getExtraMessage());
+			assertEquals(OptionalInt.empty(), error.getFailedPermissionId());
 		}
 	}
 

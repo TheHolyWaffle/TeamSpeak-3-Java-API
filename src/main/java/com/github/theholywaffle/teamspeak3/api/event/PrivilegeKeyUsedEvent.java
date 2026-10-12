@@ -26,6 +26,8 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.PrivilegeKeyType;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 
@@ -35,20 +37,20 @@ public class PrivilegeKeyUsedEvent extends BaseEvent {
 		super(wrapper);
 	}
 
-	public int getClientId() {
-		return getInt("clid");
+	public ClientId getClientId() {
+		return requireClientId("clid");
 	}
 
-	public int getClientDatabaseId() {
-		return getInt("cldbid");
+	public ClientDatabaseId getClientDatabaseId() {
+		return requireDatabaseId("cldbid");
 	}
 
 	public String getClientUniqueIdentifier() {
-		return get("cluid");
+		return require("cluid");
 	}
 
 	public String getPrivilegeKey() {
-		return get("token");
+		return require("token");
 	}
 
 	public PrivilegeKeyType getPrivilegeKeyType() {
@@ -60,11 +62,11 @@ public class PrivilegeKeyUsedEvent extends BaseEvent {
 	}
 
 	public int getPrivilegeKeyGroupId() {
-		return getInt("token1");
+		return requireInt("token1");
 	}
 
 	public int getPrivilegeKeyChannelId() {
-		return getInt("token2");
+		return requireInt("token2");
 	}
 
 	@Override

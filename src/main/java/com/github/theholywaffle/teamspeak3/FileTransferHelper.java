@@ -26,11 +26,13 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.FileTransferParameters;
+
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.InterruptedIOException;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
@@ -112,9 +114,9 @@ class FileTransferHelper implements AutoCloseable {
 		Socket connect(FileTransferParameters params) throws IOException {
 			check();
 			int port = field(params::getFileServerPort);
-			if (port < 1 || port > 65535 || params.getFileTransferKey().isEmpty())
-				throw new IOException("Invalid file transfer endpoint or key");
-			var endpoint = config.endpointResolver().resolve(defaultHost, params.getFileServerHost(), port);
+			String key = field(params::getFileTransferKey);
+			if (port < 1 || port > 65535 || key.isEmpty()) throw new IOException("Invalid file transfer endpoint or key");
+			var endpoint = config.endpointResolver().resolve(defaultHost, field(params::getFileServerHost).orElse(""), port);
 			if (endpoint == null || endpoint.getPort() < 1) throw new IOException("Invalid resolved file endpoint");
 			Socket connected;
 			synchronized (this) {
@@ -122,7 +124,7 @@ class FileTransferHelper implements AutoCloseable {
 			}
 			connected.connect(endpoint, TS3Config.socketTimeout(config.connectTimeout()));
 			connected.setSoTimeout(TS3Config.socketTimeout(config.readTimeout()));
-			connected.getOutputStream().write(params.getFileTransferKey().getBytes(StandardCharsets.UTF_8));
+			connected.getOutputStream().write(key.getBytes(StandardCharsets.UTF_8));
 			connected.getOutputStream().flush();
 			check();
 			return connected;
@@ -147,7 +149,7 @@ class FileTransferHelper implements AutoCloseable {
 	/** Converts a malformed numeric server field into an I/O failure. */
 	static <T> T field(Supplier<T> parse) throws IOException {
 		try { return parse.get(); }
-		catch (NumberFormatException malformed) { throw new IOException("Malformed file transfer field", malformed); }
+		catch (TS3InvalidValueException malformed) { throw new IOException("Missing or malformed file transfer field", malformed); }
 	}
 
 	void downloadFile(OutputStream dataOut, FileTransferParameters params, long seekPosition, Operation operation) throws IOException {
@@ -184,7 +186,7 @@ class FileTransferHelper implements AutoCloseable {
 
 	void uploadFile(InputStream dataIn, long dataLength, FileTransferParameters params, boolean resume, Operation operation) throws IOException {
 		if (dataLength < 0) throw new IOException("Negative upload length");
-		long position = field(() -> params.getLong("seekpos"));
+		long position = field(params::getSeekPosition);
 		if (position < 0 || position > dataLength || (!resume && position != 0))
 			throw new IOException("Invalid server upload seek position");
 		byte[] buffer = new byte[BUFFER_SIZE];

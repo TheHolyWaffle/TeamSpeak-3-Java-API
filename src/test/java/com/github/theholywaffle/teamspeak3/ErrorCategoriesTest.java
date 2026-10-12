@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
@@ -96,7 +97,7 @@ class ErrorCategoriesTest {
 	}
 
 	@Test void unsupportedDataIsReportedThroughTheLibraryHierarchy() {
-		TS3Exception failure = assertThrows(TS3UnsupportedOperationException.class, () -> new ClientInfo(1, Map.of()).isTalking());
+		TS3Exception failure = assertThrows(TS3UnsupportedOperationException.class, () -> new ClientInfo(ClientId.of(1), Map.of()).isTalking());
 		assertFalse(failure.isOutcomeUnknown());
 	}
 }

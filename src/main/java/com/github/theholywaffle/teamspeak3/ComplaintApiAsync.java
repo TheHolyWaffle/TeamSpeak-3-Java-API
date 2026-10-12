@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Complaint;
 import com.github.theholywaffle.teamspeak3.commands.ComplaintCommands;
 
@@ -24,23 +25,23 @@ public final class ComplaintApiAsync {
 		return requests.models(ComplaintCommands.complainList(-1), Complaint::new);
 	}
 
-	/** @see ComplaintApi#about(int) */
-	public CompletableFuture<List<Complaint>> about(int targetDatabaseId) {
-		return requests.models(ComplaintCommands.complainList(targetDatabaseId), Complaint::new);
+	/** @see ComplaintApi#about(ClientDatabaseId) */
+	public CompletableFuture<List<Complaint>> about(ClientDatabaseId targetDatabaseId) {
+		return requests.models(ComplaintCommands.complainList(targetDatabaseId.value()), Complaint::new);
 	}
 
-	/** @see ComplaintApi#add(int, String) */
-	public CompletableFuture<Void> add(int targetDatabaseId, String message) {
-		return requests.run(ComplaintCommands.complainAdd(targetDatabaseId, message));
+	/** @see ComplaintApi#add(ClientDatabaseId, String) */
+	public CompletableFuture<Void> add(ClientDatabaseId targetDatabaseId, String message) {
+		return requests.run(ComplaintCommands.complainAdd(targetDatabaseId.value(), message));
 	}
 
-	/** @see ComplaintApi#delete(int, int) */
-	public CompletableFuture<Void> delete(int targetDatabaseId, int fromDatabaseId) {
-		return requests.run(ComplaintCommands.complainDel(targetDatabaseId, fromDatabaseId));
+	/** @see ComplaintApi#delete(ClientDatabaseId, ClientDatabaseId) */
+	public CompletableFuture<Void> delete(ClientDatabaseId targetDatabaseId, ClientDatabaseId fromDatabaseId) {
+		return requests.run(ComplaintCommands.complainDel(targetDatabaseId.value(), fromDatabaseId.value()));
 	}
 
-	/** @see ComplaintApi#deleteAll(int) */
-	public CompletableFuture<Void> deleteAll(int targetDatabaseId) {
-		return requests.run(ComplaintCommands.complainDelAll(targetDatabaseId));
+	/** @see ComplaintApi#deleteAll(ClientDatabaseId) */
+	public CompletableFuture<Void> deleteAll(ClientDatabaseId targetDatabaseId) {
+		return requests.run(ComplaintCommands.complainDelAll(targetDatabaseId.value()));
 	}
 }

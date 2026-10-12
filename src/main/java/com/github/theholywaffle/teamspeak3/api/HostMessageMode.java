@@ -43,4 +43,14 @@ public enum HostMessageMode {
 		return i;
 	}
 
+	/**
+	 * @param index the ServerQuery code
+	 * @return the matching constant, or {@link #UNKNOWN} for a code this library does not know
+	 */
+	public static HostMessageMode fromIndex(int index) {
+		for (HostMessageMode value : values()) {
+			if (value != UNKNOWN && value.i == index) return value;
+		}
+		return UNKNOWN;
+	}
 }

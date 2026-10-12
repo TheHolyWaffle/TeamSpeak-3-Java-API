@@ -1,5 +1,7 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import java.util.Map;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
@@ -29,14 +31,14 @@ class CommandFuturesTest {
 			p.expect("whoami"); await(respond); p.write("client_id=3\nerror id=0 msg=ok\n"); p.finishQuit();
 		}); var query = query(peer)) {
 			query.connect(); var source = query.getAsyncApi().whoAmI();
-			var one = source.thenApply(value -> value.getId() + 1);
-			var two = source.thenApply(value -> value.getId() * 2);
+			var one = source.thenApply(value -> value.getId().value() + 1);
+			var two = source.thenApply(value -> value.getId().value() * 2);
 			var thrown = new IllegalArgumentException("callback");
 			var bad = source.thenApply(value -> { throw thrown; });
 			respond.countDown();
 			assertEquals(4, one.get(2, TimeUnit.SECONDS)); assertEquals(6, two.get(2, TimeUnit.SECONDS));
 			assertSame(thrown, assertThrows(ExecutionException.class, () -> bad.get(2, TimeUnit.SECONDS)).getCause());
-			assertEquals(3, source.get().getId()); query.exit(); peer.await();
+			assertEquals(ClientId.of(3), source.get().getId()); query.exit(); peer.await();
 		} finally { respond.countDown(); }
 	}
 
@@ -147,7 +149,7 @@ class CommandFuturesTest {
 			var cancelled = query.getAsyncApi().channels().create("must-not-send", java.util.Map.of());
 			assertTrue(cancelled.cancel(false));
 			var next = query.getAsyncApi().whoAmI(); assertFalse(next.isDone());
-			query.connect(); assertEquals(2, next.get(2, TimeUnit.SECONDS).getId());
+			query.connect(); assertEquals(ClientId.of(2), next.get(2, TimeUnit.SECONDS).getId());
 			FutureAssertions.awaitCommandAdmission(query);
 			query.exit(); peer.await();
 		}
@@ -165,7 +167,7 @@ class CommandFuturesTest {
 			await(received); assertTrue(sent.cancel(true));
 			var next = query.getAsyncApi().whoAmI(); respond.countDown();
 			assertThrows(CancellationException.class, sent::get);
-			assertEquals(2, next.get(2, TimeUnit.SECONDS).getId()); query.exit(); peer.await();
+			assertEquals(ClientId.of(2), next.get(2, TimeUnit.SECONDS).getId()); query.exit(); peer.await();
 		} finally { respond.countDown(); }
 	}
 
@@ -179,7 +181,7 @@ class CommandFuturesTest {
 			query.connect();
 			var first = query.getAsyncApi().whoAmI(); var second = query.getAsyncApi().whoAmI();
 			for (var future : List.of(first, second)) future.thenAccept(value -> {
-				threads.add(Thread.currentThread().getName()); order.add(value.getId()); completed.countDown();
+				threads.add(Thread.currentThread().getName()); order.add(value.getId().value()); completed.countDown();
 			});
 			respond.countDown(); await(completed); assertEquals(List.of(1, 2), order);
 			assertTrue(threads.stream().allMatch(name -> name.contains("Completions")));
@@ -216,7 +218,7 @@ class CommandFuturesTest {
 			assertInstanceOf(TimeoutException.class, assertThrows(ExecutionException.class,
 				() -> first.get(2, TimeUnit.SECONDS)).getCause());
 			var next = query.getAsyncApi().whoAmI(); respond.countDown();
-			assertEquals(2, next.get(2, TimeUnit.SECONDS).getId()); query.exit(); peer.await();
+			assertEquals(ClientId.of(2), next.get(2, TimeUnit.SECONDS).getId()); query.exit(); peer.await();
 		} finally { respond.countDown(); }
 	}
 
@@ -225,9 +227,9 @@ class CommandFuturesTest {
 			p.expect("clientinfo clid=7"); p.write("error id=512 msg=invalid_client\n");
 			p.expect("clientinfo clid=8"); p.write("error id=2568 msg=insufficient_permissions\n"); p.finishQuit();
 		}); var query = query(peer)) {
-			query.connect(); assertFalse(query.getAsyncApi().clients().isOnline(7).get(2, TimeUnit.SECONDS));
+			query.connect(); assertFalse(query.getAsyncApi().clients().isOnline(ClientId.of(7)).get(2, TimeUnit.SECONDS));
 			var failure = assertThrows(ExecutionException.class,
-				() -> query.getAsyncApi().clients().isOnline(8).get(2, TimeUnit.SECONDS));
+				() -> query.getAsyncApi().clients().isOnline(ClientId.of(8)).get(2, TimeUnit.SECONDS));
 			assertEquals(2568, assertInstanceOf(TS3CommandFailedException.class, failure.getCause()).getError().getId());
 			query.exit(); peer.await();
 		}
@@ -285,7 +287,7 @@ class CommandFuturesTest {
 			try {
 				await(entered); assertTrue(mutation.isCancelled());
 				var next = query.getAsyncApi().whoAmI(); assertFalse(next.isDone());
-				query.connect(); assertEquals(2, next.get(2, TimeUnit.SECONDS).getId());
+				query.connect(); assertEquals(ClientId.of(2), next.get(2, TimeUnit.SECONDS).getId());
 			} finally { release.countDown(); cancelling.join(5000); }
 			assertTrue(cancelled.get(1, TimeUnit.SECONDS));
 			FutureAssertions.awaitCommandAdmission(query);
@@ -348,7 +350,7 @@ class CommandFuturesTest {
 				long until = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
 				while (query.commandAdmission(true).availablePermits() == 0 && System.nanoTime() < until) Thread.sleep(1);
 				assertEquals(1, query.commandAdmission(true).availablePermits());
-				assertEquals(2, query.getAsyncApi().whoAmI().get(2, TimeUnit.SECONDS).getId());
+				assertEquals(ClientId.of(2), query.getAsyncApi().whoAmI().get(2, TimeUnit.SECONDS).getId());
 				FutureAssertions.awaitCommandAdmission(query);
 				query.exit(); peer.await(); fileDone.get(2, TimeUnit.SECONDS);
 			} finally { release.countDown(); fileWorker.join(5000); }

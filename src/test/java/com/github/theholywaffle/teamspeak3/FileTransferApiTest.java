@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.UploadMode;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
@@ -32,7 +33,7 @@ class FileTransferApiTest {
     }
     private static void recovered(TS3Query query) throws Exception {
         FutureAssertions.awaitCommandAdmission(query);
-        assertEquals(42, query.getAsyncApi().whoAmI().get(2, TimeUnit.SECONDS).getId());
+        assertEquals(ClientId.of(42), query.getAsyncApi().whoAmI().get(2, TimeUnit.SECONDS).getId());
         query.exit();
     }
 
@@ -73,7 +74,7 @@ class FileTransferApiTest {
                 } catch (Throwable failure) { received.completeExceptionally(failure); }
             });
             var pending = query.getAsyncApi().whoAmI(); assertEquals(0, query.commandAdmission(true).availablePermits());
-            query.connect(); assertEquals(42, pending.get(2, TimeUnit.SECONDS).getId());
+            query.connect(); assertEquals(ClientId.of(42), pending.get(2, TimeUnit.SECONDS).getId());
             assertArrayEquals(bytes, received.get(2, TimeUnit.SECONDS)); FutureAssertions.awaitCommandAdmission(query);
             query.exit(); peer.await(); server.join(2000); assertFalse(server.isAlive());
         }

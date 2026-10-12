@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.ReasonIdentifier;
@@ -7,6 +8,7 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ClientInfo;
 import com.github.theholywaffle.teamspeak3.commands.ClientCommands;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -32,9 +34,9 @@ public final class ClientApiAsync {
 		return requests.models(ClientCommands.clientList(), Client::new);
 	}
 
-	/** @see ClientApi#info(int) */
-	public CompletableFuture<ClientInfo> info(int clientId) {
-		return requests.model(ClientCommands.clientInfo(clientId), map -> new ClientInfo(clientId, map));
+	/** @see ClientApi#info(ClientId) */
+	public CompletableFuture<ClientInfo> info(ClientId clientId) {
+		return requests.model(ClientCommands.clientInfo(clientId.value()), map -> new ClientInfo(clientId, map));
 	}
 
 	/** @see ClientApi#findByName(String, boolean) */
@@ -45,19 +47,19 @@ public final class ClientApiAsync {
 
 	/** @see ClientApi#search(String) */
 	public CompletableFuture<List<Client>> search(String nicknamePart) {
-		var ids = requests.integers(ClientCommands.clientFind(nicknamePart), "clid");
+		var ids = requests.rows(ClientCommands.clientFind(nicknamePart), row -> row.requireClientId("clid"));
 		return QueryRequests.recover(QueryRequests.findByKey(ids, list(), Client::getId), QueryRequests.INVALID_CLIENT_ID, List.of());
 	}
 
 	/** @see ClientApi#findByUniqueId(String) */
 	public CompletableFuture<Optional<ClientInfo>> findByUniqueId(String uniqueId) {
-		var id = requests.optionalInteger(ClientCommands.clientGetIds(uniqueId), "clid");
+		var id = requests.optional(ClientCommands.clientGetIds(uniqueId), row -> row.requireClientId("clid"));
 		return QueryRequests.recover(QueryRequests.thenLookup(id, this::info), QueryRequests.INVALID_CLIENT_ID, Optional.empty());
 	}
 
-	/** @see ClientApi#isOnline(int) */
-	public CompletableFuture<Boolean> isOnline(int clientId) {
-		return QueryRequests.recover(requests.response(ClientCommands.clientInfo(clientId), ignored -> true), QueryRequests.INVALID_CLIENT_ID, false);
+	/** @see ClientApi#isOnline(ClientId) */
+	public CompletableFuture<Boolean> isOnline(ClientId clientId) {
+		return QueryRequests.recover(requests.response(ClientCommands.clientInfo(clientId.value()), ignored -> true), QueryRequests.INVALID_CLIENT_ID, false);
 	}
 
 	/** @see ClientApi#isOnline(String) */
@@ -65,40 +67,44 @@ public final class ClientApiAsync {
 		return requests.response(ClientCommands.clientGetIds(uniqueId), response -> !response.getResponses().isEmpty());
 	}
 
-	/** @see ClientApi#move(int, int) */
-	public CompletableFuture<Void> move(int clientId, int channelId) {
+	/** @see ClientApi#move(ClientId, int) */
+	public CompletableFuture<Void> move(ClientId clientId, int channelId) {
 		return move(clientId, channelId, null);
 	}
 
-	/** @see ClientApi#move(int, int, String) */
-	public CompletableFuture<Void> move(int clientId, int channelId, String channelPassword) {
-		return requests.run(ClientCommands.clientMove(clientId, channelId, channelPassword));
+	/** @see ClientApi#move(ClientId, int, String) */
+	public CompletableFuture<Void> move(ClientId clientId, int channelId, String channelPassword) {
+		return requests.run(ClientCommands.clientMove(clientId.value(), channelId, channelPassword));
 	}
 
 	/** @see ClientApi#moveAll(Collection, int, String) */
-	public CompletableFuture<Void> moveAll(Collection<Integer> clientIds, int channelId, String channelPassword) {
-		int[] ids = clientIds.stream().mapToInt(Integer::intValue).toArray();
+	public CompletableFuture<Void> moveAll(Collection<ClientId> clientIds, int channelId, String channelPassword) {
+		int[] ids = clientIds.stream().mapToInt(ClientId::value).toArray();
 		if (ids.length == 0) return CompletableFuture.completedFuture(null);
 		return requests.run(ClientCommands.clientMove(ids, channelId, channelPassword));
 	}
 
-	/** @see ClientApi#kickFromChannel(String, int...) */
-	public CompletableFuture<Void> kickFromChannel(String reason, int... clientIds) {
-		return requests.run(ClientCommands.clientKick(ReasonIdentifier.REASON_KICK_CHANNEL, reason, clientIds));
+	/** @see ClientApi#kickFromChannel(String, ClientId...) */
+	public CompletableFuture<Void> kickFromChannel(String reason, ClientId... clientIds) {
+		return requests.run(ClientCommands.clientKick(ReasonIdentifier.REASON_KICK_CHANNEL, reason, values(clientIds)));
 	}
 
-	/** @see ClientApi#kickFromServer(String, int...) */
-	public CompletableFuture<Void> kickFromServer(String reason, int... clientIds) {
-		return requests.run(ClientCommands.clientKick(ReasonIdentifier.REASON_KICK_SERVER, reason, clientIds));
+	/** @see ClientApi#kickFromServer(String, ClientId...) */
+	public CompletableFuture<Void> kickFromServer(String reason, ClientId... clientIds) {
+		return requests.run(ClientCommands.clientKick(ReasonIdentifier.REASON_KICK_SERVER, reason, values(clientIds)));
 	}
 
-	/** @see ClientApi#poke(int, String) */
-	public CompletableFuture<Void> poke(int clientId, String message) {
-		return requests.run(ClientCommands.clientPoke(clientId, message));
+	/** @see ClientApi#poke(ClientId, String) */
+	public CompletableFuture<Void> poke(ClientId clientId, String message) {
+		return requests.run(ClientCommands.clientPoke(clientId.value(), message));
 	}
 
-	/** @see ClientApi#edit(int, Map) */
-	public CompletableFuture<Void> edit(int clientId, Map<ClientProperty, String> properties) {
-		return requests.run(ClientCommands.clientEdit(clientId, properties));
+	/** @see ClientApi#edit(ClientId, Map) */
+	public CompletableFuture<Void> edit(ClientId clientId, Map<ClientProperty, String> properties) {
+		return requests.run(ClientCommands.clientEdit(clientId.value(), properties));
+	}
+
+	private static int[] values(ClientId... clientIds) {
+		return Arrays.stream(clientIds).mapToInt(ClientId::value).toArray();
 	}
 }

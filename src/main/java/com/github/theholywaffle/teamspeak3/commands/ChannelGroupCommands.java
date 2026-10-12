@@ -43,7 +43,7 @@ public final class ChannelGroupCommands {
 		CommandBuilder builder = new CommandBuilder("channelgroupadd", 2);
 		builder.add(new KeyValueParam("name", groupName));
 		if (type != null) {
-			builder.add(new KeyValueParam("type", type.getIndex()));
+			builder.add(new KeyValueParam("type", KnownCodes.require(type.getIndex())));
 		}
 		return builder.build();
 	}
@@ -76,7 +76,7 @@ public final class ChannelGroupCommands {
 		builder.add(new KeyValueParam("scgid", sourceGroupId));
 		builder.add(new KeyValueParam("tcgid", targetGroupId));
 		builder.add(new KeyValueParam("name", groupName));
-		builder.add(new KeyValueParam("type", type.getIndex()));
+		builder.add(new KeyValueParam("type", KnownCodes.require(type.getIndex())));
 		return builder.build();
 	}
 

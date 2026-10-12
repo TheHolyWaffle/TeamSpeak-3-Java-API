@@ -30,7 +30,10 @@ public enum PermissionGroupDatabaseType {
 
 	TEMPLATE(0),
 	REGULAR(1),
-	QUERY(2);
+	QUERY(2),
+
+	/** A code this library does not know; read the raw value from the model's properties. */
+	UNKNOWN(-1);
 
 	private final int i;
 
@@ -42,4 +45,14 @@ public enum PermissionGroupDatabaseType {
 		return i;
 	}
 
+	/**
+	 * @param index the ServerQuery code
+	 * @return the matching constant, or {@link #UNKNOWN} for a code this library does not know
+	 */
+	public static PermissionGroupDatabaseType fromIndex(int index) {
+		for (PermissionGroupDatabaseType value : values()) {
+			if (value != UNKNOWN && value.i == index) return value;
+		}
+		return UNKNOWN;
+	}
 }

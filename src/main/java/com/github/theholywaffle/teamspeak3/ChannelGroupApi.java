@@ -1,6 +1,7 @@
 package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelGroupFilter;
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ChannelGroup;
@@ -121,7 +122,7 @@ public final class ChannelGroupApi {
 	 * @param channelId the channel ID
 	 * @param clientDatabaseId the client database ID
 	 */
-	public void assign(int groupId, int channelId, int clientDatabaseId) {
+	public void assign(int groupId, int channelId, ClientDatabaseId clientDatabaseId) {
 		CommandFutures.join(async.assign(groupId, channelId, clientDatabaseId));
 	}
 }

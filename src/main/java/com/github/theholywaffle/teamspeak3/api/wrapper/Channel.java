@@ -26,9 +26,9 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.Map;
-
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
+
+import java.util.Map;
 
 public class Channel extends ChannelBase {
 
@@ -38,19 +38,19 @@ public class Channel extends ChannelBase {
 
 	@Override
 	public int getId() {
-		return getInt(ChannelProperty.CID);
+		return requireInt(ChannelProperty.CID);
 	}
 
 	public int getTotalClientsFamily() {
-		return getInt(ChannelProperty.TOTAL_CLIENTS_FAMILY);
+		return requireInt(ChannelProperty.TOTAL_CLIENTS_FAMILY);
 	}
 
 	public int getTotalClients() {
-		return getInt(ChannelProperty.TOTAL_CLIENTS);
+		return requireInt(ChannelProperty.TOTAL_CLIENTS);
 	}
 
 	public int getNeededSubscribePower() {
-		return getInt(ChannelProperty.CHANNEL_NEEDED_SUBSCRIBE_POWER);
+		return requireInt(ChannelProperty.CHANNEL_NEEDED_SUBSCRIBE_POWER);
 	}
 
 	/**

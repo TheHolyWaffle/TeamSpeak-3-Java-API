@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.wrapper.CreatedQueryLogin;
 import com.github.theholywaffle.teamspeak3.api.wrapper.QueryLogin;
@@ -39,13 +40,24 @@ public final class QueryLoginApi {
 	}
 
 	/**
-	 * Creates a ServerQuery login for a database client.
+	 * Creates a ServerQuery login with a new query client identity, which is not tied to a
+	 * virtual server and can be used instance-wide.
+	 *
+	 * @param loginName the login name
+	 * @return the login, its new client database ID and its generated password
+	 */
+	public CreatedQueryLogin create(String loginName) {
+		return CommandFutures.join(async.create(loginName));
+	}
+
+	/**
+	 * Creates a ServerQuery login for an existing database client of the selected virtual server.
 	 *
 	 * @param loginName the login name
 	 * @param clientDatabaseId the client database ID
 	 * @return the login and its generated password
 	 */
-	public CreatedQueryLogin create(String loginName, int clientDatabaseId) {
+	public CreatedQueryLogin create(String loginName, ClientDatabaseId clientDatabaseId) {
 		return CommandFutures.join(async.create(loginName, clientDatabaseId));
 	}
 
@@ -54,7 +66,7 @@ public final class QueryLoginApi {
 	 *
 	 * @param clientDatabaseId the client database ID
 	 */
-	public void delete(int clientDatabaseId) {
+	public void delete(ClientDatabaseId clientDatabaseId) {
 		CommandFutures.join(async.delete(clientDatabaseId));
 	}
 

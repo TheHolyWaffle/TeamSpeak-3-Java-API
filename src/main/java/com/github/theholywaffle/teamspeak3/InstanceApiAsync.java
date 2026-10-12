@@ -41,17 +41,17 @@ public final class InstanceApiAsync {
 
 	/** @see InstanceApi#version() */
 	public CompletableFuture<Version> version() {
-		return requests.model(ServerCommands.version(), Version::new);
+		return requests.one(ServerCommands.version(), Version::from);
 	}
 
 	/** @see InstanceApi#bindings() */
 	public CompletableFuture<List<Binding>> bindings() {
-		return requests.models(ServerCommands.bindingList(), Binding::new);
+		return requests.rows(ServerCommands.bindingList(), Binding::from);
 	}
 
 	/** @see InstanceApi#logEntries(int) */
 	public CompletableFuture<List<String>> logEntries(int lines) {
-		return requests.rows(ServerCommands.logView(lines, true), row -> row.get("l"));
+		return requests.rows(ServerCommands.logView(lines, true), row -> row.require("l"));
 	}
 
 	/** @see InstanceApi#stopProcess(String) */
