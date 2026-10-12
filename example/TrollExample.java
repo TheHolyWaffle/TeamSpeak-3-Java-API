@@ -28,7 +28,6 @@ import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3ApiAsync;
 import com.github.theholywaffle.teamspeak3.TS3Config;
 import com.github.theholywaffle.teamspeak3.TS3Query;
-import com.github.theholywaffle.teamspeak3.api.CommandFuture.SuccessListener;
 import com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
@@ -36,7 +35,6 @@ import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Channel;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -92,8 +90,8 @@ public class TrollExample {
 		api.selectVirtualServerById(1);
 		api.setNickname("Global Server Admin");
 
-		api.registerEvent(TS3EventType.SERVER);
-		api.addTS3Listeners(new TS3EventAdapter() {
+		api.events().register(TS3EventType.SERVER);
+		api.events().subscribe(new TS3EventAdapter() {
 
 			@Override
 			public void onClientJoin(ClientJoinEvent e) {
@@ -141,18 +139,18 @@ public class TrollExample {
 				case 0:
 					// Poke the client with a random message
 					String pokeMessage = MESSAGES[RANDOM.nextInt(MESSAGES.length)];
-					asyncApi.pokeClient(clientId, pokeMessage);
+					asyncApi.clients().poke(clientId, pokeMessage);
 					break;
 
 				case 1:
 					// Send the client a private message
 					String privateMessage = MESSAGES[RANDOM.nextInt(MESSAGES.length)];
-					asyncApi.sendPrivateMessage(clientId, privateMessage);
+					asyncApi.messages().sendPrivate(clientId, privateMessage);
 					break;
 
 				case 2:
 					// Kick the client to the default channel
-					asyncApi.kickClientFromChannel(clientId);
+					asyncApi.clients().kickFromChannel(null, clientId);
 					break;
 
 				case 3:
@@ -160,16 +158,13 @@ public class TrollExample {
 					// First, get all channels
 					// (Using .getChannels every time works on small servers, but might
 					//  not be a good idea on servers with 50+ clients!                )
-					asyncApi.getChannels().onSuccess(new SuccessListener<List<Channel>>() {
-						@Override
-						public void handleSuccess(List<Channel> result) {
-							// Once we retrieved the channels (some time in the future), choose one channel
-							int randomChannelIndex = RANDOM.nextInt(result.size());
-							Channel randomChannel = result.get(randomChannelIndex);
+					asyncApi.channels().list().thenAccept(result -> {
+						// Once we retrieved the channels (some time in the future), choose one channel
+						int randomChannelIndex = RANDOM.nextInt(result.size());
+						Channel randomChannel = result.get(randomChannelIndex);
 
-							// Then move the client into that channel
-							asyncApi.moveClient(clientId, randomChannel.getId());
-						}
+						// Then move the client into that channel
+						asyncApi.clients().move(clientId, randomChannel.getId());
 					});
 					break;
 				default:

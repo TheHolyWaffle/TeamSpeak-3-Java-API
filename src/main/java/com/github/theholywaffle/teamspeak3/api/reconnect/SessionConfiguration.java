@@ -90,6 +90,6 @@ public record SessionConfiguration(int virtualServerId, String nickname, List<Su
 	public void restore(TS3Api api) {
 		api.selectVirtualServerById(virtualServerId);
 		if (nickname != null) api.setNickname(nickname);
-		for (Subscription subscription : subscriptions) api.registerEvent(subscription.eventType(), subscription.channelId());
+		for (Subscription subscription : subscriptions) api.events().register(subscription.eventType(), subscription.channelId());
 	}
 }

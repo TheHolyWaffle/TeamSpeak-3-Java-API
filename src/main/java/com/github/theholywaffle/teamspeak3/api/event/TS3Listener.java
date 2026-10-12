@@ -33,8 +33,8 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * Consider extending {@link TS3EventAdapter} instead.
  * </i></p>
  *
- * @see com.github.theholywaffle.teamspeak3.TS3Api#addTS3Listeners(TS3Listener...)
- * @see com.github.theholywaffle.teamspeak3.TS3ApiAsync#addTS3Listeners(TS3Listener...)
+ * @see com.github.theholywaffle.teamspeak3.TS3Query#subscribe(TS3Listener)
+ * @see com.github.theholywaffle.teamspeak3.EventApi#subscribe(TS3Listener)
  */
 public interface TS3Listener {
 

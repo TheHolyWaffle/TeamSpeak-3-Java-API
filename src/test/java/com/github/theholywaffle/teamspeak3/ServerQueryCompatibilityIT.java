@@ -1,5 +1,9 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.BanRequest;
+import com.github.theholywaffle.teamspeak3.api.PermissionGrant;
+import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
+import com.github.theholywaffle.teamspeak3.api.FileLocation;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.Codec;
 import com.github.theholywaffle.teamspeak3.api.event.ChannelDescriptionEditedEvent;
@@ -31,7 +35,10 @@ import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 import com.github.theholywaffle.teamspeak3.api.reconnect.SessionConfiguration;
+import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 import java.time.Duration;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -84,22 +91,22 @@ class ServerQueryCompatibilityIT {
 			query.connect();
 			assertTrue(query.isConnected());
 			TS3Api api = query.getApi();
-			var version = api.getVersion();
+			var version = api.instance().version();
 			assertEquals("3.13.8", version.getVersion());
 			assertFalse(version.getBuild().isBlank());
 			server.record(target.name(), version);
 			api.selectVirtualServerById(1);
 			assertEquals(1, api.whoAmI().getVirtualServerId());
 			String name = "compatibility " + target + " | literal \\s";
-			int id = api.createChannel(name, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"));
+			int id = api.channels().create(name, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"));
 			try {
-				assertTrue(api.getChannels().stream().anyMatch(channel -> channel.getId() == id && channel.getName().equals(name)));
-			} finally { api.deleteChannel(id, true); }
-			assertTrue(api.getChannels().stream().noneMatch(channel -> channel.getId() == id));
+				assertTrue(api.channels().list().stream().anyMatch(channel -> channel.getId() == id && channel.getName().equals(name)));
+			} finally { api.channels().delete(id, true); }
+			assertTrue(api.channels().list().stream().noneMatch(channel -> channel.getId() == id));
 			var error = assertThrows(TS3CommandFailedException.class, () -> api.selectVirtualServerById(999));
 			assertEquals(2816, error.getError().getId()); // Selection is rejected by this fixture.
 			// A server error must leave response framing usable.
-			assertEquals(version.getVersion(), api.getVersion().getVersion());
+			assertEquals(version.getVersion(), api.instance().version().getVersion());
 		} finally { exitAndAssertTerminated(query, server); }
 	}
 
@@ -134,7 +141,7 @@ class ServerQueryCompatibilityIT {
 				@Override public boolean authenticates() { return factory.authenticates(); }
 			});
 			try (var query = new TS3Query(config)) {
-				query.getApi().addTS3Listeners(new TS3EventAdapter() {
+				query.subscribe(new TS3EventAdapter() {
 					@Override public void onChannelCreate(ChannelCreateEvent notification) { event.countDown(); }
 				});
 				query.connect();
@@ -147,9 +154,9 @@ class ServerQueryCompatibilityIT {
 				var after = query.getApi().whoAmI();
 				assertEquals(1, after.getVirtualServerId()); assertEquals(session.nickname(), after.getNickname());
 				// This privileged operation proves authentication was restored; its event proves the subscription.
-				int channel = query.getApi().createChannel("reconnect-event-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"));
+				int channel = query.getApi().channels().create("reconnect-event-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"));
 				try { assertTrue(event.await(5, TimeUnit.SECONDS), "Channel notifications must be restored"); }
-				finally { query.getApi().deleteChannel(channel, true); }
+				finally { query.getApi().channels().delete(channel, true); }
 				query.exit();
 				long until = System.nanoTime() + TimeUnit.SECONDS.toNanos(1);
 				while (!query.resourcesTerminated() && System.nanoTime() < until) Thread.sleep(5);
@@ -173,8 +180,8 @@ class ServerQueryCompatibilityIT {
 			 var actor = new TS3Query(server.config(target.protocol))) {
 			observer.connect();
 			observer.getApi().selectVirtualServerById(1);
-			observer.getApi().registerEvent(TS3EventType.SERVER);
-			observer.getApi().registerEvent(TS3EventType.CHANNEL, 0);
+			observer.getApi().events().register(TS3EventType.SERVER);
+			observer.getApi().events().register(TS3EventType.CHANNEL, 0);
 			try (var subscription = observer.subscribe(new TS3EventAdapter() {
 				@Override public void onClientJoin(com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent e) {
 					assertTrue(e.getClientId() > 0); rows.add("join " + e); joined.countDown();
@@ -190,19 +197,19 @@ class ServerQueryCompatibilityIT {
 				actor.connect(); actor.getApi().selectVirtualServerById(1);
 				actorId.set(actor.getApi().whoAmI().getId());
 				assertTrue(joined.await(5, TimeUnit.SECONDS));
-				int channel = observer.getApi().createChannel("notification-probe-" + target,
+				int channel = observer.getApi().channels().create("notification-probe-" + target,
 					Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"));
 				try {
-					observer.getApi().moveClient(actorId.get(), channel);
+					observer.getApi().clients().move(actorId.get(), channel);
 					assertTrue(moved.await(5, TimeUnit.SECONDS));
 					actor.exit(); assertTrue(left.await(5, TimeUnit.SECONDS));
-				} finally { observer.getApi().deleteChannel(channel, true); }
+				} finally { observer.getApi().channels().delete(channel, true); }
 				// Deletion callback fences preceding join/move/leave callbacks on this registration.
 				assertTrue(deleted.await(5, TimeUnit.SECONDS));
 				assertEquals(1, rows.stream().filter(row -> row.startsWith("join ")).count());
 				assertEquals(1, rows.stream().filter(row -> row.startsWith("move ")).count());
 				assertEquals(1, rows.stream().filter(row -> row.startsWith("leave ")).count());
-				assertFalse(observer.getApi().getVersion().getVersion().isBlank());
+				assertFalse(observer.getApi().instance().version().getVersion().isBlank());
 				observer.exit();
 				assertEquals(0, observer.getEventStatistics().malformedNotifications());
 				assertEquals(0, observer.getEventStatistics().listenerFailures());
@@ -229,10 +236,10 @@ class ServerQueryCompatibilityIT {
 			observer.connect(); actor.connect();
 			var api = actor.getApi();
 			api.selectVirtualServerById(1); observer.getApi().selectVirtualServerById(1);
-			server.record(target.name(), api.getVersion());
+			server.record(target.name(), api.instance().version());
 			int actorId = api.whoAmI().getId();
 			assertNotEquals(actorId, observer.getApi().whoAmI().getId());
-			observer.getApi().registerEvent(TS3EventType.CHANNEL, 0);
+			observer.getApi().events().register(TS3EventType.CHANNEL, 0);
 			try (var subscription = observer.subscribe(new TS3EventAdapter() {
 				@Override public void onChannelCreate(ChannelCreateEvent e) { created.add(e); }
 				@Override public void onChannelEdit(ChannelEditedEvent e) { edited.add(e); }
@@ -246,51 +253,51 @@ class ServerQueryCompatibilityIT {
 				}
 				try (var channels = new ChannelCleanup(api)) {
 					String name = "domain-" + target + " 日本語 | literal \\s";
-					int parent = channels.track(api.createChannel("parent-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
+					int parent = channels.track(api.channels().create("parent-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
 					var parentEvent = created.poll(5, TimeUnit.SECONDS);
 					assertNotNull(parentEvent); assertEquals(parent, parentEvent.getChannelId());
-					int channel = channels.track(api.createChannel(name, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1", ChannelProperty.CHANNEL_TOPIC, "initial topic")));
+					int channel = channels.track(api.channels().create(name, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1", ChannelProperty.CHANNEL_TOPIC, "initial topic")));
 					var create = created.poll(5, TimeUnit.SECONDS);
 					assertNotNull(create); assertEquals(channel, create.getChannelId());
 					assertEquals(name, create.get("channel_name"));
 					assertEquals(actorId, create.getInvokerId());
 					evidence.add("create event " + new java.util.TreeMap<>(create.getMap()));
-					var list = api.getChannels().stream().filter(c -> c.getId() == channel).findFirst().orElseThrow();
+					var list = api.channels().list().stream().filter(c -> c.getId() == channel).findFirst().orElseThrow();
 					assertEquals(name, list.getName()); assertTrue(list.isPermanent()); assertEquals("initial topic", list.getTopic());
 					evidence.add("channellist " + new java.util.TreeMap<>(list.getMap()));
-					assertTrue(api.getChannelsByName("domain-" + target).stream().anyMatch(c -> c.getId() == channel));
+					assertTrue(api.channels().search("domain-" + target).stream().anyMatch(c -> c.getId() == channel));
 					String renamed = name + " renamed";
 					String topic = "updated | literal \\n";
-					api.editChannel(channel, Map.of(ChannelProperty.CHANNEL_NAME, renamed, ChannelProperty.CHANNEL_TOPIC, topic,
+					api.channels().edit(channel, Map.of(ChannelProperty.CHANNEL_NAME, renamed, ChannelProperty.CHANNEL_TOPIC, topic,
 						ChannelProperty.CHANNEL_DESCRIPTION, "description 日本語 | literal \\s"));
 					var edit = edited.poll(5, TimeUnit.SECONDS);
 					assertNotNull(edit); assertEquals(channel, edit.getChannelId());
 					assertEquals(actorId, edit.getInvokerId());
 					assertEquals(renamed, edit.get("channel_name")); assertEquals(topic, edit.get("channel_topic"));
 					evidence.add("edit event " + new java.util.TreeMap<>(edit.getMap()));
-					var info = api.getChannelInfo(channel);
+					var info = api.channels().info(channel);
 					assertEquals(renamed, info.getName()); assertEquals(topic, info.getTopic());
 					assertEquals("description 日本語 | literal \\s", info.getDescription());
 					assertNotNull(info.getUniqueIdentifier());
 					evidence.add("channelinfo " + new java.util.TreeMap<>(info.getMap()));
-					api.moveChannel(channel, parent, 0);
+					api.channels().move(channel, parent, 0);
 					var move = moved.poll(5, TimeUnit.SECONDS);
 					assertNotNull(move); evidence.add("move event " + new java.util.TreeMap<>(move.getMap()));
 					assertEquals(channel, move.getChannelId());
 					assertEquals(actorId, move.getInvokerId());
 					assertEquals(parent, move.getChannelParentId()); assertEquals(0, move.getChannelOrder());
-					assertEquals(parent, api.getChannelInfo(channel).getParentChannelId());
+					assertEquals(parent, api.channels().info(channel).getParentChannelId());
 					channels.delete(channel);
 					var delete = deleted.poll(5, TimeUnit.SECONDS);
 					assertNotNull(delete); assertEquals(channel, delete.getChannelId());
 					assertEquals(actorId, delete.getInvokerId());
 					evidence.add("delete event " + new java.util.TreeMap<>(delete.getMap()));
-					assertTrue(api.getChannels().stream().noneMatch(c -> c.getId() == channel));
-					var error = assertThrows(TS3CommandFailedException.class, () -> api.getChannelInfo(channel));
+					assertTrue(api.channels().list().stream().noneMatch(c -> c.getId() == channel));
+					var error = assertThrows(TS3CommandFailedException.class, () -> api.channels().info(channel));
 					assertEquals(768, error.getError().getId());
 					assertEquals("invalid channelID", error.getError().getMessage());
 					evidence.add("deleted channel error " + new java.util.TreeMap<>(error.getError().getMap()));
-					assertEquals(api.getVersion().getVersion(), observer.getApi().getVersion().getVersion());
+					assertEquals(api.instance().version().getVersion(), observer.getApi().instance().version().getVersion());
 				}
 			}
 			observer.exit(); actor.exit();
@@ -317,7 +324,7 @@ class ServerQueryCompatibilityIT {
 			observer.connect(); actor.connect();
 			var api = actor.getApi();
 			api.selectVirtualServerById(1); observer.getApi().selectVirtualServerById(1);
-			server.record(target.name(), api.getVersion());
+			server.record(target.name(), api.instance().version());
 			for (String command : java.util.List.of("channelcreate", "channeledit", "channelinfo")) {
 				String help = api.executeRawCommand("help " + command).getRawResponse();
 				assertTrue(help.startsWith("Usage: " + command)); evidence.add("help " + command + "\n" + help);
@@ -325,52 +332,52 @@ class ServerQueryCompatibilityIT {
 			int observerId = observer.getApi().whoAmI().getId();
 			assertNotEquals(observerId, api.whoAmI().getId());
 			try (var channels = new ChannelCleanup(api)) {
-				int channel = channels.track(api.createChannel("configuration-" + target, Map.of(
+				int channel = channels.track(api.channels().create("configuration-" + target, Map.of(
 					ChannelProperty.CHANNEL_FLAG_SEMI_PERMANENT, "1", ChannelProperty.CHANNEL_CODEC, Integer.toString(Codec.OPUS_VOICE.getIndex()),
 					ChannelProperty.CHANNEL_CODEC_QUALITY, "6", ChannelProperty.CHANNEL_FLAG_MAXCLIENTS_UNLIMITED, "1",
 					ChannelProperty.CHANNEL_FLAG_MAXFAMILYCLIENTS_INHERITED, "1")));
-				var initial = api.getChannelInfo(channel);
+				var initial = api.channels().info(channel);
 				assertTrue(initial.isSemiPermanent()); assertFalse(initial.isPermanent()); assertFalse(initial.hasPassword());
 				assertTrue(initial.hasUnlimitedClients()); assertTrue(initial.hasInheritedMaxFamilyClients());
 				assertEquals(Codec.OPUS_VOICE, initial.getCodec()); assertEquals(6, initial.getCodecQuality());
-				api.moveClient(observerId, channel);
-				observer.getApi().registerEvent(TS3EventType.CHANNEL, channel);
+				api.clients().move(observerId, channel);
+				observer.getApi().events().register(TS3EventType.CHANNEL, channel);
 				try (var subscription = observer.subscribe(new TS3EventAdapter() {
 					@Override public void onChannelDescriptionChanged(ChannelDescriptionEditedEvent e) { descriptions.capture(() -> descriptions.publish(e)); }
 					@Override public void onChannelPasswordChanged(ChannelPasswordChangedEvent e) { passwords.capture(() -> passwords.publish(e)); }
 				})) {
 					String description = "configuration 日本語 | literal \\n";
-					api.editChannel(channel, Map.of(ChannelProperty.CHANNEL_DESCRIPTION, description));
+					api.channels().edit(channel, Map.of(ChannelProperty.CHANNEL_DESCRIPTION, description));
 					var described = descriptions.await();
 					assertEquals(channel, described.getChannelId());
 					assertEquals(java.util.Set.of("cid"), described.getMap().keySet());
 					evidence.add("description event " + new java.util.TreeMap<>(described.getMap()));
-					assertEquals(description, api.getChannelInfo(channel).getDescription());
+					assertEquals(description, api.channels().info(channel).getDescription());
 					String password = "configuration 日本語 | literal \\s";
-					api.editChannel(channel, Map.of(ChannelProperty.CHANNEL_PASSWORD, password));
+					api.channels().edit(channel, Map.of(ChannelProperty.CHANNEL_PASSWORD, password));
 					var protectedEvent = passwords.await();
 					assertEquals(channel, protectedEvent.getChannelId());
 					assertEquals(java.util.Set.of("cid"), protectedEvent.getMap().keySet());
 					evidence.add("password event fields " + new java.util.TreeSet<>(protectedEvent.getMap().keySet()));
-					assertTrue(api.getChannelInfo(channel).hasPassword());
-					api.editChannel(channel, Map.of(ChannelProperty.CHANNEL_PASSWORD, ""));
+					assertTrue(api.channels().info(channel).hasPassword());
+					api.channels().edit(channel, Map.of(ChannelProperty.CHANNEL_PASSWORD, ""));
 					var cleared = passwords.await();
 					assertEquals(channel, cleared.getChannelId());
 					assertEquals(java.util.Set.of("cid"), cleared.getMap().keySet());
-					assertFalse(api.getChannelInfo(channel).hasPassword());
+					assertFalse(api.channels().info(channel).hasPassword());
 				}
 				var conflicting = assertThrows(TS3CommandFailedException.class,
-					() -> api.editChannel(channel, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
+					() -> api.channels().edit(channel, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
 				assertEquals(775, conflicting.getError().getId()); assertEquals("invalid channel flags", conflicting.getError().getMessage());
 				evidence.add("conflicting mode " + new java.util.TreeMap<>(conflicting.getError().getMap()));
-				var rejected = api.getChannelInfo(channel);
+				var rejected = api.channels().info(channel);
 				assertTrue(rejected.isSemiPermanent()); assertFalse(rejected.isPermanent());
-				api.editChannel(channel, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1", ChannelProperty.CHANNEL_FLAG_SEMI_PERMANENT, "0",
+				api.channels().edit(channel, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1", ChannelProperty.CHANNEL_FLAG_SEMI_PERMANENT, "0",
 					ChannelProperty.CHANNEL_MAXCLIENTS, "2", ChannelProperty.CHANNEL_FLAG_MAXCLIENTS_UNLIMITED, "0",
 					ChannelProperty.CHANNEL_MAXFAMILYCLIENTS, "3", ChannelProperty.CHANNEL_FLAG_MAXFAMILYCLIENTS_INHERITED, "0",
 					ChannelProperty.CHANNEL_FLAG_MAXFAMILYCLIENTS_UNLIMITED, "0",
 					ChannelProperty.CHANNEL_CODEC, Integer.toString(Codec.OPUS_MUSIC.getIndex()), ChannelProperty.CHANNEL_CODEC_QUALITY, "8"));
-				var limited = api.getChannelInfo(channel);
+				var limited = api.channels().info(channel);
 				assertTrue(limited.isPermanent()); assertFalse(limited.isSemiPermanent());
 				assertFalse(limited.hasUnlimitedClients()); assertEquals(2, limited.getMaxClients());
 				assertFalse(limited.hasInheritedMaxFamilyClients()); assertFalse(limited.hasUnlimitedFamilyClients());
@@ -380,15 +387,15 @@ class ServerQueryCompatibilityIT {
 				evidence.add("limited values " + Map.of("permanent", limited.isPermanent(), "semiPermanent", limited.isSemiPermanent(),
 					"clients", limited.getMaxClients(), "familyClients", limited.getMaxFamilyClients(), "codec", limited.getCodec(), "quality", limited.getCodecQuality()));
 				var invalid = assertThrows(TS3CommandFailedException.class,
-					() -> api.editChannel(channel, Map.of(ChannelProperty.CHANNEL_CODEC_QUALITY, "11")));
+					() -> api.channels().edit(channel, Map.of(ChannelProperty.CHANNEL_CODEC_QUALITY, "11")));
 				evidence.add("invalid quality " + new java.util.TreeMap<>(invalid.getError().getMap()));
 				assertEquals(2568, invalid.getError().getId()); assertEquals("insufficient client permissions", invalid.getError().getMessage());
-				assertEquals(api.getPermissionIdByName(IPermissionType.I_CHANNEL_CREATE_MODIFY_WITH_CODEC_MAXQUALITY.getName()),
+				assertEquals(api.permissions().idByName(IPermissionType.I_CHANNEL_CREATE_MODIFY_WITH_CODEC_MAXQUALITY.getName()),
 					invalid.getError().getFailedPermissionId());
-				assertEquals(8, api.getChannelInfo(channel).getCodecQuality());
-				api.editChannel(channel, Map.of(ChannelProperty.CHANNEL_FLAG_SEMI_PERMANENT, "1", ChannelProperty.CHANNEL_FLAG_PERMANENT, "0",
+				assertEquals(8, api.channels().info(channel).getCodecQuality());
+				api.channels().edit(channel, Map.of(ChannelProperty.CHANNEL_FLAG_SEMI_PERMANENT, "1", ChannelProperty.CHANNEL_FLAG_PERMANENT, "0",
 					ChannelProperty.CHANNEL_FLAG_MAXCLIENTS_UNLIMITED, "1", ChannelProperty.CHANNEL_FLAG_MAXFAMILYCLIENTS_INHERITED, "1"));
-				var restored = api.getChannelInfo(channel);
+				var restored = api.channels().info(channel);
 				assertTrue(restored.isSemiPermanent()); assertFalse(restored.isPermanent());
 				assertTrue(restored.hasUnlimitedClients()); assertTrue(restored.hasInheritedMaxFamilyClients());
 			}
@@ -412,22 +419,22 @@ class ServerQueryCompatibilityIT {
 			query.connect();
 			var api = query.getApi(); api.selectVirtualServerById(1);
 			var identity = api.whoAmI();
-			server.record(target.name(), api.getVersion());
+			server.record(target.name(), api.instance().version());
 			for (String command : java.util.List.of("banadd", "banlist", "bandel")) {
 				String help = api.executeRawCommand("help " + command).getRawResponse();
 				assertTrue(help.startsWith("Usage: " + command)); evidence.add("help " + command + "\n" + help);
 			}
-			var initial = api.getBans().stream().map(com.github.theholywaffle.teamspeak3.api.wrapper.Ban::getId).collect(java.util.stream.Collectors.toSet());
+			var initial = api.bans().list().stream().map(com.github.theholywaffle.teamspeak3.api.wrapper.Ban::getId).collect(java.util.stream.Collectors.toSet());
 			String name = "^unconnected-ban-" + target + "$";
 			String ip = "198[.]51[.]100[.]44";
 			String uid = "AAAAAAAAAAAAAAAAAAAAAAAAAAA=";
 			String reason = "ban 日本語 | literal \\s\\p\\n /";
 			int deletedId;
-			try (var nameBan = new CreatedResource(api.addBan(null, name, null, 0, reason), api::deleteBan);
-				 var ipBan = new CreatedResource(api.addBan(ip, null, null, (String) null, 3600, reason), api::deleteBan);
-				 var uidBan = new CreatedResource(api.addBan(null, null, uid, 0, null), api::deleteBan)) {
+			try (var nameBan = new CreatedResource(api.bans().add(BanRequest.name(name).withReason(reason)), api.bans()::delete);
+				 var ipBan = new CreatedResource(api.bans().add(BanRequest.ip(ip).withDuration(Duration.ofHours(1)).withReason(reason)), api.bans()::delete);
+				 var uidBan = new CreatedResource(api.bans().add(BanRequest.uniqueId(uid)), api.bans()::delete)) {
 				deletedId = nameBan.id();
-				var bans = api.getBans(); assertEquals(initial.size() + 3, bans.size());
+				var bans = api.bans().list(); assertEquals(initial.size() + 3, bans.size());
 				var expected = new java.util.HashSet<>(initial);
 				expected.addAll(java.util.List.of(nameBan.id(), ipBan.id(), uidBan.id()));
 				assertEquals(expected, bans.stream().map(com.github.theholywaffle.teamspeak3.api.wrapper.Ban::getId).collect(java.util.stream.Collectors.toSet()));
@@ -451,11 +458,11 @@ class ServerQueryCompatibilityIT {
 					}
 				}
 			}
-			assertEquals(initial, api.getBans().stream().map(com.github.theholywaffle.teamspeak3.api.wrapper.Ban::getId).collect(java.util.stream.Collectors.toSet()));
-			var missing = assertThrows(TS3CommandFailedException.class, () -> api.deleteBan(deletedId));
+			assertEquals(initial, api.bans().list().stream().map(com.github.theholywaffle.teamspeak3.api.wrapper.Ban::getId).collect(java.util.stream.Collectors.toSet()));
+			var missing = assertThrows(TS3CommandFailedException.class, () -> api.bans().delete(deletedId));
 			evidence.add("delete removed ban " + new java.util.TreeMap<>(missing.getError().getMap()));
 			assertEquals(3328, missing.getError().getId()); assertEquals("invalid ban id", missing.getError().getMessage());
-			assertFalse(api.getVersion().getVersion().isBlank()); query.exit();
+			assertFalse(api.instance().version().getVersion().isBlank()); query.exit();
 		} finally {
 			Path path = Path.of("target", "compatibility", target + "-ban-rules.txt");
 			Files.createDirectories(path.getParent()); Files.write(path, evidence);
@@ -479,29 +486,29 @@ class ServerQueryCompatibilityIT {
 			var identity = actor.getApi().whoAmI();
 			int observerId = api.whoAmI().getId();
 			assertNotEquals(observerId, identity.getId());
-			server.record(target.name(), api.getVersion());
+			server.record(target.name(), api.instance().version());
 			for (String command : java.util.List.of("privilegekeyadd", "privilegekeylist", "privilegekeydelete", "privilegekeyuse")) {
 				String help = api.executeRawCommand("help " + command).getRawResponse();
 				assertTrue(help.startsWith("Usage: " + command), "Live help must describe " + command);
 				evidence.add("help " + command + "\n" + help);
 			}
-			var initial = api.getPrivilegeKeys().stream().map(PrivilegeKey::getToken).collect(java.util.stream.Collectors.toSet());
-			api.registerEvent(TS3EventType.SERVER); api.registerEvent(TS3EventType.TEXT_PRIVATE);
+			var initial = api.privilegeKeys().list().stream().map(PrivilegeKey::getToken).collect(java.util.stream.Collectors.toSet());
+			api.events().register(TS3EventType.SERVER); api.events().register(TS3EventType.TEXT_PRIVATE);
 			try (var channels = new ChannelCleanup(api);
-				 var serverGroup = new CreatedResource(api.addServerGroup("key-server-" + target), id -> api.deleteServerGroup(id, true));
-				 var channelGroup = new CreatedResource(api.addChannelGroup("key-channel-" + target), id -> api.deleteChannelGroup(id, true));
+				 var serverGroup = new CreatedResource(api.serverGroups().create("key-server-" + target), id -> api.serverGroups().delete(id, true));
+				 var channelGroup = new CreatedResource(api.channelGroups().create("key-channel-" + target), id -> api.channelGroups().delete(id, true));
 				 var subscription = observer.subscribe(new TS3EventAdapter() {
 					@Override public void onPrivilegeKeyUsed(PrivilegeKeyUsedEvent event) { assertTrue(used.offer(event)); }
 					@Override public void onTextMessage(TextMessageEvent event) { assertTrue(messages.offer(event)); }
 				 })) {
-				int channel = channels.track(api.createChannel("key-channel-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
+				int channel = channels.track(api.channels().create("key-channel-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
 				String description = "key 日本語 | literal \\s\\p\\n /";
 				String deletedToken;
-				try (var serverKey = new CreatedPrivilegeKey(api, api.addPrivilegeKeyServerGroup(serverGroup.id(), description));
-					 var channelKey = new CreatedPrivilegeKey(api, api.addPrivilegeKeyChannelGroup(channelGroup.id(), channel, description));
-					 var genericKey = new CreatedPrivilegeKey(api, api.addPrivilegeKey(PrivilegeKeyType.SERVER_GROUP, serverGroup.id(), 0, null))) {
+				try (var serverKey = new CreatedPrivilegeKey(api, api.privilegeKeys().createForServerGroup(serverGroup.id(), description));
+					 var channelKey = new CreatedPrivilegeKey(api, api.privilegeKeys().createForChannelGroup(channelGroup.id(), channel, description));
+					 var genericKey = new CreatedPrivilegeKey(api, api.privilegeKeys().createForServerGroup(serverGroup.id(), null))) {
 					deletedToken = serverKey.token();
-					var listed = api.getPrivilegeKeys();
+					var listed = api.privilegeKeys().list();
 					assertEquals(initial.size() + 3, listed.size());
 					var serverEntry = listed.stream().filter(k -> k.getToken().equals(serverKey.token())).findFirst().orElseThrow();
 					assertPrivilegeKey(serverEntry, PrivilegeKeyType.SERVER_GROUP, serverGroup.id(), 0, description, evidence);
@@ -509,28 +516,28 @@ class ServerQueryCompatibilityIT {
 					assertPrivilegeKey(channelEntry, PrivilegeKeyType.CHANNEL_GROUP, channelGroup.id(), channel, description, evidence);
 					var genericEntry = listed.stream().filter(k -> k.getToken().equals(genericKey.token())).findFirst().orElseThrow();
 					assertPrivilegeKey(genericEntry, PrivilegeKeyType.SERVER_GROUP, serverGroup.id(), 0, "", evidence);
-					var serverUse = assertThrows(TS3CommandFailedException.class, () -> actor.getApi().usePrivilegeKey(serverEntry));
+					var serverUse = assertThrows(TS3CommandFailedException.class, () -> actor.getApi().privilegeKeys().use(serverEntry.getToken()));
 					evidence.add("server key query use " + new java.util.TreeMap<>(serverUse.getError().getMap()));
 					assertEquals(516, serverUse.getError().getId()); assertEquals("invalid client type", serverUse.getError().getMessage());
-					var channelUse = assertThrows(TS3CommandFailedException.class, () -> actor.getApi().usePrivilegeKey(channelKey.token()));
+					var channelUse = assertThrows(TS3CommandFailedException.class, () -> actor.getApi().privilegeKeys().use(channelKey.token()));
 					evidence.add("channel key query use " + new java.util.TreeMap<>(channelUse.getError().getMap()));
 					assertEquals(516, channelUse.getError().getId()); assertEquals("invalid client type", channelUse.getError().getMessage());
 					// The later actor message fences preceding notification frames on this ordered subscription.
-					actor.getApi().sendPrivateMessage(observerId, "rejected-key-use-fence");
+					actor.getApi().messages().sendPrivate(observerId, "rejected-key-use-fence");
 					assertMessage(messages, TextMessageTargetMode.CLIENT, "rejected-key-use-fence", identity, observerId, evidence);
 					assertTrue(used.isEmpty(), "Rejected consumption must not produce a privilege-key-used event");
-					var retained = api.getPrivilegeKeys().stream().map(PrivilegeKey::getToken).collect(java.util.stream.Collectors.toSet());
+					var retained = api.privilegeKeys().list().stream().map(PrivilegeKey::getToken).collect(java.util.stream.Collectors.toSet());
 					assertTrue(retained.containsAll(java.util.List.of(serverKey.token(), channelKey.token(), genericKey.token())));
 				}
-				var restored = api.getPrivilegeKeys().stream().map(PrivilegeKey::getToken).collect(java.util.stream.Collectors.toSet());
+				var restored = api.privilegeKeys().list().stream().map(PrivilegeKey::getToken).collect(java.util.stream.Collectors.toSet());
 				assertEquals(initial, restored);
-				var missing = assertThrows(TS3CommandFailedException.class, () -> api.deletePrivilegeKey(deletedToken));
+				var missing = assertThrows(TS3CommandFailedException.class, () -> api.privilegeKeys().delete(deletedToken));
 				evidence.add("delete removed key " + new java.util.TreeMap<>(missing.getError().getMap()));
 				assertEquals(3, missing.getError().getId()); assertEquals("ok", missing.getError().getMessage());
-				var deletedUse = assertThrows(TS3CommandFailedException.class, () -> actor.getApi().usePrivilegeKey(deletedToken));
+				var deletedUse = assertThrows(TS3CommandFailedException.class, () -> actor.getApi().privilegeKeys().use(deletedToken));
 				evidence.add("removed key query use " + new java.util.TreeMap<>(deletedUse.getError().getMap()));
 				assertEquals(516, deletedUse.getError().getId()); assertEquals("invalid client type", deletedUse.getError().getMessage());
-				assertFalse(api.getVersion().getVersion().isBlank());
+				assertFalse(api.instance().version().getVersion().isBlank());
 			}
 			observer.exit(); actor.exit();
 			assertEquals(0, observer.getEventStatistics().unknownNotifications());
@@ -555,7 +562,7 @@ class ServerQueryCompatibilityIT {
 	}
 
 	private record CreatedPrivilegeKey(TS3Api api, String token) implements AutoCloseable {
-		@Override public void close() { api.deletePrivilegeKey(token); }
+		@Override public void close() { api.privilegeKeys().delete(token); }
 	}
 
 	@ParameterizedTest(name = "{0}: file directory commands and metadata")
@@ -568,45 +575,45 @@ class ServerQueryCompatibilityIT {
 			query.connect();
 			var api = query.getApi();
 			api.selectVirtualServerById(1);
-			server.record(target.name(), api.getVersion());
+			server.record(target.name(), api.instance().version());
 			for (String command : java.util.List.of("ftcreatedir", "ftgetfilelist", "ftgetfileinfo", "ftrenamefile", "ftdeletefile", "ftlist")) {
 				String help = api.executeRawCommand("help " + command).getRawResponse();
 				assertTrue(help.startsWith("Usage: " + command), "Live help must describe " + command);
 				evidence.add("help " + command + "\n" + help);
 			}
 			try (var channels = new ChannelCleanup(api)) {
-				int source = channels.track(api.createChannel("file-source-" + target,
+				int source = channels.track(api.channels().create("file-source-" + target,
 					Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
 				String password = "file password | \\s";
-				int destination = channels.track(api.createChannel("file-destination-" + target,
+				int destination = channels.track(api.channels().create("file-destination-" + target,
 					Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1", ChannelProperty.CHANNEL_PASSWORD, password)));
-				assertTrue(api.getChannelInfo(destination).hasPassword());
-				assertEquals(1, api.getPermissionValue(BPermissionType.B_FT_IGNORE_PASSWORD.getName()));
+				assertTrue(api.channels().info(destination).hasPassword());
+				assertEquals(1, api.permissions().ownValue(BPermissionType.B_FT_IGNORE_PASSWORD.getName()));
 				evidence.add("effective b_ft_ignore_password=1; destination channel is password protected");
-				assertTrue(api.getFileList("/", source).isEmpty());
-				assertTrue(api.getFileList("/", destination, password).isEmpty());
-				assertTrue(api.getFileTransfers().isEmpty());
-				var rejected = assertThrows(TS3CommandFailedException.class, () -> api.createFileDirectory("/literal\\s", source));
+				assertTrue(api.files().list(FileLocation.of(source, "/")).isEmpty());
+				assertTrue(api.files().list(FileLocation.of(destination, "/").withChannelPassword(password)).isEmpty());
+				assertTrue(api.files().transfers().isEmpty());
+				var rejected = assertThrows(TS3CommandFailedException.class, () -> api.files().createDirectory(FileLocation.of(source, "/literal\\s")));
 				evidence.add("invalid path " + new java.util.TreeMap<>(rejected.getError().getMap()));
 				assertEquals(2054, rejected.getError().getId()); assertEquals("invalid file path", rejected.getError().getMessage());
-				assertTrue(api.getFileList("/", source).isEmpty());
+				assertTrue(api.files().list(FileLocation.of(source, "/")).isEmpty());
 				String pipePath = "/directory | pipe";
-				api.createFileDirectory(pipePath, source);
-				var pipe = api.getFileList("/", source).getFirst();
+				api.files().createDirectory(FileLocation.of(source, pipePath));
+				var pipe = api.files().list(FileLocation.of(source, "/")).getFirst();
 				evidence.add("pipe path " + new java.util.TreeMap<>(pipe.getMap()));
 				assertEquals(pipePath, pipe.getPath());
-				api.deleteFile(pipePath, source);
+				api.files().delete(FileLocation.of(source, pipePath));
 				String unicodePath = "/directory 日本語 spaces";
-				api.createFileDirectory(unicodePath, source);
-				var unicode = api.getFileList("/", source).getFirst();
+				api.files().createDirectory(FileLocation.of(source, unicodePath));
+				var unicode = api.files().list(FileLocation.of(source, "/")).getFirst();
 				evidence.add("Unicode path " + new java.util.TreeMap<>(unicode.getMap()));
 				assertEquals(unicodePath, unicode.getPath());
-				api.deleteFile(unicodePath, source);
-				assertTrue(api.getFileList("/", source).isEmpty());
+				api.files().delete(FileLocation.of(source, unicodePath));
+				assertTrue(api.files().list(FileLocation.of(source, "/")).isEmpty());
 				String name = "directory spaces";
 				String path = "/" + name;
-				api.createFileDirectory(name, source);
-				var directory = api.getFileList("/", source).getFirst();
+				api.files().createDirectory(FileLocation.of(source, name));
+				var directory = api.files().list(FileLocation.of(source, "/")).getFirst();
 				evidence.add("root directory " + new java.util.TreeMap<>(directory.getMap()));
 				assertEquals(name, directory.getName()); assertEquals(path, directory.getPath());
 				assertEquals("/", directory.getParentPath()); assertEquals(source, directory.getChannelId());
@@ -614,40 +621,40 @@ class ServerQueryCompatibilityIT {
 				long modified = directory.getLastModifiedDate().getTime();
 				assertTrue(Math.abs(System.currentTimeMillis() - modified) < 60_000, "New directory timestamp must represent current time");
 				assertFalse(directory.isStillUploading()); assertFalse(directory.getMap().containsKey("incompletesize"));
-				assertTrue(api.getFileList(name, source).isEmpty());
-				api.createFileDirectory(path + "/child", source, null);
-				var nested = api.getFileList(path, source).getFirst();
+				assertTrue(api.files().list(FileLocation.of(source, name)).isEmpty());
+				api.files().createDirectory(FileLocation.of(source, path + "/child"));
+				var nested = api.files().list(FileLocation.of(source, path)).getFirst();
 				evidence.add("nested directory " + new java.util.TreeMap<>(nested.getMap()));
 				assertEquals("child", nested.getName()); assertEquals(path + "/child", nested.getPath());
 				assertEquals(path + "/", nested.getParentPath()); assertTrue(nested.isDirectory());
-				var directoryInfo = assertThrows(TS3CommandFailedException.class, () -> api.getFileInfo(path, source));
+				var directoryInfo = assertThrows(TS3CommandFailedException.class, () -> api.files().info(FileLocation.of(source, path)));
 				evidence.add("directory fileinfo " + new java.util.TreeMap<>(directoryInfo.getError().getMap()));
 				assertEquals(2048, directoryInfo.getError().getId()); assertEquals("invalid file name", directoryInfo.getError().getMessage());
 				String renamed = "/renamed spaces";
-				api.moveFile(path, renamed, source);
-				assertEquals(renamed, api.getFileList("/", source).getFirst().getPath());
-				assertEquals(renamed + "/child", api.getFileList(renamed, source).getFirst().getPath());
-				api.moveFile(renamed, "/moved", source, null, destination, password);
-				assertTrue(api.getFileList("/", source).isEmpty());
-				assertEquals("/moved", api.getFileList("/", destination, password).getFirst().getPath());
-				assertEquals("/moved/child", api.getFileList("moved", destination, password).getFirst().getPath());
-				api.deleteFile("/moved/child", destination, password);
-				assertTrue(api.getFileList("/moved", destination, password).isEmpty());
-				api.createFileDirectory("/second", destination, password);
-				api.deleteFiles(new String[]{"/moved", "/second"}, destination, password);
-				assertTrue(api.getFileList("/", destination, password).isEmpty());
-				var missing = assertThrows(TS3CommandFailedException.class, () -> api.getFileInfo("/absent.txt", source));
+				api.files().move(FileLocation.of(source, path), FileLocation.of(source, renamed));
+				assertEquals(renamed, api.files().list(FileLocation.of(source, "/")).getFirst().getPath());
+				assertEquals(renamed + "/child", api.files().list(FileLocation.of(source, renamed)).getFirst().getPath());
+				api.files().move(FileLocation.of(source, renamed), FileLocation.of(destination, "/moved").withChannelPassword(password));
+				assertTrue(api.files().list(FileLocation.of(source, "/")).isEmpty());
+				assertEquals("/moved", api.files().list(FileLocation.of(destination, "/").withChannelPassword(password)).getFirst().getPath());
+				assertEquals("/moved/child", api.files().list(FileLocation.of(destination, "moved").withChannelPassword(password)).getFirst().getPath());
+				api.files().delete(FileLocation.of(destination, "/moved/child").withChannelPassword(password));
+				assertTrue(api.files().list(FileLocation.of(destination, "/moved").withChannelPassword(password)).isEmpty());
+				api.files().createDirectory(FileLocation.of(destination, "/second").withChannelPassword(password));
+				api.files().delete(java.util.List.of(FileLocation.of(destination, "/moved").withChannelPassword(password), FileLocation.of(destination, "/second").withChannelPassword(password)));
+				assertTrue(api.files().list(FileLocation.of(destination, "/").withChannelPassword(password)).isEmpty());
+				var missing = assertThrows(TS3CommandFailedException.class, () -> api.files().info(FileLocation.of(source, "/absent.txt")));
 				evidence.add("missing file " + new java.util.TreeMap<>(missing.getError().getMap()));
 				assertEquals(2052, missing.getError().getId());
 				assertEquals("file input/output error", missing.getError().getMessage());
-				var missingDirectory = assertThrows(TS3CommandFailedException.class, () -> api.getFileList("/absent", source));
+				var missingDirectory = assertThrows(TS3CommandFailedException.class, () -> api.files().list(FileLocation.of(source, "/absent")));
 				evidence.add("missing directory " + new java.util.TreeMap<>(missingDirectory.getError().getMap()));
 				assertEquals(2052, missingDirectory.getError().getId());
 				assertEquals("file input/output error", missingDirectory.getError().getMessage());
-				assertTrue(api.getFileList("/", destination, "wrong").isEmpty());
+				assertTrue(api.files().list(FileLocation.of(destination, "/").withChannelPassword("wrong")).isEmpty());
 				evidence.add("serveradmin can list the password-protected channel with an incorrect password");
-				assertTrue(api.getFileList("/", destination, password).isEmpty());
-				assertFalse(api.getVersion().getVersion().isBlank());
+				assertTrue(api.files().list(FileLocation.of(destination, "/").withChannelPassword(password)).isEmpty());
+				assertFalse(api.instance().version().getVersion().isBlank());
 			}
 			query.exit();
 		} finally {
@@ -673,14 +680,14 @@ class ServerQueryCompatibilityIT {
 			api.selectVirtualServerById(1); observer.getApi().selectVirtualServerById(1);
 			api.setNickname("client-admin-" + target);
 			var invoker = api.whoAmI();
-			server.record(target.name(), api.getVersion());
+			server.record(target.name(), api.instance().version());
 			for (String command : java.util.List.of("clientlist", "clientinfo", "clientfind", "clientupdate", "clientedit", "clientmove")) {
 				String help = api.executeRawCommand("help " + command).getRawResponse();
 				assertTrue(help.startsWith("Usage: " + command), "Live help must describe " + command);
 				evidence.add("help " + command + "\n" + help);
 			}
-			observer.getApi().registerEvent(TS3EventType.SERVER);
-			observer.getApi().registerEvent(TS3EventType.CHANNEL, 0);
+			observer.getApi().events().register(TS3EventType.SERVER);
+			observer.getApi().events().register(TS3EventType.CHANNEL, 0);
 			try (var channels = new ChannelCleanup(api);
 				 var subscription = observer.subscribe(new TS3EventAdapter() {
 					@Override public void onClientJoin(ClientJoinEvent event) { assertTrue(joins.offer(event)); }
@@ -702,57 +709,57 @@ class ServerQueryCompatibilityIT {
 				String name = "query-" + target + " 日本語 | \\s";
 				subject.getApi().updateClient(Map.of(ClientProperty.CLIENT_NICKNAME, name));
 				assertEquals(name, subject.getApi().whoAmI().getNickname());
-				var info = api.getClientInfo(id);
+				var info = api.clients().info(id);
 				evidence.add("clientinfo " + new java.util.TreeMap<>(info.getMap()));
 				assertEquals(id, info.getId()); assertEquals(name, info.getNickname()); assertEquals(1, info.getType());
 				assertFalse(info.isRegularClient()); assertEquals(identity.getChannelId(), info.getChannelId());
 				assertEquals(identity.getDatabaseId(), info.getDatabaseId());
 				assertEquals(identity.getUniqueIdentifier(), info.getUniqueIdentifier());
-				var listed = api.getClients().stream().filter(c -> c.getId() == id).findFirst().orElseThrow();
+				var listed = api.clients().list().stream().filter(c -> c.getId() == id).findFirst().orElseThrow();
 				evidence.add("clientlist " + new java.util.TreeMap<>(listed.getMap()));
 				assertEquals(name, listed.getNickname()); assertEquals(info.getUniqueIdentifier(), listed.getUniqueIdentifier());
 				assertEquals(info.getDatabaseId(), listed.getDatabaseId()); assertEquals(1, listed.getType());
-				assertEquals(id, api.getClientByNameExact(name, false).getId());
-				assertEquals(id, api.getClientByNameExact(name.toUpperCase(java.util.Locale.ROOT), true).getId());
-				assertTrue(api.getClientsByName(name).stream().anyMatch(c -> c.getId() == id));
-				assertNull(api.getClientByNameExact("absent-client-" + target, false));
-				assertTrue(api.getClientsByName("absent-client-" + target).isEmpty());
+				assertEquals(id, api.clients().findByName(name, false).orElseThrow().getId());
+				assertEquals(id, api.clients().findByName(name.toUpperCase(java.util.Locale.ROOT), true).orElseThrow().getId());
+				assertTrue(api.clients().search(name).stream().anyMatch(c -> c.getId() == id));
+				assertTrue(api.clients().findByName("absent-client-" + target, false).isEmpty());
+				assertTrue(api.clients().search("absent-client-" + target).isEmpty());
 				try (var restoration = new ClientDescription(api, id, info.getDescription())) {
 					String description = "description 日本語 | \\s\\p\\n /";
-					api.editClient(id, ClientProperty.CLIENT_DESCRIPTION, description);
-					assertEquals(description, api.getClientInfo(id).getDescription());
+					api.clients().edit(id, Map.of(ClientProperty.CLIENT_DESCRIPTION, description));
+					assertEquals(description, api.clients().info(id).getDescription());
 					String controls = "before\nmiddle\tend\r tail";
-					api.editClient(id, Map.of(ClientProperty.CLIENT_DESCRIPTION, controls));
-					assertEquals("beforemiddleend tail", api.getClientInfo(id).getDescription());
+					api.clients().edit(id, Map.of(ClientProperty.CLIENT_DESCRIPTION, controls));
+					assertEquals("beforemiddleend tail", api.clients().info(id).getDescription());
 					String rawDescription = api.executeRawCommand("clientinfo clid=" + id).getRawResponse();
 					evidence.add("description controls raw " + rawDescription);
 					assertTrue(rawDescription.contains("client_description=beforemiddleend\\stail"));
-					int channel = channels.track(api.createChannel("client-move-" + target,
+					int channel = channels.track(api.channels().create("client-move-" + target,
 						Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
-					api.moveClient(id, channel);
+					api.clients().move(id, channel);
 					assertClientMove(moves, id, channel, 1, invoker, evidence);
 					assertEquals(channel, subject.getApi().whoAmI().getChannelId());
-					assertEquals(channel, api.getClientInfo(id).getChannelId());
-					var badMove = assertThrows(TS3CommandFailedException.class, () -> api.moveClient(id, Integer.MAX_VALUE));
+					assertEquals(channel, api.clients().info(id).getChannelId());
+					var badMove = assertThrows(TS3CommandFailedException.class, () -> api.clients().move(id, Integer.MAX_VALUE));
 					evidence.add("invalid channel " + new java.util.TreeMap<>(badMove.getError().getMap()));
 					assertEquals(768, badMove.getError().getId()); assertEquals("invalid channelID", badMove.getError().getMessage());
-					assertEquals(channel, api.getClientInfo(id).getChannelId());
-					subject.getApi().moveClient(id, identity.getChannelId());
+					assertEquals(channel, api.clients().info(id).getChannelId());
+					subject.getApi().clients().move(id, identity.getChannelId());
 					assertClientMove(moves, id, identity.getChannelId(), 0, null, evidence);
 					assertTrue(moves.isEmpty(), "Rejected moves must not add notifications before the valid move fence");
 				}
-				assertEquals(info.getDescription(), api.getClientInfo(id).getDescription());
+				assertEquals(info.getDescription(), api.clients().info(id).getDescription());
 				subject.exit();
 				var leave = leaves.poll(5, TimeUnit.SECONDS);
 				assertNotNull(leave); evidence.add("leave " + new java.util.TreeMap<>(leave.getMap()));
 				assertEquals(id, leave.getClientId()); assertEquals(identity.getChannelId(), leave.getClientFromId());
 				assertEquals(0, leave.getClientTargetId()); assertEquals(8, leave.getReasonId());
 				assertFalse(leave.getMap().containsKey("invokerid")); assertEquals(-1, leave.getInvokerId());
-				var gone = assertThrows(TS3CommandFailedException.class, () -> api.getClientInfo(id));
+				var gone = assertThrows(TS3CommandFailedException.class, () -> api.clients().info(id));
 				evidence.add("disconnected client " + new java.util.TreeMap<>(gone.getError().getMap()));
 				assertEquals(512, gone.getError().getId()); assertEquals("invalid clientID", gone.getError().getMessage());
-				assertTrue(api.getClients().stream().noneMatch(c -> c.getId() == id));
-				assertFalse(api.getVersion().getVersion().isBlank());
+				assertTrue(api.clients().list().stream().noneMatch(c -> c.getId() == id));
+				assertFalse(api.instance().version().getVersion().isBlank());
 				assertTrue(joins.isEmpty()); assertTrue(moves.isEmpty()); assertTrue(leaves.isEmpty());
 			}
 			observer.exit(); controller.exit();
@@ -781,7 +788,7 @@ class ServerQueryCompatibilityIT {
 	}
 
 	private record ClientDescription(TS3Api api, int id, String value) implements AutoCloseable {
-		@Override public void close() { api.editClient(id, ClientProperty.CLIENT_DESCRIPTION, value); }
+		@Override public void close() { api.clients().edit(id, Map.of(ClientProperty.CLIENT_DESCRIPTION, value)); }
 	}
 
 	@ParameterizedTest(name = "{0}: server information and edits from an independent query session")
@@ -796,7 +803,7 @@ class ServerQueryCompatibilityIT {
 			observer.connect(); actor.connect();
 			var api = actor.getApi();
 			api.selectVirtualServerById(1); observer.getApi().selectVirtualServerById(1);
-			server.record(target.name(), api.getVersion());
+			server.record(target.name(), api.instance().version());
 			api.setNickname("server-edit-" + target);
 			var actorInfo = api.whoAmI();
 			assertNotEquals(actorInfo.getId(), observer.getApi().whoAmI().getId());
@@ -806,33 +813,33 @@ class ServerQueryCompatibilityIT {
 				assertTrue(help.startsWith("Usage: " + command), "Live help must describe " + command);
 				evidence.add("help " + command + "\n" + help);
 			}
-			var info = api.getServerInfo();
+			var info = api.servers().info();
 			evidence.add("serverinfo " + new java.util.TreeMap<>(info.getMap()));
 			assertEquals(1, info.getId()); assertEquals(VirtualServerStatus.ONLINE, info.getStatus());
 			assertFalse(info.getName().isBlank()); assertFalse(info.getUniqueIdentifier().isBlank());
 			assertTrue(info.getPort() > 0); assertTrue(info.getMaxClients() > 0);
 			assertFalse(info.getVersion().isBlank()); assertFalse(info.getPlatform().isBlank());
-			var listed = api.getVirtualServers().stream().filter(v -> v.getId() == 1).findFirst().orElseThrow();
+			var listed = api.servers().list().stream().filter(v -> v.getId() == 1).findFirst().orElseThrow();
 			evidence.add("serverlist " + new java.util.TreeMap<>(listed.getMap()));
 			assertEquals(info.getName(), listed.getName()); assertEquals(info.getPort(), listed.getPort());
 			assertEquals(info.getUniqueIdentifier(), listed.getUniqueIdentifier());
 			assertEquals(info.getStatus(), listed.getStatus()); assertEquals(info.getMaxClients(), listed.getMaxClients());
-			assertEquals(1, api.getServerIdByPort(info.getPort()));
-			var host = api.getHostInfo();
+			assertEquals(Optional.of(1), api.servers().findIdByPort(info.getPort()));
+			var host = api.instance().hostInfo();
 			evidence.add("hostinfo " + new java.util.TreeMap<>(host.getMap()));
 			assertEquals(1, host.getTotalRunningServers()); assertTrue(host.getTotalChannels() > 0);
 			assertTrue(host.getUptime() >= 0); assertTrue(host.getTimeStamp().getTime() > 0);
-			var instance = api.getInstanceInfo();
+			var instance = api.instance().info();
 			evidence.add("instanceinfo " + new java.util.TreeMap<>(instance.getMap()));
 			assertTrue(instance.getDatabaseVersion() > 0); assertTrue(instance.getFileTransferPort() > 0);
-			var connection = api.getConnectionInfo();
+			var connection = api.servers().connectionInfo();
 			evidence.add("connectioninfo " + new java.util.TreeMap<>(connection.getMap()));
 			assertTrue(connection.getTotalPacketsSent() >= 0); assertTrue(connection.getTotalPacketsReceived() >= 0);
 			assertTrue(connection.getTotalBytesSent() >= 0); assertTrue(connection.getTotalBytesReceived() >= 0);
 			var original = Map.of(VirtualServerProperty.VIRTUALSERVER_NAME, info.getName(),
 				VirtualServerProperty.VIRTUALSERVER_WELCOMEMESSAGE, info.getWelcomeMessage(),
 				VirtualServerProperty.VIRTUALSERVER_HOSTMESSAGE, info.getHostMessage());
-			observer.getApi().registerEvent(TS3EventType.SERVER);
+			observer.getApi().events().register(TS3EventType.SERVER);
 			try (var restoration = new ServerSettings(api, original);
 				 var subscription = observer.subscribe(new TS3EventAdapter() {
 					@Override public void onServerEdit(ServerEditedEvent event) { assertTrue(edits.offer(event)); }
@@ -840,32 +847,33 @@ class ServerQueryCompatibilityIT {
 				String name = "server-" + target + " 日本語 | \\s";
 				String welcome = "welcome | literal \\s\\p\\n / \n";
 				String hostMessage = "host | literal \\t\\r\\\\ / \t\r";
-				api.editServer(Map.of(VirtualServerProperty.VIRTUALSERVER_NAME, name,
+				api.servers().edit(Map.of(VirtualServerProperty.VIRTUALSERVER_NAME, name,
 					VirtualServerProperty.VIRTUALSERVER_WELCOMEMESSAGE, welcome,
 					VirtualServerProperty.VIRTUALSERVER_HOSTMESSAGE, hostMessage));
 				assertServerEdit(edits, name, actorInfo, evidence);
-				var changed = api.getServerInfo();
+				var changed = api.servers().info();
 				assertEquals(name, changed.getName()); assertEquals(welcome, changed.getWelcomeMessage());
 				assertEquals(hostMessage, changed.getHostMessage());
-				assertEquals(name, api.getVirtualServers().stream().filter(v -> v.getId() == 1).findFirst().orElseThrow().getName());
+				assertEquals(name, api.servers().list().stream().filter(v -> v.getId() == 1).findFirst().orElseThrow().getName());
 				var invalidValue = assertThrows(TS3CommandFailedException.class,
-					() -> api.editServer(Map.of(VirtualServerProperty.VIRTUALSERVER_MAXCLIENTS, "not-an-integer")));
+					() -> api.servers().edit(Map.of(VirtualServerProperty.VIRTUALSERVER_MAXCLIENTS, "not-an-integer")));
 				evidence.add("invalid numeric edit " + new java.util.TreeMap<>(invalidValue.getError().getMap()));
 				assertEquals(1540, invalidValue.getError().getId());
 				assertEquals("convert error", invalidValue.getError().getMessage());
-				assertEquals(name, api.getServerInfo().getName());
+				assertEquals(name, api.servers().info().getName());
 				String secondName = "updated " + name;
-				api.editServer(Map.of(VirtualServerProperty.VIRTUALSERVER_NAME, secondName));
+				api.servers().edit(Map.of(VirtualServerProperty.VIRTUALSERVER_NAME, secondName));
 				assertServerEdit(edits, secondName, actorInfo, evidence);
 				assertTrue(edits.isEmpty(), "Rejected edits must not produce an extra server-edit notification");
-				assertEquals(secondName, api.getServerInfo().getName());
-				var missingPort = assertThrows(TS3CommandFailedException.class, () -> api.getServerIdByPort(65535));
+				assertEquals(secondName, api.servers().info().getName());
+				assertEquals(Optional.empty(), api.servers().findIdByPort(65535));
+				var missingPort = assertThrows(TS3CommandFailedException.class, () -> api.executeRawCommand("serveridgetbyport virtualserver_port=65535"));
 				evidence.add("unknown port " + new java.util.TreeMap<>(missingPort.getError().getMap()));
 				assertEquals(1024, missingPort.getError().getId());
 				assertEquals("invalid serverID", missingPort.getError().getMessage());
-				assertEquals(1, api.getServerIdByPort(info.getPort()));
+				assertEquals(Optional.of(1), api.servers().findIdByPort(info.getPort()));
 			}
-			var restored = api.getServerInfo();
+			var restored = api.servers().info();
 			assertEquals(info.getName(), restored.getName()); assertEquals(info.getWelcomeMessage(), restored.getWelcomeMessage());
 			assertEquals(info.getHostMessage(), restored.getHostMessage());
 			observer.exit(); actor.exit();
@@ -893,7 +901,7 @@ class ServerQueryCompatibilityIT {
 	}
 
 	private record ServerSettings(TS3Api api, Map<VirtualServerProperty, String> values) implements AutoCloseable {
-		@Override public void close() { api.editServer(values); }
+		@Override public void close() { api.servers().edit(values); }
 	}
 
 	@ParameterizedTest(name = "{0}: online text messages from an independent query session")
@@ -909,7 +917,7 @@ class ServerQueryCompatibilityIT {
 			var api = actor.getApi();
 			var recipient = observer.getApi();
 			api.selectVirtualServerById(1); recipient.selectVirtualServerById(1);
-			server.record(target.name(), api.getVersion());
+			server.record(target.name(), api.instance().version());
 			String nickname = "msg-" + target + " | \\s";
 			api.setNickname(nickname);
 			var actorInfo = api.whoAmI();
@@ -926,52 +934,53 @@ class ServerQueryCompatibilityIT {
 				 var subscription = observer.subscribe(new TS3EventAdapter() {
 					@Override public void onTextMessage(TextMessageEvent event) { assertTrue(messages.offer(event)); }
 				 })) {
-				int channel = channels.track(api.createChannel("messages-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
+				int channel = channels.track(api.channels().create("messages-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
 				recipient.moveQuery(channel);
-				recipient.registerEvents(TS3EventType.TEXT_SERVER, TS3EventType.TEXT_CHANNEL, TS3EventType.TEXT_PRIVATE);
+				recipient.events().register(TS3EventType.TEXT_SERVER, TS3EventType.TEXT_CHANNEL, TS3EventType.TEXT_PRIVATE);
 				String payload = "[b]héllo 日本語[/b] | literal \\s\\p\\n\\t\\r\\\\ / \n\t\r";
-				api.sendServerMessage(payload);
+				api.messages().sendServer(payload);
 				assertMessage(messages, TextMessageTargetMode.SERVER, payload, actorInfo, observerId, evidence);
-				api.sendChannelMessage(channel, payload);
+				api.messages().sendChannel(channel, payload);
 				assertEquals(channel, api.whoAmI().getChannelId(), "Explicit channel send leaves the query in that channel");
 				assertMessage(messages, TextMessageTargetMode.CHANNEL, payload, actorInfo, observerId, evidence);
-				api.sendChannelMessage("current " + payload);
+				api.messages().sendChannel("current " + payload);
 				assertMessage(messages, TextMessageTargetMode.CHANNEL, "current " + payload, actorInfo, observerId, evidence);
-				api.sendTextMessage(TextMessageTargetMode.CHANNEL, 65535, "ignored target " + payload);
+				// The typed API has no channel/server target: the server ignores it, as these raw commands record.
+				api.executeRawCommand("sendtextmessage targetmode=2 target=65535 msg=" + CommandEncoding.encode("ignored target " + payload));
 				assertMessage(messages, TextMessageTargetMode.CHANNEL, "ignored target " + payload, actorInfo, observerId, evidence);
-				api.sendTextMessage(TextMessageTargetMode.SERVER, 65535, "ignored target " + payload);
+				api.executeRawCommand("sendtextmessage targetmode=3 target=65535 msg=" + CommandEncoding.encode("ignored target " + payload));
 				assertMessage(messages, TextMessageTargetMode.SERVER, "ignored target " + payload, actorInfo, observerId, evidence);
-				api.sendPrivateMessage(observerId, payload);
+				api.messages().sendPrivate(observerId, payload);
 				assertMessage(messages, TextMessageTargetMode.CLIENT, payload, actorInfo, observerId, evidence);
-				api.sendTextMessage(TextMessageTargetMode.CLIENT, observerId, "generic " + payload);
+				api.executeRawCommand("sendtextmessage targetmode=1 target=" + observerId + " msg=" + CommandEncoding.encode("generic " + payload));
 				assertMessage(messages, TextMessageTargetMode.CLIENT, "generic " + payload, actorInfo, observerId, evidence);
-				api.sendServerMessage(1, "selected " + payload);
+				api.messages().sendServer(1, "selected " + payload);
 				assertEquals(1, api.whoAmI().getVirtualServerId());
 				assertMessage(messages, TextMessageTargetMode.SERVER, "selected " + payload, actorInfo, observerId, evidence);
 				String boundary = "é".repeat(512);
-				api.sendPrivateMessage(observerId, boundary);
+				api.messages().sendPrivate(observerId, boundary);
 				assertMessage(messages, TextMessageTargetMode.CLIENT, boundary, actorInfo, observerId, evidence);
-				api.sendPrivateMessage(observerId, boundary + "é");
+				api.messages().sendPrivate(observerId, boundary + "é");
 				assertMessage(messages, TextMessageTargetMode.CLIENT, boundary + "é", actorInfo, observerId, evidence);
 				evidence.add("private UTF-8 payloads: 1024 and 1026 bytes received intact");
-				var invalidNumber = assertThrows(TS3CommandFailedException.class, () -> api.sendPrivateMessage(Integer.MAX_VALUE, "out of range"));
+				var invalidNumber = assertThrows(TS3CommandFailedException.class, () -> api.messages().sendPrivate(Integer.MAX_VALUE, "out of range"));
 				evidence.add("out-of-range recipient " + new java.util.TreeMap<>(invalidNumber.getError().getMap()));
 				assertEquals(1540, invalidNumber.getError().getId());
 				assertEquals("convert error", invalidNumber.getError().getMessage());
-				var invalidClient = assertThrows(TS3CommandFailedException.class, () -> api.sendPrivateMessage(65535, "missing client"));
+				var invalidClient = assertThrows(TS3CommandFailedException.class, () -> api.messages().sendPrivate(65535, "missing client"));
 				evidence.add("invalid recipient " + new java.util.TreeMap<>(invalidClient.getError().getMap()));
 				assertEquals(512, invalidClient.getError().getId());
 				assertEquals("invalid clientID", invalidClient.getError().getMessage());
-				var invalidChannel = assertThrows(TS3CommandFailedException.class, () -> api.sendChannelMessage(65535, "missing channel"));
+				var invalidChannel = assertThrows(TS3CommandFailedException.class, () -> api.messages().sendChannel(65535, "missing channel"));
 				evidence.add("invalid channel " + new java.util.TreeMap<>(invalidChannel.getError().getMap()));
 				assertEquals(768, invalidChannel.getError().getId());
 				assertEquals("invalid channelID", invalidChannel.getError().getMessage());
-				var invalidServer = assertThrows(TS3CommandFailedException.class, () -> api.sendServerMessage(65535, "missing server"));
+				var invalidServer = assertThrows(TS3CommandFailedException.class, () -> api.messages().sendServer(65535, "missing server"));
 				evidence.add("invalid server " + new java.util.TreeMap<>(invalidServer.getError().getMap()));
 				assertEquals(2816, invalidServer.getError().getId());
 				assertEquals("virtualserver limit reached", invalidServer.getError().getMessage());
 				assertEquals(0, api.whoAmI().getVirtualServerId(), "Failed selection clears the current server on these targets");
-				var unselected = assertThrows(TS3CommandFailedException.class, () -> api.sendServerMessage("no current server"));
+				var unselected = assertThrows(TS3CommandFailedException.class, () -> api.messages().sendServer("no current server"));
 				evidence.add("unselected server " + new java.util.TreeMap<>(unselected.getError().getMap()));
 				assertEquals(1024, unselected.getError().getId());
 				assertEquals("invalid serverID", unselected.getError().getMessage());
@@ -980,15 +989,15 @@ class ServerQueryCompatibilityIT {
 				assertEquals(1, actorInfo.getVirtualServerId());
 				assertEquals(nickname, actorInfo.getNickname());
 				// A private event fences earlier sends on the same actor and listener, without a timing-only absence check.
-				recipient.unregisterAllEvents();
-				recipient.registerEvent(TS3EventType.TEXT_PRIVATE);
-				api.sendServerMessage("unsubscribed server");
-				api.sendChannelMessage(channel, "unsubscribed channel");
-				api.sendPrivateMessage(observerId, "private fence");
+				recipient.events().unregisterAll();
+				recipient.events().register(TS3EventType.TEXT_PRIVATE);
+				api.messages().sendServer("unsubscribed server");
+				api.messages().sendChannel(channel, "unsubscribed channel");
+				api.messages().sendPrivate(observerId, "private fence");
 				assertMessage(messages, TextMessageTargetMode.CLIENT, "private fence", actorInfo, observerId, evidence);
 				assertTrue(messages.isEmpty(), "No failed-target or unsubscribed message may be dispatched before the fence");
 			}
-			assertFalse(api.getVersion().getVersion().isBlank());
+			assertFalse(api.instance().version().getVersion().isBlank());
 			observer.exit(); actor.exit();
 			assertEquals(0, observer.getEventStatistics().malformedNotifications());
 			assertEquals(0, observer.getEventStatistics().listenerFailures());
@@ -1023,60 +1032,60 @@ class ServerQueryCompatibilityIT {
 		try (var server = new TeamSpeakContainer()) {
 			server.start();
 			try (var query = new TS3Query(server.config(target.protocol))) {
-				query.connect(); var api = query.getApi(); server.record(target.name(), api.getVersion());
+				query.connect(); var api = query.getApi(); server.record(target.name(), api.instance().version());
 				for (String command : java.util.List.of("servercreate", "serverstart", "serverstop", "serverdelete")) {
 					String help = api.executeRawCommand("help " + command).getRawResponse();
 					assertTrue(help.startsWith("Usage: " + command)); evidence.add("help " + command + "\n" + help);
 				}
-				var initial = api.getVirtualServers(); assertEquals(1, initial.size());
+				var initial = api.servers().list(); assertEquals(1, initial.size());
 				int originalId = initial.getFirst().getId();
 				api.selectVirtualServerById(originalId);
-				api.stopServer(originalId, "owned fixture replacement 日本語 | literal \\s");
-				var stoppedOriginal = api.getVirtualServers().getFirst();
+				api.servers().stop(originalId, "owned fixture replacement 日本語 | literal \\s");
+				var stoppedOriginal = api.servers().list().getFirst();
 				evidence.add("stopped original " + stoppedOriginal.getStatus());
 				assertEquals(VirtualServerStatus.OFFLINE, stoppedOriginal.getStatus());
-				api.deleteServer(originalId); assertTrue(api.getVirtualServers().isEmpty());
+				api.servers().delete(originalId); assertTrue(api.servers().list().isEmpty());
 				String name = "lifecycle 日本語 | literal \\s " + target;
-				var created = api.createServer(name, Map.of(VirtualServerProperty.VIRTUALSERVER_MAXCLIENTS, "8"));
+				var created = api.servers().create(name, Map.of(VirtualServerProperty.VIRTUALSERVER_MAXCLIENTS, "8"));
 				try (var cleanup = new CreatedResource(created.getId(), id -> {
-					var row = api.getVirtualServers().stream().filter(candidate -> candidate.getId() == id).findFirst().orElseThrow();
-					if (row.getStatus() != VirtualServerStatus.OFFLINE) api.stopServer(row);
-					api.deleteServer(id);
+					var row = api.servers().list().stream().filter(candidate -> candidate.getId() == id).findFirst().orElseThrow();
+					if (row.getStatus() != VirtualServerStatus.OFFLINE) api.servers().stop(row.getId());
+					api.servers().delete(id);
 				})) {
 					assertTrue(created.getId() > 0); assertTrue(created.getPort() > 0);
 					assertFalse(created.getServerAdminToken().isBlank());
 					evidence.add("created fields " + new java.util.TreeSet<>(created.getMap().keySet()));
-					var running = assertThrows(TS3CommandFailedException.class, () -> api.deleteServer(created.getId()));
+					var running = assertThrows(TS3CommandFailedException.class, () -> api.servers().delete(created.getId()));
 					evidence.add("delete running " + new java.util.TreeMap<>(running.getError().getMap()));
 					assertEquals(1035, running.getError().getId()); assertEquals("server got an invalid status for this operation", running.getError().getMessage());
 					for (int cycle = 0; cycle < 3; cycle++) {
-						var servers = api.getVirtualServers(); assertEquals(1, servers.size());
+						var servers = api.servers().list(); assertEquals(1, servers.size());
 						var row = servers.getFirst();
 						evidence.add("online " + Map.of("id", row.getId(), "port", row.getPort(), "status", row.getStatus(), "name", row.getName()));
 						assertEquals(created.getId(), row.getId()); assertEquals(created.getPort(), row.getPort());
 						assertEquals(name, row.getName()); assertEquals(8, row.getMaxClients());
 						assertEquals(VirtualServerStatus.ONLINE, row.getStatus());
-						api.selectVirtualServerById(created.getId()); assertEquals(name, api.getServerInfo().getName());
-						if (cycle == 2) api.stopServer(row);
-						else api.stopServer(row, "cycle " + cycle + " 日本語 | literal \\s");
-						var stopped = api.getVirtualServers().getFirst();
+						api.selectVirtualServerById(created.getId()); assertEquals(name, api.servers().info().getName());
+						if (cycle == 2) api.servers().stop(row.getId());
+						else api.servers().stop(row.getId(), "cycle " + cycle + " 日本語 | literal \\s");
+						var stopped = api.servers().list().getFirst();
 						assertEquals(VirtualServerStatus.OFFLINE, stopped.getStatus());
 						int context = api.whoAmI().getVirtualServerId(); assertEquals(0, context);
 						evidence.add("offline " + created.getId() + " query context " + context);
-						if (cycle == 0) api.startServer(stopped);
-						else if (cycle == 1) api.startServer(created.getId());
+						if (cycle == 0) api.servers().start(stopped.getId());
+						else if (cycle == 1) api.servers().start(created.getId());
 					}
 				}
-				assertTrue(api.getVirtualServers().isEmpty());
-				for (var operation : Map.<String, Runnable>of("serverstart", () -> api.startServer(created.getId()),
-					"serverstop", () -> api.stopServer(created.getId()), "serverdelete", () -> api.deleteServer(created.getId())).entrySet()) {
+				assertTrue(api.servers().list().isEmpty());
+				for (var operation : Map.<String, Runnable>of("serverstart", () -> api.servers().start(created.getId()),
+					"serverstop", () -> api.servers().stop(created.getId()), "serverdelete", () -> api.servers().delete(created.getId())).entrySet()) {
 					var missing = assertThrows(TS3CommandFailedException.class, operation.getValue()::run);
 					evidence.add("missing " + operation.getKey() + " " + new java.util.TreeMap<>(missing.getError().getMap()));
 					boolean stop = operation.getKey().equals("serverstop");
 					assertEquals(stop ? 1033 : 1024, missing.getError().getId());
 					assertEquals(stop ? "server is not running" : "invalid serverID", missing.getError().getMessage());
 				}
-				assertFalse(api.getVersion().getVersion().isBlank()); query.exit();
+				assertFalse(api.instance().version().getVersion().isBlank()); query.exit();
 			}
 		} finally {
 			Path path = Path.of("target", "compatibility", target + "-server-lifecycle.txt");
@@ -1091,26 +1100,26 @@ class ServerQueryCompatibilityIT {
 		TeamSpeakContainer server = ts3;
 		var evidence = new java.util.ArrayList<String>();
 		try (var query = new TS3Query(server.config(target.protocol))) {
-			query.connect(); var api = query.getApi(); var version = api.getVersion(); server.record(target.name(), version);
+			query.connect(); var api = query.getApi(); var version = api.instance().version(); server.record(target.name(), version);
 			for (String command : java.util.List.of("logadd", "logview")) {
 				String help = api.executeRawCommand("help " + command).getRawResponse();
 				assertTrue(help.startsWith("Usage: " + command)); evidence.add("help " + command + "\n" + help);
 			}
-			var instanceRows = api.getInstanceLogEntries(100);
+			var instanceRows = api.instance().logEntries(100);
 			assertTrue(instanceRows.stream().anyMatch(line -> line.contains(version.getVersion())));
-			assertTrue(api.getVirtualServerLogEntries().stream().anyMatch(line -> line.contains("|ServerLibPriv")));
+			assertTrue(api.servers().logEntries(100).stream().anyMatch(line -> line.contains("|ServerLibPriv")));
 			api.selectVirtualServerById(1);
-			var virtualRows = api.getVirtualServerLogEntries(100);
+			var virtualRows = api.servers().logEntries(100);
 			assertFalse(virtualRows.isEmpty());
 			assertTrue(virtualRows.stream().anyMatch(line -> line.contains("|1  |")));
 			assertFalse(virtualRows.stream().anyMatch(line -> line.contains("|ServerLibPriv")));
-			assertTrue(api.getInstanceLogEntries(100).stream().anyMatch(line -> line.contains("|ServerLibPriv")));
+			assertTrue(api.instance().logEntries(100).stream().anyMatch(line -> line.contains("|ServerLibPriv")));
 			evidence.add("instance rows " + instanceRows.size() + " virtual rows " + virtualRows.size());
-			for (var rows : java.util.List.of(api.getInstanceLogEntries(1), api.getVirtualServerLogEntries(1))) {
+			for (var rows : java.util.List.of(api.instance().logEntries(1), api.servers().logEntries(1))) {
 				assertEquals(1, rows.size());
 			}
-			for (var rows : java.util.List.of(api.getInstanceLogEntries(), api.getVirtualServerLogEntries(),
-				api.getInstanceLogEntries(0), api.getVirtualServerLogEntries(-1))) {
+			for (var rows : java.util.List.of(api.instance().logEntries(100), api.servers().logEntries(100),
+				api.instance().logEntries(0), api.servers().logEntries(-1))) {
 				assertFalse(rows.isEmpty()); assertTrue(rows.size() <= 100);
 			}
 			for (String command : java.util.List.of("logview lines=1", "logview lines=1 instance=1")) {
@@ -1119,14 +1128,14 @@ class ServerQueryCompatibilityIT {
 				assertTrue(raw.getMap().containsKey("l")); assertFalse(raw.get("l").isBlank());
 				assertTrue(raw.getLong("last_pos") >= 0); assertTrue(raw.getLong("file_size") > 0);
 			}
-			assertThrows(IllegalArgumentException.class, () -> api.getInstanceLogEntries(101));
-			assertThrows(IllegalArgumentException.class, () -> api.getVirtualServerLogEntries(101));
-			assertThrows(IllegalArgumentException.class, () -> query.getAsyncApi().getInstanceLogEntries(101));
-			assertThrows(IllegalArgumentException.class, () -> query.getAsyncApi().getVirtualServerLogEntries(101));
+			assertThrows(IllegalArgumentException.class, () -> api.instance().logEntries(101));
+			assertThrows(IllegalArgumentException.class, () -> api.servers().logEntries(101));
+			assertThrows(IllegalArgumentException.class, () -> query.getAsyncApi().instance().logEntries(101));
+			assertThrows(IllegalArgumentException.class, () -> query.getAsyncApi().servers().logEntries(101));
 			var invalid = assertThrows(TS3CommandFailedException.class, () -> api.executeRawCommand("logadd loglevel=5 logmsg=invalid-log-level"));
 			evidence.add("invalid log level " + new java.util.TreeMap<>(invalid.getError().getMap()));
 			assertEquals(1538, invalid.getError().getId()); assertEquals("invalid parameter", invalid.getError().getMessage());
-			assertFalse(api.getVersion().getVersion().isBlank()); query.exit();
+			assertFalse(api.instance().version().getVersion().isBlank()); query.exit();
 		} finally {
 			Path path = Path.of("target", "compatibility", target + "-logs.txt");
 			Files.createDirectories(path.getParent()); Files.write(path, evidence);
@@ -1143,22 +1152,22 @@ class ServerQueryCompatibilityIT {
 			try (var administrator = new TS3Query(server.config(target.protocol))) {
 				administrator.connect(); var api = administrator.getApi();
 				assertEquals(0, api.whoAmI().getVirtualServerId());
-				server.record(target.name(), api.getVersion());
+				server.record(target.name(), api.instance().version());
 				for (String command : java.util.List.of("queryloginadd", "queryloginlist", "querylogindel")) {
 					String help = api.executeRawCommand("help " + command).getRawResponse();
 					assertTrue(help.startsWith("Usage: " + command)); evidence.add("help " + command + "\n" + help);
 				}
-				var initial = api.getServerQueryLogins().stream().map(com.github.theholywaffle.teamspeak3.api.wrapper.QueryLogin::getMap).toList();
+				var initial = api.queryLogins().list().stream().map(com.github.theholywaffle.teamspeak3.api.wrapper.QueryLogin::getMap).toList();
 				String name = "global-query-" + target;
-				var created = api.addServerQueryLogin(name, 0);
-				try (var cleanup = new CreatedResource(created.getClientDatabaseId(), api::deleteServerQueryLogin)) {
+				var created = api.queryLogins().create(name, 0);
+				try (var cleanup = new CreatedResource(created.getClientDatabaseId(), api.queryLogins()::delete)) {
 					assertTrue(created.getClientDatabaseId() > 0);
 					assertFalse(created.getQueryClientLoginPassword().isBlank());
 					evidence.add("created fields " + new java.util.TreeSet<>(created.getMap().keySet()));
 					assertEquals(0, created.getVirtualServerId()); assertEquals(name, created.getQueryClientLoginName());
-					var all = api.getServerQueryLogins(); assertEquals(initial.size() + 1, all.size());
+					var all = api.queryLogins().list(); assertEquals(initial.size() + 1, all.size());
 					assertEquals(1, all.stream().filter(row -> row.getClientDatabaseId() == created.getClientDatabaseId() && row.getVirtualServerId() == 0 && row.getQueryClientLoginName().equals(name)).count());
-					var listed = api.getServerQueryLoginsByName(name); assertEquals(1, listed.size());
+					var listed = api.queryLogins().search(name); assertEquals(1, listed.size());
 					var row = listed.getFirst(); evidence.add("listed fields " + new java.util.TreeSet<>(row.getMap().keySet()));
 					evidence.add("listed " + Map.of("cldbid", row.getClientDatabaseId(), "sid", row.getVirtualServerId(), "name", row.getQueryClientLoginName()));
 					assertEquals(created.getClientDatabaseId(), row.getClientDatabaseId());
@@ -1169,12 +1178,12 @@ class ServerQueryCompatibilityIT {
 						assertEquals(name, identity.getLoginName());
 						assertEquals(created.getClientDatabaseId(), identity.getDatabaseId());
 						assertEquals(0, identity.getOriginServerId()); assertEquals(0, identity.getVirtualServerId());
-						assertFalse(actor.getApi().getVersion().getVersion().isBlank());
+						assertFalse(actor.getApi().instance().version().getVersion().isBlank());
 						actor.exit();
 					}
 				}
-				assertEquals(initial, api.getServerQueryLogins().stream().map(com.github.theholywaffle.teamspeak3.api.wrapper.QueryLogin::getMap).toList());
-				var missing = assertThrows(TS3CommandFailedException.class, () -> api.deleteServerQueryLogin(created.getClientDatabaseId()));
+				assertEquals(initial, api.queryLogins().list().stream().map(com.github.theholywaffle.teamspeak3.api.wrapper.QueryLogin::getMap).toList());
+				var missing = assertThrows(TS3CommandFailedException.class, () -> api.queryLogins().delete(created.getClientDatabaseId()));
 				evidence.add("delete removed login " + new java.util.TreeMap<>(missing.getError().getMap()));
 				assertEquals(512, missing.getError().getId()); assertEquals("invalid clientID", missing.getError().getMessage());
 				try (var rejected = new TS3Query(server.config(target.protocol).setLoginCredentials(name, created.getQueryClientLoginPassword()))) {
@@ -1182,7 +1191,7 @@ class ServerQueryCompatibilityIT {
 					assertLoginAuthenticationFailure(failure, target, evidence);
 					assertFalse(rejected.isConnected());
 				}
-				assertFalse(api.getVersion().getVersion().isBlank()); administrator.exit();
+				assertFalse(api.instance().version().getVersion().isBlank()); administrator.exit();
 			}
 		} finally {
 			Path path = Path.of("target", "compatibility", target + "-query-logins.txt");
@@ -1215,9 +1224,9 @@ class ServerQueryCompatibilityIT {
 		var regular = com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType.REGULAR;
 		try (var query = new TS3Query(server.config(target.protocol))) {
 			query.connect(); var api = query.getApi(); api.selectVirtualServerById(1);
-			server.record(target.name(), api.getVersion());
+			server.record(target.name(), api.instance().version());
 			int queryDatabaseId = api.whoAmI().getDatabaseId();
-			var queryPermissions = assertThrows(TS3CommandFailedException.class, () -> api.getClientPermissions(queryDatabaseId));
+			var queryPermissions = assertThrows(TS3CommandFailedException.class, () -> api.permissions().assigned(PermissionTarget.client(queryDatabaseId)));
 			evidence.add("query database " + queryDatabaseId + " clientpermlist " + new java.util.TreeMap<>(queryPermissions.getError().getMap()));
 			assertEquals(512, queryPermissions.getError().getId()); assertEquals("invalid clientID", queryPermissions.getError().getMessage());
 			for (String command : java.util.List.of("servergroupcopy", "channelgroupcopy")) {
@@ -1226,57 +1235,56 @@ class ServerQueryCompatibilityIT {
 			}
 			String name = IPermissionType.I_CHANNEL_NEEDED_JOIN_POWER.getName();
 			String extra = BPermissionType.B_CHANNEL_CREATE_PERMANENT.getName();
-			var initialServerIds = api.getServerGroups().stream().map(g -> g.getId()).collect(java.util.stream.Collectors.toSet());
-			var initialChannelIds = api.getChannelGroups().stream().map(g -> g.getId()).collect(java.util.stream.Collectors.toSet());
+			var initialServerIds = api.serverGroups().list().stream().map(g -> g.getId()).collect(java.util.stream.Collectors.toSet());
+			var initialChannelIds = api.channelGroups().list().stream().map(g -> g.getId()).collect(java.util.stream.Collectors.toSet());
 			int removedServer, removedChannel;
-			try (var sourceServer = new CreatedResource(api.addServerGroup("copy-source-server-" + target), id -> api.deleteServerGroup(id, true));
-				 var sourceChannel = new CreatedResource(api.addChannelGroup("copy-source-channel-" + target), id -> api.deleteChannelGroup(id, true));
-				 var targetServer = new CreatedResource(api.addServerGroup("copy-target-server-" + target), id -> api.deleteServerGroup(id, true));
-				 var targetChannel = new CreatedResource(api.addChannelGroup("copy-target-channel-" + target), id -> api.deleteChannelGroup(id, true))) {
+			try (var sourceServer = new CreatedResource(api.serverGroups().create("copy-source-server-" + target), id -> api.serverGroups().delete(id, true));
+				 var sourceChannel = new CreatedResource(api.channelGroups().create("copy-source-channel-" + target), id -> api.channelGroups().delete(id, true));
+				 var targetServer = new CreatedResource(api.serverGroups().create("copy-target-server-" + target), id -> api.serverGroups().delete(id, true));
+				 var targetChannel = new CreatedResource(api.channelGroups().create("copy-target-channel-" + target), id -> api.channelGroups().delete(id, true))) {
 				removedServer = sourceServer.id(); removedChannel = sourceChannel.id();
-				api.addServerGroupPermission(sourceServer.id(), name, 31, true, true);
-				api.addChannelGroupPermission(sourceChannel.id(), name, 41);
+				api.permissions().add(PermissionTarget.serverGroup(sourceServer.id()), PermissionGrant.of(name, 31).withNegated().withSkip());
+				api.permissions().add(PermissionTarget.channelGroup(sourceChannel.id()), PermissionGrant.of(name, 41));
 				String copiedName = "copy 日本語 | literal \\s " + target;
-				try (var copyServer = new CreatedResource(api.copyServerGroup(sourceServer.id(), copiedName, regular), id -> api.deleteServerGroup(id, true));
-					 var copyChannel = new CreatedResource(api.copyChannelGroup(sourceChannel.id(), copiedName, regular), id -> api.deleteChannelGroup(id, true))) {
+				try (var copyServer = new CreatedResource(api.serverGroups().copy(sourceServer.id(), copiedName, regular), id -> api.serverGroups().delete(id, true));
+					 var copyChannel = new CreatedResource(api.channelGroups().copy(sourceChannel.id(), copiedName, regular), id -> api.channelGroups().delete(id, true))) {
 					assertNotEquals(sourceServer.id(), copyServer.id()); assertNotEquals(sourceChannel.id(), copyChannel.id());
-					var serverRow = api.getServerGroups().stream().filter(g -> g.getId() == copyServer.id()).findFirst().orElseThrow();
-					var channelRow = api.getChannelGroups().stream().filter(g -> g.getId() == copyChannel.id()).findFirst().orElseThrow();
+					var serverRow = api.serverGroups().list().stream().filter(g -> g.getId() == copyServer.id()).findFirst().orElseThrow();
+					var channelRow = api.channelGroups().list().stream().filter(g -> g.getId() == copyChannel.id()).findFirst().orElseThrow();
 					evidence.add("server copy " + new java.util.TreeMap<>(serverRow.getMap()));
 					evidence.add("channel copy " + new java.util.TreeMap<>(channelRow.getMap()));
 					assertEquals(copiedName, serverRow.getName()); assertEquals(copiedName, channelRow.getName());
 					assertEquals(regular, serverRow.getType()); assertEquals(regular, channelRow.getType());
-					assertPermission(api.getServerGroupPermissions(copyServer.id()), name, 31, true, true, evidence, "server copy permission");
-					assertPermission(api.getChannelGroupPermissions(copyChannel.id()), name, 41, false, false, evidence, "channel copy permission");
-					api.addServerGroupPermission(sourceServer.id(), name, 33, false, false);
-					api.addChannelGroupPermission(sourceChannel.id(), name, 43);
-					assertPermission(api.getServerGroupPermissions(copyServer.id()), name, 31, true, true, evidence, "independent server copy");
-					assertPermission(api.getChannelGroupPermissions(copyChannel.id()), name, 41, false, false, evidence, "independent channel copy");
-					api.addServerGroupPermission(targetServer.id(), extra, 1, false, false);
-					api.addChannelGroupPermission(targetChannel.id(), extra, 1);
-					int result = api.copyServerGroup(sourceServer.id(), targetServer.id(), regular);
-					evidence.add("server overwrite returned " + result); assertEquals(targetServer.id(), result);
-					api.copyChannelGroup(sourceChannel.id(), targetChannel.id(), regular);
-					var serverPermissions = api.getServerGroupPermissions(targetServer.id());
-					var channelPermissions = api.getChannelGroupPermissions(targetChannel.id());
-					assertEquals(permissionStates(api.getServerGroupPermissions(sourceServer.id())), permissionStates(serverPermissions));
-					assertEquals(permissionStates(api.getChannelGroupPermissions(sourceChannel.id())), permissionStates(channelPermissions));
+					assertPermission(api.permissions().assigned(PermissionTarget.serverGroup(copyServer.id())), name, 31, true, true, evidence, "server copy permission");
+					assertPermission(api.permissions().assigned(PermissionTarget.channelGroup(copyChannel.id())), name, 41, false, false, evidence, "channel copy permission");
+					api.permissions().add(PermissionTarget.serverGroup(sourceServer.id()), PermissionGrant.of(name, 33));
+					api.permissions().add(PermissionTarget.channelGroup(sourceChannel.id()), PermissionGrant.of(name, 43));
+					assertPermission(api.permissions().assigned(PermissionTarget.serverGroup(copyServer.id())), name, 31, true, true, evidence, "independent server copy");
+					assertPermission(api.permissions().assigned(PermissionTarget.channelGroup(copyChannel.id())), name, 41, false, false, evidence, "independent channel copy");
+					api.permissions().add(PermissionTarget.serverGroup(targetServer.id()), PermissionGrant.of(extra, 1));
+					api.permissions().add(PermissionTarget.channelGroup(targetChannel.id()), PermissionGrant.of(extra, 1));
+					api.serverGroups().overwrite(sourceServer.id(), targetServer.id(), regular);
+					api.channelGroups().overwrite(sourceChannel.id(), targetChannel.id(), regular);
+					var serverPermissions = api.permissions().assigned(PermissionTarget.serverGroup(targetServer.id()));
+					var channelPermissions = api.permissions().assigned(PermissionTarget.channelGroup(targetChannel.id()));
+					assertEquals(permissionStates(api.permissions().assigned(PermissionTarget.serverGroup(sourceServer.id()))), permissionStates(serverPermissions));
+					assertEquals(permissionStates(api.permissions().assigned(PermissionTarget.channelGroup(sourceChannel.id()))), permissionStates(channelPermissions));
 					assertTrue(serverPermissions.stream().noneMatch(p -> p.getName().equals(extra)));
 					assertTrue(channelPermissions.stream().noneMatch(p -> p.getName().equals(extra)));
 					assertPermission(serverPermissions, name, 33, false, false, evidence, "server overwrite");
 					assertPermission(channelPermissions, name, 43, false, false, evidence, "channel overwrite");
 				}
 			}
-			assertEquals(initialServerIds, api.getServerGroups().stream().map(g -> g.getId()).collect(java.util.stream.Collectors.toSet()));
-			assertEquals(initialChannelIds, api.getChannelGroups().stream().map(g -> g.getId()).collect(java.util.stream.Collectors.toSet()));
-			var serverError = assertThrows(TS3CommandFailedException.class, () -> api.copyServerGroup(removedServer, "missing server", regular));
-			var channelError = assertThrows(TS3CommandFailedException.class, () -> api.copyChannelGroup(removedChannel, "missing channel", regular));
+			assertEquals(initialServerIds, api.serverGroups().list().stream().map(g -> g.getId()).collect(java.util.stream.Collectors.toSet()));
+			assertEquals(initialChannelIds, api.channelGroups().list().stream().map(g -> g.getId()).collect(java.util.stream.Collectors.toSet()));
+			var serverError = assertThrows(TS3CommandFailedException.class, () -> api.serverGroups().copy(removedServer, "missing server", regular));
+			var channelError = assertThrows(TS3CommandFailedException.class, () -> api.channelGroups().copy(removedChannel, "missing channel", regular));
 			evidence.add("removed server source " + new java.util.TreeMap<>(serverError.getError().getMap()));
 			evidence.add("removed channel source " + new java.util.TreeMap<>(channelError.getError().getMap()));
 			for (var error : java.util.List.of(serverError, channelError)) {
 				assertEquals(2560, error.getError().getId()); assertEquals("invalid group ID", error.getError().getMessage());
 			}
-			assertFalse(api.getVersion().getVersion().isBlank()); query.exit();
+			assertFalse(api.instance().version().getVersion().isBlank()); query.exit();
 		} finally {
 			Path path = Path.of("target", "compatibility", target + "-group-copy.txt");
 			Files.createDirectories(path.getParent()); Files.write(path, evidence);
@@ -1300,7 +1308,7 @@ class ServerQueryCompatibilityIT {
 			query.connect();
 			var api = query.getApi();
 			api.selectVirtualServerById(1);
-			server.record(target.name(), api.getVersion());
+			server.record(target.name(), api.instance().version());
 			for (String command : java.util.List.of("permissionlist", "permidgetbyname", "permget", "permfind", "channeladdperm",
 				"channelpermlist", "channeldelperm", "servergroupadd", "servergrouplist", "servergrouprename", "servergroupdel",
 				"servergroupaddperm", "servergrouppermlist", "servergroupdelperm", "channelgroupadd", "channelgrouplist",
@@ -1309,7 +1317,7 @@ class ServerQueryCompatibilityIT {
 				assertTrue(help.startsWith("Usage: " + command), "Live help must describe " + command);
 				evidence.add("help " + command + "\n" + help);
 			}
-			var metadata = api.getPermissions();
+			var metadata = api.permissions().list();
 			assertFalse(metadata.isEmpty());
 			var byName = new java.util.HashMap<String, PermissionInfo>();
 			var ids = new java.util.HashSet<Integer>();
@@ -1323,63 +1331,63 @@ class ServerQueryCompatibilityIT {
 			String integerName = IPermissionType.I_CHANNEL_NEEDED_JOIN_POWER.getName();
 			String booleanName = BPermissionType.B_CHANNEL_CREATE_PERMANENT.getName();
 			assertTrue(byName.containsKey(integerName)); assertTrue(byName.containsKey(booleanName));
-			assertEquals(2562, assertThrows(TS3CommandFailedException.class, () -> api.getPermissionIdByName("i_issue441_nonexistent")).getError().getId());
-			assertEquals(byName.get(integerName).getId(), api.getPermissionIdByName(integerName));
-			assertArrayEquals(new int[]{byName.get(booleanName).getId(), byName.get(integerName).getId()},
-				api.getPermissionIdsByName(booleanName, integerName));
-			assertArrayEquals(new int[]{api.getPermissionValue(booleanName), api.getPermissionValue(integerName)},
-				api.getPermissionValues(booleanName, integerName));
+			assertEquals(2562, assertThrows(TS3CommandFailedException.class, () -> api.permissions().idByName("i_issue441_nonexistent")).getError().getId());
+			assertEquals(byName.get(integerName).getId(), api.permissions().idByName(integerName));
+			assertEquals(List.of(byName.get(booleanName).getId(), byName.get(integerName).getId()),
+				api.permissions().idsByName(booleanName, integerName));
+			assertEquals(List.of(api.permissions().ownValue(booleanName), api.permissions().ownValue(integerName)),
+				api.permissions().ownValues(booleanName, integerName));
 			try (var channels = new ChannelCleanup(api);
-				 var serverGroup = new CreatedResource(api.addServerGroup("permissions " + target + " | \\s"), id -> api.deleteServerGroup(id, true));
-				 var channelGroup = new CreatedResource(api.addChannelGroup("permissions " + target + " | \\s"), id -> api.deleteChannelGroup(id, true))) {
-				int channel = channels.track(api.createChannel("permission-channel-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
-				assertEquals("permissions " + target + " | \\s", api.getServerGroups().stream().filter(g -> g.getId() == serverGroup.id()).findFirst().orElseThrow().getName());
-				assertEquals("permissions " + target + " | \\s", api.getChannelGroups().stream().filter(g -> g.getId() == channelGroup.id()).findFirst().orElseThrow().getName());
-				api.addChannelPermission(channel, integerName, 17);
-				assertPermission(api.getChannelPermissions(channel), integerName, 17, false, false, evidence, "channel");
-				api.addChannelPermission(channel, integerName, 23);
-				assertPermission(api.getChannelPermissions(channel), integerName, 23, false, false, evidence, "channel update");
-				api.deleteChannelPermission(channel, integerName);
-				assertTrue(api.getChannelPermissions(channel).stream().noneMatch(p -> p.getName().equals(integerName)));
-				api.addServerGroupPermission(serverGroup.id(), integerName, 31, true, true);
-				assertPermission(api.getServerGroupPermissions(serverGroup.id()), integerName, 31, true, true, evidence, "server group");
-				var assignment = api.getPermissionAssignments(integerName).stream().filter(p ->
+				 var serverGroup = new CreatedResource(api.serverGroups().create("permissions " + target + " | \\s"), id -> api.serverGroups().delete(id, true));
+				 var channelGroup = new CreatedResource(api.channelGroups().create("permissions " + target + " | \\s"), id -> api.channelGroups().delete(id, true))) {
+				int channel = channels.track(api.channels().create("permission-channel-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
+				assertEquals("permissions " + target + " | \\s", api.serverGroups().list().stream().filter(g -> g.getId() == serverGroup.id()).findFirst().orElseThrow().getName());
+				assertEquals("permissions " + target + " | \\s", api.channelGroups().list().stream().filter(g -> g.getId() == channelGroup.id()).findFirst().orElseThrow().getName());
+				api.permissions().add(PermissionTarget.channel(channel), PermissionGrant.of(integerName, 17));
+				assertPermission(api.permissions().assigned(PermissionTarget.channel(channel)), integerName, 17, false, false, evidence, "channel");
+				api.permissions().add(PermissionTarget.channel(channel), PermissionGrant.of(integerName, 23));
+				assertPermission(api.permissions().assigned(PermissionTarget.channel(channel)), integerName, 23, false, false, evidence, "channel update");
+				api.permissions().delete(PermissionTarget.channel(channel), integerName);
+				assertTrue(api.permissions().assigned(PermissionTarget.channel(channel)).stream().noneMatch(p -> p.getName().equals(integerName)));
+				api.permissions().add(PermissionTarget.serverGroup(serverGroup.id()), PermissionGrant.of(integerName, 31).withNegated().withSkip());
+				assertPermission(api.permissions().assigned(PermissionTarget.serverGroup(serverGroup.id())), integerName, 31, true, true, evidence, "server group");
+				var assignment = api.permissions().assignments(integerName).stream().filter(p ->
 					p.getType() == PermissionGroupType.SERVER_GROUP && p.getMajorId() == serverGroup.id()).findFirst().orElseThrow();
 				assertEquals(byName.get(integerName).getId(), assignment.getId());
 				assertFalse(assignment.getMap().containsKey("v"), "permfind returns identities, not assignment values");
 				assertFalse(assignment.getMap().containsKey("n"));
 				assertFalse(assignment.getMap().containsKey("s"));
 				evidence.add("assignment search " + new java.util.TreeMap<>(assignment.getMap()));
-				api.addServerGroupPermission(serverGroup.id(), integerName, 37, false, false);
-				assertPermission(api.getServerGroupPermissions(serverGroup.id()), integerName, 37, false, false, evidence, "server group update");
-				api.addServerGroupPermission(serverGroup.id(), booleanName, 1, false, true);
-				assertPermission(api.getServerGroupPermissions(serverGroup.id()), booleanName, 1, false, true, evidence, "server group boolean");
-				api.deleteServerGroupPermission(serverGroup.id(), booleanName);
-				assertTrue(api.getServerGroupPermissions(serverGroup.id()).stream().noneMatch(p -> p.getName().equals(booleanName)));
-				api.deleteServerGroupPermission(serverGroup.id(), integerName);
-				assertTrue(api.getServerGroupPermissions(serverGroup.id()).stream().noneMatch(p -> p.getName().equals(integerName)));
-				api.addChannelGroupPermission(channelGroup.id(), integerName, 41);
-				assertPermission(api.getChannelGroupPermissions(channelGroup.id()), integerName, 41, false, false, evidence, "channel group");
-				api.addChannelGroupPermission(channelGroup.id(), integerName, 43);
-				assertPermission(api.getChannelGroupPermissions(channelGroup.id()), integerName, 43, false, false, evidence, "channel group update");
-				api.deleteChannelGroupPermission(channelGroup.id(), integerName);
-				assertTrue(api.getChannelGroupPermissions(channelGroup.id()).stream().noneMatch(p -> p.getName().equals(integerName)));
-				api.renameServerGroup(serverGroup.id(), "renamed server " + target);
-				assertEquals("renamed server " + target, api.getServerGroups().stream().filter(g -> g.getId() == serverGroup.id()).findFirst().orElseThrow().getName());
-				api.renameChannelGroup(channelGroup.id(), "renamed channel " + target);
-				assertEquals("renamed channel " + target, api.getChannelGroups().stream().filter(g -> g.getId() == channelGroup.id()).findFirst().orElseThrow().getName());
-				var error = assertThrows(TS3CommandFailedException.class, () -> api.addChannelPermission(channel, "i_issue441_missing_permission", 1));
+				api.permissions().add(PermissionTarget.serverGroup(serverGroup.id()), PermissionGrant.of(integerName, 37));
+				assertPermission(api.permissions().assigned(PermissionTarget.serverGroup(serverGroup.id())), integerName, 37, false, false, evidence, "server group update");
+				api.permissions().add(PermissionTarget.serverGroup(serverGroup.id()), PermissionGrant.of(booleanName, 1).withSkip());
+				assertPermission(api.permissions().assigned(PermissionTarget.serverGroup(serverGroup.id())), booleanName, 1, false, true, evidence, "server group boolean");
+				api.permissions().delete(PermissionTarget.serverGroup(serverGroup.id()), booleanName);
+				assertTrue(api.permissions().assigned(PermissionTarget.serverGroup(serverGroup.id())).stream().noneMatch(p -> p.getName().equals(booleanName)));
+				api.permissions().delete(PermissionTarget.serverGroup(serverGroup.id()), integerName);
+				assertTrue(api.permissions().assigned(PermissionTarget.serverGroup(serverGroup.id())).stream().noneMatch(p -> p.getName().equals(integerName)));
+				api.permissions().add(PermissionTarget.channelGroup(channelGroup.id()), PermissionGrant.of(integerName, 41));
+				assertPermission(api.permissions().assigned(PermissionTarget.channelGroup(channelGroup.id())), integerName, 41, false, false, evidence, "channel group");
+				api.permissions().add(PermissionTarget.channelGroup(channelGroup.id()), PermissionGrant.of(integerName, 43));
+				assertPermission(api.permissions().assigned(PermissionTarget.channelGroup(channelGroup.id())), integerName, 43, false, false, evidence, "channel group update");
+				api.permissions().delete(PermissionTarget.channelGroup(channelGroup.id()), integerName);
+				assertTrue(api.permissions().assigned(PermissionTarget.channelGroup(channelGroup.id())).stream().noneMatch(p -> p.getName().equals(integerName)));
+				api.serverGroups().rename(serverGroup.id(), "renamed server " + target);
+				assertEquals("renamed server " + target, api.serverGroups().list().stream().filter(g -> g.getId() == serverGroup.id()).findFirst().orElseThrow().getName());
+				api.channelGroups().rename(channelGroup.id(), "renamed channel " + target);
+				assertEquals("renamed channel " + target, api.channelGroups().list().stream().filter(g -> g.getId() == channelGroup.id()).findFirst().orElseThrow().getName());
+				var error = assertThrows(TS3CommandFailedException.class, () -> api.permissions().add(PermissionTarget.channel(channel), PermissionGrant.of("i_issue441_missing_permission", 1)));
 				evidence.add("unknown permission " + new java.util.TreeMap<>(error.getError().getMap()));
 				assertEquals(2562, error.getError().getId());
 				assertEquals("invalid permission ID", error.getError().getMessage());
-				var lookupError = assertThrows(TS3CommandFailedException.class, () -> api.getPermissionIdByName("i_issue441_missing_permission"));
+				var lookupError = assertThrows(TS3CommandFailedException.class, () -> api.permissions().idByName("i_issue441_missing_permission"));
 				assertEquals(2562, lookupError.getError().getId());
-				var findError = assertThrows(TS3CommandFailedException.class, () -> api.getPermissionAssignments("i_issue441_missing_permission"));
+				var findError = assertThrows(TS3CommandFailedException.class, () -> api.permissions().assignments("i_issue441_missing_permission"));
 				assertEquals(2562, findError.getError().getId());
-				assertEquals(byName.get(integerName).getId(), api.getPermissionIdByName(integerName));
+				assertEquals(byName.get(integerName).getId(), api.permissions().idByName(integerName));
 			}
-			assertTrue(api.getServerGroups().stream().noneMatch(g -> g.getName().equals("renamed server " + target)));
-			assertTrue(api.getChannelGroups().stream().noneMatch(g -> g.getName().equals("renamed channel " + target)));
+			assertTrue(api.serverGroups().list().stream().noneMatch(g -> g.getName().equals("renamed server " + target)));
+			assertTrue(api.channelGroups().list().stream().noneMatch(g -> g.getName().equals("renamed channel " + target)));
 			query.exit();
 		} finally {
 			Path path = Path.of("target", "compatibility", target + "-permissions.txt");
@@ -1407,14 +1415,14 @@ class ServerQueryCompatibilityIT {
 		int track(int id) { ids.add(id); return id; }
 
 		void delete(int id) {
-			api.deleteChannel(id, true);
+			api.channels().delete(id, true);
 			ids.remove(Integer.valueOf(id));
 		}
 
 		@Override public void close() {
 			RuntimeException failure = null;
 			for (int i = ids.size() - 1; i >= 0; --i) {
-				try { api.deleteChannel(ids.get(i), true); }
+				try { api.channels().delete(ids.get(i), true); }
 				catch (RuntimeException error) {
 					if (failure == null) failure = error;
 					else failure.addSuppressed(error);
@@ -1428,7 +1436,7 @@ class ServerQueryCompatibilityIT {
 		TS3Query query = new TS3Query(server.config(protocol));
 		try {
 			query.connect();
-			assertFalse(query.getApi().getVersion().getVersion().isBlank());
+			assertFalse(query.getApi().instance().version().getVersion().isBlank());
 		} finally { exitAndAssertTerminated(query, server); }
 	}
 

@@ -28,6 +28,8 @@ import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3Config;
 import com.github.theholywaffle.teamspeak3.TS3Query;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
+import com.github.theholywaffle.teamspeak3.api.FileLocation;
+import com.github.theholywaffle.teamspeak3.api.UploadMode;
 
 import javax.imageio.ImageIO;
 import java.awt.Color;
@@ -92,7 +94,7 @@ public class FileTransferExample {
 		api.login("serveradmin", "serveradminpassword");
 		api.selectVirtualServerById(1);
 		api.setNickname("PutPutBot");
-		api.sendChannelMessage("PutPutBot is online!");
+		api.messages().sendChannel("PutPutBot is online!");
 
 		// Set up properties for our test channels
 		final Map<ChannelProperty, String> properties = new HashMap<>();
@@ -106,16 +108,16 @@ public class FileTransferExample {
 		// --------------------- //
 
 		// Create a new channel
-		int directChannel = api.createChannel("Direct file transfers", properties);
+		int directChannel = api.channels().create("Direct file transfers", properties);
 		// Upload and set an icon
-		long blackIconId = api.uploadIconDirect(RED_EXAMPLE_ICON);
-		api.editChannel(directChannel, mapOf(ChannelProperty.CHANNEL_ICON_ID, blackIconId));
+		long blackIconId = api.files().uploadIcon(RED_EXAMPLE_ICON);
+		api.channels().edit(directChannel, mapOf(ChannelProperty.CHANNEL_ICON_ID, blackIconId));
 		// Create a new directory on the file repository
-		api.createFileDirectory(EXAMPLE_DIRECTORY, directChannel);
+		api.files().createDirectory(FileLocation.of(directChannel, EXAMPLE_DIRECTORY));
 		// And upload a file to it
-		api.uploadFileDirect(EXAMPLE_FILE_CONTENT, EXAMPLE_FILE_NAME, false, directChannel);
+		api.files().upload(FileLocation.of(directChannel, EXAMPLE_FILE_NAME), EXAMPLE_FILE_CONTENT, UploadMode.CREATE);
 		// Download it again and print it to System.out
-		byte[] directDownload = api.downloadFileDirect(EXAMPLE_FILE_NAME, directChannel);
+		byte[] directDownload = api.files().downloadBytes(FileLocation.of(directChannel, EXAMPLE_FILE_NAME));
 		System.out.println(new String(directDownload, StandardCharsets.UTF_8));
 
 		// --------------------- //
@@ -123,19 +125,19 @@ public class FileTransferExample {
 		// --------------------- //
 
 		// Create a new channel
-		int streamChannel = api.createChannel("Stream file transfers", properties);
+		int streamChannel = api.channels().create("Stream file transfers", properties);
 		// Upload and set an icon
 		InputStream iconIn = new ByteArrayInputStream(BLUE_EXAMPLE_ICON); // Usually a FileInputStream
-		long whiteIconId = api.uploadIcon(iconIn, BLUE_EXAMPLE_ICON.length);
-		api.editChannel(streamChannel, mapOf(ChannelProperty.CHANNEL_ICON_ID, whiteIconId));
+		long whiteIconId = api.files().uploadIcon(iconIn, BLUE_EXAMPLE_ICON.length);
+		api.channels().edit(streamChannel, mapOf(ChannelProperty.CHANNEL_ICON_ID, whiteIconId));
 		// Create a new directory on the file repository
-		api.createFileDirectory(EXAMPLE_DIRECTORY, streamChannel);
+		api.files().createDirectory(FileLocation.of(streamChannel, EXAMPLE_DIRECTORY));
 		// And upload a file to it
 		InputStream dataIn = new ByteArrayInputStream(EXAMPLE_FILE_CONTENT); // Usually a FileInputStream
-		api.uploadFile(dataIn, EXAMPLE_FILE_CONTENT.length, EXAMPLE_FILE_NAME, false, streamChannel);
+		api.files().upload(FileLocation.of(streamChannel, EXAMPLE_FILE_NAME), dataIn, EXAMPLE_FILE_CONTENT.length, UploadMode.CREATE);
 		// Download it again and print it to System.out
 		ByteArrayOutputStream dataOut = new ByteArrayOutputStream(128); // Usually a FileOutputStream
-		api.downloadFile(dataOut, EXAMPLE_FILE_NAME, streamChannel);
+		api.files().download(FileLocation.of(streamChannel, EXAMPLE_FILE_NAME), dataOut);
 		System.out.println(new String(dataOut.toByteArray(), StandardCharsets.UTF_8));
 
 		// We're done, disconnect

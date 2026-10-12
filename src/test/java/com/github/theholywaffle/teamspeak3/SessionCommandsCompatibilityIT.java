@@ -16,7 +16,7 @@ class SessionCommandsCompatibilityIT {
             try (var query = new TS3Query(server.config(target.protocol))) {
                 query.connect(); var api = query.getApi(); api.selectVirtualServerById(1);
                 for (String name : List.of("login", "logout", "whoami", "bindinglist")) assertTrue(api.executeRawCommand("help " + name).getRawResponse().startsWith("Usage: " + name));
-                var bindings = api.getBindings(); assertFalse(bindings.isEmpty());
+                var bindings = api.instance().bindings(); assertFalse(bindings.isEmpty());
                 assertTrue(bindings.stream().allMatch(binding -> !binding.getIp().isBlank()));
                 api.logout(); var loggedOut = api.whoAmI();
                 assertEquals(0, loggedOut.getVirtualServerId());
@@ -24,7 +24,7 @@ class SessionCommandsCompatibilityIT {
                 api.login("serveradmin", TeamSpeakContainer.PASSWORD);
                 assertEquals("serveradmin", api.whoAmI().getLoginName());
                 api.selectVirtualServerById(1); assertEquals(1, api.whoAmI().getVirtualServerId());
-                assertEquals("3.13.8", api.getVersion().getVersion()); query.exit();
+                assertEquals("3.13.8", api.instance().version().getVersion()); query.exit();
             }
             var report = Path.of("target", "compatibility", target + "-session-commands.txt");
             Files.createDirectories(report.getParent());

@@ -37,8 +37,8 @@ public final class BanCommands {
 	}
 
 	public static Command banAdd(String ip, String name, String uid, String myTSId, long timeInSeconds, String reason) {
-		if (ip == null && name == null && uid == null) {
-			throw new IllegalArgumentException("Either IP, name or UId must be non-null");
+		if (ip == null && name == null && uid == null && myTSId == null) {
+			throw new IllegalArgumentException("Either IP, name, UId or myTeamSpeak ID must be non-null");
 		}
 
 		CommandBuilder builder = new CommandBuilder("banadd", 6);

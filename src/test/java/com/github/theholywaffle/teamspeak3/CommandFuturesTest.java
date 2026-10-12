@@ -1,5 +1,7 @@
 package com.github.theholywaffle.teamspeak3;
 
+import java.util.Map;
+import com.github.theholywaffle.teamspeak3.api.FileLocation;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
@@ -142,7 +144,7 @@ class CommandFuturesTest {
 		try (var peer = new FakeServerQuery(p -> {
 			p.expect("whoami"); p.write("client_id=2\nerror id=0 msg=ok\n"); p.finishQuit();
 		}); var query = new TS3Query(new TS3Config().setHost("127.0.0.1").setQueryPort(peer.port()).setCommandCapacity(1))) {
-			var cancelled = query.getAsyncApi().createChannel("must-not-send", java.util.Map.of());
+			var cancelled = query.getAsyncApi().channels().create("must-not-send", java.util.Map.of());
 			assertTrue(cancelled.cancel(false));
 			var next = query.getAsyncApi().whoAmI(); assertFalse(next.isDone());
 			query.connect(); assertEquals(2, next.get(2, TimeUnit.SECONDS).getId());
@@ -159,7 +161,7 @@ class CommandFuturesTest {
 			p.expect("whoami"); p.write("client_id=2\nerror id=0 msg=ok\n"); p.finishQuit();
 		}); var query = query(peer)) {
 			query.connect();
-			var sent = query.getAsyncApi().createChannel("sent", java.util.Map.of());
+			var sent = query.getAsyncApi().channels().create("sent", java.util.Map.of());
 			await(received); assertTrue(sent.cancel(true));
 			var next = query.getAsyncApi().whoAmI(); respond.countDown();
 			assertThrows(CancellationException.class, sent::get);
@@ -223,9 +225,9 @@ class CommandFuturesTest {
 			p.expect("clientinfo clid=7"); p.write("error id=512 msg=invalid_client\n");
 			p.expect("clientinfo clid=8"); p.write("error id=2568 msg=insufficient_permissions\n"); p.finishQuit();
 		}); var query = query(peer)) {
-			query.connect(); assertFalse(query.getAsyncApi().isClientOnline(7).get(2, TimeUnit.SECONDS));
+			query.connect(); assertFalse(query.getAsyncApi().clients().isOnline(7).get(2, TimeUnit.SECONDS));
 			var failure = assertThrows(ExecutionException.class,
-				() -> query.getAsyncApi().isClientOnline(8).get(2, TimeUnit.SECONDS));
+				() -> query.getAsyncApi().clients().isOnline(8).get(2, TimeUnit.SECONDS));
 			assertEquals(2568, assertInstanceOf(TS3CommandFailedException.class, failure.getCause()).getError().getId());
 			query.exit(); peer.await();
 		}
@@ -273,7 +275,7 @@ class CommandFuturesTest {
 		try (var peer = new FakeServerQuery(p -> {
 			p.expect("whoami"); p.write("client_id=2\nerror id=0 msg=ok\n"); p.finishQuit();
 		}); var query = new TS3Query(new TS3Config().setHost("127.0.0.1").setQueryPort(peer.port()).setCommandCapacity(1))) {
-			var mutation = query.getAsyncApi().createChannel("must-not-send", java.util.Map.of());
+			var mutation = query.getAsyncApi().channels().create("must-not-send", java.util.Map.of());
 			mutation.whenComplete((value, failure) -> {
 				entered.countDown();
 				try { await(release); } catch (InterruptedException e) { throw new AssertionError(e); }
@@ -299,7 +301,7 @@ class CommandFuturesTest {
 			await(release); p.write("error id=0 msg=ok\n"); p.finishQuit();
 		}); var query = query(peer)) {
 			query.connect();
-			try { assertEquals(List.of(), query.getAsyncApi().getChannelsByName("missing").get(500, TimeUnit.MILLISECONDS)); }
+			try { assertEquals(List.of(), query.getAsyncApi().channels().search("missing").get(500, TimeUnit.MILLISECONDS)); }
 			finally { release.countDown(); }
 			query.exit(); peer.await();
 		} finally { release.countDown(); }
@@ -337,7 +339,7 @@ class CommandFuturesTest {
 					if (interrupted) Thread.currentThread().interrupt();
 				}
 			};
-			query.connect(); var transfer = query.getAsyncApi().downloadFile(output, "/test", 0);
+			query.connect(); var transfer = query.getAsyncApi().files().download(FileLocation.of(0, "/test"), output);
 			try {
 				await(entered); assertTrue(transfer.cancel(false));
 				assertThrows(com.github.theholywaffle.teamspeak3.api.exception.TS3QueueFullException.class,

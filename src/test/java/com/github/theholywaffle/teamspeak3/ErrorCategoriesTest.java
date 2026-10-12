@@ -37,7 +37,7 @@ class ErrorCategoriesTest {
 			p.finishQuit();
 		}); var query = new TS3Query(config(peer.port()))) {
 			query.connect();
-			var failure = assertThrows(TS3CommandFailedException.class, () -> query.getApi().getChannelInfo(99));
+			var failure = assertThrows(TS3CommandFailedException.class, () -> query.getApi().channels().info(99));
 			assertEquals(768, failure.getErrorId());
 			assertEquals("channelinfo", failure.getCommandName());
 			assertTrue(failure.matchesQueryError(768));
@@ -57,7 +57,7 @@ class ErrorCategoriesTest {
 			.setReconnectStrategy(ReconnectStrategy.exponentialBackoff()))) {
 			query.connect();
 			var first = query.getAsyncApi().whoAmI();
-			var waiting = query.getAsyncApi().getVersion();
+			var waiting = query.getAsyncApi().instance().version();
 			var failure = assertThrows(TS3TimeoutException.class, () -> FutureAssertions.read(waiting, 1, TimeUnit.SECONDS));
 			assertEquals(TS3TimeoutException.Phase.QUEUE_WAIT, failure.getPhase());
 			assertEquals("version", failure.getCommandName());

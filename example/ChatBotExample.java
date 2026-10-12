@@ -51,17 +51,17 @@ public class ChatBotExample {
 		api.login("serveradmin", "serveradminpassword");
 		api.selectVirtualServerById(1);
 		api.setNickname("PutPutBot");
-		api.sendChannelMessage("PutPutBot is online!");
+		api.messages().sendChannel("PutPutBot is online!");
 
 		// Get our own client ID by running the "whoami" command
 		final int clientId = api.whoAmI().getId();
 
 		// Listen to chat in the channel the query is currently in
 		// As we never changed the channel, this will be the default channel of the server
-		api.registerEvent(TS3EventType.TEXT_CHANNEL, 0);
+		api.events().register(TS3EventType.TEXT_CHANNEL, 0);
 
 		// Register the event listener
-		api.addTS3Listeners(new TS3EventAdapter() {
+		api.events().subscribe(new TS3EventAdapter() {
 
 			@Override
 			public void onTextMessage(TextMessageEvent e) {
@@ -71,11 +71,11 @@ public class ChatBotExample {
 
 					if (message.equals("!ping")) {
 						// Answer "!ping" with "pong"
-						api.sendChannelMessage("pong");
+						api.messages().sendChannel("pong");
 					} else if (message.startsWith("hello")) {
 						// Greet whoever said hello
 						// Message: "Hello <client name>!"
-						api.sendChannelMessage("Hello " + e.getInvokerName() + "!");
+						api.messages().sendChannel("Hello " + e.getInvokerName() + "!");
 					}
 				}
 			}
