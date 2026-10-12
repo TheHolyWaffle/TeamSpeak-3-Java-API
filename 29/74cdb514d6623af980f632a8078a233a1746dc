@@ -1,0 +1,24 @@
+docs/api-migration.md
+  h_b0b95817cb397c 490-502
+src/main/java/com/github/theholywaffle/teamspeak3/ClientApiAsync.java
+  h_b0b95817cb397c 55
+src/main/java/com/github/theholywaffle/teamspeak3/DatabaseClientApiAsync.java
+  h_b0b95817cb397c 64
+src/main/java/com/github/theholywaffle/teamspeak3/QueryRequests.java
+  h_b0b95817cb397c 66-69
+src/main/java/com/github/theholywaffle/teamspeak3/VirtualServerApiAsync.java
+  h_b0b95817cb397c 39
+src/test/java/com/github/theholywaffle/teamspeak3/DomainApiTest.java
+  h_b0b95817cb397c 66,77-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2974cdb514d6623af980f632a8078a233a1746dc",
+  "prompts": {},
+  "humans": {
+    "h_b0b95817cb397c": {
+      "author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
