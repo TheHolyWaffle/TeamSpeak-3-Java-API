@@ -43,9 +43,9 @@ class Connection {
 	private final AtomicBoolean stopped = new AtomicBoolean();
 	private final AtomicLong lastSent = new AtomicLong(System.nanoTime());
 	private volatile Deadline initialization;
-	private volatile StreamReader reader;
-	private volatile StreamWriter writer;
-	private volatile KeepAlive keepAlive;
+	private volatile Thread reader;
+	private volatile Thread writer;
+	private volatile Thread keepAlive;
 
 	Connection(TS3Query query, QueryConfig config, CommandQueue initialQueue) {
 		this.query = query;
@@ -59,9 +59,12 @@ class Connection {
 		channel.connect(this::transportConnected);
 		synchronized (this) {
 			if (stopped.get()) throw new IOException("Connection closed during initialization");
-			reader = new StreamReader(this, channel.getInputStream(), query, config);
-			writer = new StreamWriter(this, channel.getOutputStream(), config);
-			keepAlive = new KeepAlive(this);
+			// Protocol I/O stays on platform threads, isolated from application work on virtual threads.
+			reader = Thread.ofPlatform().name("[TeamSpeak-3-Java-API] StreamReader").daemon(true)
+				.unstarted(new StreamReader(this, channel.getInputStream(), query, config));
+			writer = Thread.ofPlatform().name("[TeamSpeak-3-Java-API] StreamWriter").daemon(true)
+				.unstarted(new StreamWriter(this, channel.getOutputStream(), config));
+			keepAlive = Thread.ofVirtual().name("[TeamSpeak-3-Java-API] KeepAlive").unstarted(new KeepAlive(this));
 			reader.start(); writer.start(); keepAlive.start();
 		}
 	}

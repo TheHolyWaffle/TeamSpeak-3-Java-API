@@ -77,7 +77,7 @@ class EventManager {
 		executor = new ThreadPoolExecutor(threads, threads, 0,
 			TimeUnit.MILLISECONDS,
 			new ArrayBlockingQueue<>(query.getConfig().getListenerCapacity()),
-			Thread.ofPlatform().name("[TeamSpeak-3-Java-API] Event-", 0).factory(),
+			Thread.ofPlatform().name("[TeamSpeak-3-Java-API] Event-", 0).daemon(true).factory(),
 			new ThreadPoolExecutor.AbortPolicy());
 	}
 

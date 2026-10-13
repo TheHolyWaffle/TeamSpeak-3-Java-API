@@ -29,7 +29,7 @@ package com.github.theholywaffle.teamspeak3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class KeepAlive extends Thread {
+class KeepAlive implements Runnable {
 
 	private static final Logger log = LoggerFactory.getLogger(KeepAlive.class);
 	private static final int SLEEP = 60_000;
@@ -37,14 +37,13 @@ class KeepAlive extends Thread {
 	private final Connection con;
 
 	KeepAlive(Connection connection) {
-		super("[TeamSpeak-3-Java-API] KeepAlive");
 		con = connection;
 	}
 
 	@Override
 	public void run() {
 		try {
-			while (!isInterrupted()) {
+			while (!Thread.currentThread().isInterrupted()) {
 				final long idleTime = con.getIdleTime();
 				if (idleTime >= SLEEP) {
 					// Using the asynchronous API so we get InterruptedExceptions

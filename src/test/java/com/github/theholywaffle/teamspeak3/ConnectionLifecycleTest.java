@@ -254,12 +254,11 @@ class ConnectionLifecycleTest {
 			var con = new Connection(query, query.getConfig(), queue);
 			var pending = queue.getAsyncApi().whoAmI();
 			var writes = new CountDownLatch(1);
-			var writer = new StreamWriter(con, new OutputStream() {
+			var writer = Thread.ofPlatform().start(new StreamWriter(con, new OutputStream() {
 				@Override public void write(int value) throws IOException {
 					writes.countDown(); throw new IOException("Injected write failure");
 				}
-			}, query.getConfig());
-			writer.start();
+			}, query.getConfig()));
 			assertTrue(writes.await(1, TimeUnit.SECONDS));
 			assertThrows(TS3QueryShutDownException.class, () -> FutureAssertions.read(pending, 1, TimeUnit.SECONDS));
 			writer.join(1000);

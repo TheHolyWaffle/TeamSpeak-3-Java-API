@@ -50,8 +50,7 @@ connected also throws. A disconnected client using a reconnect strategy can
 enter `CONNECTING` again. `isConnected()` describes the current transport state,
 not a guarantee that the server will respond to the next command.
 
-The client owns its socket/SSH client, three I/O/keepalive workers, deadline
-scheduler and virtual-thread callback executor. The SSH channel also tracks and
+The client owns its socket/SSH client and the threads in the table below. The SSH channel also tracks and
 joins SSHJ's transport reader and keepalive worker within the shared close budget;
 SSHJ's transport-close event alone does not guarantee that its reader has exited.
 Applications own callback code
@@ -64,11 +63,35 @@ remain bounded, but such external blocking code can outlive them. Use an IP
 address if your resolver cannot provide a bounded lookup. File-transfer endpoint
 and stream lifecycle changes remain assigned to #442.
 
+## Threading model
+
+| Work | Thread | Why |
+| --- | --- | --- |
+| Protocol reader and writer, one each per connection | Platform, daemon | Isolated from application work on the shared virtual-thread scheduler; one writer keeps commands in protocol order |
+| Deadline scheduler | Platform, **non-daemon** | Enforces deadlines independently of application load; keeps the JVM alive while a query is open |
+| Keep-alive | Virtual | Sleeps and waits on a `whoami` future |
+| Initialization, connection handlers, file-transfer I/O | Virtual, one per task | Blocking work; file transfers hold command admission, so their number stays bounded |
+| Command completions | One ordered virtual worker | Preserves completion order; bounded by command admission |
+| Event callbacks | Bounded platform pool (`setEventCallbackThreads`), daemon | Fixed workers plus a bounded queue give the drop accounting described in [events and capacity](events-and-capacity.md) |
+
+Daemon status is set explicitly. Before 2.0 it was inherited from the thread that
+created the query or connection, so a query created on a daemon or virtual thread
+did not keep the JVM alive. Now an open query always does, until `close()` or `exit()`.
+
+Virtual threads were evaluated for every blocking task (#445). They are used where
+work only blocks and is already bounded by admission. They do not replace the
+single writer, the command queue or admission limits. Cheap threads change neither
+protocol ordering nor overload. The reader, writer and deadline scheduler stay on
+platform threads. A CPU-bound application callback on a virtual thread cannot be
+preempted, so these threads must not depend on the virtual-thread scheduler.
+`ThreadModelTest` pins the table above.
+
 ## Intentional behavior changes
 
-- `setCommandTimeout(int)` remains as a deprecated millisecond adapter for
-  **command response only**. Set the other four durations explicitly if you
-  previously relied on that setting for SSH connection/authentication timeouts.
+- `setCommandTimeout(int)` is removed (#445); use
+  `setCommandResponseTimeout(Duration.ofMillis(ms))`. It only ever set the
+  **command response** budget. Set the other four durations explicitly if you
+  previously relied on it for SSH connection/authentication timeouts.
 - A response must finish within its own budget. Slow streaming responses need a
   larger response duration; repeated data no longer keeps them alive forever.
 - Queue wait is now finite. Increase it for long flood-rate-limited queues.
