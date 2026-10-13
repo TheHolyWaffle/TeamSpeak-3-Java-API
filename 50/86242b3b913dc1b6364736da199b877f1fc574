@@ -1,0 +1,27 @@
+docs/configuration-and-transports.md
+  s_5ecca41ab751cc::t_bb89c5dfb7e90e 25
+docs/development-server.md
+  s_5ecca41ab751cc::t_cd780893edd4c3 62
+docs/integration-tests.md
+  s_5ecca41ab751cc::t_f12bc96b8a9ea2 80
+docs/packaging.md
+  s_5ecca41ab751cc::t_568d5fd04e2bd6 1-139
+docs/releases.md
+  s_5ecca41ab751cc::t_82ac99ffda8faf 6-8,114,131-134,155,211,222-224,227,229-230,233-238,256-257
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5086242b3b913dc1b6364736da199b877f1fc574",
+  "prompts": {},
+  "sessions": {
+    "s_5ecca41ab751cc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_5ecca41ab751cc",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
