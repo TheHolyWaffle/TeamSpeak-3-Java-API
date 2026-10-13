@@ -41,15 +41,22 @@ public final class ExampleSettings {
     public TS3Config config() {
         TS3Config config = new TS3Config()
                 .setHost(required("TS3_HOST"))
-                .setProtocol(choice("TS3_PROTOCOL", Protocol.class, Protocol.RAW))
+                .setProtocol(
+                        switch (lowerCase("TS3_PROTOCOL", "raw")) {
+                            case "raw" -> Protocol.RAW;
+                            case "ssh" -> Protocol.SSH;
+                            default -> throw unsupported("TS3_PROTOCOL");
+                        })
                 .setLoginCredentials(required("TS3_USERNAME"), required("TS3_PASSWORD"))
                 .setFloodRate(
-                        choice("TS3_FLOOD_RATE", Rate.class, Rate.DEFAULT) == Rate.UNLIMITED
-                                ? FloodRate.UNLIMITED
-                                : FloodRate.DEFAULT)
+                        switch (lowerCase("TS3_FLOOD_RATE", "default")) {
+                            case "default" -> FloodRate.DEFAULT;
+                            case "unlimited" -> FloodRate.UNLIMITED;
+                            default -> throw unsupported("TS3_FLOOD_RATE");
+                        })
                 .setEnableCommunicationsLogging(Boolean.parseBoolean(
                         optional("TS3_COMMUNICATIONS_LOGGING").orElse("false")));
-        optional("TS3_QUERY_PORT").ifPresent(port -> config.setQueryPort(port("TS3_QUERY_PORT", port)));
+        optional("TS3_QUERY_PORT").ifPresent(port -> config.setQueryPort(port("TS3_QUERY_PORT")));
         optional("TS3_SSH_KNOWN_HOSTS")
                 .ifPresent(file -> config.setSshHostKeyPolicy(SshHostKeyPolicy.knownHosts(Path.of(file))));
         Optional<String> fileHost = optional("TS3_FILE_TRANSFER_HOST");
@@ -60,7 +67,7 @@ public final class ExampleSettings {
         }
         if (fileHost.isPresent()) {
             String host = fileHost.get();
-            int port = port("TS3_FILE_TRANSFER_PORT", filePort.get());
+            int port = port("TS3_FILE_TRANSFER_PORT");
             FileTransferConfig defaults = FileTransferConfig.defaults();
             config.setFileTransferConfig(new FileTransferConfig(
                     defaults.connectTimeout(),
@@ -74,14 +81,7 @@ public final class ExampleSettings {
 
     /** @return {@code TS3_VIRTUAL_SERVER_ID}, default 1 */
     public int virtualServerId() {
-        String value = optional("TS3_VIRTUAL_SERVER_ID").orElse("1");
-        try {
-            int id = Integer.parseInt(value);
-            if (id > 0) return id;
-        } catch (NumberFormatException ignored) {
-            // Reported below.
-        }
-        throw new IllegalArgumentException("TS3_VIRTUAL_SERVER_ID must be a positive integer: " + value);
+        return integer("TS3_VIRTUAL_SERVER_ID", "1", Integer.MAX_VALUE);
     }
 
     /** @return {@code TS3_NICKNAME}, default "Java API example" */
@@ -102,11 +102,6 @@ public final class ExampleSettings {
         }
     }
 
-    private enum Rate {
-        DEFAULT,
-        UNLIMITED
-    }
-
     private String required(String name) {
         return optional(name)
                 .orElseThrow(() -> new IllegalArgumentException(
@@ -117,23 +112,26 @@ public final class ExampleSettings {
         return Optional.ofNullable(environment.get(name)).filter(value -> !value.isBlank());
     }
 
-    private <E extends Enum<E>> E choice(String name, Class<E> type, E fallback) {
-        Optional<String> value = optional(name);
-        if (value.isEmpty()) return fallback;
-        try {
-            return Enum.valueOf(type, value.get().trim().toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(name + " has an unsupported value: " + value.get(), e);
-        }
+    private String lowerCase(String name, String fallback) {
+        return optional(name).orElse(fallback).trim().toLowerCase(Locale.ROOT);
     }
 
-    private static int port(String name, String value) {
+    private IllegalArgumentException unsupported(String name) {
+        return new IllegalArgumentException(name + " has an unsupported value: " + environment.get(name));
+    }
+
+    private int port(String name) {
+        return integer(name, "", 65535);
+    }
+
+    private int integer(String name, String fallback, int max) {
+        String value = optional(name).orElse(fallback).trim();
         try {
-            int port = Integer.parseInt(value.trim());
-            if (port > 0 && port <= 65535) return port;
+            int number = Integer.parseInt(value);
+            if (number > 0 && number <= max) return number;
         } catch (NumberFormatException ignored) {
             // Reported below.
         }
-        throw new IllegalArgumentException(name + " must be a port between 1 and 65535: " + value);
+        throw new IllegalArgumentException(name + " must be an integer between 1 and " + max + ": " + value);
     }
 }

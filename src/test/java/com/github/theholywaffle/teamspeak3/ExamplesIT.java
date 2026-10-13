@@ -70,14 +70,13 @@ class ExamplesIT {
     @ParameterizedTest(name = "{0} over {1}")
     @MethodSource("examples")
     void runsUnchanged(String example, Protocol protocol) throws Exception {
-        String output = ExampleProcess.runToCompletion(example, SERVER.exampleEnvironment(protocol, knownHosts), 0);
+        String output = ForkedJvm.runExample(example, SERVER.exampleEnvironment(protocol, knownHosts), 0);
         assertTrue(output.contains(COMPLETED.get(example)), output);
     }
 
     @Test
     void chatBotAnswersPing() throws Exception {
-        try (ExampleProcess bot =
-                        ExampleProcess.start("ChatBotExample", SERVER.exampleEnvironment(Protocol.RAW, knownHosts));
+        try (ForkedJvm bot = ForkedJvm.example("ChatBotExample", SERVER.exampleEnvironment(Protocol.RAW, knownHosts));
                 TS3Query query = new TS3Query(SERVER.config(Protocol.RAW))) {
             bot.awaitOutput("Running.", Duration.ofSeconds(60));
             query.connect();
@@ -94,14 +93,14 @@ class ExamplesIT {
             api.events().register(TS3EventType.TEXT_CHANNEL);
             api.messages().sendChannel("!ping");
             assertEquals("Java API example", reply.get(30, TimeUnit.SECONDS));
-            bot.stop();
+            bot.closeInput();
             assertEquals(0, bot.await(Duration.ofSeconds(30)), bot.output());
         }
     }
 
     @Test
     void missingSettingsFailWithoutConnecting() throws Exception {
-        String output = ExampleProcess.runToCompletion("ClientInfoExample", Map.of(), 1);
+        String output = ForkedJvm.runExample("ClientInfoExample", Map.of(), 1);
         assertTrue(output.contains("Set the TS3_HOST environment variable"), output);
     }
 }

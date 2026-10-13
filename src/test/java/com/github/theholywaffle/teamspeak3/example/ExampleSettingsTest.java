@@ -18,7 +18,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 class ExampleSettingsTest {
     private static final Map<String, String> REQUIRED =
-            Map.of("TS3_HOST", "ts.example.net", "TS3_USERNAME", "bot", "TS3_PASSWORD", "secret");
+            Map.of("TS3_HOST", "192.0.2.10", "TS3_USERNAME", "bot", "TS3_PASSWORD", "secret");
 
     private static ExampleSettings with(String... pairs) {
         Map<String, String> environment = new HashMap<>(REQUIRED);
@@ -29,7 +29,7 @@ class ExampleSettingsTest {
     @Test
     void defaultsToRawLoginWithFloodProtection() {
         QueryConfig config = with().config().build();
-        assertEquals("ts.example.net", config.getHost());
+        assertEquals("192.0.2.10", config.getHost());
         assertEquals(Protocol.RAW, config.getProtocol());
         assertEquals(10011, config.getQueryPort());
         assertEquals("bot", config.getUsername());
@@ -39,9 +39,9 @@ class ExampleSettingsTest {
         assertEquals(1, with().virtualServerId());
         assertEquals("Java API example", with().nickname());
         assertEndpoint(
-                "ts.example.net",
+                "192.0.2.10",
                 30033,
-                config.getFileTransferConfig().endpointResolver().resolve("ts.example.net", "0.0.0.0", 30033));
+                config.getFileTransferConfig().endpointResolver().resolve("192.0.2.10", "0.0.0.0", 30033));
     }
 
     @Test
@@ -52,7 +52,7 @@ class ExampleSettingsTest {
                 "TS3_FLOOD_RATE", "unlimited",
                 "TS3_COMMUNICATIONS_LOGGING", "true",
                 "TS3_SSH_KNOWN_HOSTS", "trust/known_hosts",
-                "TS3_FILE_TRANSFER_HOST", "files.example.net",
+                "TS3_FILE_TRANSFER_HOST", "198.51.100.7",
                 "TS3_FILE_TRANSFER_PORT", "43033",
                 "TS3_VIRTUAL_SERVER_ID", "7",
                 "TS3_NICKNAME", "Bot");
@@ -64,7 +64,7 @@ class ExampleSettingsTest {
         assertEquals(
                 "SshHostKeyPolicy[KNOWN_HOSTS]", config.getSshHostKeyPolicy().toString());
         FileTransferEndpointResolver resolver = config.getFileTransferConfig().endpointResolver();
-        assertEndpoint("files.example.net", 43033, resolver.resolve("q", "10.0.0.2", 30033));
+        assertEndpoint("198.51.100.7", 43033, resolver.resolve("q", "10.0.0.2", 30033));
         assertEquals(7, settings.virtualServerId());
         assertEquals("Bot", settings.nickname());
     }
@@ -90,7 +90,7 @@ class ExampleSettingsTest {
         "TS3_QUERY_PORT, 70000",
         "TS3_QUERY_PORT, ten",
         "TS3_FLOOD_RATE, fast",
-        "TS3_FILE_TRANSFER_HOST, files.example.net"
+        "TS3_FILE_TRANSFER_HOST, 198.51.100.7"
     })
     void rejectsInvalidSettings(String name, String value) {
         assertThrows(IllegalArgumentException.class, () -> with(name, value).config());
