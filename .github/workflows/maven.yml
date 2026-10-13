@@ -22,8 +22,10 @@ jobs:
   compatibility:
     uses: ./.github/workflows/compatibility.yml
 
-  dependency_scan:
-    uses: ./.github/workflows/dependency-scan.yml
+  dependencies:
+    uses: ./.github/workflows/dependencies.yml
+    permissions:
+      contents: write
 
   api_compatibility:
     name: API compatibility
@@ -114,7 +116,7 @@ jobs:
   required:
     name: CI required
     if: ${{ always() }}
-    needs: [verify, compatibility, dependency_scan, api_compatibility, release_intent]
+    needs: [verify, compatibility, dependencies, api_compatibility, release_intent]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -122,12 +124,12 @@ jobs:
         env:
           BUILD_RESULT: ${{ needs.verify.result }}
           COMPATIBILITY_RESULT: ${{ needs.compatibility.result }}
-          DEPENDENCY_SCAN_RESULT: ${{ needs.dependency_scan.result }}
+          DEPENDENCY_RESULT: ${{ needs.dependencies.result }}
           API_RESULT: ${{ needs.api_compatibility.result }}
           INTENT_RESULT: ${{ needs.release_intent.result }}
         run: |
           test "$BUILD_RESULT" = success
           test "$COMPATIBILITY_RESULT" = success
-          test "$DEPENDENCY_SCAN_RESULT" = success
+          test "$DEPENDENCY_RESULT" = success
           test "$API_RESULT" = success
           test "$INTENT_RESULT" = success || test "$INTENT_RESULT" = skipped
