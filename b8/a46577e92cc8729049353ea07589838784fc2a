@@ -1,0 +1,27 @@
+.github/ISSUE_TEMPLATE/bug_report.yml
+  s_ba4f2e5e310bfe::t_cfcf3884bd29b3 1-78
+.github/ISSUE_TEMPLATE/config.yml
+  s_ba4f2e5e310bfe::t_c42d54d1359944 1-8
+.github/ISSUE_TEMPLATE/feature_request.yml
+  s_ba4f2e5e310bfe::t_0559ea74621938 1-45
+.github/pull_request_template.md
+  s_ba4f2e5e310bfe::t_58956e9d37765f 1-25
+.github/scripts/test-api-compatibility.sh
+  s_ba4f2e5e310bfe::t_8ec9188933d2c4 25-27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b8a46577e92cc8729049353ea07589838784fc2a",
+  "prompts": {},
+  "sessions": {
+    "s_ba4f2e5e310bfe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2adad55e-4bba-4de8-8b8f-dca91fe79778",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
