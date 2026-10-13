@@ -13,39 +13,43 @@ import java.util.Objects;
  */
 public record PermissionGrant(String permissionName, int value, boolean negated, boolean skipped) {
 
-	public PermissionGrant {
-		Objects.requireNonNull(permissionName, "permissionName");
-		if (permissionName.isEmpty()) throw new IllegalArgumentException("Permission name must not be empty");
-	}
+    public PermissionGrant {
+        Objects.requireNonNull(permissionName, "permissionName");
+        if (permissionName.isEmpty()) throw new IllegalArgumentException("Permission name must not be empty");
+    }
 
-	public static PermissionGrant of(String permissionName, int value) {
-		return new PermissionGrant(permissionName, value, false, false);
-	}
+    public static PermissionGrant of(String permissionName, int value) {
+        return new PermissionGrant(permissionName, value, false, false);
+    }
 
-	public static PermissionGrant of(IPermissionType permission, int value) {
-		return of(permission.getName(), value);
-	}
+    public static PermissionGrant of(IPermissionType permission, int value) {
+        return of(permission.getName(), value);
+    }
 
-	public static PermissionGrant of(BPermissionType permission, boolean value) {
-		return of(permission.getName(), value ? 1 : 0);
-	}
+    public static PermissionGrant of(BPermissionType permission, boolean value) {
+        return of(permission.getName(), value ? 1 : 0);
+    }
 
-	/** @return a negated copy */
-	public PermissionGrant withNegated() { return new PermissionGrant(permissionName, value, true, skipped); }
+    /** @return a negated copy */
+    public PermissionGrant withNegated() {
+        return new PermissionGrant(permissionName, value, true, skipped);
+    }
 
-	/** @return a copy that channel group permissions do not overwrite */
-	public PermissionGrant withSkip() { return new PermissionGrant(permissionName, value, negated, true); }
+    /** @return a copy that channel group permissions do not overwrite */
+    public PermissionGrant withSkip() {
+        return new PermissionGrant(permissionName, value, negated, true);
+    }
 
-	/**
-	 * @param holder the type of holder that receives this grant
-	 * @throws IllegalArgumentException if the holder does not accept this grant's flags
-	 */
-	public void requireSupportedBy(PermissionGroupType holder) {
-		if (negated && holder != PermissionGroupType.SERVER_GROUP) {
-			throw new IllegalArgumentException(holder + " permissions cannot be negated");
-		}
-		if (skipped && holder != PermissionGroupType.SERVER_GROUP && holder != PermissionGroupType.GLOBAL_CLIENT) {
-			throw new IllegalArgumentException(holder + " permissions cannot be skipped");
-		}
-	}
+    /**
+     * @param holder the type of holder that receives this grant
+     * @throws IllegalArgumentException if the holder does not accept this grant's flags
+     */
+    public void requireSupportedBy(PermissionGroupType holder) {
+        if (negated && holder != PermissionGroupType.SERVER_GROUP) {
+            throw new IllegalArgumentException(holder + " permissions cannot be negated");
+        }
+        if (skipped && holder != PermissionGroupType.SERVER_GROUP && holder != PermissionGroupType.GLOBAL_CLIENT) {
+            throw new IllegalArgumentException(holder + " permissions cannot be skipped");
+        }
+    }
 }

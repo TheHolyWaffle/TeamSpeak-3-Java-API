@@ -7,5 +7,6 @@ package com.github.theholywaffle.teamspeak3;
  */
 @FunctionalInterface
 public interface EventSubscription extends AutoCloseable {
-	@Override void close();
+    @Override
+    void close();
 }

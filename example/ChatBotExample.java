@@ -10,10 +10,10 @@
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -32,7 +32,6 @@ import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
-
 import java.util.Optional;
 
 /**
@@ -42,46 +41,47 @@ import java.util.Optional;
  */
 public class ChatBotExample {
 
-	public static void main(String[] args) {
-		final TS3Config config = new TS3Config();
-		config.setHost("77.77.77.77");
-		config.setEnableCommunicationsLogging(true);
+    public static void main(String[] args) {
+        final TS3Config config = new TS3Config();
+        config.setHost("77.77.77.77");
+        config.setEnableCommunicationsLogging(true);
 
-		final TS3Query query = new TS3Query(config);
-		query.connect();
+        final TS3Query query = new TS3Query(config);
+        query.connect();
 
-		final TS3Api api = query.getApi();
-		api.login("serveradmin", "serveradminpassword");
-		api.selectVirtualServerById(1);
-		api.setNickname("PutPutBot");
-		api.messages().sendChannel("PutPutBot is online!");
+        final TS3Api api = query.getApi();
+        api.login("serveradmin", "serveradminpassword");
+        api.selectVirtualServerById(1);
+        api.setNickname("PutPutBot");
+        api.messages().sendChannel("PutPutBot is online!");
 
-		// Get our own client ID by running the "whoami" command
-		final ClientId clientId = api.whoAmI().getId();
+        // Get our own client ID by running the "whoami" command
+        final ClientId clientId = api.whoAmI().getId();
 
-		// Listen to chat in the channel the query is currently in
-		// As we never changed the channel, this will be the default channel of the server
-		api.events().register(TS3EventType.TEXT_CHANNEL, 0);
+        // Listen to chat in the channel the query is currently in
+        // As we never changed the channel, this will be the default channel of the server
+        api.events().register(TS3EventType.TEXT_CHANNEL, 0);
 
-		// Register the event listener
-		api.events().subscribe(new TS3EventAdapter() {
+        // Register the event listener
+        api.events().subscribe(new TS3EventAdapter() {
 
-			@Override
-			public void onTextMessage(TextMessageEvent e) {
-				// Only react to channel messages not sent by the query itself
-				if (e.getTargetMode() == TextMessageTargetMode.CHANNEL && !e.getInvokerId().equals(Optional.of(clientId))) {
-					String message = e.getMessage().toLowerCase();
+            @Override
+            public void onTextMessage(TextMessageEvent e) {
+                // Only react to channel messages not sent by the query itself
+                if (e.getTargetMode() == TextMessageTargetMode.CHANNEL
+                        && !e.getInvokerId().equals(Optional.of(clientId))) {
+                    String message = e.getMessage().toLowerCase();
 
-					if (message.equals("!ping")) {
-						// Answer "!ping" with "pong"
-						api.messages().sendChannel("pong");
-					} else if (message.startsWith("hello")) {
-						// Greet whoever said hello
-						// Message: "Hello <client name>!"
-						api.messages().sendChannel("Hello " + e.getInvokerName().orElse("there") + "!");
-					}
-				}
-			}
-		});
-	}
+                    if (message.equals("!ping")) {
+                        // Answer "!ping" with "pong"
+                        api.messages().sendChannel("pong");
+                    } else if (message.startsWith("hello")) {
+                        // Greet whoever said hello
+                        // Message: "Hello <client name>!"
+                        api.messages().sendChannel("Hello " + e.getInvokerName().orElse("there") + "!");
+                    }
+                }
+            }
+        });
+    }
 }

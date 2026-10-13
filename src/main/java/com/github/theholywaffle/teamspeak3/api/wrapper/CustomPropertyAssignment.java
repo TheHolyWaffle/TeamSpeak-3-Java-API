@@ -27,7 +27,6 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  */
 
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
-
 import java.util.Objects;
 
 /**
@@ -39,14 +38,15 @@ import java.util.Objects;
  */
 public record CustomPropertyAssignment(ClientDatabaseId clientDatabaseId, String key, String value) {
 
-	public CustomPropertyAssignment {
-		Objects.requireNonNull(clientDatabaseId, "clientDatabaseId");
-		Objects.requireNonNull(key, "key");
-		Objects.requireNonNull(value, "value");
-	}
+    public CustomPropertyAssignment {
+        Objects.requireNonNull(clientDatabaseId, "clientDatabaseId");
+        Objects.requireNonNull(key, "key");
+        Objects.requireNonNull(value, "value");
+    }
 
-	/** @throws com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException if a property is missing or malformed */
-	public static CustomPropertyAssignment from(Wrapper row) {
-		return new CustomPropertyAssignment(row.requireDatabaseId("cldbid"), row.require("ident"), row.require("value"));
-	}
+    /** @throws com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException if a property is missing or malformed */
+    public static CustomPropertyAssignment from(Wrapper row) {
+        return new CustomPropertyAssignment(
+                row.requireDatabaseId("cldbid"), row.require("ident"), row.require("value"));
+    }
 }

@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.commands;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -31,40 +31,44 @@ import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 
 public final class PrivilegeKeyCommands {
 
-	private PrivilegeKeyCommands() {
-		throw new Error("No instances");
-	}
+    private PrivilegeKeyCommands() {
+        throw new Error("No instances");
+    }
 
-	public static Command privilegeKeyAdd(PrivilegeKeyType type, int groupId, int channelId, String description) {
-		if (type == null) {
-			throw new IllegalArgumentException("Privilege key type cannot be null");
-		}
+    public static Command privilegeKeyAdd(PrivilegeKeyType type, int groupId, int channelId, String description) {
+        if (type == null) {
+            throw new IllegalArgumentException("Privilege key type cannot be null");
+        }
 
-		CommandBuilder builder = new CommandBuilder("privilegekeyadd");
-		builder.add(new KeyValueParam("tokentype", KnownCodes.require(type.getIndex())));
-		builder.add(new KeyValueParam("tokenid1", groupId));
-		builder.add(new KeyValueParam("tokenid2", channelId));
-		builder.addIf(description != null, new KeyValueParam("tokendescription", description));
-		return builder.build();
-	}
+        CommandBuilder builder = new CommandBuilder("privilegekeyadd");
+        builder.add(new KeyValueParam("tokentype", KnownCodes.require(type.getIndex())));
+        builder.add(new KeyValueParam("tokenid1", groupId));
+        builder.add(new KeyValueParam("tokenid2", channelId));
+        builder.addIf(description != null, new KeyValueParam("tokendescription", description));
+        return builder.build();
+    }
 
-	public static Command privilegeKeyDelete(String token) {
-		if (token == null || token.isEmpty()) {
-			throw new IllegalArgumentException("Privilege key must be a non-empty string");
-		}
+    public static Command privilegeKeyDelete(String token) {
+        if (token == null || token.isEmpty()) {
+            throw new IllegalArgumentException("Privilege key must be a non-empty string");
+        }
 
-		return new CommandBuilder("privilegekeydelete").add(new KeyValueParam("token", token)).build();
-	}
+        return new CommandBuilder("privilegekeydelete")
+                .add(new KeyValueParam("token", token))
+                .build();
+    }
 
-	public static Command privilegeKeyList() {
-		return new CommandBuilder("privilegekeylist").build();
-	}
+    public static Command privilegeKeyList() {
+        return new CommandBuilder("privilegekeylist").build();
+    }
 
-	public static Command privilegeKeyUse(String token) {
-		if (token == null || token.isEmpty()) {
-			throw new IllegalArgumentException("Privilege key must be a non-empty string");
-		}
+    public static Command privilegeKeyUse(String token) {
+        if (token == null || token.isEmpty()) {
+            throw new IllegalArgumentException("Privilege key must be a non-empty string");
+        }
 
-		return new CommandBuilder("privilegekeyuse").add(new KeyValueParam("token", token)).build();
-	}
+        return new CommandBuilder("privilegekeyuse")
+                .add(new KeyValueParam("token", token))
+                .build();
+    }
 }

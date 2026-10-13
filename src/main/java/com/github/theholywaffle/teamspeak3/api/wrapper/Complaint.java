@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,38 +27,36 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  */
 
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
-
 import java.time.Instant;
 import java.util.Map;
 
 public class Complaint extends Wrapper {
 
-	public Complaint(Map<String, String> map) {
-		super(map);
-	}
+    public Complaint(Map<String, String> map) {
+        super(map);
+    }
 
-	public ClientDatabaseId getTargetClientDatabaseId() {
-		return requireDatabaseId("tcldbid");
-	}
+    public ClientDatabaseId getTargetClientDatabaseId() {
+        return requireDatabaseId("tcldbid");
+    }
 
-	public String getTargetName() {
-		return require("tname");
-	}
+    public String getTargetName() {
+        return require("tname");
+    }
 
-	public ClientDatabaseId getSourceClientDatabaseId() {
-		return requireDatabaseId("fcldbid");
-	}
+    public ClientDatabaseId getSourceClientDatabaseId() {
+        return requireDatabaseId("fcldbid");
+    }
 
-	public String getSourceName() {
-		return require("fname");
-	}
+    public String getSourceName() {
+        return require("fname");
+    }
 
-	public String getMessage() {
-		return require("message");
-	}
+    public String getMessage() {
+        return require("message");
+    }
 
-	public Instant getTimestamp() {
-		return requireInstant("timestamp");
-	}
-
+    public Instant getTimestamp() {
+        return requireInstant("timestamp");
+    }
 }

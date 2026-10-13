@@ -9,20 +9,21 @@ import java.util.Set;
  */
 @FunctionalInterface
 public interface FileTransferEndpointResolver {
-	/**
-	 * @param queryHost configured query host, used when the advertised address is unspecified
-	 * @param advertisedHost complete server address field, possibly empty or comma separated
-	 * @param advertisedPort server-advertised file port
-	 * @return reachable file endpoint, including a NAT or Docker mapped port when necessary
-	 */
-	InetSocketAddress resolve(String queryHost, String advertisedHost, int advertisedPort);
+    /**
+     * @param queryHost configured query host, used when the advertised address is unspecified
+     * @param advertisedHost complete server address field, possibly empty or comma separated
+     * @param advertisedPort server-advertised file port
+     * @return reachable file endpoint, including a NAT or Docker mapped port when necessary
+     */
+    InetSocketAddress resolve(String queryHost, String advertisedHost, int advertisedPort);
 
-	/** @return resolver selecting the first advertised address, falling back for wildcard/empty addresses */
-	static FileTransferEndpointResolver advertised() {
-		return (queryHost, hosts, port) -> {
-			String host = hosts == null ? "" : hosts.split(",", -1)[0].trim();
-			if (host.isEmpty() || Set.of("0.0.0.0", "::", "[::]", "0:0:0:0:0:0:0:0").contains(host)) host = queryHost;
-			return new InetSocketAddress(host, port);
-		};
-	}
+    /** @return resolver selecting the first advertised address, falling back for wildcard/empty addresses */
+    static FileTransferEndpointResolver advertised() {
+        return (queryHost, hosts, port) -> {
+            String host = hosts == null ? "" : hosts.split(",", -1)[0].trim();
+            if (host.isEmpty()
+                    || Set.of("0.0.0.0", "::", "[::]", "0:0:0:0:0:0:0:0").contains(host)) host = queryHost;
+            return new InetSocketAddress(host, port);
+        };
+    }
 }

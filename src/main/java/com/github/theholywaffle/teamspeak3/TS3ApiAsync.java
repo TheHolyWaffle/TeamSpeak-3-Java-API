@@ -33,7 +33,6 @@ import com.github.theholywaffle.teamspeak3.commands.ClientCommands;
 import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 import com.github.theholywaffle.teamspeak3.commands.QueryCommands;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
-
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -63,160 +62,190 @@ import java.util.concurrent.CompletableFuture;
  */
 public class TS3ApiAsync {
 
-	private final QueryRequests requests;
-	private final BanApiAsync bans;
-	private final ChannelApiAsync channels;
-	private final ChannelGroupApiAsync channelGroups;
-	private final ClientApiAsync clients;
-	private final ComplaintApiAsync complaints;
-	private final DatabaseClientApiAsync databaseClients;
-	private final EventApiAsync events;
-	private final FileApiAsync files;
-	private final InstanceApiAsync instance;
-	private final MessageApiAsync messages;
-	private final PermissionApiAsync permissions;
-	private final PrivilegeKeyApiAsync privilegeKeys;
-	private final QueryLoginApiAsync queryLogins;
-	private final ServerGroupApiAsync serverGroups;
-	private final VirtualServerApiAsync servers;
+    private final QueryRequests requests;
+    private final BanApiAsync bans;
+    private final ChannelApiAsync channels;
+    private final ChannelGroupApiAsync channelGroups;
+    private final ClientApiAsync clients;
+    private final ComplaintApiAsync complaints;
+    private final DatabaseClientApiAsync databaseClients;
+    private final EventApiAsync events;
+    private final FileApiAsync files;
+    private final InstanceApiAsync instance;
+    private final MessageApiAsync messages;
+    private final PermissionApiAsync permissions;
+    private final PrivilegeKeyApiAsync privilegeKeys;
+    private final QueryLoginApiAsync queryLogins;
+    private final ServerGroupApiAsync serverGroups;
+    private final VirtualServerApiAsync servers;
 
-	TS3ApiAsync(TS3Query query, CommandQueue commandQueue) {
-		requests = new QueryRequests(query, commandQueue);
-		bans = new BanApiAsync(requests);
-		channels = new ChannelApiAsync(requests);
-		channelGroups = new ChannelGroupApiAsync(requests);
-		clients = new ClientApiAsync(requests);
-		complaints = new ComplaintApiAsync(requests);
-		databaseClients = new DatabaseClientApiAsync(requests);
-		events = new EventApiAsync(requests);
-		files = new FileApiAsync(requests);
-		instance = new InstanceApiAsync(requests);
-		messages = new MessageApiAsync(requests);
-		permissions = new PermissionApiAsync(requests);
-		privilegeKeys = new PrivilegeKeyApiAsync(requests);
-		queryLogins = new QueryLoginApiAsync(requests);
-		serverGroups = new ServerGroupApiAsync(requests);
-		servers = new VirtualServerApiAsync(requests);
-	}
+    TS3ApiAsync(TS3Query query, CommandQueue commandQueue) {
+        requests = new QueryRequests(query, commandQueue);
+        bans = new BanApiAsync(requests);
+        channels = new ChannelApiAsync(requests);
+        channelGroups = new ChannelGroupApiAsync(requests);
+        clients = new ClientApiAsync(requests);
+        complaints = new ComplaintApiAsync(requests);
+        databaseClients = new DatabaseClientApiAsync(requests);
+        events = new EventApiAsync(requests);
+        files = new FileApiAsync(requests);
+        instance = new InstanceApiAsync(requests);
+        messages = new MessageApiAsync(requests);
+        permissions = new PermissionApiAsync(requests);
+        privilegeKeys = new PrivilegeKeyApiAsync(requests);
+        queryLogins = new QueryLoginApiAsync(requests);
+        serverGroups = new ServerGroupApiAsync(requests);
+        servers = new VirtualServerApiAsync(requests);
+    }
 
-	/** @return ban rule administration */
-	public BanApiAsync bans() { return bans; }
+    /** @return ban rule administration */
+    public BanApiAsync bans() {
+        return bans;
+    }
 
-	/** @return channel administration */
-	public ChannelApiAsync channels() { return channels; }
+    /** @return channel administration */
+    public ChannelApiAsync channels() {
+        return channels;
+    }
 
-	/** @return channel group administration */
-	public ChannelGroupApiAsync channelGroups() { return channelGroups; }
+    /** @return channel group administration */
+    public ChannelGroupApiAsync channelGroups() {
+        return channelGroups;
+    }
 
-	/** @return administration of connected clients */
-	public ClientApiAsync clients() { return clients; }
+    /** @return administration of connected clients */
+    public ClientApiAsync clients() {
+        return clients;
+    }
 
-	/** @return complaint administration */
-	public ComplaintApiAsync complaints() { return complaints; }
+    /** @return complaint administration */
+    public ComplaintApiAsync complaints() {
+        return complaints;
+    }
 
-	/** @return administration of clients in the virtual server database */
-	public DatabaseClientApiAsync databaseClients() { return databaseClients; }
+    /** @return administration of clients in the virtual server database */
+    public DatabaseClientApiAsync databaseClients() {
+        return databaseClients;
+    }
 
-	/** @return server notification registration and local listeners */
-	public EventApiAsync events() { return events; }
+    /** @return server notification registration and local listeners */
+    public EventApiAsync events() {
+        return events;
+    }
 
-	/** @return file repository access, transfers and icons */
-	public FileApiAsync files() { return files; }
+    /** @return file repository access, transfers and icons */
+    public FileApiAsync files() {
+        return files;
+    }
 
-	/** @return server instance administration */
-	public InstanceApiAsync instance() { return instance; }
+    /** @return server instance administration */
+    public InstanceApiAsync instance() {
+        return instance;
+    }
 
-	/** @return text and offline messages */
-	public MessageApiAsync messages() { return messages; }
+    /** @return text and offline messages */
+    public MessageApiAsync messages() {
+        return messages;
+    }
 
-	/** @return permission metadata and assignments */
-	public PermissionApiAsync permissions() { return permissions; }
+    /** @return permission metadata and assignments */
+    public PermissionApiAsync permissions() {
+        return permissions;
+    }
 
-	/** @return privilege key administration */
-	public PrivilegeKeyApiAsync privilegeKeys() { return privilegeKeys; }
+    /** @return privilege key administration */
+    public PrivilegeKeyApiAsync privilegeKeys() {
+        return privilegeKeys;
+    }
 
-	/** @return ServerQuery login administration */
-	public QueryLoginApiAsync queryLogins() { return queryLogins; }
+    /** @return ServerQuery login administration */
+    public QueryLoginApiAsync queryLogins() {
+        return queryLogins;
+    }
 
-	/** @return server group administration */
-	public ServerGroupApiAsync serverGroups() { return serverGroups; }
+    /** @return server group administration */
+    public ServerGroupApiAsync serverGroups() {
+        return serverGroups;
+    }
 
-	/** @return virtual server lifecycle and administration of the selected virtual server */
-	public VirtualServerApiAsync servers() { return servers; }
+    /** @return virtual server lifecycle and administration of the selected virtual server */
+    public VirtualServerApiAsync servers() {
+        return servers;
+    }
 
-	/**
-	 * Executes one already-encoded ServerQuery command through the bounded command queue.
-	 * Session restrictions, deadlines, cancellation and retry policy apply as for typed methods.
-	 * The caller owns value encoding and interpreting server-specific fields. Use typed methods
-	 * when available; do not pass untrusted command text. Unknown commands are not retried by default.
-	 *
-	 * @param line one command without control characters; encode values with
-	 *             {@link CommandEncoding#encode(String)}
-	 * @return the decoded rows and original response text; server errors fail the future with
-	 *         {@link TS3CommandFailedException}
-	 * @throws IllegalArgumentException if the command line is invalid
-	 * @see TS3Api#executeRawCommand(String)
-	 */
-	public CompletableFuture<DefaultArrayResponse> executeRawCommand(String line) {
-		return requests.response(QueryCommands.rawCommand(line), response -> response);
-	}
+    /**
+     * Executes one already-encoded ServerQuery command through the bounded command queue.
+     * Session restrictions, deadlines, cancellation and retry policy apply as for typed methods.
+     * The caller owns value encoding and interpreting server-specific fields. Use typed methods
+     * when available; do not pass untrusted command text. Unknown commands are not retried by default.
+     *
+     * @param line one command without control characters; encode values with
+     *             {@link CommandEncoding#encode(String)}
+     * @return the decoded rows and original response text; server errors fail the future with
+     *         {@link TS3CommandFailedException}
+     * @throws IllegalArgumentException if the command line is invalid
+     * @see TS3Api#executeRawCommand(String)
+     */
+    public CompletableFuture<DefaultArrayResponse> executeRawCommand(String line) {
+        return requests.response(QueryCommands.rawCommand(line), response -> response);
+    }
 
-	/** @see TS3Api#login(String, String) */
-	public CompletableFuture<Void> login(String username, String password) {
-		return requests.run(QueryCommands.logIn(username, password));
-	}
+    /** @see TS3Api#login(String, String) */
+    public CompletableFuture<Void> login(String username, String password) {
+        return requests.run(QueryCommands.logIn(username, password));
+    }
 
-	/** @see TS3Api#logout() */
-	public CompletableFuture<Void> logout() {
-		return requests.run(QueryCommands.logOut());
-	}
+    /** @see TS3Api#logout() */
+    public CompletableFuture<Void> logout() {
+        return requests.run(QueryCommands.logOut());
+    }
 
-	/** @see TS3Api#whoAmI() */
-	public CompletableFuture<ServerQueryInfo> whoAmI() {
-		return requests.model(QueryCommands.whoAmI(), ServerQueryInfo::new);
-	}
+    /** @see TS3Api#whoAmI() */
+    public CompletableFuture<ServerQueryInfo> whoAmI() {
+        return requests.model(QueryCommands.whoAmI(), ServerQueryInfo::new);
+    }
 
-	/** @see TS3Api#selectVirtualServerById(int) */
-	public CompletableFuture<Void> selectVirtualServerById(int id) {
-		return selectVirtualServerById(id, null);
-	}
+    /** @see TS3Api#selectVirtualServerById(int) */
+    public CompletableFuture<Void> selectVirtualServerById(int id) {
+        return selectVirtualServerById(id, null);
+    }
 
-	/** @see TS3Api#selectVirtualServerById(int, String) */
-	public CompletableFuture<Void> selectVirtualServerById(int id, String nickname) {
-		return requests.run(QueryCommands.useId(id, nickname));
-	}
+    /** @see TS3Api#selectVirtualServerById(int, String) */
+    public CompletableFuture<Void> selectVirtualServerById(int id, String nickname) {
+        return requests.run(QueryCommands.useId(id, nickname));
+    }
 
-	/** @see TS3Api#selectVirtualServerByPort(int) */
-	public CompletableFuture<Void> selectVirtualServerByPort(int port) {
-		return selectVirtualServerByPort(port, null);
-	}
+    /** @see TS3Api#selectVirtualServerByPort(int) */
+    public CompletableFuture<Void> selectVirtualServerByPort(int port) {
+        return selectVirtualServerByPort(port, null);
+    }
 
-	/** @see TS3Api#selectVirtualServerByPort(int, String) */
-	public CompletableFuture<Void> selectVirtualServerByPort(int port, String nickname) {
-		return requests.run(QueryCommands.usePort(port, nickname));
-	}
+    /** @see TS3Api#selectVirtualServerByPort(int, String) */
+    public CompletableFuture<Void> selectVirtualServerByPort(int port, String nickname) {
+        return requests.run(QueryCommands.usePort(port, nickname));
+    }
 
-	/** @see TS3Api#setNickname(String) */
-	public CompletableFuture<Void> setNickname(String nickname) {
-		return updateClient(Map.of(ClientProperty.CLIENT_NICKNAME, nickname));
-	}
+    /** @see TS3Api#setNickname(String) */
+    public CompletableFuture<Void> setNickname(String nickname) {
+        return updateClient(Map.of(ClientProperty.CLIENT_NICKNAME, nickname));
+    }
 
-	/** @see TS3Api#updateClient(Map) */
-	public CompletableFuture<Void> updateClient(Map<ClientProperty, String> properties) {
-		return requests.run(ClientCommands.clientUpdate(properties));
-	}
+    /** @see TS3Api#updateClient(Map) */
+    public CompletableFuture<Void> updateClient(Map<ClientProperty, String> properties) {
+        return requests.run(ClientCommands.clientUpdate(properties));
+    }
 
-	/** @see TS3Api#moveQuery(int) */
-	public CompletableFuture<Void> moveQuery(int channelId) {
-		return moveQuery(channelId, null);
-	}
+    /** @see TS3Api#moveQuery(int) */
+    public CompletableFuture<Void> moveQuery(int channelId) {
+        return moveQuery(channelId, null);
+    }
 
-	/** @see TS3Api#moveQuery(int, String) */
-	public CompletableFuture<Void> moveQuery(int channelId, String channelPassword) {
-		return requests.run(ClientCommands.clientMove(0, channelId, channelPassword));
-	}
+    /** @see TS3Api#moveQuery(int, String) */
+    public CompletableFuture<Void> moveQuery(int channelId, String channelPassword) {
+        return requests.run(ClientCommands.clientMove(0, channelId, channelPassword));
+    }
 
-	CompletableFuture<Void> quit() {
-		return requests.run(QueryCommands.quit());
-	}
+    CompletableFuture<Void> quit() {
+        return requests.run(QueryCommands.quit());
+    }
 }

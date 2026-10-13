@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -31,33 +31,33 @@ import org.slf4j.LoggerFactory;
 
 class KeepAlive implements Runnable {
 
-	private static final Logger log = LoggerFactory.getLogger(KeepAlive.class);
-	private static final int SLEEP = 60_000;
+    private static final Logger log = LoggerFactory.getLogger(KeepAlive.class);
+    private static final int SLEEP = 60_000;
 
-	private final Connection con;
+    private final Connection con;
 
-	KeepAlive(Connection connection) {
-		con = connection;
-	}
+    KeepAlive(Connection connection) {
+        con = connection;
+    }
 
-	@Override
-	public void run() {
-		try {
-			while (!Thread.currentThread().isInterrupted()) {
-				final long idleTime = con.getIdleTime();
-				if (idleTime >= SLEEP) {
-					// Using the asynchronous API so we get InterruptedExceptions
-					TS3ApiAsync asyncApi = con.getCommandQueue().getAsyncApi();
-					asyncApi.whoAmI().handle((value, failure) -> null).get();
-				} else {
-					Thread.sleep(SLEEP - idleTime);
-				}
-			}
-		} catch (InterruptedException ignored) {
-			// Thread stopped properly, ignore
-		} catch (Exception e) {
-			log.warn("KeepAlive thread has stopped!", e);
-			con.internalDisconnect();
-		}
-	}
+    @Override
+    public void run() {
+        try {
+            while (!Thread.currentThread().isInterrupted()) {
+                final long idleTime = con.getIdleTime();
+                if (idleTime >= SLEEP) {
+                    // Using the asynchronous API so we get InterruptedExceptions
+                    TS3ApiAsync asyncApi = con.getCommandQueue().getAsyncApi();
+                    asyncApi.whoAmI().handle((value, failure) -> null).get();
+                } else {
+                    Thread.sleep(SLEEP - idleTime);
+                }
+            }
+        } catch (InterruptedException ignored) {
+            // Thread stopped properly, ignore
+        } catch (Exception e) {
+            log.warn("KeepAlive thread has stopped!", e);
+            con.internalDisconnect();
+        }
+    }
 }

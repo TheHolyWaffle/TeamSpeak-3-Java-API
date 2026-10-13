@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -32,27 +32,27 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 
 public class ClientMovedEvent extends BaseEvent {
 
-	public ClientMovedEvent(Wrapper wrapper) {
-		super(wrapper);
-	}
+    public ClientMovedEvent(Wrapper wrapper) {
+        super(wrapper);
+    }
 
-	/**
-	 * Gets the ID of the channel the client has moved to.
-	 *
-	 * @return the ID of the target channel
-	 *
-	 * @see Channel#getId()
-	 */
-	public int getTargetChannelId() {
-		return requireInt("ctid");
-	}
+    /**
+     * Gets the ID of the channel the client has moved to.
+     *
+     * @return the ID of the target channel
+     *
+     * @see Channel#getId()
+     */
+    public int getTargetChannelId() {
+        return requireInt("ctid");
+    }
 
-	public ClientId getClientId() {
-		return requireClientId("clid");
-	}
+    public ClientId getClientId() {
+        return requireClientId("clid");
+    }
 
-	@Override
-	public void fire(TS3Listener listener) {
-		listener.onClientMoved(this);
-	}
+    @Override
+    public void fire(TS3Listener listener) {
+        listener.onClientMoved(this);
+    }
 }

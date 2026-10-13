@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,29 +27,28 @@ package com.github.theholywaffle.teamspeak3.api;
  */
 
 public enum HostMessageMode {
+    LOG(1),
+    MODAL(2),
+    MODAL_QUIT(3),
+    UNKNOWN(-1);
 
-	LOG(1),
-	MODAL(2),
-	MODAL_QUIT(3),
-	UNKNOWN(-1);
+    private static final HostMessageMode[] VALUES = values();
 
-	private static final HostMessageMode[] VALUES = values();
+    private final int i;
 
-	private final int i;
+    HostMessageMode(int i) {
+        this.i = i;
+    }
 
-	HostMessageMode(int i) {
-		this.i = i;
-	}
+    public int getIndex() {
+        return i;
+    }
 
-	public int getIndex() {
-		return i;
-	}
-
-	/**
-	 * @param index the ServerQuery code
-	 * @return the matching constant, or {@link #UNKNOWN} for a code this library does not know
-	 */
-	public static HostMessageMode fromIndex(int index) {
-		return CodeLookup.byIndex(VALUES, HostMessageMode::getIndex, index, UNKNOWN);
-	}
+    /**
+     * @param index the ServerQuery code
+     * @return the matching constant, or {@link #UNKNOWN} for a code this library does not know
+     */
+    public static HostMessageMode fromIndex(int index) {
+        return CodeLookup.byIndex(VALUES, HostMessageMode::getIndex, index, UNKNOWN);
+    }
 }

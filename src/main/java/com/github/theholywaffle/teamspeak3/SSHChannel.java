@@ -27,106 +27,135 @@ package com.github.theholywaffle.teamspeak3;
  */
 
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
-import net.schmizz.sshj.SSHClient;
-import net.schmizz.sshj.connection.channel.direct.Session;
-import net.schmizz.sshj.userauth.UserAuthException;
-
-import javax.net.SocketFactory;
-import java.net.Socket;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import javax.net.SocketFactory;
+import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.connection.channel.direct.Session;
+import net.schmizz.sshj.userauth.UserAuthException;
 
 class SSHChannel implements QueryTransport {
 
-	private final SSHClient client = new SSHClient();
-	private volatile Thread initializingThread;
-	private volatile Thread transportReader;
-	private final Socket socket = new Socket() {
-		@Override
-		public InputStream getInputStream() throws IOException {
-			return new FilterInputStream(super.getInputStream()) {
-				private void trackReader() {
-					// SSHJ reads identification on the caller before starting its single owned reader.
-					// The query owns that caller; only the asynchronous reader belongs to the transport.
-					Thread current = Thread.currentThread();
-					if (transportReader == null && current != initializingThread) transportReader = current;
-				}
-				@Override public int read() throws IOException { trackReader(); return in.read(); }
-				@Override public int read(byte[] bytes, int offset, int length) throws IOException {
-					trackReader(); return in.read(bytes, offset, length);
-				}
-			};
-		}
-	};
-	private final QueryConfig config;
-	private volatile Session session;
+    private final SSHClient client = new SSHClient();
+    private volatile Thread initializingThread;
+    private volatile Thread transportReader;
+    private final Socket socket = new Socket() {
+        @Override
+        public InputStream getInputStream() throws IOException {
+            return new FilterInputStream(super.getInputStream()) {
+                private void trackReader() {
+                    // SSHJ reads identification on the caller before starting its single owned reader.
+                    // The query owns that caller; only the asynchronous reader belongs to the transport.
+                    Thread current = Thread.currentThread();
+                    if (transportReader == null && current != initializingThread) transportReader = current;
+                }
 
-	SSHChannel(QueryConfig config) { this.config = config; }
+                @Override
+                public int read() throws IOException {
+                    trackReader();
+                    return in.read();
+                }
 
-	@Override
-	public void connect(QueryTransport.Connected connection) throws IOException {
-		initializingThread = Thread.currentThread();
-		if (!config.hasLoginCredentials()) {
-			throw new TS3ConnectionFailedException("SSH requires query login credentials");
-		}
-		socket.connect(new InetSocketAddress(config.getHost(),
-			config.getQueryPort()), TS3Config.socketTimeout(config.getConnectTimeout()));
-		connection.transportConnected();
-		socket.setTcpNoDelay(true);
-		client.setSocketFactory(new SocketFactory() {
-			@Override public Socket createSocket() { return socket; }
-			@Override public Socket createSocket(String host, int port) { return socket; }
-			@Override public Socket createSocket(String host, int port, InetAddress local, int localPort) { return socket; }
-			@Override public Socket createSocket(InetAddress host, int port) { return socket; }
-			@Override public Socket createSocket(InetAddress host, int port, InetAddress local, int localPort) { return socket; }
-		});
-		client.addHostKeyVerifier(config.getSshHostKeyPolicy().verifier());
-		client.setTimeout(TS3Config.socketTimeout(config.getHandshakeTimeout()));
-		client.setRemoteCharset(StandardCharsets.UTF_8);
-		try {
-			client.connect(config.getHost(), config.getQueryPort());
-			client.authPassword(config.getUsername(), config.getPassword());
-			session = client.startSession();
-			session.startShell();
-		} catch (UserAuthException e) {
-			throw new TS3ConnectionFailedException("Invalid query username or password", e);
-		}
-	}
+                @Override
+                public int read(byte[] bytes, int offset, int length) throws IOException {
+                    trackReader();
+                    return in.read(bytes, offset, length);
+                }
+            };
+        }
+    };
+    private final QueryConfig config;
+    private volatile Session session;
 
-	@Override
-	public InputStream getInputStream() {
-		return session.getInputStream();
-	}
+    SSHChannel(QueryConfig config) {
+        this.config = config;
+    }
 
-	@Override
-	public OutputStream getOutputStream() {
-		return session.getOutputStream();
-	}
+    @Override
+    public void connect(QueryTransport.Connected connection) throws IOException {
+        initializingThread = Thread.currentThread();
+        if (!config.hasLoginCredentials()) {
+            throw new TS3ConnectionFailedException("SSH requires query login credentials");
+        }
+        socket.connect(
+                new InetSocketAddress(config.getHost(), config.getQueryPort()),
+                TS3Config.socketTimeout(config.getConnectTimeout()));
+        connection.transportConnected();
+        socket.setTcpNoDelay(true);
+        client.setSocketFactory(new SocketFactory() {
+            @Override
+            public Socket createSocket() {
+                return socket;
+            }
 
-	@Override
-	public void close() throws IOException {
-		// Abort the underlying socket first: SSH channel/client close may write to the peer.
-		socket.close();
-		client.close();
-	}
+            @Override
+            public Socket createSocket(String host, int port) {
+                return socket;
+            }
 
-	@Override
-	public void awaitTermination(Duration timeout) {
-		Deadline deadline = new Deadline(timeout);
-		deadline.join(transportReader);
-		deadline.join(client.getConnection().getKeepAlive());
-	}
+            @Override
+            public Socket createSocket(String host, int port, InetAddress local, int localPort) {
+                return socket;
+            }
 
-	@Override
-	public boolean isTerminated() {
-		Thread reader = transportReader;
-		return (reader == null || !reader.isAlive()) && !client.getConnection().getKeepAlive().isAlive();
-	}
+            @Override
+            public Socket createSocket(InetAddress host, int port) {
+                return socket;
+            }
 
+            @Override
+            public Socket createSocket(InetAddress host, int port, InetAddress local, int localPort) {
+                return socket;
+            }
+        });
+        client.addHostKeyVerifier(config.getSshHostKeyPolicy().verifier());
+        client.setTimeout(TS3Config.socketTimeout(config.getHandshakeTimeout()));
+        client.setRemoteCharset(StandardCharsets.UTF_8);
+        try {
+            client.connect(config.getHost(), config.getQueryPort());
+            client.authPassword(config.getUsername(), config.getPassword());
+            session = client.startSession();
+            session.startShell();
+        } catch (UserAuthException e) {
+            throw new TS3ConnectionFailedException("Invalid query username or password", e);
+        }
+    }
+
+    @Override
+    public InputStream getInputStream() {
+        return session.getInputStream();
+    }
+
+    @Override
+    public OutputStream getOutputStream() {
+        return session.getOutputStream();
+    }
+
+    @Override
+    public void close() throws IOException {
+        // Abort the underlying socket first: SSH channel/client close may write to the peer.
+        socket.close();
+        client.close();
+    }
+
+    @Override
+    public void awaitTermination(Duration timeout) {
+        Deadline deadline = new Deadline(timeout);
+        deadline.join(transportReader);
+        deadline.join(client.getConnection().getKeepAlive());
+    }
+
+    @Override
+    public boolean isTerminated() {
+        Thread reader = transportReader;
+        return (reader == null || !reader.isAlive())
+                && !client.getConnection().getKeepAlive().isAlive();
+    }
 }

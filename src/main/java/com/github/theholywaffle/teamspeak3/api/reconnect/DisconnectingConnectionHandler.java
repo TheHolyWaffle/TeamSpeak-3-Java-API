@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api.reconnect;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -33,26 +33,26 @@ import org.slf4j.LoggerFactory;
 
 public class DisconnectingConnectionHandler implements ConnectionHandler {
 
-	private static final Logger log = LoggerFactory.getLogger(DisconnectingConnectionHandler.class);
-	private final ConnectionHandler userConnectionHandler;
+    private static final Logger log = LoggerFactory.getLogger(DisconnectingConnectionHandler.class);
+    private final ConnectionHandler userConnectionHandler;
 
-	public DisconnectingConnectionHandler(ConnectionHandler userConnectionHandler) {
-		this.userConnectionHandler = userConnectionHandler;
-	}
+    public DisconnectingConnectionHandler(ConnectionHandler userConnectionHandler) {
+        this.userConnectionHandler = userConnectionHandler;
+    }
 
-	@Override
-	public void onConnect(TS3Api api) {
-		if (userConnectionHandler != null) {
-			userConnectionHandler.onConnect(api);
-		}
-	}
+    @Override
+    public void onConnect(TS3Api api) {
+        if (userConnectionHandler != null) {
+            userConnectionHandler.onConnect(api);
+        }
+    }
 
-	@Override
-	public void onDisconnect(TS3Query ts3Query) {
-		log.error("[Connection] Disconnected from TS3 server");
+    @Override
+    public void onDisconnect(TS3Query ts3Query) {
+        log.error("[Connection] Disconnected from TS3 server");
 
-		if (userConnectionHandler != null) {
-			userConnectionHandler.onDisconnect(ts3Query);
-		}
-	}
+        if (userConnectionHandler != null) {
+            userConnectionHandler.onDisconnect(ts3Query);
+        }
+    }
 }

@@ -5,7 +5,6 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.CreatedQueryLogin;
 import com.github.theholywaffle.teamspeak3.api.wrapper.QueryLogin;
 import com.github.theholywaffle.teamspeak3.commands.ClientCommands;
 import com.github.theholywaffle.teamspeak3.commands.QueryLoginCommands;
-
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -16,39 +15,40 @@ import java.util.concurrent.CompletableFuture;
  */
 public final class QueryLoginApiAsync {
 
-	private final QueryRequests requests;
+    private final QueryRequests requests;
 
-	QueryLoginApiAsync(QueryRequests requests) {
-		this.requests = requests;
-	}
+    QueryLoginApiAsync(QueryRequests requests) {
+        this.requests = requests;
+    }
 
-	/** @see QueryLoginApi#list() */
-	public CompletableFuture<List<QueryLogin>> list() {
-		return search(null);
-	}
+    /** @see QueryLoginApi#list() */
+    public CompletableFuture<List<QueryLogin>> list() {
+        return search(null);
+    }
 
-	/** @see QueryLoginApi#search(String) */
-	public CompletableFuture<List<QueryLogin>> search(String loginNamePattern) {
-		return requests.models(QueryLoginCommands.queryLoginList(loginNamePattern), QueryLogin::new);
-	}
+    /** @see QueryLoginApi#search(String) */
+    public CompletableFuture<List<QueryLogin>> search(String loginNamePattern) {
+        return requests.models(QueryLoginCommands.queryLoginList(loginNamePattern), QueryLogin::new);
+    }
 
-	/** @see QueryLoginApi#create(String) */
-	public CompletableFuture<CreatedQueryLogin> create(String loginName) {
-		return requests.model(QueryLoginCommands.queryLoginAdd(loginName, 0), CreatedQueryLogin::new);
-	}
+    /** @see QueryLoginApi#create(String) */
+    public CompletableFuture<CreatedQueryLogin> create(String loginName) {
+        return requests.model(QueryLoginCommands.queryLoginAdd(loginName, 0), CreatedQueryLogin::new);
+    }
 
-	/** @see QueryLoginApi#create(String, ClientDatabaseId) */
-	public CompletableFuture<CreatedQueryLogin> create(String loginName, ClientDatabaseId clientDatabaseId) {
-		return requests.model(QueryLoginCommands.queryLoginAdd(loginName, clientDatabaseId.value()), CreatedQueryLogin::new);
-	}
+    /** @see QueryLoginApi#create(String, ClientDatabaseId) */
+    public CompletableFuture<CreatedQueryLogin> create(String loginName, ClientDatabaseId clientDatabaseId) {
+        return requests.model(
+                QueryLoginCommands.queryLoginAdd(loginName, clientDatabaseId.value()), CreatedQueryLogin::new);
+    }
 
-	/** @see QueryLoginApi#delete(ClientDatabaseId) */
-	public CompletableFuture<Void> delete(ClientDatabaseId clientDatabaseId) {
-		return requests.run(QueryLoginCommands.queryLoginDel(clientDatabaseId.value()));
-	}
+    /** @see QueryLoginApi#delete(ClientDatabaseId) */
+    public CompletableFuture<Void> delete(ClientDatabaseId clientDatabaseId) {
+        return requests.run(QueryLoginCommands.queryLoginDel(clientDatabaseId.value()));
+    }
 
-	/** @see QueryLoginApi#updateOwn(String) */
-	public CompletableFuture<String> updateOwn(String loginName) {
-		return requests.string(ClientCommands.clientSetServerQueryLogin(loginName), "client_login_password");
-	}
+    /** @see QueryLoginApi#updateOwn(String) */
+    public CompletableFuture<String> updateOwn(String loginName) {
+        return requests.string(ClientCommands.clientSetServerQueryLogin(loginName), "client_login_password");
+    }
 }

@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,41 +27,40 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  */
 
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
-
 import java.util.Map;
 
 public class Channel extends ChannelBase {
 
-	public Channel(Map<String, String> map) {
-		super(map);
-	}
+    public Channel(Map<String, String> map) {
+        super(map);
+    }
 
-	@Override
-	public int getId() {
-		return requireInt(ChannelProperty.CID);
-	}
+    @Override
+    public int getId() {
+        return requireInt(ChannelProperty.CID);
+    }
 
-	public int getTotalClientsFamily() {
-		return requireInt(ChannelProperty.TOTAL_CLIENTS_FAMILY);
-	}
+    public int getTotalClientsFamily() {
+        return requireInt(ChannelProperty.TOTAL_CLIENTS_FAMILY);
+    }
 
-	public int getTotalClients() {
-		return requireInt(ChannelProperty.TOTAL_CLIENTS);
-	}
+    public int getTotalClients() {
+        return requireInt(ChannelProperty.TOTAL_CLIENTS);
+    }
 
-	public int getNeededSubscribePower() {
-		return requireInt(ChannelProperty.CHANNEL_NEEDED_SUBSCRIBE_POWER);
-	}
+    public int getNeededSubscribePower() {
+        return requireInt(ChannelProperty.CHANNEL_NEEDED_SUBSCRIBE_POWER);
+    }
 
-	/**
-	 * @return {@code true}, if the channel is empty, {@code false} otherwise.
-	 */
-	public boolean isEmpty() {
-		return (getTotalClients() == 0);
-	}
+    /**
+     * @return {@code true}, if the channel is empty, {@code false} otherwise.
+     */
+    public boolean isEmpty() {
+        return (getTotalClients() == 0);
+    }
 
-	@Override
-	public boolean isFamilyEmpty() {
-		return (getTotalClientsFamily() == 0);
-	}
+    @Override
+    public boolean isFamilyEmpty() {
+        return (getTotalClientsFamily() == 0);
+    }
 }

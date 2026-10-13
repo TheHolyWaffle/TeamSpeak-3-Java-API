@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -35,25 +35,25 @@ import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
  */
 public record KeyValueParam(String key, String value) implements Parameter {
 
-	public KeyValueParam {
-		if (key == null) throw new IllegalArgumentException("Key was null");
-		if (value == null) value = "";
-	}
+    public KeyValueParam {
+        if (key == null) throw new IllegalArgumentException("Key was null");
+        if (value == null) value = "";
+    }
 
-	public KeyValueParam(String key, int value) {
-		this(key, String.valueOf(value));
-	}
+    public KeyValueParam(String key, int value) {
+        this(key, String.valueOf(value));
+    }
 
-	public KeyValueParam(String key, long value) {
-		this(key, String.valueOf(value));
-	}
+    public KeyValueParam(String key, long value) {
+        this(key, String.valueOf(value));
+    }
 
-	public KeyValueParam(String key, boolean value) {
-		this(key, value ? "1" : "0");
-	}
+    public KeyValueParam(String key, boolean value) {
+        this(key, value ? "1" : "0");
+    }
 
-	@Override
-	public void appendTo(StringBuilder line) {
-		CommandEncoding.encode(value, CommandEncoding.encode(key, line).append('='));
-	}
+    @Override
+    public void appendTo(StringBuilder line) {
+        CommandEncoding.encode(value, CommandEncoding.encode(key, line).append('='));
+    }
 }

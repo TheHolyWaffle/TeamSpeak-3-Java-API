@@ -8,5 +8,9 @@ package com.github.theholywaffle.teamspeak3;
  * @param listenerFailures exceptions thrown by event callbacks (including lazy field access)
  * @param rejectedTasks event executor admission failures
  */
-public record EventStatistics(long droppedEvents, long unknownNotifications,
-		long malformedNotifications, long listenerFailures, long rejectedTasks) { }
+public record EventStatistics(
+        long droppedEvents,
+        long unknownNotifications,
+        long malformedNotifications,
+        long listenerFailures,
+        long rejectedTasks) {}

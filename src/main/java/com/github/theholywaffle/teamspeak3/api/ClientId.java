@@ -8,13 +8,17 @@ package com.github.theholywaffle.teamspeak3.api;
  */
 public record ClientId(int value) {
 
-	public ClientId {
-		if (value < 0) throw new IllegalArgumentException("Client ID must not be negative");
-	}
+    public ClientId {
+        if (value < 0) throw new IllegalArgumentException("Client ID must not be negative");
+    }
 
-	public static ClientId of(int value) { return new ClientId(value); }
+    public static ClientId of(int value) {
+        return new ClientId(value);
+    }
 
-	/** @return the plain number, as used in ServerQuery commands */
-	@Override
-	public String toString() { return Integer.toString(value); }
+    /** @return the plain number, as used in ServerQuery commands */
+    @Override
+    public String toString() {
+        return Integer.toString(value);
+    }
 }

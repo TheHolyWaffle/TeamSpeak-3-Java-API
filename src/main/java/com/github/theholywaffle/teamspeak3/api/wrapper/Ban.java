@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,7 +27,6 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  */
 
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
@@ -39,71 +38,71 @@ import java.util.Optional;
  */
 public class Ban extends Wrapper {
 
-	public Ban(Map<String, String> map) {
-		super(map);
-	}
+    public Ban(Map<String, String> map) {
+        super(map);
+    }
 
-	public int getId() {
-		return requireInt("banid");
-	}
+    public int getId() {
+        return requireInt("banid");
+    }
 
-	/** @return the banned IP pattern, or empty if the rule does not match on IP */
-	public Optional<String> getBannedIp() {
-		return findText("ip");
-	}
+    /** @return the banned IP pattern, or empty if the rule does not match on IP */
+    public Optional<String> getBannedIp() {
+        return findText("ip");
+    }
 
-	/** @return the banned name pattern, or empty if the rule does not match on name */
-	public Optional<String> getBannedName() {
-		return findText("name");
-	}
+    /** @return the banned name pattern, or empty if the rule does not match on name */
+    public Optional<String> getBannedName() {
+        return findText("name");
+    }
 
-	/** @return the banned unique ID, or empty if the rule does not match on unique ID */
-	public Optional<String> getBannedUId() {
-		return findText("uid");
-	}
+    /** @return the banned unique ID, or empty if the rule does not match on unique ID */
+    public Optional<String> getBannedUId() {
+        return findText("uid");
+    }
 
-	/** @return the banned myTeamSpeak ID, or empty if the rule does not match on it */
-	public Optional<String> getBannedMyTeamSpeakId() {
-		return findText("mytsid");
-	}
+    /** @return the banned myTeamSpeak ID, or empty if the rule does not match on it */
+    public Optional<String> getBannedMyTeamSpeakId() {
+        return findText("mytsid");
+    }
 
-	/** @return the last nickname of the banned client, or empty if unknown */
-	public Optional<String> getLastNickname() {
-		return findText("lastnickname");
-	}
+    /** @return the last nickname of the banned client, or empty if unknown */
+    public Optional<String> getLastNickname() {
+        return findText("lastnickname");
+    }
 
-	public Instant getCreatedDate() {
-		return requireInstant("created");
-	}
+    public Instant getCreatedDate() {
+        return requireInstant("created");
+    }
 
-	/** @return the ban duration with second precision; {@link Duration#ZERO} for a permanent ban */
-	public Duration getDuration() {
-		return requireSeconds("duration");
-	}
+    /** @return the ban duration with second precision; {@link Duration#ZERO} for a permanent ban */
+    public Duration getDuration() {
+        return requireSeconds("duration");
+    }
 
-	public boolean isPermanent() {
-		return getDuration().isZero();
-	}
+    public boolean isPermanent() {
+        return getDuration().isZero();
+    }
 
-	public String getInvokerName() {
-		return require("invokername");
-	}
+    public String getInvokerName() {
+        return require("invokername");
+    }
 
-	/** @return the database ID of the client who created the ban, or empty if none ({@code 0}) */
-	public Optional<ClientDatabaseId> getInvokerClientDBId() {
-		return findDatabaseId("invokercldbid");
-	}
+    /** @return the database ID of the client who created the ban, or empty if none ({@code 0}) */
+    public Optional<ClientDatabaseId> getInvokerClientDBId() {
+        return findDatabaseId("invokercldbid");
+    }
 
-	public String getInvokerUId() {
-		return require("invokeruid");
-	}
+    public String getInvokerUId() {
+        return require("invokeruid");
+    }
 
-	/** @return the reason, or empty if none was given */
-	public Optional<String> getReason() {
-		return findText("reason");
-	}
+    /** @return the reason, or empty if none was given */
+    public Optional<String> getReason() {
+        return findText("reason");
+    }
 
-	public int getEnforcements() {
-		return requireInt("enforcements");
-	}
+    public int getEnforcements() {
+        return requireInt("enforcements");
+    }
 }

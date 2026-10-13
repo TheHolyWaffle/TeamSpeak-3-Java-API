@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,156 +26,157 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
-import java.util.concurrent.CompletableFuture;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 import com.github.theholywaffle.teamspeak3.commands.response.ResponseBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
+import java.util.concurrent.CompletableFuture;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class StreamReader implements Runnable {
 
-	private static final Logger log = LoggerFactory.getLogger(StreamReader.class);
+    private static final Logger log = LoggerFactory.getLogger(StreamReader.class);
 
-	private final TS3Query ts3;
-	private final Connection con;
-	private final ProtocolLineReader in;
-	private final boolean logComms;
+    private final TS3Query ts3;
+    private final Connection con;
+    private final ProtocolLineReader in;
+    private final boolean logComms;
 
-	private CommandQueue commandQueue = null;
-	private ResponseBuilder responseBuilder = null;
-	private boolean receivingResponses;
+    private CommandQueue commandQueue = null;
+    private ResponseBuilder responseBuilder = null;
+    private boolean receivingResponses;
 
-	StreamReader(Connection connection, InputStream inStream, TS3Query query, QueryConfig config) throws IOException {
-		ts3 = query;
-		con = connection;
-		in = new ProtocolLineReader(inStream);
-		logComms = config.getEnableCommunicationsLogging();
-	}
+    StreamReader(Connection connection, InputStream inStream, TS3Query query, QueryConfig config) throws IOException {
+        ts3 = query;
+        con = connection;
+        in = new ProtocolLineReader(inStream);
+        logComms = config.getEnableCommunicationsLogging();
+    }
 
-	@Override
-	public void run() {
-		while (!Thread.currentThread().isInterrupted()) {
-			String line;
+    @Override
+    public void run() {
+        while (!Thread.currentThread().isInterrupted()) {
+            String line;
 
-			try {
-				// Will block until a full line of text could be read.
-				line = in.readLine();
-			} catch (SocketTimeoutException socketTimeout) {
-				// Really disconnected or just no data transferred for <commandTimeout> milliseconds?
-				if (con.isTimedOut()) {
-					log.error("Connection timed out.", socketTimeout);
-					break;
-				} else {
-					continue;
-				}
-			} catch (IOException io) {
-				if (!Thread.currentThread().isInterrupted()) {
-					log.error("Connection error occurred.", io);
-				}
-				break;
-			}
+            try {
+                // Will block until a full line of text could be read.
+                line = in.readLine();
+            } catch (SocketTimeoutException socketTimeout) {
+                // Really disconnected or just no data transferred for <commandTimeout> milliseconds?
+                if (con.isTimedOut()) {
+                    log.error("Connection timed out.", socketTimeout);
+                    break;
+                } else {
+                    continue;
+                }
+            } catch (IOException io) {
+                if (!Thread.currentThread().isInterrupted()) {
+                    log.error("Connection error occurred.", io);
+                }
+                break;
+            }
 
-			if (line == null) {
-				// End of stream: connection terminated by server
-				log.error("Connection closed by the server.");
-				break;
-			} else if (line.isEmpty()) {
-				continue; // The server is sending garbage
-			}
+            if (line == null) {
+                // End of stream: connection terminated by server
+                log.error("Connection closed by the server.");
+                break;
+            } else if (line.isEmpty()) {
+                continue; // The server is sending garbage
+            }
 
-			if (line.startsWith("notify")) {
-				handleEvent(line);
-			} else if (receivingResponses || line.startsWith("error ") || startsWithField(line)) {
-				// Welcome text is informational, not a fixed-size response frame.
-				// Protocol data is key/value text; error lines terminate a command.
-				receivingResponses = true;
-				// Response fragments never extend a command deadline.
-				try {
-					handleCommandResponse(line);
-				} catch (IllegalArgumentException malformed) {
-					log.error("Malformed command response: {}", line, malformed);
-					break;
-				}
-			} else if (logComms) {
-				log.debug("[welcome] < {}", line);
-			}
-		}
+            if (line.startsWith("notify")) {
+                handleEvent(line);
+            } else if (receivingResponses || line.startsWith("error ") || startsWithField(line)) {
+                // Welcome text is informational, not a fixed-size response frame.
+                // Protocol data is key/value text; error lines terminate a command.
+                receivingResponses = true;
+                // Response fragments never extend a command deadline.
+                try {
+                    handleCommandResponse(line);
+                } catch (IllegalArgumentException malformed) {
+                    log.error("Malformed command response: {}", line, malformed);
+                    break;
+                }
+            } else if (logComms) {
+                log.debug("[welcome] < {}", line);
+            }
+        }
 
-		try {
-			in.close();
-		} catch (IOException ignored) {
-			// Ignore
-		}
+        try {
+            in.close();
+        } catch (IOException ignored) {
+            // Ignore
+        }
 
-		if (!Thread.currentThread().isInterrupted()) {
-			con.internalDisconnect();
-		}
-	}
+        if (!Thread.currentThread().isInterrupted()) {
+            con.internalDisconnect();
+        }
+    }
 
-	private static boolean startsWithField(String line) {
-		int equals = line.indexOf('=');
-		int space = line.indexOf(' ');
-		return equals > 0 && (space == -1 || equals < space);
-	}
+    private static boolean startsWithField(String line) {
+        int equals = line.indexOf('=');
+        int space = line.indexOf(' ');
+        return equals > 0 && (space == -1 || equals < space);
+    }
 
-	private void handleEvent(String event) {
-		if (logComms) log.debug("[event] < {}", event);
+    private void handleEvent(String event) {
+        if (logComms) log.debug("[event] < {}", event);
 
-		String[] parts = event.split(" ", 2);
-		if (parts.length == 2) ts3.getEventManager().fireEvent(parts[0], parts[1]);
-		else ts3.getEventManager().malformedNotification();
-	}
+        String[] parts = event.split(" ", 2);
+        if (parts.length == 2) ts3.getEventManager().fireEvent(parts[0], parts[1]);
+        else ts3.getEventManager().malformedNotification();
+    }
 
-	private void handleCommandResponse(String response) {
-		if (responseBuilder == null) {
-			commandQueue = con.getCommandQueue();
-			Command command = commandQueue.peekReceiveQueue();
+    private void handleCommandResponse(String response) {
+        if (responseBuilder == null) {
+            commandQueue = con.getCommandQueue();
+            Command command = commandQueue.peekReceiveQueue();
 
-			if (command == null) {
-				log.warn("[UNHANDLED] < {}", response);
-				return;
-			}
+            if (command == null) {
+                log.warn("[UNHANDLED] < {}", response);
+                return;
+            }
 
-			responseBuilder = new ResponseBuilder(command);
-		}
+            responseBuilder = new ResponseBuilder(command);
+        }
 
-		if (logComms) log.debug("[{}] < {}", responseBuilder.getCommand().getName(), response);
+        if (logComms) log.debug("[{}] < {}", responseBuilder.getCommand().getName(), response);
 
-		if (response.startsWith("error ")) {
-			handleCommandError(responseBuilder, response);
+        if (response.startsWith("error ")) {
+            handleCommandError(responseBuilder, response);
 
-			responseBuilder = null;
-		} else {
-			responseBuilder.appendResponse(response);
-		}
-	}
+            responseBuilder = null;
+        } else {
+            responseBuilder.appendResponse(response);
+        }
+    }
 
-	private void handleCommandError(ResponseBuilder responseBuilder, String error) {
-		Command command = responseBuilder.getCommand();
-		if (command.getName().equals("quit")) {
-			// Response to a quit command received, we're done
-			Thread.currentThread().interrupt();
-		}
+    private void handleCommandError(ResponseBuilder responseBuilder, String error) {
+        Command command = responseBuilder.getCommand();
+        if (command.getName().equals("quit")) {
+            // Response to a quit command received, we're done
+            Thread.currentThread().interrupt();
+        }
 
-		QueryError queryError = DefaultArrayResponse.parseError(error);
-		CompletableFuture<DefaultArrayResponse> future = command.getFuture();
+        QueryError queryError = DefaultArrayResponse.parseError(error);
+        CompletableFuture<DefaultArrayResponse> future = command.getFuture();
 
-		if (queryError.isSuccessful()) {
-			DefaultArrayResponse response = responseBuilder.buildResponse();
+        if (queryError.isSuccessful()) {
+            DefaultArrayResponse response = responseBuilder.buildResponse();
 
-			commandQueue.completeResponse(command, con, () -> future.complete(response));
-		} else {
-			log.debug("TS3 command error: {}", queryError);
+            commandQueue.completeResponse(command, con, () -> future.complete(response));
+        } else {
+            log.debug("TS3 command error: {}", queryError);
 
-			commandQueue.completeResponse(command, con, () -> future.completeExceptionally(new TS3CommandFailedException(queryError, command.getName())));
-		}
-	}
-
+            commandQueue.completeResponse(
+                    command,
+                    con,
+                    () -> future.completeExceptionally(new TS3CommandFailedException(queryError, command.getName())));
+        }
+    }
 }

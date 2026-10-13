@@ -14,22 +14,28 @@ import java.util.Objects;
  */
 public record ClientBan(List<ClientId> clientIds, Duration duration, String reason, boolean continueOnError) {
 
-	public ClientBan {
-		clientIds = List.copyOf(clientIds);
-		if (clientIds.isEmpty()) throw new IllegalArgumentException("At least one client ID is required");
-		Objects.requireNonNull(duration, "duration");
-		if (duration.isNegative()) throw new IllegalArgumentException("Duration must not be negative");
-	}
+    public ClientBan {
+        clientIds = List.copyOf(clientIds);
+        if (clientIds.isEmpty()) throw new IllegalArgumentException("At least one client ID is required");
+        Objects.requireNonNull(duration, "duration");
+        if (duration.isNegative()) throw new IllegalArgumentException("Duration must not be negative");
+    }
 
-	/** @return a permanent ban without reason for the given clients */
-	public static ClientBan of(ClientId... clientIds) {
-		return new ClientBan(List.of(clientIds), Duration.ZERO, null, false);
-	}
+    /** @return a permanent ban without reason for the given clients */
+    public static ClientBan of(ClientId... clientIds) {
+        return new ClientBan(List.of(clientIds), Duration.ZERO, null, false);
+    }
 
-	/** @param banDuration the ban duration, truncated to seconds; {@link Duration#ZERO} is permanent */
-	public ClientBan withDuration(Duration banDuration) { return new ClientBan(clientIds, banDuration, reason, continueOnError); }
+    /** @param banDuration the ban duration, truncated to seconds; {@link Duration#ZERO} is permanent */
+    public ClientBan withDuration(Duration banDuration) {
+        return new ClientBan(clientIds, banDuration, reason, continueOnError);
+    }
 
-	public ClientBan withReason(String banReason) { return new ClientBan(clientIds, duration, banReason, continueOnError); }
+    public ClientBan withReason(String banReason) {
+        return new ClientBan(clientIds, duration, banReason, continueOnError);
+    }
 
-	public ClientBan continuingOnError() { return new ClientBan(clientIds, duration, reason, true); }
+    public ClientBan continuingOnError() {
+        return new ClientBan(clientIds, duration, reason, true);
+    }
 }
