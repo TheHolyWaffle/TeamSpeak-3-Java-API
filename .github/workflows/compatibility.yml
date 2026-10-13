@@ -2,7 +2,17 @@ name: ServerQuery compatibility
 
 on:
   workflow_call:
+    inputs:
+      ts3-image:
+        description: Candidate digest-pinned TS3 image to test instead of the pin
+        type: string
+        default: ''
   workflow_dispatch:
+    inputs:
+      ts3-image:
+        description: Candidate digest-pinned TS3 image (teamspeak:X.Y.Z@sha256:...); empty uses the pin
+        type: string
+        default: ''
   schedule:
     - cron: '23 6 * * 1' # Weekly verification of pinned TS3 compatibility.
 
@@ -23,6 +33,11 @@ jobs:
           java-version: '25'
           distribution: temurin
           cache: maven
+      - name: Use the candidate TS3 image as its update PR would
+        if: ${{ inputs.ts3-image != '' }}
+        env:
+          TS3_IMAGE: ${{ inputs.ts3-image }}
+        run: bash .github/scripts/use-ts3-image.sh "$TS3_IMAGE"
       - name: Require Docker and record image architectures
         run: |
           docker version

@@ -1,0 +1,63 @@
+name: Upstream update detection
+
+on:
+  schedule:
+    - cron: '17 5 * * 4' # Weekly, between Dependabot's Monday runs.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ts3_image:
+    name: Detect a newer TS3 server image
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      candidate: ${{ steps.image.outputs.candidate }}
+      changed: ${{ steps.image.outputs.changed }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Compare the pin with the newest official TeamSpeak 3 image
+        id: image
+        run: |
+          bash .github/scripts/ts3-image-candidate.sh | tee -a "$GITHUB_OUTPUT" > "$RUNNER_TEMP/image.txt"
+          {
+            echo '### TS3 server image'
+            echo
+            sed 's/^/    /' "$RUNNER_TEMP/image.txt"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if grep -qx 'changed=true' "$RUNNER_TEMP/image.txt"; then
+            echo "::notice::A newer TS3 image is available; the compatibility suite runs against it."
+          fi
+
+  ts3_compatibility:
+    name: Candidate TS3 image
+    needs: ts3_image
+    if: ${{ needs.ts3_image.outputs.changed == 'true' }}
+    uses: ./.github/workflows/compatibility.yml
+    with:
+      ts3-image: ${{ needs.ts3_image.outputs.candidate }}
+
+  maven_distribution:
+    name: Detect a newer Maven 3 distribution
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Dependabot's Maven Wrapper updates are not generally available yet.
+      - name: Compare the Maven Wrapper with the newest Maven 3 release
+        run: |
+          pinned=$(sed -n 's#^distributionUrl=.*/apache-maven-\(.*\)-bin\.zip$#\1#p' .mvn/wrapper/maven-wrapper.properties)
+          newest=$(curl -fsSL --retry 3 https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/maven-metadata.xml |
+            sed -n 's#.*<version>\(3\.[0-9]*\.[0-9]*\)</version>.*#\1#p' | sort -V | tail -1)
+          test -n "$pinned" && test -n "$newest"
+          echo "Maven Wrapper: $pinned; newest Maven 3: $newest" | tee -a "$GITHUB_STEP_SUMMARY"
+          if [[ $pinned != "$newest" ]]; then
+            echo "::error::Maven $newest is available: update .mvn/wrapper/maven-wrapper.properties in a build: PR (docs/maintenance.md)."
+            exit 1
+          fi
