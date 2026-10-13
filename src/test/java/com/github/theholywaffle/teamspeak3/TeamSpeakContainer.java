@@ -41,6 +41,7 @@ import org.testcontainers.utility.DockerImageName;
 final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer>
         implements BeforeAllCallback, AfterAllCallback {
     static final String PASSWORD = "integration-test-only";
+    private static final String ALLOWLIST_LOADED = "updated query_ip_allowlist ips: 0.0.0.0/0";
     static final String TS3_IMAGE =
             "teamspeak:3.13.8@sha256:6dfdfb22869adf50e1b66d024b360b786d57a85ea09e8e8fdb6cca23949b2813";
     PublicKey hostKey;
@@ -67,6 +68,10 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer>
                         Exception last = null;
                         do {
                             try {
+                                // Connections before the allowlist is active count against flood protection
+                                // and can block later queries from the Docker gateway address.
+                                if (!getLogs().contains(ALLOWLIST_LOADED))
+                                    throw new IOException("Allowlist not loaded");
                                 probeSsh();
                                 probeRaw();
                                 return;
@@ -172,7 +177,8 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer>
 
     @Override
     public String getLogs() {
-        return super.getLogs().replaceAll("(?im)^.*(?:token=|password[=:]).*$", "[redacted generated credentials]");
+        return super.getLogs()
+                .replaceAll("(?im)^.*(?:token=|password[=:]|apikey=).*$", "[redacted generated credentials]");
     }
 
     TS3Config config(TS3Query.Protocol protocol) {
