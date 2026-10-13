@@ -154,6 +154,46 @@
 				</executions>
 			</plugin>
 			<plugin>
+				<groupId>com.diffplug.spotless</groupId>
+				<artifactId>spotless-maven-plugin</artifactId>
+				<version>3.10.3</version>
+				<configuration>
+					<java>
+						<includes>
+							<include>src/main/java/**/*.java</include>
+							<include>src/test/java/**/*.java</include>
+							<include>example/**/*.java</include>
+						</includes>
+						<palantirJavaFormat>
+							<version>2.99.0</version>
+						</palantirJavaFormat>
+					</java>
+					<formats>
+						<format>
+							<includes>
+								<include>.github/**/*.yml</include>
+								<include>.github/**/*.sh</include>
+								<include>src/**/*.properties</include>
+								<include>src/**/*.sh</include>
+								<include>*.yml</include>
+								<include>*.json</include>
+								<include>pom.xml</include>
+							</includes>
+							<trimTrailingWhitespace />
+							<endWithNewline />
+						</format>
+					</formats>
+				</configuration>
+				<executions>
+					<execution>
+						<id>check-formatting</id>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-clean-plugin</artifactId>
 				<version>3.5.0</version>
