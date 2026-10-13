@@ -24,18 +24,18 @@ Java 25 workflow without the corresponding build changes. This branch removes th
 publisher as part of its replacement CI, but cannot change the deployed workflow
 on `master` before its PR merges. Travis is removed on this modernization branch.
 
-Repository administrators should extend the branch rules to `modernization/2.0`
-and require the **CI required** status from GitHub Actions, including requiring
-up-to-date branches and PR review. Keep the old `master` build check required until
-the final integration PR introduces this workflow, then require **CI required** on
-`master` too. The README badge tracks `modernization/2.0` now; switch its branch query
-back to `master` when the final integration PR lands.
+Repository rulesets require squash-merged PRs on `master` and `modernization/2.0`, and
+**CI required** on an up-to-date `modernization/2.0` (see
+[repository rules](../CONTRIBUTING.md#repository-rules)). `master` keeps requiring its old
+build check until the final integration PR introduces this workflow; then switch its
+required check to **CI required**. The README badge tracks `modernization/2.0` now; switch
+its branch query back to `master` when the final integration PR lands.
 
 ## Record intent
 
-Use Conventional Commit PR titles and **Squash and merge**. Configure GitHub's
-squash-merge message to use the PR title and description so release-please sees the
-reviewed type, breaking-change notes, and issue references in the resulting commit.
+Use Conventional Commit PR titles and **Squash and merge**; the squash commit is the PR
+title and description (see [contributing](../CONTRIBUTING.md#pull-request-titles-and-releases)),
+so release-please sees the reviewed type, breaking-change notes, and issue references.
 Individual development commits can be freely amended; the resulting integration
 commit must preserve release intent. The **Release intent** job validates PR titles,
 including generated release PRs, and reruns when a title changes.
@@ -44,8 +44,8 @@ including generated release PRs, and reruns when a title changes.
 | --- | --- | --- |
 | `feat!: ...`, `fix!: ...`, or another type with `!` | major | Breaking change; describe migration in the PR body |
 | `feat: ...` | minor | Backward-compatible feature |
-| `fix: ...`, `perf: ...`, `deps: ...` | patch | Backward-compatible fix, performance or runtime dependency update |
-| `ci: ...`, `test: ...`, `chore: ...`, etc. | none | Internal work; no user-facing release on its own |
+| `fix: ...`, `perf: ...`, `deps: ...`, `revert: ...` | patch | Backward-compatible fix, performance change, runtime dependency update or revert |
+| `docs:`, `test:`, `ci:`, `build:`, `refactor:`, `style:`, `chore: ...` | none | Internal work; not released on its own and hidden from release notes |
 
 A `BREAKING CHANGE:` footer also records a major impact. Reference the issue in the
 PR body and retain the generated PR number when squashing. Release-please derives
@@ -152,6 +152,10 @@ Task #449 changes no library API, behavior or dependency. For contributors: `dep
 require a runtime dependency change, Maven Enforcer accepts any Maven 3.10 or newer 3.x (the
 wrapper still pins the exact version), and the TS3 image is pinned in
 `src/test/resources/teamspeak3/Dockerfile`. See [dependency and image maintenance](maintenance.md).
+
+Task #450 changes no library API, behavior or dependency. Questions move from Gitter to
+GitHub Discussions; see [getting help](../SUPPORT.md) and the
+[supported versions](../SECURITY.md#supported-versions), which end 1.x support at 2.0.0.
 
 ## Central Portal publication (#433)
 

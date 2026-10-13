@@ -22,6 +22,10 @@ expect_impact patch 'deps: bump sshj'
 expect_impact none 'refactor: simplify queue'
 expect_impact none 'ci: pin actions'
 expect_impact none 'docs: mention BREAKING CHANGE: in prose' 'Not a footer: BREAKING CHANGE: inline'
+# The squash commit body is the PR description, so the unedited template must not add an impact.
+template=$(<.github/pull_request_template.md)
+expect_impact none 'ci: pin actions' "$template"
+expect_impact patch 'fix: decode escaped pipes' "$template"
 
 # Release impact against the resolved runtime dependencies (dependency:list output).
 list() {

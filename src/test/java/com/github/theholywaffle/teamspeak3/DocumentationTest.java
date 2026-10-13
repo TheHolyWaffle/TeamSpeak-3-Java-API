@@ -21,11 +21,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import org.junit.jupiter.api.Test;
 
-/** Keeps the README configuration reference and the Markdown links in step with the code. */
+/** Keeps the README configuration reference, the support policy and the Markdown links in step with the code. */
 class DocumentationTest {
     private static final Path README = Path.of("README.md");
+    private static final Set<String> GENERATED = Set.of("target", ".git", "build", ".gradle");
     private static final Pattern LINK = Pattern.compile("\\]\\(([^)\\s]+)\\)");
 
     @Test
@@ -102,11 +104,32 @@ class DocumentationTest {
                 "Update the README support table for src/test/resources/teamspeak3/Dockerfile");
     }
 
+    /** A new major version changes the support policy, so it fails until SECURITY.md is reviewed. */
+    @Test
+    void securityPolicyCoversTheDevelopedMajorVersion() throws IOException {
+        Matcher version = Pattern.compile("<artifactId>teamspeak3-api</artifactId>\\s*<version>(\\d+)\\.")
+                .matcher(Files.readString(Path.of("pom.xml")));
+        assertTrue(version.find());
+        int newestDocumented = Pattern.compile("^\\| (\\d+)\\.x ", Pattern.MULTILINE)
+                .matcher(Files.readString(Path.of("SECURITY.md")))
+                .results()
+                .mapToInt(row -> Integer.parseInt(row.group(1)))
+                .max()
+                .orElse(-1);
+        assertTrue(
+                Integer.parseInt(version.group(1)) <= newestDocumented,
+                "Add the " + version.group(1) + ".x line to the supported versions in SECURITY.md");
+    }
+
     @Test
     void relativeLinksAndAnchorsResolve() throws IOException {
-        List<Path> pages = new ArrayList<>(List.of(README));
-        try (Stream<Path> docs = Files.list(Path.of("docs"))) {
-            docs.filter(file -> file.toString().endsWith(".md")).forEach(pages::add);
+        List<Path> pages;
+        try (Stream<Path> files = Files.walk(Path.of("."))) {
+            pages = files.filter(file -> file.toString().endsWith(".md"))
+                    .filter(file -> StreamSupport.stream(file.spliterator(), false)
+                            .noneMatch(part -> GENERATED.contains(part.toString())))
+                    .map(Path::normalize)
+                    .toList();
         }
         List<String> broken = new ArrayList<>();
         for (Path page : pages) {
