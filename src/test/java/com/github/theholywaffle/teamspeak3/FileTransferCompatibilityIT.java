@@ -73,6 +73,8 @@ class FileTransferCompatibilityIT {
                 assertThrows(TS3FileTransferFailedException.class, () -> api.files().upload(FileLocation.of(cid, "/resume.bin"), truncated, 7, UploadMode.OVERWRITE));
                 assertFalse(truncated.closed);
                 eventually(() -> api.files().info(FileLocation.of(cid, "/resume.bin")).getFileSize() == 3, "Truncated upload prefix is retained");
+                // The server reports "file already in use" (2058) until it has released the failed transfer.
+                eventually(() -> api.files().transfers().stream().noneMatch(row -> row.isActive()), "Truncated upload stops");
                 byte[] full = {1,2,3,4,5,6,7};
                 var resumed = new Input(full); api.files().upload(FileLocation.of(cid, "/resume.bin").withChannelPassword(""), resumed, full.length, UploadMode.RESUME);
                 assertFalse(resumed.closed);

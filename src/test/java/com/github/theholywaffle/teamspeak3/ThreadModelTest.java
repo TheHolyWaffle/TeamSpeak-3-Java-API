@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Timeout;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -18,9 +19,12 @@ class ThreadModelTest {
 
 	@Test
 	void ownedThreadsHaveExplicitKindAndDaemonStatus() throws Exception {
+		// A callback attached to an already completed future runs on the attaching thread.
+		var callbackAttached = new CountDownLatch(1);
 		try (var peer = new FakeServerQuery(p -> {
 			p.write("TS3\n");
 			p.expect("whoami");
+			assertTrue(callbackAttached.await(5, TimeUnit.SECONDS));
 			p.write("virtualserver_status=online client_id=1\n" + FakeServerQuery.OK);
 			p.write("notifytextmessage targetmode=3 msg=hi invokerid=1 invokername=a invokeruid=u\n");
 			p.finishQuit();
@@ -36,8 +40,9 @@ class ThreadModelTest {
 				});
 				var completionThread = new CompletableFuture<Thread>();
 				query.connect();
-				query.getAsyncApi().whoAmI().thenRun(() -> completionThread.complete(Thread.currentThread()))
-					.get(5, TimeUnit.SECONDS);
+				var observed = query.getAsyncApi().whoAmI().thenRun(() -> completionThread.complete(Thread.currentThread()));
+				callbackAttached.countDown();
+				observed.get(5, TimeUnit.SECONDS);
 
 				Map<String, Thread> platform = Thread.getAllStackTraces().keySet().stream()
 					.filter(thread -> thread.getName().startsWith("[TeamSpeak-3-Java-API]"))
