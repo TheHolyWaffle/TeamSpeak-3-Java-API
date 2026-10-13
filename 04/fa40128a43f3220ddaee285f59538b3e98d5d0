@@ -1,0 +1,41 @@
+.github/scripts/consumer-check.sh
+  s_5964abfa66d14f::t_30d73fad049d7f 1-34
+.github/scripts/reproducibility-check.sh
+  s_5964abfa66d14f::t_6c0ee8debec39c 1-29
+.github/scripts/synthetic-release.sh
+  s_5964abfa66d14f::t_7f2f364f0fce9e 1-15
+.github/scripts/test-verify-staged-artifacts.sh
+  s_5964abfa66d14f::t_8809635df890a8 1-37
+.github/scripts/verify-staged-artifacts.sh
+  s_5964abfa66d14f::t_a4a77e9ccb1127 1-60
+.github/workflows/release.yml
+  s_5964abfa66d14f::t_98a189e28c523f 138-140
+.github/workflows/verify.yml
+  s_5964abfa66d14f::t_60cf1ab864d000 27,71-72,75-84,93,96-119
+src/test/consumers/gradle/build.gradle.kts
+  s_5964abfa66d14f::t_4df9cde23fd1d6 1-47
+src/test/consumers/gradle/settings.gradle.kts
+  s_5964abfa66d14f::t_2dd02e0c7da3c4 1
+src/test/consumers/maven/pom.xml
+  s_5964abfa66d14f::t_dc92aa316c0406 1-65
+src/test/consumers/maven/src/main/java/consumer/ConsumerApp.java
+  s_5964abfa66d14f::t_f6a4117330f078 1-163
+src/test/consumers/maven/src/main/java/module-info.java
+  s_5964abfa66d14f::t_ad68ace99afbba 1-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "04fa40128a43f3220ddaee285f59538b3e98d5d0",
+  "prompts": {},
+  "sessions": {
+    "s_5964abfa66d14f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_5964abfa66d14f",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
