@@ -1,0 +1,29 @@
+.github/workflows/compatibility.yml
+  s_8ea22aa262209c::t_ed633a05c20e1f 47
+.github/workflows/verify.yml
+  s_8ea22aa262209c::t_ae9fcd2553cbff 38-45
+pom.xml
+  s_8ea22aa262209c::t_ffa0eef39c4c05 303-430,546-563
+src/main/java/com/github/theholywaffle/teamspeak3/KeepAlive.java
+  s_8ea22aa262209c::t_abf4216914c584 29-31,35,38-39,42-45,48-59,66-69,71,78
+src/test/java/com/github/theholywaffle/teamspeak3/KeepAliveTest.java
+  s_8ea22aa262209c::t_7ec52dfe7b70a3 1-75
+src/test/java/com/github/theholywaffle/teamspeak3/api/reconnect/ReconnectBackoffTest.java
+  s_8ea22aa262209c::t_fe5e45cc0793b1 27-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7fa63f52a39093d43062ef70ad01f67b5e0862c6",
+  "prompts": {},
+  "sessions": {
+    "s_8ea22aa262209c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_8ea22aa262209c",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
