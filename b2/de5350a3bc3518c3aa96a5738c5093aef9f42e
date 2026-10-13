@@ -1,0 +1,25 @@
+.github/dependabot.yml
+  s_ba4f2e5e310bfe::t_2bcf10c80c34aa 1-105
+.github/scripts/dependency-impact.sh
+  s_ba4f2e5e310bfe::t_c996cb968ce154 1-17
+.github/scripts/test-api-compatibility.sh
+  s_ba4f2e5e310bfe::t_8f1d08179def70 26-46
+.github/workflows/maven.yml
+  s_ba4f2e5e310bfe::t_4f52c3424dd433 76-87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b2de5350a3bc3518c3aa96a5738c5093aef9f42e",
+  "prompts": {},
+  "sessions": {
+    "s_ba4f2e5e310bfe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2adad55e-4bba-4de8-8b8f-dca91fe79778",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
