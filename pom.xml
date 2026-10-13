@@ -385,42 +385,6 @@
 										<include>com.github.theholywaffle.teamspeak3.commands.parameter.*</include>
 										<include>com.github.theholywaffle.teamspeak3.commands.response.*</include>
 									</includes>
-									<limits>
-										<limit>
-											<counter>LINE</counter>
-											<value>COVEREDRATIO</value>
-											<minimum>0.80</minimum>
-										</limit>
-									</limits>
-								</rule>
-								<rule>
-									<element>CLASS</element>
-									<includes>
-										<include>com.github.theholywaffle.teamspeak3.CommandQueue*</include>
-										<include>com.github.theholywaffle.teamspeak3.Connection</include>
-										<include>com.github.theholywaffle.teamspeak3.Deadline</include>
-										<include>com.github.theholywaffle.teamspeak3.KeepAlive</include>
-										<include>com.github.theholywaffle.teamspeak3.ProtocolLineReader</include>
-										<include>com.github.theholywaffle.teamspeak3.StreamReader</include>
-										<include>com.github.theholywaffle.teamspeak3.StreamWriter</include>
-										<include>com.github.theholywaffle.teamspeak3.TS3Query</include>
-										<include>com.github.theholywaffle.teamspeak3.EventManager*</include>
-										<include>com.github.theholywaffle.teamspeak3.FileTransferHelper*</include>
-										<include>com.github.theholywaffle.teamspeak3.QueryConfig</include>
-										<include>com.github.theholywaffle.teamspeak3.SshHostKeyPolicy*</include>
-										<include>com.github.theholywaffle.teamspeak3.api.CommandFutures*</include>
-										<include>com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException</include>
-										<include>com.github.theholywaffle.teamspeak3.api.exception.TS3TimeoutException</include>
-										<include>com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException</include>
-										<include>com.github.theholywaffle.teamspeak3.api.reconnect.*</include>
-										<include>com.github.theholywaffle.teamspeak3.api.wrapper.QueryError</include>
-										<include>com.github.theholywaffle.teamspeak3.commands.Command</include>
-										<include>com.github.theholywaffle.teamspeak3.commands.CommandBuilder</include>
-										<include>com.github.theholywaffle.teamspeak3.commands.CommandEncoding</include>
-										<include>com.github.theholywaffle.teamspeak3.commands.ProtocolRedactor</include>
-										<include>com.github.theholywaffle.teamspeak3.commands.parameter.*</include>
-										<include>com.github.theholywaffle.teamspeak3.commands.response.*</include>
-									</includes>
 									<excludes>
 										<exclude>com.github.theholywaffle.teamspeak3.api.CommandFutures.RequestFuture</exclude>
 										<exclude>com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectingConnectionHandler</exclude>
@@ -428,6 +392,11 @@
 										<exclude>com.github.theholywaffle.teamspeak3.api.reconnect.SessionConfiguration.Subscription</exclude>
 									</excludes>
 									<limits>
+										<limit>
+											<counter>LINE</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.80</minimum>
+										</limit>
 										<limit>
 											<counter>BRANCH</counter>
 											<value>COVEREDRATIO</value>
@@ -445,6 +414,11 @@
 										<include>com.github.theholywaffle.teamspeak3.api.reconnect.SessionConfiguration.Subscription</include>
 									</includes>
 									<limits>
+										<limit>
+											<counter>LINE</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.80</minimum>
+										</limit>
 										<limit>
 											<counter>BRANCH</counter>
 											<value>COVEREDRATIO</value>
