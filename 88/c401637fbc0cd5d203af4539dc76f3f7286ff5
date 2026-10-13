@@ -1,0 +1,19 @@
+CONTRIBUTING.md
+  s_ba4f2e5e310bfe::t_f1cc736bc25e35 124-125
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "88c401637fbc0cd5d203af4539dc76f3f7286ff5",
+  "prompts": {},
+  "sessions": {
+    "s_ba4f2e5e310bfe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2adad55e-4bba-4de8-8b8f-dca91fe79778",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
