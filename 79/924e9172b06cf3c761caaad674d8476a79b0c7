@@ -1,0 +1,21 @@
+SECURITY.md
+  s_ba4f2e5e310bfe::t_c2519561edd890 1-54
+SUPPORT.md
+  s_ba4f2e5e310bfe::t_166fecc97e1bd5 1-17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "79924e9172b06cf3c761caaad674d8476a79b0c7",
+  "prompts": {},
+  "sessions": {
+    "s_ba4f2e5e310bfe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2adad55e-4bba-4de8-8b8f-dca91fe79778",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
