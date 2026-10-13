@@ -1,0 +1,54 @@
+src/test/java/com/github/theholywaffle/teamspeak3/CommunicationLogRedactionTest.java
+  s_b735877422ccbc::t_e5eacab718afa6 26,44,64
+src/main/java/com/github/theholywaffle/teamspeak3/commands/ProtocolRedactor.java
+  s_b735877422ccbc::t_d364b5c2f315b4 50-51,53-59
+  s_b735877422ccbc::t_763388151e12ac 49
+  s_b735877422ccbc::t_cc7d043da3dff3 60
+  s_474fdb95c2237a::t_c114d81f31f956 5-6,17-19,37-39,46-47
+.github/workflows/dependencies.yml
+  s_474fdb95c2237a::t_8880a3be6c9b84 1,10-11,14-15,19,21,23-39
+.github/workflows/maven.yml
+  s_474fdb95c2237a::t_0576ac6cf8aeb0 25-28,119,127,133
+src/main/java/com/github/theholywaffle/teamspeak3/StreamReader.java
+  s_474fdb95c2237a::t_45e1bcac3a29bf 106-107,129,149,183-186
+src/main/java/com/github/theholywaffle/teamspeak3/StreamWriter.java
+  s_474fdb95c2237a::t_4e35e9b07b32be 64,66-67
+src/main/java/com/github/theholywaffle/teamspeak3/commands/Command.java
+  s_474fdb95c2237a::t_29331ace2fc67b 53-54,59-64
+src/test/java/com/github/theholywaffle/teamspeak3/CommandFuturesTest.java
+  s_474fdb95c2237a::t_be2e6c67752fe7 517,555
+src/test/java/com/github/theholywaffle/teamspeak3/FileContentCompatibilityIT.java
+  s_474fdb95c2237a::t_c0d835b5c56a97 85
+src/test/java/com/github/theholywaffle/teamspeak3/RawCommandTest.java
+  s_474fdb95c2237a::t_cb13b7a8249a5e 52
+src/test/java/com/github/theholywaffle/teamspeak3/commands/CommandSyntaxTest.java
+  s_474fdb95c2237a::t_a0a7bde8555504 33,56,59,62,67,77,79
+src/test/java/com/github/theholywaffle/teamspeak3/commands/FileCommandsTest.java
+  s_474fdb95c2237a::t_fc71ef929c9e19 17,19,45,71,136,148,150,162,164,180,183,189,206,208,228,231
+src/test/java/com/github/theholywaffle/teamspeak3/commands/ProtocolRedactorTest.java
+  s_474fdb95c2237a::t_1e6ce67c4171cb 21,64-83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "51c856e51d9261e7d163200458d9e193d97d5267",
+  "prompts": {},
+  "sessions": {
+    "s_474fdb95c2237a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_474fdb95c2237a",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    },
+    "s_b735877422ccbc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a13497-0be5-70b2-bf9a-79b2c81283b0",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
