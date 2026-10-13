@@ -1,6 +1,6 @@
 TeamSpeak 3 Java API
 ====================
-[![Build Status](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/actions/workflows/maven.yml/badge.svg?branch=modernization%2F2.0)](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/actions/workflows/maven.yml) [![Maven Central](https://img.shields.io/maven-central/v/com.github.theholywaffle/teamspeak3-api.svg)](https://central.sonatype.com/artifact/com.github.theholywaffle/teamspeak3-api) [![Javadocs](https://www.javadoc.io/badge/com.github.theholywaffle/teamspeak3-api.svg)](https://www.javadoc.io/doc/com.github.theholywaffle/teamspeak3-api) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/TheHolyWaffle/TeamSpeak-3-Java-API?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![Build Status](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/actions/workflows/maven.yml/badge.svg?branch=modernization%2F2.0)](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/actions/workflows/maven.yml) [![Maven Central](https://img.shields.io/maven-central/v/com.github.theholywaffle/teamspeak3-api.svg)](https://central.sonatype.com/artifact/com.github.theholywaffle/teamspeak3-api) [![Javadocs](https://www.javadoc.io/badge/com.github.theholywaffle/teamspeak3-api.svg)](https://www.javadoc.io/doc/com.github.theholywaffle/teamspeak3-api)
 
 A Java library for the TeamSpeak 3 ServerQuery interface: server administration, notifications
 and file transfers over raw TCP or SSH.
@@ -19,7 +19,7 @@ and file transfers over raw TCP or SSH.
   [flood rate](#flood-rate)
 - [Configuration reference](#configuration-reference)
 - [Development](#development)
-- [Contributing and releases](#contributing-and-releases)
+- [Getting help and contributing](#getting-help-and-contributing)
 
 ## Requirements and compatibility
 
@@ -390,29 +390,14 @@ See [development server](docs/development-server.md).
 - [Command compatibility](docs/command-compatibility.md) · [Integration tests](docs/integration-tests.md) · [Development server](docs/development-server.md)
 - [Packaging](docs/packaging.md) · [Quality checks](docs/quality-checks.md) · [CI and releases](docs/releases.md)
 
-## Contributing and releases
+## Getting help and contributing
 
-Branch from `modernization/2.0` and open pull requests against it until 2.0 is integrated into `master`.
-The guides below are the reference; they are not repeated here.
-
-- **PR titles and merging:** use a Conventional Commit PR title (`fix:`, `feat:`, `!` or
-  `BREAKING CHANGE:` for breaking changes, `ci:`/`test:`/`chore:`/`docs:` for internal work) and
-  **Squash and merge** with the PR title and description as the commit message. See
-  [record intent](docs/releases.md#record-intent).
-- **Release preparation PR:** release-please opens and updates the release PR when **Prepare release**
-  is run; see [prepare a release PR](docs/releases.md#prepare-a-release-pr).
-- **API compatibility:** japicmp compares the API with the last release and writes reports to
-  `target/japicmp/`; it checks signatures, not behavior. See
-  [API compatibility](docs/quality-checks.md#api-compatibility) and its [limits](docs/quality-checks.md#limits).
-- **Dependency and image updates:** Dependabot opens grouped, Conventional Commit update PRs for
-  Maven, Actions, the TS3 image and the Gradle consumer, and a weekly job tests newer TS3 images.
-  See [dependency and image maintenance](docs/maintenance.md).
-- **Publishing:** the JReleaser dry-run rehearsal and the explicit, protected publication action are
-  described in [local validation and CI rehearsal](docs/releases.md#local-validation-and-ci-rehearsal)
-  and [explicit release action](docs/releases.md#explicit-release-action). Merges never publish.
-
-## Questions or bugs?
-
-Please let us know [here](../../issues). If you just have a simple question or want to talk to us
-about something else, please join the [repository chat](https://gitter.im/TheHolyWaffle/TeamSpeak-3-Java-API)
-on Gitter.
+- **Questions:** ask in [Discussions Q&A](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/discussions/categories/q-a).
+  See [getting help](SUPPORT.md).
+- **Bugs and feature requests:** use the [issue forms](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/issues/new/choose).
+  For a bug, include the versions and a redacted [communications log](#logging).
+- **Vulnerabilities:** report them privately as described in the [security policy](SECURITY.md),
+  which also lists the [supported versions](SECURITY.md#supported-versions).
+- **Contributing:** the [contributing guide](CONTRIBUTING.md) covers building, branches, Conventional
+  Commit PR titles, release-please, API compatibility reports and review. Releases are described in
+  [CI and releases](docs/releases.md).

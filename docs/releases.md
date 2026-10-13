@@ -24,18 +24,19 @@ Java 25 workflow without the corresponding build changes. This branch removes th
 publisher as part of its replacement CI, but cannot change the deployed workflow
 on `master` before its PR merges. Travis is removed on this modernization branch.
 
-Repository administrators should extend the branch rules to `modernization/2.0`
-and require the **CI required** status from GitHub Actions, including requiring
-up-to-date branches and PR review. Keep the old `master` build check required until
-the final integration PR introduces this workflow, then require **CI required** on
-`master` too. The README badge tracks `modernization/2.0` now; switch its branch query
-back to `master` when the final integration PR lands.
+Repository rulesets require squash-merged PRs on `master` and `modernization/2.0`, and
+**CI required** on an up-to-date `modernization/2.0` (see
+[repository rules](../CONTRIBUTING.md#repository-rules)). `master` keeps requiring its old
+build check until the final integration PR introduces this workflow; then switch its
+required check to **CI required**. The README badge tracks `modernization/2.0` now; switch
+its branch query back to `master` when the final integration PR lands.
 
 ## Record intent
 
-Use Conventional Commit PR titles and **Squash and merge**. Configure GitHub's
-squash-merge message to use the PR title and description so release-please sees the
-reviewed type, breaking-change notes, and issue references in the resulting commit.
+Use Conventional Commit PR titles and **Squash and merge**. The repository's
+squash-merge setting uses the PR title as the commit subject and the PR description as
+its body, so release-please sees the reviewed type, breaking-change notes, and issue
+references in the resulting commit. Merge commits and rebase merges are disabled.
 Individual development commits can be freely amended; the resulting integration
 commit must preserve release intent. The **Release intent** job validates PR titles,
 including generated release PRs, and reruns when a title changes.
@@ -152,6 +153,13 @@ Task #449 changes no library API, behavior or dependency. For contributors: `dep
 require a runtime dependency change, Maven Enforcer accepts any Maven 3.10 or newer 3.x (the
 wrapper still pins the exact version), and the TS3 image is pinned in
 `src/test/resources/teamspeak3/Dockerfile`. See [dependency and image maintenance](maintenance.md).
+
+Task #450 changes no library API, behavior or dependency. Questions move from Gitter to
+[GitHub Discussions](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/discussions), bugs
+and feature requests use issue forms, and vulnerabilities are reported privately as described
+in the [security policy](../SECURITY.md). 1.x reaches end of life when 2.0.0 is published: it
+receives no further releases, including security fixes. Contributors follow
+[CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Central Portal publication (#433)
 

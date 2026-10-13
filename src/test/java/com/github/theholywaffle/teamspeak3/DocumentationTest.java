@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
-/** Keeps the README configuration reference and the Markdown links in step with the code. */
+/** Keeps the README configuration reference, the support policy and the Markdown links in step with the code. */
 class DocumentationTest {
     private static final Path README = Path.of("README.md");
     private static final Pattern LINK = Pattern.compile("\\]\\(([^)\\s]+)\\)");
@@ -102,9 +102,26 @@ class DocumentationTest {
                 "Update the README support table for src/test/resources/teamspeak3/Dockerfile");
     }
 
+    /** A new major version changes the support policy, so it fails until SECURITY.md is reviewed. */
+    @Test
+    void securityPolicyCoversTheDevelopedMajorVersion() throws IOException {
+        Matcher version = Pattern.compile("<artifactId>teamspeak3-api</artifactId>\\s*<version>(\\d+)\\.")
+                .matcher(Files.readString(Path.of("pom.xml")));
+        assertTrue(version.find());
+        String policy = Files.readString(Path.of("SECURITY.md"));
+        assertTrue(
+                policy.contains("\n| " + version.group(1) + ".x "),
+                "Add the " + version.group(1) + ".x line to the supported versions in SECURITY.md");
+    }
+
     @Test
     void relativeLinksAndAnchorsResolve() throws IOException {
-        List<Path> pages = new ArrayList<>(List.of(README));
+        List<Path> pages = new ArrayList<>(List.of(
+                README,
+                Path.of("CONTRIBUTING.md"),
+                Path.of("SECURITY.md"),
+                Path.of("SUPPORT.md"),
+                Path.of(".github", "pull_request_template.md")));
         try (Stream<Path> docs = Files.list(Path.of("docs"))) {
             docs.filter(file -> file.toString().endsWith(".md")).forEach(pages::add);
         }
