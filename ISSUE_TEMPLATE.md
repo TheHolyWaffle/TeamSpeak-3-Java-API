@@ -1,3 +1,0 @@
-> Issues on Github are (mostly) meant for bug reporting and feature requests. For basic questions, please use our [Gitter](https://gitter.im/TheHolyWaffle/TeamSpeak-3-Java-API) instead.
-
-> For bug reports, please include the debug log by [enabling communications logging](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API#ts3config-settings) and ensuring that ``DEBUG`` messages are being logged (enabled if you use the jar file, [see here if you use Maven](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API#download)). Passwords, privilege keys, API keys and file transfer keys are redacted automatically; remove IP addresses, nicknames, unique identifiers and message contents you do not want to share.
