@@ -18,7 +18,9 @@ mkdir -p "$work/old" "$work/new" "$reports"
 cp "$old" "$work/old/api-1.0.0.jar"
 cp "$new" "$work/new/api-$version.jar"
 status=0
-./mvnw -B -ntp -q japicmp:cmp@api-compatibility \
+# japicmp needs this project's artifact from the reactor, so package it (without tests) in the same run.
+./mvnw -B -ntp -q -DskipTests -Djacoco.skip -Dspotless.check.skip -Dmaven.javadoc.skip -Dmaven.source.skip \
+  package japicmp:cmp@api-compatibility \
   -Dapi.compare.old="$work/old/api-1.0.0.jar" -Dapi.compare.new="$work/new/api-$version.jar" \
   -Dapi.rejectIncompatible="$incompatible" -Dapi.rejectAnyChange="$any" || status=$?
 cp target/japicmp/api-compatibility.* "$reports/"

@@ -69,11 +69,12 @@ library=target/teamspeak3-api-$version.jar
 baseline=target/api-baseline/teamspeak3-api-1.3.1.jar
 [[ -f $library && -f $baseline ]] || fail "run ./mvnw verify first"
 cp "$library" "$work/teamspeak3-api-1.4.0.jar"
-if ./mvnw -B -ntp -q japicmp:cmp@api-compatibility -Dapi.compare.new="$work/teamspeak3-api-1.4.0.jar" > "$work/log" 2>&1; then
+quick=(-B -ntp -q -DskipTests -Djacoco.skip -Dspotless.check.skip -Dmaven.javadoc.skip -Dmaven.source.skip package)
+if ./mvnw "${quick[@]}" japicmp:cmp@api-compatibility -Dapi.compare.new="$work/teamspeak3-api-1.4.0.jar" > "$work/log" 2>&1; then
   fail "a 1.4.0 release of the 2.0 API was accepted against 1.3.1"
 fi
 rejected_by_gate "$work/log" || { cat "$work/log" >&2; fail "1.4.0 failed for another reason"; }
 echo "ok: library as 1.4.0 against 1.3.1: fail"
-./mvnw -B -ntp -q japicmp:cmp@api-compatibility || fail "library $version was rejected against 1.3.1"
+./mvnw "${quick[@]}" japicmp:cmp@api-compatibility || fail "library $version was rejected against 1.3.1"
 echo "ok: library $version against 1.3.1: pass"
 echo 'API compatibility examples passed.'
