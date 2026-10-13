@@ -1,3 +1,3 @@
 # The TS3 server image used by the integration suite and development launcher.
 # Dependabot maintains the tag and digest; TeamSpeakContainer reads this line.
-FROM teamspeak:3.13.8@sha256:6dfdfb22869adf50e1b66d024b360b786d57a85ea09e8e8fdb6cca23949b2813
+FROM teamspeak:3.13.7@sha256:4d3fa1c0db9a5a4ac69a2d07d6f0478539e464b15e7186c243a9f194bc1141fa

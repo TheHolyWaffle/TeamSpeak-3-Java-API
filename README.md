@@ -31,8 +31,8 @@ and file transfers over raw TCP or SSH.
 
 | Server | Transport | Status |
 | --- | --- | --- |
-| TeamSpeak 3 server 3.13.8 (official Docker image, Linux amd64) | Raw TCP (port 10011) | Verified by the integration suite in CI |
-| TeamSpeak 3 server 3.13.8 (official Docker image, Linux amd64) | SSH (port 10022) | Verified by the integration suite in CI |
+| TeamSpeak 3 server 3.13.7 (official Docker image, Linux amd64) | Raw TCP (port 10011) | Verified by the integration suite in CI |
+| TeamSpeak 3 server 3.13.7 (official Docker image, Linux amd64) | SSH (port 10022) | Verified by the integration suite in CI |
 | Other TeamSpeak 3 server versions | Raw TCP, SSH | Not verified |
 | TeamSpeak 6; TS3 WebQuery (HTTP) | — | Not supported |
 
