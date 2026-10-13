@@ -359,7 +359,7 @@ and set `JAVA_HOME` to it. On macOS: `export JAVA_HOME=$(/usr/libexec/java_home 
 ./mvnw -B -ntp verify
 ```
 
-The Maven Wrapper downloads and verifies the pinned Maven 3.10.0, so no Maven installation is needed;
+The Maven Wrapper downloads and verifies the pinned Maven version, so no Maven installation is needed;
 the first build needs internet access. Maven Enforcer rejects older JDKs and other Maven versions.
 `verify` compiles the library and the examples, runs the unit tests, and applies the formatting,
 static analysis, Javadoc, coverage and API compatibility checks described in

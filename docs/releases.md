@@ -211,7 +211,7 @@ For an approved stable release checkout, extract its notes, then run the signed
 non-publishing rehearsal:
 
 ```sh
-./mvnw -B -ntp org.apache.maven.plugins:maven-help-plugin:3.5.2:evaluate \
+./mvnw -B -ntp help:evaluate \
   -Dexpression=project.version -Doutput=target/release-version.txt
 bash .github/scripts/release-metadata.sh "$(cat target/release-version.txt)" v2.0.0
 bash .github/scripts/release-rehearsal.sh
