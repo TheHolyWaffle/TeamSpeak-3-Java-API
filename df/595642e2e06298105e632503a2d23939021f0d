@@ -1,0 +1,21 @@
+.github/workflows/dependency-scan.yml
+  s_b076a090cfdb8c::t_769c2d2c0748aa 1-27
+.github/workflows/maven.yml
+  s_b076a090cfdb8c::t_afe7fcf56f8eff 25-27,58,66,71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "df595642e2e06298105e632503a2d23939021f0d",
+  "prompts": {},
+  "sessions": {
+    "s_b076a090cfdb8c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_b076a090cfdb8c",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
