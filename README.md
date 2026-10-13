@@ -26,48 +26,50 @@ coverage, dependency scanning, log redaction and API compatibility checks are de
 
 ### Download
 
-- **Option 1 (Standalone Jar)**: 
+The library is published to Maven Central as a single regular JAR with sources and Javadoc.
+Its POM brings in SSHJ, the patched Bouncy Castle modules and the SLF4J API. Version 2.0
+no longer publishes a standalone `with-dependencies` JAR; see
+[packaging](docs/packaging.md#migration-from-the-standalone-jar) for the migration.
 
-    Download the [latest release](https://search.maven.org/remote_content?g=com.github.theholywaffle&a=teamspeak3-api&v=LATEST&c=with-dependencies) and add this jar to the buildpath of your project.
-
-- **Option 2 (Maven)**: 
-
-    Add the following to your pom.xml:
-
-    ```xml
-    <dependency>
-	    <groupId>com.github.theholywaffle</groupId>
-	    <artifactId>teamspeak3-api</artifactId>
-	    <version>...</version>
-    </dependency>
-    ```
-
-    This API utilizes [SLF4J](https://www.slf4j.org/) for logging purposes and doesn't come shipped with a default logging implementation, if you use Maven instead of the standalone jar.
-    You will manually have to add one via Maven to get any logging going, if you don't have one already. 
-    
-    The easiest way to do so is to just add SimpleLogger to your project, which also supports configuration via
-    config file (needs to be shipped as a resource with your jar), if you want to log ```DEBUG``` messages for instance (e.g. raw client-server communication). 
-
-    See this [configuration example](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/blob/master/src/main/resources/simplelogger.properties) for SimpleLogger.
-    Add the following to your pom.xml to get started:
+- **Maven**:
 
     ```xml
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-simple</artifactId>
-      <version>2.0.20</version>
+      <groupId>com.github.theholywaffle</groupId>
+      <artifactId>teamspeak3-api</artifactId>
+      <version>...</version>
     </dependency>
     ```
 
-    This development branch uses SLF4J 2.0.20. Choose exactly one provider that supports
-    the SLF4J 2.0 API, and keep `slf4j-api` and `slf4j-simple` at the same version when
-    using SimpleLogger. SLF4J 2.x discovers providers through `ServiceLoader`; old
-    SLF4J 1.7 bindings are ignored and must be replaced. Existing SLF4J logging calls
-    remain compatible. See the [SLF4J manual](https://slf4j.org/manual.html).
+- **Gradle**:
 
-    The Maven library supplies only the logging API. The standalone
-    `with-dependencies` JAR includes SimpleLogger 2.0.20 and its provider registration;
-    use the Maven library when supplying your own logging provider.
+    ```kotlin
+    dependencies {
+        implementation("com.github.theholywaffle:teamspeak3-api:...")
+    }
+    ```
+
+The library logs through the [SLF4J](https://www.slf4j.org/) 2.0 API and ships no logging
+provider, so logging stays your application's choice. Add exactly one provider that supports
+SLF4J 2.0, for example SimpleLogger:
+
+```xml
+<dependency>
+  <groupId>org.slf4j</groupId>
+  <artifactId>slf4j-simple</artifactId>
+  <version>2.0.20</version>
+  <scope>runtime</scope>
+</dependency>
+```
+
+Without a provider, SLF4J prints one warning and discards log output. SLF4J 2.x discovers
+providers through `ServiceLoader`; old SLF4J 1.7 bindings are ignored and must be replaced.
+Existing SLF4J logging calls remain compatible. See the [SLF4J manual](https://slf4j.org/manual.html)
+and this [SimpleLogger configuration example](example/simplelogger.properties), which
+logs `DEBUG` messages such as the raw client-server communication.
+
+On the module path, the JAR is the automatic module `com.github.theholywaffle.teamspeak3`:
+add `requires com.github.theholywaffle.teamspeak3;` to your `module-info.java`.
 
 
 ### Usage
@@ -141,11 +143,8 @@ Maven Enforcer rejects older build JDKs and unpinned Maven versions during
 validation, before compilation. No `toolchains.xml` is needed: compilation, tests, and Javadoc use the JDK running Maven.
 
 The default build runs the unit tests and creates the normal JAR, sources JAR and
-Java 25 Javadoc JAR under `target`. To also build the standalone JAR:
-
-```sh
-./mvnw -B -ntp -Pfull verify
-```
+Java 25 Javadoc JAR under `target`. [Packaging](docs/packaging.md) describes the
+reproducibility and consumer checks on those artifacts.
 
 Docker-dependent TS3 raw and TS3 SSH smoke tests run separately:
 
