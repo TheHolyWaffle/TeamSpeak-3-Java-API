@@ -1,0 +1,39 @@
+src/main/java/com/github/theholywaffle/teamspeak3/StreamWriter.java
+  s_053edcd6b8ca07::t_2495192bc103f0 30,67
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/Wrapper.java
+  s_053edcd6b8ca07::t_69edf128e3217f 33,650,653-656
+src/main/java/com/github/theholywaffle/teamspeak3/commands/response/DefaultArrayResponse.java
+  s_053edcd6b8ca07::t_0894fb8a650997 32,124,129,132
+ISSUE_TEMPLATE.md
+  s_053edcd6b8ca07::t_f30460c70411fe 3
+README.md
+  s_053edcd6b8ca07::t_3c6cabe268faf3 230
+pom.xml
+  s_053edcd6b8ca07::t_d14157b6e54827 281-301
+src/main/java/com/github/theholywaffle/teamspeak3/StreamReader.java
+  s_053edcd6b8ca07::t_3112f304cb85e7 32,103,107,129,142,149-150
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Config.java
+  s_053edcd6b8ca07::t_39d708d49c9499 321-324
+src/main/java/com/github/theholywaffle/teamspeak3/commands/ProtocolRedactor.java
+  s_053edcd6b8ca07::t_d62fcd303515ed 1-64
+src/test/java/com/github/theholywaffle/teamspeak3/CommunicationLogRedactionTest.java
+  s_053edcd6b8ca07::t_7a4ff69ecec55d 1-76
+src/test/java/com/github/theholywaffle/teamspeak3/commands/ProtocolRedactorTest.java
+  s_053edcd6b8ca07::t_079aaf1f4562f5 1-95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "656c84a58e2ff0a286e0c9a7175ad816342c4ec3",
+  "prompts": {},
+  "sessions": {
+    "s_053edcd6b8ca07": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "806ab1a1-673a-439b-a98d-45ce1994aae5",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
