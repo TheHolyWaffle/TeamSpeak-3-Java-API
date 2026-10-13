@@ -59,7 +59,8 @@ jobs:
           PR_BODY: ${{ github.event.pull_request.body }}
           BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
-          (cd api-base && ./mvnw -B -ntp -q -DskipTests -Denforcer.skip -Djapicmp.skip -Djacoco.skip \
+          # The head's wrapper: 1.x master has none.
+          (cd api-base && ../mvnw -B -ntp -q -DskipTests -Denforcer.skip -Djapicmp.skip -Djacoco.skip \
             -Dspotless.check.skip -Dmaven.javadoc.skip -Dmaven.source.skip package)
           impact=$(bash .github/scripts/api-impact.sh "$PR_TITLE" "$PR_BODY")
           library() { for jar in "$1"/target/teamspeak3-api-*.jar; do [[ $jar == *-sources.jar || $jar == *-javadoc.jar ]] || echo "$jar"; done; }
