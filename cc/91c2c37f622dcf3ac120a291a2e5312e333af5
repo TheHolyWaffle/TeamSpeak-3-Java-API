@@ -1,0 +1,21 @@
+.github/scripts/api-compare.sh
+  s_0a8c9896f06c38::t_f9347e1a10aa89 21-23
+.github/scripts/test-api-compatibility.sh
+  s_0a8c9896f06c38::t_583a9840248baa 72-73,78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cc91c2c37f622dcf3ac120a291a2e5312e333af5",
+  "prompts": {},
+  "sessions": {
+    "s_0a8c9896f06c38": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_0a8c9896f06c38",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
