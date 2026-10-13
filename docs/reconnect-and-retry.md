@@ -22,7 +22,7 @@ import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 import com.github.theholywaffle.teamspeak3.api.reconnect.SessionConfiguration;
 
 TS3Config config = new TS3Config()
-    .setLoginCredentials(System.getenv("TS_QUERY_USERNAME"), System.getenv("TS_QUERY_PASSWORD"))
+    .setLoginCredentials(System.getenv("TS3_USERNAME"), System.getenv("TS3_PASSWORD"))
     .setSessionConfiguration(SessionConfiguration.forServer(1)
         .withNickname("admin-bot")
         .withSubscription(TS3EventType.SERVER, -1)

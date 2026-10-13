@@ -48,8 +48,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * ServerQuery client owning its transport, I/O workers, deadline scheduler and callback executors.
- * Event callbacks use a fixed worker pool with bounded queues; command completions use virtual
- * threads bounded by command admission and run separately from event callbacks.
+ * Event callbacks use a fixed worker pool with bounded queues; command completions run in receive order
+ * on one virtual worker, bounded by command admission and separate from event callbacks.
+ * An open query keeps the JVM alive until {@link #close()} or {@link #exit()}.
  * Closing interrupts callback tasks; application callbacks must cooperate with interruption.
  */
 public final class TS3Query implements AutoCloseable {
@@ -59,8 +60,9 @@ public final class TS3Query implements AutoCloseable {
     /**
      * Artificial delay between sending commands, measured in milliseconds.
      * <p>
-     * If the query's hostname / IP has not been added to the server's {@code query_ip_whitelist.txt},
-     * you need to use {@link FloodRate#DEFAULT} to prevent the query from being flood-banned.
+     * If the query's IP address is not in the server's {@code query_ip_allowlist.txt}
+     * ({@code query_ip_whitelist.txt} before TS3 3.13), use {@link FloodRate#DEFAULT} to prevent the
+     * query from being flood-banned.
      * </p><p>
      * Calling {@link FloodRate#custom} allows you to use a custom command delay if neither
      * {@link FloodRate#UNLIMITED} nor {@link FloodRate#DEFAULT} fit your needs.
@@ -69,12 +71,12 @@ public final class TS3Query implements AutoCloseable {
     public static class FloodRate {
 
         /**
-         * Default delay of 350 milliseconds between commands for queries that are not whitelisted.
+         * Default delay of 350 milliseconds between commands for queries that are not on the allowlist.
          */
         public static final FloodRate DEFAULT = new FloodRate(350);
 
         /**
-         * No delay between commands. If a query uses this without being whitelisted, it will likely be flood-banned.
+         * No delay between commands. A query not on the allowlist will likely be flood-banned.
          */
         public static final FloodRate UNLIMITED = new FloodRate(0);
 
@@ -139,7 +141,7 @@ public final class TS3Query implements AutoCloseable {
 
     /**
      * Creates a TS3Query that connects to a TS3 server at
-     * {@code localhost:10011} using default settings.
+     * {@code 127.0.0.1:10011} over raw TCP using default settings, without logging in.
      */
     public TS3Query() {
         this(new TS3Config());

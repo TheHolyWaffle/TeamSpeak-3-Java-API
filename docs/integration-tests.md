@@ -16,9 +16,16 @@ fork to ten minutes, and each fixture allows ninety seconds for authenticated
 readiness. First image pulls also need registry access.
 
 For an interactive server session using the same fixture, see the
-[local development launcher](development-server.md). Its compiled example and
-Enter/EOF/termination cleanup are also exercised by this integration profile;
-each launcher owns a separate disposable server.
+[local development launcher](development-server.md). Its compiled example,
+printed example instructions and Enter/EOF/termination cleanup are also exercised
+by this integration profile; each launcher owns a separate disposable server.
+
+`ExamplesIT` runs every class in `src/example/java` unchanged, in its own JVM,
+over TS3 raw and TS3 SSH, configured only through the `TS3_*` variables
+documented in the [README](../README.md#run-an-example). A new example must
+declare its expected completion output there or the test fails. The test also
+exchanges `!ping`/`pong` with the running chat bot and checks that a missing
+setting fails before connecting.
 
 `TeamSpeakContainer` uses official images pinned by version and manifest digest:
 

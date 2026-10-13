@@ -49,7 +49,9 @@ public final class CommandRetryPolicy {
      * Selects read commands to replay, in their original position, after session restoration.
      * Server error responses are never retried. Mutations and context changes are rejected.
      * @param maxRetries maximum additional sends per command, greater than zero
-     * @param commands exact protocol names from the supported read-only set
+     * @param commands exact protocol names from the supported read-only set: {@code whoami}, {@code version},
+     *     {@code serverinfo}, {@code serverlist}, {@code channellist}, {@code channelinfo}, {@code clientlist}
+     *     and {@code clientinfo}
      * @return an immutable policy
      */
     public static CommandRetryPolicy safeReads(int maxRetries, String... commands) {

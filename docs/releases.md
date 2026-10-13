@@ -132,6 +132,13 @@ Task #447 stops publishing the standalone `with-dependencies` JAR and removes th
 profile. Depend on the regular JAR through Maven or Gradle and choose a logging provider; see
 [migration from the standalone JAR](packaging.md#migration-from-the-standalone-jar).
 
+Task #448 changes no library API or behavior. The examples moved from `example/` to the
+compiled `src/example/java` source set and read their host and login from `TS3_*`
+environment variables (see [run an example](../README.md#run-an-example)); copy code from
+there rather than from 1.x examples, which used removed APIs. Javadoc now documents that TS3
+assigns channel and client icons through the `i_icon_id` permission rather than the
+`channel_icon_id`/`client_icon_id` properties, which the server rejects in edits.
+
 ## Central Portal publication (#433)
 
 JReleaser **1.26.0**, pinned in Maven, is the sole owner of signing, Central Portal

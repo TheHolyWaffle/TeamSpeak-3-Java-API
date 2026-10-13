@@ -40,9 +40,7 @@ import java.util.OptionalInt;
  * To reduce bandwidth usage, the TS3 server only transmit the numeric
  * permission ID and not the permission name.
  * </p><p>
- * For a complete description of the TS3 permission system, refer to
- * <a href="http://forum.teamspeak.com/threads/49581-The-New-Permission-Documentataions">
- * this post</a> on the TeamSpeak forums.
+ * The {@code doc} directory of a TS3 server installation describes the permission system.
  * </p>
  */
 public class PermissionAssignment extends Wrapper {
