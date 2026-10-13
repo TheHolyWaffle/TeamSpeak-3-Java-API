@@ -206,10 +206,13 @@ class ModelCompatibilityIT {
 
 	/** Records presence and type, not values, so generated secrets stay out of the report. */
 	private static String describe(Object value) {
-		if (value instanceof Optional<?> optional) return optional.isPresent() ? "present " + optional.get().getClass().getSimpleName() : "empty";
-		if (value instanceof OptionalInt optional) return optional.isPresent() ? "present int" : "empty";
-		if (value instanceof OptionalLong optional) return optional.isPresent() ? "present long" : "empty";
-		if (value instanceof Enum<?> constant) return constant.getDeclaringClass().getSimpleName() + "." + constant.name();
-		return value == null ? "null" : value.getClass().getSimpleName();
+		return switch (value) {
+			case null -> "null";
+			case Optional<?> optional -> optional.map(present -> "present " + present.getClass().getSimpleName()).orElse("empty");
+			case OptionalInt optional -> optional.isPresent() ? "present int" : "empty";
+			case OptionalLong optional -> optional.isPresent() ? "present long" : "empty";
+			case Enum<?> constant -> constant.getDeclaringClass().getSimpleName() + "." + constant.name();
+			default -> value.getClass().getSimpleName();
+		};
 	}
 }

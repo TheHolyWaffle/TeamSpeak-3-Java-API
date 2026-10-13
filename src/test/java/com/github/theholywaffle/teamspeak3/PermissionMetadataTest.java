@@ -14,7 +14,13 @@ class PermissionMetadataTest {
 	@Test void usesConnectedServerIdsAndNamesIncludingNewPermissions() throws Exception {
 		try (var peer = new FakeServerQuery(p -> {
 			p.expect("permissionlist");
-			p.write("TS3\npermid=7001 permname=i_channel_needed_join_power permdesc=Join\\spower|permid=9002 permname=b_channel_create_permanent permdesc=Create|permid=12003 permname=i_future_server_permission permdesc=New\\spermission\nerror id=0 msg=ok\n");
+			p.write("""
+				TS3
+				permid=7001 permname=i_channel_needed_join_power permdesc=Join\\spower|\
+				permid=9002 permname=b_channel_create_permanent permdesc=Create|\
+				permid=12003 permname=i_future_server_permission permdesc=New\\spermission
+				error id=0 msg=ok
+				""");
 			p.expect("permidgetbyname permsid=i_channel_needed_join_power");
 			p.write("permid=7001\nerror id=0 msg=ok\n");
 			p.expect("permidgetbyname permsid=b_channel_create_permanent|permsid=i_future_server_permission");
