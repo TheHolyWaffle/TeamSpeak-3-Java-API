@@ -1,0 +1,29 @@
+README.md
+  s_ba4f2e5e310bfe::t_d1372fe0b19ced 407-409
+docs/integration-tests.md
+  s_ba4f2e5e310bfe::t_e344331769afcb 76-81
+docs/maintenance.md
+  s_ba4f2e5e310bfe::t_4788187a366394 3-94
+docs/packaging.md
+  s_ba4f2e5e310bfe::t_19151a761925e0 124-126
+docs/quality-checks.md
+  s_ba4f2e5e310bfe::t_6cf67954dd6e55 8,10-11,13,16-19,113-114
+docs/releases.md
+  s_ba4f2e5e310bfe::t_b76a35fd8c1852 47,57-60,100-105,108-111,151-155
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "01391a3b87fbde1fe1b69719396494abfe7b25a6",
+  "prompts": {},
+  "sessions": {
+    "s_ba4f2e5e310bfe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2adad55e-4bba-4de8-8b8f-dca91fe79778",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
