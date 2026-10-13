@@ -1,0 +1,33 @@
+.github/scripts/consumer-check.sh
+  s_805b9cbb0585ef::t_41a74d66c0cf82 16,18-22,28-29,33
+.github/scripts/reproducibility-check.sh
+  s_805b9cbb0585ef::t_52470d9b2a1f3f 4,19-23,25-26
+.github/scripts/test-verify-staged-artifacts.sh
+  s_805b9cbb0585ef::t_9322f273b3c819 2-3,10,12,14,16-17,19-21,30-39,41-47,49-50
+.github/scripts/verify-staged-artifacts.sh
+  s_805b9cbb0585ef::t_b3e3cbb037e98d 3-4,8,11-16,24-25,34-35,62-63,67-68
+.github/workflows/verify.yml
+  s_805b9cbb0585ef::t_ca7ef1a862ccc8 75,77-78
+docs/packaging.md
+  s_805b9cbb0585ef::t_73d99ae5a8fec9 80,84,91-93,95-96,130-131
+docs/releases.md
+  s_805b9cbb0585ef::t_db367c654b4dfc 229
+src/test/consumers/maven/src/main/java/consumer/ConsumerApp.java
+  s_805b9cbb0585ef::t_ebb3dd2c713bde 19,37-40,42,45-49,62-64,66,70-73,143
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a8316416a5cc3d49760fc9247ce5c2bd3272e0f3",
+  "prompts": {},
+  "sessions": {
+    "s_805b9cbb0585ef": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_805b9cbb0585ef",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
