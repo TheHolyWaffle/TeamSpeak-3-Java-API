@@ -31,14 +31,15 @@ class DevelopmentServerIT {
                 .start();
         List<String> output = new CopyOnWriteArrayList<>();
         Thread reader = Thread.ofPlatform().start(() -> {
-            try (var lines = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            try (var lines = new BufferedReader(
+                    new InputStreamReader(process.getInputStream(), java.nio.charset.StandardCharsets.UTF_8))) {
                 for (String line; (line = lines.readLine()) != null; ) output.add(line);
             } catch (Exception e) {
                 output.add("Reader failure: " + e);
             }
         });
         try {
-            long deadline = System.nanoTime() + Duration.ofSeconds(120).toNanos();
+            long deadline = System.nanoTime() + Duration.ofMinutes(2).toNanos();
             while (process.isAlive()
                     && output.stream().noneMatch(line -> line.startsWith("Press Enter"))
                     && !stop.equals("ONCE")

@@ -46,8 +46,8 @@ class ApiMigrationInventoryTest {
         String source = Files.readString(
                 Path.of("src", "test", "java", "com", "github", "theholywaffle", "teamspeak3", "CommonWorkflow.java"));
         for (String form : List.of("sync", "async")) {
-            String body =
-                    source.split("// workflow-" + form + "-start\n")[1].split("    // workflow-" + form + "-end")[0];
+            String body = source.split("// workflow-" + form + "-start\n", -1)[1]
+                    .split("    // workflow-" + form + "-end", -1)[0];
             String unindented = Arrays.stream(body.stripTrailing().split("\n"))
                     .map(line -> line.startsWith("    ") ? line.substring(4) : line)
                     .collect(Collectors.joining("\n"));

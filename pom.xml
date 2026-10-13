@@ -56,6 +56,9 @@
 		<bouncycastle.version>1.86</bouncycastle.version>
 		<junit.version>6.1.3</junit.version>
 		<testcontainers.version>2.0.5</testcontainers.version>
+		<errorprone.version>2.50.0</errorprone.version>
+		<!-- Summaries are optional: many members are fully described by @return or @see. -->
+		<errorprone.flags>-XepDisableWarningsInGeneratedCode -Xep:MissingSummary:OFF</errorprone.flags>
 		<jreleaser.config.file>${project.basedir}/jreleaser.yml</jreleaser.config.file>
 		<project.build.outputTimestamp>1980-01-01T00:00:02Z</project.build.outputTimestamp>
 	</properties>
@@ -217,6 +220,47 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.16.0</version>
+				<configuration>
+					<showWarnings>true</showWarnings>
+					<failOnWarning>true</failOnWarning>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>com.google.errorprone</groupId>
+							<artifactId>error_prone_core</artifactId>
+							<version>${errorprone.version}</version>
+						</path>
+					</annotationProcessorPaths>
+					<compilerArgs>
+						<arg>-Xlint:all</arg>
+						<arg>-Xmaxwarns</arg>
+						<arg>10000</arg>
+						<arg>-XDcompilePolicy=simple</arg>
+						<arg>--should-stop=ifError=FLOW</arg>
+					</compilerArgs>
+				</configuration>
+				<executions>
+					<execution>
+						<id>default-compile</id>
+						<configuration>
+							<compilerArgs combine.children="append">
+								<arg>-Xdoclint:all/protected</arg>
+								<arg>-Xdoclint:-missing</arg>
+								<arg>-Xplugin:ErrorProne ${errorprone.flags}</arg>
+							</compilerArgs>
+						</configuration>
+					</execution>
+					<execution>
+						<id>default-testCompile</id>
+						<configuration>
+							<!-- Test fixtures close servers whose close() may be interrupted, and tests start
+							     futures only to observe their side effects. -->
+							<compilerArgs combine.children="append">
+								<arg>-Xlint:-try</arg>
+								<arg>-Xplugin:ErrorProne ${errorprone.flags} -Xep:FutureReturnValueIgnored:OFF</arg>
+							</compilerArgs>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -256,6 +300,9 @@
 					<release>${maven.compiler.release}</release>
 					<quiet>true</quiet>
 					<show>protected</show>
+					<!-- Same policy as the compiler's -Xdoclint. -->
+					<doclint>all,-missing</doclint>
+					<failOnWarnings>true</failOnWarnings>
 					<linksource>true</linksource>
 					<notimestamp>true</notimestamp>
 					<bottom>Released under the MIT license.</bottom>
@@ -289,6 +336,17 @@
 	</build>
 
 	<profiles>
+		<!-- The formatter parses with the running javac, and no release supports JDK 26+ internals yet.
+		     Formatting does not depend on the build JDK, so JDK 25 builds and CI enforce it. -->
+		<profile>
+			<id>format-check-on-baseline-jdk-only</id>
+			<activation>
+				<jdk>[26,)</jdk>
+			</activation>
+			<properties>
+				<spotless.check.skip>true</spotless.check.skip>
+			</properties>
+		</profile>
 		<!-- Fork a development-only JVM using the already test-scoped harness. -->
 		<profile>
 			<id>dev-server</id>

@@ -635,6 +635,8 @@ public class Wrapper {
     }
 
     @Override
+    // Different model types are never equal, even with identical properties.
+    @SuppressWarnings("EqualsGetClass")
     public boolean equals(Object other) {
         return other != null && other.getClass() == getClass() && map.equals(((Wrapper) other).map);
     }

@@ -236,7 +236,7 @@ public class Client extends Wrapper {
     /** Badge entries look like {@code overwolf=0:badges=guid1,guid2}. */
     private Optional<String> badge(String key) {
         String prefix = key + "=";
-        for (String entry : BADGE_SEPARATOR.split(require(ClientProperty.CLIENT_BADGES))) {
+        for (String entry : BADGE_SEPARATOR.split(require(ClientProperty.CLIENT_BADGES), -1)) {
             if (entry.startsWith(prefix)) return Optional.of(entry.substring(prefix.length()));
         }
         return Optional.empty();

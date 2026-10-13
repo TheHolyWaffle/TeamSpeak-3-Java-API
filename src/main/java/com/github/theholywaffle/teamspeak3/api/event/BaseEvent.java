@@ -63,7 +63,6 @@ public abstract class BaseEvent extends Wrapper implements TS3Event {
      * {@link ClientMovedEvent}) do <b>not</b> have an invoker if a client joined,
      * quit or changed channels themselves. These values are only present if another client
      * caused the event to happen by moving, kicking or banning a client.
-     * </p><p>
      * </p>
      *
      * @return the nickname of the invoker, or empty if the event does not contain an invoker

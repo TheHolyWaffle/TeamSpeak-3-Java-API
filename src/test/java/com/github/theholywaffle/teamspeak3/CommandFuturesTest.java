@@ -420,6 +420,7 @@ class CommandFuturesTest {
                     try {
                         release.await();
                     } catch (InterruptedException ignored) {
+                        // Keep waiting for the release.
                     }
                 }
             });

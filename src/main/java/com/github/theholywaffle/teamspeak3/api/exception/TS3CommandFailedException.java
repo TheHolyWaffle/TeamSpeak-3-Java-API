@@ -33,12 +33,15 @@ public class TS3CommandFailedException extends TS3Exception {
 
     private static final long serialVersionUID = 8179203326662268882L;
 
-    private final QueryError queryError;
+    // Java serialization keeps the message, error ID and command name, but not the full error map.
+    private final transient QueryError queryError;
+    private final int errorId;
     private final String commandName;
 
     public TS3CommandFailedException(QueryError error, String commandName) {
         super(buildMessage(error, commandName));
         queryError = error;
+        errorId = error.getId();
         this.commandName = commandName;
     }
 
@@ -57,13 +60,14 @@ public class TS3CommandFailedException extends TS3Exception {
         return msg.toString();
     }
 
+    /** @return the parsed server error, or {@code null} after Java deserialization */
     public QueryError getError() {
         return queryError;
     }
 
     /** @return the server error ID, for example 768 for an invalid channel ID */
     public int getErrorId() {
-        return queryError.getId();
+        return errorId;
     }
 
     /** @return the protocol command name, excluding parameters */
@@ -73,6 +77,6 @@ public class TS3CommandFailedException extends TS3Exception {
 
     @Override
     public boolean matchesQueryError(int errorId) {
-        return queryError.getId() == errorId;
+        return this.errorId == errorId;
     }
 }

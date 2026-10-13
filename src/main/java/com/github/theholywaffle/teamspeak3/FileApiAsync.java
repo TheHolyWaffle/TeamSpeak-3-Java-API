@@ -223,6 +223,8 @@ public final class FileApiAsync {
         T run(FileTransferParameters params, FileTransferHelper.Operation operation) throws IOException;
     }
 
+    // whenComplete registers a listener; its callback cannot throw.
+    @SuppressWarnings("FutureReturnValueIgnored")
     private <T> CompletableFuture<T> executeTransfer(Command command, String failureMessage, TransferWork<T> transfer) {
         var finished = new CompletableFuture<Void>();
         var work = new CompletableFuture<T>();
@@ -255,6 +257,8 @@ public final class FileApiAsync {
         return result;
     }
 
+    // whenComplete registers a listener; its callback cannot throw.
+    @SuppressWarnings("FutureReturnValueIgnored")
     private static CompletableFuture<Void> abortOnCancel(FileTransferHelper.Operation operation) {
         var cancellation = new CompletableFuture<Void>();
         cancellation.whenComplete((value, failure) -> operation.abort());

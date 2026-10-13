@@ -20,6 +20,8 @@ final class Deadline {
         return remaining() == 0;
     }
 
+    // A thread cannot join itself.
+    @SuppressWarnings("ReferenceEquality")
     void join(Thread thread) {
         if (thread == null || thread == Thread.currentThread()) return;
         long left = remaining();

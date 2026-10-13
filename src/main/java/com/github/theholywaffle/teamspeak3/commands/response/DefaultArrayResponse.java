@@ -88,7 +88,7 @@ public class DefaultArrayResponse {
     private static Map<String, String> parseMap(String rawMap) {
         if (rawMap.isEmpty()) return Map.of();
         Map<String, String> map = new LinkedHashMap<>();
-        for (String param : rawMap.split(" ")) {
+        for (String param : rawMap.split(" ", -1)) {
             if (param.isEmpty()) continue;
             int pos = param.indexOf('=');
             if (pos == -1) map.put(CommandEncoding.decode(param), "");

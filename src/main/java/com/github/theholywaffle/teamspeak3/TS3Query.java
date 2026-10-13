@@ -52,7 +52,7 @@ import org.slf4j.LoggerFactory;
  * threads bounded by command admission and run separately from event callbacks.
  * Closing interrupts callback tasks; application callbacks must cooperate with interruption.
  */
-public class TS3Query implements AutoCloseable {
+public final class TS3Query implements AutoCloseable {
 
     private static final Logger log = LoggerFactory.getLogger(TS3Query.class);
 
@@ -157,6 +157,8 @@ public class TS3Query implements AutoCloseable {
     }
 
     /** @param config immutable validated connection settings */
+    // The periodic deadline task handles its own failures and ends with the scheduler.
+    @SuppressWarnings("FutureReturnValueIgnored")
     public TS3Query(QueryConfig config) {
         this.config = Objects.requireNonNull(config, "config");
         this.commandAdmission = new Semaphore(config.getCommandCapacity());
@@ -448,7 +450,7 @@ public class TS3Query implements AutoCloseable {
 
     void submitUserTask(final String name, final Runnable task) {
         try {
-            userThreadPool.submit(() -> {
+            userThreadPool.execute(() -> {
                 try {
                     runUserTask(task);
                 } catch (Throwable e) {
@@ -468,6 +470,8 @@ public class TS3Query implements AutoCloseable {
         return fileTransferHelper;
     }
 
+    // Only the current connection instance may report a disconnect.
+    @SuppressWarnings("ReferenceEquality")
     void fireDisconnect(Connection source) {
         synchronized (this) {
             if (source != connection || state.get() == State.CLOSING || state.get() == State.CLOSED) return;

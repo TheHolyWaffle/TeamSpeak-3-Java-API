@@ -159,6 +159,7 @@ class FileTransferHelper implements AutoCloseable {
                 try {
                     socket.close();
                 } catch (IOException ignored) {
+                    // The transfer outcome is already decided.
                 }
             }
         }

@@ -125,6 +125,8 @@ class CommandQueue {
         enqueueCommand(command, NO_ASYNC_WORK);
     }
 
+    // whenComplete registers a listener; its callback cannot throw.
+    @SuppressWarnings("FutureReturnValueIgnored")
     void enqueueCommand(Command command, CompletionStage<?> work) {
         queueLock.lock();
         try {
@@ -209,6 +211,8 @@ class CommandQueue {
         }
     }
 
+    // Responses belong to this exact command and connection instance.
+    @SuppressWarnings("ReferenceEquality")
     void completeResponse(Command command, Connection owner, Runnable completion) {
         queueLock.lock();
         try {
@@ -355,6 +359,8 @@ class CommandQueue {
         }
     }
 
+    // quit is best effort; shutDown settles every remaining command.
+    @SuppressWarnings("FutureReturnValueIgnored")
     void quit(Deadline deadline) {
         queueLock.lock();
         try {

@@ -179,7 +179,7 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer>
                 .setFloodRate(TS3Query.FloodRate.UNLIMITED)
                 .setProtocol(protocol)
                 .setLoginCredentials("serveradmin", PASSWORD)
-                .setCommandResponseTimeout(Duration.ofMillis(5000));
+                .setCommandResponseTimeout(Duration.ofSeconds(5));
     }
 
     void record(String name, Version version) throws IOException {

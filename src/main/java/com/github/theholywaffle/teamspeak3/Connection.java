@@ -124,6 +124,7 @@ class Connection {
         try {
             channel.close();
         } catch (IOException ignored) {
+            // The connection is being torn down either way.
         }
         Thread[] threads;
         synchronized (this) {

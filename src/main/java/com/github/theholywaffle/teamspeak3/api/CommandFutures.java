@@ -84,6 +84,8 @@ public final class CommandFutures {
         return linked;
     }
 
+    // whenComplete registers a listener; its callback cannot throw.
+    @SuppressWarnings("FutureReturnValueIgnored")
     private static <T> void relay(CompletableFuture<T> source, RequestFuture<T> target) {
         source.whenComplete((value, failure) -> {
             if (target.cancelling.get()) return;
@@ -97,6 +99,8 @@ public final class CommandFutures {
         private final AtomicReference<Runnable> cancelRequest;
         private final AtomicBoolean cancelling = new AtomicBoolean();
 
+        // whenComplete registers a listener; its callback cannot throw.
+        @SuppressWarnings("FutureReturnValueIgnored")
         private RequestFuture(Runnable cancelRequest) {
             this.cancelRequest = new AtomicReference<>(cancelRequest);
             whenComplete((value, failure) -> this.cancelRequest.set(null));
@@ -145,11 +149,12 @@ public final class CommandFutures {
     }
 
     /** Waits for every result, preserving input order. Fails as soon as any request fails. */
+    // whenComplete registers a listener; its callback cannot throw.
+    @SuppressWarnings("FutureReturnValueIgnored")
     public static <T> CompletableFuture<List<T>> all(Collection<CompletableFuture<T>> requests) {
         var snapshot = List.copyOf(requests);
         var result = CompletableFuture.allOf(snapshot.toArray(CompletableFuture[]::new))
-                .thenApply(
-                        unused -> snapshot.stream().map(CompletableFuture::join).toList());
+                .thenApply(_ -> snapshot.stream().map(CompletableFuture::join).toList());
         for (var request : snapshot)
             request.whenComplete((value, failure) -> {
                 if (failure != null) result.completeExceptionally(unwrap(failure));

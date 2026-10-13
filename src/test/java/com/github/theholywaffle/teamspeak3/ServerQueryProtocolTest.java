@@ -27,7 +27,7 @@ class ServerQueryProtocolTest {
                 .setHost("127.0.0.1")
                 .setQueryPort(peer.port())
                 .setFloodRate(TS3Query.FloodRate.UNLIMITED)
-                .setCommandResponseTimeout(Duration.ofMillis(2000))
+                .setCommandResponseTimeout(Duration.ofSeconds(2))
                 .setConnectionHandler(new ConnectionHandler() {
                     @Override
                     public void onConnect(TS3Api api) {

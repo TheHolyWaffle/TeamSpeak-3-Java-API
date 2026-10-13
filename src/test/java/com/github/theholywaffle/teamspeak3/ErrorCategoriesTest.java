@@ -12,6 +12,11 @@ import com.github.theholywaffle.teamspeak3.api.exception.TS3TransportException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3UnsupportedOperationException;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ClientInfo;
+import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.time.Duration;
@@ -33,6 +38,24 @@ class ErrorCategoriesTest {
                 .setQueueWaitTimeout(Duration.ofMillis(150))
                 .setCommandResponseTimeout(Duration.ofMillis(200))
                 .setCloseTimeout(Duration.ofMillis(500));
+    }
+
+    @Test
+    void serializedServerErrorKeepsIdCommandAndMessage() throws Exception {
+        var original = new TS3CommandFailedException(
+                new QueryError(Map.of("id", "768", "msg", "invalid channelID")), "channelinfo");
+        var bytes = new ByteArrayOutputStream();
+        try (var out = new ObjectOutputStream(bytes)) {
+            out.writeObject(original);
+        }
+        try (var in = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+            var copy = (TS3CommandFailedException) in.readObject();
+            assertEquals(768, copy.getErrorId());
+            assertTrue(copy.matchesQueryError(768));
+            assertEquals("channelinfo", copy.getCommandName());
+            assertEquals(original.getMessage(), copy.getMessage());
+            assertNull(copy.getError());
+        }
     }
 
     @Test

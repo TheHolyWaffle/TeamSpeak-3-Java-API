@@ -46,6 +46,7 @@ final class DisconnectingProxy implements AutoCloseable {
             try {
                 from.getInputStream().transferTo(to.getOutputStream());
             } catch (IOException expectedWhenDropped) {
+                // The proxy drops connections on purpose.
             } finally {
                 closeSocket(from);
                 closeSocket(to);
@@ -68,6 +69,7 @@ final class DisconnectingProxy implements AutoCloseable {
             try {
                 socket.close();
             } catch (IOException ignored) {
+                // Already closed.
             }
     }
 

@@ -2359,16 +2359,6 @@ class ServerQueryCompatibilityIT {
         }
     }
 
-    private static void verifyConnection(TeamSpeakContainer server, TS3Query.Protocol protocol) throws Exception {
-        TS3Query query = new TS3Query(server.config(protocol));
-        try {
-            query.connect();
-            assertFalse(query.getApi().instance().version().version().isBlank());
-        } finally {
-            exitAndAssertTerminated(query, server);
-        }
-    }
-
     private static void exitAndAssertTerminated(TS3Query query, TeamSpeakContainer server) throws InterruptedException {
         query.exit();
         long started = System.nanoTime();

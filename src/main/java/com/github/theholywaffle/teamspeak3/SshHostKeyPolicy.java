@@ -15,6 +15,8 @@ import net.schmizz.sshj.transport.verification.OpenSSHKnownHosts;
  * TOFU is explicit and writes only to the supplied file; parent directories must already exist.
  */
 public final class SshHostKeyPolicy {
+    private static final Object TOFU_LOCK = new Object();
+
     private enum Mode {
         KNOWN_HOSTS,
         PINNED,
@@ -62,7 +64,7 @@ public final class SshHostKeyPolicy {
                 }
                 // Serialize first-use decisions across queries in this JVM and reload the store.
                 // Unknown algorithms for an already trusted endpoint must not bypass key rotation checks.
-                synchronized (SshHostKeyPolicy.class) {
+                synchronized (TOFU_LOCK) {
                     try {
                         var known = new OpenSSHKnownHosts(file.toFile());
                         if (!known.findExistingAlgorithms(host, port).isEmpty()) return known.verify(host, port, key);

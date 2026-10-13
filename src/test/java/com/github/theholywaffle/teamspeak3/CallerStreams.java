@@ -24,6 +24,7 @@ final class CallerStreams {
     }
 
     /** Blocks every read until interrupted, counting down {@code entered} first. */
+    @SuppressWarnings("InputStreamSlowMultibyteRead") // Reads never return data.
     static class BlockingInput extends InputStream {
         final CountDownLatch entered = new CountDownLatch(1);
         boolean closed;

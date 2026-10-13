@@ -50,6 +50,8 @@ class SSHChannel implements QueryTransport {
         @Override
         public InputStream getInputStream() throws IOException {
             return new FilterInputStream(super.getInputStream()) {
+                // Thread identity decides which reader owns the transport.
+                @SuppressWarnings("ReferenceEquality")
                 private void trackReader() {
                     // SSHJ reads identification on the caller before starting its single owned reader.
                     // The query owns that caller; only the asynchronous reader belongs to the transport.

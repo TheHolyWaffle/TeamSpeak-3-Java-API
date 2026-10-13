@@ -385,6 +385,7 @@ class FileTransferHelperTest {
                         Thread.sleep(20);
                     }
                 } catch (IOException expectedWhenClientAborts) {
+                    // The client aborts the transfer on purpose.
                 } catch (InterruptedException failure) {
                     Thread.currentThread().interrupt();
                 }
@@ -419,7 +420,11 @@ class FileTransferHelperTest {
                     var socket = new Socket();
                     occupied.add(socket);
                     try {
-                        socket.connect(new InetSocketAddress("127.0.0.1", listener.getLocalPort()), 100);
+                        socket.connect(
+                                new InetSocketAddress(
+                                        java.net.InetAddress.getByAddress(new byte[] {127, 0, 0, 1}),
+                                        listener.getLocalPort()),
+                                100);
                     } catch (SocketTimeoutException expected) {
                         saturated = true;
                         break;
