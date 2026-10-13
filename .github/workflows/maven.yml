@@ -25,6 +25,65 @@ jobs:
   dependency_scan:
     uses: ./.github/workflows/dependency-scan.yml
 
+  api_compatibility:
+    name: API compatibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: '25'
+          distribution: temurin
+          cache: maven
+      - name: Compare with the verified 1.3.1 release
+        run: ./mvnw -B -ntp -DskipTests verify
+      - name: Run controlled compatibility examples
+        run: bash .github/scripts/test-api-compatibility.sh
+      - name: Check out the PR base
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: api-base
+          persist-credentials: false
+      - name: Require a release impact that covers the API change
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          (cd api-base && ./mvnw -B -ntp -q -DskipTests -Denforcer.skip -Djapicmp.skip -Djacoco.skip \
+            -Dspotless.check.skip -Dmaven.javadoc.skip -Dmaven.source.skip package)
+          impact=$(bash .github/scripts/api-impact.sh "$PR_TITLE" "$PR_BODY")
+          base_jar=$(find api-base/target -maxdepth 1 -name 'teamspeak3-api-*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar')
+          head_jar=$(find target -maxdepth 1 -name 'teamspeak3-api-*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar')
+          status=0
+          bash .github/scripts/api-compare.sh "$base_jar" "$head_jar" "$impact" target/api-impact || status=$?
+          {
+            echo "### API change against \`$BASE_REF\`"
+            echo
+            echo "Release impact from the PR title and body: **$impact**. Result: $([[ $status -eq 0 ]] && echo accepted || echo '**rejected**: use a larger Conventional Commit impact (\`feat:\` or \`!\`/\`BREAKING CHANGE:\`) with migration notes')."
+            echo
+            echo '```'
+            head -c 60000 target/api-impact/api-compatibility.diff
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+      - name: Upload API reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: api-compatibility
+          path: |
+            target/japicmp/
+            target/api-impact/
+          if-no-files-found: ignore
+          retention-days: 14
+
   release_intent:
     name: Release intent
     if: ${{ github.event_name == 'pull_request' }}
@@ -55,7 +114,7 @@ jobs:
   required:
     name: CI required
     if: ${{ always() }}
-    needs: [verify, compatibility, dependency_scan, release_intent]
+    needs: [verify, compatibility, dependency_scan, api_compatibility, release_intent]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -64,9 +123,11 @@ jobs:
           BUILD_RESULT: ${{ needs.verify.result }}
           COMPATIBILITY_RESULT: ${{ needs.compatibility.result }}
           DEPENDENCY_SCAN_RESULT: ${{ needs.dependency_scan.result }}
+          API_RESULT: ${{ needs.api_compatibility.result }}
           INTENT_RESULT: ${{ needs.release_intent.result }}
         run: |
           test "$BUILD_RESULT" = success
           test "$COMPATIBILITY_RESULT" = success
           test "$DEPENDENCY_SCAN_RESULT" = success
+          test "$API_RESULT" = success
           test "$INTENT_RESULT" = success || test "$INTENT_RESULT" = skipped
