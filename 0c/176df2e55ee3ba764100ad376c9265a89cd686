@@ -1,0 +1,23 @@
+.github/scripts/test-api-compatibility.sh
+  s_85649eb8ec18d5::t_625ca39d1ee050 69
+README.md
+  s_85649eb8ec18d5::t_01b9a535f18c83 29-32,34,38-40,44,46-49,52-69,71-72,146-147
+pom.xml
+  s_85649eb8ec18d5::t_bebbc6172c611b 180-197,209,225-226
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0c176df2e55ee3ba764100ad376c9265a89cd686",
+  "prompts": {},
+  "sessions": {
+    "s_85649eb8ec18d5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_85649eb8ec18d5",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
