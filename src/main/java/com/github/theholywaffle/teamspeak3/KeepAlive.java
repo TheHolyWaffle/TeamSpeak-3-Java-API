@@ -36,7 +36,7 @@ class KeepAlive extends Thread {
 
 	private final Connection con;
 
-	public KeepAlive(Connection connection) {
+	KeepAlive(Connection connection) {
 		super("[TeamSpeak-3-Java-API] KeepAlive");
 		con = connection;
 	}

@@ -5,8 +5,7 @@ import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.commands.QueryCommands;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -24,8 +23,7 @@ public final class EventApiAsync {
 
 	/** @see EventApi#register(TS3EventType...) */
 	public CompletableFuture<Void> register(TS3EventType... eventTypes) {
-		List<CompletableFuture<Void>> registrations = new ArrayList<>(eventTypes.length);
-		for (TS3EventType type : eventTypes) registrations.add(register(type, defaultChannel(type)));
+		var registrations = Arrays.stream(eventTypes).map(type -> register(type, defaultChannel(type))).toList();
 		return QueryRequests.discard(CommandFutures.all(registrations));
 	}
 

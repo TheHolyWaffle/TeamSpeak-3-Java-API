@@ -10,7 +10,6 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.CustomPropertyCommands;
 import com.github.theholywaffle.teamspeak3.commands.DatabaseClientCommands;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -18,6 +17,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.IntStream;
 
 /**
  * Asynchronous administration of clients known to the virtual server's database,
@@ -39,8 +39,8 @@ public final class DatabaseClientApiAsync {
 	public CompletableFuture<List<DatabaseClient>> list() {
 		var count = requests.integer(DatabaseClientCommands.clientDBList(0, 1, true), "count");
 		return CommandFutures.map(CommandFutures.compose(count, total -> {
-			List<CompletableFuture<List<DatabaseClient>>> pages = new ArrayList<>((total + PAGE_SIZE - 1) / PAGE_SIZE);
-			for (int offset = 0; offset < total; offset += PAGE_SIZE) pages.add(list(offset, PAGE_SIZE));
+			var pages = IntStream.iterate(0, offset -> offset < total, offset -> offset + PAGE_SIZE)
+				.mapToObj(offset -> list(offset, PAGE_SIZE)).toList();
 			return CommandFutures.all(pages);
 		}), pages -> pages.stream().flatMap(List::stream).toList());
 	}

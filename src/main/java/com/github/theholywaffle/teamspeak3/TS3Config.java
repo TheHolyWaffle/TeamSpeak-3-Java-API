@@ -208,12 +208,8 @@ public final class TS3Config {
 	}
 
 	int getQueryPort() {
-		if (queryPort > 0) {
-			return queryPort;
-		} else {
-			// Query port not set by user, use default for chosen protocol
-			return protocol == Protocol.SSH ? 10022 : 10011;
-		}
+		if (queryPort > 0) return queryPort;
+		return protocol == Protocol.SSH ? 10022 : 10011;
 	}
 
 	/**
@@ -412,7 +408,7 @@ public final class TS3Config {
 
 
 	static int socketTimeout(Duration value) {
-		return (int) Math.min(Integer.MAX_VALUE, Math.max(1L, value.toMillis()));
+		return Math.clamp(value.toMillis(), 1, Integer.MAX_VALUE);
 	}
 
 	/**

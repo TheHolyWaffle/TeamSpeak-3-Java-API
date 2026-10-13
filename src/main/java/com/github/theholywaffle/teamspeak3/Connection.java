@@ -29,6 +29,8 @@ package com.github.theholywaffle.teamspeak3;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -49,7 +51,7 @@ class Connection {
 		this.query = query;
 		this.config = config;
 		queue = new AtomicReference<>(initialQueue);
-		channel = java.util.Objects.requireNonNull(config.getTransportFactory().create(config), "transport");
+		channel = Objects.requireNonNull(config.getTransportFactory().create(config), "transport");
 		initialization = new Deadline(config.getConnectTimeout());
 	}
 
@@ -112,7 +114,7 @@ class Connection {
 
 	private void awaitTermination(Deadline deadline) {
 		deadline.join(reader); deadline.join(writer); deadline.join(keepAlive);
-		channel.awaitTermination(java.time.Duration.ofNanos(deadline.remaining()));
+		channel.awaitTermination(Duration.ofNanos(deadline.remaining()));
 	}
 
 	boolean threadsTerminated() {

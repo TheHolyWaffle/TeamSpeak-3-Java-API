@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.PublicKey;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 /** Immutable SSH trust policy. Unknown and changed keys are rejected by default.
@@ -61,7 +62,7 @@ public final class SshHostKeyPolicy {
 						if (!known.findExistingAlgorithms(host, port).isEmpty()) return known.verify(host, port, key);
 						KeyType type = KeyType.fromKey(key);
 						if (type == KeyType.UNKNOWN) return false;
-						String endpoint = host.toLowerCase(java.util.Locale.ROOT);
+						String endpoint = host.toLowerCase(Locale.ROOT);
 						if (port != 22) endpoint = "[" + endpoint + "]:" + port;
 						known.entries().add(new OpenSSHKnownHosts.HostEntry(null, endpoint, type, key));
 						known.write();
