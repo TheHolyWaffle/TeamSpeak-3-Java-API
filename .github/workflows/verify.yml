@@ -73,6 +73,8 @@ jobs:
       # Provenance is attested only by a real publication; the rehearsal checks its wiring.
       - name: Lint workflows and check the release provenance wiring
         run: bash .github/scripts/test-check-release-workflow.sh
+      - name: Test release workflow gates
+        run: bash .github/scripts/test-release-workflow.sh
       - name: Apply a synthetic release-please version solely for local validation
         run: bash .github/scripts/synthetic-release.sh 0.0.0
       - name: Stage and verify signatures with an ephemeral test key
