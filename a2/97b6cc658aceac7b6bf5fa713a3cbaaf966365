@@ -1,0 +1,27 @@
+.github/scripts/test-verify-staged-artifacts.sh
+  s_c5dc63b3d83f98::t_8a89cad46d0685 6,23,28,34,38-57
+.github/scripts/verify-staged-artifacts.sh
+  s_c5dc63b3d83f98::t_71697d391f2e55 4,9,33,55-56,59-62,64-75
+.github/workflows/verify.yml
+  s_c5dc63b3d83f98::t_4afbaaab1e2fad 75-81
+docs/packaging.md
+  s_c5dc63b3d83f98::t_a1282d46fcaea0 89-91,97-98,129-131,141
+docs/releases.md
+  s_c5dc63b3d83f98::t_fdbfbfe8060dde 229-230
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a297b6cc658aceac7b6bf5fa713a3cbaaf966365",
+  "prompts": {},
+  "sessions": {
+    "s_c5dc63b3d83f98": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_c5dc63b3d83f98",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
