@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.time.Duration;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CompletableFuture;
@@ -24,7 +25,7 @@ class ServerQueryProtocolTest {
 
 	private TS3Query query(FakeServerQuery peer) {
 		return new TS3Query(new TS3Config().setHost("127.0.0.1").setQueryPort(peer.port())
-			.setFloodRate(TS3Query.FloodRate.UNLIMITED).setCommandTimeout(2000)
+			.setFloodRate(TS3Query.FloodRate.UNLIMITED).setCommandResponseTimeout(Duration.ofMillis(2000))
 			.setConnectionHandler(new ConnectionHandler() {
 				@Override public void onConnect(TS3Api api) { api.whoAmI(); }
 				@Override public void onDisconnect(TS3Query query) { }

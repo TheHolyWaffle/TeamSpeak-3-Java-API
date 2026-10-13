@@ -341,7 +341,7 @@ class ConnectionLifecycleTest {
 		assertThrows(IllegalArgumentException.class, () -> config.setHandshakeTimeout(Duration.ofMillis(-1)));
 		assertThrows(IllegalArgumentException.class, () -> config.setQueueWaitTimeout(null));
 		assertThrows(IllegalArgumentException.class, () -> config.setCloseTimeout(Duration.ofSeconds(Long.MAX_VALUE)));
-		config.setCommandTimeout(123);
+		config.setCommandResponseTimeout(Duration.ofMillis(123));
 		assertEquals(Duration.ofMillis(123), config.getCommandResponseTimeout());
 		assertEquals(Duration.ofMillis(300), config.getConnectTimeout());
 		try (var query = new TS3Query(config)) {

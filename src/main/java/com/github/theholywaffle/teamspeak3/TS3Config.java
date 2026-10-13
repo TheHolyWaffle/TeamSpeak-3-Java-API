@@ -318,17 +318,6 @@ public final class TS3Config {
 		return enableCommunicationsLogging;
 	}
 
-	/**
-	 * Sets the command response deadline in milliseconds. Unrelated traffic does not extend it.
-	 * @param commandTimeout positive timeout in milliseconds
-	 * @return this configuration
-	 * @deprecated use {@link #setCommandResponseTimeout(Duration)}; other phases have separate deadlines
-	 */
-	@Deprecated
-	public TS3Config setCommandTimeout(int commandTimeout) {
-		return setCommandResponseTimeout(Duration.ofMillis(commandTimeout));
-	}
-
 	static Duration timeout(Duration value) {
 		if (value == null || value.isZero() || value.isNegative()) {
 			throw new IllegalArgumentException("Deadline must be positive");

@@ -45,11 +45,6 @@ public class ReconnectingConnectionHandler implements ConnectionHandler {
 	private final double multiplier;
 	private final int maxAttempts;
 
-	public ReconnectingConnectionHandler(ConnectionHandler userConnectionHandler, int startTimeout,
-	                                     int timeoutCap, int addend, double multiplier) {
-		this(userConnectionHandler, startTimeout, timeoutCap, addend, multiplier, 10);
-	}
-
 	/** Creates a bounded reconnect handler; delays use equal jitter within the cap.
 	 * @param userConnectionHandler optional callback
 	 * @param startTimeout first delay upper bound in milliseconds
@@ -82,7 +77,7 @@ public class ReconnectingConnectionHandler implements ConnectionHandler {
 	@Override
 	public void onDisconnect(TS3Query ts3Query) {
 		// Announce disconnect and run user connection handler
-		log.info("[Connection] Disconnected from TS3 server - reconnect delay capped at {}ms", startTimeout);
+		log.info("[Connection] Disconnected from TS3 server - reconnecting up to {} times, delay capped at {}ms", maxAttempts, timeoutCap);
 		if (userConnectionHandler != null) {
 			userConnectionHandler.onDisconnect(ts3Query);
 		}
@@ -112,6 +107,10 @@ public class ReconnectingConnectionHandler implements ConnectionHandler {
 		log.warn("[Connection] Reconnect attempts exhausted ({})", maxAttempts);
 		ts3Query.close();
 	}
+
+	int startTimeout() { return startTimeout; }
+
+	int maxAttempts() { return maxAttempts; }
 
 	long nextDelay(long delay) {
 		return (long) Math.min(timeoutCap, Math.ceil(delay * multiplier) + addend);
