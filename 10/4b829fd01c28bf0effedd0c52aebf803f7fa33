@@ -1,0 +1,53 @@
+.github/scripts/api-compare.sh
+  s_95855fd7d8b461::t_e8ccc1f24cf3f6 1-25
+.github/scripts/api-impact.sh
+  s_95855fd7d8b461::t_0eb23edd4cd10f 1-15
+.github/scripts/test-api-compatibility.sh
+  s_95855fd7d8b461::t_f41d87caca2a98 1-79
+.github/workflows/maven.yml
+  s_95855fd7d8b461::t_0b36b0a452d71d 28-86,117,126,132
+pom.xml
+  s_95855fd7d8b461::t_b253358d769c3d 64-74,168-184,197,504-564
+src/test/api-fixtures/README.md
+  s_95855fd7d8b461::t_c4dfabe42ff880 1-2
+src/test/api-fixtures/added/fixture/Api.java
+  s_95855fd7d8b461::t_89ef99d1dfd407 1-13
+src/test/api-fixtures/added/fixture/Listener.java
+  s_95855fd7d8b461::t_6e9aa30565d209 1-5
+src/test/api-fixtures/base/fixture/Api.java
+  s_95855fd7d8b461::t_b9bbfea4d9d658 1-9
+src/test/api-fixtures/base/fixture/Listener.java
+  s_95855fd7d8b461::t_63c645c21dfc58 1-5
+src/test/api-fixtures/changed/fixture/Api.java
+  s_95855fd7d8b461::t_b8ccedee9efa5e 1-9
+src/test/api-fixtures/changed/fixture/Listener.java
+  s_95855fd7d8b461::t_b8ab2c9dfebbe8 1-5
+src/test/api-fixtures/extended/fixture/Api.java
+  s_95855fd7d8b461::t_dbbab60cc4662f 1-9
+src/test/api-fixtures/extended/fixture/Listener.java
+  s_95855fd7d8b461::t_c415767ac3fef5 1-7
+src/test/api-fixtures/internal/fixture/Api.java
+  s_95855fd7d8b461::t_c34691fcb13f8e 1-9
+src/test/api-fixtures/internal/fixture/Listener.java
+  s_95855fd7d8b461::t_0f3ff935171421 1-5
+src/test/api-fixtures/removed/fixture/Api.java
+  s_95855fd7d8b461::t_bebf8ef5473a26 1-7
+src/test/api-fixtures/removed/fixture/Listener.java
+  s_95855fd7d8b461::t_79004cbbf6c0b4 1-5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "104b829fd01c28bf0effedd0c52aebf803f7fa33",
+  "prompts": {},
+  "sessions": {
+    "s_95855fd7d8b461": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_95855fd7d8b461",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
