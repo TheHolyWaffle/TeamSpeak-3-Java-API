@@ -15,12 +15,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.PublicKey;
 import java.time.Duration;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import net.schmizz.sshj.DefaultConfig;
 import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.common.KeyType;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.transport.verification.HostKeyVerifier;
+import net.schmizz.sshj.transport.verification.OpenSSHKnownHosts;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -180,6 +184,33 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer>
                 .setProtocol(protocol)
                 .setLoginCredentials("serveradmin", PASSWORD)
                 .setCommandResponseTimeout(Duration.ofSeconds(5));
+    }
+
+    /** Writes an OpenSSH trust file holding only this container's SSH endpoint and key. */
+    Path writeKnownHosts(Path file) throws IOException {
+        Files.createDirectories(file.getParent());
+        String endpoint = "[" + getHost() + "]:" + getMappedPort(10022);
+        String line = new OpenSSHKnownHosts.HostEntry(null, endpoint, KeyType.fromKey(hostKey), hostKey).getLine();
+        Files.writeString(file, line + "\n", StandardCharsets.UTF_8);
+        return file;
+    }
+
+    /** @return the {@code TS3_*} variables the examples need to reach this container */
+    Map<String, String> exampleEnvironment(TS3Query.Protocol protocol, Path knownHosts) {
+        var environment = new LinkedHashMap<String, String>();
+        environment.put("TS3_HOST", getHost());
+        environment.put("TS3_USERNAME", "serveradmin");
+        environment.put("TS3_PASSWORD", PASSWORD);
+        environment.put("TS3_FLOOD_RATE", "unlimited");
+        environment.put("TS3_PROTOCOL", protocol.name().toLowerCase(Locale.ROOT));
+        environment.put(
+                "TS3_QUERY_PORT", Integer.toString(getMappedPort(protocol == TS3Query.Protocol.RAW ? 10011 : 10022)));
+        if (protocol == TS3Query.Protocol.SSH) environment.put("TS3_SSH_KNOWN_HOSTS", knownHosts.toString());
+        if (getExposedPorts().contains(30033)) {
+            environment.put("TS3_FILE_TRANSFER_HOST", getHost());
+            environment.put("TS3_FILE_TRANSFER_PORT", Integer.toString(getMappedPort(30033)));
+        }
+        return environment;
     }
 
     void record(String name, Version version) throws IOException {

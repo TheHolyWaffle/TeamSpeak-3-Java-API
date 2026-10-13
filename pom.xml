@@ -634,6 +634,32 @@
 				</plugins>
 			</build>
 		</profile>
+		<!-- Runs one compiled example in a forked JVM; connection settings come from TS3_* environment variables. -->
+		<profile>
+			<id>example</id>
+			<properties>
+				<example>ClientInfoExample</example>
+			</properties>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>exec-maven-plugin</artifactId>
+						<version>3.6.4</version>
+						<configuration>
+							<executable>${java.home}/bin/java</executable>
+							<classpathScope>test</classpathScope>
+							<inheritIo>true</inheritIo>
+							<arguments>
+								<argument>-classpath</argument>
+								<classpath />
+								<argument>com.github.theholywaffle.teamspeak3.example.${example}</argument>
+							</arguments>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
 		<profile>
 			<id>integration</id>
 			<build>

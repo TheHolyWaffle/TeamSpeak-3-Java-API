@@ -6,17 +6,45 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.testcontainers.DockerClientFactory;
 
 /** Exercise the real forked launcher, including its JVM shutdown hook. */
 class DevelopmentServerIT {
+    /** Follows the printed instructions: the raw exports, then the SSH exports on top of them. */
+    private static void runExamplesFromPrintedExports(List<String> output) throws Exception {
+        List<Map<String, String>> exports = output.stream()
+                .map(String::trim)
+                .filter(line -> line.startsWith(DevelopmentServer.EXPORT_PREFIX))
+                .map(DevelopmentServerIT::parseExports)
+                .toList();
+        assertEquals(2, exports.size(), output.toString());
+        Map<String, String> ssh = new HashMap<>(exports.get(0));
+        ssh.putAll(exports.get(1));
+        for (Map<String, String> environment : List.of(exports.get(0), ssh)) {
+            String result = ExampleProcess.runToCompletion("ClientInfoExample", environment, 0);
+            assertTrue(result.contains("Server version: 3.13.8"), result);
+        }
+    }
+
+    private static Map<String, String> parseExports(String line) {
+        Map<String, String> variables = new HashMap<>();
+        Matcher matcher = Pattern.compile("(TS3_[A-Z_]+)='([^']*)'").matcher(line);
+        while (matcher.find()) variables.put(matcher.group(1), matcher.group(2));
+        return variables;
+    }
+
     @ParameterizedTest(name = "{0}: launcher example and {1} cleanup")
     @CsvSource({"ts3,ENTER", "ts3,EOF", "ts3,SIGNAL", "ts3,ONCE"})
     void exampleAndCleanup(String server, String stop) throws Exception {
@@ -47,6 +75,7 @@ class DevelopmentServerIT {
                     && System.nanoTime() < deadline) Thread.sleep(100);
             if (!stop.equals("ONCE")) {
                 assertTrue(output.stream().anyMatch(line -> line.startsWith("Press Enter")), output.toString());
+                if (stop.equals("ENTER")) runExamplesFromPrintedExports(output);
                 switch (stop) {
                     case "ENTER" -> {
                         process.getOutputStream().write('\n');
@@ -69,6 +98,9 @@ class DevelopmentServerIT {
                     .findFirst()
                     .orElseThrow();
             String id = ready.substring(ready.indexOf("container=") + "container=".length());
+            assertFalse(
+                    Files.exists(Path.of("target", "dev-server", id)),
+                    "Stopping the launcher must remove its SSH trust");
             assertThrows(
                     NotFoundException.class,
                     () -> DockerClientFactory.instance()

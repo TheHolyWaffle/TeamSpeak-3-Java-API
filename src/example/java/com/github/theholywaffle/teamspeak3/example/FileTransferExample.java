@@ -4,6 +4,7 @@ import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3Query;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
+import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
 import com.github.theholywaffle.teamspeak3.api.UploadMode;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -36,6 +37,8 @@ public final class FileTransferExample {
     private FileTransferExample() {}
 
     public static void main(String[] args) {
+        // Icons are drawn off-screen; without this, AWT can keep the JVM alive on macOS.
+        System.setProperty("java.awt.headless", "true");
         ExampleSettings settings = ExampleSettings.fromEnvironment();
         try (TS3Query query = new TS3Query(settings.config())) {
             query.connect();
@@ -73,8 +76,10 @@ public final class FileTransferExample {
                 System.out.println(
                         "Stream download (" + length + " bytes): " + dataOut.toString(StandardCharsets.UTF_8));
 
-                api.channels().edit(channelId, Map.of(ChannelProperty.CHANNEL_ICON_ID, Long.toString(blueIcon)));
-                System.out.println("Uploaded icons " + redIcon + " and " + blueIcon + "; set icon " + blueIcon);
+                // TS3 assigns channel icons through the i_icon_id permission, using the ID's signed 32-bit form.
+                api.permissions().add(PermissionTarget.channel(channelId), "i_icon_id", (int) blueIcon);
+                System.out.println("Uploaded icons " + redIcon + " and " + blueIcon + "; channel icon is now "
+                        + api.channels().info(channelId).getIconId());
                 api.files().deleteIcons(redIcon, blueIcon);
             } finally {
                 api.channels().delete(channelId, true);
