@@ -39,6 +39,7 @@ github=$(step 'Require Central availability before creating the GitHub release')
 deploy_run=$(yq ".jobs.publish.steps[$deploy].run" "$workflow")
 grep -qF 'check-portal-deployment.sh' <<< "$deploy_run" || fail 'resume-central must check the Portal deployment first'
 grep -qF 'JRELEASER_MAVENCENTRAL_CENTRAL_STAGE=PUBLISH' <<< "$deploy_run" || fail 'resume-central must not upload again'
+grep -qF 'release-consistency.sh' <<< "$deploy_run" || fail 'the deployed version, tag and commit must be checked before releasing'
 
 for config in jreleaser.yml jreleaser-github.yml; do
   yq -e '.release.github.overwrite == false and .release.github.update.enabled == false' "$config" > /dev/null ||

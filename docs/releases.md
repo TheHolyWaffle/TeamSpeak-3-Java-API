@@ -552,7 +552,8 @@ run, which reads the merged history exactly as `master` will after a merge-commi
    `chore(modernization/2.0): release 2.0.0`, updating `pom.xml`, the Maven consumer POM,
    `CHANGELOG.md` and the manifest. It writes the proposed changelog entry to
    `target/release-please-notes.md` and passes it through `release-metadata.sh`, so notes that
-   publication would reject (for example above 10,000 bytes) fail CI first. Read the entry: every
+   publication would reject (for example above 10,000 bytes) fail CI first. The rehearsed 2.0.0
+   notes use 9,189 bytes; keep further releasing PRs before 2.0.0 short. Read the entry: every
    `!` commit must appear under **BREAKING CHANGES** with usable migration notes. Release-please
    logs `commit could not be parsed` for messages it skips; only the pre-Conventional-Commit
    commits from 1.3.1 and #429/#430 may appear there.
@@ -587,6 +588,7 @@ run, which reads the merged history exactly as `master` will after a merge-commi
 | Not a reviewed release-please merge at `master` HEAD, or **CI required** not green | `validate` job; `publish` needs `validate` and `verify` to succeed | `test-release-workflow.sh` |
 | Version, manifest, tag or newest changelog entry disagree, a snapshot or prerelease, notes too long | `release-metadata.sh` in `validate` and again in `publish` | `test-release-metadata.sh` |
 | Tag exists on another commit, or the GitHub release exists | `validate` | `test-release-workflow.sh` |
+| JReleaser resolved another version, tag, commit or branch than approved | `release-consistency.sh` after deployment, before the tag and GitHub release | `release-rehearsal.sh`; `test-release-workflow.sh` |
 | `master` moved during the release | Rechecked when `publish` starts and before the GitHub release | `test-release-workflow.sh` |
 | Missing, extra, non-reproducible or wrong-version artifacts | `verify-staged-artifacts.sh` before JReleaser signs | `test-verify-staged-artifacts.sh` (planted defects) |
 | Bundle without sources, unsigned or failing Central rules | JReleaser with `applyMavenCentralRules` before upload | `release-rehearsal.sh` (missing sources) |

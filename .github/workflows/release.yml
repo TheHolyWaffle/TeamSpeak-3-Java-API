@@ -170,6 +170,8 @@ jobs:
           JRELEASER_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
           RELEASE_ACTION: ${{ inputs.action }}
           DEPLOYMENT_ID: ${{ inputs.deployment_id }}
+          RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
         shell: bash
         run: |
           set -euo pipefail
@@ -200,6 +202,8 @@ jobs:
           fi
           ./mvnw -B -ntp jreleaser:deploy
           cp target/jreleaser/output.properties target/jreleaser/deployment-output.properties
+          bash .github/scripts/release-consistency.sh "$(cat target/release-version.txt)" "$RELEASE_TAG" \
+            "$RELEASE_COMMIT" target/jreleaser/deployment-output.properties
       - name: Require Central availability before creating the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
