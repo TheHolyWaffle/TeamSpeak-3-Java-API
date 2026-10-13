@@ -86,13 +86,16 @@ the local `-Pcentral-staging deploy` repository that JReleaser signs and bundles
   embeds the same version and contains only Java 25 bytecode without preview features;
 - the sources JAR matches `src/main/java`, and the Javadoc JAR documents every package
   without generation dates;
-- every entry of every JAR carries the configured `outputTimestamp`.
+- every entry of every JAR carries the configured `outputTimestamp`;
+- when given JReleaser's Central bundle, it holds exactly those four files with their
+  signatures and MD5/SHA-1/SHA-256/SHA-512 checksums, byte-identical to the staged files.
 
 [`test-verify-staged-artifacts.sh`](../.github/scripts/test-verify-staged-artifacts.sh)
 copies a valid staged repository and introduces one defect per copy. It requires each
 copy to be rejected for the intended reason: an unapproved version, a shaded classifier,
 a missing Javadoc JAR, a changed POM, an unnormalized timestamp, a bundled logging
-configuration, preview bytecode or incomplete sources.
+configuration, preview bytecode, incomplete sources, and a bundle with a missing
+signature or a different library JAR.
 
 JReleaser's Central rules separately validate the POM metadata (name, description, URL,
 license, developers and SCM) and require sources and Javadoc. The release rehearsal checks
@@ -123,8 +126,9 @@ Gradle 9.8.1 (on `PATH`, or set `GRADLE`):
 ```sh
 bash .github/scripts/synthetic-release.sh 0.0.0
 bash .github/scripts/release-rehearsal.sh
-bash .github/scripts/verify-staged-artifacts.sh 0.0.0
-bash .github/scripts/test-verify-staged-artifacts.sh 0.0.0
+bundle=target/jreleaser/deploy/mavenCentral/central/com.github.theholywaffle-teamspeak3-api-0.0.0-bundle.zip
+bash .github/scripts/verify-staged-artifacts.sh 0.0.0 target/staging-deploy .release-please-manifest.json "$bundle"
+bash .github/scripts/test-verify-staged-artifacts.sh 0.0.0 target/staging-deploy "$bundle"
 bash .github/scripts/consumer-check.sh 0.0.0
 bash .github/scripts/reproducibility-check.sh
 ```
@@ -134,6 +138,6 @@ release-please PR changes: POM version, manifest and a newest changelog entry. I
 extracts the release notes through the same gate as a real release. The JReleaser
 release dry-run in the rehearsal needs a Git checkout.
 
-The **Validate publication bundle (no upload)** CI job runs the first five steps;
+The **Validate publication bundle (no upload)** CI job runs all but the last step;
 **Reproducible unsigned artifacts** runs the last. The explicit release workflow runs
 `verify-staged-artifacts.sh` with the approved version before JReleaser signs or deploys.
