@@ -3,7 +3,7 @@
 # newest changelog entry), then extract the notes through the same gate as a real release.
 set -euo pipefail
 version=${1:?synthetic stable version required}
-./mvnw -B -ntp org.codehaus.mojo:versions-maven-plugin:2.22.0:set \
+./mvnw -B -ntp versions:set \
   -DnewVersion="$version" -DgenerateBackupPoms=false -DupdateBuildOutputTimestampPolicy=never
 printf '{\n  ".": "%s"\n}\n' "$version" > .release-please-manifest.json
 mkdir -p target

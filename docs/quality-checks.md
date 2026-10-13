@@ -5,15 +5,18 @@ the same checks as the CI **Verify Java 25** job. A few checks that need extra i
 title, a second checkout or a scanner binary) run from the scripts below, and CI calls the same
 scripts.
 
-| Check | Tool (pinned) | Local command | CI job |
+| Check | Tool | Local command | CI job |
 | --- | --- | --- | --- |
-| Formatting | Spotless 3.10.3 with Palantir Java Format 2.99.0, `.editorconfig` | `./mvnw spotless:apply`, checked by `verify` | Verify Java 25 |
-| Compiler and bug patterns | `javac -Xlint:all -Werror`, Error Prone 2.50.0 | `verify` | Verify Java 25 and 27 |
+| Formatting | Spotless with Palantir Java Format, `.editorconfig` | `./mvnw spotless:apply`, checked by `verify` | Verify Java 25 |
+| Compiler and bug patterns | `javac -Xlint:all -Werror`, Error Prone | `verify` | Verify Java 25 and 27 |
 | Javadoc | `-Xdoclint` for protected API, `javadoc` with `failOnWarnings` | `verify` | Verify Java 25 and 27 |
-| Coverage | JaCoCo 0.8.15 per-class floors | `verify`; `-Pintegration verify` adds the TS3 suite | Verify (report artifact), Docker compatibility (`jacoco-it`) |
+| Coverage | JaCoCo per-class floors | `verify`; `-Pintegration verify` adds the TS3 suite | Verify (report artifact), Docker compatibility (`jacoco-it`) |
 | Log redaction | `CommunicationLogRedactionTest` in its own DEBUG-logging Surefire run | `verify` | Verify Java 25 and 27 |
 | Dependency vulnerabilities | GitHub dependency graph, Dependabot alerts, dependency review | (GitHub only) | Dependency graph and review |
-| API compatibility | japicmp 0.26.2 | `verify`; `bash .github/scripts/test-api-compatibility.sh` | API compatibility |
+| API compatibility | japicmp | `verify`; `bash .github/scripts/test-api-compatibility.sh` | API compatibility |
+
+Tool versions are pinned in `pom.xml` and kept current by Dependabot; see
+[dependency and image maintenance](maintenance.md).
 
 ## Formatting
 
@@ -107,7 +110,8 @@ Castle BOM, with `advanced-security/maven-dependency-submission-action`:
 Dependency review checks changed dependencies only. A new advisory against an unchanged
 dependency surfaces as a Dependabot alert on `master`. Allow a vulnerability (`allow-ghsas`)
 only in a reviewed PR that states why it is not exploitable here. Maven build plugins and GitHub
-Actions are pinned and are not scanned here; their updates are covered by #449.
+Actions are pinned and are not scanned here; Dependabot version updates keep them current (see
+[dependency and image maintenance](maintenance.md)).
 
 ## API compatibility
 

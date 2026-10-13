@@ -8,6 +8,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -42,8 +43,11 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer>
         implements BeforeAllCallback, AfterAllCallback {
     static final String PASSWORD = "integration-test-only";
     private static final String ALLOWLIST_LOADED = "updated query_ip_allowlist ips: 0.0.0.0/0";
-    static final String TS3_IMAGE =
-            "teamspeak:3.13.8@sha256:6dfdfb22869adf50e1b66d024b360b786d57a85ea09e8e8fdb6cca23949b2813";
+    /** Tag and digest from {@code teamspeak3/Dockerfile}, the one place the image is pinned. */
+    static final String TS3_IMAGE = pinnedImage();
+    /** The server version the pinned image reports: its tag. */
+    static final String TS3_VERSION = TS3_IMAGE.substring("teamspeak:".length(), TS3_IMAGE.indexOf('@'));
+
     PublicKey hostKey;
     String sshBanner;
     String algorithms;
@@ -91,6 +95,23 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer>
                                 "Authenticated ServerQuery readiness failed for " + getDockerImageName(), last);
                     }
                 }.withStartupTimeout(Duration.ofSeconds(90)));
+    }
+
+    private static String pinnedImage() {
+        try (var in = TeamSpeakContainer.class.getResourceAsStream("/teamspeak3/Dockerfile")) {
+            if (in == null) throw new IllegalStateException("teamspeak3/Dockerfile is not on the test classpath");
+            List<String> from = new String(in.readAllBytes(), StandardCharsets.UTF_8)
+                    .lines()
+                    .filter(line -> line.startsWith("FROM "))
+                    .map(line -> line.substring("FROM ".length()))
+                    .toList();
+            if (from.size() != 1 || !from.getFirst().matches("teamspeak:3\\.\\d+\\.\\d+@sha256:[0-9a-f]{64}"))
+                throw new IllegalStateException(
+                        "Expected one FROM teamspeak:<3.x.y>@sha256:<digest> line, got: " + from);
+            return from.getFirst();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     TeamSpeakContainer withFileTransferPort() {

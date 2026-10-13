@@ -23,7 +23,7 @@ export JRELEASER_MAVENCENTRAL_CENTRAL_PASSWORD=unused-dry-run
   -Djreleaser.config.file=jreleaser-github.yml
 cmp target/release-notes.md target/jreleaser/release/CHANGELOG.md
 # Verify signatures independently of JReleaser and assert the required artifacts.
-version=$(./mvnw -q -ntp org.apache.maven.plugins:maven-help-plugin:3.5.2:evaluate \
+version=$(./mvnw -q -ntp help:evaluate \
   -Dexpression=project.version -DforceStdout)
 base="target/staging-deploy/com/github/theholywaffle/teamspeak3-api/$version/teamspeak3-api-$version"
 for suffix in .pom .jar -sources.jar -javadoc.jar; do

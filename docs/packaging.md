@@ -121,8 +121,9 @@ Castle provider. It checks that exactly the application's chosen SLF4J provider 
 present and that the library's communication log reached it. The script then requires
 that each consumer loaded a library JAR identical to the staged one.
 
-Run the checks locally in a disposable copy of the repository with JDK 25, GnuPG and
-Gradle 9.8.1 (on `PATH`, or set `GRADLE`):
+Run the checks locally in a disposable copy of the repository with JDK 25, GnuPG and the
+Gradle version in `src/test/consumers/gradle/gradle/wrapper/gradle-wrapper.properties` (on
+`PATH`, or set `GRADLE`):
 
 ```sh
 bash .github/scripts/synthetic-release.sh 0.0.0

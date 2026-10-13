@@ -21,7 +21,7 @@ work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
 # Every entry carries project.build.outputTimestamp, as zipinfo prints it (yyyymmdd.hhmmss).
-stamp=$(./mvnw -q -ntp org.apache.maven.plugins:maven-help-plugin:3.5.2:evaluate \
+stamp=$(./mvnw -q -ntp help:evaluate \
   -Dexpression=project.build.outputTimestamp -DforceStdout | tr -d -- '-:Z' | tr T .)
 [[ "$stamp" =~ ^[0-9]{8}\.[0-9]{6}$ ]] || fail 'project.build.outputTimestamp is not an ISO-8601 UTC instant'
 for jar in "$base.jar" "$base-sources.jar" "$base-javadoc.jar"; do

@@ -93,7 +93,7 @@ jobs:
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
           mkdir -p target
-          ./mvnw -B -ntp org.apache.maven.plugins:maven-help-plugin:3.5.2:evaluate \
+          ./mvnw -B -ntp help:evaluate \
             -Dexpression=project.version -Doutput=target/release-version.txt
           bash .github/scripts/release-metadata.sh "$(cat target/release-version.txt)" "$RELEASE_TAG"
 
@@ -129,7 +129,7 @@ jobs:
         run: |
           test "$RELEASE_COMMIT" = "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/master" --jq '.object.sha')"
           mkdir -p target
-          ./mvnw -B -ntp org.apache.maven.plugins:maven-help-plugin:3.5.2:evaluate \
+          ./mvnw -B -ntp help:evaluate \
             -Dexpression=project.version -Doutput=target/release-version.txt
           bash .github/scripts/release-metadata.sh "$(cat target/release-version.txt)" "$RELEASE_TAG"
       - name: Package the normal library into a local repository

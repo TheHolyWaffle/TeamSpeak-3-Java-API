@@ -88,6 +88,20 @@ class DocumentationTest {
         assertEquals(QueryTransports.RAW, config.getTransportFactory());
     }
 
+    /** An image update changes the verified support claim, so it fails until the README is reviewed. */
+    @Test
+    void supportTableNamesThePinnedServerVersion() throws IOException {
+        Set<String> documented = Pattern.compile("^\\| TeamSpeak 3 server (\\d+\\.\\d+\\.\\d+) ", Pattern.MULTILINE)
+                .matcher(Files.readString(README))
+                .results()
+                .map(match -> match.group(1))
+                .collect(Collectors.toSet());
+        assertEquals(
+                Set.of(TeamSpeakContainer.TS3_VERSION),
+                documented,
+                "Update the README support table for src/test/resources/teamspeak3/Dockerfile");
+    }
+
     @Test
     void relativeLinksAndAnchorsResolve() throws IOException {
         List<Path> pages = new ArrayList<>(List.of(README));

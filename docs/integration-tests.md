@@ -27,11 +27,11 @@ declare its expected completion output there or the test fails. The test also
 exchanges `!ping`/`pong` with the running chat bot and checks that a missing
 setting fails before connecting.
 
-`TeamSpeakContainer` uses official images pinned by version and manifest digest:
-
-| Server | Image version | Manifest digest | Advertised platforms |
-| --- | --- | --- | --- |
-| TS3 | `teamspeak:3.13.8` | `sha256:6dfdfb22869adf50e1b66d024b360b786d57a85ea09e8e8fdb6cca23949b2813` | Linux amd64 |
+`TeamSpeakContainer` uses the official TS3 image pinned by version and manifest digest in
+[`src/test/resources/teamspeak3/Dockerfile`](../src/test/resources/teamspeak3/Dockerfile), the only
+place the image is named. Its tag is the server version the suite expects, and the README support
+table must name it. Dependabot maintains the pin; see
+[dependency and image maintenance](maintenance.md).
 
 TS3 explicitly requests `linux/amd64`: Apple Silicon needs Docker amd64
 emulation. This is not native TS3 arm64 support. The Linux CI suite uses amd64; local Apple Silicon validation is
@@ -73,11 +73,12 @@ container startup diagnostics.
 
 The required Maven CI calls `compatibility.yml` on Linux with Java 25, and the
 aggregate `CI required` job requires its success. The workflow also supports
-manual runs and weekly scheduled revalidation of the pinned images. GitHub runs
-cron only for workflows present on the default branch: while modernization stays
-on `modernization/2.0`, manually run **ServerQuery compatibility** on that branch
-weekly; cron becomes active after final integration into `master`. No workflow
-here publishes artifacts or upgrades the pin silently.
+manual runs, optionally against a candidate image, and weekly scheduled revalidation
+of the pin. **Upstream update detection** runs the same suite against a newer official
+TS3 image as soon as one is published; see [scheduled detection](maintenance.md#scheduled-detection).
+GitHub runs scheduled and manually dispatched workflows only when they exist on the
+default branch, so both become active after final integration into `master`. No workflow
+here publishes artifacts or changes the pin; Dependabot proposes pin updates as PRs.
 
 Review a newer official TS3 version/digest, inspect its manifest, rerun this suite
 on Linux amd64 and Apple Silicon, update the expected version and pins (including

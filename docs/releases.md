@@ -44,7 +44,7 @@ including generated release PRs, and reruns when a title changes.
 | --- | --- | --- |
 | `feat!: ...`, `fix!: ...`, or another type with `!` | major | Breaking change; describe migration in the PR body |
 | `feat: ...` | minor | Backward-compatible feature |
-| `fix: ...`, `perf: ...`, `deps: ...` | patch | Backward-compatible fix, performance or dependency update |
+| `fix: ...`, `perf: ...`, `deps: ...` | patch | Backward-compatible fix, performance or runtime dependency update |
 | `ci: ...`, `test: ...`, `chore: ...`, etc. | none | Internal work; no user-facing release on its own |
 
 A `BREAKING CHANGE:` footer also records a major impact. Reference the issue in the
@@ -54,7 +54,10 @@ or Python CI scripts are needed. Changes to runtime support, defaults, and
 behavior still need human compatibility review. The **API compatibility** job rejects a PR
 whose API change needs a larger impact than its title or `BREAKING CHANGE:` footer declares,
 and `verify` checks the pending version against the published 1.3.1 API; see
-[API compatibility](quality-checks.md#api-compatibility) and its limits.
+[API compatibility](quality-checks.md#api-compatibility) and its limits. The same job requires a
+releasing title when the resolved runtime dependencies change and rejects `deps:` when they do not,
+so build-only updates use `build:`. Dependabot PRs pass through these same checks; see
+[dependency and image maintenance](maintenance.md#release-intent).
 
 ## Prepare a release PR
 
@@ -94,12 +97,18 @@ Release-please then derives subsequent versions normally and prepares separate
 `autorelease: snapshot` PRs after releases. Those snapshot PRs update development
 versions without creating public releases; review and merge them through CI.
 
-For a non-publishing rehearsal, use the pinned release-please CLI version bundled
-with the Action and its dry-run mode; do not run preparation against a live
-repository with publication enabled. Native Maven verification remains:
+The required **Release preparation (dry run)** job is the non-publishing rehearsal: it
+installs the release-please version locked by the Action pinned above and runs
+`release-pr --dry-run` against the PR or pushed branch with a read-only token. It fails if the
+configuration does not load, release-please reports an error, or the proposed release PR
+does not carry the configured `release-as` version. It skips fork PRs, whose branch
+release-please cannot read. To run it locally against a pushed branch:
 
 ```sh
-./mvnw -B -ntp verify
+git clone https://github.com/googleapis/release-please-action target/release-please-action
+git -C target/release-please-action checkout <SHA pinned in release-prepare.yml>
+GITHUB_TOKEN=$(gh auth token) GITHUB_REPOSITORY=TheHolyWaffle/TeamSpeak-3-Java-API \
+  bash .github/scripts/release-please-dry-run.sh target/release-please-action <branch>
 ```
 
 ## Modernization migration notes
@@ -138,6 +147,11 @@ environment variables (see [run an example](../README.md#run-an-example)); copy 
 there rather than from 1.x examples, which used removed APIs. Javadoc now documents that TS3
 assigns channel and client icons through the `i_icon_id` permission rather than the
 `channel_icon_id`/`client_icon_id` properties, which the server rejects in edits.
+
+Task #449 changes no library API, behavior or dependency. For contributors: `deps:` titles now
+require a runtime dependency change, Maven Enforcer accepts any Maven 3.10 or newer 3.x (the
+wrapper still pins the exact version), and the TS3 image is pinned in
+`src/test/resources/teamspeak3/Dockerfile`. See [dependency and image maintenance](maintenance.md).
 
 ## Central Portal publication (#433)
 
@@ -211,7 +225,7 @@ For an approved stable release checkout, extract its notes, then run the signed
 non-publishing rehearsal:
 
 ```sh
-./mvnw -B -ntp org.apache.maven.plugins:maven-help-plugin:3.5.2:evaluate \
+./mvnw -B -ntp help:evaluate \
   -Dexpression=project.version -Doutput=target/release-version.txt
 bash .github/scripts/release-metadata.sh "$(cat target/release-version.txt)" v2.0.0
 bash .github/scripts/release-rehearsal.sh

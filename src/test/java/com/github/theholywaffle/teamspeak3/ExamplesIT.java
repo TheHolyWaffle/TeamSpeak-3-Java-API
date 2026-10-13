@@ -35,7 +35,7 @@ class ExamplesIT {
     /** Output proving each example completed its work; every example must be listed. */
     private static final Map<String, String> COMPLETED = Map.of(
             "ChatBotExample", "Running. Press Enter",
-            "ClientInfoExample", "Server version: 3.13.8",
+            "ClientInfoExample", "Server version: " + TeamSpeakContainer.TS3_VERSION,
             "CreateChannelExample", "Deleted channel",
             "EventListenerExample", "Event statistics: ",
             "FileTransferExample", "Stream download (30 bytes): Hello file transferring world!",

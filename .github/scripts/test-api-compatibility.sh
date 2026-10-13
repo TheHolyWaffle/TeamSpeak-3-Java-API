@@ -23,6 +23,27 @@ expect_impact none 'refactor: simplify queue'
 expect_impact none 'ci: pin actions'
 expect_impact none 'docs: mention BREAKING CHANGE: in prose' 'Not a footer: BREAKING CHANGE: inline'
 
+# Release impact against the resolved runtime dependencies (dependency:list output).
+list() {
+  printf 'The following files have been resolved:\n'
+  printf '   %s -- module x\n' "$@"
+}
+list org.slf4j:slf4j-api:jar:2.0.20:compile > "$work/deps-base.txt"
+list org.slf4j:slf4j-api:jar:2.0.21:compile > "$work/deps-bumped.txt"
+expect_dependencies() {
+  local status=0
+  bash .github/scripts/dependency-impact.sh "$work/deps-base.txt" "$work/$2.txt" "$3" > /dev/null 2>&1 || status=$?
+  if [[ $1 == pass && $status -ne 0 ]]; then fail "'$3' with $2 runtime dependencies was rejected"; fi
+  if [[ $1 == fail && $status -eq 0 ]]; then fail "'$3' with $2 runtime dependencies was accepted"; fi
+  echo "ok: '$3' with $2 runtime dependencies: $1"
+}
+expect_dependencies pass deps-bumped 'deps: bump org.slf4j:slf4j-api from 2.0.20 to 2.0.21'
+expect_dependencies pass deps-bumped 'fix: update vulnerable sshj'
+expect_dependencies fail deps-bumped 'build: bump the build-plugins group with 2 updates'
+expect_dependencies pass deps-base 'build: bump com.google.errorprone:error_prone_core from 2.50.0 to 2.51.0'
+expect_dependencies fail deps-base 'deps: bump com.google.errorprone:error_prone_core from 2.50.0 to 2.51.0'
+expect_dependencies fail deps-base 'deps: bump the maven-distribution group with 1 update'
+
 javac_bin=${JAVA_HOME:+$JAVA_HOME/bin/}javac
 jar_bin=${JAVA_HOME:+$JAVA_HOME/bin/}jar
 for variant in base removed changed added extended internal; do
