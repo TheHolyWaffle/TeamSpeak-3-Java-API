@@ -9,7 +9,7 @@
 | 1.2 and older | End of life |
 
 Once 2.0.0 is published, 1.x receives no further releases, including security fixes. Upgrade
-with the [migration guide](README.md#migrating-from-1x). Within a supported line, only the
+with the [migration guide](docs/migration-2.0.md). Within a supported line, only the
 newest release is patched; there are no backports to older minors or patches.
 
 A supported version runs on **Java 25 or newer** against the **TeamSpeak 3 server** versions listed in the README's
