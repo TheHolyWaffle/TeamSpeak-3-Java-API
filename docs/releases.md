@@ -6,7 +6,9 @@ newer GA JDK (currently 27), with Java 25 bytecode on both. Maven `verify` runs
 tests and creates the normal, sources and Javadoc JARs; `-Pfull verify`
 additionally creates the standalone JAR. Maven errors fail the job, with logs and available test/Javadoc reports
 uploaded for seven days. PR builds have read-only permissions and no release
-credentials. Linux Docker checks arrive with #434; japicmp arrives with #446.
+credentials. Linux Docker checks arrived with #434. Formatting, static analysis, Javadoc,
+coverage, dependency scanning and japicmp API checks are described in
+[quality checks](quality-checks.md).
 
 ## Before merging modernization into master
 
@@ -48,7 +50,10 @@ A `BREAKING CHANGE:` footer also records a major impact. Reference the issue in 
 PR body and retain the generated PR number when squashing. Release-please derives
 notes and versions from merged commits; no separate fragment files, exemptions,
 or Python CI scripts are needed. Changes to runtime support, defaults, and
-behavior still need human compatibility review. Task #446 adds japicmp checks.
+behavior still need human compatibility review. The **API compatibility** job rejects a PR
+whose API change needs a larger impact than its title or `BREAKING CHANGE:` footer declares,
+and `verify` checks the pending version against the published 1.3.1 API; see
+[API compatibility](quality-checks.md#api-compatibility) and its limits.
 
 ## Prepare a release PR
 
@@ -118,6 +123,10 @@ Task #443 moves `TS3Api`/`TS3ApiAsync` operations into domain APIs such as
 for absent lookups and defines the `TS3Exception` categories. Every previous operation is
 mapped in the [domain API migration guide](api-migration.md), an intentional 2.0
 source/binary break.
+
+Task #446 makes `TS3Query` final, keeps `TS3CommandFailedException` serializable without its
+error map, and redacts secrets in communication logs and `toString()` diagnostics. See the
+[quality checks migration table](quality-checks.md#migration-20).
 
 ## Central Portal publication (#433)
 
