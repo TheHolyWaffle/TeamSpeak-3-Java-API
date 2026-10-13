@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.github.dockerjava.api.exception.NotFoundException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
@@ -31,8 +32,8 @@ class DevelopmentServerIT {
                 .start();
         List<String> output = new CopyOnWriteArrayList<>();
         Thread reader = Thread.ofPlatform().start(() -> {
-            try (var lines = new BufferedReader(
-                    new InputStreamReader(process.getInputStream(), java.nio.charset.StandardCharsets.UTF_8))) {
+            try (var lines =
+                    new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
                 for (String line; (line = lines.readLine()) != null; ) output.add(line);
             } catch (Exception e) {
                 output.add("Reader failure: " + e);

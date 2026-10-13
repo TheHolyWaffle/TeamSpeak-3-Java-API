@@ -124,9 +124,9 @@ for absent lookups and defines the `TS3Exception` categories. Every previous ope
 mapped in the [domain API migration guide](api-migration.md), an intentional 2.0
 source/binary break.
 
-Task #446 makes `TS3Query` final, keeps `TS3CommandFailedException` serializable without its
-error map, and redacts secrets in communication logs and `toString()` diagnostics. See the
-[quality checks migration table](quality-checks.md#migration-20).
+Task #446 makes `TS3Query` final, makes `TS3CommandFailedException` serializable, returns the
+wire text from `Command.encoded()` and redacts secrets in communication logs and `toString()`
+diagnostics. See the [quality checks migration table](quality-checks.md#migration-20).
 
 ## Central Portal publication (#433)
 

@@ -43,6 +43,7 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
+import java.util.StringJoiner;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
@@ -650,9 +651,8 @@ public class Wrapper {
     /** @return the type and properties, with {@linkplain ProtocolRedactor secret} values redacted */
     @Override
     public String toString() {
-        var shown = new LinkedHashMap<String, String>();
-        map.forEach((key, value) ->
-                shown.put(key, ProtocolRedactor.isSecret(key) && !value.isEmpty() ? ProtocolRedactor.REDACTED : value));
-        return getClass().getSimpleName() + shown;
+        var shown = new StringJoiner(", ", getClass().getSimpleName() + "{", "}");
+        map.forEach((key, value) -> shown.add(key + "=" + ProtocolRedactor.redactValue(key, value)));
+        return shown.toString();
     }
 }

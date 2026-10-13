@@ -53,10 +53,19 @@ public final class ProtocolRedactor {
         return tokens.appendTail(redacted).toString();
     }
 
+    /**
+     * @param key a ServerQuery property name
+     * @param value its decoded or encoded value
+     * @return {@value #REDACTED} for a non-empty secret value, otherwise {@code value}
+     */
+    public static String redactValue(String key, String value) {
+        return !value.isEmpty() && isSecret(key) ? REDACTED : value;
+    }
+
     private static String redactProperty(String token) {
         int equals = token.indexOf('=');
-        return equals > 0 && equals < token.length() - 1 && isSecret(token.substring(0, equals))
-                ? token.substring(0, equals + 1) + REDACTED
-                : token;
+        if (equals <= 0) return token;
+        String key = token.substring(0, equals);
+        return key + '=' + redactValue(key, token.substring(equals + 1));
     }
 }

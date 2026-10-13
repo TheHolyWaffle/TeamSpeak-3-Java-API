@@ -41,7 +41,7 @@ class ErrorCategoriesTest {
     }
 
     @Test
-    void serializedServerErrorKeepsIdCommandAndMessage() throws Exception {
+    void serializedServerErrorKeepsErrorCommandAndMessage() throws Exception {
         var original = new TS3CommandFailedException(
                 new QueryError(Map.of("id", "768", "msg", "invalid channelID")), "channelinfo");
         var bytes = new ByteArrayOutputStream();
@@ -54,7 +54,7 @@ class ErrorCategoriesTest {
             assertTrue(copy.matchesQueryError(768));
             assertEquals("channelinfo", copy.getCommandName());
             assertEquals(original.getMessage(), copy.getMessage());
-            assertNull(copy.getError());
+            assertEquals(original.getError(), copy.getError());
         }
     }
 

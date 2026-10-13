@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 /** Sends a probe command whenever the connection has been idle for one interval. */
 class KeepAlive implements Runnable {
 
-    static final long INTERVAL_MILLIS = 60_000;
+    private static final long INTERVAL_MILLIS = 60_000;
 
     private static final Logger log = LoggerFactory.getLogger(KeepAlive.class);
 

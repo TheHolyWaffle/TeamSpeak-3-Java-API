@@ -12,7 +12,7 @@ scripts.
 | Javadoc | `-Xdoclint` for protected API, `javadoc` with `failOnWarnings` | `verify` | Verify Java 25 and 27 |
 | Coverage | JaCoCo 0.8.15 per-class floors | `verify`; `-Pintegration verify` adds the TS3 suite | Verify (report artifact), Docker compatibility (`jacoco-it`) |
 | Log redaction | `CommunicationLogRedactionTest` in its own DEBUG-logging Surefire run | `verify` | Verify Java 25 and 27 |
-| Dependency vulnerabilities | OSV-Scanner 2.6.0 | `osv-scanner scan source --lockfile=pom.xml --all-vulns` | Dependency scan (also weekly) |
+| Dependency vulnerabilities | GitHub dependency graph, Dependabot alerts, dependency review | (GitHub only) | Dependency graph and review |
 | API compatibility | japicmp 0.26.2 | `verify`; `bash .github/scripts/test-api-compatibility.sh` | API compatibility |
 
 ## Formatting
@@ -73,13 +73,15 @@ response and notification at DEBUG. These diagnostics replace secret values with
 
 - communication logs, and the `[UNHANDLED]` and malformed-response warnings, which are logged
   even without communication logging;
-- `Wrapper.toString()` for every response model and event, and `DefaultArrayResponse.toString()`.
+- `toString()` of `Command`, of every response model and event (`Wrapper`), and of
+  `DefaultArrayResponse`.
 
 Secrets are `*password` properties (except `*_flag_password` flags), `cpw`/`tcpw` channel
 passwords, temporary passwords `pw`/`pw_clear`, privilege keys `token`, `apikey` and file
-transfer keys `ftkey`, in every row of a response. The positional password of
-`login <user> <password>` is redacted too. Getters, `getRawResponse()` and the encoded command
-sent to the server keep the real values. IP addresses, nicknames, unique identifiers and
+transfer keys `ftkey`, in every row of a response. In a `login` command every argument after
+the user name is redacted, because a positional password may contain `=` or start with `-`.
+Getters, `getRawResponse()` and `Command.encoded()`, the text sent to the server, keep the real
+values. Communication log lines are only built and redacted when DEBUG is enabled. IP addresses, nicknames, unique identifiers and
 messages are not redacted; review them before sharing a log.
 
 `ProtocolRedactorTest` covers each secret property and the line structure.
@@ -88,20 +90,24 @@ fails if any password, key or token appears in it, or if an expected redacted li
 
 ## Dependency vulnerabilities
 
-OSV-Scanner resolves the transitive Maven graph of `pom.xml` (compile, runtime and test
-scopes), including versions managed by the Bouncy Castle BOM. It fails on any known
-vulnerability. CI runs the SHA-pinned `google/osv-scanner-action` on every push and PR and
-every Monday, because new advisories can affect unchanged dependencies. Locally, use the same
-scanner release:
+GitHub scans dependencies; the build runs no scanner of its own. GitHub's own `pom.xml` parsing
+sees only direct dependencies, so the **Dependency graph and review** job submits the resolved
+Maven graph, including transitive and test dependencies and versions managed by the Bouncy
+Castle BOM, with `advanced-security/maven-dependency-submission-action`:
 
-```sh
-osv-scanner scan source --lockfile=pom.xml --all-vulns
-```
+- **Dependabot alerts and security updates** (enabled in the repository settings) use that graph.
+  GitHub raises alerts for the default branch, `master`, and re-evaluates it whenever a new
+  advisory is published, so no scheduled scan is needed there. Until the final integration
+  merges 2.0 into `master`, alerts cover the 1.x graph on `master`, not `modernization/2.0`.
+- **Dependency review** (`actions/dependency-review-action`) runs on every PR after its graph is
+  submitted. It fails the PR if a dependency it adds or changes has a known vulnerability of any
+  severity. PRs from forks get a read-only token and cannot submit a graph, so their review sees
+  only the direct dependencies GitHub parses from `pom.xml`.
 
-No vulnerability is ignored. If a finding is not exploitable here and cannot be fixed yet,
-add it to an `osv-scanner.toml` `[[IgnoredVulns]]` entry with its ID, an `ignoreUntil` date
-and a reason, in a reviewed PR. Maven build plugins and GitHub Actions are pinned and are not
-scanned here; their updates are covered by #449.
+Dependency review checks changed dependencies only. A new advisory against an unchanged
+dependency surfaces as a Dependabot alert on `master`. Allow a vulnerability (`allow-ghsas`)
+only in a reviewed PR that states why it is not exploitable here. Maven build plugins and GitHub
+Actions are pinned and are not scanned here; their updates are covered by #449.
 
 ## API compatibility
 
@@ -134,8 +140,8 @@ Reports are written to `target/japicmp/api-compatibility.{diff,md,html,xml}` and
   (see the examples).
 - **Each PR (CI).** The job builds the PR base, derives the release impact that release-please
   will apply from the PR title and body (`.github/scripts/api-impact.sh`), and compares base
-  and head (`.github/scripts/api-compare.sh`). The job summary shows the impact, the result and
-  the change list.
+  and head (`.github/scripts/api-compare.sh`) with the limits for that impact below, instead of
+  the version check. The job summary shows the impact, the result and the change list.
 
 | Release impact | Title | Allowed API change |
 | --- | --- | --- |
@@ -166,7 +172,7 @@ execution. The examples check that:
 - a `fix:` title is mapped to patch and its API removal is rejected;
 - the real library is rejected against 1.3.1 as `1.4.0` and accepted as the pending `2.0.0`.
 
-It also tests the title/body mapping for each type. Run it after `./mvnw verify`.
+It also tests the title/body mapping for each type.
 
 ### Intentional 2.0 breaks
 
@@ -202,9 +208,10 @@ change, even when japicmp reports nothing.
 | Before | After |
 | --- | --- |
 | `TS3Query` could be subclassed | `TS3Query` is `final`; wrap it instead. Its constructor shares `this` with the event manager, so a subclass could observe it half-initialized |
-| `TS3CommandFailedException` failed Java serialization (`QueryError` is not serializable) | It serializes; after deserialization `getErrorId()`, `getCommandName()`, `matchesQueryError()` and the message are kept, and `getError()` returns `null` |
+| `TS3CommandFailedException` failed Java serialization (`QueryError` is not serializable) | It serializes, including the full error |
 | Communication logs and warnings contained passwords, privilege keys and file transfer keys | Those values are `<redacted>` |
 | `Wrapper.toString()` and `DefaultArrayResponse.toString()` printed secrets | Secrets are `<redacted>`; use the getters or `getRawResponse()` for real values |
+| `Command.toString()` returned the wire text | `Command.encoded()` returns the wire text; `toString()` redacts secrets |
 
 Release intent: `fix!:` for the planned **2.0.0**, with a `BREAKING CHANGE` footer listing the
 rows above. Defaults, dependencies, transports and protocol are unchanged.

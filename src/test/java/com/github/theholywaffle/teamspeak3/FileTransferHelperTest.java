@@ -421,10 +421,7 @@ class FileTransferHelperTest {
                     occupied.add(socket);
                     try {
                         socket.connect(
-                                new InetSocketAddress(
-                                        java.net.InetAddress.getByAddress(new byte[] {127, 0, 0, 1}),
-                                        listener.getLocalPort()),
-                                100);
+                                new InetSocketAddress(InetAddress.getLoopbackAddress(), listener.getLocalPort()), 100);
                     } catch (SocketTimeoutException expected) {
                         saturated = true;
                         break;

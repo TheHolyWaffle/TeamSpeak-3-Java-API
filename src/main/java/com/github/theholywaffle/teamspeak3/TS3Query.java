@@ -157,8 +157,6 @@ public final class TS3Query implements AutoCloseable {
     }
 
     /** @param config immutable validated connection settings */
-    // The periodic deadline task handles its own failures and ends with the scheduler.
-    @SuppressWarnings("FutureReturnValueIgnored")
     public TS3Query(QueryConfig config) {
         this.config = Objects.requireNonNull(config, "config");
         this.commandAdmission = new Semaphore(config.getCommandCapacity());
@@ -180,7 +178,8 @@ public final class TS3Query implements AutoCloseable {
         this.fileTransferHelper = new FileTransferHelper(config.getHost(), config.getFileTransferConfig(), deadlines);
         this.connectionHandler = config.getReconnectStrategy().create(config.getConnectionHandler());
         this.globalQueue = CommandQueue.newGlobalQueue(this, !isReconnectEnabled());
-        deadlines.scheduleWithFixedDelay(
+        // The periodic deadline task handles its own failures and ends with the scheduler.
+        var _ = deadlines.scheduleWithFixedDelay(
                 () -> {
                     try {
                         globalQueue.expireWaitingCommands();
