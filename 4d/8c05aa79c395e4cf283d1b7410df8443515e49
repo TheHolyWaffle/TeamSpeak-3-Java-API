@@ -1,0 +1,19 @@
+src/test/java/com/github/theholywaffle/teamspeak3/DocumentationTest.java
+  s_ba4f2e5e310bfe::t_14d4429829c5e0 6,112-113
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4d8c05aa79c395e4cf283d1b7410df8443515e49",
+  "prompts": {},
+  "sessions": {
+    "s_ba4f2e5e310bfe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2adad55e-4bba-4de8-8b8f-dca91fe79778",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
