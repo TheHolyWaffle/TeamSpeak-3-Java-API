@@ -1,0 +1,25 @@
+.github/scripts/ts3-image-candidate.sh
+  s_ba4f2e5e310bfe::t_0471b49a9abece 1-20
+.github/workflows/upstream-updates.yml
+  s_ba4f2e5e310bfe::t_864364e09238ec 1-63
+.github/scripts/use-ts3-image.sh
+  s_ba4f2e5e310bfe::t_5fa8a1db64fc9f 1-14
+.github/workflows/compatibility.yml
+  s_ba4f2e5e310bfe::t_9d6195454101cb 5-9,11-15,36-40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3f79f98704e2f8894dbf1b2aed0e586003e2ef48",
+  "prompts": {},
+  "sessions": {
+    "s_ba4f2e5e310bfe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2adad55e-4bba-4de8-8b8f-dca91fe79778",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
