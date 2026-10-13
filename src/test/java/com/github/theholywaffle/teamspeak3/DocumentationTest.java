@@ -3,6 +3,7 @@ package com.github.theholywaffle.teamspeak3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import com.github.theholywaffle.teamspeak3.TS3Query.FloodRate;
 import com.github.theholywaffle.teamspeak3.TS3Query.Protocol;
@@ -108,6 +109,8 @@ class DocumentationTest {
         Matcher version = Pattern.compile("<artifactId>teamspeak3-api</artifactId>\\s*<version>(\\d+)\\.")
                 .matcher(Files.readString(Path.of("pom.xml")));
         assertTrue(version.find());
+        // The publication rehearsal builds a synthetic 0.0.0 release.
+        assumeFalse(version.group(1).equals("0"));
         String policy = Files.readString(Path.of("SECURITY.md"));
         assertTrue(
                 policy.contains("\n| " + version.group(1) + ".x "),
