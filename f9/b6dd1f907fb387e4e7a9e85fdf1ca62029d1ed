@@ -1,0 +1,35 @@
+.github/scripts/release-rehearsal.sh
+  s_ba4f2e5e310bfe::t_356731f28ef9df 26
+.github/scripts/synthetic-release.sh
+  s_ba4f2e5e310bfe::t_4c29015a88556a 6
+.github/scripts/verify-staged-artifacts.sh
+  s_ba4f2e5e310bfe::t_2385d5ee3cde09 24
+.github/workflows/release.yml
+  s_ba4f2e5e310bfe::t_6cd847a1812000 96,132
+.github/workflows/verify.yml
+  s_ba4f2e5e310bfe::t_39ec2596970c76 79-85,88
+README.md
+  s_ba4f2e5e310bfe::t_8e8b8b699244cd 362
+docs/releases.md
+  s_ba4f2e5e310bfe::t_1d03c653e29450 214
+pom.xml
+  s_ba4f2e5e310bfe::t_928d75e7105872 60,139-149,182-183,239,260-267
+src/test/consumers/gradle/gradle/wrapper/gradle-wrapper.properties
+  s_ba4f2e5e310bfe::t_9fc28efdd3ac90 1-2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f9b6dd1f907fb387e4e7a9e85fdf1ca62029d1ed",
+  "prompts": {},
+  "sessions": {
+    "s_ba4f2e5e310bfe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2adad55e-4bba-4de8-8b8f-dca91fe79778",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
