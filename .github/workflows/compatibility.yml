@@ -27,7 +27,7 @@ jobs:
         run: |
           docker version
           docker info --format '{{.Architecture}}'
-          docker buildx imagetools inspect teamspeak:3.13.8@sha256:6dfdfb22869adf50e1b66d024b360b786d57a85ea09e8e8fdb6cca23949b2813
+          docker buildx imagetools inspect "$(sed -n 's/^FROM //p' src/test/resources/teamspeak3/Dockerfile)"
       - name: Run required authenticated ServerQuery suite
         shell: bash
         run: |

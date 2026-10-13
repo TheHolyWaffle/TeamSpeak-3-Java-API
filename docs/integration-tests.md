@@ -27,11 +27,11 @@ declare its expected completion output there or the test fails. The test also
 exchanges `!ping`/`pong` with the running chat bot and checks that a missing
 setting fails before connecting.
 
-`TeamSpeakContainer` uses official images pinned by version and manifest digest:
-
-| Server | Image version | Manifest digest | Advertised platforms |
-| --- | --- | --- | --- |
-| TS3 | `teamspeak:3.13.8` | `sha256:6dfdfb22869adf50e1b66d024b360b786d57a85ea09e8e8fdb6cca23949b2813` | Linux amd64 |
+`TeamSpeakContainer` uses the official TS3 image pinned by version and manifest digest in
+[`src/test/resources/teamspeak3/Dockerfile`](../src/test/resources/teamspeak3/Dockerfile), the only
+place the image is named. Its tag is the server version the suite expects, and the README support
+table must name it. Dependabot maintains the pin; see
+[dependency and image maintenance](maintenance.md).
 
 TS3 explicitly requests `linux/amd64`: Apple Silicon needs Docker amd64
 emulation. This is not native TS3 arm64 support. The Linux CI suite uses amd64; local Apple Silicon validation is

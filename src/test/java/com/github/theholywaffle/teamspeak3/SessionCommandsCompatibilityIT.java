@@ -35,7 +35,8 @@ class SessionCommandsCompatibilityIT {
                 assertEquals(java.util.Optional.of("serveradmin"), api.whoAmI().getLoginName());
                 api.selectVirtualServerById(1);
                 assertEquals(1, api.whoAmI().getVirtualServerId());
-                assertEquals("3.13.8", api.instance().version().version());
+                assertEquals(
+                        TeamSpeakContainer.TS3_VERSION, api.instance().version().version());
                 query.exit();
             }
             var report = Path.of("target", "compatibility", target + "-session-commands.txt");

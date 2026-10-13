@@ -8,6 +8,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -19,6 +20,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import net.schmizz.sshj.DefaultConfig;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.common.KeyType;
@@ -42,8 +46,14 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer>
         implements BeforeAllCallback, AfterAllCallback {
     static final String PASSWORD = "integration-test-only";
     private static final String ALLOWLIST_LOADED = "updated query_ip_allowlist ips: 0.0.0.0/0";
-    static final String TS3_IMAGE =
-            "teamspeak:3.13.8@sha256:6dfdfb22869adf50e1b66d024b360b786d57a85ea09e8e8fdb6cca23949b2813";
+    private static final Pattern PINNED_IMAGE =
+            Pattern.compile("FROM (teamspeak:(\\d+\\.\\d+\\.\\d+)@sha256:[0-9a-f]{64})");
+    private static final Matcher PIN = pinnedImage();
+    /** Tag and digest from {@code teamspeak3/Dockerfile}, the one place the image is pinned. */
+    static final String TS3_IMAGE = PIN.group(1);
+    /** The server version the pinned image reports: its tag. */
+    static final String TS3_VERSION = PIN.group(2);
+
     PublicKey hostKey;
     String sshBanner;
     String algorithms;
@@ -91,6 +101,23 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer>
                                 "Authenticated ServerQuery readiness failed for " + getDockerImageName(), last);
                     }
                 }.withStartupTimeout(Duration.ofSeconds(90)));
+    }
+
+    private static Matcher pinnedImage() {
+        try (var in = TeamSpeakContainer.class.getResourceAsStream("/teamspeak3/Dockerfile")) {
+            if (in == null) throw new IllegalStateException("teamspeak3/Dockerfile is not on the test classpath");
+            String from = new String(in.readAllBytes(), StandardCharsets.UTF_8)
+                    .lines()
+                    .filter(line -> line.startsWith("FROM "))
+                    .collect(Collectors.joining("\n"));
+            Matcher matcher = PINNED_IMAGE.matcher(from);
+            if (!matcher.matches())
+                throw new IllegalStateException(
+                        "Expected one FROM teamspeak:<x.y.z>@sha256:<digest> line, got: " + from);
+            return matcher;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     TeamSpeakContainer withFileTransferPort() {

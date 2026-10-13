@@ -29,7 +29,7 @@ class DevelopmentServerIT {
         ssh.putAll(exports.get(1));
         for (Map<String, String> environment : List.of(exports.get(0), ssh)) {
             String result = ForkedJvm.runExample("ClientInfoExample", environment, 0);
-            assertTrue(result.contains("Server version: 3.13.8"), result);
+            assertTrue(result.contains("Server version: " + TeamSpeakContainer.TS3_VERSION), result);
         }
     }
 
@@ -61,7 +61,8 @@ class DevelopmentServerIT {
             if (!stop.equals("SIGNAL")) assertEquals(0, exit, output.toString());
             assertTrue(
                     output.stream()
-                            .anyMatch(line -> line.startsWith("Compiled example succeeded: version=" + "3.13.8")),
+                            .anyMatch(line -> line.startsWith(
+                                    "Compiled example succeeded: version=" + TeamSpeakContainer.TS3_VERSION)),
                     output.toString());
             String ready = output.stream()
                     .filter(line -> line.startsWith("Development server ready:"))

@@ -89,7 +89,7 @@ class ServerQueryCompatibilityIT {
             assertTrue(query.isConnected());
             TS3Api api = query.getApi();
             var version = api.instance().version();
-            assertEquals("3.13.8", version.version());
+            assertEquals(TeamSpeakContainer.TS3_VERSION, version.version());
             assertFalse(version.build().isBlank());
             server.record(target.name(), version);
             api.selectVirtualServerById(1);
