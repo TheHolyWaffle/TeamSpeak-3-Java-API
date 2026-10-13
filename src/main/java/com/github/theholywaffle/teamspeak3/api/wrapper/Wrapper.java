@@ -30,6 +30,7 @@ import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.Property;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException;
+import com.github.theholywaffle.teamspeak3.commands.ProtocolRedactor;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
@@ -646,8 +647,12 @@ public class Wrapper {
         return map.hashCode();
     }
 
+    /** @return the type and properties, with {@linkplain ProtocolRedactor secret} values redacted */
     @Override
     public String toString() {
-        return getClass().getSimpleName() + map;
+        var shown = new LinkedHashMap<String, String>();
+        map.forEach((key, value) ->
+                shown.put(key, ProtocolRedactor.isSecret(key) && !value.isEmpty() ? ProtocolRedactor.REDACTED : value));
+        return getClass().getSimpleName() + shown;
     }
 }

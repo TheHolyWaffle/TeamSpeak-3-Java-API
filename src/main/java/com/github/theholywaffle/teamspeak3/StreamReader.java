@@ -29,6 +29,7 @@ package com.github.theholywaffle.teamspeak3;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
 import com.github.theholywaffle.teamspeak3.commands.Command;
+import com.github.theholywaffle.teamspeak3.commands.ProtocolRedactor;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 import com.github.theholywaffle.teamspeak3.commands.response.ResponseBuilder;
 import java.io.IOException;
@@ -99,11 +100,11 @@ class StreamReader implements Runnable {
                 try {
                     handleCommandResponse(line);
                 } catch (IllegalArgumentException malformed) {
-                    log.error("Malformed command response: {}", line, malformed);
+                    log.error("Malformed command response: {}", ProtocolRedactor.redactLine(line), malformed);
                     break;
                 }
             } else if (logComms) {
-                log.debug("[welcome] < {}", line);
+                log.debug("[welcome] < {}", ProtocolRedactor.redactLine(line));
             }
         }
 
@@ -125,7 +126,7 @@ class StreamReader implements Runnable {
     }
 
     private void handleEvent(String event) {
-        if (logComms) log.debug("[event] < {}", event);
+        if (logComms) log.debug("[event] < {}", ProtocolRedactor.redactLine(event));
 
         String[] parts = event.split(" ", 2);
         if (parts.length == 2) ts3.getEventManager().fireEvent(parts[0], parts[1]);
@@ -138,14 +139,15 @@ class StreamReader implements Runnable {
             Command command = commandQueue.peekReceiveQueue();
 
             if (command == null) {
-                log.warn("[UNHANDLED] < {}", response);
+                log.warn("[UNHANDLED] < {}", ProtocolRedactor.redactLine(response));
                 return;
             }
 
             responseBuilder = new ResponseBuilder(command);
         }
 
-        if (logComms) log.debug("[{}] < {}", responseBuilder.getCommand().getName(), response);
+        if (logComms)
+            log.debug("[{}] < {}", responseBuilder.getCommand().getName(), ProtocolRedactor.redactLine(response));
 
         if (response.startsWith("error ")) {
             handleCommandError(responseBuilder, response);

@@ -27,6 +27,7 @@ package com.github.theholywaffle.teamspeak3;
  */
 
 import com.github.theholywaffle.teamspeak3.commands.Command;
+import com.github.theholywaffle.teamspeak3.commands.ProtocolRedactor;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -63,7 +64,7 @@ class StreamWriter implements Runnable {
                 con.resetIdleTime();
                 String message = command.toString();
 
-                if (logComms) log.debug("[{}] > {}", command.getName(), message);
+                if (logComms) log.debug("[{}] > {}", command.getName(), ProtocolRedactor.redactLine(message));
                 out.write(message);
                 out.write("\n");
                 out.flush();

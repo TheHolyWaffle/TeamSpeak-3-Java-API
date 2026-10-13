@@ -29,6 +29,7 @@ package com.github.theholywaffle.teamspeak3.commands.response;
 import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
+import com.github.theholywaffle.teamspeak3.commands.ProtocolRedactor;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -120,12 +121,14 @@ public class DefaultArrayResponse {
         return responses.stream().findFirst();
     }
 
+    /** @return the encoded response, including secrets; {@link #toString()} redacts them */
     public String getRawResponse() {
         return rawResponse;
     }
 
+    /** @return the encoded response with {@linkplain ProtocolRedactor secrets} redacted */
     @Override
     public String toString() {
-        return rawResponse;
+        return ProtocolRedactor.redactLine(rawResponse);
     }
 }

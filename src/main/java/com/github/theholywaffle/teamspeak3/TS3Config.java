@@ -318,8 +318,10 @@ public final class TS3Config {
      * Setting this value to {@code true} will log the communication between the
      * query client and the TS3 server at the {@code DEBUG} level.
      * <p>
-     * By default, this is turned off to prevent leaking IPs, tokens, passwords, etc.
-     * into the console and / or log files.
+     * Passwords, privilege keys, API keys and file transfer keys are replaced by
+     * {@code <redacted>} (see {@link com.github.theholywaffle.teamspeak3.commands.ProtocolRedactor}).
+     * Other data, such as IP addresses, nicknames, unique identifiers and messages, is logged
+     * unchanged, so this is turned off by default.
      * </p>
      *
      * @param enable

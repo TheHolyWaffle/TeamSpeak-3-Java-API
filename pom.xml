@@ -278,6 +278,27 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.6.0</version>
+				<configuration>
+					<excludedGroups>debug-logging</excludedGroups>
+				</configuration>
+				<executions>
+					<execution>
+						<!-- A separate JVM, so slf4j-simple starts with DEBUG output to a file. -->
+						<id>debug-communication-logging</id>
+						<goals>
+							<goal>test</goal>
+						</goals>
+						<configuration>
+							<groups>debug-logging</groups>
+							<excludedGroups combine.self="override" />
+							<reportsDirectory>${project.build.directory}/surefire-reports/debug-logging</reportsDirectory>
+							<systemPropertyVariables>
+								<org.slf4j.simpleLogger.defaultLogLevel>debug</org.slf4j.simpleLogger.defaultLogLevel>
+								<org.slf4j.simpleLogger.logFile>${project.build.directory}/debug-communication.log</org.slf4j.simpleLogger.logFile>
+							</systemPropertyVariables>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

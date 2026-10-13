@@ -227,7 +227,7 @@ Only use `FloodRate.UNLIMITED` if you are sure that your query account is whitel
 |Host/IP | IP/Host of TeamSpeak 3 server.| ``setHost(String)`` |  | yes |
 |QueryPort | Query port of TeamSpeak 3 server. | ``setQueryPort(int)`` | 10011 | no |
 |FloodRate | Prevents possible spam to the server. | ``setFloodRate(FloodRate)`` | `FloodRate.DEFAULT` | no |
-|Communications logging | Log client-server communication. | ``setEnableCommunicationsLogging(boolean)`` | false | no |
+|Communications logging | Log client-server communication at DEBUG; passwords, privilege keys, API keys and file transfer keys are redacted. | ``setEnableCommunicationsLogging(boolean)`` | false | no |
 |Command response timeout | Time from writing a command until its response must finish | ``setCommandResponseTimeout(Duration)`` | 4 s | no |
 
 ## Questions or bugs?
