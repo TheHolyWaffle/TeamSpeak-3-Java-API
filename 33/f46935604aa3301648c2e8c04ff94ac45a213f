@@ -1,0 +1,45 @@
+.github/dependabot.yml
+  s_ba4f2e5e310bfe::t_2c9f2972506329 9,19,49,66,77
+.github/scripts/use-ts3-image.sh
+  s_ba4f2e5e310bfe::t_47faa7e6ce2fe7 12
+.github/workflows/maven.yml
+  s_ba4f2e5e310bfe::t_0ad4054249cbb5 83-86,103-105
+README.md
+  s_1e2e0c39dd5bf5::t_bc14af1b14a1d0 363
+docs/maintenance.md
+  s_ba4f2e5e310bfe::t_a6bbffa5fec8ce 12-21,88-89
+src/test/java/com/github/theholywaffle/teamspeak3/DocumentationTest.java
+  s_ba4f2e5e310bfe::t_1cc893684fdfc0 94-102
+.github/scripts/dependency-impact.sh
+  s_ba4f2e5e310bfe::t_3b09b63e533749 13
+.github/scripts/ts3-image-candidate.sh
+  s_ba4f2e5e310bfe::t_2c36e52ecc595b 2-3,15
+.github/workflows/upstream-updates.yml
+  s_ba4f2e5e310bfe::t_ff8c34525039d8 17,25,30
+src/test/java/com/github/theholywaffle/teamspeak3/TeamSpeakContainer.java
+  s_ba4f2e5e310bfe::t_e6b7cf3d5132ac 47,49,100,103,106-108,110-111
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "33f46935604aa3301648c2e8c04ff94ac45a213f",
+  "prompts": {},
+  "sessions": {
+    "s_1e2e0c39dd5bf5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "648d11fe-c1ac-46f1-87b5-83354e058fbf",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    },
+    "s_ba4f2e5e310bfe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2adad55e-4bba-4de8-8b8f-dca91fe79778",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
