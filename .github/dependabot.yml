@@ -1,0 +1,105 @@
+# Version updates for everything the build pins. See docs/maintenance.md.
+# Titles are Conventional Commits checked by the same Release intent job as contributor PRs:
+# deps: runtime library (patch release), build: plugins and test libraries, ci: Actions,
+# test: the TS3 image and the Gradle consumer fixture.
+version: 2
+updates:
+  - package-ecosystem: maven
+    directories:
+      - /
+      - /src/test/consumers/maven
+    schedule:
+      interval: weekly
+      day: monday
+      time: '04:00'
+      timezone: Etc/UTC
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: deps
+      prefix-development: build
+    ignore:
+      # The API baseline and the consumers' staged library change only with a release.
+      - dependency-name: com.github.theholywaffle:teamspeak3-api
+    groups:
+      # Dependabot titles these deps: (it treats the Maven distribution, annotation processors and
+      # plugin dependencies as production); the Release intent gate rejects that because the runtime
+      # dependencies are unchanged, so retitle the PR build: before merging.
+      build-toolchain:
+        patterns:
+          - org.apache.maven:apache-maven
+          - org.apache.maven.wrapper:*
+          - com.google.errorprone:*
+          - com.palantir.javaformat:*
+      release-tooling:
+        patterns:
+          - org.jreleaser:*
+          - com.github.siom79.japicmp:*
+      # slf4j-api and the test binding share a version property.
+      slf4j:
+        patterns:
+          - org.slf4j:*
+      test-libraries:
+        dependency-type: development
+        patterns:
+          - org.junit*
+          - org.testcontainers:*
+        update-types: [minor, patch]
+      build-plugins:
+        dependency-type: development
+        patterns:
+          - '*'
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '04:00'
+      timezone: Etc/UTC
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns:
+          - '*'
+        exclude-patterns:
+          # Release tooling gets its own PR and validation.
+          - googleapis/release-please-action
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directory: /src/test/resources/teamspeak3
+    schedule:
+      interval: weekly
+      day: monday
+      time: '04:00'
+      timezone: Etc/UTC
+    commit-message:
+      prefix: test
+    ignore:
+      # TeamSpeak 3 only; another major version is a support decision, not an update.
+      - dependency-name: teamspeak
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: gradle
+    directory: /src/test/consumers/gradle
+    schedule:
+      interval: weekly
+      day: monday
+      time: '04:00'
+      timezone: Etc/UTC
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: test
+    ignore:
+      - dependency-name: com.github.theholywaffle:teamspeak3-api
+    groups:
+      gradle-consumer:
+        patterns:
+          - '*'
+        update-types: [minor, patch]

@@ -73,6 +73,18 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           exit "$status"
+      - name: Require a release impact that covers runtime dependency changes
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          for project in api-base .; do
+            ./mvnw -B -ntp -q -f "$project/pom.xml" dependency:list -DincludeScope=runtime -Dsort=true \
+              -DoutputFile=target/runtime-dependencies.txt
+          done
+          bash .github/scripts/dependency-impact.sh api-base/target/runtime-dependencies.txt \
+            target/runtime-dependencies.txt "$PR_TITLE" "$PR_BODY"
       - name: Upload API reports
         if: ${{ always() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
