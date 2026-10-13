@@ -113,6 +113,9 @@ GITHUB_TOKEN=$(gh auth token) GITHUB_REPOSITORY=TheHolyWaffle/TeamSpeak-3-Java-A
 
 ## Modernization migration notes
 
+Users follow the [2.0 migration guide](migration-2.0.md), which consolidates these notes and
+the task guides; this section records which task introduced each change.
+
 Tasks #429 and #430 landed before Conventional Commit title checks. Their user-facing
 changes must appear in the first release notes and migration guide:
 
@@ -265,8 +268,8 @@ The job then inspects the staged artifacts and runs the Maven and Gradle consume
 against them, as described in [packaging](packaging.md). CI uploads the signed
 repository, generated bundle and consumer logs as a short-lived Actions artifact for
 inspection, without uploading to Portal or publishing a release. Synthetic
-version/notes never change committed source or the approved release. Complete
-pipeline rehearsal remains #451.
+version/notes never change committed source or the approved release. The complete
+2.0.0 rehearsal is described [below](#200-release-rehearsal).
 
 ### Explicit release action
 
@@ -506,3 +509,93 @@ Decided for 2.0 (#484): neither is adopted now.
   graph, fed by the dependency submission job, exports an SPDX SBOM for the repository. Attaching
   an SBOM would add a published file that the staged-artifact checks, the attestation and the
   Central bundle would all have to include. Reconsider if consumers ask for one.
+
+## 2.0.0 release rehearsal
+
+The rehearsal runs every release step for the exact 2.0.0 the release PR would produce, without
+uploading, tagging or creating a release. **Prepare release** can only be dispatched once its
+workflow is on `master`, so before the final integration the release PR is rehearsed by its dry
+run, which reads the merged history exactly as `master` will after a merge-commit integration.
+
+1. **Release PR.** With the pinned release-please (see [prepare a release PR](#prepare-a-release-pr)),
+   `release-please-dry-run.sh` against `modernization/2.0` must propose
+   `chore(modernization/2.0): release 2.0.0`, updating `pom.xml`, the Maven consumer POM,
+   `CHANGELOG.md` and the manifest. It writes the proposed changelog entry to
+   `target/release-please-notes.md` and passes it through `release-metadata.sh`, so notes that
+   publication would reject (for example above 10,000 bytes) fail CI first. Read the entry: every
+   `!` commit must appear under **BREAKING CHANGES** with usable migration notes. Release-please
+   logs `commit could not be parsed` for messages it skips; only the pre-Conventional-Commit
+   commits from 1.3.1 and #429/#430 may appear there.
+2. **Correct notes without rewriting history.** Squash commits are immutable. To fix a merged PR's
+   entry, add a `BEGIN_COMMIT_OVERRIDE` … `END_COMMIT_OVERRIDE` block with the corrected
+   Conventional Commit message to that PR's description, as the
+   [release-please documentation](https://github.com/googleapis/release-please#how-can-i-fix-release-notes)
+   describes, and dry-run again.
+3. **Bundle, consumers and API.** In a disposable worktree, apply that entry and version, then
+   build, compare, sign, stage and consume:
+
+   ```sh
+   bash .github/scripts/synthetic-release.sh 2.0.0 /path/to/release-please-notes.md
+   ./mvnw -B -ntp verify
+   bash .github/scripts/api-accounting.sh target/japicmp/api-compatibility.diff docs/api-differences-2.0.md
+   bash .github/scripts/release-rehearsal.sh
+   bash .github/scripts/verify-staged-artifacts.sh 2.0.0 target/staging-deploy \
+     target/jreleaser/deploy/mavenCentral/central/com.github.theholywaffle-teamspeak3-api-2.0.0-bundle.zip
+   bash .github/scripts/consumer-check.sh 2.0.0
+   bash .github/scripts/reproducibility-check.sh
+   ```
+
+   `verify` checks the 2.0.0 API against 1.3.1 with the version check enabled, and the
+   accounting check requires a [migration row](api-differences-2.0.md) for every reported type.
+4. **Publication gates.** `test-release-workflow.sh` (CI, with `yq`) asserts the gates in
+   `release.yml` and the JReleaser configurations listed below.
+
+### What stops a bad release
+
+| Failure | Gate | Tested by |
+| --- | --- | --- |
+| Not a reviewed release-please merge at `master` HEAD, or **CI required** not green | `validate` job; `publish` needs `validate` and `verify` to succeed | `test-release-workflow.sh` |
+| Version, manifest, tag or newest changelog entry disagree, a snapshot or prerelease, notes too long | `release-metadata.sh` in `validate` and again in `publish` | `test-release-metadata.sh` |
+| Tag exists on another commit, or the GitHub release exists | `validate` | `test-release-workflow.sh` |
+| `master` moved during the release | Rechecked when `publish` starts and before the GitHub release | `test-release-workflow.sh` |
+| Missing, extra, non-reproducible or wrong-version artifacts | `verify-staged-artifacts.sh` before JReleaser signs | `test-verify-staged-artifacts.sh` (planted defects) |
+| Bundle without sources, unsigned or failing Central rules | JReleaser with `applyMavenCentralRules` before upload | `release-rehearsal.sh` (missing sources) |
+| Build, test, reproducibility or consumer failure | `verify` reusable workflow | Every CI run |
+| `validate` selected | `publish` skipped | `test-release-workflow.sh` |
+
+### Resuming a partial publication
+
+Published Maven versions are immutable and nothing in the pipeline can replace them: the Portal
+rejects a second upload of a published version, both JReleaser configurations set
+`overwrite: false` with updates disabled, and `validate` refuses a tag on another commit or an
+existing GitHub release. A release interrupted after upload resumes with **resume-central**, which
+checks that the deployment is `VALIDATED` and holds only this version
+(`check-portal-deployment.sh`, tested in `test-release-metadata.sh`) and then publishes that
+deployment without uploading again (`JRELEASER_MAVENCENTRAL_CENTRAL_STAGE=PUBLISH`). A release
+published to Central whose GitHub step failed finishes with **finish-github**, which neither signs
+nor deploys. See [partial failure and recovery](#partial-failure-and-recovery).
+
+## After 2.0.0 is published
+
+Once the release workflow has published 2.0.0 and created `v2.0.0`:
+
+1. **Check the published release.** Download `teamspeak3-api-2.0.0.jar` from
+   `https://repo.maven.apache.org/maven2/com/github/theholywaffle/teamspeak3-api/2.0.0/` and run
+   `gh attestation verify teamspeak3-api-2.0.0.jar --repo TheHolyWaffle/TeamSpeak-3-Java-API
+   --signer-workflow TheHolyWaffle/TeamSpeak-3-Java-API/.github/workflows/release.yml`. Check its
+   `.asc` signature with the release key, that `v2.0.0` points to the approved commit, and that the
+   GitHub release body equals the `CHANGELOG.md` entry. `reproducibility-check.sh` on a checkout of
+   `v2.0.0` must reproduce the unsigned JARs byte for byte.
+2. **Move the baselines** in one reviewed PR to `master` (`build:` title):
+   - set `api.baseline.version` to `2.0.0` and `api.baseline.sha256` to the SHA-256 of the
+     downloaded JAR, after comparing it with Central's `.sha256`;
+   - update `test-api-compatibility.sh`, which pins the 1.3.1 comparison, to 2.0.0;
+   - remove the **Account for every API difference from 1.3.1** step from `verify.yml`; keep
+     [API differences from 1.3.1](api-differences-2.0.md) as the 2.0.0 record;
+   - remove `release-as`, `skip-snapshot` and `bootstrap-sha` from `release-please-config.json`,
+     so release-please derives later versions and opens `autorelease: snapshot` PRs.
+3. **Update support statements:** the README's 2.0 development-line note, and
+   [SECURITY.md](../SECURITY.md#supported-versions), where 1.x reaches end of life.
+
+From then on japicmp enforces SemVer against 2.0.0 and every release repeats the explicit release
+action. Corrections need a new version; published artifacts are never replaced.
