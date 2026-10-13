@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.commands;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -28,33 +28,38 @@ package com.github.theholywaffle.teamspeak3.commands;
 
 import com.github.theholywaffle.teamspeak3.commands.parameter.Parameter;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
-
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public final class Command {
 
-	private final String name;
-	private final List<Parameter> parameters;
-	private final CompletableFuture<DefaultArrayResponse> future = new CompletableFuture<>();
+    private final String name;
+    private final List<Parameter> parameters;
+    private final CompletableFuture<DefaultArrayResponse> future = new CompletableFuture<>();
 
-	Command(String name, List<Parameter> parameters) {
-		this.name = name;
-		this.parameters = List.copyOf(parameters);
-	}
+    Command(String name, List<Parameter> parameters) {
+        this.name = name;
+        this.parameters = List.copyOf(parameters);
+    }
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public CompletableFuture<DefaultArrayResponse> getFuture() {
-		return future;
-	}
+    public CompletableFuture<DefaultArrayResponse> getFuture() {
+        return future;
+    }
 
-	@Override
-	public String toString() {
-		var line = new StringBuilder(name);
-		for (Parameter parameter : parameters) parameter.appendTo(line.append(' '));
-		return line.toString();
-	}
+    /** @return the command line sent to the server, including secrets */
+    public String encoded() {
+        var line = new StringBuilder(name);
+        for (Parameter parameter : parameters) parameter.appendTo(line.append(' '));
+        return line.toString();
+    }
+
+    /** @return the command line with {@linkplain ProtocolRedactor secrets} redacted */
+    @Override
+    public String toString() {
+        return ProtocolRedactor.redactLine(encoded());
+    }
 }

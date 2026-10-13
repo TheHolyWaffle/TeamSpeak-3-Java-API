@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,23 +27,21 @@ package com.github.theholywaffle.teamspeak3.api.event;
  */
 
 public enum TS3EventType {
+    SERVER("server"),
+    CHANNEL("channel"),
+    TEXT_SERVER("textserver"),
+    TEXT_CHANNEL("textchannel"),
+    TEXT_PRIVATE("textprivate"),
+    PRIVILEGE_KEY_USED("tokenused");
 
-	SERVER("server"),
-	CHANNEL("channel"),
-	TEXT_SERVER("textserver"),
-	TEXT_CHANNEL("textchannel"),
-	TEXT_PRIVATE("textprivate"),
-	PRIVILEGE_KEY_USED("tokenused");
+    private final String name;
 
-	private final String name;
+    TS3EventType(String name) {
+        this.name = name;
+    }
 
-	TS3EventType(String name) {
-		this.name = name;
-	}
-
-	@Override
-	public String toString() {
-		return name;
-	}
-
+    @Override
+    public String toString() {
+        return name;
+    }
 }

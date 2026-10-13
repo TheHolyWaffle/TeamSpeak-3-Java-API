@@ -68,36 +68,42 @@ Before, synchronous (compiled against `c685be8`, the integration branch before #
 
 ```java
 static int prepareLobby(TS3Api api, String uniqueId, byte[] rules) {
-	Channel existing = api.getChannelByNameExact("Lobby", false);
-	int lobby = existing != null ? existing.getId()
-		: api.createChannel("Lobby", Collections.singletonMap(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"));
-	api.addChannelPermission(lobby, "i_channel_needed_join_power", 10);
-	api.uploadFileDirect(rules, "/rules.txt", true, lobby);
-	try {
-		ClientInfo client = api.getClientByUId(uniqueId);
-		api.moveClient(client.getId(), lobby);
-		api.sendPrivateMessage(client.getId(), "Welcome to the lobby");
-	} catch (TS3Exception offline) {
-		if (!offline.matchesQueryError(512)) throw offline;
-		api.sendOfflineMessage(uniqueId, "Lobby", "Welcome to the lobby");
-	}
-	return lobby;
-}
+    Channel existing = api.getChannelByNameExact("Lobby", false);
+    int lobby = existing != null
+            ? existing.getId()
+            : api.createChannel("Lobby", Collections.singletonMap(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"));
+    api.addChannelPermission(lobby, "i_channel_needed_join_power", 10);
+    api.uploadFileDirect(rules, "/rules.txt", true, lobby);
+    try {
+        ClientInfo client = api.getClientByUId(uniqueId);
+        api.moveClient(client.getId(), lobby);
+        api.sendPrivateMessage(client.getId(), "Welcome to the lobby");
+    } catch (TS3Exception offline) {
+        if (!offline.matchesQueryError(512)) throw offline;
+        api.sendOfflineMessage(uniqueId, "Lobby", "Welcome to the lobby");
+    }
+    return lobby;
 ```
 
 After, synchronous:
 
 ```java
 static int prepareLobby(TS3Api api, String uniqueId, byte[] rules) {
-	int lobby = api.channels().findByName("Lobby", false).map(Channel::getId)
-		.orElseGet(() -> api.channels().create("Lobby", Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
-	api.permissions().add(PermissionTarget.channel(lobby), "i_channel_needed_join_power", 10);
-	api.files().upload(FileLocation.of(lobby, "/rules.txt"), rules, UploadMode.OVERWRITE);
-	api.clients().findByUniqueId(uniqueId).ifPresentOrElse(client -> {
-		api.clients().move(client.getId(), lobby);
-		api.messages().sendPrivate(client.getId(), "Welcome to the lobby");
-	}, () -> api.messages().sendOffline(uniqueId, "Lobby", "Welcome to the lobby"));
-	return lobby;
+    int lobby = api.channels()
+            .findByName("Lobby", false)
+            .map(Channel::getId)
+            .orElseGet(() -> api.channels().create("Lobby", Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
+    api.permissions().add(PermissionTarget.channel(lobby), "i_channel_needed_join_power", 10);
+    api.files().upload(FileLocation.of(lobby, "/rules.txt"), rules, UploadMode.OVERWRITE);
+    api.clients()
+            .findByUniqueId(uniqueId)
+            .ifPresentOrElse(
+                    client -> {
+                        api.clients().move(client.getId(), lobby);
+                        api.messages().sendPrivate(client.getId(), "Welcome to the lobby");
+                    },
+                    () -> api.messages().sendOffline(uniqueId, "Lobby", "Welcome to the lobby"));
+    return lobby;
 }
 ```
 
@@ -105,39 +111,52 @@ Before, asynchronous:
 
 ```java
 static CompletableFuture<Integer> prepareLobby(TS3ApiAsync api, String uniqueId, byte[] rules) {
-	return api.getChannelByNameExact("Lobby", false).thenCompose(existing -> existing != null
-			? CompletableFuture.completedFuture(existing.getId())
-			: api.createChannel("Lobby", Collections.singletonMap(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")))
-		.thenCompose(lobby -> api.addChannelPermission(lobby, "i_channel_needed_join_power", 10)
-			.thenCompose(done -> api.uploadFileDirect(rules, "/rules.txt", true, lobby))
-			.thenCompose(done -> api.getClientByUId(uniqueId).thenCompose(client -> api.moveClient(client.getId(), lobby)
-				.thenCompose(moved -> api.sendPrivateMessage(client.getId(), "Welcome to the lobby"))))
-			.exceptionallyCompose(failure -> CommandFutures.unwrap(failure) instanceof TS3Exception offline && offline.matchesQueryError(512)
-				? api.sendOfflineMessage(uniqueId, "Lobby", "Welcome to the lobby") : CompletableFuture.failedFuture(failure))
-			.thenApply(done -> lobby));
-}
+    return api.getChannelByNameExact("Lobby", false)
+            .thenCompose(existing -> existing != null
+                    ? CompletableFuture.completedFuture(existing.getId())
+                    : api.createChannel(
+                            "Lobby", Collections.singletonMap(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")))
+            .thenCompose(lobby -> api.addChannelPermission(lobby, "i_channel_needed_join_power", 10)
+                    .thenCompose(done -> api.uploadFileDirect(rules, "/rules.txt", true, lobby))
+                    .thenCompose(done -> api.getClientByUId(uniqueId)
+                            .thenCompose(client -> api.moveClient(client.getId(), lobby)
+                                    .thenCompose(moved ->
+                                            api.sendPrivateMessage(client.getId(), "Welcome to the lobby"))))
+                    .exceptionallyCompose(failure -> CommandFutures.unwrap(failure) instanceof TS3Exception offline
+                                    && offline.matchesQueryError(512)
+                            ? api.sendOfflineMessage(uniqueId, "Lobby", "Welcome to the lobby")
+                            : CompletableFuture.failedFuture(failure))
+                    .thenApply(done -> lobby));
 ```
 
 After, asynchronous:
 
 ```java
 static CompletableFuture<Integer> prepareLobby(TS3ApiAsync api, String uniqueId, byte[] rules) {
-	return api.channels().findByName("Lobby", false).thenCompose(found -> found.map(channel -> CompletableFuture.completedFuture(channel.getId()))
-			.orElseGet(() -> api.channels().create("Lobby", Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"))))
-		.thenCompose(lobby -> api.permissions().add(PermissionTarget.channel(lobby), "i_channel_needed_join_power", 10)
-			.thenCompose(done -> api.files().upload(FileLocation.of(lobby, "/rules.txt"), rules, UploadMode.OVERWRITE))
-			.thenCompose(done -> api.clients().findByUniqueId(uniqueId))
-			.thenCompose(client -> client.isEmpty() ? api.messages().sendOffline(uniqueId, "Lobby", "Welcome to the lobby")
-				: api.clients().move(client.get().getId(), lobby)
-					.thenCompose(done -> api.messages().sendPrivate(client.get().getId(), "Welcome to the lobby")))
-			.thenApply(done -> lobby));
+    return api.channels()
+            .findByName("Lobby", false)
+            .thenCompose(found -> found.map(channel -> CompletableFuture.completedFuture(channel.getId()))
+                    .orElseGet(() ->
+                            api.channels().create("Lobby", Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"))))
+            .thenCompose(lobby -> api.permissions()
+                    .add(PermissionTarget.channel(lobby), "i_channel_needed_join_power", 10)
+                    .thenCompose(done ->
+                            api.files().upload(FileLocation.of(lobby, "/rules.txt"), rules, UploadMode.OVERWRITE))
+                    .thenCompose(done -> api.clients().findByUniqueId(uniqueId))
+                    .thenCompose(client -> client.isEmpty()
+                            ? api.messages().sendOffline(uniqueId, "Lobby", "Welcome to the lobby")
+                            : api.clients()
+                                    .move(client.get().getId(), lobby)
+                                    .thenCompose(done -> api.messages()
+                                            .sendPrivate(client.get().getId(), "Welcome to the lobby")))
+                    .thenApply(done -> lobby));
 }
 ```
 
-| Measure (non-blank lines, characters without indentation) | Before sync | After sync | Before async | After async |
+| Measure (non-blank lines, characters without indentation; Palantir Java Format) | Before sync | After sync | Before async | After async |
 | --- | --- | --- | --- | --- |
-| Lines | 16 | 11 | 12 | 11 |
-| Characters | 717 | 688 | 965 | 901 |
+| Lines | 16 | 17 | 17 | 19 |
+| Characters | 715 | 687 | 961 | 898 |
 | `null` checks | 1 | 0 | 1 | 0 |
 
 The old form needs a `null` check and must catch server error 512, because an offline

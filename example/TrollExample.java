@@ -10,10 +10,10 @@
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -34,7 +34,6 @@ import com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Channel;
-
 import java.util.HashMap;
 import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
@@ -51,136 +50,135 @@ import java.util.concurrent.TimeUnit;
  */
 public class TrollExample {
 
-	private static final Random RANDOM = new Random();
+    private static final Random RANDOM = new Random();
 
-	// Troll-y messages because reason. They're not especially good, I'm sorry :(
-	private static final String[] MESSAGES = {
-			"Get off my server, damn kids!",
-			"Tell me a joke!",
-			"Hey Apple! Hey Apple! Apple! Hey Apple!",
-			"A virus has been detected",
-			"Move out of this channel or you will be banned in 15 seconds.",
-			"Say something :3",
-			"Boo!"
-	};
+    // Troll-y messages because reason. They're not especially good, I'm sorry :(
+    private static final String[] MESSAGES = {
+        "Get off my server, damn kids!",
+        "Tell me a joke!",
+        "Hey Apple! Hey Apple! Apple! Hey Apple!",
+        "A virus has been detected",
+        "Move out of this channel or you will be banned in 15 seconds.",
+        "Say something :3",
+        "Boo!"
+    };
 
-	public static void main(String[] args) {
-		new TrollExample();
-	}
+    public static void main(String[] args) {
+        new TrollExample();
+    }
 
-	private final TS3Query query;
-	private final ScheduledExecutorService executor;
-	private final HashMap<ClientId, ClientTrollWorker> workers;
+    private final TS3Query query;
+    private final ScheduledExecutorService executor;
+    private final HashMap<ClientId, ClientTrollWorker> workers;
 
-	public TrollExample() {
-		// Start the query
-		final TS3Config config = new TS3Config();
-		config.setHost("77.77.77.77");
-		config.setEnableCommunicationsLogging(true);
+    public TrollExample() {
+        // Start the query
+        final TS3Config config = new TS3Config();
+        config.setHost("77.77.77.77");
+        config.setEnableCommunicationsLogging(true);
 
-		query = new TS3Query(config);
-		query.connect();
+        query = new TS3Query(config);
+        query.connect();
 
-		// And let's use one separate thread to troll everyone
-		executor = new ScheduledThreadPoolExecutor(1);
-		workers = new HashMap<>();
+        // And let's use one separate thread to troll everyone
+        executor = new ScheduledThreadPoolExecutor(1);
+        workers = new HashMap<>();
 
-		// Log in, select the virtual server and set a nickname
-		TS3Api api = query.getApi();
-		api.login("serveradmin", "serveradminpassword");
-		api.selectVirtualServerById(1);
-		api.setNickname("Global Server Admin");
+        // Log in, select the virtual server and set a nickname
+        TS3Api api = query.getApi();
+        api.login("serveradmin", "serveradminpassword");
+        api.selectVirtualServerById(1);
+        api.setNickname("Global Server Admin");
 
-		api.events().register(TS3EventType.SERVER);
-		api.events().subscribe(new TS3EventAdapter() {
+        api.events().register(TS3EventType.SERVER);
+        api.events().subscribe(new TS3EventAdapter() {
 
-			@Override
-			public void onClientJoin(ClientJoinEvent e) {
-				final ClientId clientId = e.getClientId();
-				final ClientTrollWorker worker = new ClientTrollWorker(clientId);
-				workers.put(clientId, worker);
+            @Override
+            public void onClientJoin(ClientJoinEvent e) {
+                final ClientId clientId = e.getClientId();
+                final ClientTrollWorker worker = new ClientTrollWorker(clientId);
+                workers.put(clientId, worker);
 
-				// Let's wait a short moment until we begin trolling - 10 to 20 seconds
-				long timeout = 10 + RANDOM.nextInt(11);
-				executor.schedule(worker, timeout, TimeUnit.SECONDS);
-			}
+                // Let's wait a short moment until we begin trolling - 10 to 20 seconds
+                long timeout = 10 + RANDOM.nextInt(11);
+                executor.schedule(worker, timeout, TimeUnit.SECONDS);
+            }
 
-			@Override
-			public void onClientLeave(ClientLeaveEvent e) {
-				final ClientTrollWorker worker = workers.remove(e.getClientId());
-				if (worker == null) return;
-				worker.shutdown();
-			}
-		});
-	}
+            @Override
+            public void onClientLeave(ClientLeaveEvent e) {
+                final ClientTrollWorker worker = workers.remove(e.getClientId());
+                if (worker == null) return;
+                worker.shutdown();
+            }
+        });
+    }
 
-	private class ClientTrollWorker implements Runnable {
+    private class ClientTrollWorker implements Runnable {
 
-		private final ClientId clientId;
-		private boolean cancelled;
+        private final ClientId clientId;
+        private boolean cancelled;
 
-		private ClientTrollWorker(ClientId clientId) {
-			this.clientId = clientId;
-			cancelled = false;
-		}
+        private ClientTrollWorker(ClientId clientId) {
+            this.clientId = clientId;
+            cancelled = false;
+        }
 
-		@Override
-		public void run() {
-			// We were cancelled, abandon ship!
-			if (cancelled) return;
+        @Override
+        public void run() {
+            // We were cancelled, abandon ship!
+            if (cancelled) return;
 
-			// Important!
-			// We're using the asynchronous API so we don't block
-			// our executor which has only 1 thread
-			final TS3ApiAsync asyncApi = query.getAsyncApi();
+            // Important!
+            // We're using the asynchronous API so we don't block
+            // our executor which has only 1 thread
+            final TS3ApiAsync asyncApi = query.getAsyncApi();
 
-			// Let's decide what to do
-			int choice = RANDOM.nextInt(4); // 0 .. 3
-			switch (choice) {
-				case 0:
-					// Poke the client with a random message
-					String pokeMessage = MESSAGES[RANDOM.nextInt(MESSAGES.length)];
-					asyncApi.clients().poke(clientId, pokeMessage);
-					break;
+            // Let's decide what to do
+            int choice = RANDOM.nextInt(4); // 0 .. 3
+            switch (choice) {
+                case 0:
+                    // Poke the client with a random message
+                    String pokeMessage = MESSAGES[RANDOM.nextInt(MESSAGES.length)];
+                    asyncApi.clients().poke(clientId, pokeMessage);
+                    break;
 
-				case 1:
-					// Send the client a private message
-					String privateMessage = MESSAGES[RANDOM.nextInt(MESSAGES.length)];
-					asyncApi.messages().sendPrivate(clientId, privateMessage);
-					break;
+                case 1:
+                    // Send the client a private message
+                    String privateMessage = MESSAGES[RANDOM.nextInt(MESSAGES.length)];
+                    asyncApi.messages().sendPrivate(clientId, privateMessage);
+                    break;
 
-				case 2:
-					// Kick the client to the default channel
-					asyncApi.clients().kickFromChannel(null, clientId);
-					break;
+                case 2:
+                    // Kick the client to the default channel
+                    asyncApi.clients().kickFromChannel(null, clientId);
+                    break;
 
-				case 3:
-					// Move client into a different channel
-					// First, get all channels
-					// (Using .getChannels every time works on small servers, but might
-					//  not be a good idea on servers with 50+ clients!                )
-					asyncApi.channels().list().thenAccept(result -> {
-						// Once we retrieved the channels (some time in the future), choose one channel
-						int randomChannelIndex = RANDOM.nextInt(result.size());
-						Channel randomChannel = result.get(randomChannelIndex);
+                case 3:
+                    // Move client into a different channel
+                    // First, get all channels
+                    // (Using .getChannels every time works on small servers, but might
+                    //  not be a good idea on servers with 50+ clients!                )
+                    asyncApi.channels().list().thenAccept(result -> {
+                        // Once we retrieved the channels (some time in the future), choose one channel
+                        int randomChannelIndex = RANDOM.nextInt(result.size());
+                        Channel randomChannel = result.get(randomChannelIndex);
 
-						// Then move the client into that channel
-						asyncApi.clients().move(clientId, randomChannel.getId());
-					});
-					break;
-				default:
-					// java.util.Random is broken
-					throw new IllegalStateException("java.util.Random returned an illegal value.");
-			}
+                        // Then move the client into that channel
+                        asyncApi.clients().move(clientId, randomChannel.getId());
+                    });
+                    break;
+                default:
+                    // java.util.Random is broken
+                    throw new IllegalStateException("java.util.Random returned an illegal value.");
+            }
 
-			// And finally, re-schedule the runnable
-			long timeout = RANDOM.nextInt(30) + 30; // Wait 30 to 60 seconds
-			executor.schedule(this, timeout, TimeUnit.SECONDS);
-		}
+            // And finally, re-schedule the runnable
+            long timeout = RANDOM.nextInt(30) + 30; // Wait 30 to 60 seconds
+            executor.schedule(this, timeout, TimeUnit.SECONDS);
+        }
 
-		private void shutdown() {
-			cancelled = true;
-		}
-	}
-
+        private void shutdown() {
+            cancelled = true;
+        }
+    }
 }

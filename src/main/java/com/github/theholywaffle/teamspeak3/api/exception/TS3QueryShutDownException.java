@@ -29,13 +29,13 @@ package com.github.theholywaffle.teamspeak3.api.exception;
 /** The query was closed or disconnected before the command was written. */
 public class TS3QueryShutDownException extends TS3TransportException {
 
-	private static final long serialVersionUID = -6727279731231409306L;
+    private static final long serialVersionUID = -6727279731231409306L;
 
-	public TS3QueryShutDownException() {
-		this("The query was shut down or disconnected.");
-	}
+    public TS3QueryShutDownException() {
+        this("The query was shut down or disconnected.");
+    }
 
-	public TS3QueryShutDownException(String msg) {
-		super(msg);
-	}
+    public TS3QueryShutDownException(String msg) {
+        super(msg);
+    }
 }

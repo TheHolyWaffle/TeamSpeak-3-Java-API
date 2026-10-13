@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.commands.response;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,27 +27,26 @@ package com.github.theholywaffle.teamspeak3.commands.response;
  */
 
 import com.github.theholywaffle.teamspeak3.commands.Command;
-
 import java.util.StringJoiner;
 
 public class ResponseBuilder {
 
-	private final Command command;
-	private final StringJoiner rows = new StringJoiner("|");
+    private final Command command;
+    private final StringJoiner rows = new StringJoiner("|");
 
-	public ResponseBuilder(Command command) {
-		this.command = command;
-	}
+    public ResponseBuilder(Command command) {
+        this.command = command;
+    }
 
-	public Command getCommand() {
-		return command;
-	}
+    public Command getCommand() {
+        return command;
+    }
 
-	public DefaultArrayResponse buildResponse() {
-		return DefaultArrayResponse.parse(rows.toString());
-	}
+    public DefaultArrayResponse buildResponse() {
+        return DefaultArrayResponse.parse(rows.toString());
+    }
 
-	public void appendResponse(String rawArrayResponse) {
-		rows.add(rawArrayResponse);
-	}
+    public void appendResponse(String rawArrayResponse) {
+        rows.add(rawArrayResponse);
+    }
 }

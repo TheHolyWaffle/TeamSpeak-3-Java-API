@@ -30,11 +30,11 @@ import java.util.Map;
 
 public class CreatedQueryLogin extends QueryLogin {
 
-	public CreatedQueryLogin(Map<String, String> map) {
-		super(map);
-	}
+    public CreatedQueryLogin(Map<String, String> map) {
+        super(map);
+    }
 
-	public String getQueryClientLoginPassword() {
-		return require("client_login_password");
-	}
+    public String getQueryClientLoginPassword() {
+        return require("client_login_password");
+    }
 }

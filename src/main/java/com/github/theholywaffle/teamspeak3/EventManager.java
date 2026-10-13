@@ -29,161 +29,183 @@ package com.github.theholywaffle.teamspeak3;
 import com.github.theholywaffle.teamspeak3.api.event.*;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
+import java.util.ArrayDeque;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayDeque;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Objects;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Function;
-
 class EventManager {
 
-	private static final Logger log = LoggerFactory.getLogger(EventManager.class);
-	private static final Map<String, Function<Wrapper, TS3Event>> EVENT_BY_NAME = Map.ofEntries(
-		Map.entry("notifytextmessage", TextMessageEvent::new),
-		Map.entry("notifycliententerview", ClientJoinEvent::new),
-		Map.entry("notifyclientleftview", ClientLeaveEvent::new),
-		Map.entry("notifyserveredited", ServerEditedEvent::new),
-		Map.entry("notifychanneledited", ChannelEditedEvent::new),
-		Map.entry("notifychanneldescriptionchanged", ChannelDescriptionEditedEvent::new),
-		Map.entry("notifyclientmoved", ClientMovedEvent::new),
-		Map.entry("notifychannelcreated", ChannelCreateEvent::new),
-		Map.entry("notifychanneldeleted", ChannelDeletedEvent::new),
-		Map.entry("notifychannelmoved", ChannelMovedEvent::new),
-		Map.entry("notifychannelpasswordchanged", ChannelPasswordChangedEvent::new),
-		Map.entry("notifytokenused", PrivilegeKeyUsedEvent::new));
+    private static final Logger log = LoggerFactory.getLogger(EventManager.class);
+    private static final Map<String, Function<Wrapper, TS3Event>> EVENT_BY_NAME = Map.ofEntries(
+            Map.entry("notifytextmessage", TextMessageEvent::new),
+            Map.entry("notifycliententerview", ClientJoinEvent::new),
+            Map.entry("notifyclientleftview", ClientLeaveEvent::new),
+            Map.entry("notifyserveredited", ServerEditedEvent::new),
+            Map.entry("notifychanneledited", ChannelEditedEvent::new),
+            Map.entry("notifychanneldescriptionchanged", ChannelDescriptionEditedEvent::new),
+            Map.entry("notifyclientmoved", ClientMovedEvent::new),
+            Map.entry("notifychannelcreated", ChannelCreateEvent::new),
+            Map.entry("notifychanneldeleted", ChannelDeletedEvent::new),
+            Map.entry("notifychannelmoved", ChannelMovedEvent::new),
+            Map.entry("notifychannelpasswordchanged", ChannelPasswordChangedEvent::new),
+            Map.entry("notifytokenused", PrivilegeKeyUsedEvent::new));
 
-	private final CopyOnWriteArrayList<ListenerTask> tasks = new CopyOnWriteArrayList<>();
-	private final TS3Query ts3;
-	private final ThreadPoolExecutor executor;
-	private final AtomicLong dropped = new AtomicLong();
-	private final AtomicLong unknown = new AtomicLong();
-	private final AtomicLong malformed = new AtomicLong();
-	private final AtomicLong failures = new AtomicLong();
-	private final AtomicLong rejected = new AtomicLong();
-	private boolean closed;
+    private final CopyOnWriteArrayList<ListenerTask> tasks = new CopyOnWriteArrayList<>();
+    private final TS3Query ts3;
+    private final ThreadPoolExecutor executor;
+    private final AtomicLong dropped = new AtomicLong();
+    private final AtomicLong unknown = new AtomicLong();
+    private final AtomicLong malformed = new AtomicLong();
+    private final AtomicLong failures = new AtomicLong();
+    private final AtomicLong rejected = new AtomicLong();
+    private boolean closed;
 
-	EventManager(TS3Query query) {
-		ts3 = query;
-		int threads = query.getConfig().getEventCallbackThreads();
-		executor = new ThreadPoolExecutor(threads, threads, 0,
-			TimeUnit.MILLISECONDS,
-			new ArrayBlockingQueue<>(query.getConfig().getListenerCapacity()),
-			Thread.ofPlatform().name("[TeamSpeak-3-Java-API] Event-", 0).daemon(true).factory(),
-			new ThreadPoolExecutor.AbortPolicy());
-	}
+    EventManager(TS3Query query) {
+        ts3 = query;
+        int threads = query.getConfig().getEventCallbackThreads();
+        executor = new ThreadPoolExecutor(
+                threads,
+                threads,
+                0,
+                TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(query.getConfig().getListenerCapacity()),
+                Thread.ofPlatform()
+                        .name("[TeamSpeak-3-Java-API] Event-", 0)
+                        .daemon(true)
+                        .factory(),
+                new ThreadPoolExecutor.AbortPolicy());
+    }
 
-	synchronized EventSubscription subscribe(TS3Listener listener) {
-		Objects.requireNonNull(listener, "listener");
-		if (closed) throw new IllegalStateException("Query event subscriptions are closed");
-		if (tasks.size() >= ts3.getConfig().getListenerCapacity()) throw new IllegalStateException("Listener capacity exceeded");
-		ListenerTask task = new ListenerTask(listener);
-		tasks.add(task);
-		return () -> remove(task);
-	}
+    synchronized EventSubscription subscribe(TS3Listener listener) {
+        Objects.requireNonNull(listener, "listener");
+        if (closed) throw new IllegalStateException("Query event subscriptions are closed");
+        if (tasks.size() >= ts3.getConfig().getListenerCapacity())
+            throw new IllegalStateException("Listener capacity exceeded");
+        ListenerTask task = new ListenerTask(listener);
+        tasks.add(task);
+        return () -> remove(task);
+    }
 
-	private synchronized void remove(ListenerTask task) {
-		task.close();
-		tasks.remove(task);
-	}
+    private synchronized void remove(ListenerTask task) {
+        task.close();
+        tasks.remove(task);
+    }
 
-	void fireEvent(String notifyName, String notifyBody) {
-		Function<Wrapper, TS3Event> constructor = EVENT_BY_NAME.get(notifyName);
-		if (constructor == null) {
-			unknown.incrementAndGet();
-			log.debug("Ignoring unsupported notification type: {}", notifyName);
-			return;
-		}
-		if (notifyBody == null || notifyBody.isBlank()) { malformedNotification(); return; }
-		try {
-			for (Wrapper data : DefaultArrayResponse.parse(notifyBody).getResponses()) {
-				fireEvent(constructor.apply(data));
-			}
-		} catch (RuntimeException failure) {
-			malformedNotification();
-		}
-	}
+    void fireEvent(String notifyName, String notifyBody) {
+        Function<Wrapper, TS3Event> constructor = EVENT_BY_NAME.get(notifyName);
+        if (constructor == null) {
+            unknown.incrementAndGet();
+            log.debug("Ignoring unsupported notification type: {}", notifyName);
+            return;
+        }
+        if (notifyBody == null || notifyBody.isBlank()) {
+            malformedNotification();
+            return;
+        }
+        try {
+            for (Wrapper data : DefaultArrayResponse.parse(notifyBody).getResponses()) {
+                fireEvent(constructor.apply(data));
+            }
+        } catch (RuntimeException failure) {
+            malformedNotification();
+        }
+    }
 
-	void malformedNotification() {
-		malformed.incrementAndGet();
-		log.debug("Ignoring malformed notification");
-	}
+    void malformedNotification() {
+        malformed.incrementAndGet();
+        log.debug("Ignoring malformed notification");
+    }
 
-	EventStatistics statistics() {
-		return new EventStatistics(dropped.get(), unknown.get(), malformed.get(), failures.get(), rejected.get());
-	}
+    EventStatistics statistics() {
+        return new EventStatistics(dropped.get(), unknown.get(), malformed.get(), failures.get(), rejected.get());
+    }
 
-	void fireEvent(TS3Event event) {
-		Objects.requireNonNull(event, "event");
-		for (ListenerTask task : tasks) task.enqueueEvent(event);
-	}
+    void fireEvent(TS3Event event) {
+        Objects.requireNonNull(event, "event");
+        for (ListenerTask task : tasks) task.enqueueEvent(event);
+    }
 
-	synchronized void close() {
-		closed = true;
-		for (ListenerTask task : tasks) task.close();
-		tasks.clear();
-		executor.shutdownNow();
-	}
+    synchronized void close() {
+        closed = true;
+        for (ListenerTask task : tasks) task.close();
+        tasks.clear();
+        executor.shutdownNow();
+    }
 
-	void awaitTermination(Deadline deadline) {
-		try { executor.awaitTermination(deadline.remaining(), TimeUnit.NANOSECONDS); }
-		catch (InterruptedException e) { Thread.currentThread().interrupt(); }
-	}
+    void awaitTermination(Deadline deadline) {
+        try {
+            executor.awaitTermination(deadline.remaining(), TimeUnit.NANOSECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
 
-	boolean isTerminated() { return executor.isTerminated(); }
+    boolean isTerminated() {
+        return executor.isTerminated();
+    }
 
-	private final class ListenerTask implements Runnable {
-		private final TS3Listener listener;
-		private final Queue<TS3Event> events = new ArrayDeque<>();
-		private boolean running;
-		private boolean removed;
+    private final class ListenerTask implements Runnable {
+        private final TS3Listener listener;
+        private final Queue<TS3Event> events = new ArrayDeque<>();
+        private boolean running;
+        private boolean removed;
 
-		ListenerTask(TS3Listener listener) { this.listener = listener; }
+        ListenerTask(TS3Listener listener) {
+            this.listener = listener;
+        }
 
-		synchronized void close() {
-			removed = true;
-			events.clear();
-			executor.remove(this);
-		}
+        synchronized void close() {
+            removed = true;
+            events.clear();
+            executor.remove(this);
+        }
 
-		synchronized void enqueueEvent(TS3Event event) {
-			if (removed) return;
-			if (events.size() >= ts3.getConfig().getListenerQueueCapacity()) {
-				dropped.incrementAndGet();
-				return; // Drop newest; reader never waits for callbacks.
-			}
-			events.add(event);
-			if (running) return;
-			running = true;
-			try { executor.execute(this); }
-			catch (RejectedExecutionException failure) {
-				rejected.incrementAndGet();
-				dropped.addAndGet(events.size());
-				events.clear();
-				running = false;
-			}
-		}
+        synchronized void enqueueEvent(TS3Event event) {
+            if (removed) return;
+            if (events.size() >= ts3.getConfig().getListenerQueueCapacity()) {
+                dropped.incrementAndGet();
+                return; // Drop newest; reader never waits for callbacks.
+            }
+            events.add(event);
+            if (running) return;
+            running = true;
+            try {
+                executor.execute(this);
+            } catch (RejectedExecutionException failure) {
+                rejected.incrementAndGet();
+                dropped.addAndGet(events.size());
+                events.clear();
+                running = false;
+            }
+        }
 
-		@Override public void run() {
-			while (true) {
-				TS3Event event;
-				synchronized (this) {
-					if (removed || (event = events.poll()) == null) { running = false; return; }
-				}
-				try { ts3.runUserTask(() -> event.fire(listener)); }
-				catch (Throwable failure) {
-					failures.incrementAndGet();
-					log.error("Event listener threw an exception", failure);
-				}
-			}
-		}
-	}
+        @Override
+        public void run() {
+            while (true) {
+                TS3Event event;
+                synchronized (this) {
+                    if (removed || (event = events.poll()) == null) {
+                        running = false;
+                        return;
+                    }
+                }
+                try {
+                    ts3.runUserTask(() -> event.fire(listener));
+                } catch (Throwable failure) {
+                    failures.incrementAndGet();
+                    log.error("Event listener threw an exception", failure);
+                }
+            }
+        }
+    }
 }

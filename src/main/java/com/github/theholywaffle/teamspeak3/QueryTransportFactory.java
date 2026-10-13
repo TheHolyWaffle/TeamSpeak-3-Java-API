@@ -5,10 +5,14 @@ package com.github.theholywaffle.teamspeak3;
  */
 @FunctionalInterface
 public interface QueryTransportFactory {
-	/** @param config immutable settings @return a new unopened transport */
-	QueryTransport create(QueryConfig config);
-	/** @param protocol requested protocol @return whether supported */
-	default boolean supports(TS3Query.Protocol protocol) { return true; }
-	/** @return true if transport performs login; false to run the shared ServerQuery login command */
-	default boolean authenticates() { return false; }
+    /** @param config immutable settings @return a new unopened transport */
+    QueryTransport create(QueryConfig config);
+    /** @param protocol requested protocol @return whether supported */
+    default boolean supports(TS3Query.Protocol protocol) {
+        return true;
+    }
+    /** @return true if transport performs login; false to run the shared ServerQuery login command */
+    default boolean authenticates() {
+        return false;
+    }
 }

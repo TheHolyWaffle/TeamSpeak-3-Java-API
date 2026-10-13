@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -31,27 +31,27 @@ import java.util.Map;
 
 public class Message extends Wrapper {
 
-	public Message(Map<String, String> map) {
-		super(map);
-	}
+    public Message(Map<String, String> map) {
+        super(map);
+    }
 
-	public int getId() {
-		return requireInt("msgid");
-	}
+    public int getId() {
+        return requireInt("msgid");
+    }
 
-	public String getSenderUniqueIdentifier() {
-		return require("cluid");
-	}
+    public String getSenderUniqueIdentifier() {
+        return require("cluid");
+    }
 
-	public String getSubject() {
-		return require("subject");
-	}
+    public String getSubject() {
+        return require("subject");
+    }
 
-	public Instant getReceivedDate() {
-		return requireInstant("timestamp");
-	}
+    public Instant getReceivedDate() {
+        return requireInstant("timestamp");
+    }
 
-	public boolean hasBeenRead() {
-		return requireBoolean("flag_read");
-	}
+    public boolean hasBeenRead() {
+        return requireBoolean("flag_read");
+    }
 }

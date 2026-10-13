@@ -9,7 +9,9 @@ For the 2.0 domain APIs, error categories and a mapping of every 1.x operation, 
 [CompletableFuture migration and execution contract](docs/futures.md). Response models
 are immutable and use typed values; see the [response model guide](docs/models-and-values.md).
 Removed overloads and internal command-builder changes are listed in the
-[implementation cleanup notes](docs/implementation-cleanup.md).
+[implementation cleanup notes](docs/implementation-cleanup.md). Formatting, static analysis,
+coverage, dependency scanning, log redaction and API compatibility checks are described in
+[quality checks](docs/quality-checks.md).
 
 ## Features
 
@@ -182,7 +184,9 @@ Use a Conventional Commit PR title and squash-merge it: `fix: ...` for a patch,
 `feat: ...` for a feature, and `feat!: ...` (or another type with `!`) for a
 breaking change. Include migration details in the PR body and reference its issue.
 Internal changes use titles such as `ci: ...`, `test: ...`, or `chore: ...`.
-No separate release fragments or local release tooling are required.
+No separate release fragments or local release tooling are required. Run
+`./mvnw spotless:apply` before committing; `./mvnw verify` runs the same formatting, analysis,
+coverage and API checks as CI (see [quality checks](docs/quality-checks.md)).
 
 Run **Prepare release** manually on `modernization/2.0` to open or update its
 release PR. The first modernization release is pinned to **2.0.0**. See
@@ -227,7 +231,7 @@ Only use `FloodRate.UNLIMITED` if you are sure that your query account is whitel
 |Host/IP | IP/Host of TeamSpeak 3 server.| ``setHost(String)`` |  | yes |
 |QueryPort | Query port of TeamSpeak 3 server. | ``setQueryPort(int)`` | 10011 | no |
 |FloodRate | Prevents possible spam to the server. | ``setFloodRate(FloodRate)`` | `FloodRate.DEFAULT` | no |
-|Communications logging | Log client-server communication. | ``setEnableCommunicationsLogging(boolean)`` | false | no |
+|Communications logging | Log client-server communication at DEBUG; passwords, privilege keys, API keys and file transfer keys are redacted. | ``setEnableCommunicationsLogging(boolean)`` | false | no |
 |Command response timeout | Time from writing a command until its response must finish | ``setCommandResponseTimeout(Duration)`` | 4 s | no |
 
 ## Questions or bugs?

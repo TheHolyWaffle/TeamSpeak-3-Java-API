@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api.exception;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -38,26 +38,29 @@ package com.github.theholywaffle.teamspeak3.api.exception;
  */
 public class TS3Exception extends RuntimeException {
 
-	private static final long serialVersionUID = 7167169981592989359L;
+    private static final long serialVersionUID = 7167169981592989359L;
 
-	public TS3Exception(String msg) {
-		super(msg);
-	}
+    public TS3Exception(String msg) {
+        super(msg);
+    }
 
-	public TS3Exception(String msg, Throwable cause) {
-		super(msg, cause);
-	}
+    public TS3Exception(String msg, Throwable cause) {
+        super(msg, cause);
+    }
 
-	/** Whether this failure represents the given ServerQuery error ID. */
-	public boolean matchesQueryError(int errorId) { return false; }
+    /** Whether this failure represents the given ServerQuery error ID. */
+    public boolean matchesQueryError(int errorId) {
+        return false;
+    }
 
-	/**
-	 * Whether the server may have executed the failed ServerQuery command. Only retry such a command
-	 * when repeating it is safe. File transfer failures describe the separate file socket; see
-	 * {@link TS3FileTransferFailedException}.
-	 *
-	 * @return {@code true} if the command was written but its response never arrived
-	 */
-	public boolean isOutcomeUnknown() { return false; }
-
+    /**
+     * Whether the server may have executed the failed ServerQuery command. Only retry such a command
+     * when repeating it is safe. File transfer failures describe the separate file socket; see
+     * {@link TS3FileTransferFailedException}.
+     *
+     * @return {@code true} if the command was written but its response never arrived
+     */
+    public boolean isOutcomeUnknown() {
+        return false;
+    }
 }

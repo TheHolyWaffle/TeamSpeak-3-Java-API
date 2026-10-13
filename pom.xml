@@ -56,8 +56,23 @@
 		<bouncycastle.version>1.86</bouncycastle.version>
 		<junit.version>6.1.3</junit.version>
 		<testcontainers.version>2.0.5</testcontainers.version>
+		<errorprone.version>2.50.0</errorprone.version>
+		<!-- Summaries are optional: many members are fully described by @return or @see. -->
+		<errorprone.flags>-XepDisableWarningsInGeneratedCode -Xep:MissingSummary:OFF</errorprone.flags>
 		<jreleaser.config.file>${project.basedir}/jreleaser.yml</jreleaser.config.file>
 		<project.build.outputTimestamp>1980-01-01T00:00:02Z</project.build.outputTimestamp>
+		<!-- API compatibility baseline: the latest published release, verified by checksum. Same groupId,
+		     artifactId, packages and Automatic-Module-Name as this build. -->
+		<api.baseline.version>1.3.1</api.baseline.version>
+		<api.baseline.sha256>e76bfdb446c5d814a23ddd4f5f49486c1361fa61bcb2c8f393c7c13d96794756</api.baseline.sha256>
+		<api.baseline.jar>${project.build.directory}/api-baseline/${project.artifactId}-${api.baseline.version}.jar</api.baseline.jar>
+		<!-- By default the pending version must cover the change since the baseline; japicmp reads each
+		     version from the file name. .github/scripts/api-compare.sh sets an explicit release impact. -->
+		<api.compare.old>${api.baseline.jar}</api.compare.old>
+		<api.compare.new>${project.build.directory}/${project.build.finalName}.jar</api.compare.new>
+		<api.checkVersions>true</api.checkVersions>
+		<api.rejectIncompatible>false</api.rejectIncompatible>
+		<api.rejectAnyChange>false</api.rejectAnyChange>
 	</properties>
 
 	<dependencyManagement>
@@ -151,6 +166,64 @@
 							</rules>
 						</configuration>
 					</execution>
+					<execution>
+						<id>verify-api-baseline</id>
+						<phase>package</phase>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<requireFileChecksum>
+									<file>${api.baseline.jar}</file>
+									<checksum>${api.baseline.sha256}</checksum>
+									<type>sha256</type>
+									<message>The API baseline ${api.baseline.jar} does not match the verified published artifact.</message>
+								</requireFileChecksum>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>com.diffplug.spotless</groupId>
+				<artifactId>spotless-maven-plugin</artifactId>
+				<version>3.10.3</version>
+				<configuration>
+					<java>
+						<includes>
+							<include>src/main/java/**/*.java</include>
+							<include>src/test/java/**/*.java</include>
+							<include>example/**/*.java</include>
+							<include>src/test/api-fixtures/**/*.java</include>
+						</includes>
+						<palantirJavaFormat>
+							<version>2.99.0</version>
+						</palantirJavaFormat>
+					</java>
+					<formats>
+						<format>
+							<includes>
+								<include>.github/**/*.yml</include>
+								<include>.github/**/*.sh</include>
+								<include>src/**/*.properties</include>
+								<include>src/**/*.sh</include>
+								<include>*.yml</include>
+								<include>*.json</include>
+								<include>pom.xml</include>
+							</includes>
+							<trimTrailingWhitespace />
+							<endWithNewline />
+						</format>
+					</formats>
+				</configuration>
+				<executions>
+					<execution>
+						<id>check-formatting</id>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
 				</executions>
 			</plugin>
 			<plugin>
@@ -177,6 +250,47 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.16.0</version>
+				<configuration>
+					<showWarnings>true</showWarnings>
+					<failOnWarning>true</failOnWarning>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>com.google.errorprone</groupId>
+							<artifactId>error_prone_core</artifactId>
+							<version>${errorprone.version}</version>
+						</path>
+					</annotationProcessorPaths>
+					<compilerArgs>
+						<arg>-Xlint:all</arg>
+						<arg>-Xmaxwarns</arg>
+						<arg>10000</arg>
+						<arg>-XDcompilePolicy=simple</arg>
+						<arg>--should-stop=ifError=FLOW</arg>
+					</compilerArgs>
+				</configuration>
+				<executions>
+					<execution>
+						<id>default-compile</id>
+						<configuration>
+							<compilerArgs combine.children="append">
+								<arg>-Xdoclint:all/protected</arg>
+								<arg>-Xdoclint:-missing</arg>
+								<arg>-Xplugin:ErrorProne ${errorprone.flags}</arg>
+							</compilerArgs>
+						</configuration>
+					</execution>
+					<execution>
+						<id>default-testCompile</id>
+						<configuration>
+							<!-- Test fixtures close servers whose close() may be interrupted, and tests start
+							     futures only to observe their side effects. -->
+							<compilerArgs combine.children="append">
+								<arg>-Xlint:-try</arg>
+								<arg>-Xplugin:ErrorProne ${errorprone.flags} -Xep:FutureReturnValueIgnored:OFF</arg>
+							</compilerArgs>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -194,6 +308,129 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.6.0</version>
+				<configuration>
+					<excludedGroups>debug-logging</excludedGroups>
+				</configuration>
+				<executions>
+					<execution>
+						<!-- A separate JVM, so slf4j-simple starts with DEBUG output to a file. -->
+						<id>debug-communication-logging</id>
+						<goals>
+							<goal>test</goal>
+						</goals>
+						<configuration>
+							<groups>debug-logging</groups>
+							<excludedGroups combine.self="override" />
+							<reportsDirectory>${project.build.directory}/surefire-reports/debug-logging</reportsDirectory>
+							<systemPropertyVariables>
+								<org.slf4j.simpleLogger.defaultLogLevel>debug</org.slf4j.simpleLogger.defaultLogLevel>
+								<org.slf4j.simpleLogger.logFile>${project.build.directory}/debug-communication.log</org.slf4j.simpleLogger.logFile>
+							</systemPropertyVariables>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.15</version>
+				<executions>
+					<execution>
+						<id>prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>check-critical-coverage</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<!-- Per-class floors for protocol, lifecycle and error-path code; facades and models are
+							     covered by the TS3 integration suite instead of a global percentage. -->
+							<rules>
+								<rule>
+									<element>CLASS</element>
+									<includes>
+										<include>com.github.theholywaffle.teamspeak3.CommandQueue*</include>
+										<include>com.github.theholywaffle.teamspeak3.Connection</include>
+										<include>com.github.theholywaffle.teamspeak3.Deadline</include>
+										<include>com.github.theholywaffle.teamspeak3.KeepAlive</include>
+										<include>com.github.theholywaffle.teamspeak3.ProtocolLineReader</include>
+										<include>com.github.theholywaffle.teamspeak3.StreamReader</include>
+										<include>com.github.theholywaffle.teamspeak3.StreamWriter</include>
+										<include>com.github.theholywaffle.teamspeak3.TS3Query</include>
+										<include>com.github.theholywaffle.teamspeak3.EventManager*</include>
+										<include>com.github.theholywaffle.teamspeak3.FileTransferHelper*</include>
+										<include>com.github.theholywaffle.teamspeak3.QueryConfig</include>
+										<include>com.github.theholywaffle.teamspeak3.SshHostKeyPolicy*</include>
+										<include>com.github.theholywaffle.teamspeak3.api.CommandFutures*</include>
+										<include>com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException</include>
+										<include>com.github.theholywaffle.teamspeak3.api.exception.TS3TimeoutException</include>
+										<include>com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException</include>
+										<include>com.github.theholywaffle.teamspeak3.api.reconnect.*</include>
+										<include>com.github.theholywaffle.teamspeak3.api.wrapper.QueryError</include>
+										<include>com.github.theholywaffle.teamspeak3.commands.Command</include>
+										<include>com.github.theholywaffle.teamspeak3.commands.CommandBuilder</include>
+										<include>com.github.theholywaffle.teamspeak3.commands.CommandEncoding</include>
+										<include>com.github.theholywaffle.teamspeak3.commands.ProtocolRedactor</include>
+										<include>com.github.theholywaffle.teamspeak3.commands.parameter.*</include>
+										<include>com.github.theholywaffle.teamspeak3.commands.response.*</include>
+									</includes>
+									<excludes>
+										<exclude>com.github.theholywaffle.teamspeak3.api.CommandFutures.RequestFuture</exclude>
+										<exclude>com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectingConnectionHandler</exclude>
+										<exclude>com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy.UserControlled</exclude>
+										<exclude>com.github.theholywaffle.teamspeak3.api.reconnect.SessionConfiguration.Subscription</exclude>
+									</excludes>
+									<limits>
+										<limit>
+											<counter>LINE</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.80</minimum>
+										</limit>
+										<limit>
+											<counter>BRANCH</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.75</minimum>
+										</limit>
+									</limits>
+								</rule>
+								<rule>
+									<!-- Remaining branches are concurrent state races, exercised by the integration suite. -->
+									<element>CLASS</element>
+									<includes>
+										<include>com.github.theholywaffle.teamspeak3.api.CommandFutures.RequestFuture</include>
+										<include>com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectingConnectionHandler</include>
+										<include>com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy.UserControlled</include>
+										<include>com.github.theholywaffle.teamspeak3.api.reconnect.SessionConfiguration.Subscription</include>
+									</includes>
+									<limits>
+										<limit>
+											<counter>LINE</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.80</minimum>
+										</limit>
+										<limit>
+											<counter>BRANCH</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.50</minimum>
+										</limit>
+									</limits>
+								</rule>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -216,6 +453,9 @@
 					<release>${maven.compiler.release}</release>
 					<quiet>true</quiet>
 					<show>protected</show>
+					<!-- Same policy as the compiler's -Xdoclint. -->
+					<doclint>all,-missing</doclint>
+					<failOnWarnings>true</failOnWarnings>
 					<linksource>true</linksource>
 					<notimestamp>true</notimestamp>
 					<bottom>Released under the MIT license.</bottom>
@@ -237,6 +477,67 @@
 				</executions>
 			</plugin>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>3.11.0</version>
+				<executions>
+					<execution>
+						<id>fetch-api-baseline</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>${project.groupId}</groupId>
+									<artifactId>${project.artifactId}</artifactId>
+									<version>${api.baseline.version}</version>
+								</artifactItem>
+							</artifactItems>
+							<outputDirectory>${project.build.directory}/api-baseline</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>com.github.siom79.japicmp</groupId>
+				<artifactId>japicmp-maven-plugin</artifactId>
+				<version>0.26.2</version>
+				<executions>
+					<execution>
+						<!-- Public and protected API of every package; no exclusions. -->
+						<id>api-compatibility</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>cmp</goal>
+						</goals>
+						<configuration>
+							<oldVersion>
+								<file>
+									<path>${api.compare.old}</path>
+								</file>
+							</oldVersion>
+							<newVersion>
+								<file>
+									<path>${api.compare.new}</path>
+								</file>
+							</newVersion>
+							<parameter>
+								<accessModifier>protected</accessModifier>
+								<onlyModified>true</onlyModified>
+								<reportOnlyFilename>true</reportOnlyFilename>
+								<breakBuildBasedOnSemanticVersioning>${api.checkVersions}</breakBuildBasedOnSemanticVersioning>
+								<breakBuildOnBinaryIncompatibleModifications>${api.rejectIncompatible}</breakBuildOnBinaryIncompatibleModifications>
+								<breakBuildOnSourceIncompatibleModifications>${api.rejectIncompatible}</breakBuildOnSourceIncompatibleModifications>
+								<breakBuildOnModifications>${api.rejectAnyChange}</breakBuildOnModifications>
+								<markdownTitle>API compatibility</markdownTitle>
+							</parameter>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>org.jreleaser</groupId>
 				<artifactId>jreleaser-maven-plugin</artifactId>
 				<version>1.26.0</version>
@@ -249,6 +550,28 @@
 	</build>
 
 	<profiles>
+		<!-- Packages the library for API comparisons only: no tests, coverage, formatting or attachments. -->
+		<profile>
+			<id>api-quick</id>
+			<properties>
+				<maven.test.skip>true</maven.test.skip>
+				<jacoco.skip>true</jacoco.skip>
+				<spotless.check.skip>true</spotless.check.skip>
+				<maven.javadoc.skip>true</maven.javadoc.skip>
+				<maven.source.skip>true</maven.source.skip>
+			</properties>
+		</profile>
+		<!-- The formatter parses with the running javac, and no release supports JDK 26+ internals yet.
+		     Formatting does not depend on the build JDK, so JDK 25 builds and CI enforce it. -->
+		<profile>
+			<id>format-check-on-baseline-jdk-only</id>
+			<activation>
+				<jdk>[26,)</jdk>
+			</activation>
+			<properties>
+				<spotless.check.skip>true</spotless.check.skip>
+			</properties>
+		</profile>
 		<!-- Fork a development-only JVM using the already test-scoped harness. -->
 		<profile>
 			<id>dev-server</id>
@@ -293,6 +616,24 @@
 						<executions>
 							<execution>
 								<goals><goal>integration-test</goal><goal>verify</goal></goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.jacoco</groupId>
+						<artifactId>jacoco-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>prepare-agent-integration</id>
+								<goals>
+									<goal>prepare-agent-integration</goal>
+								</goals>
+							</execution>
+							<execution>
+								<id>report-integration</id>
+								<goals>
+									<goal>report-integration</goal>
+								</goals>
 							</execution>
 						</executions>
 					</plugin>
