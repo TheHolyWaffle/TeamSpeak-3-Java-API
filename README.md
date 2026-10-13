@@ -1,6 +1,6 @@
 TeamSpeak 3 Java API
 ====================
-[![Build Status](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/actions/workflows/maven.yml/badge.svg?branch=modernization%2F2.0)](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/actions/workflows/maven.yml) [![Maven Central](https://img.shields.io/maven-central/v/com.github.theholywaffle/teamspeak3-api.svg)](https://central.sonatype.com/artifact/com.github.theholywaffle/teamspeak3-api) [![Javadocs](https://www.javadoc.io/badge/com.github.theholywaffle/teamspeak3-api.svg)](https://www.javadoc.io/doc/com.github.theholywaffle/teamspeak3-api)
+[![Build Status](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/actions/workflows/maven.yml/badge.svg?branch=master)](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/actions/workflows/maven.yml) [![Maven Central](https://img.shields.io/maven-central/v/com.github.theholywaffle/teamspeak3-api.svg)](https://central.sonatype.com/artifact/com.github.theholywaffle/teamspeak3-api) [![Javadocs](https://www.javadoc.io/badge/com.github.theholywaffle/teamspeak3-api.svg)](https://www.javadoc.io/doc/com.github.theholywaffle/teamspeak3-api)
 
 A Java library for the TeamSpeak 3 ServerQuery interface: server administration, notifications
 and file transfers over raw TCP or SSH.

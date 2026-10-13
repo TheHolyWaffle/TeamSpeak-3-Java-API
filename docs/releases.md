@@ -11,25 +11,55 @@ credentials. Linux Docker checks arrived with #434. Formatting, static analysis,
 coverage, dependency scanning and japicmp API checks are described in
 [quality checks](quality-checks.md).
 
-## Before merging modernization into master
+## Final integration into master
 
-The existing `master` workflow still publishes ordinary pushes until a separate
-preparatory PR removes its `deploy` job from `.github/workflows/maven.yml`. Land
-that small change before merging any modernization work into `master`. A
-[reviewable isolation patch](master-publishing-isolation.patch), checked against the
-current `master` workflow, removes only that job and its obsolete header comment.
-Apply it in a separate checkout of `master` and open its preparatory PR. Preserve
-`master`'s current Java/build configuration in that PR; do not cherry-pick the
-Java 25 workflow without the corresponding build changes. This branch removes the
-publisher as part of its replacement CI, but cannot change the deployed workflow
-on `master` before its PR merges. Travis is removed on this modernization branch.
+`modernization/2.0` reaches `master` through one reviewed integration PR, after every core task,
+including #451, has merged into `modernization/2.0` and the rehearsal below has passed. The
+integration itself publishes nothing; publication remains the [explicit release action](#explicit-release-action).
 
-Repository rulesets require squash-merged PRs on `master` and `modernization/2.0`, and
-**CI required** on an up-to-date `modernization/2.0` (see
-[repository rules](../CONTRIBUTING.md#repository-rules)). `master` keeps requiring its old
-build check until the final integration PR introduces this workflow; then switch its
-required check to **CI required**. The README badge tracks `modernization/2.0` now; switch
-its branch query back to `master` when the final integration PR lands.
+**History is merged, not squashed.** Release-please builds the 2.0.0 notes from the individual
+Conventional Commits and their PRs (including [commit overrides](#200-release-rehearsal)). A squash
+would leave one commit on `master` and lose them, so the integration PR alone uses a merge commit.
+GitHub's merge commit subject, `Merge pull request #N from ...`, is not a Conventional Commit, so
+release-please ignores it and adds no entry of its own. The PR description must not contain a
+`BEGIN_COMMIT_OVERRIDE` block.
+
+**No separate publishing-isolation PR.** The legacy `master` workflow publishes on pushes to
+`master`, but a push runs the workflow file of the pushed commit. The integration merge commit
+carries this branch's workflows, which have no deploy job, and no other change reaches `master`
+before it. A preparatory PR removing the legacy job would therefore protect nothing.
+
+Steps, in order:
+
+1. **Reconcile `master`.** `git log origin/modernization/2.0..origin/master` must be empty; on
+   2026-10-14 `master` (`f458e72`) is an ancestor of `modernization/2.0`. Bring any later `master`
+   fix into `modernization/2.0` through a normal PR first.
+2. **Open the integration PR** from `modernization/2.0` to `master`, titled
+   `chore!: integrate the 2.0 modernization into master`. The `!` satisfies the API and dependency
+   impact checks against 1.3.1's `master`; the title does not reach the release notes. Its
+   **CI required** run is the complete suite on the final merge result: build, unit and TS3
+   RAW/SSH integration tests, packaging, consumers, reproducibility, API compatibility, dependency
+   review and the release-please dry run.
+3. **Prepare the rules** once that CI is green. In the **Legacy CI required on master** ruleset,
+   replace the required check `Build and run tests`, which the 2.0 workflows do not produce, with
+   `CI required` (rename the ruleset to match). In **Pull requests for release branches**, add the
+   `merge` method next to `squash`, and enable merge commits in the repository settings.
+4. **Merge** with **Create a merge commit** and the default message.
+5. **Restore** squash-only merging in the ruleset and repository settings. The README build badge
+   already tracks `master`, so it shows the new CI from this merge on.
+6. **Pin actions.** Once no branch still runs a legacy workflow, enable **Require actions to be
+   pinned to a full-length commit SHA** (Settings → Actions). On 2026-10-14 the branches whose
+   workflows still use tag-pinned actions are `actionplan`, `modernization/01-reproducible-java-25-build`
+   and `TheHolyWaffle/modernization-02-dependency-security-refresh`; delete them or accept that
+   their workflows fail.
+7. **Retire** the legacy `SONATYPE_USERNAME` and `SONATYPE_PASSWORD` repository secrets, which only
+   the removed OSSRH publisher used.
+8. **Release.** Configure `RELEASE_PR_TOKEN` (see [prepare a release PR](#prepare-a-release-pr)),
+   run **Prepare release** on `master`, review the generated 2.0.0 PR against the rehearsed notes,
+   squash-merge it after **CI required** passes, then run the explicit release action with
+   `validate` and, after review, `publish`. Finish with [after 2.0.0 is published](#after-200-is-published).
+
+Contributor-facing rules are summarized in [repository rules](../CONTRIBUTING.md#repository-rules).
 
 ## Record intent
 
