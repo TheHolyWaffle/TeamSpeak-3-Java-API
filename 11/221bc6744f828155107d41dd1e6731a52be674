@@ -1,0 +1,21 @@
+docs/integration-tests.md
+  s_7df55e85b66403::t_965e9a295c8411 49-53,69-70
+src/test/java/com/github/theholywaffle/teamspeak3/TeamSpeakContainer.java
+  s_7df55e85b66403::t_7f9f5089ea3aca 44,71-74,180-181
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "11221bc6744f828155107d41dd1e6731a52be674",
+  "prompts": {},
+  "sessions": {
+    "s_7df55e85b66403": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_7df55e85b66403",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
