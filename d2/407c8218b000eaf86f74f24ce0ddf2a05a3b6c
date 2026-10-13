@@ -1,0 +1,19 @@
+pom.xml
+  s_a5562a12b8152d::t_d05319579c00d8 654-655
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d2407c8218b000eaf86f74f24ce0ddf2a05a3b6c",
+  "prompts": {},
+  "sessions": {
+    "s_a5562a12b8152d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_a5562a12b8152d",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
