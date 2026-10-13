@@ -1,0 +1,25 @@
+CONTRIBUTING.md
+  s_ba4f2e5e310bfe::t_77873b3fd84a1f 1-132
+README.md
+  s_ba4f2e5e310bfe::t_fa67df89d7895d 3,22,393-403
+docs/releases.md
+  s_ba4f2e5e310bfe::t_a57ef95fc342ea 27-32,36-39,157-163
+src/test/java/com/github/theholywaffle/teamspeak3/DocumentationTest.java
+  s_ba4f2e5e310bfe::t_37b24cb82d3b00 26,105-116,119-124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6eed62b9cb99c2b738ccfc577af9964e0f495e59",
+  "prompts": {},
+  "sessions": {
+    "s_ba4f2e5e310bfe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2adad55e-4bba-4de8-8b8f-dca91fe79778",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
