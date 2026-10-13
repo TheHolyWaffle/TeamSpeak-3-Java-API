@@ -77,7 +77,7 @@ Scheduled failures require investigation, not skipped tests.
 
 This is test/build infrastructure (`test:` release intent), with no production API
 or default changes. Testcontainers is test-scoped and is excluded from published
-runtime dependencies and the standalone artifact. The integration profile is
+runtime dependencies and the published artifacts. The integration profile is
 opt-in locally and mandatory in modernization CI. This baseline verifies only
 the exact two TS3 combinations above; it does not promise untested commands,
 notifications, file transfers, voice or Web Query. Broader command/event coverage

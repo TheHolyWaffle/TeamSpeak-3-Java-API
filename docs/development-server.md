@@ -59,7 +59,7 @@ The former `-Ddev.server=ts6` option is removed and rejected before Docker start
 This is internal development tooling (`chore:` release intent). There are no
 production API, dependency or runtime changes and no consumer migration steps.
 The launcher and example live in test sources; Testcontainers stays test-scoped
-and is excluded from normal, standalone and source library artifacts. The Maven
+and is excluded from the normal and source library artifacts. The Maven
 `dev-server` profile only configures the opt-in Exec plugin; normal builds do
 not start Docker. Use `test-compile` before `exec:exec` to run compiled classes,
 rather than Java source-file launching or preview features.

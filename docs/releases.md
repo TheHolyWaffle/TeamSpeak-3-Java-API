@@ -3,8 +3,9 @@
 `master` remains the default branch and the current published release line.
 Modernization task PRs target `modernization/2.0`. Its CI verifies Java 25 and the
 newer GA JDK (currently 27), with Java 25 bytecode on both. Maven `verify` runs
-tests and creates the normal, sources and Javadoc JARs; `-Pfull verify`
-additionally creates the standalone JAR. Maven errors fail the job, with logs and available test/Javadoc reports
+tests and creates the normal, sources and Javadoc JARs; separate jobs check that
+clean rebuilds are reproducible and that Maven and Gradle consumers run against the
+staged artifacts (see [packaging](packaging.md)). Maven errors fail the job, with logs and available test/Javadoc reports
 uploaded for seven days. PR builds have read-only permissions and no release
 credentials. Linux Docker checks arrived with #434. Formatting, static analysis, Javadoc,
 coverage, dependency scanning and japicmp API checks are described in
@@ -99,7 +100,6 @@ repository with publication enabled. Native Maven verification remains:
 
 ```sh
 ./mvnw -B -ntp verify
-./mvnw -B -ntp -Pfull verify
 ```
 
 ## Modernization migration notes
@@ -111,7 +111,7 @@ changes must appear in the first release notes and migration guide:
   Use the pinned Maven Wrapper to build from source.
 - SSHJ and its Bouncy Castle dependencies are refreshed with patched crypto modules.
 - Logging uses SLF4J 2.0. Replace SLF4J 1.7 bindings with exactly one compatible 2.x
-  provider. The standalone JAR includes SimpleLogger.
+  provider.
 
 Task #439 removes `CommandFuture` in favor of JDK `CompletableFuture` and
 `CompletionStage`. Recompile consumers and follow the [future migration guide](futures.md)
@@ -127,6 +127,10 @@ source/binary break.
 Task #446 makes `TS3Query` final, makes `TS3CommandFailedException` serializable, returns the
 wire text from `Command.encoded()` and redacts secrets in communication logs and `toString()`
 diagnostics. See the [quality checks migration table](quality-checks.md#migration-20).
+
+Task #447 stops publishing the standalone `with-dependencies` JAR and removes the `full`
+profile. Depend on the regular JAR through Maven or Gradle and choose a logging provider; see
+[migration from the standalone JAR](packaging.md#migration-from-the-standalone-jar).
 
 ## Central Portal publication (#433)
 
@@ -148,9 +152,7 @@ it. No second changelog generator runs.
 The old `ossrh` profile, Nexus staging extension and retired endpoints are removed.
 Do not use `-Possrh` or remote Maven `deploy`. `-Pcentral-staging deploy` runs tests
 and stages the normal JAR, POM, source JAR and Javadoc JAR in a **local file
-repository** under `target/staging-deploy`. It does not upload anything. Keep `full`
-separate: its standalone JAR and logging-provider dependency are not the Central
-library publication. Maven retains license, SCM, description, developer and project
+repository** under `target/staging-deploy`. It does not upload anything. Maven retains license, SCM, description, developer and project
 metadata; JReleaser validates those metadata and the required artifacts, signs them,
 and constructs the Central bundle. No second Central publishing plugin is used.
 
@@ -195,7 +197,6 @@ Use JDK 25 and the pinned Maven Wrapper, without preview features:
 
 ```sh
 ./mvnw -B -ntp verify
-./mvnw -B -ntp -Pfull verify
 bash .github/scripts/test-release-metadata.sh
 ```
 
@@ -207,6 +208,7 @@ non-publishing rehearsal:
   -Dexpression=project.version -Doutput=target/release-version.txt
 bash .github/scripts/release-metadata.sh "$(cat target/release-version.txt)" v2.0.0
 bash .github/scripts/release-rehearsal.sh
+bash .github/scripts/verify-staged-artifacts.sh "$(cat target/release-version.txt)"
 ```
 
 The rehearsal generates an ephemeral test signing key, stages all four normal
@@ -217,21 +219,24 @@ non-publishing script. Dry-run skips uploads, tags and GitHub releases; JRelease
 may still perform read-only artifact/keyserver checks. The ephemeral key is deleted
 on exit and must never be used for a real release.
 
-For development snapshots, use a disposable checkout/copy and set only that copy
-to synthetic `0.0.0`, as the **Validate publication bundle (no upload)** CI job does:
+For development snapshots, use a disposable Git checkout or copy and apply a synthetic
+`0.0.0` release-please state (POM version, manifest and changelog entry) only there, as
+the **Validate publication bundle (no upload)** CI job does:
 
 ```sh
-./mvnw -B -ntp org.codehaus.mojo:versions-maven-plugin:2.22.0:set \
-  -DnewVersion=0.0.0 -DgenerateBackupPoms=false -DupdateBuildOutputTimestampPolicy=never
-mkdir -p target
-printf '## [0.0.0]\n\nNon-publishing CI rehearsal.\n' > target/release-notes.md
+bash .github/scripts/synthetic-release.sh 0.0.0
 bash .github/scripts/release-rehearsal.sh
+bash .github/scripts/test-verify-staged-artifacts.sh 0.0.0 target/staging-deploy \
+  target/jreleaser/deploy/mavenCentral/central/com.github.theholywaffle-teamspeak3-api-0.0.0-bundle.zip
+bash .github/scripts/consumer-check.sh 0.0.0
 ```
 
-CI uploads the signed repository and generated bundle as a short-lived Actions
-artifact for inspection, without uploading to Portal or publishing a release.
-Synthetic version/notes never change committed source or the approved release.
-Full consumer acceptance and complete pipeline rehearsal remain #447 and #451.
+The job then inspects the staged artifacts and runs the Maven and Gradle consumers
+against them, as described in [packaging](packaging.md). CI uploads the signed
+repository, generated bundle and consumer logs as a short-lived Actions artifact for
+inspection, without uploading to Portal or publishing a release. Synthetic
+version/notes never change committed source or the approved release. Complete
+pipeline rehearsal remains #451.
 
 ### Explicit release action
 
@@ -249,7 +254,8 @@ configured under repository policy; they are not required by this task.
 
 Select **publish** only as the explicit release action after those checks. The job
 rechecks `master` HEAD when the release environment job begins, checks out the
-validated SHA, stages the normal artifacts, then signs and deploys using the
+validated SHA, stages the normal artifacts, checks them against the approved version
+with `verify-staged-artifacts.sh`, then signs and deploys using the
 [JReleaser Central Portal deployer](https://jreleaser.org/guide/latest/reference/deploy/maven/maven-central.html).
 After Central succeeds, it waits for the release POM to be available from Central
 and uses the release-only configuration to create the version tag and GitHub release

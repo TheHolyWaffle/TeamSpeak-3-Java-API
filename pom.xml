@@ -133,14 +133,6 @@
 	</dependencies>
 
 	<build>
-		<resources>
-			<resource>
-				<directory>src/main/resources</directory>
-				<excludes>
-					<exclude>simplelogger.properties</exclude>
-				</excludes>
-			</resource>
-		</resources>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -186,6 +178,24 @@
 				</executions>
 			</plugin>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-artifact-plugin</artifactId>
+				<version>3.7.0</version>
+				<executions>
+					<execution>
+						<!-- Rejects plugins known to break reproducible output and a missing outputTimestamp. -->
+						<id>check-reproducible-build-plan</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>check-buildplan</goal>
+						</goals>
+						<configuration>
+							<failOnNonReproducible>true</failOnNonReproducible>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>com.diffplug.spotless</groupId>
 				<artifactId>spotless-maven-plugin</artifactId>
 				<version>3.10.3</version>
@@ -196,6 +206,7 @@
 							<include>src/test/java/**/*.java</include>
 							<include>example/**/*.java</include>
 							<include>src/test/api-fixtures/**/*.java</include>
+							<include>src/test/consumers/**/*.java</include>
 						</includes>
 						<palantirJavaFormat>
 							<version>2.99.0</version>
@@ -211,6 +222,8 @@
 								<include>*.yml</include>
 								<include>*.json</include>
 								<include>pom.xml</include>
+								<include>src/test/consumers/**/*.xml</include>
+								<include>src/test/consumers/**/*.kts</include>
 							</includes>
 							<trimTrailingWhitespace />
 							<endWithNewline />
@@ -645,65 +658,6 @@
 			<properties>
 				<altDeploymentRepository>local-staging::file://${project.build.directory}/staging-deploy</altDeploymentRepository>
 			</properties>
-		</profile>
-
-		<profile>
-			<id>full</id>
-			<activation>
-				<activeByDefault>false</activeByDefault>
-			</activation>
-			<dependencies>
-				<dependency>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-simple</artifactId>
-					<version>${slf4j.version}</version>
-				</dependency>
-			</dependencies>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-shade-plugin</artifactId>
-						<version>3.6.2</version>
-						<executions>
-							<execution>
-								<phase>package</phase>
-								<goals>
-									<goal>shade</goal>
-								</goals>
-								<configuration>
-									<shadedArtifactAttached>true</shadedArtifactAttached>
-									<createDependencyReducedPom>false</createDependencyReducedPom>
-									<shadedClassifierName>with-dependencies</shadedClassifierName>
-									<transformers>
-										<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-										<transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
-											<resource>simplelogger.properties</resource>
-											<file>src/main/resources/simplelogger.properties</file>
-										</transformer>
-										<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer" />
-									</transformers>
-									<filters>
-										<filter>
-											<artifact>org.bouncycastle:*</artifact>
-											<excludes>
-												<exclude>META-INF/*.*</exclude>
-												<exclude>META-INF/versions/9/module-info.class</exclude>
-											</excludes>
-										</filter>
-										<filter>
-											<artifact>*:*</artifact>
-											<excludes>
-												<exclude>META-INF/*.MF</exclude>
-											</excludes>
-										</filter>
-									</filters>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
 		</profile>
 	</profiles>
 

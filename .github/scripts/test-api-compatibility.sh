@@ -66,7 +66,7 @@ compare removed "$impact" fail
 # The real library against its verified published baseline: 2.0 is a major release of 1.3.1.
 ./mvnw -B -ntp -q -Papi-quick package japicmp:cmp@api-compatibility || fail "the pending version was rejected against 1.3.1"
 echo "ok: library as the pending version against 1.3.1: pass"
-library=$(ls target/teamspeak3-api-*.jar | grep -vE -- '-(sources|javadoc|with-dependencies)\.jar$')
+library=$(ls target/teamspeak3-api-*.jar | grep -vE -- '-(sources|javadoc)\.jar$')
 cp "$library" "$work/teamspeak3-api-1.4.0.jar"
 if ./mvnw -B -ntp -q -Papi-quick package japicmp:cmp@api-compatibility \
   -Dapi.compare.new="$work/teamspeak3-api-1.4.0.jar" > "$work/log" 2>&1; then

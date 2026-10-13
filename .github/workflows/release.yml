@@ -135,6 +135,9 @@ jobs:
       - name: Package the normal library into a local repository
         if: ${{ inputs.action != 'finish-github' }}
         run: ./mvnw -B -ntp -Pcentral-staging deploy
+      - name: Verify the staged artifacts carry the approved version
+        if: ${{ inputs.action != 'finish-github' }}
+        run: bash .github/scripts/verify-staged-artifacts.sh "$(cat target/release-version.txt)"
       - name: Sign, validate and deploy through Central Portal
         if: ${{ inputs.action != 'finish-github' }}
         env:
