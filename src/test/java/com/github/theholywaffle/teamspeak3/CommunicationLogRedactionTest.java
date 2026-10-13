@@ -23,7 +23,7 @@ class CommunicationLogRedactionTest {
     void debugCommunicationLogNeverContainsSecrets() throws Exception {
         Path log = Path.of(System.getProperty("org.slf4j.simpleLogger.logFile"));
         try (var peer = new FakeServerQuery(p -> {
-                    p.expect("login serveradmin LoginSecret");
+                    p.expect("login admin=name -LoginSecret=123");
                     p.write(FakeServerQuery.OK);
                     p.expect("clientmove clid=5 cid=2 cpw=ChannelSecret");
                     p.write(FakeServerQuery.OK);
@@ -41,7 +41,7 @@ class CommunicationLogRedactionTest {
                         .setHost("127.0.0.1")
                         .setQueryPort(peer.port())
                         .setFloodRate(TS3Query.FloodRate.UNLIMITED)
-                        .setLoginCredentials("serveradmin", "LoginSecret")
+                        .setLoginCredentials("admin=name", "-LoginSecret=123")
                         .setEnableCommunicationsLogging(true))) {
             query.connect();
             var api = query.getApi();
@@ -61,7 +61,7 @@ class CommunicationLogRedactionTest {
 
         String output = Files.readString(log);
         for (String expected : List.of(
-                "[login] > login serveradmin <redacted>",
+                "[login] > login admin=name <redacted>",
                 "[clientmove] > clientmove clid=5 cid=2 cpw=<redacted>",
                 "[ftinitupload] < clientftfid=1 serverftfid=7 ftkey=<redacted> port=30033",
                 "[privilegekeyadd] < token=<redacted>",

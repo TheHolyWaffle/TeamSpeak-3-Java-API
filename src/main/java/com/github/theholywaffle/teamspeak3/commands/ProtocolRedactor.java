@@ -2,6 +2,8 @@ package com.github.theholywaffle.teamspeak3.commands;
 
 import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Removes passwords, tokens and file transfer keys from ServerQuery text before it is logged or
@@ -11,6 +13,9 @@ public final class ProtocolRedactor {
 
     /** Replaces each redacted value. */
     public static final String REDACTED = "<redacted>";
+
+    /** Separated by spaces between parameters and by pipes between rows. */
+    private static final Pattern TOKEN = Pattern.compile("[^ |]+");
 
     private static final Set<String> SECRET_KEYS = Set.of("cpw", "tcpw", "pw", "pw_clear", "token", "ftkey", "apikey");
 
@@ -29,36 +34,29 @@ public final class ProtocolRedactor {
     /**
      * Redacts one encoded command, response, notification or error line.
      *
-     * <p>Values of {@linkplain #isSecret(String) secret} properties are replaced in every row, and
-     * so is the positional password of {@code login}. Command names, other properties and the line
+     * <p>Values of {@linkplain #isSecret(String) secret} properties are replaced in every row. In a
+     * {@code login} command, every argument after the user name is replaced: a positional password
+     * may contain {@code =} or start with {@code -}. Command names, other properties and the line
      * structure are kept.
      *
      * @param line encoded ServerQuery text
      * @return the line with secret values replaced by {@value #REDACTED}
      */
     public static String redactLine(String line) {
+        boolean login = line.equals("login") || line.startsWith("login ");
+        Matcher tokens = TOKEN.matcher(line);
         var redacted = new StringBuilder(line.length());
-        boolean login = false;
-        int positional = 0;
-        int start = 0;
-        for (int i = 0; i <= line.length(); i++) {
-            char separator = i < line.length() ? line.charAt(i) : '\n';
-            if (separator != ' ' && separator != '|' && i < line.length()) continue;
-            String token = line.substring(start, i);
-            int equals = token.indexOf('=');
-            if (start == 0 && equals < 0) {
-                login = token.equals("login");
-                redacted.append(token);
-            } else if (equals > 0 && equals < token.length() - 1 && isSecret(token.substring(0, equals))) {
-                redacted.append(token, 0, equals + 1).append(REDACTED);
-            } else if (login && equals < 0 && !token.isEmpty() && !token.startsWith("-") && ++positional > 1) {
-                redacted.append(REDACTED);
-            } else {
-                redacted.append(token);
-            }
-            if (i < line.length()) redacted.append(separator);
-            start = i + 1;
+        for (int index = 0; tokens.find(); index++) {
+            String token = login && index > 1 ? REDACTED : redactProperty(tokens.group());
+            tokens.appendReplacement(redacted, Matcher.quoteReplacement(token));
         }
-        return redacted.toString();
+        return tokens.appendTail(redacted).toString();
+    }
+
+    private static String redactProperty(String token) {
+        int equals = token.indexOf('=');
+        return equals > 0 && equals < token.length() - 1 && isSecret(token.substring(0, equals))
+                ? token.substring(0, equals + 1) + REDACTED
+                : token;
     }
 }

@@ -18,7 +18,7 @@ class ProtocolRedactorTest {
                 // Positional and keyed login; the user name stays visible.
                 "login serveradmin s3cret# login serveradmin <redacted>",
                 "login client_login_name=admin client_login_password=s3cret"
-                        + "# login client_login_name=admin client_login_password=<redacted>",
+                        + "# login client_login_name=admin <redacted>",
                 // Channel and file passwords, including a rename's target password.
                 "clientmove clid=5 cid=2 cpw=chan\\spw# clientmove clid=5 cid=2 cpw=<redacted>",
                 "ftrenamefile cid=1 cpw=a tcid=2 tcpw=b oldname=/x newname=/y"
@@ -59,6 +59,26 @@ class ProtocolRedactorTest {
         assertEquals(
                 "channeledit cid=1 channel_password=",
                 ProtocolRedactor.redactLine("channeledit cid=1 channel_password="));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "serveradmin, abc=123",
+        "serveradmin, -secret",
+        "admin=name, secret",
+        "-admin, secret",
+        "serveradmin, client_login_password=secret",
+        "serveradmin, token=secret",
+        "client_login_name=admin, client_login_name=secret",
+        "admin name, secret with spaces",
+        "client_login_name=admin, client_login_password=",
+        "client_login_password=, -"
+    })
+    void redactsPositionalLoginCredentialsFromCommandBuilder(String username, String password) {
+        var command = QueryCommands.logIn(username, password);
+        String expected = "login " + CommandEncoding.encode(username) + " <redacted>";
+        assertEquals(expected, ProtocolRedactor.redactLine(command.encoded()));
+        assertEquals(expected, command.toString());
     }
 
     @Test

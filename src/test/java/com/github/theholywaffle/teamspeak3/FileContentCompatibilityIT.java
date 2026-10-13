@@ -82,7 +82,7 @@ class FileContentCompatibilityIT {
                 evidence.add("positive file-info fields="
                         + new java.util.TreeSet<>(info.getMap().keySet()));
                 var download = api.executeRawCommand(
-                                FileCommands.ftInitDownload(2, name, cid, "", 0).toString())
+                                FileCommands.ftInitDownload(2, name, cid, "", 0).encoded())
                         .getFirstResponse()
                         .orElseThrow();
                 assertEquals(bytes.length, download.requireLong("size"));

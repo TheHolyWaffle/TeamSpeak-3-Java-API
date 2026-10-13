@@ -50,10 +50,16 @@ public final class Command {
         return future;
     }
 
-    @Override
-    public String toString() {
+    /** @return the command line sent to the server, including secrets */
+    public String encoded() {
         var line = new StringBuilder(name);
         for (Parameter parameter : parameters) parameter.appendTo(line.append(' '));
         return line.toString();
+    }
+
+    /** @return the command line with {@linkplain ProtocolRedactor secrets} redacted */
+    @Override
+    public String toString() {
+        return ProtocolRedactor.redactLine(encoded());
     }
 }

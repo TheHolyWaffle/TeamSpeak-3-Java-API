@@ -14,9 +14,9 @@ public class FileCommandsTest {
     public void ftCreateDir() {
         final String expected = "ftcreatedir cid=1 cpw= dirname=\\/dir1";
         Assertions.assertEquals(
-                expected, FileCommands.ftCreateDir("/dir1", 1, null).toString());
+                expected, FileCommands.ftCreateDir("/dir1", 1, null).encoded());
         Assertions.assertEquals(
-                expected, FileCommands.ftCreateDir("dir1", 1, null).toString());
+                expected, FileCommands.ftCreateDir("dir1", 1, null).encoded());
     }
 
     @Test
@@ -42,7 +42,7 @@ public class FileCommandsTest {
         final String[] filePaths = {"dir1", "/dir2"};
         final String expected = "ftdeletefile cid=1 cpw= name=\\/dir1|name=\\/dir2";
         Assertions.assertEquals(
-                expected, FileCommands.ftDeleteFile(1, null, filePaths).toString());
+                expected, FileCommands.ftDeleteFile(1, null, filePaths).encoded());
     }
 
     @Test
@@ -68,7 +68,7 @@ public class FileCommandsTest {
         final String[] filePaths = {"dir1", "/dir2"};
         final String expected = "ftgetfileinfo cid=1 cpw= name=\\/dir1|cid=1 cpw= name=\\/dir2";
         Assertions.assertEquals(
-                expected, FileCommands.ftGetFileInfo(1, null, filePaths).toString());
+                expected, FileCommands.ftGetFileInfo(1, null, filePaths).encoded());
     }
 
     @Test
@@ -133,7 +133,7 @@ public class FileCommandsTest {
         Assertions.assertEquals(
                 expected,
                 FileCommands.ftGetFileInfo(channelIds, channelPasswords, filePaths)
-                        .toString());
+                        .encoded());
     }
 
     @Test
@@ -145,9 +145,9 @@ public class FileCommandsTest {
     public void ftGetFileList() {
         final String expected = "ftgetfilelist cid=1 cpw= path=\\/dir1\\/";
         Assertions.assertEquals(
-                expected, FileCommands.ftGetFileList("/dir1", 1, null).toString());
+                expected, FileCommands.ftGetFileList("/dir1", 1, null).encoded());
         Assertions.assertEquals(
-                expected, FileCommands.ftGetFileList("dir1/", 1, null).toString());
+                expected, FileCommands.ftGetFileList("dir1/", 1, null).encoded());
     }
 
     @Test
@@ -159,9 +159,9 @@ public class FileCommandsTest {
     public void ftInitDownload() {
         final String expected = "ftinitdownload clientftfid=1 name=\\/dir1 cid=1 cpw= seekpos=0 proto=0";
         Assertions.assertEquals(
-                expected, FileCommands.ftInitDownload(1, "/dir1", 1, null, 0).toString());
+                expected, FileCommands.ftInitDownload(1, "/dir1", 1, null, 0).encoded());
         Assertions.assertEquals(
-                expected, FileCommands.ftInitDownload(1, "dir1", 1, null, 0).toString());
+                expected, FileCommands.ftInitDownload(1, "dir1", 1, null, 0).encoded());
     }
 
     @Test
@@ -177,16 +177,16 @@ public class FileCommandsTest {
         Assertions.assertEquals(
                 expected,
                 FileCommands.ftInitUpload(1, "/dir1", 1, null, 1024, true, false)
-                        .toString());
+                        .encoded());
         Assertions.assertEquals(
                 expected,
-                FileCommands.ftInitUpload(1, "dir1", 1, null, 1024, true, false).toString());
+                FileCommands.ftInitUpload(1, "dir1", 1, null, 1024, true, false).encoded());
     }
 
     @Test
     public void ftList() {
         final String expected = "ftlist";
-        Assertions.assertEquals(expected, FileCommands.ftList().toString());
+        Assertions.assertEquals(expected, FileCommands.ftList().encoded());
     }
 
     @Test
@@ -203,9 +203,9 @@ public class FileCommandsTest {
     public void ftRenameFile() {
         final String expected = "ftrenamefile cid=1 cpw= oldname=\\/dir1 newname=\\/dir2";
         Assertions.assertEquals(
-                expected, FileCommands.ftRenameFile("/dir1", "dir2", 1, null).toString());
+                expected, FileCommands.ftRenameFile("/dir1", "dir2", 1, null).encoded());
         Assertions.assertEquals(
-                expected, FileCommands.ftRenameFile("dir1", "/dir2", 1, null).toString());
+                expected, FileCommands.ftRenameFile("dir1", "/dir2", 1, null).encoded());
     }
 
     @Test
@@ -225,9 +225,9 @@ public class FileCommandsTest {
         final String expected = "ftrenamefile cid=1 cpw= tcid=2 tcpw= oldname=\\/dir1 newname=\\/dir2";
         Assertions.assertEquals(
                 expected,
-                FileCommands.ftRenameFile("/dir1", "dir2", 1, null, 2, null).toString());
+                FileCommands.ftRenameFile("/dir1", "dir2", 1, null, 2, null).encoded());
         Assertions.assertEquals(
                 expected,
-                FileCommands.ftRenameFile("dir1", "/dir2", 1, null, 2, null).toString());
+                FileCommands.ftRenameFile("dir1", "/dir2", 1, null, 2, null).encoded());
     }
 }

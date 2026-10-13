@@ -514,7 +514,7 @@ class CommandFuturesTest {
                     p.expect("channelfind pattern=missing");
                     p.write("error id=768 msg=invalid_channel\n");
                     p.expect(com.github.theholywaffle.teamspeak3.commands.ChannelCommands.channelList()
-                            .toString());
+                            .encoded());
                     await(release);
                     p.write("error id=0 msg=ok\n");
                     p.finishQuit();
@@ -552,7 +552,7 @@ class CommandFuturesTest {
                 var peer = new FakeServerQuery(p -> {
                     p.expect(com.github.theholywaffle.teamspeak3.commands.FileCommands.ftInitDownload(
                                     0, "/test", 0, "", 0)
-                            .toString());
+                            .encoded());
                     p.write("clientftfid=0 serverftfid=1 ftkey=k port=" + files.getLocalPort()
                             + " size=1\nerror id=0 msg=ok\n");
                     p.expect("whoami");

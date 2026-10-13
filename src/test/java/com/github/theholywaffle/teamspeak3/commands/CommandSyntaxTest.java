@@ -30,7 +30,7 @@ class CommandSyntaxTest {
                         .add(new KeyValueParam("count", -2))
                         .add(new KeyValueParam("size", 8_589_934_592L))
                         .build()
-                        .toString());
+                        .encoded());
         assertEquals("-continueonerror", new OptionParam("continueonerror").encoded());
         assertEquals("a\\pb", new ValueParam("a|b").encoded());
         assertEquals("already\\sencoded|raw", new RawParam("already\\sencoded|raw").encoded());
@@ -53,18 +53,18 @@ class CommandSyntaxTest {
     void commandsJoinNameAndParameters() {
         assertEquals(
                 "banclient banreason=bye -continueonerror clid=3|clid=4",
-                BanCommands.banClient(new int[] {3, 4}, 0, "bye", true).toString());
+                BanCommands.banClient(new int[] {3, 4}, 0, "bye", true).encoded());
         assertEquals(
                 "permidgetbyname permsid=a|permsid=b",
-                PermissionCommands.permIdGetByName("a", "b").toString());
+                PermissionCommands.permIdGetByName("a", "b").encoded());
         assertEquals(
                 "permidgetbyname permsid=a",
-                PermissionCommands.permIdGetByName("a").toString());
+                PermissionCommands.permIdGetByName("a").encoded());
         assertThrows(IllegalArgumentException.class, () -> PermissionCommands.permGet("a", null));
         assertThrows(IllegalArgumentException.class, () -> PermissionCommands.permGet());
         assertEquals(
                 "channelmove cid=1 cpid=0 order=0",
-                ChannelCommands.channelMove(1, 0, -5).toString());
+                ChannelCommands.channelMove(1, 0, -5).encoded());
     }
 
     @Test
@@ -74,9 +74,9 @@ class CommandSyntaxTest {
         properties.put(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1");
         assertEquals(
                 "channeledit cid=5 channel_topic=a\\stopic channel_flag_permanent=1",
-                ChannelCommands.channelEdit(5, properties).toString());
+                ChannelCommands.channelEdit(5, properties).encoded());
         assertEquals(
-                "channeledit cid=5", ChannelCommands.channelEdit(5, Map.of()).toString());
+                "channeledit cid=5", ChannelCommands.channelEdit(5, Map.of()).encoded());
         assertThrows(
                 IllegalArgumentException.class, () -> ChannelCommands.channelEdit(5, Map.of(ChannelProperty.CID, "1")));
     }

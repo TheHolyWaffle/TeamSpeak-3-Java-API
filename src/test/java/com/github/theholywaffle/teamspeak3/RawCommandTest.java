@@ -49,7 +49,7 @@ class RawCommandTest {
         assertThrows(IllegalArgumentException.class, () -> QueryCommands.rawCommand(null));
         var command = QueryCommands.rawCommand("channeledit cid=4 channel_name=literal\\s\\\\s|cid=5");
         assertEquals("channeledit", command.getName());
-        assertEquals("channeledit cid=4 channel_name=literal\\s\\\\s|cid=5", command.toString());
+        assertEquals("channeledit cid=4 channel_name=literal\\s\\\\s|cid=5", command.encoded());
     }
 
     @Test

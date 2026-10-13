@@ -103,8 +103,8 @@ class StreamReader implements Runnable {
                     log.error("Malformed command response: {}", ProtocolRedactor.redactLine(line), malformed);
                     break;
                 }
-            } else if (logComms) {
-                log.debug("[welcome] < {}", ProtocolRedactor.redactLine(line));
+            } else {
+                logReceived("welcome", line);
             }
         }
 
@@ -126,7 +126,7 @@ class StreamReader implements Runnable {
     }
 
     private void handleEvent(String event) {
-        if (logComms) log.debug("[event] < {}", ProtocolRedactor.redactLine(event));
+        logReceived("event", event);
 
         String[] parts = event.split(" ", 2);
         if (parts.length == 2) ts3.getEventManager().fireEvent(parts[0], parts[1]);
@@ -146,8 +146,7 @@ class StreamReader implements Runnable {
             responseBuilder = new ResponseBuilder(command);
         }
 
-        if (logComms)
-            log.debug("[{}] < {}", responseBuilder.getCommand().getName(), ProtocolRedactor.redactLine(response));
+        logReceived(responseBuilder.getCommand().getName(), response);
 
         if (response.startsWith("error ")) {
             handleCommandError(responseBuilder, response);
@@ -180,5 +179,9 @@ class StreamReader implements Runnable {
                     con,
                     () -> future.completeExceptionally(new TS3CommandFailedException(queryError, command.getName())));
         }
+    }
+
+    private void logReceived(String name, String line) {
+        if (logComms && log.isDebugEnabled()) log.debug("[{}] < {}", name, ProtocolRedactor.redactLine(line));
     }
 }
