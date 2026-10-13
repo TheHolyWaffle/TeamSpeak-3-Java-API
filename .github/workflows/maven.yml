@@ -40,8 +40,7 @@ jobs:
           java-version: '25'
           distribution: temurin
           cache: maven
-      - name: Compare with the verified 1.3.1 release
-        run: ./mvnw -B -ntp -DskipTests verify
+      # The verify jobs already compare the pending version with 1.3.1.
       - name: Run controlled compatibility examples
         run: bash .github/scripts/test-api-compatibility.sh
       - name: Check out the PR base
@@ -61,10 +60,9 @@ jobs:
           (cd api-base && ./mvnw -B -ntp -q -DskipTests -Denforcer.skip -Djapicmp.skip -Djacoco.skip \
             -Dspotless.check.skip -Dmaven.javadoc.skip -Dmaven.source.skip package)
           impact=$(bash .github/scripts/api-impact.sh "$PR_TITLE" "$PR_BODY")
-          base_jar=$(find api-base/target -maxdepth 1 -name 'teamspeak3-api-*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar')
-          head_jar=$(find target -maxdepth 1 -name 'teamspeak3-api-*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar')
+          library() { ls "$1"/target/teamspeak3-api-*.jar | grep -vE -- '-(sources|javadoc)\.jar$'; }
           status=0
-          bash .github/scripts/api-compare.sh "$base_jar" "$head_jar" "$impact" target/api-impact || status=$?
+          bash .github/scripts/api-compare.sh "$(library api-base)" "$(library .)" "$impact" target/api-impact || status=$?
           {
             echo "### API change against \`$BASE_REF\`"
             echo

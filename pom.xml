@@ -66,10 +66,11 @@
 		<api.baseline.version>1.3.1</api.baseline.version>
 		<api.baseline.sha256>e76bfdb446c5d814a23ddd4f5f49486c1361fa61bcb2c8f393c7c13d96794756</api.baseline.sha256>
 		<api.baseline.jar>${project.build.directory}/api-baseline/${project.artifactId}-${api.baseline.version}.jar</api.baseline.jar>
-		<!-- japicmp reads each version from the file name; CI and the controlled examples override both. -->
+		<!-- By default the pending version must cover the change since the baseline; japicmp reads each
+		     version from the file name. .github/scripts/api-compare.sh sets an explicit release impact. -->
 		<api.compare.old>${api.baseline.jar}</api.compare.old>
 		<api.compare.new>${project.build.directory}/${project.build.finalName}.jar</api.compare.new>
-		<!-- Release-impact limits for a PR comparison; see .github/scripts/api-compare.sh. -->
+		<api.checkVersions>true</api.checkVersions>
 		<api.rejectIncompatible>false</api.rejectIncompatible>
 		<api.rejectAnyChange>false</api.rejectAnyChange>
 	</properties>
@@ -526,7 +527,7 @@
 								<accessModifier>protected</accessModifier>
 								<onlyModified>true</onlyModified>
 								<reportOnlyFilename>true</reportOnlyFilename>
-								<breakBuildBasedOnSemanticVersioning>true</breakBuildBasedOnSemanticVersioning>
+								<breakBuildBasedOnSemanticVersioning>${api.checkVersions}</breakBuildBasedOnSemanticVersioning>
 								<breakBuildOnBinaryIncompatibleModifications>${api.rejectIncompatible}</breakBuildOnBinaryIncompatibleModifications>
 								<breakBuildOnSourceIncompatibleModifications>${api.rejectIncompatible}</breakBuildOnSourceIncompatibleModifications>
 								<breakBuildOnModifications>${api.rejectAnyChange}</breakBuildOnModifications>
@@ -549,6 +550,17 @@
 	</build>
 
 	<profiles>
+		<!-- Packages the library for API comparisons only: no tests, coverage, formatting or attachments. -->
+		<profile>
+			<id>api-quick</id>
+			<properties>
+				<maven.test.skip>true</maven.test.skip>
+				<jacoco.skip>true</jacoco.skip>
+				<spotless.check.skip>true</spotless.check.skip>
+				<maven.javadoc.skip>true</maven.javadoc.skip>
+				<maven.source.skip>true</maven.source.skip>
+			</properties>
+		</profile>
 		<!-- The formatter parses with the running javac, and no release supports JDK 26+ internals yet.
 		     Formatting does not depend on the build JDK, so JDK 25 builds and CI enforce it. -->
 		<profile>
