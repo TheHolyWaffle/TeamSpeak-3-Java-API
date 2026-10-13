@@ -159,7 +159,8 @@ public class TS3Query implements AutoCloseable {
 		this.completions = Executors.newSingleThreadExecutor(
 			Thread.ofVirtual().name("[TeamSpeak-3-Java-API] Completions").factory());
 		this.deadlines = new ScheduledThreadPoolExecutor(1,
-			// Non-daemon: an open query keeps the JVM alive until close() or exit().
+			// Non-daemon, and kept alive by the periodic deadline task below: an open query keeps the JVM
+			// alive until close() or exit(). ThreadModelTest pins this.
 			Thread.ofPlatform().name("[TeamSpeak-3-Java-API] Deadlines").daemon(false).factory());
 		this.deadlines.setRemoveOnCancelPolicy(true);
 		this.fileTransferHelper = new FileTransferHelper(config.getHost(), config.getFileTransferConfig(), deadlines);

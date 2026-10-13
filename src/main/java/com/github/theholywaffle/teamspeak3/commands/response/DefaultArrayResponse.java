@@ -31,7 +31,6 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,9 +53,9 @@ public class DefaultArrayResponse {
 		Map<String, String> shared = parseMap(rawRows[0]);
 		List<Wrapper> rows = new ArrayList<>(rawRows.length);
 		rows.add(new Wrapper(shared));
-		for (String rawRow : Arrays.asList(rawRows).subList(1, rawRows.length)) {
+		for (int i = 1; i < rawRows.length; i++) {
 			Map<String, String> row = new LinkedHashMap<>(shared);
-			row.putAll(parseMap(rawRow));
+			row.putAll(parseMap(rawRows[i]));
 			rows.add(new Wrapper(row));
 		}
 
@@ -88,6 +87,7 @@ public class DefaultArrayResponse {
 	}
 
 	private static Map<String, String> parseMap(String rawMap) {
+		if (rawMap.isEmpty()) return Map.of();
 		Map<String, String> map = new LinkedHashMap<>();
 		for (String param : rawMap.split(" ")) {
 			if (param.isEmpty()) continue;

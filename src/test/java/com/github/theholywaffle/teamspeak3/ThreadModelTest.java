@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Timeout;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -31,6 +32,8 @@ class ThreadModelTest {
 		})) {
 			var config = new TS3Config().setHost("127.0.0.1").setQueryPort(peer.port())
 				.setFloodRate(TS3Query.FloodRate.UNLIMITED).setCloseTimeout(Duration.ofSeconds(2));
+			// Threads left over from other tests in this JVM must not be mistaken for this query's.
+			Set<Thread> earlier = Thread.getAllStackTraces().keySet();
 			// Inherited daemon status would make every owned platform thread a daemon here.
 			var query = CompletableFuture.supplyAsync(() -> new TS3Query(config), Thread.ofVirtual()::start).get();
 			try (query) {
@@ -42,18 +45,18 @@ class ThreadModelTest {
 				query.connect();
 				var observed = query.getAsyncApi().whoAmI().thenRun(() -> completionThread.complete(Thread.currentThread()));
 				callbackAttached.countDown();
-				observed.get(5, TimeUnit.SECONDS);
+				FutureAssertions.read(observed);
 
 				Map<String, Thread> platform = Thread.getAllStackTraces().keySet().stream()
-					.filter(thread -> thread.getName().startsWith("[TeamSpeak-3-Java-API]"))
-					.collect(Collectors.toMap(Thread::getName, thread -> thread, (a, b) -> a));
+					.filter(thread -> !earlier.contains(thread) && thread.getName().startsWith("[TeamSpeak-3-Java-API]"))
+					.collect(Collectors.toMap(Thread::getName, thread -> thread));
 				assertFalse(platform.get("[TeamSpeak-3-Java-API] Deadlines").isDaemon(), "An open query keeps the JVM alive");
 				assertTrue(platform.get("[TeamSpeak-3-Java-API] StreamReader").isDaemon());
 				assertTrue(platform.get("[TeamSpeak-3-Java-API] StreamWriter").isDaemon());
 				assertFalse(platform.containsKey("[TeamSpeak-3-Java-API] KeepAlive"), "Keep-alive runs on a virtual thread");
 
-				assertTrue(completionThread.get(5, TimeUnit.SECONDS).isVirtual(), "Command completions run on virtual threads");
-				Thread eventWorker = callbackThread.get(5, TimeUnit.SECONDS);
+				assertTrue(FutureAssertions.read(completionThread).isVirtual(), "Command completions run on virtual threads");
+				Thread eventWorker = FutureAssertions.read(callbackThread);
 				assertFalse(eventWorker.isVirtual(), "Event callbacks use the bounded platform pool");
 				assertTrue(eventWorker.isDaemon());
 				query.exit();

@@ -73,8 +73,7 @@ class FileTransferCompatibilityIT {
                 assertThrows(TS3FileTransferFailedException.class, () -> api.files().upload(FileLocation.of(cid, "/resume.bin"), truncated, 7, UploadMode.OVERWRITE));
                 assertFalse(truncated.closed);
                 eventually(() -> api.files().info(FileLocation.of(cid, "/resume.bin")).getFileSize() == 3, "Truncated upload prefix is retained");
-                // The server reports "file already in use" (2058) until it has released the failed transfer.
-                eventually(() -> api.files().transfers().stream().noneMatch(row -> row.isActive()), "Truncated upload stops");
+                awaitReleasedTransfers(api, "Truncated upload stops");
                 byte[] full = {1,2,3,4,5,6,7};
                 var resumed = new Input(full); api.files().upload(FileLocation.of(cid, "/resume.bin").withChannelPassword(""), resumed, full.length, UploadMode.RESUME);
                 assertFalse(resumed.closed);
@@ -97,7 +96,7 @@ class FileTransferCompatibilityIT {
                 var upload = async.files().upload(FileLocation.of(cid, "/cancel.bin"), cancelledSource, 7, UploadMode.OVERWRITE);
                 assertTrue(uploadEntered.await(5, TimeUnit.SECONDS)); assertTrue(upload.cancel(false));
                 FutureAssertions.awaitCommandAdmission(query);
-                eventually(() -> api.files().transfers().stream().noneMatch(row -> row.isActive()), "Cancelled upload stops");
+                awaitReleasedTransfers(api, "Cancelled upload stops");
                 assertFalse(cancelledSource.closed); assertTrue(upload.isCancelled());
                 eventually(() -> api.files().info(FileLocation.of(cid, "/cancel.bin")).getFileSize() == 3, "Cancelled prefix retained");
                 api.files().upload(FileLocation.of(cid, "/cancel.bin").withChannelPassword(""), new Input(new byte[]{9,9,9,4,5,6,7}), 7, UploadMode.RESUME);
@@ -133,5 +132,10 @@ class FileTransferCompatibilityIT {
             var path = Path.of("target", "compatibility", target + "-reliable-files.txt");
             Files.createDirectories(path.getParent()); Files.write(path, evidence);
         }
+    }
+
+    // A RESUME fails with "file already in use" (2058) until the server releases the previous transfer.
+    private static void awaitReleasedTransfers(TS3Api api, String message) throws Exception {
+        eventually(() -> api.files().transfers().stream().noneMatch(row -> row.isActive()), message);
     }
 }

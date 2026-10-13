@@ -85,10 +85,8 @@ public abstract class ReconnectStrategy {
 	}
 
 	public static ReconnectStrategy linearBackoff(int startTimeout, int addend, int timeoutCap) {
-		if (startTimeout <= 0) throw new IllegalArgumentException("Starting timeout must be greater than 0");
 		if (addend <= 0) throw new IllegalArgumentException("Addend must be greater than 0");
-		if (timeoutCap < startTimeout) throw new IllegalArgumentException("Cap must be >= starting timeout");
-		return new Backoff(startTimeout, timeoutCap, addend, 1.0, DEFAULT_ATTEMPTS);
+		return backoff(startTimeout, timeoutCap, addend, 1.0);
 	}
 
 	public static ReconnectStrategy exponentialBackoff() {
@@ -100,10 +98,14 @@ public abstract class ReconnectStrategy {
 	}
 
 	public static ReconnectStrategy exponentialBackoff(int startTimeout, double multiplier, int timeoutCap) {
-		if (startTimeout <= 0) throw new IllegalArgumentException("Starting timeout must be greater than 0");
 		if (!Double.isFinite(multiplier) || multiplier <= 1.0) throw new IllegalArgumentException("Multiplier must be greater than 1");
+		return backoff(startTimeout, timeoutCap, 0, multiplier);
+	}
+
+	private static ReconnectStrategy backoff(int startTimeout, int timeoutCap, int addend, double multiplier) {
+		if (startTimeout <= 0) throw new IllegalArgumentException("Starting timeout must be greater than 0");
 		if (timeoutCap < startTimeout) throw new IllegalArgumentException("Cap must be >= starting timeout");
-		return new Backoff(startTimeout, timeoutCap, 0, multiplier, DEFAULT_ATTEMPTS);
+		return new Backoff(startTimeout, timeoutCap, addend, multiplier, DEFAULT_ATTEMPTS);
 	}
 
 	private static final class UserControlled extends ReconnectStrategy {

@@ -30,9 +30,8 @@ import com.github.theholywaffle.teamspeak3.commands.parameter.Parameter;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public final class Command {
 
@@ -55,7 +54,8 @@ public final class Command {
 
 	@Override
 	public String toString() {
-		return Stream.concat(Stream.of(name), parameters.stream().map(Parameter::encoded))
-			.collect(Collectors.joining(" "));
+		var line = new StringJoiner(" ").add(name);
+		for (Parameter parameter : parameters) line.add(parameter.encoded());
+		return line.toString();
 	}
 }

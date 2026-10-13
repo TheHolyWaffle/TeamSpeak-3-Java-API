@@ -175,10 +175,7 @@ class CommandQueue {
 				if (owner.isStopped()) return null;
 				Entry entry = sendQueue.remove();
 				if (entry.isCancelled()) { admission.release(); continue; }
-				if (System.nanoTime() - entry.enqueuedAt >= query.getConfig().getQueueWaitTimeout().toNanos()) {
-					fail(entry, new TS3TimeoutException(TS3TimeoutException.Phase.QUEUE_WAIT, entry.command.getName()));
-					continue;
-				}
+				if (failIfWaitExpired(entry, System.nanoTime())) continue;
 				// Conservative boundary: any failure from encoding through flush has an unknown outcome.
 				entry.sentAt = System.nanoTime();
 				entry.owner = owner;
@@ -269,8 +266,9 @@ class CommandQueue {
 	boolean responseExpired() {
 		queueLock.lock();
 		try {
-			long now = System.nanoTime();
-			return receiveQueue.stream().anyMatch(entry -> responseExpired(entry.sentAt, now));
+			// Commands enter receiveQueue in send order, so the head was sent first.
+			Entry oldest = receiveQueue.peek();
+			return oldest != null && responseExpired(oldest.sentAt, System.nanoTime());
 		} finally { queueLock.unlock(); }
 	}
 
@@ -288,15 +286,17 @@ class CommandQueue {
 	void expireWaitingCommands() {
 		queueLock.lock();
 		try {
+			if (sendQueue.isEmpty()) return;
 			long now = System.nanoTime();
-			long timeout = query.getConfig().getQueueWaitTimeout().toNanos();
-			boolean changed = sendQueue.removeIf(entry -> {
-				if (now - entry.enqueuedAt < timeout) return false;
-				fail(entry, new TS3TimeoutException(TS3TimeoutException.Phase.QUEUE_WAIT, entry.command.getName()));
-				return true;
-			});
-			if (changed) canTransfer.signalAll();
+			if (sendQueue.removeIf(entry -> failIfWaitExpired(entry, now))) canTransfer.signalAll();
 		} finally { queueLock.unlock(); }
+	}
+
+	// Only call this when holding queueLock, for a command leaving sendQueue
+	private boolean failIfWaitExpired(Entry entry, long now) {
+		if (now - entry.enqueuedAt < query.getConfig().getQueueWaitTimeout().toNanos()) return false;
+		fail(entry, new TS3TimeoutException(TS3TimeoutException.Phase.QUEUE_WAIT, entry.command.getName()));
+		return true;
 	}
 
 	void shutDown(Deadline deadline) {

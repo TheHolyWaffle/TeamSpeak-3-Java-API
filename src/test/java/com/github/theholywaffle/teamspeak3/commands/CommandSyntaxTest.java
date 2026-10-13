@@ -24,9 +24,9 @@ class CommandSyntaxTest {
 	void parametersEncodeTheirValues() {
 		assertEquals("key=a\\sb", new KeyValueParam("key", "a b").encoded());
 		assertEquals("cpw=", new KeyValueParam("cpw", (String) null).encoded());
-		assertEquals("flag=1 count=-2 size=8589934592", new CommandBuilder("x")
+		assertEquals("x flag=1 count=-2 size=8589934592", new CommandBuilder("x")
 			.add(new KeyValueParam("flag", true)).add(new KeyValueParam("count", -2))
-			.add(new KeyValueParam("size", 8_589_934_592L)).build().toString().substring(2));
+			.add(new KeyValueParam("size", 8_589_934_592L)).build().toString());
 		assertEquals("-continueonerror", new OptionParam("continueonerror").encoded());
 		assertEquals("a\\pb", new ValueParam("a|b").encoded());
 		assertEquals("already\\sencoded|raw", new RawParam("already\\sencoded|raw").encoded());
