@@ -73,11 +73,12 @@ container startup diagnostics.
 
 The required Maven CI calls `compatibility.yml` on Linux with Java 25, and the
 aggregate `CI required` job requires its success. The workflow also supports
-manual runs and weekly scheduled revalidation of the pinned images. GitHub runs
-cron only for workflows present on the default branch: while modernization stays
-on `modernization/2.0`, manually run **ServerQuery compatibility** on that branch
-weekly; cron becomes active after final integration into `master`. No workflow
-here publishes artifacts or upgrades the pin silently.
+manual runs, optionally against a candidate image, and weekly scheduled revalidation
+of the pin. **Upstream update detection** runs the same suite against a newer official
+TS3 image as soon as one is published; see [scheduled detection](maintenance.md#scheduled-detection).
+GitHub runs scheduled and manually dispatched workflows only when they exist on the
+default branch, so both become active after final integration into `master`. No workflow
+here publishes artifacts or changes the pin; Dependabot proposes pin updates as PRs.
 
 Review a newer official TS3 version/digest, inspect its manifest, rerun this suite
 on Linux amd64 and Apple Silicon, update the expected version and pins (including

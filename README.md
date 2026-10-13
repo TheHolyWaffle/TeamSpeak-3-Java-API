@@ -404,6 +404,9 @@ The guides below are the reference; they are not repeated here.
 - **API compatibility:** japicmp compares the API with the last release and writes reports to
   `target/japicmp/`; it checks signatures, not behavior. See
   [API compatibility](docs/quality-checks.md#api-compatibility) and its [limits](docs/quality-checks.md#limits).
+- **Dependency and image updates:** Dependabot opens grouped, Conventional Commit update PRs for
+  Maven, Actions, the TS3 image and the Gradle consumer, and a weekly job tests newer TS3 images.
+  See [dependency and image maintenance](docs/maintenance.md).
 - **Publishing:** the JReleaser dry-run rehearsal and the explicit, protected publication action are
   described in [local validation and CI rehearsal](docs/releases.md#local-validation-and-ci-rehearsal)
   and [explicit release action](docs/releases.md#explicit-release-action). Merges never publish.
