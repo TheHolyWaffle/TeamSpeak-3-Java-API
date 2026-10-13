@@ -1,0 +1,39 @@
+pom.xml
+  s_c7ece9b2dba552::t_572e175f5cdc59 637-662
+src/example/java/com/github/theholywaffle/teamspeak3/example/FileTransferExample.java
+  s_c7ece9b2dba552::t_391c26e975cee6 7,40-41,79-82
+src/main/java/com/github/theholywaffle/teamspeak3/FileApi.java
+  s_c7ece9b2dba552::t_4329c3cc2fc3e0 181-182,194-195
+src/main/java/com/github/theholywaffle/teamspeak3/api/ChannelProperty.java
+  s_c7ece9b2dba552::t_023e1a4a16e154 50-54
+src/main/java/com/github/theholywaffle/teamspeak3/api/ClientProperty.java
+  s_c7ece9b2dba552::t_0148acc90054ee 64-68
+src/test/java/com/github/theholywaffle/teamspeak3/DevelopmentServer.java
+  s_c7ece9b2dba552::t_25d07e84e3cfb9 4,6,8-12,22,34-39,60-80,83,95-102
+src/test/java/com/github/theholywaffle/teamspeak3/DevelopmentServerIT.java
+  s_c7ece9b2dba552::t_005315070dc81d 9,12,14,17-18,25-47,78,101-103
+src/test/java/com/github/theholywaffle/teamspeak3/ExampleProcess.java
+  s_c7ece9b2dba552::t_4c12174f5d54f4 1-81
+src/test/java/com/github/theholywaffle/teamspeak3/ExamplesIT.java
+  s_c7ece9b2dba552::t_e315271c270c01 1-107
+src/test/java/com/github/theholywaffle/teamspeak3/TeamSpeakContainer.java
+  s_c7ece9b2dba552::t_37094ca0383bd8 18,20,24,27,189-215
+src/test/java/com/github/theholywaffle/teamspeak3/example/ExampleSettingsTest.java
+  s_c7ece9b2dba552::t_54e258eae0034c 1-106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "07d9f14f7b24c9806877fc469ccdf16fc9e3a1e6",
+  "prompts": {},
+  "sessions": {
+    "s_c7ece9b2dba552": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_c7ece9b2dba552",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
