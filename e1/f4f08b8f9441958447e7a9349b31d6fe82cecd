@@ -1,0 +1,65 @@
+.mvn/jvm.config
+  s_f419699afc139e::t_42abfbb99cba73 1-10
+pom.xml
+  s_f419699afc139e::t_7a41129f18fcda 59-61,223-263,303-305,339-349
+src/main/java/com/github/theholywaffle/teamspeak3/CommandQueue.java
+  s_f419699afc139e::t_5f968111930320 128-129,214-215,362-363
+src/main/java/com/github/theholywaffle/teamspeak3/Connection.java
+  s_f419699afc139e::t_b60c2850545024 127
+src/main/java/com/github/theholywaffle/teamspeak3/Deadline.java
+  s_f419699afc139e::t_a092023b660295 23-24
+src/main/java/com/github/theholywaffle/teamspeak3/FileApiAsync.java
+  s_f419699afc139e::t_c35ceeb7450f68 226-227,260-261
+src/main/java/com/github/theholywaffle/teamspeak3/FileTransferHelper.java
+  s_f419699afc139e::t_53eb996b6281f7 162
+src/main/java/com/github/theholywaffle/teamspeak3/SSHChannel.java
+  s_f419699afc139e::t_2aca7aede9ac0f 53-54
+src/main/java/com/github/theholywaffle/teamspeak3/SshHostKeyPolicy.java
+  s_f419699afc139e::t_c0f785a048f559 18-19,67
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Query.java
+  s_f419699afc139e::t_328e9fb306092e 55,160-161,453,473-474
+src/main/java/com/github/theholywaffle/teamspeak3/api/CommandFutures.java
+  s_f419699afc139e::t_35367f6b126d0f 87-88,102-103,152-153,157
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3CommandFailedException.java
+  s_f419699afc139e::t_0d3d9a953cbea0 36-38,44,63,70,80
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/Client.java
+  s_f419699afc139e::t_3b6bb35494fed9 239
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/Wrapper.java
+  s_f419699afc139e::t_94df17746a097c 638-639
+src/main/java/com/github/theholywaffle/teamspeak3/commands/response/DefaultArrayResponse.java
+  s_f419699afc139e::t_da3dd98af88183 91
+src/test/java/com/github/theholywaffle/teamspeak3/ApiMigrationInventoryTest.java
+  s_f419699afc139e::t_85c4fc0ad861bd 49-50
+src/test/java/com/github/theholywaffle/teamspeak3/CallerStreams.java
+  s_f419699afc139e::t_5b5e7f02472aec 27
+src/test/java/com/github/theholywaffle/teamspeak3/CommandFuturesTest.java
+  s_f419699afc139e::t_d50abf1a4c38ff 423
+src/test/java/com/github/theholywaffle/teamspeak3/DevelopmentServerIT.java
+  s_f419699afc139e::t_6bf899b1e2f4cc 34-35,42
+src/test/java/com/github/theholywaffle/teamspeak3/DisconnectingProxy.java
+  s_f419699afc139e::t_fb5437663c2db1 49,72
+src/test/java/com/github/theholywaffle/teamspeak3/ErrorCategoriesTest.java
+  s_f419699afc139e::t_a93a167ef12747 15-19,43-60
+src/test/java/com/github/theholywaffle/teamspeak3/FileTransferHelperTest.java
+  s_f419699afc139e::t_70d79feff65151 388,423-427
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryProtocolTest.java
+  s_f419699afc139e::t_99ec27d7da9aa1 30
+src/test/java/com/github/theholywaffle/teamspeak3/TeamSpeakContainer.java
+  s_f419699afc139e::t_c5f270f1a6959d 182
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e1f4f08b8f9441958447e7a9349b31d6fe82cecd",
+  "prompts": {},
+  "sessions": {
+    "s_f419699afc139e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_f419699afc139e",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
