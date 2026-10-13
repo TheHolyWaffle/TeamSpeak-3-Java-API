@@ -1,0 +1,23 @@
+README.md
+  s_74407c935f5765::t_3f4a7e61581a54 12-14,187-189
+docs/quality-checks.md
+  s_74407c935f5765::t_92033bf5677bb3 1-210
+docs/releases.md
+  s_74407c935f5765::t_00a36d6c2eb41e 9-11,53-56,127-130
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0797bb24867d705450e96ce8b6d5a299b2b537b2",
+  "prompts": {},
+  "sessions": {
+    "s_74407c935f5765": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_74407c935f5765",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
