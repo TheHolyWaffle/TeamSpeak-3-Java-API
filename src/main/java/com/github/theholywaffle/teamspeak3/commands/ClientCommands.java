@@ -41,7 +41,7 @@ public final class ClientCommands {
 	}
 
 	public static Command clientEdit(int clientId, Map<ClientProperty, String> options) {
-		CommandBuilder builder = new CommandBuilder("clientedit", 2);
+		CommandBuilder builder = new CommandBuilder("clientedit");
 		builder.add(new KeyValueParam("clid", clientId));
 		builder.addProperties(options);
 		return builder.build();
@@ -52,7 +52,7 @@ public final class ClientCommands {
 			throw new IllegalArgumentException("Client name pattern must be a non-empty string");
 		}
 
-		return new CommandBuilder("clientfind", 1).add(new KeyValueParam("pattern", pattern)).build();
+		return new CommandBuilder("clientfind").add(new KeyValueParam("pattern", pattern)).build();
 	}
 
 	public static Command clientGetDBIdFromUId(String clientUId) {
@@ -60,7 +60,7 @@ public final class ClientCommands {
 			throw new IllegalArgumentException("Client UId must be a non-empty string");
 		}
 
-		return new CommandBuilder("clientgetdbidfromuid", 1).add(new KeyValueParam("cluid", clientUId)).build();
+		return new CommandBuilder("clientgetdbidfromuid").add(new KeyValueParam("cluid", clientUId)).build();
 	}
 
 	public static Command clientGetIds(String clientUId) {
@@ -68,11 +68,11 @@ public final class ClientCommands {
 			throw new IllegalArgumentException("Client UId must be a non-empty string");
 		}
 
-		return new CommandBuilder("clientgetids", 1).add(new KeyValueParam("cluid", clientUId)).build();
+		return new CommandBuilder("clientgetids").add(new KeyValueParam("cluid", clientUId)).build();
 	}
 
 	public static Command clientInfo(int clientId) {
-		return new CommandBuilder("clientinfo", 1).add(new KeyValueParam("clid", clientId)).build();
+		return new CommandBuilder("clientinfo").add(new KeyValueParam("clid", clientId)).build();
 	}
 
 	public static Command clientKick(ReasonIdentifier reason, String reasonMessage, int... clientIds) {
@@ -80,21 +80,16 @@ public final class ClientCommands {
 			throw new IllegalArgumentException("Client ID array cannot be null or empty");
 		}
 
-		CommandBuilder builder = new CommandBuilder("clientkick", 3);
+		CommandBuilder builder = new CommandBuilder("clientkick");
 		builder.add(new KeyValueParam("reasonid", reason.getIndex()));
 		builder.addIf(reasonMessage != null, new KeyValueParam("reasonmsg", reasonMessage));
 
-		ArrayParameter clients = new ArrayParameter(clientIds.length);
-		for (final int id : clientIds) {
-			clients.add(new KeyValueParam("clid", id));
-		}
-		builder.add(clients);
-
+		builder.add(ArrayParameter.of("clid", clientIds));
 		return builder.build();
 	}
 
 	public static Command clientList() {
-		CommandBuilder builder = new CommandBuilder("clientlist", 11);
+		CommandBuilder builder = new CommandBuilder("clientlist");
 		builder.add(new OptionParam("uid"));
 		builder.add(new OptionParam("away"));
 		builder.add(new OptionParam("voice"));
@@ -110,7 +105,7 @@ public final class ClientCommands {
 	}
 
 	public static Command clientMove(int clientId, int channelId, String channelPassword) {
-		CommandBuilder builder = new CommandBuilder("clientmove", 3);
+		CommandBuilder builder = new CommandBuilder("clientmove");
 		builder.add(new KeyValueParam("clid", clientId));
 		builder.add(new KeyValueParam("cid", channelId));
 		builder.addIf(channelPassword != null, new KeyValueParam("cpw", channelPassword));
@@ -122,38 +117,33 @@ public final class ClientCommands {
 			throw new IllegalArgumentException("Client ID array cannot be null or empty");
 		}
 
-		CommandBuilder builder = new CommandBuilder("clientmove", 3);
+		CommandBuilder builder = new CommandBuilder("clientmove");
 		builder.add(new KeyValueParam("cid", channelId));
 		builder.addIf(channelPassword != null, new KeyValueParam("cpw", channelPassword));
 
-		ArrayParameter clients = new ArrayParameter(clientIds.length);
-		for (final int clientId : clientIds) {
-			clients.add(new KeyValueParam("clid", clientId));
-		}
-		builder.add(clients);
-
+		builder.add(ArrayParameter.of("clid", clientIds));
 		return builder.build();
 	}
 
 	public static Command clientPoke(int clientId, String message) {
-		CommandBuilder builder = new CommandBuilder("clientpoke", 2);
+		CommandBuilder builder = new CommandBuilder("clientpoke");
 		builder.add(new KeyValueParam("clid", clientId));
 		builder.add(new KeyValueParam("msg", message));
 		return builder.build();
 	}
 
 	public static Command clientSetServerQueryLogin(String username) {
-		CommandBuilder builder = new CommandBuilder("clientsetserverquerylogin", 1);
+		CommandBuilder builder = new CommandBuilder("clientsetserverquerylogin");
 		builder.add(new KeyValueParam("client_login_name", username));
 		return builder.build();
 	}
 
 	public static Command clientUpdate(Map<ClientProperty, String> options) {
-		return new CommandBuilder("clientupdate", 1).addProperties(options).build();
+		return new CommandBuilder("clientupdate").addProperties(options).build();
 	}
 
 	public static Command sendTextMessage(int targetMode, int targetId, String message) {
-		CommandBuilder builder = new CommandBuilder("sendtextmessage", 3);
+		CommandBuilder builder = new CommandBuilder("sendtextmessage");
 		builder.add(new KeyValueParam("targetmode", targetMode));
 		builder.add(new KeyValueParam("target", targetId));
 		builder.add(new KeyValueParam("msg", message));

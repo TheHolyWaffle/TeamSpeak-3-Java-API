@@ -28,14 +28,15 @@ package com.github.theholywaffle.teamspeak3.commands.response;
 
 import com.github.theholywaffle.teamspeak3.commands.Command;
 
+import java.util.StringJoiner;
+
 public class ResponseBuilder {
 
 	private final Command command;
-	private final StringBuilder rawResponseBuilder;
+	private final StringJoiner rows = new StringJoiner("|");
 
 	public ResponseBuilder(Command command) {
 		this.command = command;
-		this.rawResponseBuilder = new StringBuilder();
 	}
 
 	public Command getCommand() {
@@ -43,15 +44,10 @@ public class ResponseBuilder {
 	}
 
 	public DefaultArrayResponse buildResponse() {
-		// Erase trailing '|'
-		if (rawResponseBuilder.length() > 0) {
-			rawResponseBuilder.setLength(rawResponseBuilder.length() - 1);
-		}
-
-		return DefaultArrayResponse.parse(rawResponseBuilder.toString());
+		return DefaultArrayResponse.parse(rows.toString());
 	}
 
 	public void appendResponse(String rawArrayResponse) {
-		rawResponseBuilder.append(rawArrayResponse).append('|');
+		rows.add(rawArrayResponse);
 	}
 }

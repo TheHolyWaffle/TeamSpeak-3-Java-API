@@ -26,16 +26,14 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
  * #L%
  */
 
-public class RawParam extends Parameter {
-
-	private final String raw;
-
-	public RawParam(String raw) {
-		this.raw = raw;
-	}
+/**
+ * Text sent unchanged.
+ * @param raw already encoded text
+ */
+public record RawParam(String raw) implements Parameter {
 
 	@Override
-	public void appendTo(StringBuilder str) {
-		str.append(raw);
+	public void appendTo(StringBuilder line) {
+		line.append(raw);
 	}
 }

@@ -39,7 +39,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
 
-class StreamReader extends Thread {
+class StreamReader implements Runnable {
 
 	private static final Logger log = LoggerFactory.getLogger(StreamReader.class);
 
@@ -53,8 +53,6 @@ class StreamReader extends Thread {
 	private boolean receivingResponses;
 
 	StreamReader(Connection connection, InputStream inStream, TS3Query query, QueryConfig config) throws IOException {
-		super("[TeamSpeak-3-Java-API] StreamReader");
-
 		ts3 = query;
 		con = connection;
 		in = new ProtocolLineReader(inStream);
@@ -63,7 +61,7 @@ class StreamReader extends Thread {
 
 	@Override
 	public void run() {
-		while (!isInterrupted()) {
+		while (!Thread.currentThread().isInterrupted()) {
 			String line;
 
 			try {
@@ -78,7 +76,7 @@ class StreamReader extends Thread {
 					continue;
 				}
 			} catch (IOException io) {
-				if (!isInterrupted()) {
+				if (!Thread.currentThread().isInterrupted()) {
 					log.error("Connection error occurred.", io);
 				}
 				break;
@@ -116,7 +114,7 @@ class StreamReader extends Thread {
 			// Ignore
 		}
 
-		if (!isInterrupted()) {
+		if (!Thread.currentThread().isInterrupted()) {
 			con.internalDisconnect();
 		}
 	}
@@ -163,7 +161,7 @@ class StreamReader extends Thread {
 		Command command = responseBuilder.getCommand();
 		if (command.getName().equals("quit")) {
 			// Response to a quit command received, we're done
-			interrupt();
+			Thread.currentThread().interrupt();
 		}
 
 		QueryError queryError = DefaultArrayResponse.parseError(error);

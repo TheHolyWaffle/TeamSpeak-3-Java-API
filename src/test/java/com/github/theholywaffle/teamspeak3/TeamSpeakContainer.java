@@ -154,7 +154,7 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer> impl
 	TS3Config config(TS3Query.Protocol protocol) {
 		return new TS3Config().setHost(getHost()).setQueryPort(getMappedPort(protocol == TS3Query.Protocol.RAW ? 10011 : 10022))
 				.setSshHostKeyPolicy(SshHostKeyPolicy.pinnedKey(hostKey))
-				.setFloodRate(TS3Query.FloodRate.UNLIMITED).setProtocol(protocol).setLoginCredentials("serveradmin", PASSWORD).setCommandTimeout(5000);
+				.setFloodRate(TS3Query.FloodRate.UNLIMITED).setProtocol(protocol).setLoginCredentials("serveradmin", PASSWORD).setCommandResponseTimeout(Duration.ofMillis(5000));
 	}
 
 	void record(String name, Version version) throws IOException {

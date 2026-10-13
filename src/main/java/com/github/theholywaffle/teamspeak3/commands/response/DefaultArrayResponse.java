@@ -31,7 +31,6 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,23 +49,17 @@ public class DefaultArrayResponse {
 	public static DefaultArrayResponse parse(String rawResponse) {
 		if (rawResponse == null || rawResponse.isEmpty()) return EMPTY;
 
-		String[] rawMaps = rawResponse.split("\\|", -1);
-		List<Wrapper> responses = new ArrayList<>(rawMaps.length);
-
-		// First response, just use the parsed map
-		Map<String, String> firstResponse = parseMap(rawMaps[0]);
-		responses.add(new Wrapper(firstResponse));
-
-		// Array response: use "default" values from the first response, then add the parsed map
-		for (int i = 1; i < rawMaps.length; ++i) {
-			final Map<String, String> responseMap = new LinkedHashMap<>(firstResponse);
-			final Map<String, String> ithResponse = parseMap(rawMaps[i]);
-			responseMap.putAll(ithResponse);
-
-			responses.add(new Wrapper(responseMap));
+		String[] rawRows = rawResponse.split("\\|", -1);
+		Map<String, String> shared = parseMap(rawRows[0]);
+		List<Wrapper> rows = new ArrayList<>(rawRows.length);
+		rows.add(new Wrapper(shared));
+		for (int i = 1; i < rawRows.length; i++) {
+			Map<String, String> row = new LinkedHashMap<>(shared);
+			row.putAll(parseMap(rawRows[i]));
+			rows.add(new Wrapper(row));
 		}
 
-		return new DefaultArrayResponse(responses, rawResponse);
+		return new DefaultArrayResponse(rows, rawResponse);
 	}
 
 	/**
@@ -94,29 +87,18 @@ public class DefaultArrayResponse {
 	}
 
 	private static Map<String, String> parseMap(String rawMap) {
-		if (rawMap == null || rawMap.isEmpty()) return Collections.emptyMap();
-
-		final String[] parameters = rawMap.split(" ");
-		final Map<String, String> map = new LinkedHashMap<>(parameters.length);
-
-		for (String param : parameters) {
+		if (rawMap.isEmpty()) return Map.of();
+		Map<String, String> map = new LinkedHashMap<>();
+		for (String param : rawMap.split(" ")) {
 			if (param.isEmpty()) continue;
-			final int pos = param.indexOf("=");
-
-			if (pos == -1) {
-				final String valuelessKey = CommandEncoding.decode(param);
-				map.put(valuelessKey, "");
-			} else {
-				final String key = CommandEncoding.decode(param.substring(0, pos));
-				final String value = CommandEncoding.decode(param.substring(pos + 1));
-				map.put(key, value);
-			}
+			int pos = param.indexOf('=');
+			if (pos == -1) map.put(CommandEncoding.decode(param), "");
+			else map.put(CommandEncoding.decode(param.substring(0, pos)), CommandEncoding.decode(param.substring(pos + 1)));
 		}
-
 		return map;
 	}
 
-	private static final DefaultArrayResponse EMPTY = new DefaultArrayResponse(Collections.emptyList(), "");
+	private static final DefaultArrayResponse EMPTY = new DefaultArrayResponse(List.of(), "");
 
 	private final List<Wrapper> responses;
 	private final String rawResponse;

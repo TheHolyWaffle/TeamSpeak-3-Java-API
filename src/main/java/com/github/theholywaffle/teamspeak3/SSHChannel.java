@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 
 class SSHChannel implements QueryTransport {
 
@@ -116,7 +117,7 @@ class SSHChannel implements QueryTransport {
 	}
 
 	@Override
-	public void awaitTermination(java.time.Duration timeout) {
+	public void awaitTermination(Duration timeout) {
 		Deadline deadline = new Deadline(timeout);
 		deadline.join(transportReader);
 		deadline.join(client.getConnection().getKeepAlive());

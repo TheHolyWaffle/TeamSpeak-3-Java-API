@@ -28,16 +28,14 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
 
 import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 
-public class OptionParam extends Parameter {
-
-	private final String option;
-
-	public OptionParam(String option) {
-		this.option = option;
-	}
+/**
+ * A {@code -option} flag.
+ * @param option unencoded option name
+ */
+public record OptionParam(String option) implements Parameter {
 
 	@Override
-	public void appendTo(StringBuilder str) {
-		str.append('-').append(CommandEncoding.encode(option));
+	public void appendTo(StringBuilder line) {
+		CommandEncoding.encode(option, line.append('-'));
 	}
 }

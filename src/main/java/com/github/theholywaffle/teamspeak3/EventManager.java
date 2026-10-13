@@ -33,9 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Objects;
@@ -50,21 +47,19 @@ import java.util.function.Function;
 class EventManager {
 
 	private static final Logger log = LoggerFactory.getLogger(EventManager.class);
-	private static final Map<String, Function<Wrapper, TS3Event>> eventByName = new HashMap<>(12);
-	static {
-		eventByName.put("notifytextmessage", TextMessageEvent::new);
-		eventByName.put("notifycliententerview", ClientJoinEvent::new);
-		eventByName.put("notifyclientleftview", ClientLeaveEvent::new);
-		eventByName.put("notifyserveredited", ServerEditedEvent::new);
-		eventByName.put("notifychanneledited", ChannelEditedEvent::new);
-		eventByName.put("notifychanneldescriptionchanged", ChannelDescriptionEditedEvent::new);
-		eventByName.put("notifyclientmoved", ClientMovedEvent::new);
-		eventByName.put("notifychannelcreated", ChannelCreateEvent::new);
-		eventByName.put("notifychanneldeleted", ChannelDeletedEvent::new);
-		eventByName.put("notifychannelmoved", ChannelMovedEvent::new);
-		eventByName.put("notifychannelpasswordchanged", ChannelPasswordChangedEvent::new);
-		eventByName.put("notifytokenused", PrivilegeKeyUsedEvent::new);
-	}
+	private static final Map<String, Function<Wrapper, TS3Event>> EVENT_BY_NAME = Map.ofEntries(
+		Map.entry("notifytextmessage", TextMessageEvent::new),
+		Map.entry("notifycliententerview", ClientJoinEvent::new),
+		Map.entry("notifyclientleftview", ClientLeaveEvent::new),
+		Map.entry("notifyserveredited", ServerEditedEvent::new),
+		Map.entry("notifychanneledited", ChannelEditedEvent::new),
+		Map.entry("notifychanneldescriptionchanged", ChannelDescriptionEditedEvent::new),
+		Map.entry("notifyclientmoved", ClientMovedEvent::new),
+		Map.entry("notifychannelcreated", ChannelCreateEvent::new),
+		Map.entry("notifychanneldeleted", ChannelDeletedEvent::new),
+		Map.entry("notifychannelmoved", ChannelMovedEvent::new),
+		Map.entry("notifychannelpasswordchanged", ChannelPasswordChangedEvent::new),
+		Map.entry("notifytokenused", PrivilegeKeyUsedEvent::new));
 
 	private final CopyOnWriteArrayList<ListenerTask> tasks = new CopyOnWriteArrayList<>();
 	private final TS3Query ts3;
@@ -82,29 +77,17 @@ class EventManager {
 		executor = new ThreadPoolExecutor(threads, threads, 0,
 			TimeUnit.MILLISECONDS,
 			new ArrayBlockingQueue<>(query.getConfig().getListenerCapacity()),
-			Thread.ofPlatform().name("[TeamSpeak-3-Java-API] Event-", 0).factory(),
+			Thread.ofPlatform().name("[TeamSpeak-3-Java-API] Event-", 0).daemon(true).factory(),
 			new ThreadPoolExecutor.AbortPolicy());
-	}
-
-	synchronized void addListeners(TS3Listener... listeners) {
-		checkCapacity(listeners.length);
-		for (TS3Listener listener : listeners) Objects.requireNonNull(listener, "listener");
-		for (TS3Listener listener : listeners) tasks.add(new ListenerTask(listener));
 	}
 
 	synchronized EventSubscription subscribe(TS3Listener listener) {
 		Objects.requireNonNull(listener, "listener");
-		checkCapacity(1);
+		if (closed) throw new IllegalStateException("Query event subscriptions are closed");
+		if (tasks.size() >= ts3.getConfig().getListenerCapacity()) throw new IllegalStateException("Listener capacity exceeded");
 		ListenerTask task = new ListenerTask(listener);
 		tasks.add(task);
 		return () -> remove(task);
-	}
-
-	private void checkCapacity(int added) {
-		if (closed) throw new IllegalStateException("Query event subscriptions are closed");
-		if (added > ts3.getConfig().getListenerCapacity() - tasks.size()) {
-			throw new IllegalStateException("Listener capacity exceeded");
-		}
 	}
 
 	private synchronized void remove(ListenerTask task) {
@@ -112,13 +95,8 @@ class EventManager {
 		tasks.remove(task);
 	}
 
-	synchronized void removeListeners(TS3Listener... listeners) {
-		List<TS3Listener> toRemove = Arrays.asList(listeners);
-		for (ListenerTask task : tasks) if (toRemove.contains(task.listener)) remove(task);
-	}
-
 	void fireEvent(String notifyName, String notifyBody) {
-		Function<Wrapper, TS3Event> constructor = eventByName.get(notifyName);
+		Function<Wrapper, TS3Event> constructor = EVENT_BY_NAME.get(notifyName);
 		if (constructor == null) {
 			unknown.incrementAndGet();
 			log.debug("Ignoring unsupported notification type: {}", notifyName);

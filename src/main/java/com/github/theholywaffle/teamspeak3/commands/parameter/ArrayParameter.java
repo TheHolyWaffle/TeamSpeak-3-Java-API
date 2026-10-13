@@ -26,46 +26,47 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
  * #L%
  */
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-public class ArrayParameter extends Parameter {
+/**
+ * Pipe-separated entries, each made of space-separated parameters.
+ * @param entries the entries; copied
+ */
+public record ArrayParameter(List<List<Parameter>> entries) implements Parameter {
 
-	private final int parametersPerEntry;
-	private final List<Parameter> parameters;
-
-	public ArrayParameter(int numberOfEntries) {
-		this(numberOfEntries, 1);
+	public ArrayParameter {
+		entries = entries.stream().map(List::copyOf).toList();
 	}
 
-	public ArrayParameter(int numberOfEntries, int parametersPerEntry) {
-		this.parametersPerEntry = parametersPerEntry;
-		this.parameters = new ArrayList<>(numberOfEntries * parametersPerEntry);
+	/**
+	 * Creates one {@code key=value} entry per value.
+	 * @param key unencoded key
+	 * @param values unencoded values
+	 * @return the array parameter
+	 */
+	public static ArrayParameter of(String key, List<String> values) {
+		return new ArrayParameter(values.stream().map(value -> List.<Parameter>of(new KeyValueParam(key, value))).toList());
 	}
 
-	public ArrayParameter add(Parameter p) {
-		parameters.add(p);
-		return this;
+	/**
+	 * Creates one {@code key=value} entry per value.
+	 * @param key unencoded key
+	 * @param values numeric values
+	 * @return the array parameter
+	 */
+	public static ArrayParameter of(String key, int[] values) {
+		return of(key, Arrays.stream(values).mapToObj(String::valueOf).toList());
 	}
 
 	@Override
-	public void appendTo(StringBuilder str) {
-		if (parameters.isEmpty()) return;
-
-		// First entry without |
-		parameters.get(0).appendTo(str);
-		for (int i = 1; i < parametersPerEntry; ++i) {
-			str.append(' ');
-			parameters.get(i).appendTo(str);
-		}
-
-		// Remaining entries separated with |
-		for (int offset = parametersPerEntry; offset < parameters.size(); offset += parametersPerEntry) {
-			str.append('|');
-			parameters.get(offset).appendTo(str);
-			for (int i = 1; i < parametersPerEntry; ++i) {
-				str.append(' ');
-				parameters.get(offset + i).appendTo(str);
+	public void appendTo(StringBuilder line) {
+		for (int i = 0; i < entries.size(); i++) {
+			if (i > 0) line.append('|');
+			List<Parameter> entry = entries.get(i);
+			for (int j = 0; j < entry.size(); j++) {
+				if (j > 0) line.append(' ');
+				entry.get(j).appendTo(line);
 			}
 		}
 	}

@@ -35,18 +35,18 @@ public final class CustomPropertyCommands {
 	}
 
 	public static Command customDelete(int clientDBId, String key) {
-		CommandBuilder builder = new CommandBuilder("customdelete", 2);
+		CommandBuilder builder = new CommandBuilder("customdelete");
 		builder.add(new KeyValueParam("cldbid", clientDBId));
 		builder.add(new KeyValueParam("ident", key));
 		return builder.build();
 	}
 
 	public static Command customInfo(int clientDBId) {
-		return new CommandBuilder("custominfo", 1).add(new KeyValueParam("cldbid", clientDBId)).build();
+		return new CommandBuilder("custominfo").add(new KeyValueParam("cldbid", clientDBId)).build();
 	}
 
 	public static Command customSet(int clientDBId, String key, String value) {
-		CommandBuilder builder = new CommandBuilder("customset", 3);
+		CommandBuilder builder = new CommandBuilder("customset");
 		builder.add(new KeyValueParam("cldbid", clientDBId));
 		builder.add(new KeyValueParam("ident", key));
 		builder.add(new KeyValueParam("value", value));
@@ -54,7 +54,7 @@ public final class CustomPropertyCommands {
 	}
 
 	public static Command customSearch(String key, String pattern) {
-		CommandBuilder builder = new CommandBuilder("customsearch", 2);
+		CommandBuilder builder = new CommandBuilder("customsearch");
 		builder.add(new KeyValueParam("ident", key));
 		builder.add(new KeyValueParam("pattern", pattern));
 		return builder.build();

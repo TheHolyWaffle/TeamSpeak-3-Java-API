@@ -111,7 +111,7 @@ class ModelCompatibilityIT {
 					api.channelGroups().assign(5, 1, databaseClient);
 					api.databaseClients().setCustomProperty(databaseClient, "models", target.name());
 					api.messages().sendOffline(api.databaseClients().info(databaseClient).getUniqueIdentifier(), "models", "offline " + target);
-					api.executeRawCommand(FileCommands.ftInitUpload(41, upload, 1, "", 8, true).toString());
+					api.executeRawCommand(FileCommands.ftInitUpload(41, upload, 1, "", 8, true, false).toString());
 
 					for (Object model : List.of(api.servers().info(), api.servers().connectionInfo(), api.instance().info(),
 						api.instance().hostInfo(), api.instance().version(), api.whoAmI(), api.clients().info(actorId),
@@ -206,10 +206,13 @@ class ModelCompatibilityIT {
 
 	/** Records presence and type, not values, so generated secrets stay out of the report. */
 	private static String describe(Object value) {
-		if (value instanceof Optional<?> optional) return optional.isPresent() ? "present " + optional.get().getClass().getSimpleName() : "empty";
-		if (value instanceof OptionalInt optional) return optional.isPresent() ? "present int" : "empty";
-		if (value instanceof OptionalLong optional) return optional.isPresent() ? "present long" : "empty";
-		if (value instanceof Enum<?> constant) return constant.getDeclaringClass().getSimpleName() + "." + constant.name();
-		return value == null ? "null" : value.getClass().getSimpleName();
+		return switch (value) {
+			case null -> "null";
+			case Optional<?> optional -> optional.map(present -> "present " + present.getClass().getSimpleName()).orElse("empty");
+			case OptionalInt optional -> optional.isPresent() ? "present int" : "empty";
+			case OptionalLong optional -> optional.isPresent() ? "present long" : "empty";
+			case Enum<?> constant -> constant.getDeclaringClass().getSimpleName() + "." + constant.name();
+			default -> value.getClass().getSimpleName();
+		};
 	}
 }

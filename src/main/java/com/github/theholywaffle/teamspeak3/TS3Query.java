@@ -33,8 +33,10 @@ import com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -143,12 +145,12 @@ public class TS3Query implements AutoCloseable {
 	 * 		configuration for this TS3Query
 	 */
 	public TS3Query(TS3Config config) {
-		this(java.util.Objects.requireNonNull(config, "config").build());
+		this(Objects.requireNonNull(config, "config").build());
 	}
 
 	/** @param config immutable validated connection settings */
 	public TS3Query(QueryConfig config) {
-		this.config = java.util.Objects.requireNonNull(config, "config");
+		this.config = Objects.requireNonNull(config, "config");
 		this.commandAdmission = new Semaphore(config.getCommandCapacity());
 		this.startupAdmission = new Semaphore(config.getCommandCapacity());
 		this.eventManager = new EventManager(this);
@@ -157,7 +159,9 @@ public class TS3Query implements AutoCloseable {
 		this.completions = Executors.newSingleThreadExecutor(
 			Thread.ofVirtual().name("[TeamSpeak-3-Java-API] Completions").factory());
 		this.deadlines = new ScheduledThreadPoolExecutor(1,
-			Thread.ofPlatform().name("[TeamSpeak-3-Java-API] Deadlines").factory());
+			// Non-daemon, and kept alive by the periodic deadline task below: an open query keeps the JVM
+			// alive until close() or exit(). ThreadModelTest pins this.
+			Thread.ofPlatform().name("[TeamSpeak-3-Java-API] Deadlines").daemon(false).factory());
 		this.deadlines.setRemoveOnCancelPolicy(true);
 		this.fileTransferHelper = new FileTransferHelper(config.getHost(), config.getFileTransferConfig(), deadlines);
 		this.connectionHandler = config.getReconnectStrategy().create(config.getConnectionHandler());
@@ -378,7 +382,7 @@ public class TS3Query implements AutoCloseable {
 		try { task.run(); } finally { userTask.remove(); }
 	}
 
-	java.util.concurrent.Executor callbackExecutor() {
+	Executor callbackExecutor() {
 		return task -> userThreadPool.execute(() -> runUserTask(task));
 	}
 

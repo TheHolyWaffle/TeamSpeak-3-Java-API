@@ -319,7 +319,7 @@ class CommandFuturesTest {
 		var fileDone = new CompletableFuture<Void>();
 		try (var files = new java.net.ServerSocket(0, 1, java.net.InetAddress.getLoopbackAddress());
 		     var peer = new FakeServerQuery(p -> {
-			p.expect(com.github.theholywaffle.teamspeak3.commands.FileCommands.ftInitDownload(0, "/test", 0, "").toString());
+			p.expect(com.github.theholywaffle.teamspeak3.commands.FileCommands.ftInitDownload(0, "/test", 0, "", 0).toString());
 			p.write("clientftfid=0 serverftfid=1 ftkey=k port=" + files.getLocalPort() + " size=1\nerror id=0 msg=ok\n");
 			p.expect("whoami"); p.write("client_id=2\nerror id=0 msg=ok\n"); p.finishQuit();
 		}); var query = new TS3Query(new TS3Config().setHost("127.0.0.1").setQueryPort(peer.port()).setCommandCapacity(1))) {

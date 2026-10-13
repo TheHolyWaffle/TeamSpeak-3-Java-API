@@ -36,7 +36,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-class StreamWriter extends Thread {
+class StreamWriter implements Runnable {
 
 	private static final Logger log = LoggerFactory.getLogger(StreamWriter.class);
 
@@ -46,8 +46,6 @@ class StreamWriter extends Thread {
 	private final boolean logComms;
 
 	StreamWriter(Connection connection, OutputStream outStream, QueryConfig config) {
-		super("[TeamSpeak-3-Java-API] StreamWriter");
-
 		con = connection;
 		out = new BufferedWriter(new OutputStreamWriter(outStream, StandardCharsets.UTF_8));
 		floodRate = config.getFloodRate().getMs();
@@ -57,7 +55,7 @@ class StreamWriter extends Thread {
 	@Override
 	public void run() {
 		try {
-			while (!isInterrupted()) {
+			while (!Thread.currentThread().isInterrupted()) {
 				if (floodRate > 0) Thread.sleep(floodRate);
 
 				Command command = con.getCommandQueue().transferCommand(con);
@@ -72,17 +70,17 @@ class StreamWriter extends Thread {
 				out.flush();
 			}
 		} catch (IOException e) {
-			if (!isInterrupted()) con.internalDisconnect();
+			if (!Thread.currentThread().isInterrupted()) con.internalDisconnect();
 		} catch (RuntimeException e) {
 			log.warn("Command encoding or write failed", e);
 			con.internalDisconnect();
 		} catch (InterruptedException e) {
-			interrupt(); // Regular shutdown
+			Thread.currentThread().interrupt(); // Regular shutdown
 		}
 
 		// The connection closes the transport before joining this thread.
 
-		if (!isInterrupted()) {
+		if (!Thread.currentThread().isInterrupted()) {
 			log.warn("StreamWriter has stopped!");
 			con.internalDisconnect();
 		}

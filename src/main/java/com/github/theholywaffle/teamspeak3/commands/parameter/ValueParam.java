@@ -28,16 +28,14 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
 
 import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 
-public class ValueParam extends Parameter {
-
-	private final String value;
-
-	public ValueParam(String value) {
-		this.value = value;
-	}
+/**
+ * A value without a key, such as the {@code login} credentials.
+ * @param value unencoded value
+ */
+public record ValueParam(String value) implements Parameter {
 
 	@Override
-	public void appendTo(StringBuilder str) {
-		str.append(CommandEncoding.encode(value));
+	public void appendTo(StringBuilder line) {
+		CommandEncoding.encode(value, line);
 	}
 }

@@ -41,7 +41,7 @@ public final class BanCommands {
 			throw new IllegalArgumentException("Either IP, name, UId or myTeamSpeak ID must be non-null");
 		}
 
-		CommandBuilder builder = new CommandBuilder("banadd", 6);
+		CommandBuilder builder = new CommandBuilder("banadd");
 		builder.addIf(ip != null, new KeyValueParam("ip", ip));
 		builder.addIf(name != null, new KeyValueParam("name", name));
 		builder.addIf(uid != null, new KeyValueParam("uid", uid));
@@ -52,22 +52,17 @@ public final class BanCommands {
 	}
 
 	public static Command banClient(int[] clientIds, long timeInSeconds, String reason, boolean continueOnError) {
-		CommandBuilder builder = new CommandBuilder("banclient", 4);
+		CommandBuilder builder = new CommandBuilder("banclient");
 		builder.addIf(timeInSeconds > 0, new KeyValueParam("time", timeInSeconds));
 		builder.addIf(reason != null, new KeyValueParam("banreason", reason));
 		builder.addIf(continueOnError, new OptionParam("continueonerror"));
 
-		ArrayParameter clients = new ArrayParameter(clientIds.length);
-		for (int clientId : clientIds) {
-			clients.add(new KeyValueParam("clid", clientId));
-		}
-		builder.add(clients);
-
+		builder.add(ArrayParameter.of("clid", clientIds));
 		return builder.build();
 	}
 
 	public static Command banDel(int banId) {
-		return new CommandBuilder("bandel", 1).add(new KeyValueParam("banid", banId)).build();
+		return new CommandBuilder("bandel").add(new KeyValueParam("banid", banId)).build();
 	}
 
 	public static Command banDelAll() {

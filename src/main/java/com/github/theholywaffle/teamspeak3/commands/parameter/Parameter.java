@@ -26,14 +26,22 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
  * #L%
  */
 
-public abstract class Parameter {
+/** One part of a ServerQuery command line. */
+public sealed interface Parameter permits ArrayParameter, KeyValueParam, OptionParam, RawParam, ValueParam {
 
-	public abstract void appendTo(StringBuilder str);
+	/**
+	 * Appends this parameter in ServerQuery syntax, with values escaped.
+	 * @param line the command line being built
+	 */
+	void appendTo(StringBuilder line);
 
-	@Override
-	public String toString() {
-		StringBuilder stringBuilder = new StringBuilder();
-		appendTo(stringBuilder);
-		return stringBuilder.toString();
+	/**
+	 * Encodes this parameter on its own.
+	 * @return this parameter in ServerQuery syntax, with values escaped
+	 */
+	default String encoded() {
+		var line = new StringBuilder();
+		appendTo(line);
+		return line.toString();
 	}
 }

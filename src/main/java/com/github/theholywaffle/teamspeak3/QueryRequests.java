@@ -8,11 +8,11 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -140,13 +140,7 @@ final class QueryRequests {
 	                                                  Function<? super V, ? extends K> keyMapper) {
 		return CommandFutures.link(CommandFutures.compose(keysFuture, keys -> CommandFutures.map(valuesFuture, values -> {
 			Map<K, V> valueMap = values.stream().collect(Collectors.toMap(keyMapper, Function.identity(), (l, r) -> l));
-			List<V> foundValues = new ArrayList<>(keys.size());
-			for (K key : keys) {
-				if (key == null) continue;
-				V value = valueMap.get(key);
-				if (value != null) foundValues.add(value);
-			}
-			return List.copyOf(foundValues);
+			return keys.stream().filter(Objects::nonNull).map(valueMap::get).filter(Objects::nonNull).toList();
 		})), keysFuture, valuesFuture);
 	}
 }

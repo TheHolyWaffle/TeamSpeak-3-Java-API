@@ -254,12 +254,11 @@ class ConnectionLifecycleTest {
 			var con = new Connection(query, query.getConfig(), queue);
 			var pending = queue.getAsyncApi().whoAmI();
 			var writes = new CountDownLatch(1);
-			var writer = new StreamWriter(con, new OutputStream() {
+			var writer = Thread.ofPlatform().start(new StreamWriter(con, new OutputStream() {
 				@Override public void write(int value) throws IOException {
 					writes.countDown(); throw new IOException("Injected write failure");
 				}
-			}, query.getConfig());
-			writer.start();
+			}, query.getConfig()));
 			assertTrue(writes.await(1, TimeUnit.SECONDS));
 			assertThrows(TS3QueryShutDownException.class, () -> FutureAssertions.read(pending, 1, TimeUnit.SECONDS));
 			writer.join(1000);
@@ -341,7 +340,7 @@ class ConnectionLifecycleTest {
 		assertThrows(IllegalArgumentException.class, () -> config.setHandshakeTimeout(Duration.ofMillis(-1)));
 		assertThrows(IllegalArgumentException.class, () -> config.setQueueWaitTimeout(null));
 		assertThrows(IllegalArgumentException.class, () -> config.setCloseTimeout(Duration.ofSeconds(Long.MAX_VALUE)));
-		config.setCommandTimeout(123);
+		config.setCommandResponseTimeout(Duration.ofMillis(123));
 		assertEquals(Duration.ofMillis(123), config.getCommandResponseTimeout());
 		assertEquals(Duration.ofMillis(300), config.getConnectTimeout());
 		try (var query = new TS3Query(config)) {

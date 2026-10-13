@@ -8,6 +8,8 @@ For the 2.0 domain APIs, error categories and a mapping of every 1.x operation, 
 [domain API migration guide](docs/api-migration.md). For asynchronous results, see the
 [CompletableFuture migration and execution contract](docs/futures.md). Response models
 are immutable and use typed values; see the [response model guide](docs/models-and-values.md).
+Removed overloads and internal command-builder changes are listed in the
+[implementation cleanup notes](docs/implementation-cleanup.md).
 
 ## Features
 
@@ -226,7 +228,7 @@ Only use `FloodRate.UNLIMITED` if you are sure that your query account is whitel
 |QueryPort | Query port of TeamSpeak 3 server. | ``setQueryPort(int)`` | 10011 | no |
 |FloodRate | Prevents possible spam to the server. | ``setFloodRate(FloodRate)`` | `FloodRate.DEFAULT` | no |
 |Communications logging | Log client-server communication. | ``setEnableCommunicationsLogging(boolean)`` | false | no |
-|Command timeout | Time until a command waiting for a response fails | ``setCommandTimeout(int)`` | 4000 (ms) | no |
+|Command response timeout | Time from writing a command until its response must finish | ``setCommandResponseTimeout(Duration)`` | 4 s | no |
 
 ## Questions or bugs?
 

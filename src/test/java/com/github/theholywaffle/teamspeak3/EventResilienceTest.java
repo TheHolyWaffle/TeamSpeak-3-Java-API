@@ -98,7 +98,12 @@ class EventResilienceTest {
 		var duplicateMoves = new CountDownLatch(3);
 		try (var peer = new FakeServerQuery(p -> {
 			p.expect("whoami");
-			p.write("notifyfutureevent extra=1\nnotifytextmessage\nnotifytextmessage msg=first\nnotifyclientmoved ctid=invalid\n");
+			p.write("""
+				notifyfutureevent extra=1
+				notifytextmessage
+				notifytextmessage msg=first
+				notifyclientmoved ctid=invalid
+				""");
 			for (int i = 0; i < 3; i++) p.write("notifyclientmoved clid=2 ctid=3 reasonid=1\n");
 			p.write("client_id=1\nerror id=0 msg=ok\n");
 			p.expect("whoami"); p.write("client_id=2\nerror id=0 msg=ok\n");

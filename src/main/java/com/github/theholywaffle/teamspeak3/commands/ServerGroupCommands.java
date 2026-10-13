@@ -41,7 +41,7 @@ public final class ServerGroupCommands {
 			throw new IllegalArgumentException("Server group name must be a non-empty string");
 		}
 
-		CommandBuilder builder = new CommandBuilder("servergroupadd", 2);
+		CommandBuilder builder = new CommandBuilder("servergroupadd");
 		builder.add(new KeyValueParam("name", groupName));
 		if (type != null) {
 			builder.add(new KeyValueParam("type", KnownCodes.require(type.getIndex())));
@@ -50,14 +50,14 @@ public final class ServerGroupCommands {
 	}
 
 	public static Command serverGroupAddClient(int groupId, int clientDBId) {
-		CommandBuilder builder = new CommandBuilder("servergroupaddclient", 2);
+		CommandBuilder builder = new CommandBuilder("servergroupaddclient");
 		builder.add(new KeyValueParam("sgid", groupId));
 		builder.add(new KeyValueParam("cldbid", clientDBId));
 		return builder.build();
 	}
 
 	public static Command serverGroupClientList(int groupId) {
-		CommandBuilder builder = new CommandBuilder("servergroupclientlist", 2);
+		CommandBuilder builder = new CommandBuilder("servergroupclientlist");
 		builder.add(new KeyValueParam("sgid", groupId));
 		builder.add(new OptionParam("names"));
 		return builder.build();
@@ -79,7 +79,7 @@ public final class ServerGroupCommands {
 			throw new IllegalArgumentException("Server group name must be a non-empty string");
 		}
 
-		CommandBuilder builder = new CommandBuilder("servergroupcopy", 4);
+		CommandBuilder builder = new CommandBuilder("servergroupcopy");
 		builder.add(new KeyValueParam("ssgid", sourceGroupId));
 		builder.add(new KeyValueParam("tsgid", targetGroupId));
 		builder.add(new KeyValueParam("name", groupName));
@@ -88,14 +88,14 @@ public final class ServerGroupCommands {
 	}
 
 	public static Command serverGroupDel(int id, boolean force) {
-		CommandBuilder builder = new CommandBuilder("servergroupdel", 2);
+		CommandBuilder builder = new CommandBuilder("servergroupdel");
 		builder.add(new KeyValueParam("sgid", id));
 		builder.add(new KeyValueParam("force", force));
 		return builder.build();
 	}
 
 	public static Command serverGroupDelClient(int groupId, int clientDBId) {
-		CommandBuilder builder = new CommandBuilder("servergroupdelclient", 2);
+		CommandBuilder builder = new CommandBuilder("servergroupdelclient");
 		builder.add(new KeyValueParam("sgid", groupId));
 		builder.add(new KeyValueParam("cldbid", clientDBId));
 		return builder.build();
@@ -110,13 +110,13 @@ public final class ServerGroupCommands {
 			throw new IllegalArgumentException("Server group name must be a non-empty string");
 		}
 
-		CommandBuilder builder = new CommandBuilder("servergrouprename", 2);
+		CommandBuilder builder = new CommandBuilder("servergrouprename");
 		builder.add(new KeyValueParam("sgid", id));
 		builder.add(new KeyValueParam("name", groupName));
 		return builder.build();
 	}
 
 	public static Command serverGroupsByClientId(int clientDBId) {
-		return new CommandBuilder("servergroupsbyclientid", 1).add(new KeyValueParam("cldbid", clientDBId)).build();
+		return new CommandBuilder("servergroupsbyclientid").add(new KeyValueParam("cldbid", clientDBId)).build();
 	}
 }

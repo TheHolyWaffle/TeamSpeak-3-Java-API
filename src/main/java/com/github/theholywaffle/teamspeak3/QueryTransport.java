@@ -30,6 +30,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.Duration;
 
 /** A fresh ordered UTF-8 ServerQuery byte stream for one connection.
  * Implementations own only transport I/O: framing, commands and events are shared by TS3Query.
@@ -47,7 +48,7 @@ public interface QueryTransport extends Closeable {
 	void connect(Connected connection) throws IOException;
 
 	/** @param timeout remaining shutdown budget for owned workers */
-	default void awaitTermination(java.time.Duration timeout) { }
+	default void awaitTermination(Duration timeout) { }
 
 	/** @return whether every owned worker has stopped */
 	default boolean isTerminated() { return true; }

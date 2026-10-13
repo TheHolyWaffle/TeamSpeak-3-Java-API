@@ -208,12 +208,8 @@ public final class TS3Config {
 	}
 
 	int getQueryPort() {
-		if (queryPort > 0) {
-			return queryPort;
-		} else {
-			// Query port not set by user, use default for chosen protocol
-			return protocol == Protocol.SSH ? 10022 : 10011;
-		}
+		if (queryPort > 0) return queryPort;
+		return protocol == Protocol.SSH ? 10022 : 10011;
 	}
 
 	/**
@@ -322,17 +318,6 @@ public final class TS3Config {
 		return enableCommunicationsLogging;
 	}
 
-	/**
-	 * Sets the command response deadline in milliseconds. Unrelated traffic does not extend it.
-	 * @param commandTimeout positive timeout in milliseconds
-	 * @return this configuration
-	 * @deprecated use {@link #setCommandResponseTimeout(Duration)}; other phases have separate deadlines
-	 */
-	@Deprecated
-	public TS3Config setCommandTimeout(int commandTimeout) {
-		return setCommandResponseTimeout(Duration.ofMillis(commandTimeout));
-	}
-
 	static Duration timeout(Duration value) {
 		if (value == null || value.isZero() || value.isNegative()) {
 			throw new IllegalArgumentException("Deadline must be positive");
@@ -412,7 +397,7 @@ public final class TS3Config {
 
 
 	static int socketTimeout(Duration value) {
-		return (int) Math.min(Integer.MAX_VALUE, Math.max(1L, value.toMillis()));
+		return Math.clamp(value.toMillis(), 1, Integer.MAX_VALUE);
 	}
 
 	/**
