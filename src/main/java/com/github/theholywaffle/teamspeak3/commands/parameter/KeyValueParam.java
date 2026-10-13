@@ -28,7 +28,11 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
 
 import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 
-/** A {@code key=value} pair; a {@code null} value is sent as an empty value. */
+/**
+ * A {@code key=value} pair.
+ * @param key unencoded key
+ * @param value unencoded value; {@code null} is sent as an empty value
+ */
 public record KeyValueParam(String key, String value) implements Parameter {
 
 	public KeyValueParam {

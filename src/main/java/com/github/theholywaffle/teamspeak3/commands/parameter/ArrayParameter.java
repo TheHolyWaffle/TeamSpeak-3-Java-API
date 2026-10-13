@@ -30,19 +30,32 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/** Pipe-separated entries, each made of space-separated parameters. */
+/**
+ * Pipe-separated entries, each made of space-separated parameters.
+ * @param entries the entries; copied
+ */
 public record ArrayParameter(List<List<Parameter>> entries) implements Parameter {
 
 	public ArrayParameter {
 		entries = entries.stream().map(List::copyOf).toList();
 	}
 
-	/** @return one {@code key=value} entry per value */
+	/**
+	 * Creates one {@code key=value} entry per value.
+	 * @param key unencoded key
+	 * @param values unencoded values
+	 * @return the array parameter
+	 */
 	public static ArrayParameter of(String key, List<String> values) {
 		return new ArrayParameter(values.stream().map(value -> List.<Parameter>of(new KeyValueParam(key, value))).toList());
 	}
 
-	/** @return one {@code key=value} entry per value */
+	/**
+	 * Creates one {@code key=value} entry per value.
+	 * @param key unencoded key
+	 * @param values numeric values
+	 * @return the array parameter
+	 */
 	public static ArrayParameter of(String key, int[] values) {
 		return of(key, Arrays.stream(values).mapToObj(String::valueOf).toList());
 	}

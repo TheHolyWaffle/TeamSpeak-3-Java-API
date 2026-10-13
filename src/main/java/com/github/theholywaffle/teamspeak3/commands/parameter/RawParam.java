@@ -26,7 +26,10 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
  * #L%
  */
 
-/** Already encoded text, sent unchanged. */
+/**
+ * Text sent unchanged.
+ * @param raw already encoded text
+ */
 public record RawParam(String raw) implements Parameter {
 
 	@Override

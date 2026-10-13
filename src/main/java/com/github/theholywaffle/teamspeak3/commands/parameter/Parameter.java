@@ -29,6 +29,9 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
 /** One part of a ServerQuery command line. */
 public sealed interface Parameter permits ArrayParameter, KeyValueParam, OptionParam, RawParam, ValueParam {
 
-	/** @return this parameter in ServerQuery syntax, with values escaped */
+	/**
+	 * Encodes this parameter.
+	 * @return this parameter in ServerQuery syntax, with values escaped
+	 */
 	String encoded();
 }
