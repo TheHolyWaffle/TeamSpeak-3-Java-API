@@ -33,10 +33,9 @@ its branch query back to `master` when the final integration PR lands.
 
 ## Record intent
 
-Use Conventional Commit PR titles and **Squash and merge**. The repository's
-squash-merge setting uses the PR title as the commit subject and the PR description as
-its body, so release-please sees the reviewed type, breaking-change notes, and issue
-references in the resulting commit. Merge commits and rebase merges are disabled.
+Use Conventional Commit PR titles and **Squash and merge**; the squash commit is the PR
+title and description (see [contributing](../CONTRIBUTING.md#pull-request-titles-and-releases)),
+so release-please sees the reviewed type, breaking-change notes, and issue references.
 Individual development commits can be freely amended; the resulting integration
 commit must preserve release intent. The **Release intent** job validates PR titles,
 including generated release PRs, and reruns when a title changes.
@@ -45,8 +44,8 @@ including generated release PRs, and reruns when a title changes.
 | --- | --- | --- |
 | `feat!: ...`, `fix!: ...`, or another type with `!` | major | Breaking change; describe migration in the PR body |
 | `feat: ...` | minor | Backward-compatible feature |
-| `fix: ...`, `perf: ...`, `deps: ...` | patch | Backward-compatible fix, performance or runtime dependency update |
-| `ci: ...`, `test: ...`, `chore: ...`, etc. | none | Internal work; no user-facing release on its own |
+| `fix: ...`, `perf: ...`, `deps: ...`, `revert: ...` | patch | Backward-compatible fix, performance change, runtime dependency update or revert |
+| `docs:`, `test:`, `ci:`, `build:`, `refactor:`, `style:`, `chore: ...` | none | Internal work; not released on its own and hidden from release notes |
 
 A `BREAKING CHANGE:` footer also records a major impact. Reference the issue in the
 PR body and retain the generated PR number when squashing. Release-please derives
@@ -155,11 +154,8 @@ wrapper still pins the exact version), and the TS3 image is pinned in
 `src/test/resources/teamspeak3/Dockerfile`. See [dependency and image maintenance](maintenance.md).
 
 Task #450 changes no library API, behavior or dependency. Questions move from Gitter to
-[GitHub Discussions](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/discussions), bugs
-and feature requests use issue forms, and vulnerabilities are reported privately as described
-in the [security policy](../SECURITY.md). 1.x reaches end of life when 2.0.0 is published: it
-receives no further releases, including security fixes. Contributors follow
-[CONTRIBUTING.md](../CONTRIBUTING.md).
+GitHub Discussions; see [getting help](../SUPPORT.md) and the
+[supported versions](../SECURITY.md#supported-versions), which end 1.x support at 2.0.0.
 
 ## Central Portal publication (#433)
 

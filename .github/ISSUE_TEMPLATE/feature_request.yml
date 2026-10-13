@@ -35,8 +35,6 @@ body:
         - Backward-compatible addition
         - Changes existing behavior or API (breaking)
         - Not sure
-    validations:
-      required: true
   - type: checkboxes
     id: contribution
     attributes:

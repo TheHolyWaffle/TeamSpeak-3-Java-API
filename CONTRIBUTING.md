@@ -1,9 +1,8 @@
 # Contributing
 
-Thanks for helping. Questions go to [Discussions](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/discussions),
-bugs and feature requests to the [issue forms](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/issues/new/choose),
-and vulnerabilities to a [private report](SECURITY.md). For anything larger than a small fix, open
-or comment on an issue first so the approach can be agreed before you write code.
+Thanks for helping. [Getting help](SUPPORT.md) lists where questions, bugs and vulnerabilities go.
+For anything larger than a small fix, open or comment on an issue first so the approach can be
+agreed before you write code.
 
 ## Build and test
 
@@ -54,17 +53,12 @@ description you get approved are therefore the release record:
 - Reference issues in the description with `Closes #123` or `Refs #123`; they stay in the commit.
 - Individual commits on your branch need no prefix and can be amended or squashed freely.
 
-| Title | SemVer impact | Use for |
-| --- | --- | --- |
-| `feat!: …`, `fix!: …`, any `type!: …`, or a `BREAKING CHANGE:` footer | major | Removed or changed API, changed behavior or defaults, dropped runtime support |
-| `feat: …` | minor | Backward-compatible feature or API addition |
-| `fix: …`, `perf: …`, `deps: …`, `revert: …` | patch | Backward-compatible fix, performance change, runtime dependency update |
-| `docs:`, `test:`, `ci:`, `build:`, `refactor:`, `style:`, `chore: …` | none | Internal work. It is not released on its own and does not appear in the release notes |
-
-A breaking change needs migration notes in the description: what users must change, and how.
-The [PR template](.github/pull_request_template.md) asks for the intended compatibility impact
-and the notes. `deps:` is only for changes to the resolved runtime dependencies; build-only
-updates use `build:`. The full rules are in [record intent](docs/releases.md#record-intent).
+Each type's SemVer impact is listed in [record intent](docs/releases.md#record-intent): `type!:`
+or a `BREAKING CHANGE:` footer is major, `feat:` minor, `fix:`/`perf:`/`deps:`/`revert:` patch,
+and internal types such as `docs:`, `test:`, `ci:` and `build:` release nothing on their own.
+Breaking changes include changed behavior, defaults and runtime support, and need migration notes
+in the description: what users must change, and how. `deps:` is only for changes to the resolved
+runtime dependencies; build-only updates use `build:`.
 
 ### API compatibility reports
 
@@ -106,8 +100,7 @@ A PR is ready for review when:
 - New behavior has tests, ideally against a live server in the integration suite when it depends
   on TS3 behavior. Fixes include a test that failed before.
 - The README, `docs/`, examples and Javadoc match the change.
-- The description states the compatibility impact, migration notes where needed, and how you
-  validated the change.
+- The description follows the [PR template](.github/pull_request_template.md).
 
 Maintainers review every PR, and all review threads must be resolved before merging. Breaking
 changes are acceptable for the next major version, recorded with migration notes rather than

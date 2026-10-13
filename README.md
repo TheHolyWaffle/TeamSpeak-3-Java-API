@@ -392,12 +392,6 @@ See [development server](docs/development-server.md).
 
 ## Getting help and contributing
 
-- **Questions:** ask in [Discussions Q&A](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/discussions/categories/q-a).
-  See [getting help](SUPPORT.md).
-- **Bugs and feature requests:** use the [issue forms](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/issues/new/choose).
-  For a bug, include the versions and a redacted [communications log](#logging).
-- **Vulnerabilities:** report them privately as described in the [security policy](SECURITY.md),
-  which also lists the [supported versions](SECURITY.md#supported-versions).
-- **Contributing:** the [contributing guide](CONTRIBUTING.md) covers building, branches, Conventional
-  Commit PR titles, release-please, API compatibility reports and review. Releases are described in
-  [CI and releases](docs/releases.md).
+See [getting help](SUPPORT.md) for questions, bug reports and private vulnerability reports, the
+[security policy](SECURITY.md) for supported versions, and the [contributing guide](CONTRIBUTING.md)
+for building, PR titles, releases and review.

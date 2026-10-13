@@ -3,7 +3,6 @@ package com.github.theholywaffle.teamspeak3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import com.github.theholywaffle.teamspeak3.TS3Query.FloodRate;
 import com.github.theholywaffle.teamspeak3.TS3Query.Protocol;
@@ -22,11 +21,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import org.junit.jupiter.api.Test;
 
 /** Keeps the README configuration reference, the support policy and the Markdown links in step with the code. */
 class DocumentationTest {
     private static final Path README = Path.of("README.md");
+    private static final Set<String> GENERATED = Set.of("target", ".git", "build", ".gradle");
     private static final Pattern LINK = Pattern.compile("\\]\\(([^)\\s]+)\\)");
 
     @Test
@@ -109,24 +110,26 @@ class DocumentationTest {
         Matcher version = Pattern.compile("<artifactId>teamspeak3-api</artifactId>\\s*<version>(\\d+)\\.")
                 .matcher(Files.readString(Path.of("pom.xml")));
         assertTrue(version.find());
-        // The publication rehearsal builds a synthetic 0.0.0 release.
-        assumeFalse(version.group(1).equals("0"));
-        String policy = Files.readString(Path.of("SECURITY.md"));
+        int newestDocumented = Pattern.compile("^\\| (\\d+)\\.x ", Pattern.MULTILINE)
+                .matcher(Files.readString(Path.of("SECURITY.md")))
+                .results()
+                .mapToInt(row -> Integer.parseInt(row.group(1)))
+                .max()
+                .orElse(-1);
         assertTrue(
-                policy.contains("\n| " + version.group(1) + ".x "),
+                Integer.parseInt(version.group(1)) <= newestDocumented,
                 "Add the " + version.group(1) + ".x line to the supported versions in SECURITY.md");
     }
 
     @Test
     void relativeLinksAndAnchorsResolve() throws IOException {
-        List<Path> pages = new ArrayList<>(List.of(
-                README,
-                Path.of("CONTRIBUTING.md"),
-                Path.of("SECURITY.md"),
-                Path.of("SUPPORT.md"),
-                Path.of(".github", "pull_request_template.md")));
-        try (Stream<Path> docs = Files.list(Path.of("docs"))) {
-            docs.filter(file -> file.toString().endsWith(".md")).forEach(pages::add);
+        List<Path> pages;
+        try (Stream<Path> files = Files.walk(Path.of("."))) {
+            pages = files.filter(file -> file.toString().endsWith(".md"))
+                    .filter(file -> StreamSupport.stream(file.spliterator(), false)
+                            .noneMatch(part -> GENERATED.contains(part.toString())))
+                    .map(Path::normalize)
+                    .toList();
         }
         List<String> broken = new ArrayList<>();
         for (Path page : pages) {

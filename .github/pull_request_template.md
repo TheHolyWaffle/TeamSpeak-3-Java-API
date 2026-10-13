@@ -1,7 +1,4 @@
-<!--
-Title: a Conventional Commit, for example `fix: decode escaped pipes in client lists`.
-It becomes the squash commit and decides the release; see CONTRIBUTING.md#pull-request-titles-and-releases.
--->
+<!-- Title: a Conventional Commit; it becomes the squash commit (see CONTRIBUTING.md). -->
 
 ## Summary
 
@@ -9,17 +6,9 @@ It becomes the squash commit and decides the release; see CONTRIBUTING.md#pull-r
 
 ## Compatibility impact
 
-<!-- Keep one. Must match the title: `!` or a BREAKING CHANGE: footer for a break. -->
-- None (internal: build, CI, tests, docs)
-- Backward-compatible fix or feature
-- Breaking change to the API, behavior, defaults, runtime support or dependencies
-
-## Migration notes
-
-<!-- Required for a breaking change or changed behavior/defaults: what users must change. Otherwise "None". -->
+<!-- None (internal), backward-compatible, or breaking (title needs `!`). For a breaking or
+behavior/default change, add migration notes: what users must change. -->
 
 ## Validation
 
-<!-- Commands you ran and their result, for example `./mvnw -B -ntp verify` and `-Pintegration verify`. -->
-
-- [ ] Tests cover the change, and docs, examples and Javadoc are updated where behavior changed
+<!-- Commands you ran and their result, for example `./mvnw -B -ntp verify`. -->
