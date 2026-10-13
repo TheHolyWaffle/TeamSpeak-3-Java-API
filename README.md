@@ -360,7 +360,7 @@ and set `JAVA_HOME` to it. On macOS: `export JAVA_HOME=$(/usr/libexec/java_home 
 ```
 
 The Maven Wrapper downloads and verifies the pinned Maven version, so no Maven installation is needed;
-the first build needs internet access. Maven Enforcer rejects older JDKs and other Maven versions.
+the first build needs internet access. Maven Enforcer rejects JDKs older than 25 and Maven older than 3.10.
 `verify` compiles the library and the examples, runs the unit tests, and applies the formatting,
 static analysis, Javadoc, coverage and API compatibility checks described in
 [quality checks](docs/quality-checks.md). It needs no Docker and publishes nothing. Run

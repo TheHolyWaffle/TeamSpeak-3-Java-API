@@ -20,9 +20,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import net.schmizz.sshj.DefaultConfig;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.common.KeyType;
@@ -46,13 +43,10 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer>
         implements BeforeAllCallback, AfterAllCallback {
     static final String PASSWORD = "integration-test-only";
     private static final String ALLOWLIST_LOADED = "updated query_ip_allowlist ips: 0.0.0.0/0";
-    private static final Pattern PINNED_IMAGE =
-            Pattern.compile("FROM (teamspeak:(\\d+\\.\\d+\\.\\d+)@sha256:[0-9a-f]{64})");
-    private static final Matcher PIN = pinnedImage();
     /** Tag and digest from {@code teamspeak3/Dockerfile}, the one place the image is pinned. */
-    static final String TS3_IMAGE = PIN.group(1);
+    static final String TS3_IMAGE = pinnedImage();
     /** The server version the pinned image reports: its tag. */
-    static final String TS3_VERSION = PIN.group(2);
+    static final String TS3_VERSION = TS3_IMAGE.substring("teamspeak:".length(), TS3_IMAGE.indexOf('@'));
 
     PublicKey hostKey;
     String sshBanner;
@@ -103,18 +97,18 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer>
                 }.withStartupTimeout(Duration.ofSeconds(90)));
     }
 
-    private static Matcher pinnedImage() {
+    private static String pinnedImage() {
         try (var in = TeamSpeakContainer.class.getResourceAsStream("/teamspeak3/Dockerfile")) {
             if (in == null) throw new IllegalStateException("teamspeak3/Dockerfile is not on the test classpath");
-            String from = new String(in.readAllBytes(), StandardCharsets.UTF_8)
+            List<String> from = new String(in.readAllBytes(), StandardCharsets.UTF_8)
                     .lines()
                     .filter(line -> line.startsWith("FROM "))
-                    .collect(Collectors.joining("\n"));
-            Matcher matcher = PINNED_IMAGE.matcher(from);
-            if (!matcher.matches())
+                    .map(line -> line.substring("FROM ".length()))
+                    .toList();
+            if (from.size() != 1 || !from.getFirst().matches("teamspeak:3\\.\\d+\\.\\d+@sha256:[0-9a-f]{64}"))
                 throw new IllegalStateException(
-                        "Expected one FROM teamspeak:<x.y.z>@sha256:<digest> line, got: " + from);
-            return matcher;
+                        "Expected one FROM teamspeak:<3.x.y>@sha256:<digest> line, got: " + from);
+            return from.getFirst();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

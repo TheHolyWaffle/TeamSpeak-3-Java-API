@@ -91,15 +91,15 @@ class DocumentationTest {
     /** An image update changes the verified support claim, so it fails until the README is reviewed. */
     @Test
     void supportTableNamesThePinnedServerVersion() throws IOException {
-        String readme = Files.readString(README);
-        for (String transport : List.of("Raw TCP (port 10011)", "SSH (port 10022)")) {
-            String row = "| TeamSpeak 3 server " + TeamSpeakContainer.TS3_VERSION
-                    + " (official Docker image, Linux amd64) | " + transport
-                    + " | Verified by the integration suite in CI |";
-            assertTrue(
-                    readme.contains(row),
-                    "Update the README support table for src/test/resources/teamspeak3/Dockerfile: " + row);
-        }
+        Set<String> documented = Pattern.compile("^\\| TeamSpeak 3 server (\\d+\\.\\d+\\.\\d+) ", Pattern.MULTILINE)
+                .matcher(Files.readString(README))
+                .results()
+                .map(match -> match.group(1))
+                .collect(Collectors.toSet());
+        assertEquals(
+                Set.of(TeamSpeakContainer.TS3_VERSION),
+                documented,
+                "Update the README support table for src/test/resources/teamspeak3/Dockerfile");
     }
 
     @Test

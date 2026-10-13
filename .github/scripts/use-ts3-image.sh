@@ -9,6 +9,6 @@ version=${BASH_REMATCH[1]}
 dockerfile=src/test/resources/teamspeak3/Dockerfile
 old=$(sed -n 's/^FROM teamspeak:\([^@]*\)@.*/\1/p' "$dockerfile")
 sed -i.bak "s|^FROM .*|FROM $image|" "$dockerfile"
-sed -i.bak "s/| TeamSpeak 3 server ${old//./\\.} (official/| TeamSpeak 3 server $version (official/" README.md
+sed -i.bak "s/| TeamSpeak 3 server ${old//./\\.} /| TeamSpeak 3 server $version /" README.md
 rm "$dockerfile.bak" README.md.bak
 echo "Using $image instead of TS3 $old"

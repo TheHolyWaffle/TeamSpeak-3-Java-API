@@ -1,7 +1,4 @@
 # Version updates for everything the build pins. See docs/maintenance.md.
-# Titles are Conventional Commits checked by the same Release intent job as contributor PRs:
-# deps: runtime library (patch release), build: plugins and test libraries, ci: Actions,
-# test: the TS3 image and the Gradle consumer fixture.
 version: 2
 updates:
   - package-ecosystem: maven
@@ -9,10 +6,7 @@ updates:
       - /
       - /src/test/consumers/maven
     schedule:
-      interval: weekly
-      day: monday
-      time: '04:00'
-      timezone: Etc/UTC
+      interval: weekly # Mondays
     cooldown:
       default-days: 7
     commit-message:
@@ -22,9 +16,7 @@ updates:
       # The API baseline and the consumers' staged library change only with a release.
       - dependency-name: com.github.theholywaffle:teamspeak3-api
     groups:
-      # Dependabot titles these deps: (it treats the Maven distribution, annotation processors and
-      # plugin dependencies as production); the Release intent gate rejects that because the runtime
-      # dependencies are unchanged, so retitle the PR build: before merging.
+      # Titled deps: by Dependabot; retitle build: (docs/maintenance.md#release-intent).
       build-toolchain:
         patterns:
           - org.apache.maven:apache-maven
@@ -54,10 +46,7 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
-      day: monday
-      time: '04:00'
-      timezone: Etc/UTC
+      interval: weekly # Mondays
     cooldown:
       default-days: 7
     commit-message:
@@ -74,10 +63,7 @@ updates:
   - package-ecosystem: docker
     directory: /src/test/resources/teamspeak3
     schedule:
-      interval: weekly
-      day: monday
-      time: '04:00'
-      timezone: Etc/UTC
+      interval: weekly # Mondays
     commit-message:
       prefix: test
     ignore:
@@ -88,10 +74,7 @@ updates:
   - package-ecosystem: gradle
     directory: /src/test/consumers/gradle
     schedule:
-      interval: weekly
-      day: monday
-      time: '04:00'
-      timezone: Etc/UTC
+      interval: weekly # Mondays
     cooldown:
       default-days: 7
     commit-message:

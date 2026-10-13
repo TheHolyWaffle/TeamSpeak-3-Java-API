@@ -9,12 +9,16 @@ maintainer like any contributor PR. Nothing merges automatically.
 
 ## What is updated
 
-| Ecosystem | Files | Groups (one PR each) | PR title |
-| --- | --- | --- | --- |
-| Maven | `pom.xml`, `src/test/consumers/maven/pom.xml`, `.mvn/wrapper/maven-wrapper.properties` | `build-toolchain` (Maven distribution, Error Prone, Palantir Java Format), `release-tooling` (JReleaser, japicmp), `slf4j`, `test-libraries` and `build-plugins` (minor/patch) | `deps:` for the runtime library, `build:` otherwise |
-| GitHub Actions | `.github/workflows/*.yml` (SHA pins with version comments) | `actions` (minor/patch); release-please on its own | `ci:` |
-| Docker | [`src/test/resources/teamspeak3/Dockerfile`](../src/test/resources/teamspeak3/Dockerfile) (tag and digest) | none | `test:` |
-| Gradle | `src/test/consumers/gradle` (Gradle version and consumer dependencies) | `gradle-consumer` (minor/patch) | `test:` |
+| Ecosystem | Files | PR title |
+| --- | --- | --- |
+| Maven | `pom.xml`, `src/test/consumers/maven/pom.xml`, `.mvn/wrapper/maven-wrapper.properties` | `deps:` for the runtime library, `build:` otherwise |
+| GitHub Actions | `.github/workflows/*.yml` (SHA pins with version comments) | `ci:` |
+| Docker | [`src/test/resources/teamspeak3/Dockerfile`](../src/test/resources/teamspeak3/Dockerfile) (tag and digest) | `test:` |
+| Gradle | `src/test/consumers/gradle` (Gradle version and consumer dependencies) | `test:` |
+
+Related updates share one PR per group (see the config): the build toolchain, release tooling
+(JReleaser, japicmp), SLF4J, test libraries, other build plugins, Actions other than
+release-please, and the Gradle consumer.
 
 Runtime dependencies (SSHJ, the Bouncy Castle BOM) and major updates arrive one per PR.
 Version updates wait seven days after a release (`cooldown`) so that broken or withdrawn releases
@@ -81,7 +85,8 @@ support table and reviews the compatibility results.
   current manifest digest). If that differs from the pin, it runs the full compatibility suite
   against it, applied as its update PR would apply it, and fails if the server is incompatible.
   The step summary records both images.
-- It fails while the Maven Wrapper is older than the newest Maven 3 release.
+- It fails while the Maven Wrapper is older than the newest Maven 3 release. Remove this job once
+  Dependabot's Maven Wrapper updates are generally available.
 
 **ServerQuery compatibility** also revalidates the pinned image every week. GitHub runs scheduled
 and manually dispatched workflows only when they exist on the default branch, so both start with
