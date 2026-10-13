@@ -1,0 +1,31 @@
+.github/pull_request_template.md
+  s_946b96cdd3f8c4::t_d448d7d451540d 1,9-10,14
+.github/scripts/test-api-compatibility.sh
+  s_946b96cdd3f8c4::t_ea9e6403a20fbf 26-28
+CONTRIBUTING.md
+  s_946b96cdd3f8c4::t_8be35117f0debd 3-5,56-61,103
+README.md
+  s_946b96cdd3f8c4::t_2f2c62416ded60 395-397
+SECURITY.md
+  s_946b96cdd3f8c4::t_ddb7515e31762a 15
+docs/releases.md
+  s_946b96cdd3f8c4::t_534952c450a987 36-38,47-48,157-158
+src/test/java/com/github/theholywaffle/teamspeak3/DocumentationTest.java
+  s_946b96cdd3f8c4::t_bc1e71c6fd606d 24,30,113-118,120,126-132
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "476e9f679251c8722765685360b52d45e8442df3",
+  "prompts": {},
+  "sessions": {
+    "s_946b96cdd3f8c4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "09493001-efc7-4912-bd48-cec868b5f761",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
