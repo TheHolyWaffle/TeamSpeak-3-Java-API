@@ -44,5 +44,6 @@ jobs:
             target/ci-logs/
             target/failsafe-reports/
             target/surefire-reports/
+            target/site/jacoco-it/
           if-no-files-found: error
           retention-days: 14

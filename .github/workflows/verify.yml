@@ -35,6 +35,14 @@ jobs:
         run: |
           set -o pipefail
           ./mvnw -B -ntp -Pfull verify 2>&1 | tee target/ci-logs/full.log
+      - name: Upload coverage report
+        if: ${{ matrix.java == '25' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-report
+          path: target/site/jacoco/
+          if-no-files-found: error
+          retention-days: 14
       - name: Upload failure reports
         if: ${{ failure() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

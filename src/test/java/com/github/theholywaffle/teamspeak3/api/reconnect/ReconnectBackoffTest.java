@@ -25,6 +25,15 @@ class ReconnectBackoffTest {
     }
 
     @Test
+    void userControlledReconnectUsesTheApplicationHandlerAndRequiresOne() {
+        var application = new DisconnectingConnectionHandler(null);
+        assertSame(application, ReconnectStrategy.userControlled().create(application));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> ReconnectStrategy.userControlled().create(null));
+    }
+
+    @Test
     void builtInStrategiesKeepTheirDelayProgressionAndAttemptLimit() {
         assertEquals(List.of(100L, 100L, 100L), delays(ReconnectStrategy.constantBackoff(100), 3));
         assertEquals(List.of(10L, 15L, 20L, 25L, 30L, 30L), delays(ReconnectStrategy.linearBackoff(10, 5, 30), 6));

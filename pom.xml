@@ -301,6 +301,134 @@
 				</executions>
 			</plugin>
 			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.15</version>
+				<executions>
+					<execution>
+						<id>prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>check-critical-coverage</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<!-- Per-class floors for protocol, lifecycle and error-path code; facades and models are
+							     covered by the TS3 integration suite instead of a global percentage. -->
+							<rules>
+								<rule>
+									<element>CLASS</element>
+									<includes>
+										<include>com.github.theholywaffle.teamspeak3.CommandQueue*</include>
+										<include>com.github.theholywaffle.teamspeak3.Connection</include>
+										<include>com.github.theholywaffle.teamspeak3.Deadline</include>
+										<include>com.github.theholywaffle.teamspeak3.KeepAlive</include>
+										<include>com.github.theholywaffle.teamspeak3.ProtocolLineReader</include>
+										<include>com.github.theholywaffle.teamspeak3.StreamReader</include>
+										<include>com.github.theholywaffle.teamspeak3.StreamWriter</include>
+										<include>com.github.theholywaffle.teamspeak3.TS3Query</include>
+										<include>com.github.theholywaffle.teamspeak3.EventManager*</include>
+										<include>com.github.theholywaffle.teamspeak3.FileTransferHelper*</include>
+										<include>com.github.theholywaffle.teamspeak3.QueryConfig</include>
+										<include>com.github.theholywaffle.teamspeak3.SshHostKeyPolicy*</include>
+										<include>com.github.theholywaffle.teamspeak3.api.CommandFutures*</include>
+										<include>com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException</include>
+										<include>com.github.theholywaffle.teamspeak3.api.exception.TS3TimeoutException</include>
+										<include>com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException</include>
+										<include>com.github.theholywaffle.teamspeak3.api.reconnect.*</include>
+										<include>com.github.theholywaffle.teamspeak3.api.wrapper.QueryError</include>
+										<include>com.github.theholywaffle.teamspeak3.commands.Command</include>
+										<include>com.github.theholywaffle.teamspeak3.commands.CommandBuilder</include>
+										<include>com.github.theholywaffle.teamspeak3.commands.CommandEncoding</include>
+										<include>com.github.theholywaffle.teamspeak3.commands.ProtocolRedactor</include>
+										<include>com.github.theholywaffle.teamspeak3.commands.parameter.*</include>
+										<include>com.github.theholywaffle.teamspeak3.commands.response.*</include>
+									</includes>
+									<limits>
+										<limit>
+											<counter>LINE</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.80</minimum>
+										</limit>
+									</limits>
+								</rule>
+								<rule>
+									<element>CLASS</element>
+									<includes>
+										<include>com.github.theholywaffle.teamspeak3.CommandQueue*</include>
+										<include>com.github.theholywaffle.teamspeak3.Connection</include>
+										<include>com.github.theholywaffle.teamspeak3.Deadline</include>
+										<include>com.github.theholywaffle.teamspeak3.KeepAlive</include>
+										<include>com.github.theholywaffle.teamspeak3.ProtocolLineReader</include>
+										<include>com.github.theholywaffle.teamspeak3.StreamReader</include>
+										<include>com.github.theholywaffle.teamspeak3.StreamWriter</include>
+										<include>com.github.theholywaffle.teamspeak3.TS3Query</include>
+										<include>com.github.theholywaffle.teamspeak3.EventManager*</include>
+										<include>com.github.theholywaffle.teamspeak3.FileTransferHelper*</include>
+										<include>com.github.theholywaffle.teamspeak3.QueryConfig</include>
+										<include>com.github.theholywaffle.teamspeak3.SshHostKeyPolicy*</include>
+										<include>com.github.theholywaffle.teamspeak3.api.CommandFutures*</include>
+										<include>com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException</include>
+										<include>com.github.theholywaffle.teamspeak3.api.exception.TS3TimeoutException</include>
+										<include>com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException</include>
+										<include>com.github.theholywaffle.teamspeak3.api.reconnect.*</include>
+										<include>com.github.theholywaffle.teamspeak3.api.wrapper.QueryError</include>
+										<include>com.github.theholywaffle.teamspeak3.commands.Command</include>
+										<include>com.github.theholywaffle.teamspeak3.commands.CommandBuilder</include>
+										<include>com.github.theholywaffle.teamspeak3.commands.CommandEncoding</include>
+										<include>com.github.theholywaffle.teamspeak3.commands.ProtocolRedactor</include>
+										<include>com.github.theholywaffle.teamspeak3.commands.parameter.*</include>
+										<include>com.github.theholywaffle.teamspeak3.commands.response.*</include>
+									</includes>
+									<excludes>
+										<exclude>com.github.theholywaffle.teamspeak3.api.CommandFutures.RequestFuture</exclude>
+										<exclude>com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectingConnectionHandler</exclude>
+										<exclude>com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy.UserControlled</exclude>
+										<exclude>com.github.theholywaffle.teamspeak3.api.reconnect.SessionConfiguration.Subscription</exclude>
+									</excludes>
+									<limits>
+										<limit>
+											<counter>BRANCH</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.75</minimum>
+										</limit>
+									</limits>
+								</rule>
+								<rule>
+									<!-- Remaining branches are concurrent state races, exercised by the integration suite. -->
+									<element>CLASS</element>
+									<includes>
+										<include>com.github.theholywaffle.teamspeak3.api.CommandFutures.RequestFuture</include>
+										<include>com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectingConnectionHandler</include>
+										<include>com.github.theholywaffle.teamspeak3.api.reconnect.ReconnectStrategy.UserControlled</include>
+										<include>com.github.theholywaffle.teamspeak3.api.reconnect.SessionConfiguration.Subscription</include>
+									</includes>
+									<limits>
+										<limit>
+											<counter>BRANCH</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.50</minimum>
+										</limit>
+									</limits>
+								</rule>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
 				<version>3.4.0</version>
@@ -412,6 +540,24 @@
 						<executions>
 							<execution>
 								<goals><goal>integration-test</goal><goal>verify</goal></goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.jacoco</groupId>
+						<artifactId>jacoco-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>prepare-agent-integration</id>
+								<goals>
+									<goal>prepare-agent-integration</goal>
+								</goals>
+							</execution>
+							<execution>
+								<id>report-integration</id>
+								<goals>
+									<goal>report-integration</goal>
+								</goals>
 							</execution>
 						</executions>
 					</plugin>
