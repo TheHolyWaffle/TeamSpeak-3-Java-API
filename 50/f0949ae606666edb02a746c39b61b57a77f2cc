@@ -1,0 +1,49 @@
+README.md
+  s_a499bf1c4b1795::t_a6fa1f0cb4655f 3-52,54-60,62-66,68-71,73,75-92,94-97,99,101-103,105-113,115,117,119-121,123,125-127,129-130,132,134-137,139-141,143-144,146,148,150-161,163-164,166,168,170-173,175-181,183-184,186,188-193,195-207,210-215,217,219-225,227-246,249-251,253,255-256,258-266,268,270,272-274,276-279,281-283,285,287-288,290-360,362-367,369,371-373,375-377,379,381-383,385,387-391,393,395-411,413-415
+docs/configuration-and-transports.md
+  s_a499bf1c4b1795::t_601607b92d72ce 67-72
+docs/development-server.md
+  s_a499bf1c4b1795::t_871bd894cd0796 18-34,42-45,73-75
+docs/integration-tests.md
+  s_a499bf1c4b1795::t_324465f65cea29 19-28
+docs/packaging.md
+  s_a499bf1c4b1795::t_6c7cfe9a1adf09 32,43
+docs/reconnect-and-retry.md
+  s_a499bf1c4b1795::t_d1a37dd6ce5ca9 25
+docs/releases.md
+  s_a499bf1c4b1795::t_ed919f10c8b910 135-141
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Config.java
+  s_a499bf1c4b1795::t_824bd2dde4a3e4 261-262,293-295,367-368,412,443-447,455
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Query.java
+  s_a499bf1c4b1795::t_9d4842f0396eb6 51-53,63-65,74,79,144
+src/main/java/com/github/theholywaffle/teamspeak3/api/event/TS3EventAdapter.java
+  s_a499bf1c4b1795::t_1f85fd67ab75f4 32
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3QueryShutDownException.java
+  s_a499bf1c4b1795::t_a7173fe2571344 29-32
+src/main/java/com/github/theholywaffle/teamspeak3/api/reconnect/CommandRetryPolicy.java
+  s_a499bf1c4b1795::t_a25f4f967d4a56 52-54
+src/main/java/com/github/theholywaffle/teamspeak3/api/reconnect/ConnectionHandler.java
+  s_a499bf1c4b1795::t_a12792a8eb7f00 32-34,37-42,45-49
+src/main/java/com/github/theholywaffle/teamspeak3/api/reconnect/ReconnectStrategy.java
+  s_a499bf1c4b1795::t_82c122a108831b 29-38,54-57,80-84,89,94,99-102,108,113-117,122-127,133,138-142,147-152
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/PermissionAssignment.java
+  s_a499bf1c4b1795::t_eedbcb6f5d0746 43
+src/test/java/com/github/theholywaffle/teamspeak3/DocumentationTest.java
+  s_a499bf1c4b1795::t_bd188f1984c661 1-128
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "50f0949ae606666edb02a746c39b61b57a77f2cc",
+  "prompts": {},
+  "sessions": {
+    "s_a499bf1c4b1795": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_a499bf1c4b1795",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
