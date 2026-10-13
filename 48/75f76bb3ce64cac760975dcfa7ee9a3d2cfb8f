@@ -1,0 +1,37 @@
+docs/maintenance.md
+  s_ba4f2e5e310bfe::t_897c5585862732 1-10
+.github/workflows/compatibility.yml
+  s_ba4f2e5e310bfe::t_a69c8f188cbb23 30
+docs/integration-tests.md
+  s_ba4f2e5e310bfe::t_1697469fc884cd 30-34
+src/test/java/com/github/theholywaffle/teamspeak3/DevelopmentServerIT.java
+  s_ba4f2e5e310bfe::t_f5f772f9056158 32,64-65
+src/test/java/com/github/theholywaffle/teamspeak3/DocumentationTest.java
+  s_ba4f2e5e310bfe::t_4a47a29212d378 91-104
+src/test/java/com/github/theholywaffle/teamspeak3/ExamplesIT.java
+  s_ba4f2e5e310bfe::t_2b25c2b192c6dd 38
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryCompatibilityIT.java
+  s_ba4f2e5e310bfe::t_951a8a9edccd02 92
+src/test/java/com/github/theholywaffle/teamspeak3/SessionCommandsCompatibilityIT.java
+  s_ba4f2e5e310bfe::t_7deea4c2e00432 38-39
+src/test/java/com/github/theholywaffle/teamspeak3/TeamSpeakContainer.java
+  s_ba4f2e5e310bfe::t_a04972945ec598 11,23-25,49-56,106-122
+src/test/resources/teamspeak3/Dockerfile
+  s_ba4f2e5e310bfe::t_ec915c03271b7e 1-3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4875f76bb3ce64cac760975dcfa7ee9a3d2cfb8f",
+  "prompts": {},
+  "sessions": {
+    "s_ba4f2e5e310bfe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2adad55e-4bba-4de8-8b8f-dca91fe79778",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
