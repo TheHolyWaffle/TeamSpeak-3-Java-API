@@ -24,17 +24,12 @@ jobs:
           java-version: ${{ matrix.java }}
           distribution: temurin
           cache: maven
-      - name: Verify library
+      - name: Verify library, sources and Javadoc artifacts
         shell: bash
         run: |
           set -o pipefail
           mkdir -p target/ci-logs
           ./mvnw -B -ntp verify 2>&1 | tee target/ci-logs/library.log
-      - name: Verify standalone, sources and Javadoc artifacts
-        shell: bash
-        run: |
-          set -o pipefail
-          ./mvnw -B -ntp -Pfull verify 2>&1 | tee target/ci-logs/full.log
       - name: Upload coverage report
         if: ${{ matrix.java == '25' }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -73,14 +68,20 @@ jobs:
           cache: maven
       - name: Test release metadata gates
         run: bash .github/scripts/test-release-metadata.sh
-      - name: Create a synthetic release solely for local validation
-        run: |
-          ./mvnw -B -ntp org.codehaus.mojo:versions-maven-plugin:2.22.0:set \
-            -DnewVersion=0.0.0 -DgenerateBackupPoms=false -DupdateBuildOutputTimestampPolicy=never
-          mkdir -p target
-          printf '## [0.0.0]\n\nNon-publishing CI rehearsal.\n' > target/release-notes.md
+      - name: Apply a synthetic release-please version solely for local validation
+        run: bash .github/scripts/synthetic-release.sh 0.0.0
       - name: Stage and verify signatures with an ephemeral test key
         run: bash .github/scripts/release-rehearsal.sh
+      - name: Verify staged artifact contents, version and timestamps
+        run: bash .github/scripts/verify-staged-artifacts.sh 0.0.0
+      - name: Test that staged artifact defects are rejected
+        run: bash .github/scripts/test-verify-staged-artifacts.sh 0.0.0
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          gradle-version: 9.8.1
+          cache-disabled: true
+      - name: Run Maven and Gradle consumers against the staged artifacts
+        run: bash .github/scripts/consumer-check.sh 0.0.0
       - name: Upload validated bundle
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -89,5 +90,30 @@ jobs:
             target/staging-deploy/
             target/jreleaser/deploy/
             target/release-notes.md
+            target/consumers/*.log
           if-no-files-found: error
+          retention-days: 7
+
+  reproducibility:
+    name: Reproducible unsigned artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: '25'
+          distribution: temurin
+          cache: maven
+      - name: Rebuild cleanly and compare every artifact
+        run: bash .github/scripts/reproducibility-check.sh
+      - name: Upload build fingerprints
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: reproducibility
+          path: target/reproducibility/
+          if-no-files-found: ignore
           retention-days: 7
