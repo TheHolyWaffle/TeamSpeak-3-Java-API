@@ -1,0 +1,25 @@
+CHANGELOG.md
+  s_946b96cdd3f8c4::t_798a2abf04901b 4-6
+README.md
+  s_946b96cdd3f8c4::t_608cd83a8d35a1 314-316,387
+SECURITY.md
+  s_946b96cdd3f8c4::t_3a58c221dfb8a8 12
+docs/migration-2.0.md
+  s_946b96cdd3f8c4::t_744903fcb74f22 1-201
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bcb1486414002605722af95e505b7c37091e7c96",
+  "prompts": {},
+  "sessions": {
+    "s_946b96cdd3f8c4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "09493001-efc7-4912-bd48-cec868b5f761",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
