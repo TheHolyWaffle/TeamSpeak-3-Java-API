@@ -96,6 +96,38 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  release_preparation:
+    name: Release preparation (dry run)
+    # Release-please reads its configuration from the pushed branch, which a fork PR's head is not.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Read the release-please Action pinned for release preparation
+        id: action
+        run: |
+          sha=$(sed -n 's#.*googleapis/release-please-action@\([0-9a-f]\{40\}\).*#\1#p' .github/workflows/release-prepare.yml)
+          test "${#sha}" = 40
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+      - name: Check out that Action and its locked dependencies
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: googleapis/release-please-action
+          ref: ${{ steps.action.outputs.sha }}
+          path: target/release-please-action
+          persist-credentials: false
+      - name: Dry-run release preparation; nothing is created
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: bash .github/scripts/release-please-dry-run.sh target/release-please-action "$BRANCH"
+
   release_intent:
     name: Release intent
     if: ${{ github.event_name == 'pull_request' }}
@@ -126,7 +158,7 @@ jobs:
   required:
     name: CI required
     if: ${{ always() }}
-    needs: [verify, compatibility, dependencies, api_compatibility, release_intent]
+    needs: [verify, compatibility, dependencies, api_compatibility, release_preparation, release_intent]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -137,9 +169,11 @@ jobs:
           DEPENDENCY_RESULT: ${{ needs.dependencies.result }}
           API_RESULT: ${{ needs.api_compatibility.result }}
           INTENT_RESULT: ${{ needs.release_intent.result }}
+          PREPARATION_RESULT: ${{ needs.release_preparation.result }}
         run: |
           test "$BUILD_RESULT" = success
           test "$COMPATIBILITY_RESULT" = success
           test "$DEPENDENCY_RESULT" = success
           test "$API_RESULT" = success
           test "$INTENT_RESULT" = success || test "$INTENT_RESULT" = skipped
+          test "$PREPARATION_RESULT" = success || test "$PREPARATION_RESULT" = skipped
