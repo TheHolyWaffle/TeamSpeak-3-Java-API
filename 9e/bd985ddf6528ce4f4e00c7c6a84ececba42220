@@ -1,0 +1,23 @@
+.github/workflows/verify.yml
+  s_946b96cdd3f8c4::t_ba37636b8c756a 73-74
+.github/scripts/test-release-workflow.sh
+  s_946b96cdd3f8c4::t_cb7f107aadd232 1-51
+docs/releases.md
+  s_946b96cdd3f8c4::t_2d44f9443fdb41 116-118,266-267,334-423
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9ebd985ddf6528ce4f4e00c7c6a84ececba42220",
+  "prompts": {},
+  "sessions": {
+    "s_946b96cdd3f8c4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "09493001-efc7-4912-bd48-cec868b5f761",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
