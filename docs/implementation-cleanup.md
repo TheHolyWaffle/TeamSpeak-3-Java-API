@@ -9,7 +9,7 @@ admission limits are unchanged. The last section lists the intentional breaks.
 
 | Area | Change | Evidence that behavior is kept |
 | --- | --- | --- |
-| Command parameters | `Parameter` is a sealed interface. `KeyValueParam`, `OptionParam`, `RawParam`, `ValueParam` and `ArrayParameter` are records that return their wire text from `encoded()` | `CommandSyntaxTest`, `FileCommandsTest`, `DomainApiTest` expected command lines, live command ITs |
+| Command parameters | `Parameter` is a sealed interface. `KeyValueParam`, `OptionParam`, `RawParam`, `ValueParam` and `ArrayParameter` are records that append their wire text to one `StringBuilder` through `appendTo` (`encoded()` returns it on its own) | `CommandSyntaxTest`, `FileCommandsTest`, `DomainApiTest` expected command lines, live command ITs |
 | Escaping | `CommandEncoding.encode` escapes in one pass with a `switch`, like `decode`, instead of eleven chained `replace` calls | `CommandEncodingTest` round trips; `CommandSyntaxTest` compares the old and new encoders on 2,000 random strings |
 | Command building | No capacity hints. Array loops become `ArrayParameter.of(key, values)` or explicit entries. Properties are added directly in map order | `CommandSyntaxTest.propertiesKeepMapOrderAndRejectReadOnlyProperties` |
 | Responses | `ResponseBuilder` joins rows with `StringJoiner`. `DefaultArrayResponse` uses `List.of`/`Map.of` and a shorter parser | `DefaultArrayResponseTest`, `ServerQueryProtocolTest` |
@@ -28,7 +28,7 @@ admission limits are unchanged. The last section lists the intentional breaks.
   The [threading model](connection-lifecycle.md#threading-model) explains why. Cheap threads
   replace neither the single writer nor admission limits.
 - **Pattern matching in production code.** `AGENTS.md` prohibits production `instanceof`
-  checks, so behavior stays behind polymorphic contracts such as `Parameter.encoded()`.
+  checks, so behavior stays behind polymorphic contracts such as `Parameter.appendTo`.
   Pattern matching is used in tests only.
 - **More records.** `TS3Config` is a mutable builder. `QueryConfig` keeps credentials out of
   `toString`, and its 23 getters would all be renamed. `FloodRate` would only rename `getMs()`.
@@ -51,7 +51,7 @@ These breaks affect the public `commands` packages (internal command builders, s
 | --- | --- |
 | `TS3Config.setCommandTimeout(int ms)` (deprecated) | `setCommandResponseTimeout(Duration.ofMillis(ms))` |
 | `new ReconnectingConnectionHandler(handler, start, cap, addend, multiplier)` | Add `maxAttempts`; the previous default was `10` |
-| `Parameter.appendTo(StringBuilder)` / `toString()` | `Parameter.encoded()` |
+| Abstract class `Parameter`; `toString()` returned the wire text | Sealed interface: `appendTo(StringBuilder)` is kept, `encoded()` returns the wire text, `toString()` is the record form |
 | `new ArrayParameter(n[, perEntry]).add(p)` | `new ArrayParameter(List<List<Parameter>>)` or `ArrayParameter.of(key, values)` |
 | Parameter classes with constructors only | Records with accessors such as `key()`/`value()` and value equality |
 | `FileCommands.ftInitDownload(id, path, cid, cpw)` | Pass seek position `0` |

@@ -30,8 +30,18 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
 public sealed interface Parameter permits ArrayParameter, KeyValueParam, OptionParam, RawParam, ValueParam {
 
 	/**
-	 * Encodes this parameter.
+	 * Appends this parameter in ServerQuery syntax, with values escaped.
+	 * @param line the command line being built
+	 */
+	void appendTo(StringBuilder line);
+
+	/**
+	 * Encodes this parameter on its own.
 	 * @return this parameter in ServerQuery syntax, with values escaped
 	 */
-	String encoded();
+	default String encoded() {
+		var line = new StringBuilder();
+		appendTo(line);
+		return line.toString();
+	}
 }

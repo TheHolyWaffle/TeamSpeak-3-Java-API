@@ -31,7 +31,17 @@ public final class CommandEncoding {
 	private CommandEncoding() {}
 
 	public static String encode(String str) {
-		StringBuilder encoded = new StringBuilder(str.length());
+		return encode(str, new StringBuilder(str.length())).toString();
+	}
+
+	/**
+	 * Appends the escaped form of a value.
+	 *
+	 * @param str the plain value
+	 * @param encoded the builder to append to
+	 * @return {@code encoded}
+	 */
+	public static StringBuilder encode(String str, StringBuilder encoded) {
 		for (int i = 0; i < str.length(); i++) {
 			char ch = str.charAt(i);
 			switch (ch) {
@@ -49,7 +59,7 @@ public final class CommandEncoding {
 				default -> encoded.append(ch);
 			}
 		}
-		return encoded.toString();
+		return encoded;
 	}
 
 	/**

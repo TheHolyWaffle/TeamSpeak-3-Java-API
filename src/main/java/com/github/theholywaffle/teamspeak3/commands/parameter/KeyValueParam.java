@@ -53,7 +53,7 @@ public record KeyValueParam(String key, String value) implements Parameter {
 	}
 
 	@Override
-	public String encoded() {
-		return CommandEncoding.encode(key) + '=' + CommandEncoding.encode(value);
+	public void appendTo(StringBuilder line) {
+		CommandEncoding.encode(value, CommandEncoding.encode(key, line).append('='));
 	}
 }

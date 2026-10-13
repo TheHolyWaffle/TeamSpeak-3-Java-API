@@ -35,7 +35,7 @@ import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 public record OptionParam(String option) implements Parameter {
 
 	@Override
-	public String encoded() {
-		return '-' + CommandEncoding.encode(option);
+	public void appendTo(StringBuilder line) {
+		CommandEncoding.encode(option, line.append('-'));
 	}
 }

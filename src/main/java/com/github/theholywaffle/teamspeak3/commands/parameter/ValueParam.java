@@ -35,7 +35,7 @@ import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 public record ValueParam(String value) implements Parameter {
 
 	@Override
-	public String encoded() {
-		return CommandEncoding.encode(value);
+	public void appendTo(StringBuilder line) {
+		CommandEncoding.encode(value, line);
 	}
 }

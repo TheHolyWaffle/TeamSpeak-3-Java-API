@@ -28,7 +28,6 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Pipe-separated entries, each made of space-separated parameters.
@@ -61,9 +60,14 @@ public record ArrayParameter(List<List<Parameter>> entries) implements Parameter
 	}
 
 	@Override
-	public String encoded() {
-		return entries.stream()
-			.map(entry -> entry.stream().map(Parameter::encoded).collect(Collectors.joining(" ")))
-			.collect(Collectors.joining("|"));
+	public void appendTo(StringBuilder line) {
+		for (int i = 0; i < entries.size(); i++) {
+			if (i > 0) line.append('|');
+			List<Parameter> entry = entries.get(i);
+			for (int j = 0; j < entry.size(); j++) {
+				if (j > 0) line.append(' ');
+				entry.get(j).appendTo(line);
+			}
+		}
 	}
 }

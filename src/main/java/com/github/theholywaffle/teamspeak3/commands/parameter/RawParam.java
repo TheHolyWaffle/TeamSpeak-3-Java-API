@@ -33,7 +33,7 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
 public record RawParam(String raw) implements Parameter {
 
 	@Override
-	public String encoded() {
-		return raw;
+	public void appendTo(StringBuilder line) {
+		line.append(raw);
 	}
 }
