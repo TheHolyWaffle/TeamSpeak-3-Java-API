@@ -1,0 +1,45 @@
+name: Feature request
+description: A change or addition to the library.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The library covers TeamSpeak 3 ServerQuery administration, notifications and file transfers over raw TCP and SSH. TeamSpeak 6, voice/audio and screen sharing are out of scope.
+        For open-ended ideas, start a [discussion](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/discussions/categories/ideas) first.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What you are trying to do and why the current API makes it hard or impossible.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: The API or behavior you would like, and the ServerQuery commands involved if you know them.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and workarounds
+      description: What you use today, for example `executeRawCommand`, and other approaches you considered.
+  - type: dropdown
+    id: compatibility
+    attributes:
+      label: Compatibility impact
+      description: Your best guess; maintainers decide the release impact.
+      options:
+        - Backward-compatible addition
+        - Changes existing behavior or API (breaking)
+        - Not sure
+    validations:
+      required: true
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I would like to implement this myself (see CONTRIBUTING.md).
