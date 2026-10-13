@@ -8,6 +8,8 @@ For the 2.0 domain APIs, error categories and a mapping of every 1.x operation, 
 [domain API migration guide](docs/api-migration.md). For asynchronous results, see the
 [CompletableFuture migration and execution contract](docs/futures.md). Response models
 are immutable and use typed values; see the [response model guide](docs/models-and-values.md).
+Removed overloads and internal command-builder changes are listed in the
+[implementation cleanup notes](docs/implementation-cleanup.md).
 
 ## Features
 
