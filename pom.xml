@@ -204,7 +204,7 @@
 						<includes>
 							<include>src/main/java/**/*.java</include>
 							<include>src/test/java/**/*.java</include>
-							<include>example/**/*.java</include>
+							<include>src/example/java/**/*.java</include>
 							<include>src/test/api-fixtures/**/*.java</include>
 							<include>src/test/consumers/**/*.java</include>
 						</includes>
@@ -236,6 +236,26 @@
 						<goals>
 							<goal>check</goal>
 						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<!-- Compiles the examples with the tests, so every build catches API drift; they are never packaged. -->
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>3.6.1</version>
+				<executions>
+					<execution>
+						<id>add-example-sources</id>
+						<phase>generate-test-sources</phase>
+						<goals>
+							<goal>add-test-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<source>src/example/java</source>
+							</sources>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
