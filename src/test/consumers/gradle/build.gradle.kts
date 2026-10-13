@@ -30,10 +30,6 @@ sourceSets {
     }
 }
 
-java {
-    modularity.inferModulePath = false
-}
-
 tasks.withType<JavaCompile>().configureEach {
     options.release = 25
 }

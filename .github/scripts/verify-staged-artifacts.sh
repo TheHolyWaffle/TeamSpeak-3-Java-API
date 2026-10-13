@@ -1,25 +1,19 @@
 #!/usr/bin/env bash
 # Inspect the locally staged publication: exactly the normal, sources and Javadoc JARs plus the
-# reviewed POM, at the release-please approved version, with reproducible entry timestamps.
-# An optional JReleaser Central bundle must hold exactly these files, signed and checksummed.
+# reviewed POM, with reproducible entry timestamps. An optional JReleaser Central bundle must hold
+# exactly these files, signed and checksummed. Run release-metadata.sh first: it approves the version.
 set -euo pipefail
 version=${1:?approved version required}
 staging=${2:-target/staging-deploy}
-manifest=${3:-.release-please-manifest.json}
-bundle=${4:-}
+bundle=${3:-}
 fail() { echo "Staged artifact check failed: $*" >&2; exit 1; }
-evaluate() {
-  ./mvnw -q -ntp org.apache.maven.plugins:maven-help-plugin:3.5.2:evaluate -Dexpression="$1" -DforceStdout
-}
 
-[[ "$(evaluate project.version)" == "$version" ]] || fail "POM version is not $version"
-jq -e --arg version "$version" '.["."] == $version' "$manifest" >/dev/null \
-  || fail "$manifest does not approve $version"
-dir="$staging/com/github/theholywaffle/teamspeak3-api/$version"
-base="$dir/teamspeak3-api-$version"
-expected=$(printf '%s\n' "$base.pom" "$base.jar" "$base-sources.jar" "$base-javadoc.jar" | sort)
-actual=$(find "$dir" -type f ! -name '*.asc' ! -name '*.md5' ! -name '*.sha1' ! -name '*.sha256' \
-  ! -name '*.sha512' ! -name 'maven-metadata*' | sort)
+files=(.pom .jar -sources.jar -javadoc.jar)
+rel=com/github/theholywaffle/teamspeak3-api/$version/teamspeak3-api-$version
+base=$staging/$rel
+expected=$(for file in "${files[@]}"; do echo "$base$file"; done | sort)
+actual=$(find "$staging/${rel%/*}" -type f ! -name '*.asc' ! -name '*.md5' ! -name '*.sha1' \
+  ! -name '*.sha256' ! -name '*.sha512' ! -name 'maven-metadata*' | sort)
 [[ "$actual" == "$expected" ]] || fail $'unexpected files:\n'"$actual"
 cmp -s pom.xml "$base.pom" || fail 'staged POM differs from the reviewed pom.xml'
 
@@ -27,7 +21,8 @@ work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
 # Every entry carries project.build.outputTimestamp, as zipinfo prints it (yyyymmdd.hhmmss).
-stamp=$(evaluate project.build.outputTimestamp | sed -E 's/^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})Z$/\1\2\3.\4\5\6/')
+stamp=$(./mvnw -q -ntp org.apache.maven.plugins:maven-help-plugin:3.5.2:evaluate \
+  -Dexpression=project.build.outputTimestamp -DforceStdout | tr -d -- '-:Z' | tr T .)
 [[ "$stamp" =~ ^[0-9]{8}\.[0-9]{6}$ ]] || fail 'project.build.outputTimestamp is not an ISO-8601 UTC instant'
 for jar in "$base.jar" "$base-sources.jar" "$base-javadoc.jar"; do
   stamps=$(zipinfo -T "$jar" | awk '/^[-dl]/ { print $7 }' | sort -u)
@@ -36,7 +31,8 @@ done
 
 # Library JAR: project classes and Maven descriptors only; no shaded, provider or signature files.
 package=com/github/theholywaffle/teamspeak3
-others=$(unzip -Z1 "$base.jar" | grep -vE "^($package/.*|com/|com/github/|com/github/theholywaffle/|META-INF/|META-INF/MANIFEST\.MF|META-INF/maven/(com\.github\.theholywaffle/(teamspeak3-api/(pom\.xml|pom\.properties)?)?)?)$" || true)
+others=$(unzip -Z1 "$base.jar" | grep -v '/$' \
+  | grep -vE "^($package/.*|META-INF/MANIFEST\.MF|META-INF/maven/com\.github\.theholywaffle/teamspeak3-api/pom\.(xml|properties))$" || true)
 [[ -z "$others" ]] || fail $'library JAR contains foreign entries:\n'"$others"
 unzip -p "$base.jar" META-INF/MANIFEST.MF | tr -d '\r' \
   | grep -qx 'Automatic-Module-Name: com.github.theholywaffle.teamspeak3' || fail 'Automatic-Module-Name missing'
@@ -63,14 +59,13 @@ diff <(cd src/main/java && find . -name '*.java' -exec dirname {} \; | sed 's|^\
 ! grep -rlq 'dc.created' "$work/javadoc" || fail 'Javadoc contains generation dates'
 
 if [[ -n "$bundle" ]]; then
-  prefix=com/github/theholywaffle/teamspeak3-api/$version/teamspeak3-api-$version
-  expected=$(for file in .pom .jar -sources.jar -javadoc.jar; do
-    for suffix in '' .asc .md5 .sha1 .sha256 .sha512; do echo "$prefix$file$suffix"; done
+  expected=$(for file in "${files[@]}"; do
+    for suffix in '' .asc .md5 .sha1 .sha256 .sha512; do echo "$rel$file$suffix"; done
   done | sort)
   [[ "$(unzip -Z1 "$bundle" | sort)" == "$expected" ]] || fail "$bundle does not hold exactly the signed artifacts"
   unzip -q "$bundle" -d "$work/bundle"
-  for file in .pom .jar -sources.jar -javadoc.jar; do
-    cmp -s "$base$file" "$work/bundle/$prefix$file" || fail "bundled $file differs from the staged artifact"
+  for file in "${files[@]}"; do
+    cmp -s "$base$file" "$work/bundle/$rel$file" || fail "bundled $file differs from the staged artifact"
   done
 fi
 echo "Verified staged teamspeak3-api $version"

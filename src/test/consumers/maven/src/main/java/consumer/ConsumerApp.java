@@ -13,11 +13,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Security;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -35,42 +34,43 @@ public final class ConsumerApp {
     private ConsumerApp() {}
 
     public static void main(String[] args) throws Exception {
-        String backend = args.length == 1 ? args[0] : "";
-        List<String> captured = Collections.synchronizedList(new ArrayList<>());
-        Path simpleLog = Files.createTempFile("consumer-slf4j-simple", ".log");
-        switch (backend) {
+        List<String> captured = new CopyOnWriteArrayList<>();
+        Path simpleLog = null;
+        String expectedProvider;
+        switch (args.length == 1 ? args[0] : "") {
             case "simple" -> {
+                simpleLog = Files.createTempFile("consumer-slf4j-simple", ".log");
                 System.setProperty("org.slf4j.simpleLogger.logFile", simpleLog.toString());
                 System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "debug");
+                expectedProvider = "org.slf4j.simple.SimpleServiceProvider";
             }
-            case "jdk14" -> captureJulRecords(captured);
+            case "jdk14" -> {
+                captureJulRecords(captured);
+                expectedProvider = "org.slf4j.jul.JULServiceProvider";
+            }
             default -> throw new IllegalArgumentException("Usage: ConsumerApp simple|jdk14");
         }
 
         List<String> providers = ServiceLoader.load(SLF4JServiceProvider.class).stream()
                 .map(provider -> provider.type().getName())
                 .toList();
-        String expectedProvider = backend.equals("simple")
-                ? "org.slf4j.simple.SimpleServiceProvider"
-                : "org.slf4j.jul.JULServiceProvider";
         check(providers.equals(List.of(expectedProvider)), "Exactly the application's provider: " + providers);
 
         check("consumer-probe".equals(rawVersion()), "Typed RAW response");
         sshAttemptLoadsCryptoProvider();
 
-        if (backend.equals("simple")) captured.addAll(Files.readAllLines(simpleLog));
-        Files.delete(simpleLog);
-        synchronized (captured) {
-            check(captured.stream().anyMatch(line -> line.contains("[version] > version")), "Library log routed");
+        if (simpleLog != null) {
+            captured.addAll(Files.readAllLines(simpleLog));
+            Files.delete(simpleLog);
         }
+        check(captured.stream().anyMatch(line -> line.contains("[version] > version")), "Library log routed");
 
         System.out.println("library="
                 + Path.of(TS3Query.class
-                                .getProtectionDomain()
-                                .getCodeSource()
-                                .getLocation()
-                                .toURI())
-                        .toAbsolutePath());
+                        .getProtectionDomain()
+                        .getCodeSource()
+                        .getLocation()
+                        .toURI()));
         System.out.println("module=" + TS3Query.class.getModule().getName());
         System.out.println("CONSUMER OK");
     }
@@ -140,7 +140,7 @@ public final class ConsumerApp {
         root.setLevel(Level.ALL);
         root.addHandler(new Handler() {
             @Override
-            public synchronized void publish(LogRecord logRecord) {
+            public void publish(LogRecord logRecord) {
                 captured.add(logRecord.getMessage());
             }
 

@@ -72,13 +72,10 @@ jobs:
         run: bash .github/scripts/synthetic-release.sh 0.0.0
       - name: Stage and verify signatures with an ephemeral test key
         run: bash .github/scripts/release-rehearsal.sh
-      - name: Verify staged artifacts and the JReleaser bundle
-        env:
-          BUNDLE: target/jreleaser/deploy/mavenCentral/central/com.github.theholywaffle-teamspeak3-api-0.0.0-bundle.zip
+      - name: Verify staged artifacts and the JReleaser bundle, then reject planted defects
         run: |
-          bash .github/scripts/verify-staged-artifacts.sh 0.0.0 target/staging-deploy \
-            .release-please-manifest.json "$BUNDLE"
-          bash .github/scripts/test-verify-staged-artifacts.sh 0.0.0 target/staging-deploy "$BUNDLE"
+          bash .github/scripts/test-verify-staged-artifacts.sh 0.0.0 target/staging-deploy \
+            target/jreleaser/deploy/mavenCentral/central/com.github.theholywaffle-teamspeak3-api-0.0.0-bundle.zip
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
           gradle-version: 9.8.1

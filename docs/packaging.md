@@ -77,22 +77,23 @@ which are not reproducible, only at publication.
 [`verify-staged-artifacts.sh`](../.github/scripts/verify-staged-artifacts.sh) inspects
 the local `-Pcentral-staging deploy` repository that JReleaser signs and bundles:
 
-- the POM version equals the version given and the version approved in
-  `.release-please-manifest.json`;
-- the staging directory holds exactly the POM and the library, sources and Javadoc JARs,
+- the staging directory for the given version holds exactly the POM and the library, sources and Javadoc JARs,
   so no shaded or other classifier is published, and the staged POM equals `pom.xml`;
 - the library JAR holds only project classes and its Maven descriptors, with no third-party
   classes, service registrations or signature files, keeps the automatic module name,
-  embeds the same version and contains only Java 25 bytecode without preview features;
+  embeds the given version and contains only Java 25 bytecode without preview features;
 - the sources JAR matches `src/main/java`, and the Javadoc JAR documents every package
   without generation dates;
 - every entry of every JAR carries the configured `outputTimestamp`;
 - when given JReleaser's Central bundle, it holds exactly those four files with their
   signatures and MD5/SHA-1/SHA-256/SHA-512 checksums, byte-identical to the staged files.
 
+The given version is the one `release-metadata.sh` has already approved: it requires the
+POM version, `.release-please-manifest.json`, the newest changelog entry and the tag to agree.
+
 [`test-verify-staged-artifacts.sh`](../.github/scripts/test-verify-staged-artifacts.sh)
-copies a valid staged repository and introduces one defect per copy. It requires each
-copy to be rejected for the intended reason: an unapproved version, a shaded classifier,
+runs the verifier, then copies the valid staged repository and bundle and introduces one
+defect per copy. It requires each copy to be rejected for the intended reason: a shaded classifier,
 a missing Javadoc JAR, a changed POM, an unnormalized timestamp, a bundled logging
 configuration, preview bytecode, incomplete sources, and a bundle with a missing
 signature or a different library JAR.
@@ -126,9 +127,8 @@ Gradle 9.8.1 (on `PATH`, or set `GRADLE`):
 ```sh
 bash .github/scripts/synthetic-release.sh 0.0.0
 bash .github/scripts/release-rehearsal.sh
-bundle=target/jreleaser/deploy/mavenCentral/central/com.github.theholywaffle-teamspeak3-api-0.0.0-bundle.zip
-bash .github/scripts/verify-staged-artifacts.sh 0.0.0 target/staging-deploy .release-please-manifest.json "$bundle"
-bash .github/scripts/test-verify-staged-artifacts.sh 0.0.0 target/staging-deploy "$bundle"
+bash .github/scripts/test-verify-staged-artifacts.sh 0.0.0 target/staging-deploy \
+  target/jreleaser/deploy/mavenCentral/central/com.github.theholywaffle-teamspeak3-api-0.0.0-bundle.zip
 bash .github/scripts/consumer-check.sh 0.0.0
 bash .github/scripts/reproducibility-check.sh
 ```

@@ -226,7 +226,7 @@ the **Validate publication bundle (no upload)** CI job does:
 ```sh
 bash .github/scripts/synthetic-release.sh 0.0.0
 bash .github/scripts/release-rehearsal.sh
-bash .github/scripts/verify-staged-artifacts.sh 0.0.0 target/staging-deploy .release-please-manifest.json \
+bash .github/scripts/test-verify-staged-artifacts.sh 0.0.0 target/staging-deploy \
   target/jreleaser/deploy/mavenCentral/central/com.github.theholywaffle-teamspeak3-api-0.0.0-bundle.zip
 bash .github/scripts/consumer-check.sh 0.0.0
 ```
