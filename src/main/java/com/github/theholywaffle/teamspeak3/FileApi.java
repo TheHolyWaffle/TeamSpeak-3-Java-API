@@ -178,6 +178,8 @@ public final class FileApi {
 
     /**
      * Uploads an icon. The stream is buffered in memory to compute the icon ID. An existing identical icon is not an error.
+     * Assign the ID to a channel, client or group through its {@code i_icon_id} permission using the signed
+     * 32-bit form {@code (int) iconId}.
      *
      * @param data the PNG or other image content
      * @param length the number of bytes to read
@@ -189,6 +191,8 @@ public final class FileApi {
 
     /**
      * Uploads an icon. An existing identical icon is not an error.
+     * Assign the ID to a channel, client or group through its {@code i_icon_id} permission using the signed
+     * 32-bit form {@code (int) iconId}.
      *
      * @param data the image content
      * @return the icon ID

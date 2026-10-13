@@ -29,7 +29,7 @@ shaded JAR:
   and needed separate review of merged service files and licenses.
 
 Depend on `com.github.theholywaffle:teamspeak3-api` with Maven or Gradle instead, as the
-[README](../README.md#download) shows, and add your logging provider. Applications without a
+[README](../README.md#installation) shows, and add your logging provider. Applications without a
 build tool can collect the library and its runtime dependencies once:
 
 ```sh
@@ -40,7 +40,7 @@ mvn dependency:copy-dependencies -DincludeScope=runtime -DoutputDirectory=lib \
 where `consumer-pom.xml` declares the library and the chosen provider, then run with
 `java -cp "app.jar:lib/*" ...`. Gradle's `application` plugin (`installDist`) produces
 the same layout. The removed `src/main/resources/simplelogger.properties` was only used
-by the standalone JAR; [`example/simplelogger.properties`](../example/simplelogger.properties)
+by the standalone JAR; [`src/example/simplelogger.properties`](../src/example/simplelogger.properties)
 is the same configuration for applications using SimpleLogger.
 
 ## Java modules

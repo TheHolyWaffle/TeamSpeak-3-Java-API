@@ -16,9 +16,16 @@ fork to ten minutes, and each fixture allows ninety seconds for authenticated
 readiness. First image pulls also need registry access.
 
 For an interactive server session using the same fixture, see the
-[local development launcher](development-server.md). Its compiled example and
-Enter/EOF/termination cleanup are also exercised by this integration profile;
-each launcher owns a separate disposable server.
+[local development launcher](development-server.md). Its compiled example,
+printed example instructions and Enter/EOF/termination cleanup are also exercised
+by this integration profile; each launcher owns a separate disposable server.
+
+`ExamplesIT` runs every class in `src/example/java` unchanged, in its own JVM,
+over TS3 raw and TS3 SSH, configured only through the `TS3_*` variables
+documented in the [README](../README.md#run-an-example). A new example must
+declare its expected completion output there or the test fails. The test also
+exchanges `!ping`/`pong` with the running chat bot and checks that a missing
+setting fails before connecting.
 
 `TeamSpeakContainer` uses official images pinned by version and manifest digest:
 
@@ -39,8 +46,11 @@ addresses from query flood protection; never reuse this configuration for a
 persistent or publicly accessible server. Do not enable reuse or disable Ryuk.
 Try/finally cleanup stops servers after failures; Ryuk handles JVM termination.
 
-Readiness repeatedly authenticates and successfully executes `version` and
-`use sid=1` over SSH, plus login/version/selection over TS3 raw. The retry delay
+Readiness first waits for the server to log that the fixture allowlist is active;
+TS3 starts accepting queries a few seconds earlier, and connections in that window
+count against flood protection, which intermittently blocked later queries from
+the Docker gateway address. It then repeatedly authenticates and successfully
+executes `version` and `use sid=1` over SSH, plus login/version/selection over TS3 raw. The retry delay
 backs off failed probes; an open port or an unconditional startup sleep does not
 establish readiness. SSH host trust is bootstrapped only from the freshly created
 fixture. Normal library connections pin that key in memory. TOFU security tests
@@ -56,7 +66,8 @@ RSA host key. The readiness client records server SSH banners, negotiated crypto
 and the query greeting before any transport/API redesign. Reports under
 `target/compatibility/` and Failsafe reports record exact server version/build,
 image digest and daemon architecture. CI uploads them even on failure. Generated
-server credentials are redacted from container startup diagnostics.
+server credentials (passwords, privilege keys and API keys) are redacted from
+container startup diagnostics.
 
 ## CI and scheduled revalidation
 

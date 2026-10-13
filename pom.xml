@@ -133,6 +133,21 @@
 	</dependencies>
 
 	<build>
+		<pluginManagement>
+			<plugins>
+				<!-- Forks a JVM on the test classpath for the dev-server and example profiles. -->
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>exec-maven-plugin</artifactId>
+					<version>3.6.4</version>
+					<configuration>
+						<executable>${java.home}/bin/java</executable>
+						<classpathScope>test</classpathScope>
+						<inheritIo>true</inheritIo>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -204,7 +219,7 @@
 						<includes>
 							<include>src/main/java/**/*.java</include>
 							<include>src/test/java/**/*.java</include>
-							<include>example/**/*.java</include>
+							<include>src/example/java/**/*.java</include>
 							<include>src/test/api-fixtures/**/*.java</include>
 							<include>src/test/consumers/**/*.java</include>
 						</includes>
@@ -236,6 +251,26 @@
 						<goals>
 							<goal>check</goal>
 						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<!-- Compiles the examples with the tests, so every build catches API drift; they are never packaged. -->
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>3.6.1</version>
+				<executions>
+					<execution>
+						<id>add-example-sources</id>
+						<phase>generate-test-sources</phase>
+						<goals>
+							<goal>add-test-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<source>src/example/java</source>
+							</sources>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
@@ -597,18 +632,38 @@
 					<plugin>
 						<groupId>org.codehaus.mojo</groupId>
 						<artifactId>exec-maven-plugin</artifactId>
-						<version>3.6.4</version>
 						<configuration>
-							<executable>${java.home}/bin/java</executable>
-							<classpathScope>test</classpathScope>
-							<inheritIo>true</inheritIo>
 							<arguments>
 								<argument>-classpath</argument>
 								<classpath />
 								<argument>com.github.theholywaffle.teamspeak3.DevelopmentServer</argument>
 								<argument>${dev.server}</argument>
 								<argument>${dev.once}</argument>
-								</arguments>
+							</arguments>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<!-- Runs one compiled example in a forked JVM; connection settings come from TS3_* environment variables. -->
+		<profile>
+			<id>example</id>
+			<properties>
+				<example>ClientInfoExample</example>
+			</properties>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>exec-maven-plugin</artifactId>
+						<configuration>
+							<arguments>
+								<!-- SSHJ logs connection details at INFO and a harmless warning when the server closes the channel. -->
+								<argument>-Dorg.slf4j.simpleLogger.log.net.schmizz=error</argument>
+								<argument>-classpath</argument>
+								<classpath />
+								<argument>com.github.theholywaffle.teamspeak3.example.${example}</argument>
+							</arguments>
 						</configuration>
 					</plugin>
 				</plugins>

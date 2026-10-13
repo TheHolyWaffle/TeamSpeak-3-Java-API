@@ -64,10 +64,12 @@ rotation requires a reviewed update to the trust file or pin.
 
 Container readiness bootstraps a key only from the freshly created disposable
 fixture, then supplies an in-memory pin to the library. Dedicated TOFU tests
-use JUnit temporary files. The development launcher uses the same pin: neither
-flow changes `user.home` or writes trust under the developer's home directory.
-SSH shutdown joins its transport reader separately from the query-owned
-initialization caller; the launcher needs no temporary trust workspace.
+use JUnit temporary files. The development launcher pins the same key for its own
+smoke test and, for examples run from another terminal, writes that single key to a
+session-scoped `target/dev-server/<container-id>/known_hosts` file, removed when the
+launcher stops. No flow changes `user.home` or writes trust under the developer's
+home directory. SSH shutdown joins its transport reader separately from the
+query-owned initialization caller.
 
 Configuration `toString()` excludes both username and password, including the
 builder. Communications logging remains an explicit opt-in and can expose

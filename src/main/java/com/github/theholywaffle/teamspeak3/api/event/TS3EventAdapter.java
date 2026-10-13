@@ -29,7 +29,7 @@ package com.github.theholywaffle.teamspeak3.api.event;
 /**
  * A template class implementing {@link TS3Listener} similar to Swing's event adapters.
  * <p>
- * All method in this class do nothing, so the user only has to override the interface
+ * All methods in this class do nothing, so the user only has to override the interface
  * methods for the events they want to take action on.
  * </p>
  */

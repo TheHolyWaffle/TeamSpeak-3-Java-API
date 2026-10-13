@@ -47,6 +47,11 @@ public enum ChannelProperty implements Property {
     CHANNEL_FLAG_SEMI_PERMANENT(true),
     CHANNEL_FLAG_TEMPORARY(true),
     CHANNEL_FORCED_SILENCE(false),
+    /**
+     * The unsigned icon ID shown for this channel. TS3 3.13 rejects this property in edits; assign an icon
+     * through the {@code i_icon_id} permission instead, for example
+     * {@code permissions().add(PermissionTarget.channel(channelId), "i_icon_id", (int) iconId)}.
+     */
     CHANNEL_ICON_ID(true),
     CHANNEL_MAXCLIENTS(true),
     CHANNEL_MAXFAMILYCLIENTS(true),
