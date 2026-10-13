@@ -1,0 +1,23 @@
+.github/workflows/upstream-updates.yml
+  s_ba4f2e5e310bfe::t_ae0499eace1b17 7
+README.md
+  s_ba4f2e5e310bfe::t_4089be81569d52 34-35
+src/test/resources/teamspeak3/Dockerfile
+  s_ba4f2e5e310bfe::t_778c61d9be0fe1 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bdcb30782b2b513a6f0ae57976a74ceacdaad069",
+  "prompts": {},
+  "sessions": {
+    "s_ba4f2e5e310bfe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2adad55e-4bba-4de8-8b8f-dca91fe79778",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
