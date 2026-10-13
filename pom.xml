@@ -651,6 +651,8 @@
 							<classpathScope>test</classpathScope>
 							<inheritIo>true</inheritIo>
 							<arguments>
+								<!-- SSHJ logs connection details at INFO and a harmless warning when the server closes the channel. -->
+								<argument>-Dorg.slf4j.simpleLogger.log.net.schmizz=error</argument>
 								<argument>-classpath</argument>
 								<classpath />
 								<argument>com.github.theholywaffle.teamspeak3.example.${example}</argument>
