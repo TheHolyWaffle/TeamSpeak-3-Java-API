@@ -1,0 +1,27 @@
+name: Dependency scan
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: '41 5 * * 1' # Weekly: new advisories can affect unchanged dependencies.
+
+permissions:
+  contents: read
+
+jobs:
+  osv:
+    name: OSV dependency scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Resolves the transitive Maven graph of pom.xml (runtime and test scopes); fails on any known vulnerability.
+      - name: Scan resolved Maven dependencies
+        uses: google/osv-scanner-action/osv-scanner-action@a345acffa64b0eaede81a3d9aae6141214d9c8fc # v2.6.0
+        with:
+          scan-args: |-
+            --lockfile=pom.xml
+            --all-vulns
