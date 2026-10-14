@@ -1,0 +1,23 @@
+docs/packaging.md
+  s_f73a8090e341b1::t_9f0e5594eedbab 119-121
+src/test/consumers/maven/src/main/java/consumer/ConsumerApp.java
+  s_f73a8090e341b1::t_4531891b33d2ad 5-6,13,20,32-34,65,118-158
+src/test/consumers/maven/src/main/java/module-info.java
+  s_f73a8090e341b1::t_b5100713b2db78 6-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e04326a0f9133aac395e35d4d65a4b7b6a9c9ff1",
+  "prompts": {},
+  "sessions": {
+    "s_f73a8090e341b1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_f73a8090e341b1",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
