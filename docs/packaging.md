@@ -116,7 +116,9 @@ every signature and that a bundle missing its sources is rejected. See
   allows the library from the staging repository.
 
 Both run the same program. It connects over RAW to a loopback ServerQuery peer and reads
-a typed `version` response. It then attempts SSH against a non-SSH peer, which must fail
+a typed `version` response, and sends a Web Query request to a loopback HTTP peer, checking
+the API key header and the typed JSON result. The module-path consumer declares
+`requires java.net.http`, which modular applications using `TS3WebQuery` need. It then attempts SSH against a non-SSH peer, which must fail
 with `TS3ConnectionFailedException` after SSHJ has registered the runtime-scoped Bouncy
 Castle provider. It checks that exactly the application's chosen SLF4J provider is
 present and that the library's communication log reached it. The script then requires
