@@ -36,7 +36,6 @@ import com.github.theholywaffle.teamspeak3.commands.Command;
 import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Condition;
@@ -45,7 +44,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 class CommandQueue {
 
-    private static final CompletionStage<?> NO_ASYNC_WORK = CompletableFuture.completedStage(null);
     private static final Set<String> SESSION_COMMANDS =
             Set.of("login", "logout", "use", "clientupdate", "servernotifyregister", "servernotifyunregister");
 
@@ -105,7 +103,7 @@ class CommandQueue {
         unlimitedInFlightCommands = unlimited;
         contextSealed = global && query.getConfig().getSessionConfiguration() != null && !unlimited;
 
-        asyncApi = new TS3ApiAsync(query, this);
+        asyncApi = new TS3ApiAsync(new ServerQueryBackend(query, this));
         api = new TS3Api(asyncApi);
     }
 
@@ -119,10 +117,6 @@ class CommandQueue {
 
     boolean isGlobal() {
         return isGlobal;
-    }
-
-    void enqueueCommand(Command command) {
-        enqueueCommand(command, NO_ASYNC_WORK);
     }
 
     void enqueueCommand(Command command, CompletionStage<?> work) {

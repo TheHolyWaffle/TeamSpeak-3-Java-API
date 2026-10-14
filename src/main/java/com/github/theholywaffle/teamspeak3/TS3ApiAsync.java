@@ -79,8 +79,8 @@ public class TS3ApiAsync {
     private final ServerGroupApiAsync serverGroups;
     private final VirtualServerApiAsync servers;
 
-    TS3ApiAsync(TS3Query query, CommandQueue commandQueue) {
-        requests = new QueryRequests(query, commandQueue);
+    TS3ApiAsync(QueryBackend backend) {
+        requests = new QueryRequests(backend);
         bans = new BanApiAsync(requests);
         channels = new ChannelApiAsync(requests);
         channelGroups = new ChannelGroupApiAsync(requests);

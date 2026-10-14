@@ -15,6 +15,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -26,25 +27,21 @@ final class QueryRequests {
     static final int INVALID_SERVER_ID = 1024;
     static final int FILE_EXISTS = 2050;
 
-    private final TS3Query query;
-    private final CommandQueue queue;
+    private static final CompletionStage<?> NO_ASYNC_WORK = CompletableFuture.completedStage(null);
 
-    QueryRequests(TS3Query query, CommandQueue queue) {
-        this.query = query;
-        this.queue = queue;
+    private final QueryBackend backend;
+
+    QueryRequests(QueryBackend backend) {
+        this.backend = backend;
     }
 
-    TS3Query query() {
-        return query;
-    }
-
-    CommandQueue queue() {
-        return queue;
+    QueryBackend backend() {
+        return backend;
     }
 
     <T> CompletableFuture<T> response(Command command, Function<DefaultArrayResponse, T> fn) {
         CompletableFuture<T> result = CommandFutures.map(command.getFuture(), fn);
-        queue.enqueueCommand(command);
+        backend.enqueue(command, NO_ASYNC_WORK);
         return result;
     }
 
