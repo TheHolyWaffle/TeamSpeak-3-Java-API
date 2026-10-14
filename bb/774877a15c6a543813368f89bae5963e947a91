@@ -1,0 +1,37 @@
+.github/scripts/check-release-workflow.sh
+  s_946b96cdd3f8c4::t_f560f07131d5b5 1-60
+.github/tools/actionlint/go.mod
+  s_946b96cdd3f8c4::t_e0de733390ec21 1-20
+.github/tools/yq/go.sum
+  s_946b96cdd3f8c4::t_dbf6e61dd14d5f 1-74
+.github/workflows/verify.yml
+  s_946b96cdd3f8c4::t_ee188cc34fbe8e 71-77
+.github/workflows/release.yml
+  s_946b96cdd3f8c4::t_aa0af8f1d15b64 113-114,143-157
+.github/tools/yq/go.mod
+  s_946b96cdd3f8c4::t_d3f6a1ae270342 1-40
+.github/scripts/verify-attestations.sh
+  s_946b96cdd3f8c4::t_fe4f5dbedffd50 1-25
+.github/scripts/test-check-release-workflow.sh
+  s_946b96cdd3f8c4::t_c77a7351c700e9 1-40
+.github/tools/actionlint/go.sum
+  s_946b96cdd3f8c4::t_d58da8d4b3e415 1-25
+.github/dependabot.yml
+  s_946b96cdd3f8c4::t_4cbd7b3365d0d6 63-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bb774877a15c6a543813368f89bae5963e947a91",
+  "prompts": {},
+  "sessions": {
+    "s_946b96cdd3f8c4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "09493001-efc7-4912-bd48-cec868b5f761",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
