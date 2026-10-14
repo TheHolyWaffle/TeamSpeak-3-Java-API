@@ -33,16 +33,27 @@ class ExamplesIT {
 
     private static final Path EXAMPLES = Path.of("src/example/java/com/github/theholywaffle/teamspeak3/example");
 
+    /** Runs over HTTP and HTTPS; every other example runs over RAW and SSH. */
+    private static final String WEB_QUERY_EXAMPLE = "WebQueryExample";
+
     /** Output proving each example completed its work; every example must be listed. */
     private static final Map<String, String> COMPLETED = Map.of(
-            "ChatBotExample", "Running. Press Enter",
-            "ClientInfoExample", "Server version: " + TeamSpeakContainer.TS3_VERSION,
-            "CreateChannelExample", "Deleted channel",
-            "EventListenerExample", "Event statistics: ",
-            "FileTransferExample", "Stream download (30 bytes): Hello file transferring world!",
-            "ReconnectExample", "Deleted channels [",
-            "TrollExample", "Waiting for clients to join.",
-            "WebQueryExample", "Events need a RAW or SSH query: ");
+            "ChatBotExample",
+            "Running. Press Enter",
+            "ClientInfoExample",
+            "Server version: " + TeamSpeakContainer.TS3_VERSION,
+            "CreateChannelExample",
+            "Deleted channel",
+            "EventListenerExample",
+            "Event statistics: ",
+            "FileTransferExample",
+            "Stream download (30 bytes): Hello file transferring world!",
+            "ReconnectExample",
+            "Deleted channels [",
+            "TrollExample",
+            "Waiting for clients to join.",
+            WEB_QUERY_EXAMPLE,
+            "Events need a RAW or SSH query: ");
 
     @TempDir
     static Path trust;
@@ -59,7 +70,7 @@ class ExamplesIT {
 
     /** RAW and SSH run the ServerQuery examples; HTTP and HTTPS run the Web Query example. */
     static Map<String, String> environment(String example, String transport) throws IOException {
-        if (!example.equals("WebQueryExample"))
+        if (!example.equals(WEB_QUERY_EXAMPLE))
             return SERVER.exampleEnvironment(Protocol.valueOf(transport), knownHosts);
         return SERVER.webQueryEnvironment(transport.equals("HTTPS"), apiKey, trust.resolve("webquery.pem"));
     }
@@ -75,7 +86,7 @@ class ExamplesIT {
         assertEquals(COMPLETED.keySet(), examples, "Every example needs an expected completion line");
         return examples.stream()
                 .sorted()
-                .flatMap(example -> (example.equals("WebQueryExample")
+                .flatMap(example -> (example.equals(WEB_QUERY_EXAMPLE)
                                 ? Stream.of("HTTP", "HTTPS")
                                 : Stream.of(Protocol.RAW.name(), Protocol.SSH.name()))
                         .map(transport -> Arguments.of(example, transport)));
@@ -116,7 +127,7 @@ class ExamplesIT {
     void missingSettingsFailWithoutConnecting() throws Exception {
         String output = ForkedJvm.runExample("ClientInfoExample", Map.of(), 1);
         assertTrue(output.contains("Set the TS3_HOST environment variable"), output);
-        String web = ForkedJvm.runExample("WebQueryExample", Map.of(), 1);
+        String web = ForkedJvm.runExample(WEB_QUERY_EXAMPLE, Map.of(), 1);
         assertTrue(web.contains("Set the TS3_WEBQUERY_URI environment variable"), web);
     }
 }

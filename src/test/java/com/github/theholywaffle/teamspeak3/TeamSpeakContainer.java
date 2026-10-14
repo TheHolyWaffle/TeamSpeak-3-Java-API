@@ -28,6 +28,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -163,7 +164,7 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer>
             X500Name subject = new X500Name("CN=teamspeak3-api integration fixture");
             Instant now = Instant.now();
             String dockerHost = DockerClientFactory.instance().dockerHostIpAddress();
-            var names = new java.util.LinkedHashSet<GeneralName>(List.of(
+            var names = new LinkedHashSet<GeneralName>(List.of(
                     new GeneralName(GeneralName.dNSName, "localhost"),
                     new GeneralName(GeneralName.iPAddress, "127.0.0.1")));
             names.add(new GeneralName(
@@ -212,10 +213,13 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer>
         return text.toString();
     }
 
+    URI webQueryUri(boolean https) {
+        return URI.create((https ? "https://" : "http://") + getHost() + ":" + getMappedPort(https ? 10443 : 10080));
+    }
+
     /** @return a Web Query configuration for this fixture; HTTPS trusts only the fixture certificate */
     WebQueryConfig.Builder webQueryConfig(boolean https, String apiKey) {
-        var uri = URI.create((https ? "https://" : "http://") + getHost() + ":" + getMappedPort(https ? 10443 : 10080));
-        var builder = WebQueryConfig.builder(uri, apiKey).setRequestTimeout(Duration.ofSeconds(10));
+        var builder = WebQueryConfig.builder(webQueryUri(https), apiKey).setRequestTimeout(Duration.ofSeconds(10));
         return https ? builder.setSslContext(webQueryTrust) : builder.setPlaintextHttpAllowed(true);
     }
 
@@ -237,9 +241,7 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer>
      */
     Map<String, String> webQueryEnvironment(boolean https, String apiKey, Path certificate) throws IOException {
         var environment = new LinkedHashMap<String, String>();
-        environment.put(
-                "TS3_WEBQUERY_URI",
-                (https ? "https://" : "http://") + getHost() + ":" + getMappedPort(https ? 10443 : 10080));
+        environment.put("TS3_WEBQUERY_URI", webQueryUri(https).toString());
         environment.put("TS3_API_KEY", apiKey);
         if (https) {
             Files.createDirectories(certificate.getParent());

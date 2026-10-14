@@ -86,7 +86,8 @@ class WebQueryConfigTest {
             assertThrows(IllegalArgumentException.class, () -> builder.setRequestTimeout(invalid));
             assertThrows(IllegalArgumentException.class, () -> builder.setCloseTimeout(invalid));
         }
-        assertThrows(NullPointerException.class, () -> builder.setRequestTimeout(null));
+        assertThrows(IllegalArgumentException.class, () -> builder.setRequestTimeout(null));
+        assertThrows(IllegalArgumentException.class, () -> builder.setCloseTimeout(Duration.ofDays(365 * 1000)));
         assertThrows(IllegalArgumentException.class, () -> builder.setRequestCapacity(0));
         assertThrows(NullPointerException.class, () -> builder.setSslContext(null));
     }

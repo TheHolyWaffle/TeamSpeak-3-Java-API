@@ -104,7 +104,11 @@ class WebQueryCompatibilityIT {
     }
 
     static void record(Target target, String domain, List<String> evidence) throws Exception {
-        Path path = Path.of("target", "compatibility", "TS3_WEBQUERY_" + target + "-" + domain + ".txt");
+        record("TS3_WEBQUERY_" + target + "-" + domain, evidence);
+    }
+
+    static void record(String name, List<String> evidence) throws Exception {
+        Path path = Path.of("target", "compatibility", name + ".txt");
         Files.createDirectories(path.getParent());
         Files.write(path, evidence);
     }
@@ -801,9 +805,7 @@ class WebQueryCompatibilityIT {
                 assertFalse(server.isRunning(), "serverprocessstop ends the server process");
             }
         } finally {
-            Path path = Path.of("target", "compatibility", "TS3_WEBQUERY-server-lifecycle.txt");
-            Files.createDirectories(path.getParent());
-            Files.write(path, evidence);
+            record("TS3_WEBQUERY-server-lifecycle", evidence);
         }
     }
 
