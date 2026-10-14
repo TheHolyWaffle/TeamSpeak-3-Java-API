@@ -362,16 +362,15 @@ the workflows as data with [yq](https://github.com/mikefarah/yq) to require:
 - that only the release `publish` job requests `id-token`, `attestations` or `artifact-metadata`
   permissions, with exactly `contents`, `id-token` and `attestations` write, in the `release`
   environment, and that no other workflow uses an attestation action;
-- the step order: stage, `verify-staged-artifacts.sh`, the SHA-pinned attestation of the POM and
-  JARs, `verify-attestations.sh`, then the first JReleaser step;
-- that these steps run under exactly the deployment step's condition, so the upload never runs
-  without them;
-- that verification pins the signer workflow.
+- that the steps with ids `stage`, `staged`, `attest` (the SHA-pinned attestation action),
+  `provenance` and `deploy` run in this order;
+- that these steps share one condition, so the upload never runs without them.
 
-The test then plants one defect per copy of the workflows (attesting or verifying after JReleaser, removing
-verification, a tag-pinned action, a narrower condition, an unattested POM or JAR, extra
-permissions, an attestation in the rehearsal, an undefined input) and requires each to be rejected
-for that reason. [`workflow-tools.sh`](../.github/scripts/workflow-tools.sh) downloads the pinned
+The test then plants one defect per copy of the workflows (attesting or verifying after
+deployment, removing verification, a tag-pinned action, a narrower condition, extra permissions,
+an attestation in the rehearsal, an undefined input) and requires each to be rejected for that
+reason. Which files are attested is checked at release time, when `verify-attestations.sh`
+requires provenance for each of the four staged files. [`workflow-tools.sh`](../.github/scripts/workflow-tools.sh) downloads the pinned
 actionlint and yq release binaries and checks their published SHA-256. To run it locally:
 
 ```sh

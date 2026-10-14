@@ -28,4 +28,4 @@ fetch "https://github.com/rhysd/actionlint/releases/download/v$actionlint/action
   "$dir/actionlint.tar.gz" "$actionlint_sha"
 tar -xzf "$dir/actionlint.tar.gz" -C "$dir" actionlint
 fetch "https://github.com/mikefarah/yq/releases/download/v$yq/yq_${os}_$arch" "$dir/yq" "$yq_sha"
-chmod +x "$dir/actionlint" "$dir/yq"
+chmod +x "$dir/yq"
