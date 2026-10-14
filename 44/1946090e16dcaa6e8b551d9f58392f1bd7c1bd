@@ -1,0 +1,27 @@
+CONTRIBUTING.md
+  s_946b96cdd3f8c4::t_c9147afe114c24 21
+README.md
+  s_946b96cdd3f8c4::t_9b69ca28920525 73-88
+docs/maintenance.md
+  s_946b96cdd3f8c4::t_c9f3f5d014b9a0 42-47,67
+docs/packaging.md
+  s_946b96cdd3f8c4::t_458b8357a7b889 73-74
+docs/releases.md
+  s_946b96cdd3f8c4::t_f60688434ed5d7 160-164,210-212,282-283,288-289,330-414,422-509
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "441946090e16dcaa6e8b551d9f58392f1bd7c1bd",
+  "prompts": {},
+  "sessions": {
+    "s_946b96cdd3f8c4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "09493001-efc7-4912-bd48-cec868b5f761",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
