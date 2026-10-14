@@ -62,6 +62,7 @@ import java.util.Map;
 public class TS3Api {
 
     private final TS3ApiAsync asyncApi;
+    private final ApiKeyApi apiKeys;
     private final BanApi bans;
     private final ChannelApi channels;
     private final ChannelGroupApi channelGroups;
@@ -80,6 +81,7 @@ public class TS3Api {
 
     TS3Api(TS3ApiAsync asyncApi) {
         this.asyncApi = asyncApi;
+        apiKeys = new ApiKeyApi(asyncApi.apiKeys());
         bans = new BanApi(asyncApi.bans());
         channels = new ChannelApi(asyncApi.channels());
         channelGroups = new ChannelGroupApi(asyncApi.channelGroups());
@@ -95,6 +97,11 @@ public class TS3Api {
         queryLogins = new QueryLoginApi(asyncApi.queryLogins());
         serverGroups = new ServerGroupApi(asyncApi.serverGroups());
         servers = new VirtualServerApi(asyncApi.servers());
+    }
+
+    /** @return Web Query API key administration */
+    public ApiKeyApi apiKeys() {
+        return apiKeys;
     }
 
     /** @return ban rule administration */

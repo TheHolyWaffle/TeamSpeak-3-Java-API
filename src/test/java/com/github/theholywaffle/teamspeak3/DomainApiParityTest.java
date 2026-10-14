@@ -20,7 +20,7 @@ class DomainApiParityTest {
         Map<String, Class<?>> sync = accessors(TS3Api.class);
         Map<String, Class<?>> async = accessors(TS3ApiAsync.class);
         assertEquals(sync.keySet(), async.keySet());
-        assertEquals(15, sync.size());
+        assertEquals(16, sync.size());
         sync.forEach((name, type) -> {
             assertEquals(type.getSimpleName() + "Async", async.get(name).getSimpleName(), name);
             assertTrue(

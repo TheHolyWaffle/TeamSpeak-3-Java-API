@@ -63,6 +63,7 @@ import java.util.concurrent.CompletableFuture;
 public class TS3ApiAsync {
 
     private final QueryRequests requests;
+    private final ApiKeyApiAsync apiKeys;
     private final BanApiAsync bans;
     private final ChannelApiAsync channels;
     private final ChannelGroupApiAsync channelGroups;
@@ -81,6 +82,7 @@ public class TS3ApiAsync {
 
     TS3ApiAsync(QueryBackend backend) {
         requests = new QueryRequests(backend);
+        apiKeys = new ApiKeyApiAsync(requests);
         bans = new BanApiAsync(requests);
         channels = new ChannelApiAsync(requests);
         channelGroups = new ChannelGroupApiAsync(requests);
@@ -96,6 +98,11 @@ public class TS3ApiAsync {
         queryLogins = new QueryLoginApiAsync(requests);
         serverGroups = new ServerGroupApiAsync(requests);
         servers = new VirtualServerApiAsync(requests);
+    }
+
+    /** @return asynchronous Web Query API key administration */
+    public ApiKeyApiAsync apiKeys() {
+        return apiKeys;
     }
 
     /** @return ban rule administration */

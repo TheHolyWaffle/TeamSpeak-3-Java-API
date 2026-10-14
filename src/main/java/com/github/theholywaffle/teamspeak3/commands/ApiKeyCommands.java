@@ -1,0 +1,42 @@
+package com.github.theholywaffle.teamspeak3.commands;
+
+import com.github.theholywaffle.teamspeak3.api.ApiKeyScope;
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
+import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
+import java.time.Duration;
+
+public final class ApiKeyCommands {
+
+    private ApiKeyCommands() {
+        throw new Error("No instances");
+    }
+
+    /**
+     * @param lifetime whole days, or {@link Duration#ZERO} for a key that never expires
+     * @param owner the owning client, or {@code null} for the invoker
+     */
+    public static Command apiKeyAdd(ApiKeyScope scope, Duration lifetime, ClientDatabaseId owner) {
+        if (scope == null || scope == ApiKeyScope.UNKNOWN) {
+            throw new IllegalArgumentException("API key scope must be MANAGE, WRITE or READ");
+        }
+        if (lifetime == null || lifetime.isNegative() || !lifetime.equals(Duration.ofDays(lifetime.toDays()))) {
+            throw new IllegalArgumentException("API key lifetime must be whole days, or zero for no expiry");
+        }
+        return new CommandBuilder("apikeyadd")
+                .add(new KeyValueParam("scope", scope.getName()))
+                .add(new KeyValueParam("lifetime", lifetime.toDays()))
+                .addIf(owner != null, new KeyValueParam("cldbid", String.valueOf(owner)))
+                .build();
+    }
+
+    /** @param owner the owning client, {@code "*"} for all clients, or {@code null} for the invoker */
+    public static Command apiKeyList(String owner) {
+        return new CommandBuilder("apikeylist")
+                .addIf(owner != null, new KeyValueParam("cldbid", owner))
+                .build();
+    }
+
+    public static Command apiKeyDelete(int id) {
+        return new CommandBuilder("apikeydel").add(new KeyValueParam("id", id)).build();
+    }
+}
