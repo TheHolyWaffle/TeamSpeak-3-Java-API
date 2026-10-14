@@ -1,0 +1,23 @@
+docs/quality-checks.md
+  s_5166caa733fa70::t_e5b44c36ce18f8 62-63
+pom.xml
+  s_5166caa733fa70::t_c45f1412331feb 444-448
+src/test/java/com/github/theholywaffle/teamspeak3/WebQueryCompatibilityIT.java
+  s_5166caa733fa70::t_0b9acf3201aa8a 213-218,331-339,361-364,641
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8f5f92bd66f10761de6049b4655b7d5ddcd85f78",
+  "prompts": {},
+  "sessions": {
+    "s_5166caa733fa70": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_5166caa733fa70",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
