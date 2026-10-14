@@ -1,0 +1,18 @@
+LICENSE
+  h_b0b95817cb397c 1
+build.gradle.kts
+  h_b0b95817cb397c 69-72
+docs/quality-checks.md
+  h_b0b95817cb397c 25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "78e73775b743f799b6e192d0331c91142d70101f",
+  "prompts": {},
+  "humans": {
+    "h_b0b95817cb397c": {
+      "author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
