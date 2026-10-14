@@ -1,0 +1,17 @@
+// Version updates for everything the build pins. See docs/maintenance.md.
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: ['config:recommended', ':semanticCommits', ':automergeMinor', ':automergeDigest'],
+  // config:recommended skips test directories; the consumers and the TS3 image live under src/test.
+  ignorePaths: [],
+  // Broken or withdrawn releases are usually caught upstream within a week.
+  minimumReleaseAge: '7 days',
+  packageRules: [
+    {
+      // Major updates of test-scoped dependencies and build plugins merge too; others need review.
+      matchManagers: ['maven'],
+      matchDepTypes: ['test', 'build'],
+      automerge: true,
+    },
+  ],
+}

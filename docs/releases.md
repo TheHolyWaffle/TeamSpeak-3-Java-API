@@ -89,7 +89,7 @@ whose API change needs a larger impact than its title or `BREAKING CHANGE:` foot
 and `verify` checks the pending version against the published 1.3.1 API; see
 [API compatibility](quality-checks.md#api-compatibility) and its limits. The same job requires a
 releasing title when the resolved runtime dependencies change and rejects `deps:` when they do not,
-so build-only updates use `build:`. Dependabot PRs pass through these same checks; see
+so build-only updates use `build:`. Renovate PRs pass through these same checks; see
 [dependency and image maintenance](maintenance.md#release-intent).
 
 ## Prepare a release PR
