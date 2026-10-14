@@ -34,10 +34,6 @@ public final class WebQueryConfig {
         requestCapacity = builder.requestCapacity;
         sslContext = builder.sslContext;
         plaintextHttpAllowed = builder.plaintextHttpAllowed;
-        if (baseUri.getScheme().equals("http") && !plaintextHttpAllowed) {
-            throw new IllegalArgumentException(
-                    "Plaintext HTTP exposes the API key; use https or call setPlaintextHttpAllowed(true)");
-        }
     }
 
     /**
@@ -137,32 +133,32 @@ public final class WebQueryConfig {
 
         /**
          * Sets the TCP and TLS connection deadline. Defaults to four seconds.
-         * @param value positive duration
+         * @param value positive, finite duration
          * @return this builder
          */
         public Builder setConnectTimeout(Duration value) {
-            connectTimeout = positive(value);
+            connectTimeout = TS3Config.timeout(value);
             return this;
         }
 
         /**
          * Sets the deadline from sending a request until its response is complete. Defaults to four seconds.
          * An expired request may still have executed on the server.
-         * @param value positive duration
+         * @param value positive, finite duration
          * @return this builder
          */
         public Builder setRequestTimeout(Duration value) {
-            requestTimeout = positive(value);
+            requestTimeout = TS3Config.timeout(value);
             return this;
         }
 
         /**
          * Sets the shutdown budget for aborting requests and terminating workers. Defaults to four seconds.
-         * @param value positive duration
+         * @param value positive, finite duration
          * @return this builder
          */
         public Builder setCloseTimeout(Duration value) {
-            closeTimeout = positive(value);
+            closeTimeout = TS3Config.timeout(value);
             return this;
         }
 
@@ -205,18 +201,16 @@ public final class WebQueryConfig {
          * @throws IllegalArgumentException if the base URI uses {@code http} and plaintext is not allowed
          */
         public WebQueryConfig build() {
+            if (baseUri.getScheme().equals("http") && !plaintextHttpAllowed) {
+                throw new IllegalArgumentException(
+                        "Plaintext HTTP exposes the API key; use https or call setPlaintextHttpAllowed(true)");
+            }
             return new WebQueryConfig(this);
         }
 
         @Override
         public String toString() {
             return "WebQueryConfig.Builder[baseUri=" + baseUri + "]";
-        }
-
-        private static Duration positive(Duration value) {
-            Objects.requireNonNull(value, "value");
-            if (value.isNegative() || value.isZero()) throw new IllegalArgumentException("Duration must be positive");
-            return value;
         }
     }
 }

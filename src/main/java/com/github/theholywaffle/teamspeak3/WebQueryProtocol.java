@@ -9,10 +9,10 @@ import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 import java.net.URI;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
+import java.util.regex.Pattern;
 
 /**
  * Translates between ServerQuery commands and the TS3 Web Query HTTP/JSON format documented in the
@@ -21,6 +21,9 @@ import java.util.StringJoiner;
 final class WebQueryProtocol {
 
     static final String API_KEY_HEADER = "x-api-key";
+    static final String NO_EVENTS = "Web Query has no notification stream; use a RAW or SSH TS3Query for events";
+    static final String NO_FILES = "Web Query does not support file commands or transfers; use a RAW or SSH TS3Query";
+    private static final Pattern ERROR_ID = Pattern.compile("\\d{1,9}");
 
     private WebQueryProtocol() {}
 
@@ -32,13 +35,9 @@ final class WebQueryProtocol {
                         + " or getApiByPort(int)";
             case "login", "logout" -> "Web Query authenticates every request with its API key";
             case "quit" -> "Web Query has no session to quit; close the TS3WebQuery";
-            case "servernotifyregister", "servernotifyunregister" ->
-                "Web Query has no notification stream; use a RAW or SSH TS3Query for events";
+            case "servernotifyregister", "servernotifyunregister" -> NO_EVENTS;
             case "help" -> "Web Query does not serve command help";
-            default ->
-                commandName.startsWith("ft")
-                        ? "Web Query does not support file commands; use a RAW or SSH TS3Query"
-                        : null;
+            default -> commandName.startsWith("ft") ? NO_FILES : null;
         };
         return Optional.ofNullable(reason).map(text -> commandName + " is unsupported: " + text);
     }
@@ -101,14 +100,13 @@ final class WebQueryProtocol {
         } catch (IllegalArgumentException e) {
             throw new TS3HttpException(commandName, httpStatus, "the body is not JSON", e);
         }
+        Map<String, WebQueryJson.Value> response;
         QueryError error;
-        List<Map<String, String>> rows;
         try {
-            Map<String, WebQueryJson.Value> response = root.members("response");
+            response = root.members("response");
             error = status(response.get("status"));
-            rows = error.isSuccessful() ? rows(response.get("body")) : List.of();
         } catch (IllegalArgumentException e) {
-            throw new TS3HttpException(commandName, httpStatus, "the JSON lacks a valid status or body", e);
+            throw new TS3HttpException(commandName, httpStatus, "the JSON lacks a valid status", e);
         }
         if (!error.isSuccessful()) {
             if (httpStatus == 401 || httpStatus == 403) throw new TS3AuthenticationFailedException(error, commandName);
@@ -117,13 +115,11 @@ final class WebQueryProtocol {
         if (httpStatus / 100 != 2) {
             throw new TS3HttpException(commandName, httpStatus, "a successful status with an HTTP error", null);
         }
-        var raw = new StringJoiner("|");
-        for (Map<String, String> row : rows) {
-            var fields = new StringJoiner(" ");
-            row.forEach((key, value) -> fields.add(CommandEncoding.encode(key) + "=" + CommandEncoding.encode(value)));
-            raw.add(fields.toString());
+        try {
+            return DefaultArrayResponse.parse(encodedRows(response.get("body")));
+        } catch (IllegalArgumentException e) {
+            throw new TS3HttpException(commandName, httpStatus, "the JSON body is not a list of rows", e);
         }
-        return DefaultArrayResponse.parse(raw.toString());
     }
 
     private static QueryError status(WebQueryJson.Value value) {
@@ -139,19 +135,24 @@ final class WebQueryProtocol {
             error.put(name, member.text("status " + key));
         });
         String id = error.get("id");
-        if (id == null || !id.matches("\\d{1,9}")) throw new IllegalArgumentException("Status code is not a number");
+        if (id == null || !ERROR_ID.matcher(id).matches()) {
+            throw new IllegalArgumentException("Status code is not a number");
+        }
         error.putIfAbsent("msg", "");
         return new QueryError(error);
     }
 
-    private static List<Map<String, String>> rows(WebQueryJson.Value body) {
-        if (body == null) return List.of();
-        return body.elements("body").stream()
-                .map(row -> {
-                    Map<String, String> fields = new LinkedHashMap<>();
-                    row.members("row").forEach((key, value) -> fields.put(key, value.text(key)));
-                    return fields;
-                })
-                .toList();
+    /** @return the body rows in ServerQuery response encoding */
+    private static String encodedRows(WebQueryJson.Value body) {
+        if (body == null) return "";
+        var rows = new StringJoiner("|");
+        for (WebQueryJson.Value row : body.elements("body")) {
+            var fields = new StringJoiner(" ");
+            row.members("row")
+                    .forEach((key, value) ->
+                            fields.add(CommandEncoding.encode(key) + "=" + CommandEncoding.encode(value.text(key))));
+            rows.add(fields.toString());
+        }
+        return rows.toString();
     }
 }

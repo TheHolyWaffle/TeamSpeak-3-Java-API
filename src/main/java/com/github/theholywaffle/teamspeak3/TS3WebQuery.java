@@ -166,23 +166,35 @@ public final class TS3WebQuery implements AutoCloseable {
             result.completeExceptionally(new TS3UnsupportedOperationException(unsupported.get()));
             return;
         }
-        HttpRequest request = HttpRequest.newBuilder(
-                        WebQueryProtocol.target(config.getBaseUri(), scope, command.getName()))
-                .timeout(config.getRequestTimeout())
-                .header(WebQueryProtocol.API_KEY_HEADER, config.apiKey())
-                .header("Content-Type", "application/json")
-                .header("Accept", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(WebQueryProtocol.body(command), StandardCharsets.UTF_8))
-                .build();
+        // Reject before encoding the body: a full or closed client should stay cheap.
+        if (closed) {
+            result.completeExceptionally(new TS3QueryShutDownException("The Web Query client is closed"));
+            return;
+        }
+        if (!admission.tryAcquire()) {
+            result.completeExceptionally(new TS3QueueFullException());
+            return;
+        }
+        HttpRequest request;
+        try {
+            request = HttpRequest.newBuilder(WebQueryProtocol.target(config.getBaseUri(), scope, command.getName()))
+                    .timeout(config.getRequestTimeout())
+                    .header(WebQueryProtocol.API_KEY_HEADER, config.apiKey())
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(WebQueryProtocol.body(command), StandardCharsets.UTF_8))
+                    .build();
+        } catch (RuntimeException e) {
+            admission.release();
+            result.completeExceptionally(e);
+            return;
+        }
         CompletableFuture<HttpResponse<String>> exchange;
         long requestId;
         synchronized (lock) {
             if (closed) {
+                admission.release();
                 result.completeExceptionally(new TS3QueryShutDownException("The Web Query client is closed"));
-                return;
-            }
-            if (!admission.tryAcquire()) {
-                result.completeExceptionally(new TS3QueueFullException());
                 return;
             }
             exchange = http.sendAsync(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));

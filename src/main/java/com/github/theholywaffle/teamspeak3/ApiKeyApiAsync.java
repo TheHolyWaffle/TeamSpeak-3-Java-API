@@ -41,12 +41,12 @@ public final class ApiKeyApiAsync {
     /** @see ApiKeyApi#list(ClientDatabaseId) */
     public CompletableFuture<List<ApiKey>> list(ClientDatabaseId owner) {
         Objects.requireNonNull(owner, "owner");
-        return requests.models(ApiKeyCommands.apiKeyList(owner.toString()), ApiKey::new);
+        return requests.models(ApiKeyCommands.apiKeyList(owner), ApiKey::new);
     }
 
     /** @see ApiKeyApi#listAll() */
     public CompletableFuture<List<ApiKey>> listAll() {
-        return requests.models(ApiKeyCommands.apiKeyList("*"), ApiKey::new);
+        return requests.models(ApiKeyCommands.apiKeyListAll(), ApiKey::new);
     }
 
     /** @see ApiKeyApi#delete(int) */

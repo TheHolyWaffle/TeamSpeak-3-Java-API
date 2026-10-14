@@ -29,10 +29,16 @@ public final class ApiKeyCommands {
                 .build();
     }
 
-    /** @param owner the owning client, {@code "*"} for all clients, or {@code null} for the invoker */
-    public static Command apiKeyList(String owner) {
+    /** @param owner the owning client, or {@code null} for the invoker */
+    public static Command apiKeyList(ClientDatabaseId owner) {
         return new CommandBuilder("apikeylist")
-                .addIf(owner != null, new KeyValueParam("cldbid", owner))
+                .addIf(owner != null, new KeyValueParam("cldbid", String.valueOf(owner)))
+                .build();
+    }
+
+    public static Command apiKeyListAll() {
+        return new CommandBuilder("apikeylist")
+                .add(new KeyValueParam("cldbid", "*"))
                 .build();
     }
 

@@ -20,6 +20,7 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -64,8 +65,7 @@ public final class ExampleSettings {
                             case "unlimited" -> FloodRate.UNLIMITED;
                             default -> throw unsupported("TS3_FLOOD_RATE");
                         })
-                .setEnableCommunicationsLogging(Boolean.parseBoolean(
-                        optional("TS3_COMMUNICATIONS_LOGGING").orElse("false")));
+                .setEnableCommunicationsLogging(flag("TS3_COMMUNICATIONS_LOGGING"));
         optional("TS3_QUERY_PORT").ifPresent(port -> config.setQueryPort(port("TS3_QUERY_PORT")));
         optional("TS3_SSH_KNOWN_HOSTS")
                 .ifPresent(file -> config.setSshHostKeyPolicy(SshHostKeyPolicy.knownHosts(Path.of(file))));
@@ -104,22 +104,22 @@ public final class ExampleSettings {
             throw unsupported("TS3_WEBQUERY_URI");
         }
         WebQueryConfig.Builder builder = WebQueryConfig.builder(uri, required("TS3_API_KEY"))
-                .setPlaintextHttpAllowed(
-                        Boolean.parseBoolean(optional("TS3_WEBQUERY_PLAINTEXT").orElse("false")));
+                .setPlaintextHttpAllowed(flag("TS3_WEBQUERY_PLAINTEXT"));
         optional("TS3_WEBQUERY_CERTIFICATE").ifPresent(file -> builder.setSslContext(trusting(Path.of(file))));
         return builder.build();
     }
 
-    private static SSLContext trusting(Path certificates) {
-        try (InputStream in = Files.newInputStream(certificates)) {
+    private static SSLContext trusting(Path file) {
+        try (InputStream in = Files.newInputStream(file)) {
             KeyStore trust = KeyStore.getInstance(KeyStore.getDefaultType());
             trust.load(null, null);
-            int index = 0;
-            for (Certificate certificate :
-                    CertificateFactory.getInstance("X.509").generateCertificates(in)) {
-                trust.setCertificateEntry("certificate-" + index++, certificate);
+            List<? extends Certificate> certificates =
+                    List.copyOf(CertificateFactory.getInstance("X.509").generateCertificates(in));
+            if (certificates.isEmpty())
+                throw new IllegalArgumentException("TS3_WEBQUERY_CERTIFICATE contains no certificate");
+            for (int i = 0; i < certificates.size(); i++) {
+                trust.setCertificateEntry("certificate-" + i, certificates.get(i));
             }
-            if (index == 0) throw new IllegalArgumentException("TS3_WEBQUERY_CERTIFICATE contains no certificate");
             TrustManagerFactory managers = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             managers.init(trust);
             SSLContext context = SSLContext.getInstance("TLS");
@@ -163,6 +163,10 @@ public final class ExampleSettings {
 
     private Optional<String> optional(String name) {
         return Optional.ofNullable(environment.get(name)).filter(value -> !value.isBlank());
+    }
+
+    private boolean flag(String name) {
+        return Boolean.parseBoolean(optional(name).orElse("false"));
     }
 
     private String lowerCase(String name, String fallback) {

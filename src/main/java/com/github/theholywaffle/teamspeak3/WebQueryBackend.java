@@ -17,13 +17,11 @@ record WebQueryBackend(TS3WebQuery query, String scope) implements QueryBackend 
 
     @Override
     public EventSubscription subscribe(TS3Listener listener) {
-        throw new TS3UnsupportedOperationException(
-                "Web Query has no notification stream; use a RAW or SSH TS3Query for events");
+        throw new TS3UnsupportedOperationException(WebQueryProtocol.NO_EVENTS);
     }
 
     @Override
     public <T> CompletableFuture<T> withFileTransfers(Function<FileTransfers, CompletableFuture<T>> transfer) {
-        return CompletableFuture.failedFuture(new TS3UnsupportedOperationException(
-                "Web Query does not support file transfers; use a RAW or SSH TS3Query"));
+        return CompletableFuture.failedFuture(new TS3UnsupportedOperationException(WebQueryProtocol.NO_FILES));
     }
 }
