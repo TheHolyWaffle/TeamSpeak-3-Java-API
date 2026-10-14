@@ -1,0 +1,21 @@
+.github/scripts/test-release-workflow.sh
+  s_946b96cdd3f8c4::t_c74142d43a11d9 28
+docs/releases.md
+  s_946b96cdd3f8c4::t_82736dd9039de9 56-59,505-509
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7394554ba0240c3fee6af107aa30d00d6b58557b",
+  "prompts": {},
+  "sessions": {
+    "s_946b96cdd3f8c4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "09493001-efc7-4912-bd48-cec868b5f761",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
