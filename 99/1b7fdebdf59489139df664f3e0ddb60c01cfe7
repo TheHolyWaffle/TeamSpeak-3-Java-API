@@ -1,0 +1,21 @@
+src/main/java/com/github/theholywaffle/teamspeak3/DatabaseClientApiAsync.java
+  s_78d8876e1c15a8::t_93d8e3d691dfd8 39-42
+src/test/java/com/github/theholywaffle/teamspeak3/DomainApiTest.java
+  s_78d8876e1c15a8::t_9133219326d11d 89-104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "991b7fdebdf59489139df664f3e0ddb60c01cfe7",
+  "prompts": {},
+  "sessions": {
+    "s_78d8876e1c15a8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a9b251bb-576c-42c3-affc-72f7b9eb6bfd",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
