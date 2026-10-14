@@ -1,0 +1,140 @@
+.editorconfig
+  h_b0b95817cb397c 11,17
+.gitattributes
+  h_b0b95817cb397c 2
+.github/pull_request_template.md
+  h_b0b95817cb397c 14
+.github/renovate.json5
+  h_b0b95817cb397c 11-38
+.github/scripts/consumer-check.sh
+  h_b0b95817cb397c 3-4,7-8,10-11,26,31-32
+.github/workflows/ci.yml
+  h_b0b95817cb397c 1,5,7,9-10,17,21-47,49-50,61-80,83-88,90-100,102-110,113-115,118-119,121,126,128-139,142-155,187,191,193-194
+.github/workflows/release.yml
+  h_b0b95817cb397c 1,3-5,7-8,18-19,23-25,27-28,30-33,36-38,43-44,49,55-59,61,63-66,72-75,79,81-86,91,94-101,105,107-109
+.gitignore
+  h_b0b95817cb397c 12-14
+CONTRIBUTING.md
+  h_b0b95817cb397c 9-10,14-18,28-29,52,59-62,70-74,85-87,103-104,106
+README.md
+  h_b0b95817cb397c 3,144,155,158,160,167,398,401,404-406,409,414,423-424
+SECURITY.md
+  h_b0b95817cb397c 7
+build.gradle.kts
+  h_b0b95817cb397c 1-375
+docs/additional-command-compatibility.md
+  h_b0b95817cb397c 4,42
+docs/ban-compatibility.md
+  h_b0b95817cb397c 57,79
+docs/channel-configuration-compatibility.md
+  h_b0b95817cb397c 42,81
+docs/client-compatibility.md
+  h_b0b95817cb397c 52,100
+docs/command-compatibility.md
+  h_b0b95817cb397c 16,25,119
+docs/command-coverage-map.md
+  h_b0b95817cb397c 38
+docs/configuration-and-transports.md
+  h_b0b95817cb397c 69,117-118
+docs/development-server.md
+  h_b0b95817cb397c 3,6,9,24,26,28,47,56,77,82-84,86
+docs/events-and-capacity.md
+  h_b0b95817cb397c 75
+docs/file-compatibility.md
+  h_b0b95817cb397c 49,111
+docs/file-transfers.md
+  h_b0b95817cb397c 106
+docs/group-copy-compatibility.md
+  h_b0b95817cb397c 33,80
+docs/integration-tests.md
+  h_b0b95817cb397c 3,7,10-13,65,72-75,86-87,96,101,124
+docs/log-compatibility.md
+  h_b0b95817cb397c 32,45,93
+docs/maintenance.md
+  h_b0b95817cb397c 6,13-14,18-22,25-27,32-34,36-39,43-47,49-52,56-61,66-68
+docs/message-compatibility.md
+  h_b0b95817cb397c 47,105
+docs/migration-2.0.md
+  h_b0b95817cb397c 45
+docs/packaging.md
+  h_b0b95817cb397c 7,10-11,65-69,78,93,96,100-101
+docs/permission-compatibility.md
+  h_b0b95817cb397c 29,132
+docs/privilege-key-compatibility.md
+  h_b0b95817cb397c 40,110
+docs/quality-checks.md
+  h_b0b95817cb397c 3-4,8-12,14,16-17,23-24,27,29-31,49,53-55,94-96,101,105,109,118,126-127,132-141,153-154,158-160
+docs/query-login-compatibility.md
+  h_b0b95817cb397c 50,88
+docs/reconnect-and-retry.md
+  h_b0b95817cb397c 122
+docs/releases.md
+  h_b0b95817cb397c 3,5-12,16-20,29-96,105-115,119-120,122,124-129,131-132,147,149-155
+docs/server-compatibility.md
+  h_b0b95817cb397c 46,129
+docs/server-lifecycle-compatibility.md
+  h_b0b95817cb397c 49,90
+docs/server-snapshot-compatibility.md
+  h_b0b95817cb397c 9,20
+docs/web-query.md
+  h_b0b95817cb397c 198,207
+gradle.properties
+  h_b0b95817cb397c 1-5
+gradle/libs.versions.toml
+  h_b0b95817cb397c 1-31
+gradle/wrapper/gradle-wrapper.properties
+  h_b0b95817cb397c 1-3,5-10
+gradlew
+  h_b0b95817cb397c 1-248
+gradlew.bat
+  h_b0b95817cb397c 1-112
+jreleaser.yml
+  h_b0b95817cb397c 1-2,12-15,20-21,26,35,38
+release-please-config.json
+  h_b0b95817cb397c 8-11
+settings.gradle.kts
+  h_b0b95817cb397c 1,3-6,8-22
+src/test/consumers/gradle/build.gradle.kts
+  h_b0b95817cb397c 6-7
+src/test/java/com/github/theholywaffle/teamspeak3/DevelopmentServer.java
+  h_b0b95817cb397c 20,40,73
+src/test/java/com/github/theholywaffle/teamspeak3/DevelopmentServerIT.java
+  h_b0b95817cb397c 79
+src/test/java/com/github/theholywaffle/teamspeak3/DocumentationTest.java
+  h_b0b95817cb397c 110-111
+src/test/java/com/github/theholywaffle/teamspeak3/DomainApiCompatibilityIT.java
+  h_b0b95817cb397c 207
+src/test/java/com/github/theholywaffle/teamspeak3/FileContentCompatibilityIT.java
+  h_b0b95817cb397c 159
+src/test/java/com/github/theholywaffle/teamspeak3/FileTransferCompatibilityIT.java
+  h_b0b95817cb397c 263
+src/test/java/com/github/theholywaffle/teamspeak3/LogWriteCompatibilityIT.java
+  h_b0b95817cb397c 85
+src/test/java/com/github/theholywaffle/teamspeak3/ModelCompatibilityIT.java
+  h_b0b95817cb397c 243
+src/test/java/com/github/theholywaffle/teamspeak3/PermissionModesCompatibilityIT.java
+  h_b0b95817cb397c 150
+src/test/java/com/github/theholywaffle/teamspeak3/ServerModesCompatibilityIT.java
+  h_b0b95817cb397c 66,88
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryCompatibilityIT.java
+  h_b0b95817cb397c 273,424,606,701,849,1040,1204,1383,1562,1701,1772,1867,2054,2304
+src/test/java/com/github/theholywaffle/teamspeak3/ServerSnapshotCompatibilityIT.java
+  h_b0b95817cb397c 108
+src/test/java/com/github/theholywaffle/teamspeak3/SessionCommandsCompatibilityIT.java
+  h_b0b95817cb397c 42
+src/test/java/com/github/theholywaffle/teamspeak3/TeamSpeakContainer.java
+  h_b0b95817cb397c 378
+src/test/java/com/github/theholywaffle/teamspeak3/WebQueryCompatibilityIT.java
+  h_b0b95817cb397c 112
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6138b3008dc896654a41d82bf2071fb9051f4cf5",
+  "prompts": {},
+  "humans": {
+    "h_b0b95817cb397c": {
+      "author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
