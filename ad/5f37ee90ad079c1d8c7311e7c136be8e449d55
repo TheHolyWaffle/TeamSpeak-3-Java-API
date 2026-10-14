@@ -1,0 +1,21 @@
+.github/workflows/maven.yml
+  s_946b96cdd3f8c4::t_9612e34820afae 63,66,70,85-87,90
+.github/workflows/release.yml
+  s_946b96cdd3f8c4::t_aa0af8f1d15b64 89
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ad5f37ee90ad079c1d8c7311e7c136be8e449d55",
+  "prompts": {},
+  "sessions": {
+    "s_946b96cdd3f8c4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "09493001-efc7-4912-bd48-cec868b5f761",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
