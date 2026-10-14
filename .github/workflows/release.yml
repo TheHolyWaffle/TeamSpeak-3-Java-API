@@ -86,7 +86,7 @@ jobs:
           # Never repeat a completed GitHub release (or overwrite its artifacts).
           gh api "repos/$REPOSITORY/releases" --paginate \
             --jq '.[].tag_name' > target-releases.txt
-          ! grep -Fxq "$RELEASE_TAG" target-releases.txt
+          if grep -Fxq "$RELEASE_TAG" target-releases.txt; then exit 1; fi
           echo "commit=$RELEASE_COMMIT" >> "$GITHUB_OUTPUT"
       - name: Validate approved version and extract release-specific notes unchanged
         env:
@@ -110,6 +110,8 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: write # JReleaser alone creates the version tag and GitHub release.
+      id-token: write # Sigstore signing certificate for the provenance attestation.
+      attestations: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -133,12 +135,32 @@ jobs:
             -Dexpression=project.version -Doutput=target/release-version.txt
           bash .github/scripts/release-metadata.sh "$(cat target/release-version.txt)" "$RELEASE_TAG"
       - name: Package the normal library into a local repository
+        id: stage
         if: ${{ inputs.action != 'finish-github' }}
         run: ./mvnw -B -ntp -Pcentral-staging deploy
       - name: Verify the staged artifacts carry the approved version
+        id: staged
         if: ${{ inputs.action != 'finish-github' }}
         run: bash .github/scripts/verify-staged-artifacts.sh "$(cat target/release-version.txt)"
+      - name: Attest build provenance of the staged artifacts
+        id: attest
+        if: ${{ inputs.action != 'finish-github' }}
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            target/staging-deploy/com/github/theholywaffle/teamspeak3-api/*/teamspeak3-api-*.pom
+            target/staging-deploy/com/github/theholywaffle/teamspeak3-api/*/teamspeak3-api-*.jar
+      - name: Require verifiable provenance before deployment
+        id: provenance
+        if: ${{ inputs.action != 'finish-github' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
+        run: |
+          bash .github/scripts/verify-attestations.sh "$(cat target/release-version.txt)" \
+            target/staging-deploy "$RELEASE_COMMIT"
       - name: Sign, validate and deploy through Central Portal
+        id: deploy
         if: ${{ inputs.action != 'finish-github' }}
         env:
           JRELEASER_GITHUB_TOKEN: ${{ github.token }}

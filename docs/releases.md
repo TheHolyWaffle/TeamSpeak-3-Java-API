@@ -157,6 +157,11 @@ Task #450 changes no library API, behavior or dependency. Questions move from Gi
 GitHub Discussions; see [getting help](../SUPPORT.md) and the
 [supported versions](../SECURITY.md#supported-versions), which end 1.x support at 2.0.0.
 
+Task #484 changes no library API, behavior or dependency. Releases from 2.0.0 on carry GitHub
+build provenance attestations; see [verify a published release](#verify-a-published-release).
+For contributors: the publication rehearsal now lints every workflow with actionlint and
+shellcheck, so a `run:` script with a shellcheck warning fails CI.
+
 ## Central Portal publication (#433)
 
 JReleaser **1.26.0**, pinned in Maven, is the sole owner of signing, Central Portal
@@ -202,9 +207,9 @@ Reuse the existing `MAVEN_GPG_PRIVATE_KEY` (ASCII-armored private key) and
 pair directly; no key regeneration, renamed copies or separate public-key secret
 are required. It derives the public key in an isolated temporary GnuPG keyring,
 then passes both key files to JReleaser. Only this job receives the real signing
-pair. Repository secrets already used by the legacy `master` publisher remain
-supported; storing the pair under the same names in the `release` environment
-can restrict future access further, because environment secrets take precedence.
+pair. They are still repository secrets, which any workflow on a pushed branch could read;
+moving them into the `release` environment is a
+[maintainer action](#maintainer-action-move-the-signing-secrets).
 
 The public key must be published to a supported keyserver and valid for the
 release; JReleaser checks publication and expiration. The default GitHub token has
@@ -274,13 +279,14 @@ release-please PR targeting `master` with `autorelease: pending`, and have succe
 **CI required** checks. Maven version, manifest, latest changelog entry and tag must
 agree. Existing tags must identify that exact commit; an existing GitHub release
 blocks reruns. The same Java matrix and signed bundle rehearsal must succeed before
-the protected publication job can begin. Additional environment reviewers may be
-configured under repository policy; they are not required by this task.
+the protected publication job can begin, and a required reviewer of the `release`
+environment must approve it (see [repository administration](#repository-administration)).
 
 Select **publish** only as the explicit release action after those checks. The job
 rechecks `master` HEAD when the release environment job begins, checks out the
 validated SHA, stages the normal artifacts, checks them against the approved version
-with `verify-staged-artifacts.sh`, then signs and deploys using the
+with `verify-staged-artifacts.sh`, [attests and verifies their provenance](#provenance-attestations),
+then signs and deploys using the
 [JReleaser Central Portal deployer](https://jreleaser.org/guide/latest/reference/deploy/maven/maven-central.html).
 After Central succeeds, it waits for the release POM to be available from Central
 and uses the release-only configuration to create the version tag and GitHub release
@@ -321,6 +327,90 @@ change for that exact approved commit rather than bypassing checks. JReleaser's
 [staged deployment documentation](https://jreleaser.org/guide/latest/reference/deploy/maven/maven-central.html#_staged_deployments)
 explains `UPLOAD`, `PUBLISH` and retained deployment IDs.
 
+### Provenance attestations
+
+After `verify-staged-artifacts.sh` accepts the staged POM and library, sources and Javadoc JARs,
+the publish job attests them with the SHA-pinned
+[`actions/attest-build-provenance`](https://github.com/actions/attest-build-provenance). This signs
+a [SLSA build provenance](https://slsa.dev/spec/v1.0/provenance) statement for each file's SHA-256
+with a short-lived Sigstore certificate bound to this repository, `release.yml`, the `master` ref
+and the commit. For this public repository the signature is recorded in Sigstore's public
+transparency log, and GitHub stores the attestation under
+[the repository's attestations](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/attestations).
+
+[`verify-attestations.sh`](../.github/scripts/verify-attestations.sh) then fetches the stored
+attestations and runs `gh attestation verify` on every staged file with `--signer-workflow`,
+`--source-ref refs/heads/master`, the approved commit as `--source-digest` and
+`--deny-self-hosted-runners`. JReleaser signs and deploys only after this passes, so a missing or
+failed attestation stops the release before anything is uploaded. JReleaser deploys exactly the
+attested files: its bundle is the same staged repository plus signatures and checksums.
+
+Only the publish job has `id-token: write` (for the Sigstore certificate) and
+`attestations: write`, beside the `contents: write` JReleaser needs; every other job keeps its
+previous permissions. **finish-github** skips staging and attestation, like the deployment.
+The original **publish** run attested the uploaded files before
+uploading them; **resume-central** stages, attests and verifies its rebuild again before
+publishing that deployment.
+
+The non-publishing rehearsal never attests the synthetic `0.0.0`. Instead,
+[`test-check-release-workflow.sh`](../.github/scripts/test-check-release-workflow.sh) runs in
+**Validate publication bundle (no upload)**. It lints every workflow with
+[actionlint](https://github.com/rhysd/actionlint), including shellcheck on `run:` scripts where
+installed, and [`check-release-workflow.sh`](../.github/scripts/check-release-workflow.sh) reads
+the workflows as data with [yq](https://github.com/mikefarah/yq) to require:
+
+- that only the release `publish` job requests `id-token`, `attestations` or `artifact-metadata`
+  permissions, with exactly `contents`, `id-token` and `attestations` write, in the `release`
+  environment, and that no other workflow uses an attestation action;
+- that the steps with ids `stage`, `staged`, `attest` (the SHA-pinned attestation action),
+  `provenance` and `deploy` run in this order;
+- that these steps share one condition, so the upload never runs without them.
+
+The test then plants one defect per copy of the workflows (attesting or verifying after
+deployment, removing verification, a tag-pinned action, a narrower condition, extra permissions,
+an attestation in the rehearsal, an undefined input) and requires each to be rejected for that
+reason. Which files are attested is checked at release time, when `verify-attestations.sh`
+requires provenance for each of the four staged files. [`workflow-tools.sh`](../.github/scripts/workflow-tools.sh) downloads the pinned
+actionlint and yq release binaries and checks their published SHA-256. To run it locally:
+
+```sh
+bash .github/scripts/test-check-release-workflow.sh
+```
+
+The attestation action itself first runs in a real publication. Its failure, or any verification
+failure, stops the release before anything is uploaded. Rerun **publish** for the same commit
+after a transient failure; a cause that needs a workflow change moves `master` and is handled as
+described under [partial failure and recovery](#partial-failure-and-recovery).
+
+### Verify a published release
+
+Maven Central does not show GitHub attestations. Download the artifact and verify it with the
+current [GitHub CLI](https://cli.github.com/):
+
+```sh
+version=2.0.0
+curl -fLO "https://repo.maven.apache.org/maven2/com/github/theholywaffle/teamspeak3-api/$version/teamspeak3-api-$version.jar"
+gh attestation verify "teamspeak3-api-$version.jar" --repo TheHolyWaffle/TeamSpeak-3-Java-API \
+  --signer-workflow TheHolyWaffle/TeamSpeak-3-Java-API/.github/workflows/release.yml
+```
+
+The same command works for the `.pom`, `-sources.jar` and `-javadoc.jar`. Success proves the file
+was built by this repository's `release.yml` on a GitHub-hosted runner; the output and
+`--format json` name the source commit. Add `--source-ref refs/heads/master` and
+`--source-digest <commit>` to require the release commit, which is the commit tagged
+`v<version>`. `gh attestation verify` needs a GitHub login (`gh auth login`); `gh attestation
+download` saves the bundles for offline verification with `--bundle`.
+
+Attestations prove which workflow run produced the file, but trust that run. A reproducible
+rebuild checks the build itself: check out the tagged commit and run
+[`reproducibility-check.sh`](../.github/scripts/reproducibility-check.sh) (see
+[reproducible artifacts](packaging.md#reproducible-artifacts)), or build it with
+`./mvnw -B -ntp -DskipTests package` and compare the SHA-256 of the JARs with the downloaded ones.
+Use the JDK 25 build that the release run's `setup-java` step reports, because compiler and
+Javadoc output can differ between JDK builds. Matching digests mean the published bytes follow
+from the source at that commit. The `.asc` PGP signatures, which Central requires, remain the signer-identity check that Maven
+tooling understands.
+
 ### Snapshot policy
 
 Remote snapshot publication is disabled. There is no snapshot distribution endpoint,
@@ -328,3 +418,91 @@ workflow or Portal deployer; the deployer's `active: RELEASE` excludes snapshots
 `-Pcentral-staging` can stage snapshots locally for development but does not publish
 them. A future snapshot policy requires a separately reviewed explicit workflow and
 repository configuration; it must never create public SemVer tags/GitHub releases.
+
+## Repository administration
+
+These settings are applied in the repository settings, not in files. They were last checked
+against the live configuration with `gh api` on 2026-10-14 (#484); recheck them after changing
+settings or before a release with the commands below.
+
+| Setting | Live configuration |
+| --- | --- |
+| Ruleset **Pull requests for release branches** (`master`, `modernization/2.0`) | No deletion or force-push; changes by PR only, squash merge only, stale approvals dismissed on push, review threads resolved. Required approvals: 0, because there is a single maintainer. No bypass actors |
+| Ruleset **CI required on modernization/2.0** | **CI required** must pass on an up-to-date branch |
+| Ruleset **Legacy CI required on master** | **Build and run tests** must pass on an up-to-date branch; #451 switches it to **CI required** |
+| Ruleset **Protect default branch** (`master`) | No deletion or force-push (older ruleset, overlapping the first) |
+| Ruleset **Immutable version tags** (`refs/tags/v*`) | No deletion or update. Creation stays allowed because JReleaser creates the tag |
+| Immutable releases | Enabled: a published GitHub release's assets and tag cannot change |
+| Actions workflow permissions | Default `GITHUB_TOKEN` read-only; Actions cannot create or approve PRs |
+| Actions allow-list | GitHub-owned actions plus `advanced-security/maven-dependency-submission-action`, `amannn/action-semantic-pull-request`, `googleapis/release-please-action` and `gradle/actions/setup-gradle`. Verified-creator actions are not allowed |
+| Fork PR workflows | Approval required for all outside contributors |
+| `release` environment | Deployment branch policy `master` only, and a required reviewer (@TheHolyWaffle) |
+| Secret scanning | Secret scanning and push protection enabled |
+
+**A new third-party action must be added to the allow-list** by an administrator (Settings →
+Actions → General), otherwise every workflow that uses it fails. Pin it to a full commit SHA with
+a version comment, like every action here; GitHub-owned actions such as
+`actions/attest-build-provenance` need no allow-list change.
+
+```sh
+repo=repos/TheHolyWaffle/TeamSpeak-3-Java-API
+for id in $(gh api $repo/rulesets --jq '.[].id'); do
+  gh api $repo/rulesets/$id --jq '{name, enforcement, conditions, rules, bypass_actors}'
+done
+gh api $repo/immutable-releases
+gh api $repo/actions/permissions
+gh api $repo/actions/permissions/selected-actions
+gh api $repo/actions/permissions/workflow
+gh api $repo/actions/permissions/fork-pr-contributor-approval
+gh api $repo/environments/release --jq '{protection_rules, deployment_branch_policy}'
+gh api $repo/environments/release/deployment-branch-policies --jq '.branch_policies[].name'
+gh api $repo --jq .security_and_analysis
+gh api $repo/environments/release/secrets --jq '.secrets[].name'
+gh api $repo/actions/secrets --jq '.secrets[].name'
+```
+
+Secret names (never values) on 2026-10-14: the `release` environment holds
+`CENTRAL_PORTAL_USERNAME` and `CENTRAL_PORTAL_PASSWORD`. The repository holds
+`MAVEN_GPG_PRIVATE_KEY`, `MAVEN_GPG_PASSPHRASE` and the legacy `SONATYPE_USERNAME` and
+`SONATYPE_PASSWORD`.
+
+Owned by the final integration (#451), because `master` still runs its legacy workflow until
+then: requiring actions pinned to a full-length commit SHA (`sha_pinning_required` is currently
+`false`), switching `master`'s required check to **CI required**, landing the `master`
+publishing-isolation PR and retiring the `SONATYPE_*` secrets.
+
+### Maintainer action: move the signing secrets
+
+Not blocking any task. Secret values cannot be read back, so automation cannot move them. Create
+`MAVEN_GPG_PRIVATE_KEY` and `MAVEN_GPG_PASSPHRASE` with the same values under Settings →
+Environments → **release** → Environment secrets, from the key's original source. Once #451 has
+retired `master`'s legacy publisher, which still reads the repository secrets, delete the
+repository-level copies. Environment secrets reach only jobs that the environment's branch policy
+and reviewer have admitted. The Central Portal token is already an environment secret.
+
+### Trusted publishing (OIDC)
+
+Checked on 2026-10-14: Maven Central does not support OIDC trusted publishing. The
+[Portal publisher API](https://central.sonatype.org/publish/publish-portal-api/) and
+[token documentation](https://central.sonatype.org/publish/generate-portal-token/) authenticate
+only with a user token generated in the Portal, and the
+[Central news](https://central.sonatype.org/news/archive/) announce no tokenless publishing. The
+long-lived Portal token therefore stays, restricted to the `release` environment. Give it an
+expiry when generating it and rotate it after any suspected exposure. Recheck when Sonatype
+announces trusted publishing; then replace the token with the job's OIDC identity, which the
+publish job already has for attestations.
+
+### OpenSSF Scorecard and SBOM
+
+Decided for 2.0 (#484): neither is adopted now.
+
+- **OpenSSF Scorecard.** Scorecard analyses the default branch only, which is `master` and its
+  legacy workflow until #451. Its action, `ossf/scorecard-action`, would also have to join the
+  allow-list and receive `security-events` and `id-token` write. The controls it scores, such as
+  pinned actions, token permissions, branch protection and dependency updates, are already enforced
+  and listed above. Reconsider after the final integration.
+- **CycloneDX SBOM.** The published POM already pins the library's direct runtime dependencies
+  (SSHJ, the Bouncy Castle provider and PKIX modules and the SLF4J API), and GitHub's dependency
+  graph, fed by the dependency submission job, exports an SPDX SBOM for the repository. Attaching
+  an SBOM would add a published file that the staged-artifact checks, the attestation and the
+  Central bundle would all have to include. Reconsider if consumers ask for one.

@@ -70,7 +70,8 @@ it installs a clean build into a temporary local repository, then runs
 be byte-identical. As a negative control, a rebuild with another `outputTimestamp` must be
 reported as different. The `.buildinfo` and `.buildcompare` fingerprints are kept under
 `target/reproducibility`. These are the unsigned artifacts; JReleaser adds signatures,
-which are not reproducible, only at publication.
+which are not reproducible, only at publication. Consumers can combine such a rebuild with the release's
+provenance attestation; see [verify a published release](releases.md#verify-a-published-release).
 
 ## Staged publication checks
 

@@ -18,6 +18,7 @@ downloads the pinned Maven, so no Maven installation is needed. On Windows, use 
 | `./mvnw -q -ntp -Pexample test-compile exec:exec -Dexample=ClientInfoExample` | Runs an example against the server in `TS3_*` variables | A server |
 | `bash .github/scripts/test-api-compatibility.sh` | Runs the release-impact and japicmp controlled examples | JDK 25 |
 | `bash .github/scripts/test-release-metadata.sh` | Tests release-note extraction | Bash |
+| `bash .github/scripts/test-check-release-workflow.sh` | Lints the workflows with actionlint and checks the release provenance wiring | Bash, curl, jq; shellcheck optional |
 
 The README explains [building](README.md#building-from-source),
 [integration tests](README.md#integration-tests) and [examples](README.md#run-an-example);
