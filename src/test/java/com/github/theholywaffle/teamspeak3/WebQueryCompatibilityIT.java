@@ -48,8 +48,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -611,8 +609,8 @@ class WebQueryCompatibilityIT {
     @EnumSource(Target.class)
     void clientsAndMessages(Target target) throws Exception {
         var evidence = new ArrayList<String>();
-        var texts = new LinkedBlockingQueue<TextMessageEvent>();
-        var created = new LinkedBlockingQueue<ChannelCreateEvent>();
+        var texts = new EventProbe<TextMessageEvent>(16);
+        var created = new EventProbe<ChannelCreateEvent>(4);
         try (var query = web(target);
                 var observer = new TS3Query(ts3.config(TS3Query.Protocol.RAW))) {
             observer.connect();
@@ -625,12 +623,12 @@ class WebQueryCompatibilityIT {
             observer.subscribe(new TS3EventAdapter() {
                 @Override
                 public void onTextMessage(TextMessageEvent e) {
-                    texts.add(e);
+                    texts.publish(e);
                 }
 
                 @Override
                 public void onChannelCreate(ChannelCreateEvent e) {
-                    created.add(e);
+                    created.publish(e);
                 }
             });
             ClientId observerId = observed.whoAmI().getId();
@@ -663,8 +661,7 @@ class WebQueryCompatibilityIT {
                     api.channels().create("web clients " + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")),
                     id -> api.channels().delete(id, true))) {
                 int channel = channelResource.id();
-                var create = created.poll(5, TimeUnit.SECONDS);
-                assertNotNull(create, "ServerQuery observes channels created over Web Query");
+                var create = created.await();
                 assertEquals(channel, create.getChannelId());
                 evidence.add("observed channelcreate " + new TreeMap<>(create.getMap()));
 
@@ -717,10 +714,8 @@ class WebQueryCompatibilityIT {
         }
     }
 
-    private static TextMessageEvent nextText(LinkedBlockingQueue<TextMessageEvent> texts) throws InterruptedException {
-        var event = texts.poll(5, TimeUnit.SECONDS);
-        assertNotNull(event, "ServerQuery observes text messages sent over Web Query");
-        return event;
+    private static TextMessageEvent nextText(EventProbe<TextMessageEvent> texts) throws InterruptedException {
+        return texts.await();
     }
 
     @ParameterizedTest(name = "{0}: raw commands, pipe-separated entries and concurrent requests")

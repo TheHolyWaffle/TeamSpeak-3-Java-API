@@ -18,7 +18,7 @@ class CommandTraitTest {
                         EnumSet.of(CommandTrait.SESSION_STATE, CommandTrait.CONNECTION),
                 QueryCommands.logOut(), EnumSet.of(CommandTrait.SESSION_STATE, CommandTrait.CONNECTION),
                 QueryCommands.useId(1, null), EnumSet.of(CommandTrait.SESSION_STATE, CommandTrait.CONNECTION),
-                QueryCommands.quit(), EnumSet.of(CommandTrait.CONNECTION),
+                QueryCommands.quit(), EnumSet.of(CommandTrait.CONNECTION, CommandTrait.ENDS_CONNECTION),
                 ClientCommands.clientUpdate(Map.of()), EnumSet.of(CommandTrait.SESSION_STATE),
                 QueryCommands.serverNotifyRegister(TS3EventType.SERVER, -1),
                         EnumSet.of(CommandTrait.SESSION_STATE, CommandTrait.NOTIFICATIONS),

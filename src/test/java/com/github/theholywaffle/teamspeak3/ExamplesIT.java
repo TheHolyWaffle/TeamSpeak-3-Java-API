@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -33,27 +34,36 @@ class ExamplesIT {
 
     private static final Path EXAMPLES = Path.of("src/example/java/com/github/theholywaffle/teamspeak3/example");
 
-    /** Runs over HTTP and HTTPS; every other example runs over RAW and SSH. */
-    private static final String WEB_QUERY_EXAMPLE = "WebQueryExample";
+    enum Transport {
+        RAW,
+        SSH,
+        HTTP,
+        HTTPS;
 
-    /** Output proving each example completed its work; every example must be listed. */
-    private static final Map<String, String> COMPLETED = Map.of(
-            "ChatBotExample",
-            "Running. Press Enter",
-            "ClientInfoExample",
-            "Server version: " + TeamSpeakContainer.TS3_VERSION,
-            "CreateChannelExample",
-            "Deleted channel",
-            "EventListenerExample",
-            "Event statistics: ",
+        Map<String, String> environment() throws IOException {
+            return switch (this) {
+                case RAW, SSH -> SERVER.exampleEnvironment(Protocol.valueOf(name()), knownHosts);
+                case HTTP, HTTPS -> SERVER.webQueryEnvironment(this == HTTPS, apiKey, trust.resolve("webquery.pem"));
+            };
+        }
+    }
+
+    private static final List<Transport> SERVER_QUERY = List.of(Transport.RAW, Transport.SSH);
+    private static final List<Transport> WEB_QUERY = List.of(Transport.HTTP, Transport.HTTPS);
+
+    /** Output proving each example completed its work, and its transports; every example must be listed. */
+    record Expectation(String completed, List<Transport> transports) {}
+
+    private static final Map<String, Expectation> EXPECTED = Map.of(
+            "ChatBotExample", new Expectation("Running. Press Enter", SERVER_QUERY),
+            "ClientInfoExample", new Expectation("Server version: " + TeamSpeakContainer.TS3_VERSION, SERVER_QUERY),
+            "CreateChannelExample", new Expectation("Deleted channel", SERVER_QUERY),
+            "EventListenerExample", new Expectation("Event statistics: ", SERVER_QUERY),
             "FileTransferExample",
-            "Stream download (30 bytes): Hello file transferring world!",
-            "ReconnectExample",
-            "Deleted channels [",
-            "TrollExample",
-            "Waiting for clients to join.",
-            WEB_QUERY_EXAMPLE,
-            "Events need a RAW or SSH query: ");
+                    new Expectation("Stream download (30 bytes): Hello file transferring world!", SERVER_QUERY),
+            "ReconnectExample", new Expectation("Deleted channels [", SERVER_QUERY),
+            "TrollExample", new Expectation("Waiting for clients to join.", SERVER_QUERY),
+            "WebQueryExample", new Expectation("Events need a RAW or SSH query: ", WEB_QUERY));
 
     @TempDir
     static Path trust;
@@ -68,13 +78,6 @@ class ExamplesIT {
         apiKey = SERVER.createWebQueryKey();
     }
 
-    /** RAW and SSH run the ServerQuery examples; HTTP and HTTPS run the Web Query example. */
-    static Map<String, String> environment(String example, String transport) throws IOException {
-        if (!example.equals(WEB_QUERY_EXAMPLE))
-            return SERVER.exampleEnvironment(Protocol.valueOf(transport), knownHosts);
-        return SERVER.webQueryEnvironment(transport.equals("HTTPS"), apiKey, trust.resolve("webquery.pem"));
-    }
-
     static Stream<Arguments> examples() throws IOException {
         Set<String> examples;
         try (Stream<Path> files = Files.list(EXAMPLES)) {
@@ -83,20 +86,18 @@ class ExamplesIT {
                     .map(name -> name.substring(0, name.length() - ".java".length()))
                     .collect(Collectors.toSet());
         }
-        assertEquals(COMPLETED.keySet(), examples, "Every example needs an expected completion line");
+        assertEquals(EXPECTED.keySet(), examples, "Every example needs an expected completion line");
         return examples.stream()
                 .sorted()
-                .flatMap(example -> (example.equals(WEB_QUERY_EXAMPLE)
-                                ? Stream.of("HTTP", "HTTPS")
-                                : Stream.of(Protocol.RAW.name(), Protocol.SSH.name()))
-                        .map(transport -> Arguments.of(example, transport)));
+                .flatMap(example ->
+                        EXPECTED.get(example).transports().stream().map(transport -> Arguments.of(example, transport)));
     }
 
     @ParameterizedTest(name = "{0} over {1}")
     @MethodSource("examples")
-    void runsUnchanged(String example, String transport) throws Exception {
-        String output = ForkedJvm.runExample(example, environment(example, transport), 0);
-        assertTrue(output.contains(COMPLETED.get(example)), output);
+    void runsUnchanged(String example, Transport transport) throws Exception {
+        String output = ForkedJvm.runExample(example, transport.environment(), 0);
+        assertTrue(output.contains(EXPECTED.get(example).completed()), output);
     }
 
     @Test
@@ -127,7 +128,7 @@ class ExamplesIT {
     void missingSettingsFailWithoutConnecting() throws Exception {
         String output = ForkedJvm.runExample("ClientInfoExample", Map.of(), 1);
         assertTrue(output.contains("Set the TS3_HOST environment variable"), output);
-        String web = ForkedJvm.runExample(WEB_QUERY_EXAMPLE, Map.of(), 1);
+        String web = ForkedJvm.runExample("WebQueryExample", Map.of(), 1);
         assertTrue(web.contains("Set the TS3_WEBQUERY_URI environment variable"), web);
     }
 }
