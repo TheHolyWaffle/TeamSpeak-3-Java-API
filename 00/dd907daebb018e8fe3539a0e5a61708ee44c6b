@@ -1,0 +1,21 @@
+src/main/java/com/github/theholywaffle/teamspeak3/TS3WebQuery.java
+  s_e3460457456897::t_d260bcd95e98c9 169-191,196
+src/main/java/com/github/theholywaffle/teamspeak3/WebQueryBackend.java
+  s_e3460457456897::t_5fd662392a5024 20,25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "00dd907daebb018e8fe3539a0e5a61708ee44c6b",
+  "prompts": {},
+  "sessions": {
+    "s_e3460457456897": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "74673ecf-ac82-49b0-aa7c-d8ccb872aa63",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
