@@ -1,0 +1,21 @@
+src/main/java/com/github/theholywaffle/teamspeak3/FileApiAsync.java
+  s_b323d294012cee::t_aa8b9288842e04 235,275
+src/main/java/com/github/theholywaffle/teamspeak3/FileTransfers.java
+  s_b323d294012cee::t_f5764ce386ca14 1-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "faf6685815d099ea4091d98da21d2b9cee8eee57",
+  "prompts": {},
+  "sessions": {
+    "s_b323d294012cee": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "01ea27ad-50cb-4cfa-a7ac-c6f61151d4de",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
