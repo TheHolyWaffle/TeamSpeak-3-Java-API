@@ -22,7 +22,7 @@ current by Renovate; see
 `.gitattributes` normalizes line endings to LF (CRLF only for `gradlew.bat`). Java sources in
 `src/main`, `src/test`, `src/test/consumers` and `src/example` use Palantir Java Format: 4-space
 indentation and 120 columns, with imports ordered and unused imports removed. It does not
-reformat comments, so license notices are unchanged. The format of YAML, shell, JSON,
+reformat comments. The format of YAML, shell, JSON,
 properties, Gradle and consumer build files is checked for trailing whitespace and final newlines.
 
 Run `./gradlew spotlessApply` before committing; `build` fails on unformatted files. The
