@@ -285,7 +285,7 @@
 				<!-- Compiles the examples with the tests, so every build catches API drift; they are never packaged. -->
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
-				<version>3.6.1</version>
+				<version>3.6.2</version>
 				<executions>
 					<execution>
 						<id>add-example-sources</id>
