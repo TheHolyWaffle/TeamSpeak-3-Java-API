@@ -402,9 +402,10 @@ and set `JAVA_HOME` to it. On macOS: `export JAVA_HOME=$(/usr/libexec/java_home 
 ```
 
 The Gradle Wrapper downloads and verifies the pinned Gradle version, so no Gradle installation is
-needed; the first build needs internet access. The build rejects any JDK other than 25.
+needed; the first build needs internet access. Gradle runs on JDK 25 and downloads one if none is
+installed.
 `build` compiles the library and the examples, runs the unit tests, and applies the formatting,
-static analysis, Javadoc, coverage and API compatibility checks described in
+static analysis, Javadoc and coverage checks described in
 [quality checks](docs/quality-checks.md). It needs no Docker and publishes nothing. Run
 `./gradlew spotlessApply` to fix formatting.
 

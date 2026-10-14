@@ -43,6 +43,8 @@ jobs:
       contents: read
       id-token: write # Sigstore certificate for the provenance attestation.
       attestations: write
+    env:
+      STAGED: build/staging-deploy/com/github/theholywaffle/teamspeak3-api
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -52,10 +54,10 @@ jobs:
         with:
           java-version: '25'
           distribution: temurin
-      # No build cache in the release job: everything published is built from the tag.
+      # Dependencies come from master's cache; --no-build-cache builds everything published from the tag.
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
-          cache-disabled: true
+          cache-read-only: true
       - name: Build, verify and stage the tagged version
         env:
           VERSION: ${{ needs.release_please.outputs.version }}
@@ -69,16 +71,16 @@ jobs:
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: |
-            build/staging-deploy/com/github/theholywaffle/teamspeak3-api/*/teamspeak3-api-*.pom
-            build/staging-deploy/com/github/theholywaffle/teamspeak3-api/*/teamspeak3-api-*.module
-            build/staging-deploy/com/github/theholywaffle/teamspeak3-api/*/teamspeak3-api-*.jar
+            ${{ env.STAGED }}/*/teamspeak3-api-*.pom
+            ${{ env.STAGED }}/*/teamspeak3-api-*.module
+            ${{ env.STAGED }}/*/teamspeak3-api-*.jar
       # The same policy a consumer verifies with; JReleaser uploads exactly these files plus signatures.
       - name: Require verifiable provenance before deployment
         env:
           GH_TOKEN: ${{ github.token }}
           BUNDLE: ${{ steps.attest.outputs.bundle-path }}
         run: |
-          for file in build/staging-deploy/com/github/theholywaffle/teamspeak3-api/*/teamspeak3-api-*.{pom,module,jar}; do
+          for file in "$STAGED"/*/teamspeak3-api-*.{pom,module,jar}; do
             gh attestation verify "$file" --bundle "$BUNDLE" --repo "$GITHUB_REPOSITORY" \
               --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml" \
               --source-ref refs/heads/master --source-digest "$GITHUB_SHA" --deny-self-hosted-runners

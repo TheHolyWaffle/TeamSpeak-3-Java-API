@@ -26,11 +26,10 @@ title changes.
 | `fix: ...`, `perf: ...`, `deps: ...`, `revert: ...` | patch | Backward-compatible fix, performance change, runtime dependency update or revert |
 | `docs:`, `test:`, `ci:`, `build:`, `refactor:`, `style:`, `chore: ...` | none | Internal work; not released on its own and hidden from release notes |
 
-A `BREAKING CHANGE:` footer also records a major impact. The release PR carries the version
-release-please derived, and its build checks that version against the published API with japicmp
-(see [API compatibility](quality-checks.md#api-compatibility)): if a merged change needs a larger
-version than the commits declare, the release PR fails. Fix that with a `feat!:` or
-`BREAKING CHANGE:` commit, or a [commit override](#correct-release-notes), never by publishing.
+A `BREAKING CHANGE:` footer also records a major impact. Reviewers check that the title matches
+the change, including API, behavior and defaults (see [API changes](quality-checks.md#api-changes));
+a merged title that understated it is corrected with a [commit override](#correct-release-notes)
+before the release PR merges.
 
 ## Release
 
@@ -146,10 +145,8 @@ gh api $repo/actions/secrets --jq '.secrets[].name'
 
 In one reviewed `build:` PR:
 
-- set `apiBaselineVersion` to `2.0.0` and `apiBaselineSha256` to the SHA-256 of the published JAR
-  in `build.gradle.kts`, after comparing it with Central's `.sha256`;
-- remove the **Account for every API difference from 1.3.1** step from `ci.yml` and
-  `api-accounting.sh`; keep [API differences from 1.3.1](api-differences-2.0.md) as the record;
-- remove `release-as` and `bootstrap-sha` from `release-please-config.json`;
+- remove `release-as`, `skip-snapshot` and `bootstrap-sha` from `release-please-config.json`, so
+  release-please derives later versions and, after each release, opens a PR that moves
+  `gradle.properties` to the next `-SNAPSHOT`;
 - update the README's 2.0 development-line note and [SECURITY.md](../SECURITY.md#supported-versions),
   where 1.x reaches end of life.

@@ -2,13 +2,6 @@
 # the staged publication and deploys it to Maven Central. Snapshots are never published.
 project:
   name: teamspeak3-api
-  description: A Java wrapper of the TeamSpeak ServerQuery API
-  license: MIT
-  authors:
-    - TheHolyWaffle
-    - rogermb
-  links:
-    homepage: https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API
   languages:
     java:
       groupId: com.github.theholywaffle

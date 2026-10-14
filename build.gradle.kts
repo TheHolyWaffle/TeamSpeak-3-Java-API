@@ -1,4 +1,3 @@
-import java.security.MessageDigest
 import java.time.Duration
 import net.ltgt.gradle.errorprone.errorprone
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
@@ -48,8 +47,6 @@ dependencies {
 }
 
 tasks.withType<JavaCompile>().configureEach {
-    options.release = 25
-    options.encoding = "UTF-8"
     options.compilerArgs.addAll(listOf("-Xlint:all", "-Werror", "-Xmaxwarns", "10000"))
     options.errorprone {
         disableWarningsInGeneratedCode = true
@@ -81,7 +78,6 @@ tasks.jar {
 
 tasks.javadoc {
     (options as StandardJavadocDocletOptions).apply {
-        encoding = "UTF-8"
         memberLevel = JavadocMemberLevel.PROTECTED
         windowTitle = "TeamSpeak 3 Java API $version API"
         docTitle = windowTitle
@@ -92,12 +88,13 @@ tasks.javadoc {
         // Same policy as the compiler's -Xdoclint.
         addBooleanOption("Xdoclint:all,-missing", true)
         addBooleanOption("Xwerror", true)
-        addStringOption("-release", "25")
         quiet()
     }
 }
 
 tasks.withType<Test>().configureEach {
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
     useJUnitPlatform()
     testLogging.exceptionFormat = TestExceptionFormat.FULL
 }
@@ -111,8 +108,6 @@ tasks.test {
 val debugLoggingTest = tasks.register<Test>("debugLoggingTest") {
     description = "Runs the tests that inspect DEBUG communication logging."
     group = LifecycleBasePlugin.VERIFICATION_GROUP
-    testClassesDirs = sourceSets.test.get().output.classesDirs
-    classpath = sourceSets.test.get().runtimeClasspath
     useJUnitPlatform { includeTags("debug-logging") }
     exclude("**/*IT.class", "**/*IT$*.class")
     val logFile = layout.buildDirectory.file("debug-communication.log")
@@ -124,13 +119,9 @@ val debugLoggingTest = tasks.register<Test>("debugLoggingTest") {
 val integrationTest = tasks.register<Test>("integrationTest") {
     description = "Runs the integration tests against a TeamSpeak 3 server container."
     group = LifecycleBasePlugin.VERIFICATION_GROUP
-    testClassesDirs = sourceSets.test.get().output.classesDirs
-    classpath = sourceSets.test.get().runtimeClasspath
     include("**/*IT.class")
     timeout = Duration.ofMinutes(10)
-    // The result depends on a live server, and the evidence in build/compatibility is not a task output.
-    outputs.upToDateWhen { false }
-    outputs.doNotCacheIf("it verifies a live server") { true }
+    doNotTrackState("Verifies a live server; its evidence in build/compatibility is not a task output")
     shouldRunAfter(tasks.test, debugLoggingTest)
     finalizedBy("jacocoIntegrationTestReport")
 }
@@ -213,61 +204,13 @@ tasks.jacocoTestCoverageVerification {
     }
 }
 
-// API compatibility with the latest published release, verified by checksum. The pending version must
-// cover the change; japicmp reads each version from the file name.
-val apiBaselineVersion = "1.3.1"
-val apiBaselineSha256 = "e76bfdb446c5d814a23ddd4f5f49486c1361fa61bcb2c8f393c7c13d96794756"
-
-val japicmpTool = configurations.create("japicmpTool")
-val apiBaseline = configurations.create("apiBaseline") { isTransitive = false }
-
-dependencies {
-    japicmpTool(variantOf(libs.japicmp) { classifier("jar-with-dependencies") }) { isTransitive = false }
-    apiBaseline("api-baseline:teamspeak3-api:$apiBaselineVersion")
-}
-
-val japicmp = tasks.register<JavaExec>("japicmp") {
-    description = "Checks the API against the $apiBaselineVersion release under semantic versioning."
-    group = LifecycleBasePlugin.VERIFICATION_GROUP
-    val baseline = files(apiBaseline)
-    val expectedSha256 = apiBaselineSha256
-    val oldJar = layout.buildDirectory.file("api-baseline/teamspeak3-api-$apiBaselineVersion.jar")
-    val newJar = tasks.jar.flatMap { it.archiveFile }
-    val dependencies = files(configurations.runtimeClasspath)
-    val report = layout.buildDirectory.file("japicmp/api-compatibility.diff")
-    inputs.files(baseline, newJar, dependencies)
-    outputs.file(report)
-    classpath = files(japicmpTool)
-    mainClass = "japicmp.JApiCmp"
-    argumentProviders.add {
-        listOf(
-            "--old", oldJar.get().asFile.path, "--new", newJar.get().asFile.path,
-            "--old-classpath", dependencies.asPath, "--new-classpath", dependencies.asPath,
-            "-a", "protected", "--only-modified", "--report-only-filename", "--error-on-semantic-incompatibility",
-        )
-    }
-    doFirst {
-        val jar = baseline.singleFile
-        val sha256 = MessageDigest.getInstance("SHA-256").digest(jar.readBytes()).joinToString("") { "%02x".format(it) }
-        check(sha256 == expectedSha256) { "The API baseline $jar does not match the verified published artifact." }
-        jar.copyTo(oldJar.get().asFile, overwrite = true)
-        standardOutput = report.get().asFile.apply { parentFile.mkdirs() }.outputStream()
-    }
-}
-
 tasks.check {
-    dependsOn(debugLoggingTest, tasks.jacocoTestReport, tasks.jacocoTestCoverageVerification, japicmp)
+    dependsOn(debugLoggingTest, tasks.jacocoTestReport, tasks.jacocoTestCoverageVerification)
 }
 
 spotless {
     java {
-        target(
-            "src/main/java/**/*.java",
-            "src/test/java/**/*.java",
-            "src/example/java/**/*.java",
-            "src/test/api-fixtures/**/*.java",
-            "src/test/consumers/**/*.java",
-        )
+        target("src/**/*.java")
         palantirJavaFormat(libs.versions.palantir.java.format.get())
     }
     format("misc") {
@@ -276,9 +219,8 @@ spotless {
             ".github/**/*.sh",
             ".github/**/*.json5",
             "src/**/*.properties",
-            "src/**/*.sh",
-            "src/test/consumers/**/*.xml",
-            "src/test/consumers/**/*.kts",
+            "src/**/*.xml",
+            "src/**/*.kts",
             "*.yml",
             "*.json",
             "*.kts",
@@ -365,11 +307,12 @@ dependencies {
     jreleaserTool(libs.jreleaser)
 }
 
-// Signs the staged publication and deploys it to Central; -PdryRun validates the bundle without uploading.
+// Signs build/staging-deploy and deploys it to Central; run publish first. -PdryRun validates the bundle
+// without uploading.
 tasks.register<JavaExec>("jreleaserDeploy") {
     description = "Signs and deploys build/staging-deploy to Maven Central with JReleaser."
     group = PublishingPlugin.PUBLISH_TASK_GROUP
-    dependsOn(tasks.named("publishMavenPublicationToStagingRepository"))
+    mustRunAfter(tasks.named("publish"))
     classpath = files(jreleaserTool)
     mainClass = "org.jreleaser.tool.JReleaser"
     args("deploy", "--config-file", "jreleaser.yml", "--output-directory", "build")

@@ -18,8 +18,8 @@ it passes; see [auto-merge](#auto-merge). A maintainer merges the other major up
 Only updates of SSHJ, the SLF4J API, Gson and Bouncy Castle are `fix(deps):`, so they appear
 under "Bug Fixes" and ship in a release; everything else the build uses is a chore. The rules are
 in `renovate.json5`; a new runtime dependency must be added to the `fix` rule there. Every tool the
-build runs is a catalog entry, so Renovate sees it: the formatter, Error Prone, JaCoCo, japicmp and
-the JReleaser CLI.
+build runs is a catalog entry, so Renovate sees it: the formatter, Error Prone, JaCoCo and the
+JReleaser CLI.
 
 Version updates wait seven days after a release (`minimumReleaseAge`) so that broken or withdrawn
 releases are usually caught upstream first. Security updates are not delayed. Renovate opens
@@ -28,9 +28,9 @@ security updates disabled in the repository settings.
 
 Not updated by Renovate, deliberately:
 
-- The library's own version and the [API baseline](quality-checks.md#baseline): release-please and
-  the release process own them.
-- The Java version (25): a support policy, not a dependency.
+- The library's own version: release-please owns it.
+- The Java version (25, in `gradle/gradle-daemon-jvm.properties` and `ci.yml`): a support policy,
+  not a dependency.
 - The actionlint image in `ci.yml`: update the tag and its digest together.
 
 Renovate also proposes updates that are support decisions, and CI fails them, such as a new
@@ -47,7 +47,7 @@ PR description as its body, so remove any `BREAKING CHANGE:` line quoted from up
 notes; release-please would read it as this project's.
 
 Release tools are exercised without publishing: a JReleaser update runs the signed dry-run
-deployment, and a japicmp update runs the API check against the baseline. A release-please Action
+deployment. A release-please Action
 update first runs on the next push to `master`, and `actions/attest-build-provenance` first runs in
 a real publication, where a failure stops the release before anything is uploaded.
 

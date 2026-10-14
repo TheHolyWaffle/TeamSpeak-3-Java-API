@@ -1,4 +1,4 @@
-# Formatting, analysis, coverage and API compatibility
+# Formatting, analysis, coverage and API changes
 
 Every check runs in the normal Gradle build, so a local `./gradlew build` on JDK 25 runs the
 same checks as the CI **gradle build** job.
@@ -11,7 +11,6 @@ same checks as the CI **gradle build** job.
 | Coverage | JaCoCo per-class floors | `build`; `integrationTest` adds the TS3 suite | gradle build, gradle integrationTest |
 | Log redaction | `CommunicationLogRedactionTest` in its own DEBUG-logging test task | `build` | gradle build |
 | Dependency vulnerabilities | GitHub dependency graph, Dependabot alerts, dependency review | (GitHub only) | dependency submission and review |
-| API compatibility | japicmp | `build` (`./gradlew japicmp`) | gradle build |
 
 Tool versions are pinned in [`gradle/libs.versions.toml`](../gradle/libs.versions.toml) and kept
 current by Renovate; see
@@ -28,7 +27,7 @@ properties, Gradle and consumer build files is checked for trailing whitespace a
 
 Run `./gradlew spotlessApply` before committing; `build` fails on unformatted files. The
 formatter parses with the running JDK's compiler and supports no JDK 26+ compiler internals yet,
-which is why the build requires JDK 25.
+which is why Gradle runs on JDK 25 ([`gradle/gradle-daemon-jvm.properties`](../gradle/gradle-daemon-jvm.properties)).
 
 ## Static analysis and Javadoc
 
@@ -110,58 +109,16 @@ only in a reviewed PR that states why it is not exploitable here. Gradle plugins
 Actions are pinned and are not scanned here; Renovate keeps them current (see
 [dependency and image maintenance](maintenance.md)).
 
-## API compatibility
+## API changes
 
-### Baseline
+No tool compares the API with the last release; the release impact comes from the Conventional
+Commit title (see [record intent](releases.md#record-intent)), so reviewers check it:
 
-The baseline is the latest published release, `com.github.theholywaffle:teamspeak3-api:1.3.1`
-from Maven Central. The `japicmp` task fetches it into `build/api-baseline/` and fails unless its
-SHA-256 is `e76bfdb446c5d814a23ddd4f5f49486c1361fa61bcb2c8f393c7c13d96794756`. That JAR's
-Central SHA-1 matches, and its signature is valid for the maintainer key
-`72BF 8ED7 AA59 66B2 F5CA AA83 BEE1 8CF6 E79F 7B17`.
+- a removed or changed public or protected signature, or a method added to an interface, is a
+  breaking change (`type!:` or a `BREAKING CHANGE:` footer) with migration notes;
+- a compatible addition is `feat:`; `fix:`, `perf:`, `deps:` and `revert:` change no API.
 
-The artifact identity is unchanged in 2.0: groupId, artifactId, the
-`com.github.theholywaffle.teamspeak3` packages and the `Automatic-Module-Name`
-`com.github.theholywaffle.teamspeak3` all match 1.3.1. japicmp compares classes by name. If a
-future release renames the artifact or a package, set `apiBaselineVersion` in `build.gradle.kts`
-and the baseline repository in `settings.gradle.kts` explicitly. Expect every moved type to be reported as removed and added, and treat
-that as a breaking change with migration notes, not an exclusion.
-
-### What is compared
-
-japicmp compares the public and protected API of every package, with no includes or excludes.
-The report is written to `build/japicmp/api-compatibility.diff` and uploaded by the **gradle build** job.
-
-The library JAR is compared with the baseline. japicmp takes each version from the file name, so
-the new version is the one release-please maintains in `gradle.properties` (`2.0.0-SNAPSHOT`, then
-`2.0.0` in the release PR). The build fails if that version is too small for the changes found;
-publishing this API as `1.4.0`, for example, is rejected. Because the release PR carries the
-version derived from the merged commits, a `fix:` that removes API fails the release PR, before
-anything is published. Find the offending commit in the report and declare its impact with a
-[commit override](releases.md#correct-release-notes).
-
-| Release impact | Title | Allowed API change |
-| --- | --- | --- |
-| major | `type!:` or a `BREAKING CHANGE:` footer | Any |
-| minor | `feat:` | Binary- and source-compatible changes, such as additions |
-| patch | `fix:`, `perf:`, `deps:`, `revert:` | None |
-
-### Intentional 2.0 breaks
-
-The 1.3.1 comparison reports every 2.0 break, and the build accepts them only because the
-pending version is a major release. Nothing is excluded. Every change since 1.3.1 stays
-visible in the report artifact. Each break is reviewed when it lands and declares `!` or a
-`BREAKING CHANGE:` footer with migration notes, which release-please copies into the 2.0.0 notes. The
-operation-by-operation mapping is in the [domain API migration guide](api-migration.md),
-and the other breaks are in the task guides linked from the README.
-
-After 2.0.0 is published, move the baseline as described in
-[after 2.0.0 is published](releases.md#after-200-is-published). From then on, the check enforces
-SemVer against 2.0.0 for every release.
-
-### Limits
-
-japicmp checks signatures, not behavior. It cannot see:
+Signatures are not the whole contract. These also need the right impact and migration notes:
 
 - behavioral changes behind an unchanged signature, such as different results, exceptions,
   ordering, threading, timeouts or retry behavior;
@@ -169,10 +126,6 @@ japicmp checks signatures, not behavior. It cannot see:
 - Java runtime and TeamSpeak server support, protocol, transport or dependency changes,
   including a new required logging provider;
 - serialization compatibility, and reflection or module access.
-
-Each of these needs human review and the right Conventional Commit impact: `fix!:`/`feat!:`
-or a `BREAKING CHANGE:` footer with migration notes for an incompatible behavior or support
-change, even when japicmp reports nothing.
 
 ## Migration (2.0)
 

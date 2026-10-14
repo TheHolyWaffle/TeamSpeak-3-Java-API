@@ -11,7 +11,7 @@ installation is needed. On Windows, use `gradlew.bat`.
 
 | Command | What it does | Needs |
 | --- | --- | --- |
-| `./gradlew build` | Compiles the library and examples, runs the unit tests, and checks formatting, static analysis, Javadoc, coverage and API compatibility | JDK 25 |
+| `./gradlew build` | Compiles the library and examples, runs the unit tests, and checks formatting, static analysis, Javadoc and coverage | JDK 25 |
 | `./gradlew spotlessApply` | Fixes formatting | JDK 25 |
 | `./gradlew build integrationTest` | Adds the RAW and SSH integration suites, every example and the development server against disposable TS3 servers | Docker |
 | `./gradlew devServer` | Starts a disposable TS3 server for manual testing and prints its connection settings | Docker |
@@ -52,18 +52,9 @@ Breaking changes include changed behavior, defaults and runtime support, and nee
 in the description: what users must change, and how. `deps:` is only for changes to the library's
 runtime dependencies; build-only updates use `build:`.
 
-### API compatibility reports
-
-[japicmp](https://siom79.github.io/japicmp/) compares the library's public API:
-
-- `build` compares it with the last published release and fails if the pending version is too
-  small for the changes. The report goes to `build/japicmp/api-compatibility.diff`.
-- The release PR carries the version derived from the merged titles, so a title that understates
-  an API change fails the release PR. Declare breaking changes in your title from the start.
-
-japicmp sees signatures, not behavior. Changed results, exceptions, threading, timeouts or
-defaults behind an unchanged signature still need a breaking title and migration notes; reviewers
-check this by hand. See [API compatibility](docs/quality-checks.md#api-compatibility).
+A removed or changed public signature is breaking, and so are changed results, exceptions,
+threading, timeouts or defaults behind an unchanged one; reviewers check this by hand. See
+[API changes](docs/quality-checks.md#api-changes).
 
 ### Generated pull requests
 
@@ -82,7 +73,7 @@ do not add changelog fragments: release-please owns them.
 
 A PR is ready for review when:
 
-- **CI required** is green. It covers the build with API compatibility, the Docker-based TS3 RAW
+- **CI required** is green. It covers the build, the Docker-based TS3 RAW
   and SSH suite, dependency review, release intent, the publication rehearsal and reproducible
   builds.
 - It does one thing. Unrelated refactoring or reformatting goes in a separate PR.
@@ -94,7 +85,7 @@ A PR is ready for review when:
 Maintainers review every PR, and all review threads must be resolved before merging. Breaking
 changes are acceptable for the next major version, recorded with migration notes rather than
 compatibility shims. Changes to runtime support, defaults or behavior get an explicit
-compatibility review even when japicmp passes.
+compatibility review.
 
 ## Repository rules
 

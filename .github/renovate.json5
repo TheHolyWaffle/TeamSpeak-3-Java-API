@@ -29,7 +29,6 @@
         'com.google.errorprone:**',
         'com.palantir.javaformat:**',
         'org.jacoco:**',
-        'com.github.siom79.japicmp:**',
         'org.jreleaser:**',
         'net.ltgt.errorprone{,.gradle.plugin}',
         'com.diffplug.spotless{,.gradle.plugin}',

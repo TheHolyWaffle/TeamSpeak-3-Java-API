@@ -98,4 +98,4 @@ bash .github/scripts/consumer-check.sh 0.0.0
 ```
 
 The **gradle jreleaserDeploy -PdryRun** CI job runs the same steps after signing the staged artifacts with a
-disposable key and validating the Central bundle (`./gradlew jreleaserDeploy -PdryRun`).
+disposable key and validating the Central bundle (`./gradlew publish jreleaserDeploy -PdryRun`).

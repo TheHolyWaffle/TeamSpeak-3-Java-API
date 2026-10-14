@@ -5,11 +5,12 @@
   "include-v-in-tag": true,
   "packages": {
     ".": {
-      "release-type": "simple",
+      "release-type": "java",
       "extra-files": [
         "gradle.properties"
       ],
       "release-as": "2.0.0",
+      "skip-snapshot": true,
       "changelog-path": "CHANGELOG.md",
       "changelog-sections": [
         {

@@ -2,8 +2,8 @@
 
 2.0.0 is a major release with intentional source, binary and behavior breaks. Nothing is kept
 for compatibility: recompile, then work through the checklist below. Each section links the
-detailed guide for its area. Every API difference that japicmp reports against 1.3.1 is
-mapped to a section of this guide in the [API difference accounting](api-differences-2.0.md).
+detailed guide for its area. Every API difference from 1.3.1 is mapped to a section of this
+guide in [API differences from 1.3.1](api-differences-2.0.md).
 
 ## What 2.0 covers
 
