@@ -512,9 +512,31 @@ class WebQueryCompatibilityIT {
 
             var messages = api.messages();
             messages.sendOffline(info.getUniqueIdentifier(), "subject " + target, "body | \\s é");
-            // The fixture's only clients are query clients; the Web Query client has no offline inbox entries.
+            // The admin key's client is not the recipient; a key acts as its owner, so the recipient's key reads the
+            // inbox.
             assertEquals(List.of(), messages.listOffline());
             assertEquals(Optional.empty(), messages.getOffline(99_999));
+            var recipientKey = api.apiKeys().add(ApiKeyScope.WRITE, Duration.ofDays(1), id);
+            try (var recipient = web(target, recipientKey.getSecret().orElseThrow())) {
+                var inbox = recipient.getApi(1);
+                assertEquals(Optional.of(id), inbox.whoAmI().getDatabaseId());
+                var message = inbox.messages().listOffline().stream()
+                        .filter(m -> m.getSubject().equals("subject " + target))
+                        .findFirst()
+                        .orElseThrow();
+                assertFalse(message.hasBeenRead());
+                assertEquals(Optional.of("body | \\s é"), inbox.messages().getOffline(message.getId()));
+                inbox.messages().setOfflineRead(message.getId(), true);
+                assertTrue(inbox.messages().listOffline().stream()
+                        .filter(m -> m.getId() == message.getId())
+                        .findFirst()
+                        .orElseThrow()
+                        .hasBeenRead());
+                inbox.messages().deleteOffline(message.getId());
+                assertTrue(inbox.messages().listOffline().stream().noneMatch(m -> m.getId() == message.getId()));
+            } finally {
+                api.apiKeys().delete(recipientKey.getId());
+            }
             assertEquals(
                     512,
                     assertThrows(
@@ -725,6 +747,13 @@ class WebQueryCompatibilityIT {
             try (var query = new TS3WebQuery(server.webQueryConfig(true, key).build())) {
                 var servers = query.getApi().servers();
                 int original = servers.list().getFirst().getId();
+                // The original server is deleted below, so its only database client is disposable.
+                var databaseClients = query.getApi(original).databaseClients();
+                ClientDatabaseId guest = databaseClients.list().getFirst().getDatabaseId();
+                databaseClients.delete(guest);
+                assertTrue(databaseClients.list().stream()
+                        .noneMatch(c -> c.getDatabaseId().equals(guest)));
+                evidence.add("clientdbdelete removed cldbid=" + guest);
                 servers.stop(original, "replaced over Web Query | \\s");
                 assertEquals(
                         VirtualServerStatus.OFFLINE, servers.list().getFirst().getStatus());
