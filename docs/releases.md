@@ -565,7 +565,8 @@ run, which reads the merged history exactly as `master` will after a merge-commi
    entry, add a `BEGIN_COMMIT_OVERRIDE` … `END_COMMIT_OVERRIDE` block with the corrected
    Conventional Commit message to that PR's description, as the
    [release-please documentation](https://github.com/googleapis/release-please#how-can-i-fix-release-notes)
-   describes, and dry-run again.
+   describes, and dry-run again. Release-please reads the text after the *first* occurrence of the
+   start marker, so the description must not mention the marker anywhere else.
 3. **Bundle, consumers and API.** In a disposable worktree, apply that entry and version, then
    build, compare, sign, stage and consume:
 
