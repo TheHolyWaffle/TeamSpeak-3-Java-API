@@ -1,0 +1,26 @@
+.github/workflows/ci.yml
+  h_b0b95817cb397c 22,49-50,75-76,118-119,132,157-158,187
+.github/workflows/release.yml
+  h_b0b95817cb397c 19,36
+CONTRIBUTING.md
+  h_b0b95817cb397c 42
+docs/integration-tests.md
+  h_b0b95817cb397c 72
+docs/packaging.md
+  h_b0b95817cb397c 66,100
+docs/quality-checks.md
+  h_b0b95817cb397c 4,8-14,133
+docs/releases.md
+  h_b0b95817cb397c 19,46,72,109
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c6737d5e06add8f4da87b4b00a70121739b2650b",
+  "prompts": {},
+  "humans": {
+    "h_b0b95817cb397c": {
+      "author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
