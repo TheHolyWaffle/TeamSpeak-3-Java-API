@@ -34,7 +34,7 @@ try (TS3WebQuery query = new TS3WebQuery(config)) {
 | Deadlines | Connect, handshake, queue wait, response, close | Connect, request (send to complete response), close |
 | JVM lifetime | An open query keeps the JVM alive | An open client does not keep the JVM alive |
 
-The server represents Web Query requests with a query client of the key's owner. Its nickname and
+The server represents Web Query requests with a query client of the key's owner: `whoAmI()`, permissions and per-client data such as the offline-message inbox are the owner's. Its nickname and
 channel persist across requests on the server side: `setNickname`, `updateClient`, `moveQuery` and
 `messages().sendChannel(channelId, ...)` change that shared client for every later request with the
 same key, over HTTP and HTTPS alike. `whoAmI()` describes it; its client ID can change between
@@ -139,7 +139,7 @@ was checked, including from an independent ServerQuery session where noted. Erro
 | `servers()` | `list`, `findIdByPort`, `create`, `delete`, `start`, both `stop`, `info`, `edit` (seen by ServerQuery), `connectionInfo`, `createSnapshot`, `deploySnapshot`, `logEntries` | `delete` of a running server (1035), `start` of a deleted server (1024) | | |
 | `channels()` | all, with protocol escapes and Unicode (seen by ServerQuery) | `info` of a deleted channel (768) | | |
 | `clients()` | `list`, `info`, `findByName`, `search`, `findByUniqueId`, both `isOnline`, both `move`, `moveAll`, `kickFromChannel`, `edit` | `kickFromServer` and `poke` of query clients (516) | | success for voice clients |
-| `databaseClients()` | `list` (both), `info`, `search`, `findByUniqueId`, `edit`, custom properties (all) | `info` of an unknown ID (512) | | `delete` |
+| `databaseClients()` | all, including `list()` of an empty database and `delete` | `info` of an unknown ID (512) | | |
 | `serverGroups()` | all | | | |
 | `channelGroups()` | all | | | |
 | `permissions()` | all, including pipe-separated multi-permission requests for every target type | | | |
@@ -147,7 +147,7 @@ was checked, including from an independent ServerQuery session where noted. Erro
 | `complaints()` | all | | | |
 | `privilegeKeys()` | `list`, both `create...`, `delete` | `use` by the Web Query client (516) | | |
 | `queryLogins()` | `list`, `search`, both `create` (the instance login then authenticates over RAW), `delete` | `updateOwn`: the Web Query client has no own login (512) | | |
-| `messages()` | `sendPrivate`, both `sendChannel`, `sendServer(String)`, `broadcast`, `sendOffline`, `listOffline`, `getOffline` of an unknown ID (empty) | `sendOffline` to an unknown unique ID (512) | `sendServer(int, String)` (needs `use`; call `getApi(serverId).messages().sendServer(...)`) | reading, marking and deleting an existing offline message |
+| `messages()` | `sendPrivate`, both `sendChannel`, `sendServer(String)`, `broadcast`, `sendOffline`; `listOffline`, `getOffline`, `setOfflineRead` and `deleteOffline` with a key owned by the recipient | `sendOffline` to an unknown unique ID (512) | `sendServer(int, String)` (needs `use`; call `getApi(serverId).messages().sendServer(...)`) | |
 | `events()` | | | all | |
 | `files()` | | | all | |
 
