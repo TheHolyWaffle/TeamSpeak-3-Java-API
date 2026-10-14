@@ -1,0 +1,19 @@
+docs/releases.md
+  s_449210636ff7de::t_9fc6c9c685f953 568-569
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "10b737ce0e29c9c5df2daee2d6723075db81bcce",
+  "prompts": {},
+  "sessions": {
+    "s_449210636ff7de": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "61fb63e2-39b1-4700-bc2e-df955a4a9147",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
