@@ -70,8 +70,4 @@ public class TS3ApiAsync extends TS3BaseApiAsync {
     public CompletableFuture<Void> selectVirtualServerByPort(int port, String nickname) {
         return requests.run(QueryCommands.usePort(port, nickname));
     }
-
-    CompletableFuture<Void> quit() {
-        return requests.run(QueryCommands.quit());
-    }
 }

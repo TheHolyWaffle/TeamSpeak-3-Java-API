@@ -43,6 +43,34 @@ class ConnectionLifecycleTest {
         assertTrue(query.resourcesTerminated(), "Owned executors and I/O workers must terminate");
     }
 
+    /** A completed command returns its permit only after its callbacks, which exit must not race. */
+    @Test
+    void exitWaitsForACompletingCommandsPermitBeforeQuit() throws Exception {
+        try (var peer = new FakeServerQuery(p -> {
+                    p.expect("whoami");
+                    p.write("client_id=42\nerror id=0 msg=ok\n");
+                    p.finishQuit();
+                });
+                var query = new TS3Query(new TS3Config()
+                        .setHost("127.0.0.1")
+                        .setQueryPort(peer.port())
+                        .setFloodRate(TS3Query.FloodRate.UNLIMITED)
+                        .setCommandCapacity(1))) {
+            query.connect();
+            var whoami = query.getAsyncApi().whoAmI();
+            var _ = whoami.thenRun(() -> {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            });
+            whoami.join();
+            query.exit();
+            peer.await();
+        }
+    }
+
     @Test
     void closeBeforeConnectFailsPendingAndRejectsNewCommands() throws Exception {
         var query = new TS3Query(config(1));

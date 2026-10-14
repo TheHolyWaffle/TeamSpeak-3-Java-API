@@ -36,7 +36,10 @@ public final class DatabaseClientApiAsync {
 
     /** @see DatabaseClientApi#list() */
     public CompletableFuture<List<DatabaseClient>> list() {
-        var count = requests.integer(DatabaseClientCommands.clientDBList(0, 1, true), "count");
+        // An empty database answers with error 1281 and no count row.
+        var count = CommandFutures.map(
+                requests.optionalInteger(DatabaseClientCommands.clientDBList(0, 1, true), "count"),
+                found -> found.orElse(0));
         return CommandFutures.map(
                 CommandFutures.compose(count, total -> {
                     var pages = IntStream.iterate(0, offset -> offset < total, offset -> offset + PAGE_SIZE)

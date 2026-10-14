@@ -104,6 +104,22 @@ class DomainApiTest {
     }
 
     @Test
+    void emptyClientDatabaseListsNoClients() throws Exception {
+        try (var peer = new FakeServerQuery(p -> {
+                    // Recorded from TS3 3.13.8 after deleting a virtual server's only database client.
+                    p.expect("clientdblist start=0 duration=1 -count");
+                    p.write(EMPTY);
+                    p.finishQuit();
+                });
+                var query = query(peer)) {
+            query.connect();
+            assertEquals(List.of(), query.getApi().databaseClients().list());
+            query.exit();
+            peer.await();
+        }
+    }
+
+    @Test
     void requiredResultsFailInsteadOfReturningDefaults() throws Exception {
         try (var peer = new FakeServerQuery(p -> {
                     p.expect("whoami");

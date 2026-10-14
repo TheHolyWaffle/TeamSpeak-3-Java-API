@@ -34,10 +34,13 @@ import com.github.theholywaffle.teamspeak3.api.exception.TS3UnknownOutcomeExcept
 import com.github.theholywaffle.teamspeak3.api.exception.TS3UnsupportedOperationException;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 import com.github.theholywaffle.teamspeak3.commands.CommandTrait;
+import com.github.theholywaffle.teamspeak3.commands.QueryCommands;
 import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -117,27 +120,27 @@ class CommandQueue {
     }
 
     void enqueueCommand(Command command, CompletionStage<?> work) {
+        enqueue(command, work, false);
+    }
+
+    /** @param admitted whether the caller already holds the command's admission permit */
+    private void enqueue(Command command, CompletionStage<?> work, boolean admitted) {
         queueLock.lock();
         try {
+            TS3Exception rejection = null;
             if (rejectNew) {
-                command.getFuture().completeExceptionally(new TS3QueryShutDownException());
-                return;
+                rejection = new TS3QueryShutDownException();
+            } else if (paused && query.getConfig().getSessionConfiguration() == null) {
+                rejection = new TS3QueryShutDownException("Disconnected query has no restorable session");
+            } else if (contextSealed && command.getTraits().contains(CommandTrait.SESSION_STATE)) {
+                rejection = new TS3UnsupportedOperationException(
+                        "Session changes require SessionConfiguration when reconnect is enabled");
+            } else if (!admitted && !admission.tryAcquire()) {
+                rejection = new TS3QueueFullException();
             }
-
-            if (paused && query.getConfig().getSessionConfiguration() == null) {
-                command.getFuture()
-                        .completeExceptionally(
-                                new TS3QueryShutDownException("Disconnected query has no restorable session"));
-                return;
-            }
-            if (contextSealed && command.getTraits().contains(CommandTrait.SESSION_STATE)) {
-                command.getFuture()
-                        .completeExceptionally(new TS3UnsupportedOperationException(
-                                "Session changes require SessionConfiguration when reconnect is enabled"));
-                return;
-            }
-            if (!admission.tryAcquire()) {
-                command.getFuture().completeExceptionally(new TS3QueueFullException());
+            if (rejection != null) {
+                if (admitted) admission.release();
+                command.getFuture().completeExceptionally(rejection);
                 return;
             }
             var entry = new Entry(command, work);
@@ -349,15 +352,15 @@ class CommandQueue {
     }
 
     void quit(Deadline deadline) {
-        queueLock.lock();
+        // A completed command keeps its permit until its completion callbacks return, so wait for one.
+        boolean admitted = false;
         try {
-            // Best effort: shutDown settles every remaining command.
-            if (!rejectNew) {
-                var _ = asyncApi.quit();
-            }
-        } finally {
-            queueLock.unlock();
+            admitted = admission.tryAcquire(deadline.remaining(), TimeUnit.NANOSECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
+        // Best effort: shutDown settles every remaining command.
+        if (admitted) enqueue(QueryCommands.quit(), CompletableFuture.completedStage(null), true);
         shutDown(deadline);
     }
 
