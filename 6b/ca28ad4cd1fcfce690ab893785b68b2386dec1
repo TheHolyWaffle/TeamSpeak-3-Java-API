@@ -1,0 +1,35 @@
+src/main/java/com/github/theholywaffle/teamspeak3/ApiKeyApi.java
+  s_b323d294012cee::t_743d6040160e7d 1-83
+src/main/java/com/github/theholywaffle/teamspeak3/ApiKeyApiAsync.java
+  s_b323d294012cee::t_4beb5737e493d1 1-56
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Api.java
+  s_b323d294012cee::t_1d6d69c4cf5b1b 65,84,102-106
+src/main/java/com/github/theholywaffle/teamspeak3/TS3ApiAsync.java
+  s_b323d294012cee::t_949e262862dde0 66,85,103-107
+src/main/java/com/github/theholywaffle/teamspeak3/api/ApiKeyScope.java
+  s_b323d294012cee::t_ecf2d4e8ab743f 1-37
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/ApiKey.java
+  s_b323d294012cee::t_677fba693d4a87 1-62
+src/main/java/com/github/theholywaffle/teamspeak3/commands/ApiKeyCommands.java
+  s_b323d294012cee::t_b8378ac7d87a6d 1-42
+src/test/java/com/github/theholywaffle/teamspeak3/ApiKeyApiTest.java
+  s_b323d294012cee::t_226b46189c90cb 1-103
+src/test/java/com/github/theholywaffle/teamspeak3/DomainApiParityTest.java
+  s_b323d294012cee::t_781ddc6dbd8465 23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6bca28ad4cd1fcfce690ab893785b68b2386dec1",
+  "prompts": {},
+  "sessions": {
+    "s_b323d294012cee": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "01ea27ad-50cb-4cfa-a7ac-c6f61151d4de",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
