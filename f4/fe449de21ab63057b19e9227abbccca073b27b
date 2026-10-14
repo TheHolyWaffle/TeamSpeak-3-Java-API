@@ -1,0 +1,31 @@
+src/main/java/com/github/theholywaffle/teamspeak3/TS3WebQuery.java
+  s_b323d294012cee::t_0770aef3fd0efa 1-234
+src/main/java/com/github/theholywaffle/teamspeak3/WebQueryBackend.java
+  s_b323d294012cee::t_dd25edba7cd5cb 1-29
+src/main/java/com/github/theholywaffle/teamspeak3/WebQueryConfig.java
+  s_b323d294012cee::t_5256068918eab3 1-222
+src/main/java/com/github/theholywaffle/teamspeak3/WebQueryJson.java
+  s_b323d294012cee::t_e7da309fc8cd64 1-271
+src/main/java/com/github/theholywaffle/teamspeak3/WebQueryProtocol.java
+  s_b323d294012cee::t_fdde1e04093b8b 1-157
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3AuthenticationFailedException.java
+  s_b323d294012cee::t_8fc08cb28220f0 1-17
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3HttpException.java
+  s_b323d294012cee::t_c8bbe0b9353ca2 1-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f4fe449de21ab63057b19e9227abbccca073b27b",
+  "prompts": {},
+  "sessions": {
+    "s_b323d294012cee": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "01ea27ad-50cb-4cfa-a7ac-c6f61151d4de",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
