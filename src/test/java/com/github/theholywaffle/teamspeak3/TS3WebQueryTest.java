@@ -127,6 +127,8 @@ class TS3WebQueryTest {
     @Test
     void rejectsInvalidScopes() {
         try (var query = new TS3WebQuery(config().build())) {
+            assertSame(query.getApi(), query.getApi());
+            assertSame(query.getAsyncApi(), query.getAsyncApi());
             assertThrows(IllegalArgumentException.class, () -> query.getApi(0));
             assertThrows(IllegalArgumentException.class, () -> query.getAsyncApi(-1));
             assertThrows(IllegalArgumentException.class, () -> query.getApiByPort(0));

@@ -55,7 +55,8 @@ public final class TS3WebQuery implements AutoCloseable {
     private final Map<Long, CompletableFuture<?>> inFlight = new HashMap<>();
     private long nextRequest;
     private final Object lock = new Object();
-    private final TS3ApiAsync instanceApi;
+    private final TS3ApiAsync instanceAsyncApi;
+    private final TS3Api instanceApi;
     private volatile boolean closed;
 
     /** @param config immutable endpoint, API key and limits */
@@ -71,17 +72,18 @@ public final class TS3WebQuery implements AutoCloseable {
                 .executor(executor);
         config.getSslContext().ifPresent(builder::sslContext);
         http = builder.build();
-        instanceApi = api("");
+        instanceAsyncApi = api("");
+        instanceApi = new TS3Api(instanceAsyncApi);
     }
 
     /** @return the synchronous API for instance commands such as {@code version} and {@code serverlist} */
     public TS3Api getApi() {
-        return new TS3Api(instanceApi);
+        return instanceApi;
     }
 
     /** @return the asynchronous API for instance commands */
     public TS3ApiAsync getAsyncApi() {
-        return instanceApi;
+        return instanceAsyncApi;
     }
 
     /**
@@ -198,7 +200,7 @@ public final class TS3WebQuery implements AutoCloseable {
                 } else {
                     result.completeExceptionally(failure(command.getName(), CommandFutures.unwrap(failure)));
                 }
-            } catch (TS3Exception e) {
+            } catch (RuntimeException e) {
                 result.completeExceptionally(e);
             } finally {
                 var _ = work.whenComplete((value, ignored) -> admission.release());
