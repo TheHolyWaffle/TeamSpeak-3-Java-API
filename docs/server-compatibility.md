@@ -121,8 +121,8 @@ concurrent/multi-running-server behavior, other configuration combinations,
 instance edits and their permission failures remain in #441. Official [TS6 beta13.1 release notes](https://github.com/teamspeak/teamspeak6-server/releases/tag/v6.0.0-beta13.1)
 fix virtual-server stop behavior, but these read/edit tests do not claim lifecycle
 coverage from that release note. This slice uses serveradmin query sessions,
-not voice clients or guest/restricted roles; TS6 RAW, Web Query and other versions
-are unclaimed. Field presence does not establish transport reachability or feature
+not voice clients or guest/restricted roles; TS6 RAW and other versions are
+unclaimed; Web Query evidence is in [Web Query](web-query.md). Field presence does not establish transport reachability or feature
 administration support. Reliable transfers/NAT endpoints remain #442 scope.
 
 Official [JUnit 6.1.3](https://docs.junit.org/6.1.3/overview.html) and

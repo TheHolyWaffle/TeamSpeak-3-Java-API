@@ -78,7 +78,7 @@ fixtures. Concurrent or multi-running-server operations, repeated create/delete
 stress and thread-budget accounting, autostart/nondefault creation combinations,
 port conflicts, denied roles, snapshots, process shutdown, reboot persistence,
 voice-client disconnect/rejoin behavior and other versions remain unverified.
-TS6 RAW and Web Query remain unclaimed. Other #441 domain gaps stay in the
+TS6 RAW remains unclaimed; Web Query evidence is in [Web Query](web-query.md). Other #441 domain gaps stay in the
 inventory; file-transfer reliability/NAT endpoints remain #442 scope.
 
 Official [TS6 beta13.1 release notes](https://github.com/teamspeak/teamspeak6-server/releases/tag/v6.0.0-beta13.1)

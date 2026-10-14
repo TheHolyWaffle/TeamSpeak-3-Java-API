@@ -71,8 +71,8 @@ scope. No client identity is fabricated or client-permission state changed by th
 Template/query types, memberships/automatic assignments, copied icon semantics,
 all name constraints, missing targets, self-copy, restricted-role enforcement,
 permission overview/reset and other versions remain unverified. Actual voice
-clients need separate fixture/manual evidence. TS6 RAW and Web Query are
-unclaimed; remaining domains stay in the overall inventory. Transfer reliability
+clients need separate fixture/manual evidence. TS6 RAW is unclaimed and Web
+Query evidence is in [Web Query](web-query.md); remaining domains stay in the overall inventory. Transfer reliability
 and NAT endpoints belong to #442.
 
 Official [TS6 beta13.1 release notes](https://github.com/teamspeak/teamspeak6-server/releases/tag/v6.0.0-beta13.1),

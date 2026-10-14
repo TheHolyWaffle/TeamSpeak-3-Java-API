@@ -20,7 +20,7 @@ Related updates share one PR per group (see the config): the build toolchain, re
 (JReleaser, japicmp), SLF4J, test libraries, other build plugins, Actions other than
 release-please, and the Gradle consumer.
 
-Runtime dependencies (SSHJ, the Bouncy Castle BOM) and major updates arrive one per PR.
+Runtime dependencies (SSHJ, the Bouncy Castle BOM, Gson) and major updates arrive one per PR.
 Version updates wait seven days after a release (`cooldown`) so that broken or withdrawn releases
 are usually caught upstream first; security updates are not delayed. Every tool the build runs is
 declared where Dependabot reads it: plugins invoked by prefix (`help:evaluate`, `versions:set`)

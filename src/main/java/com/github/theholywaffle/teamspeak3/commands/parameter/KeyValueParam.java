@@ -53,6 +53,11 @@ public record KeyValueParam(String key, String value) implements Parameter {
     }
 
     @Override
+    public void addTo(ParameterSink sink) {
+        sink.put(key, value);
+    }
+
+    @Override
     public void appendTo(StringBuilder line) {
         CommandEncoding.encode(value, CommandEncoding.encode(key, line).append('='));
     }

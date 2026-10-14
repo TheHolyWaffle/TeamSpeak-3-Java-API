@@ -5,16 +5,27 @@ import com.github.theholywaffle.teamspeak3.SshHostKeyPolicy;
 import com.github.theholywaffle.teamspeak3.TS3Config;
 import com.github.theholywaffle.teamspeak3.TS3Query.FloodRate;
 import com.github.theholywaffle.teamspeak3.TS3Query.Protocol;
+import com.github.theholywaffle.teamspeak3.WebQueryConfig;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 
 /**
  * Connection settings shared by the examples, read from environment variables so no example
@@ -54,8 +65,7 @@ public final class ExampleSettings {
                             case "unlimited" -> FloodRate.UNLIMITED;
                             default -> throw unsupported("TS3_FLOOD_RATE");
                         })
-                .setEnableCommunicationsLogging(Boolean.parseBoolean(
-                        optional("TS3_COMMUNICATIONS_LOGGING").orElse("false")));
+                .setEnableCommunicationsLogging(flag("TS3_COMMUNICATIONS_LOGGING"));
         optional("TS3_QUERY_PORT").ifPresent(port -> config.setQueryPort(port("TS3_QUERY_PORT")));
         optional("TS3_SSH_KNOWN_HOSTS")
                 .ifPresent(file -> config.setSshHostKeyPolicy(SshHostKeyPolicy.knownHosts(Path.of(file))));
@@ -77,6 +87,49 @@ public final class ExampleSettings {
                     (queryHost, advertisedHost, advertisedPort) -> new InetSocketAddress(host, port)));
         }
         return config;
+    }
+
+    /**
+     * @return a Web Query configuration for {@code TS3_WEBQUERY_URI} and {@code TS3_API_KEY}, trusting only
+     *     the PEM certificates in {@code TS3_WEBQUERY_CERTIFICATE} when set, and accepting plain HTTP only
+     *     when {@code TS3_WEBQUERY_PLAINTEXT} is {@code true}
+     * @throws IllegalArgumentException if a required variable is missing or a value is invalid
+     */
+    public WebQueryConfig webQueryConfig() {
+        String endpoint = required("TS3_WEBQUERY_URI");
+        URI uri;
+        try {
+            uri = URI.create(endpoint);
+        } catch (IllegalArgumentException e) {
+            throw unsupported("TS3_WEBQUERY_URI");
+        }
+        WebQueryConfig.Builder builder = WebQueryConfig.builder(uri, required("TS3_API_KEY"))
+                .setPlaintextHttpAllowed(flag("TS3_WEBQUERY_PLAINTEXT"));
+        optional("TS3_WEBQUERY_CERTIFICATE").ifPresent(file -> builder.setSslContext(trusting(Path.of(file))));
+        return builder.build();
+    }
+
+    private static SSLContext trusting(Path file) {
+        try (InputStream in = Files.newInputStream(file)) {
+            KeyStore trust = KeyStore.getInstance(KeyStore.getDefaultType());
+            trust.load(null, null);
+            List<? extends Certificate> certificates =
+                    List.copyOf(CertificateFactory.getInstance("X.509").generateCertificates(in));
+            if (certificates.isEmpty())
+                throw new IllegalArgumentException("TS3_WEBQUERY_CERTIFICATE contains no certificate");
+            for (int i = 0; i < certificates.size(); i++) {
+                trust.setCertificateEntry("certificate-" + i, certificates.get(i));
+            }
+            TrustManagerFactory managers = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            managers.init(trust);
+            SSLContext context = SSLContext.getInstance("TLS");
+            context.init(null, managers.getTrustManagers(), null);
+            return context;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        } catch (GeneralSecurityException e) {
+            throw new IllegalArgumentException("TS3_WEBQUERY_CERTIFICATE is not a PEM certificate", e);
+        }
     }
 
     /** @return {@code TS3_VIRTUAL_SERVER_ID}, default 1 */
@@ -110,6 +163,10 @@ public final class ExampleSettings {
 
     private Optional<String> optional(String name) {
         return Optional.ofNullable(environment.get(name)).filter(value -> !value.isBlank());
+    }
+
+    private boolean flag(String name) {
+        return Boolean.parseBoolean(optional(name).orElse("false"));
     }
 
     private String lowerCase(String name, String fallback) {

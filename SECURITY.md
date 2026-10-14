@@ -13,8 +13,8 @@ with the [migration guide](docs/migration-2.0.md). Within a supported line, only
 newest release is patched; there are no backports to older minors or patches.
 
 A supported version runs on **Java 25 or newer** against the **TeamSpeak 3 server** versions listed in the README's
-[compatibility table](README.md#requirements-and-compatibility). TeamSpeak 6, the TS3 WebQuery
-and the voice/client protocols are not supported.
+[compatibility table](README.md#requirements-and-compatibility), including the optional TS3 Web Query
+transport where that table lists it. TeamSpeak 6 and the voice/client protocols are not supported.
 
 ## Reporting a vulnerability
 
@@ -44,7 +44,7 @@ weaknesses.
 Out of scope, please report upstream instead:
 
 - vulnerabilities in the TeamSpeak server itself: [TeamSpeak](https://teamspeak.com);
-- vulnerabilities in a dependency (SSHJ, Bouncy Castle, SLF4J) that this library does not make
+- vulnerabilities in a dependency (SSHJ, Bouncy Castle, SLF4J, Gson) that this library does not make
   worse: the dependency's project. Dependabot proposes patched versions here.
 
 Known, documented limitations are not vulnerabilities: file transfers use an unencrypted TCP

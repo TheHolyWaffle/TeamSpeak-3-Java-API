@@ -21,6 +21,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.function.Function;
 
 /**
  * Asynchronous file repository access, file transfers and icons.
@@ -109,20 +111,21 @@ public final class FileApiAsync {
     public CompletableFuture<Void> upload(FileLocation target, InputStream data, long length, UploadMode mode) {
         Objects.requireNonNull(data, "data");
         Objects.requireNonNull(mode, "mode");
-        FileTransferHelper helper = requests.query().getFileTransferHelper();
         boolean resume = mode == UploadMode.RESUME;
-        Command command = FileCommands.ftInitUpload(
-                helper.getClientTransferId(),
-                target.path(),
-                target.channelId(),
-                target.channelPassword(),
-                length,
-                mode == UploadMode.OVERWRITE,
-                resume);
-        return executeTransfer(command, "Upload failed", (params, operation) -> {
-            helper.uploadFile(data, length, params, resume, operation);
-            return null;
-        });
+        return executeTransfer(
+                helper -> FileCommands.ftInitUpload(
+                        helper.getClientTransferId(),
+                        target.path(),
+                        target.channelId(),
+                        target.channelPassword(),
+                        length,
+                        mode == UploadMode.OVERWRITE,
+                        resume),
+                "Upload failed",
+                (helper, params, operation) -> {
+                    helper.uploadFile(data, length, params, resume, operation);
+                    return null;
+                });
     }
 
     /** @see FileApi#upload(FileLocation, byte[], UploadMode) */
@@ -138,21 +141,23 @@ public final class FileApiAsync {
     /** @see FileApi#download(FileLocation, OutputStream, long) */
     public CompletableFuture<Long> download(FileLocation file, OutputStream out, long offset) {
         Objects.requireNonNull(out, "out");
-        FileTransferHelper helper = requests.query().getFileTransferHelper();
-        Command command = FileCommands.ftInitDownload(
-                helper.getClientTransferId(), file.path(), file.channelId(), file.channelPassword(), offset);
-        return executeTransfer(command, "Download failed", (params, operation) -> {
-            helper.downloadFile(out, params, offset, operation);
-            return params.getFileSize() - offset;
-        });
+        return executeTransfer(
+                helper -> FileCommands.ftInitDownload(
+                        helper.getClientTransferId(), file.path(), file.channelId(), file.channelPassword(), offset),
+                "Download failed",
+                (helper, params, operation) -> {
+                    helper.downloadFile(out, params, offset, operation);
+                    return params.getFileSize() - offset;
+                });
     }
 
     /** @see FileApi#downloadBytes(FileLocation) */
     public CompletableFuture<byte[]> downloadBytes(FileLocation file) {
-        FileTransferHelper helper = requests.query().getFileTransferHelper();
-        Command command = FileCommands.ftInitDownload(
-                helper.getClientTransferId(), file.path(), file.channelId(), file.channelPassword(), 0);
-        return executeTransfer(command, "Download failed", helper::downloadBytes);
+        return executeTransfer(
+                helper -> FileCommands.ftInitDownload(
+                        helper.getClientTransferId(), file.path(), file.channelId(), file.channelPassword(), 0),
+                "Download failed",
+                FileTransferHelper::downloadBytes);
     }
 
     /** @see FileApi#icons() */
@@ -169,21 +174,23 @@ public final class FileApiAsync {
     public CompletableFuture<Long> uploadIcon(InputStream data, long length) {
         Objects.requireNonNull(data, "data");
         if (length < 0) throw new IllegalArgumentException("Negative icon length");
-        TS3Query query = requests.query();
-        var admission = query.commandAdmission(requests.queue().isGlobal());
-        if (!admission.tryAcquire()) return CompletableFuture.failedFuture(new TS3QueueFullException());
-        var helper = query.getFileTransferHelper();
-        var operation = helper.newOperation();
-        var work = new CompletableFuture<byte[]>();
-        var preparation = CommandFutures.link(work, abortOnCancel(operation));
-        runFileWork(
-                operation,
-                work,
-                "Icon buffering aborted",
-                "Icon buffering failed",
-                op -> helper.bufferFully(data, length, op),
-                admission::release);
-        return CommandFutures.compose(preparation, this::uploadIcon);
+        return requests.backend().withFileTransfers(files -> {
+            var admission = files.admission();
+            if (!admission.tryAcquire()) return CompletableFuture.failedFuture(new TS3QueueFullException());
+            var helper = files.helper();
+            var operation = helper.newOperation();
+            var work = new CompletableFuture<byte[]>();
+            var preparation = CommandFutures.link(work, abortOnCancel(operation));
+            runFileWork(
+                    files.callbacks(),
+                    operation,
+                    work,
+                    "Icon buffering aborted",
+                    "Icon buffering failed",
+                    op -> helper.bufferFully(data, length, op),
+                    admission::release);
+            return CommandFutures.compose(preparation, this::uploadIcon);
+        });
     }
 
     /** @see FileApi#uploadIcon(byte[]) */
@@ -220,13 +227,24 @@ public final class FileApiAsync {
 
     @FunctionalInterface
     private interface TransferWork<T> {
-        T run(FileTransferParameters params, FileTransferHelper.Operation operation) throws IOException;
+        T run(FileTransferHelper helper, FileTransferParameters params, FileTransferHelper.Operation operation)
+                throws IOException;
     }
 
-    private <T> CompletableFuture<T> executeTransfer(Command command, String failureMessage, TransferWork<T> transfer) {
+    private <T> CompletableFuture<T> executeTransfer(
+            Function<FileTransferHelper, Command> request, String failureMessage, TransferWork<T> transfer) {
+        return requests.backend().withFileTransfers(files -> executeTransfer(files, request, failureMessage, transfer));
+    }
+
+    private <T> CompletableFuture<T> executeTransfer(
+            FileTransfers files,
+            Function<FileTransferHelper, Command> request,
+            String failureMessage,
+            TransferWork<T> transfer) {
+        Command command = request.apply(files.helper());
         var finished = new CompletableFuture<Void>();
         var work = new CompletableFuture<T>();
-        var operation = requests.query().getFileTransferHelper().newOperation();
+        var operation = files.helper().newOperation();
         var result = CommandFutures.link(work, abortOnCancel(operation), command.getFuture());
         var _ = command.getFuture().whenComplete((response, failure) -> {
             if (failure != null) {
@@ -236,6 +254,7 @@ public final class FileApiAsync {
                 return;
             }
             runFileWork(
+                    files.callbacks(),
                     operation,
                     work,
                     "File transfer aborted",
@@ -247,11 +266,11 @@ public final class FileApiAsync {
                         var params = new FileTransferParameters(row.getMap());
                         var error = FileTransferHelper.field(params::findFailure);
                         if (error.isPresent()) throw new TS3CommandFailedException(error.get(), command.getName());
-                        return transfer.run(params, op);
+                        return transfer.run(files.helper(), params, op);
                     },
                     () -> finished.complete(null));
         });
-        requests.queue().enqueueCommand(command, finished);
+        requests.backend().enqueue(command, finished);
         return result;
     }
 
@@ -261,22 +280,21 @@ public final class FileApiAsync {
         return cancellation;
     }
 
-    private <T> void runFileWork(
+    private static <T> void runFileWork(
+            Executor callbacks,
             FileTransferHelper.Operation operation,
             CompletableFuture<T> work,
             String abortMessage,
             String failureMessage,
             FileWork<T> body,
             Runnable onFinish) {
-        TS3Query query = requests.query();
         try {
-            query.callbackExecutor().execute(() -> {
+            callbacks.execute(() -> {
                 T value = null;
                 Throwable failure = null;
                 try (operation) {
-                    operation.start(() -> query.callbackExecutor()
-                            .execute(() -> work.completeExceptionally(
-                                    new TS3FileTransferFailedException(abortMessage, operation.abortCause()))));
+                    operation.start(() -> callbacks.execute(() -> work.completeExceptionally(
+                            new TS3FileTransferFailedException(abortMessage, operation.abortCause()))));
                     value = body.run(operation);
                 } catch (IOException exception) {
                     failure = new TS3FileTransferFailedException(failureMessage, operation.failureCause(exception));

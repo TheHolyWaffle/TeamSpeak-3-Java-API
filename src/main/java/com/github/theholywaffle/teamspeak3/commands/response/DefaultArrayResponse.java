@@ -30,6 +30,9 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 import com.github.theholywaffle.teamspeak3.commands.ProtocolRedactor;
+import com.github.theholywaffle.teamspeak3.commands.parameter.ArrayParameter;
+import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
+import com.github.theholywaffle.teamspeak3.commands.parameter.Parameter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -48,18 +51,37 @@ public class DefaultArrayResponse {
      */
     public static DefaultArrayResponse parse(String rawResponse) {
         if (rawResponse == null || rawResponse.isEmpty()) return EMPTY;
+        return new DefaultArrayResponse(inherit(CommandEncoding.decodeEntries(rawResponse)), rawResponse);
+    }
 
-        String[] rawRows = rawResponse.split("\\|", -1);
-        Map<String, String> shared = parseMap(rawRows[0]);
-        List<Wrapper> rows = new ArrayList<>(rawRows.length);
-        rows.add(new Wrapper(shared));
-        for (int i = 1; i < rawRows.length; i++) {
+    /**
+     * Builds a response from rows that are already decoded, such as Web Query JSON, with the same
+     * inheritance of shared fields from the first row as {@link #parse(String)}.
+     *
+     * @param rows decoded rows, in received order
+     * @return the response, whose {@link #getRawResponse()} is the rows' ServerQuery encoding
+     */
+    public static DefaultArrayResponse fromRows(List<Map<String, String>> rows) {
+        if (rows.isEmpty()) return EMPTY;
+        var encoded = new ArrayParameter(rows.stream()
+                        .map(row -> row.entrySet().stream()
+                                .<Parameter>map(field -> new KeyValueParam(field.getKey(), field.getValue()))
+                                .toList())
+                        .toList())
+                .encoded();
+        return new DefaultArrayResponse(inherit(rows), encoded);
+    }
+
+    private static List<Wrapper> inherit(List<Map<String, String>> rows) {
+        Map<String, String> shared = rows.getFirst();
+        List<Wrapper> wrappers = new ArrayList<>(rows.size());
+        wrappers.add(new Wrapper(shared));
+        for (Map<String, String> fields : rows.subList(1, rows.size())) {
             Map<String, String> row = new LinkedHashMap<>(shared);
-            row.putAll(parseMap(rawRows[i]));
-            rows.add(new Wrapper(row));
+            row.putAll(fields);
+            wrappers.add(new Wrapper(row));
         }
-
-        return new DefaultArrayResponse(rows, rawResponse);
+        return wrappers;
     }
 
     /**
@@ -73,8 +95,7 @@ public class DefaultArrayResponse {
         if (rawError == null || !rawError.startsWith("error ")) {
             throw new IllegalArgumentException("Expected an error line");
         }
-        String error = rawError.substring("error ".length());
-        Map<String, String> errorMap = parseMap(error);
+        Map<String, String> errorMap = CommandEncoding.decodeEntry(rawError.substring("error ".length()));
         String id = errorMap.get("id");
         try {
             if (id == null || Integer.parseInt(id) < 0) {
@@ -84,21 +105,6 @@ public class DefaultArrayResponse {
             throw new IllegalArgumentException("Error line requires a nonnegative integer id", e);
         }
         return new QueryError(errorMap);
-    }
-
-    private static Map<String, String> parseMap(String rawMap) {
-        if (rawMap.isEmpty()) return Map.of();
-        Map<String, String> map = new LinkedHashMap<>();
-        for (String param : rawMap.split(" ", -1)) {
-            if (param.isEmpty()) continue;
-            int pos = param.indexOf('=');
-            if (pos == -1) map.put(CommandEncoding.decode(param), "");
-            else
-                map.put(
-                        CommandEncoding.decode(param.substring(0, pos)),
-                        CommandEncoding.decode(param.substring(pos + 1)));
-        }
-        return map;
     }
 
     private static final DefaultArrayResponse EMPTY = new DefaultArrayResponse(List.of(), "");

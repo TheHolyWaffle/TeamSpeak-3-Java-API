@@ -108,7 +108,9 @@ The transport does not parse commands, response frames, notifications or values.
 response decoding live under `commands`; `CommandQueue` owns admission,
 deadlines and completion; public APIs build commands against that same queue.
 No copied command executor is needed for a new stream transport. Web Query is
-not a stream transport and remains the separately scoped optional task #452.
+not a stream transport: [`TS3WebQuery`](web-query.md) shares the domain APIs, command
+builders, models and error types through a separate request backend, without the queue,
+reader or session semantics described here.
 
 Implementation references: [SSHJ 0.41.1 known-host verification](https://github.com/hierynomus/sshj/blob/v0.41.1/src/main/java/net/schmizz/sshj/transport/verification/OpenSSHKnownHosts.java),
 [SSHJ host verifier contract](https://github.com/hierynomus/sshj/blob/v0.41.1/src/main/java/net/schmizz/sshj/transport/verification/HostKeyVerifier.java),

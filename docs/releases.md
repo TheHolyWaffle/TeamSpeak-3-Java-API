@@ -539,7 +539,7 @@ Decided for 2.0 (#484): neither is adopted now.
   pinned actions, token permissions, branch protection and dependency updates, are already enforced
   and listed above. Reconsider after the final integration.
 - **CycloneDX SBOM.** The published POM already pins the library's direct runtime dependencies
-  (SSHJ, the Bouncy Castle provider and PKIX modules and the SLF4J API), and GitHub's dependency
+  (SSHJ, the Bouncy Castle provider and PKIX modules, the SLF4J API and Gson), and GitHub's dependency
   graph, fed by the dependency submission job, exports an SPDX SBOM for the repository. Attaching
   an SBOM would add a published file that the staged-artifact checks, the attestation and the
   Central bundle would all have to include. Reconsider if consumers ask for one.

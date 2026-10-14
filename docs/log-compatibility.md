@@ -82,8 +82,8 @@ and [additional command tests](additional-command-compatibility.md).
 This covers serveradmin and existing-log retrieval on the pinned fixtures.
 Unfenced immediate visibility, denied roles, large-file/rotation behavior, concurrent writers,
 timestamp parsing, other logging settings and versions remain unverified.
-No notification or voice-client guarantee is introduced. TS6 RAW and Web Query
-remain unclaimed. Other #441 gaps remain in the inventory; file-transfer
+No notification or voice-client guarantee is introduced. TS6 RAW remains
+unclaimed; Web Query evidence is in [Web Query](web-query.md). Other #441 gaps remain in the inventory; file-transfer
 reliability and NAT endpoints remain #442 scope.
 
 Reviewed official [TS6 beta13.1 release notes](https://github.com/teamspeak/teamspeak6-server/releases/tag/v6.0.0-beta13.1),

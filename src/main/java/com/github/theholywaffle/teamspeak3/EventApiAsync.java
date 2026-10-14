@@ -45,7 +45,7 @@ public final class EventApiAsync {
 
     /** @see EventApi#subscribe(TS3Listener) */
     public EventSubscription subscribe(TS3Listener listener) {
-        return requests.query().subscribe(listener);
+        return requests.backend().subscribe(listener);
     }
 
     private static int defaultChannel(TS3EventType type) {

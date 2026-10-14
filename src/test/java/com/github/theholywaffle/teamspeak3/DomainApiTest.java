@@ -87,6 +87,39 @@ class DomainApiTest {
     }
 
     @Test
+    void serverMessageByIdSelectsThatServerFirst() throws Exception {
+        try (var peer = new FakeServerQuery(p -> {
+                    p.expect("use sid=2 -virtual");
+                    p.write(OK);
+                    p.expect("sendtextmessage targetmode=3 target=0 msg=hi");
+                    p.write(OK);
+                    p.finishQuit();
+                });
+                var query = query(peer)) {
+            query.connect();
+            query.getApi().messages().sendServer(2, "hi");
+            query.exit();
+            peer.await();
+        }
+    }
+
+    @Test
+    void emptyClientDatabaseListsNoClients() throws Exception {
+        try (var peer = new FakeServerQuery(p -> {
+                    // Recorded from TS3 3.13.8 after deleting a virtual server's only database client.
+                    p.expect("clientdblist start=0 duration=1 -count");
+                    p.write(EMPTY);
+                    p.finishQuit();
+                });
+                var query = query(peer)) {
+            query.connect();
+            assertEquals(List.of(), query.getApi().databaseClients().list());
+            query.exit();
+            peer.await();
+        }
+    }
+
+    @Test
     void requiredResultsFailInsteadOfReturningDefaults() throws Exception {
         try (var peer = new FakeServerQuery(p -> {
                     p.expect("whoami");

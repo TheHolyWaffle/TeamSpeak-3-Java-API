@@ -35,6 +35,11 @@ import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 public record ValueParam(String value) implements Parameter {
 
     @Override
+    public void addTo(ParameterSink sink) {
+        sink.put(value, "");
+    }
+
+    @Override
     public void appendTo(StringBuilder line) {
         CommandEncoding.encode(value, line);
     }

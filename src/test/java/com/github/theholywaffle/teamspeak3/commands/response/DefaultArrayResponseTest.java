@@ -14,6 +14,25 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 class DefaultArrayResponseTest {
+    @org.junit.jupiter.api.Test
+    void decodedRowsInheritSharedFieldsAndEncodeInOrderOnDemand() {
+        var first = new java.util.LinkedHashMap<String, String>();
+        first.put("sgid", "6");
+        first.put("name", "a b|c");
+        first.put("apikey", "BAsecret");
+        var response = DefaultArrayResponse.fromRows(List.of(first, Map.of("name", "second")));
+        assertEquals(2, response.getResponses().size());
+        assertEquals("6", response.getResponses().get(1).require("sgid"));
+        assertEquals("second", response.getResponses().get(1).require("name"));
+        assertEquals("sgid=6 name=a\\sb\\pc apikey=BAsecret|name=second", response.getRawResponse());
+        assertFalse(response.toString().contains("BAsecret"));
+        assertEquals(
+                response.getResponses(),
+                DefaultArrayResponse.parse(response.getRawResponse()).getResponses(),
+                "decoded rows mean the same as their encoding");
+        assertEquals(List.of(), DefaultArrayResponse.fromRows(List.of()).getResponses());
+    }
+
     @ParameterizedTest
     @NullAndEmptySource
     void emptyResponseHasNoRows(String raw) {

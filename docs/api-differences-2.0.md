@@ -36,6 +36,7 @@ requirement; the first row lists the types for which it is the only difference.
 | `api.reconnect.*` | Session configuration and retry policy added; backoff attempt limits; final `ReconnectStrategy` | [Reconnect and retry](migration-2.0.md#reconnect-and-retry) |
 | `EventStatistics`, `EventSubscription` | Added subscription handles and event counters | [Events](migration-2.0.md#events-and-capacity) |
 | `FileTransferConfig`, `FileTransferEndpointResolver` | Added file transfer limits and endpoint mapping | [File transfers](migration-2.0.md#file-transfers) |
+| `TS3WebQuery`, `WebQueryConfig`, `WebQueryConfig$Builder`, `api.ApiKeyScope`, `commands.ApiKeyCommands`, `commands.CommandTrait` | Added the optional Web Query transport, API key administration and command traits; nothing to migrate | [What 2.0 covers](migration-2.0.md#what-20-covers) |
 
 japicmp checks signatures only. Behavior, defaults, runtime and dependency changes are listed in
 [behavior the compiler cannot find](migration-2.0.md#behavior-the-compiler-cannot-find) and

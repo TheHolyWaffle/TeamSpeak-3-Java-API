@@ -17,20 +17,26 @@ import org.testcontainers.DockerClientFactory;
 
 /** Exercise the real forked launcher, including its JVM shutdown hook. */
 class DevelopmentServerIT {
-    /** Follows the printed instructions: the raw exports, then the SSH exports on top of them. */
+    /**
+     * Follows the printed instructions: the raw exports, then the SSH exports on top of them, and the Web
+     * Query exports on their own.
+     */
     private static void runExamplesFromPrintedExports(List<String> output) throws Exception {
         List<Map<String, String>> exports = output.stream()
                 .map(String::trim)
                 .filter(line -> line.startsWith(DevelopmentServer.EXPORT_PREFIX))
                 .map(DevelopmentServerIT::parseExports)
                 .toList();
-        assertEquals(2, exports.size(), output.toString());
+        assertEquals(3, exports.size(), output.toString());
         Map<String, String> ssh = new HashMap<>(exports.get(0));
         ssh.putAll(exports.get(1));
         for (Map<String, String> environment : List.of(exports.get(0), ssh)) {
             String result = ForkedJvm.runExample("ClientInfoExample", environment, 0);
             assertTrue(result.contains("Server version: " + TeamSpeakContainer.TS3_VERSION), result);
         }
+        String web = ForkedJvm.runExample("WebQueryExample", exports.get(2), 0);
+        assertTrue(web.contains("Server version: " + TeamSpeakContainer.TS3_VERSION), web);
+        assertTrue(web.contains("Deleted channel"), web);
     }
 
     private static Map<String, String> parseExports(String line) {
@@ -71,7 +77,7 @@ class DevelopmentServerIT {
             String id = ready.substring(ready.indexOf("container=") + "container=".length());
             assertFalse(
                     Files.exists(Path.of("target", "dev-server", id)),
-                    "Stopping the launcher must remove its SSH trust");
+                    "Stopping the launcher must remove its SSH and Web Query trust");
             assertThrows(
                     NotFoundException.class,
                     () -> DockerClientFactory.instance()

@@ -19,7 +19,8 @@ public final class DevelopmentServer {
         if (args.length != 2 || !args[0].equals("ts3") || !(args[1].equals("true") || args[1].equals("false"))) {
             throw new IllegalArgumentException("Use -Ddev.server=ts3 and -Ddev.once=true|false");
         }
-        try (Resources resources = new Resources(new TeamSpeakContainer().withFileTransferPort())) {
+        try (Resources resources =
+                new Resources(new TeamSpeakContainer().withFileTransferPort().withWebQuery())) {
             Thread hook = new Thread(resources::close, "teamspeak-dev-cleanup");
             Runtime.getRuntime().addShutdownHook(hook);
             try {
@@ -32,11 +33,16 @@ public final class DevelopmentServer {
                 System.out.println(
                         "Disposable login: serveradmin / " + TeamSpeakContainer.PASSWORD + "; virtual server: 1");
                 System.out.println("File transfer: " + server.getHost() + ":" + server.getMappedPort(30033));
-                // Trusts only this container's key, for this session; removed when the launcher stops.
-                resources.knownHosts = server.writeKnownHosts(
-                        Path.of("target", "dev-server", server.getContainerId(), "known_hosts")
-                                .toAbsolutePath());
-                printExampleEnvironment(server, resources.knownHosts);
+                System.out.println("Web Query: http://" + server.getHost() + ":" + server.getMappedPort(10080)
+                        + ", https://" + server.getHost() + ":" + server.getMappedPort(10443));
+                // Trusts only this container's key and certificate, for this session; removed when the launcher stops.
+                Path session =
+                        Path.of("target", "dev-server", server.getContainerId()).toAbsolutePath();
+                resources.knownHosts = server.writeKnownHosts(session.resolve("known_hosts"));
+                resources.webQueryCertificate = session.resolve("webquery-certificate.pem");
+                Map<String, String> web =
+                        server.webQueryEnvironment(true, server.createWebQueryKey(), resources.webQueryCertificate);
+                printExampleEnvironment(server, resources.knownHosts, web);
                 DevelopmentServerExample.run(server.config(TS3Query.Protocol.SSH));
                 if (!Boolean.parseBoolean(args[1])) {
                     System.out.println("Press Enter or Ctrl+C to stop and remove the server. EOF also stops it.");
@@ -57,7 +63,7 @@ public final class DevelopmentServer {
         }
     }
 
-    private static void printExampleEnvironment(TeamSpeakContainer server, Path knownHosts) {
+    private static void printExampleEnvironment(TeamSpeakContainer server, Path knownHosts, Map<String, String> web) {
         Map<String, String> raw = server.exampleEnvironment(TS3Query.Protocol.RAW, knownHosts);
         Map<String, String> ssh = new LinkedHashMap<>(server.exampleEnvironment(TS3Query.Protocol.SSH, knownHosts));
         ssh.entrySet().removeIf(variable -> variable.getValue().equals(raw.get(variable.getKey())));
@@ -67,6 +73,8 @@ public final class DevelopmentServer {
         System.out.println("  ./mvnw -q -ntp -Pexample test-compile exec:exec -Dexample=ClientInfoExample");
         System.out.println("To use SSH instead of raw TCP, also run:");
         System.out.println("  " + EXPORT_PREFIX + exports(ssh));
+        System.out.println("For WebQueryExample (HTTPS, a disposable API key and this server's certificate), run:");
+        System.out.println("  " + EXPORT_PREFIX + exports(web));
         System.out.println();
     }
 
@@ -81,6 +89,7 @@ public final class DevelopmentServer {
     private static final class Resources implements AutoCloseable {
         final TeamSpeakContainer server;
         volatile Path knownHosts;
+        volatile Path webQueryCertificate;
         boolean closed;
 
         Resources(TeamSpeakContainer server) {
@@ -95,12 +104,13 @@ public final class DevelopmentServer {
             if (knownHosts != null) {
                 try {
                     Files.deleteIfExists(knownHosts);
+                    if (webQueryCertificate != null) Files.deleteIfExists(webQueryCertificate);
                     Files.deleteIfExists(knownHosts.getParent());
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }
             }
-            System.out.println("Development server removed; disposable data and SSH trust reset.");
+            System.out.println("Development server removed; disposable data, SSH and Web Query trust reset.");
         }
     }
 }

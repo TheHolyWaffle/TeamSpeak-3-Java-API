@@ -9,7 +9,8 @@ Version 2.0 publishes one library artifact to Maven Central:
 | `teamspeak3-api-<version>-javadoc.jar` | Javadoc for every library package |
 | `teamspeak3-api-<version>.pom` | The reviewed `pom.xml`, unchanged |
 
-The POM declares SSHJ and the SLF4J API as compile dependencies and the patched Bouncy
+The POM declares SSHJ, the SLF4J API and Gson (with its annotations-only
+`error_prone_annotations` dependency) as compile dependencies and the patched Bouncy
 Castle provider and PKIX modules as runtime dependencies. Their versions come from the
 Bouncy Castle BOM, which Maven and Gradle both apply. Test-scoped dependencies are not
 seen by consumers. No logging provider is a non-test dependency, so logging remains the
@@ -116,7 +117,10 @@ every signature and that a bundle missing its sources is rejected. See
   allows the library from the staging repository.
 
 Both run the same program. It connects over RAW to a loopback ServerQuery peer and reads
-a typed `version` response. It then attempts SSH against a non-SSH peer, which must fail
+a typed `version` response, and sends a Web Query request to a loopback HTTP peer, checking
+the API key header and the typed JSON result. The module-path consumer declares
+`requires java.net.http` and `requires com.google.gson`, which modular applications using
+`TS3WebQuery` need. It then attempts SSH against a non-SSH peer, which must fail
 with `TS3ConnectionFailedException` after SSHJ has registered the runtime-scoped Bouncy
 Castle provider. It checks that exactly the application's chosen SLF4J provider is
 present and that the library's communication log reached it. The script then requires

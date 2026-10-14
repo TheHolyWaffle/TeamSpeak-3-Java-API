@@ -2,18 +2,22 @@ package consumer;
 
 import com.github.theholywaffle.teamspeak3.TS3Config;
 import com.github.theholywaffle.teamspeak3.TS3Query;
+import com.github.theholywaffle.teamspeak3.TS3WebQuery;
+import com.github.theholywaffle.teamspeak3.WebQueryConfig;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Security;
 import java.time.Duration;
 import java.util.List;
+import java.util.Locale;
 import java.util.ServiceLoader;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -25,8 +29,9 @@ import java.util.logging.Logger;
 import org.slf4j.spi.SLF4JServiceProvider;
 
 /**
- * A consumer of the staged library: a RAW query against a loopback peer, an SSH attempt that loads the
- * runtime-scoped crypto provider, and library logging through the provider this application chose.
+ * A consumer of the staged library: a RAW query and a Web Query request against loopback peers, an SSH
+ * attempt that loads the runtime-scoped crypto provider, and library logging through the provider this
+ * application chose.
  *
  * <p>Usage: {@code ConsumerApp simple|jdk14}. Prints the library JAR location for checksum comparison.
  */
@@ -57,6 +62,7 @@ public final class ConsumerApp {
         check(providers.equals(List.of(expectedProvider)), "Exactly the application's provider: " + providers);
 
         check("consumer-probe".equals(rawVersion()), "Typed RAW response");
+        check("consumer-web".equals(webQueryVersion()), "Typed Web Query response");
         sshAttemptLoadsCryptoProvider();
 
         if (simpleLog != null) {
@@ -103,6 +109,47 @@ public final class ConsumerApp {
                 query.connect();
                 String version = query.getApi().instance().version().version();
                 query.exit();
+                script.get(5, TimeUnit.SECONDS);
+                return version;
+            }
+        }
+    }
+
+    private static String webQueryVersion() throws Exception {
+        try (var peer = new ServerSocket(0, 1, InetAddress.getLoopbackAddress())) {
+            peer.setSoTimeout(5000);
+            CompletableFuture<Void> script = CompletableFuture.runAsync(() -> {
+                try (var socket = peer.accept();
+                        var in = new BufferedReader(
+                                new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8))) {
+                    expect(in, "POST /version HTTP/1.1");
+                    int length = -1;
+                    boolean key = false;
+                    for (String header; !(header = in.readLine()).isEmpty(); ) {
+                        String lower = header.toLowerCase(Locale.ROOT);
+                        if (lower.equals("x-api-key: consumer-key")) key = true;
+                        if (lower.startsWith("content-length: ")) length = Integer.parseInt(header.substring(16));
+                    }
+                    check(key, "API key header");
+                    check(length == 2 && in.read() == '{' && in.read() == '}', "Empty JSON body");
+                    byte[] body = "{\"body\":[{\"version\":\"consumer-web\",\"build\":\"1\",\"platform\":\"test\"}],"
+                            .concat("\"status\":{\"code\":0,\"message\":\"ok\"}}")
+                            .getBytes(StandardCharsets.UTF_8);
+                    OutputStream out = socket.getOutputStream();
+                    out.write(("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: " + body.length
+                                    + "\r\nConnection: close\r\n\r\n")
+                            .getBytes(StandardCharsets.US_ASCII));
+                    out.write(body);
+                    out.flush();
+                } catch (Exception e) {
+                    throw new IllegalStateException(e);
+                }
+            });
+            var config = WebQueryConfig.builder(URI.create("http://127.0.0.1:" + peer.getLocalPort()), "consumer-key")
+                    .setPlaintextHttpAllowed(true)
+                    .build();
+            try (var query = new TS3WebQuery(config)) {
+                String version = query.getApi().instance().version().version();
                 script.get(5, TimeUnit.SECONDS);
                 return version;
             }

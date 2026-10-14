@@ -6,7 +6,6 @@ import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Message;
 import com.github.theholywaffle.teamspeak3.commands.ClientCommands;
 import com.github.theholywaffle.teamspeak3.commands.MessageCommands;
-import com.github.theholywaffle.teamspeak3.commands.QueryCommands;
 import com.github.theholywaffle.teamspeak3.commands.ServerCommands;
 import java.util.List;
 import java.util.Optional;
@@ -49,7 +48,8 @@ public final class MessageApiAsync {
     /** @see MessageApi#sendServer(int, String) */
     public CompletableFuture<Void> sendServer(int serverId, String message) {
         return CommandFutures.compose(
-                requests.run(QueryCommands.useId(serverId, null)), ignored -> sendServer(message));
+                requests.backend().onVirtualServer(serverId),
+                backend -> new MessageApiAsync(new QueryRequests(backend)).sendServer(message));
     }
 
     /** @see MessageApi#broadcast(String) */

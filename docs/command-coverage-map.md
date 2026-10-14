@@ -32,8 +32,8 @@ Raw commands retain validation, admission, deadlines, framing and error translat
 Known boundaries: ServerQuery clients cannot consume keys (516); query channel-group
 creation is rejected1538 despite help; absent files return2052; query-client
 permission lookup returns512; deleted channels768; credential failure is RAW520 or SSH UserAuthException.
-Unsupported Web Query, untested server versions and licensed multi-running-server
-configurations are not advertised. TS6-specific code and acceptance have been removed.
+Untested server versions and licensed multi-running-server configurations are not
+advertised; Web Query coverage is listed in [Web Query](web-query.md#supported-operations). TS6-specific code and acceptance have been removed.
 
 For tested operations, syntax is captured from live server help in `target/compatibility/`. Exact
 version/digest/architecture and test reports accompany CI artifacts. See the

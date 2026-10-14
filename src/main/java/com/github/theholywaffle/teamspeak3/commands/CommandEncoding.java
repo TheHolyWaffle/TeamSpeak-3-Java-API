@@ -26,6 +26,11 @@ package com.github.theholywaffle.teamspeak3.commands;
  * #L%
  */
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 public final class CommandEncoding {
 
     private CommandEncoding() {}
@@ -94,5 +99,34 @@ public final class CommandEncoding {
             }
         }
         return decoded.toString();
+    }
+
+    /**
+     * Decodes encoded ServerQuery text into its pipe-separated entries.
+     *
+     * @param encoded parameters or response rows, without a command name
+     * @return one map per entry, in order; a repeated name keeps its last value, and a name without
+     *     {@code =} has an empty value
+     */
+    public static List<Map<String, String>> decodeEntries(String encoded) {
+        String[] entries = encoded.split("\\|", -1);
+        List<Map<String, String>> decoded = new ArrayList<>(entries.length);
+        for (String entry : entries) decoded.add(decodeEntry(entry));
+        return decoded;
+    }
+
+    /**
+     * @param encoded space-separated {@code name=value} parameters of one entry
+     * @return the decoded parameters, in order
+     */
+    public static Map<String, String> decodeEntry(String encoded) {
+        Map<String, String> map = new LinkedHashMap<>();
+        for (String parameter : encoded.split(" ", -1)) {
+            if (parameter.isEmpty()) continue;
+            int equals = parameter.indexOf('=');
+            if (equals < 0) map.put(decode(parameter), "");
+            else map.put(decode(parameter.substring(0, equals)), decode(parameter.substring(equals + 1)));
+        }
+        return map;
     }
 }

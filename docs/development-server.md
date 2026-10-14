@@ -15,8 +15,9 @@ creates, lists and deletes a channel. An example or startup failure fails the
 command and cleans up the instance. Docker is required; failures are never skips.
 
 The launcher prints the exact image, container ID, host, mapped SSH query port,
-TS3 raw query port, file transfer port and disposable serveradmin login, followed by
-`export` lines for the [examples](../README.md#run-an-example):
+TS3 raw query port, file transfer port, Web Query HTTP and HTTPS endpoints and
+disposable serveradmin login, followed by `export` lines for the
+[examples](../README.md#run-an-example):
 
 ```text
 Run an example from another terminal in this directory (POSIX shell):
@@ -24,6 +25,8 @@ Run an example from another terminal in this directory (POSIX shell):
   ./mvnw -q -ntp -Pexample test-compile exec:exec -Dexample=ClientInfoExample
 To use SSH instead of raw TCP, also run:
   export TS3_PROTOCOL='ssh' TS3_QUERY_PORT='…' TS3_SSH_KNOWN_HOSTS='…/target/dev-server/<container-id>/known_hosts'
+For WebQueryExample (HTTPS, a disposable API key and this server's certificate), run:
+  export TS3_WEBQUERY_URI='https://127.0.0.1:…' TS3_API_KEY='…' TS3_WEBQUERY_CERTIFICATE='…/target/dev-server/<container-id>/webquery-certificate.pem'
 ```
 
 Paste them into another terminal to run any example, or use the printed ports with
@@ -31,7 +34,8 @@ other query clients while the launcher remains open. Ports are allocated
 dynamically, so multiple launchers and integration tests can run independently.
 The file transfer port is mapped and the examples map the server's advertised file
 endpoint to it. Voice ports are not exposed. `DevelopmentServerIT` follows these
-printed instructions, running an example over raw TCP and SSH, for every stop mode.
+printed instructions, running an example over raw TCP and SSH and `WebQueryExample`
+over HTTPS, for every stop mode.
 
 ## Stop and reset
 
@@ -42,7 +46,10 @@ server changes. Start the command again to reset to a clean instance with new
 mapped ports and a new SSH host key. The launcher's own example pins the freshly
 created container's SSH key in memory. For other terminals it writes only that key to
 `target/dev-server/<container-id>/known_hosts` and deletes the file when it stops; it
-never changes `user.home` or `~/.ssh/known_hosts`.
+never changes `user.home` or `~/.ssh/known_hosts`. Web Query HTTPS uses a certificate
+generated for that container only, written next to it as `webquery-certificate.pem`
+and deleted the same way; the printed API key is an unlimited instance key of the
+disposable server and disappears with it.
 
 For a noninteractive run that exits after the example:
 

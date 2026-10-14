@@ -12,15 +12,16 @@ mapped to a section of this guide in the [API difference accounting](api-differe
 | Coordinates | `com.github.theholywaffle:teamspeak3-api`, unchanged |
 | Packages | `com.github.theholywaffle.teamspeak3` and its subpackages, unchanged; automatic module `com.github.theholywaffle.teamspeak3` |
 | Java | 25 or newer, build and runtime, no preview features |
-| Server | TeamSpeak 3 ServerQuery. Verified: TS3 server **3.13.8** (official Docker image, Linux amd64) over raw TCP and SSH. Older and newer 3.x servers are not verified |
+| Server | TeamSpeak 3 ServerQuery. Verified: TS3 server **3.13.8** (official Docker image, Linux amd64) over raw TCP and SSH, and the operations listed for Web Query over HTTP and HTTPS. Older and newer 3.x servers are not verified |
 | Scope | Server administration, notifications and file transfers |
-| Not supported | TeamSpeak 6, the TS3 WebQuery (HTTP) transport, voice, audio and screen sharing |
+| Optional transport | TS3 Web Query over HTTP(S) (`TS3WebQuery`) for administration without events or file transfers; see [Web Query](web-query.md) |
+| Not supported | TeamSpeak 6, voice, audio and screen sharing |
 
 1.x supported Java 8 and did not state a server version. The 2.0 support statement is the
 README's [compatibility table](../README.md#requirements-and-compatibility); see also the
-[security policy](../SECURITY.md#supported-versions) for the end of 1.x support. Web Query is a
-possible later addition ([#452](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/issues/452)),
-not part of 2.0.
+[security policy](../SECURITY.md#supported-versions) for the end of 1.x support. Web Query
+([#452](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/issues/452)) is new in 2.0 and optional:
+it adds API, but no behavior or default changes for RAW or SSH.
 
 ## Checklist
 

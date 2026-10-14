@@ -3,7 +3,7 @@ TeamSpeak 3 Java API
 [![Build Status](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/actions/workflows/maven.yml/badge.svg?branch=master)](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/actions/workflows/maven.yml) [![Maven Central](https://img.shields.io/maven-central/v/com.github.theholywaffle/teamspeak3-api.svg)](https://central.sonatype.com/artifact/com.github.theholywaffle/teamspeak3-api) [![Javadocs](https://www.javadoc.io/badge/com.github.theholywaffle/teamspeak3-api.svg)](https://www.javadoc.io/doc/com.github.theholywaffle/teamspeak3-api)
 
 A Java library for the TeamSpeak 3 ServerQuery interface: server administration, notifications
-and file transfers over raw TCP or SSH.
+and file transfers over raw TCP or SSH, and optionally administration over HTTP(S) Web Query.
 
 > This branch is the 2.0 development line. It needs Java 25 and contains intentional breaking
 > changes; see [migrating from 1.x](#migrating-from-1x). The Javadoc badge shows the latest
@@ -16,7 +16,7 @@ and file transfers over raw TCP or SSH.
 - [Using the API](#using-the-api): [domain APIs](#domain-apis), [futures](#asynchronous-api-and-futures),
   [events](#events), [deadlines](#deadlines-and-closing), [reconnects](#reconnect-guarantees),
   [file transfers](#file-transfers), [SSH trust](#ssh-host-key-trust), [logging](#logging),
-  [flood rate](#flood-rate)
+  [flood rate](#flood-rate), [Web Query](#web-query)
 - [Configuration reference](#configuration-reference)
 - [Development](#development)
 - [Getting help and contributing](#getting-help-and-contributing)
@@ -33,8 +33,9 @@ and file transfers over raw TCP or SSH.
 | --- | --- | --- |
 | TeamSpeak 3 server 3.13.8 (official Docker image, Linux amd64) | Raw TCP (port 10011) | Verified by the integration suite in CI |
 | TeamSpeak 3 server 3.13.8 (official Docker image, Linux amd64) | SSH (port 10022) | Verified by the integration suite in CI |
-| Other TeamSpeak 3 server versions | Raw TCP, SSH | Not verified |
-| TeamSpeak 6; TS3 WebQuery (HTTP) | — | Not supported |
+| TeamSpeak 3 server 3.13.8 (official Docker image, Linux amd64) | Web Query over HTTP (10080) and HTTPS (10443) | Optional, new in 2.0; operations listed in [Web Query](docs/web-query.md#supported-operations) verified by the integration suite in CI |
+| Other TeamSpeak 3 server versions | Raw TCP, SSH, Web Query | Not verified |
+| TeamSpeak 6 | — | Not supported |
 
 The exact image digest and per-command results are listed in the
 [command compatibility inventory](docs/command-compatibility.md) and
@@ -48,7 +49,7 @@ is also available). Voice, audio and screen sharing are out of scope.
 
 The library is published to [Maven Central](https://central.sonatype.com/artifact/com.github.theholywaffle/teamspeak3-api)
 as one regular JAR with sources and Javadoc. Its POM brings in SSHJ, the patched Bouncy Castle
-modules and the SLF4J API. 2.0 no longer publishes a standalone `with-dependencies` JAR; see
+modules, the SLF4J API and Gson (JSON for Web Query). 2.0 no longer publishes a standalone `with-dependencies` JAR; see
 [packaging](docs/packaging.md#migration-from-the-standalone-jar).
 
 ```xml
@@ -127,6 +128,7 @@ environment variables.
 | `EventListenerExample` | Every event type and the query's event statistics |
 | `ReconnectExample` | Reconnect strategy, session restoration, retry policy and asynchronous commands |
 | `TrollExample` | The asynchronous API driven by a scheduler |
+| `WebQueryExample` | [Web Query](#web-query) with an API key: listing clients, creating and deleting a channel |
 
 Long-running examples stop when you press Enter (or close standard input).
 
@@ -143,7 +145,8 @@ accepts it on your behalf.
    ```
 
    When it is ready, it prints `export` lines with the host, the mapped ports, a disposable
-   `serveradmin` password and an SSH trust file for this session, then waits. Keep it running.
+   `serveradmin` password, an SSH trust file, and a Web Query API key and certificate for this
+   session, then waits. Keep it running.
 
 2. In a second terminal in the same directory, paste the first `export` line and run an example:
 
@@ -153,10 +156,10 @@ accepts it on your behalf.
    ```
 
    Choose any example with `-Dexample=<name>`. To use SSH instead of raw TCP, also paste the
-   second `export` line. On Windows PowerShell, set each variable as `$env:TS3_HOST = '127.0.0.1'`
+   second `export` line. `WebQueryExample` needs only the third `export` line. On Windows PowerShell, set each variable as `$env:TS3_HOST = '127.0.0.1'`
    and use `mvnw.cmd`.
 
-3. Press Enter in the first terminal to stop the server. All data, ports and the SSH trust file are
+3. Press Enter in the first terminal to stop the server. All data, ports, keys and trust files are
    discarded; the next start is a clean server.
 
 ### Against your own server
@@ -175,6 +178,9 @@ Set the variables yourself and run the same Maven command:
 | `TS3_SSH_KNOWN_HOSTS` | no | OpenSSH trust file for SSH, default `~/.ssh/known_hosts` |
 | `TS3_FILE_TRANSFER_HOST`, `TS3_FILE_TRANSFER_PORT` | no | Reachable file transfer endpoint when the server's advertised one is not (NAT, Docker) |
 | `TS3_COMMUNICATIONS_LOGGING` | no | `true` to log the (redacted) protocol at DEBUG |
+| `TS3_WEBQUERY_URI`, `TS3_API_KEY` | `WebQueryExample` only | Web Query endpoint, such as `https://host:10443`, and API key; with the optional variables below and `TS3_VIRTUAL_SERVER_ID`, the only ones `WebQueryExample` reads |
+| `TS3_WEBQUERY_CERTIFICATE` | no | PEM certificate(s) to trust for HTTPS instead of the JDK trust store |
+| `TS3_WEBQUERY_PLAINTEXT` | no | `true` to allow an `http://` endpoint, which sends the key unencrypted |
 
 Examples change server state (channels, files, icons, messages) and clean up after themselves where
 possible. `TrollExample` pokes, kicks and moves real clients: only run it on a test server.
@@ -183,10 +189,12 @@ possible. `TrollExample` pokes, kicks and moves real clients: only run it on a t
 
 ### Domain APIs
 
-`TS3Api` holds the session operations (`login`, `selectVirtualServerById`, `setNickname`, `whoAmI`)
-and one domain API per area: `channels()`, `clients()`, `databaseClients()`, `serverGroups()`,
+`query.getApi()` returns a `TS3Api`. It holds the ServerQuery session operations (`login`,
+`logout`, `selectVirtualServerById`, `selectVirtualServerByPort`) on top of `TS3BaseApi`, the API
+shared with [Web Query](#web-query): query-client operations such as `setNickname` and `whoAmI`, and
+one domain API per area: `channels()`, `clients()`, `databaseClients()`, `serverGroups()`,
 `channelGroups()`, `permissions()`, `bans()`, `complaints()`, `messages()`, `files()`,
-`privilegeKeys()`, `queryLogins()`, `servers()`, `instance()` and `events()`.
+`privilegeKeys()`, `queryLogins()`, `apiKeys()`, `servers()`, `instance()` and `events()`.
 
 - Calls block until the server answers and throw a `TS3Exception` subtype on failure:
   `TS3CommandFailedException` (server error, with its ID), `TS3TransportException` (connection
@@ -324,6 +332,25 @@ TS3 temporarily bans query clients that send commands too fast. The default `Flo
 350 ms between commands. Only use `FloodRate.UNLIMITED` when the client's IP address is in the
 server's `query_ip_allowlist.txt` (`query_ip_whitelist.txt` before TS3 3.13).
 
+### Web Query
+
+`TS3WebQuery` runs the same domain APIs over a TS3 server's HTTP(S) Web Query interface, authenticated
+by an API key (create one with `api.apiKeys()`). Each command is an independent request addressed to
+the instance (`getApi()`), a virtual server ID (`getApi(1)`) or a voice port (`getApiByPort(9987)`).
+There is no session, so its API is the shared `TS3BaseApi`, without `login` or `selectVirtualServer*`.
+Events and file operations fail with `TS3UnsupportedOperationException`; keep a RAW or SSH query for
+those. HTTPS is required unless
+plaintext is explicitly allowed. Rejected keys raise `TS3AuthenticationFailedException`; responses
+without a usable status, for example from a proxy, raise `TS3HttpException`. Configuration, errors,
+security and the verified operations: [Web Query](docs/web-query.md).
+
+```java
+var config = WebQueryConfig.builder(URI.create("https://ts.example.org:10443"), apiKey).build();
+try (TS3WebQuery query = new TS3WebQuery(config)) {
+    query.getApi(1).channels().list().forEach(channel -> System.out.println(channel.getName()));
+}
+```
+
 ### Migrating from 1.x
 
 2.0 changes the build requirements, the API shape, futures, models, defaults and security behavior.
@@ -388,8 +415,8 @@ static analysis, Javadoc, coverage and API compatibility checks described in
 ./mvnw -B -ntp -Pintegration verify
 ```
 
-Starts disposable TS3 servers in Docker and runs the RAW and SSH compatibility suites, every example
-and the development server launcher. A missing Docker daemon fails the build instead of skipping
+Starts disposable TS3 servers in Docker and runs the RAW, SSH and Web Query compatibility suites, every
+example and the development server launcher. A missing Docker daemon fails the build instead of skipping
 tests. See [integration tests](docs/integration-tests.md) for images, licenses and Apple Silicon notes.
 
 ### Local development server
@@ -403,7 +430,7 @@ See [development server](docs/development-server.md).
 - [Migrating from 1.x](docs/migration-2.0.md) · [API differences from 1.3.1](docs/api-differences-2.0.md)
 - [Domain API, errors and absent results](docs/api-migration.md) · [Response models](docs/models-and-values.md) · [Implementation cleanup](docs/implementation-cleanup.md)
 - [Futures](docs/futures.md) · [Events and capacity](docs/events-and-capacity.md) · [Connection lifecycle](docs/connection-lifecycle.md) · [Reconnect and retry](docs/reconnect-and-retry.md)
-- [Configuration and transports](docs/configuration-and-transports.md) · [File transfers](docs/file-transfers.md)
+- [Configuration and transports](docs/configuration-and-transports.md) · [File transfers](docs/file-transfers.md) · [Web Query](docs/web-query.md)
 - [Command compatibility](docs/command-compatibility.md) · [Integration tests](docs/integration-tests.md) · [Development server](docs/development-server.md)
 - [Packaging](docs/packaging.md) · [Quality checks](docs/quality-checks.md) · [CI and releases](docs/releases.md)
 

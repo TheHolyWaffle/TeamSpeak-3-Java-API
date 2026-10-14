@@ -92,7 +92,7 @@ Database administration, other client properties, UID lookup, bulk/password move
 kicks/bans and restricted-account behavior remain in #441. Query-client events
 provide no guarantee of voice-client join/leave behavior, media/hardware state or
 rendering; those require a separate client fixture or manual verification. Other
-versions, TS6 RAW and Web Query are unclaimed. Transfer reliability/NAT endpoints
+versions and TS6 RAW are unclaimed; Web Query evidence is in [Web Query](web-query.md). Transfer reliability/NAT endpoints
 remain #442 scope.
 
 Official [TS6 beta13.1 release notes](https://github.com/teamspeak/teamspeak6-server/releases/tag/v6.0.0-beta13.1),
