@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.function.Function;
 
 /**
@@ -181,7 +182,7 @@ public final class FileApiAsync {
             var work = new CompletableFuture<byte[]>();
             var preparation = CommandFutures.link(work, abortOnCancel(operation));
             runFileWork(
-                    files,
+                    files.callbacks(),
                     operation,
                     work,
                     "Icon buffering aborted",
@@ -253,7 +254,7 @@ public final class FileApiAsync {
                 return;
             }
             runFileWork(
-                    files,
+                    files.callbacks(),
                     operation,
                     work,
                     "File transfer aborted",
@@ -280,7 +281,7 @@ public final class FileApiAsync {
     }
 
     private static <T> void runFileWork(
-            FileTransfers files,
+            Executor callbacks,
             FileTransferHelper.Operation operation,
             CompletableFuture<T> work,
             String abortMessage,
@@ -288,13 +289,12 @@ public final class FileApiAsync {
             FileWork<T> body,
             Runnable onFinish) {
         try {
-            files.callbacks().execute(() -> {
+            callbacks.execute(() -> {
                 T value = null;
                 Throwable failure = null;
                 try (operation) {
-                    operation.start(() -> files.callbacks()
-                            .execute(() -> work.completeExceptionally(
-                                    new TS3FileTransferFailedException(abortMessage, operation.abortCause()))));
+                    operation.start(() -> callbacks.execute(() -> work.completeExceptionally(
+                            new TS3FileTransferFailedException(abortMessage, operation.abortCause()))));
                     value = body.run(operation);
                 } catch (IOException exception) {
                     failure = new TS3FileTransferFailedException(failureMessage, operation.failureCause(exception));

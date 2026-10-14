@@ -190,7 +190,7 @@ decoded first.
 The `status` object (`code`, `message`, `extra_message`) becomes the shared `QueryError`, and each
 `body` row becomes a response row through `DefaultArrayResponse.fromRows`, which applies the same
 shared-field rule as ServerQuery responses. `DefaultArrayResponse.getRawResponse()` is the ServerQuery
-encoding of those rows, produced only when requested, so it reads the same for every transport.
+encoding of those rows, so it reads the same for every transport.
 
 ## Verification
 

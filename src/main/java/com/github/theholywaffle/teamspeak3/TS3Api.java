@@ -55,6 +55,12 @@ import java.util.Map;
  * </p><p>
  * Most commands require a login and a selected virtual server. Pass credentials to {@link TS3Config}
  * or call {@link #login(String, String)}, then {@link #selectVirtualServerById(int)}.
+ * </p><p>
+ * A {@link TS3WebQuery} API has no session: it authenticates each request with an API key and addresses
+ * the virtual server it was created for. {@link #login}, {@link #logout} and the
+ * {@code selectVirtualServer} methods, like event registration and file operations, then fail with
+ * {@link com.github.theholywaffle.teamspeak3.api.exception.TS3UnsupportedOperationException}
+ * without sending a request.
  * </p>
  *
  * @see TS3ApiAsync The asynchronous version of the API

@@ -30,13 +30,14 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 import com.github.theholywaffle.teamspeak3.commands.ProtocolRedactor;
+import com.github.theholywaffle.teamspeak3.commands.parameter.ArrayParameter;
+import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
+import com.github.theholywaffle.teamspeak3.commands.parameter.Parameter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.StringJoiner;
 
 public class DefaultArrayResponse {
 
@@ -50,27 +51,25 @@ public class DefaultArrayResponse {
      */
     public static DefaultArrayResponse parse(String rawResponse) {
         if (rawResponse == null || rawResponse.isEmpty()) return EMPTY;
-
-        String[] rawRows = rawResponse.split("\\|", -1);
-        List<Map<String, String>> rows = new ArrayList<>(rawRows.length);
-        for (String rawRow : rawRows) rows.add(parseMap(rawRow));
-        return new DefaultArrayResponse(inherit(rows), rawResponse, null);
+        return new DefaultArrayResponse(inherit(CommandEncoding.decodeEntries(rawResponse)), rawResponse);
     }
 
     /**
      * Builds a response from rows that are already decoded, such as Web Query JSON, with the same
-     * inheritance of shared fields from the first row as {@link #parse(String)}. The encoded form is
-     * produced only when {@link #getRawResponse()} or {@link #toString()} needs it.
+     * inheritance of shared fields from the first row as {@link #parse(String)}.
      *
      * @param rows decoded rows, in received order
-     * @return the response
+     * @return the response, whose {@link #getRawResponse()} is the rows' ServerQuery encoding
      */
     public static DefaultArrayResponse fromRows(List<Map<String, String>> rows) {
         if (rows.isEmpty()) return EMPTY;
-        List<Map<String, String>> copies = rows.stream()
-                .map(row -> Collections.unmodifiableMap(new LinkedHashMap<>(row)))
-                .toList();
-        return new DefaultArrayResponse(inherit(rows), null, copies);
+        var encoded = new ArrayParameter(rows.stream()
+                        .map(row -> row.entrySet().stream()
+                                .<Parameter>map(field -> new KeyValueParam(field.getKey(), field.getValue()))
+                                .toList())
+                        .toList())
+                .encoded();
+        return new DefaultArrayResponse(inherit(rows), encoded);
     }
 
     private static List<Wrapper> inherit(List<Map<String, String>> rows) {
@@ -85,16 +84,6 @@ public class DefaultArrayResponse {
         return wrappers;
     }
 
-    private static String encode(List<Map<String, String>> rows) {
-        var encoded = new StringJoiner("|");
-        for (Map<String, String> row : rows) {
-            var fields = new StringJoiner(" ");
-            row.forEach((key, value) -> fields.add(CommandEncoding.encode(key) + "=" + CommandEncoding.encode(value)));
-            encoded.add(fields.toString());
-        }
-        return encoded.toString();
-    }
-
     /**
      * Parses a terminating error line. IDs 0 and 1281 represent success.
      *
@@ -106,8 +95,7 @@ public class DefaultArrayResponse {
         if (rawError == null || !rawError.startsWith("error ")) {
             throw new IllegalArgumentException("Expected an error line");
         }
-        String error = rawError.substring("error ".length());
-        Map<String, String> errorMap = parseMap(error);
+        Map<String, String> errorMap = CommandEncoding.decodeEntry(rawError.substring("error ".length()));
         String id = errorMap.get("id");
         try {
             if (id == null || Integer.parseInt(id) < 0) {
@@ -119,32 +107,14 @@ public class DefaultArrayResponse {
         return new QueryError(errorMap);
     }
 
-    private static Map<String, String> parseMap(String rawMap) {
-        if (rawMap.isEmpty()) return Map.of();
-        Map<String, String> map = new LinkedHashMap<>();
-        for (String param : rawMap.split(" ", -1)) {
-            if (param.isEmpty()) continue;
-            int pos = param.indexOf('=');
-            if (pos == -1) map.put(CommandEncoding.decode(param), "");
-            else
-                map.put(
-                        CommandEncoding.decode(param.substring(0, pos)),
-                        CommandEncoding.decode(param.substring(pos + 1)));
-        }
-        return map;
-    }
-
-    private static final DefaultArrayResponse EMPTY = new DefaultArrayResponse(List.of(), "", null);
+    private static final DefaultArrayResponse EMPTY = new DefaultArrayResponse(List.of(), "");
 
     private final List<Wrapper> responses;
-    // Decoded rows awaiting lazy encoding; null once the encoded form is known.
-    private final List<Map<String, String>> decodedRows;
-    private volatile String rawResponse;
+    private final String rawResponse;
 
-    private DefaultArrayResponse(List<Wrapper> responses, String rawResponse, List<Map<String, String>> decodedRows) {
+    private DefaultArrayResponse(List<Wrapper> responses, String rawResponse) {
         this.responses = List.copyOf(responses);
         this.rawResponse = rawResponse;
-        this.decodedRows = decodedRows;
     }
 
     /** @return the immutable rows, in received order */
@@ -159,14 +129,12 @@ public class DefaultArrayResponse {
 
     /** @return the encoded response, including secrets; {@link #toString()} redacts them */
     public String getRawResponse() {
-        String raw = rawResponse;
-        if (raw == null) rawResponse = raw = encode(decodedRows);
-        return raw;
+        return rawResponse;
     }
 
     /** @return the encoded response with {@linkplain ProtocolRedactor secrets} redacted */
     @Override
     public String toString() {
-        return ProtocolRedactor.redactLine(getRawResponse());
+        return ProtocolRedactor.redactLine(rawResponse);
     }
 }

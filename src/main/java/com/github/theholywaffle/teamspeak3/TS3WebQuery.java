@@ -99,8 +99,13 @@ public final class TS3WebQuery implements AutoCloseable {
      * @return the asynchronous API for that virtual server
      */
     public TS3ApiAsync getAsyncApi(int virtualServerId) {
+        return api(serverScope(virtualServerId));
+    }
+
+    /** @return the request path prefix addressing a virtual server by ID */
+    static String serverScope(int virtualServerId) {
         if (virtualServerId < 1) throw new IllegalArgumentException("Virtual server ID must be positive");
-        return api(virtualServerId + "/");
+        return virtualServerId + "/";
     }
 
     /**

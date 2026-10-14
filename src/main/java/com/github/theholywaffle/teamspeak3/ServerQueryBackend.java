@@ -18,10 +18,7 @@ record ServerQueryBackend(TS3Query query, CommandQueue queue) implements QueryBa
 
     @Override
     public CompletableFuture<QueryBackend> onVirtualServer(int serverId) {
-        Command use = QueryCommands.useId(serverId, null);
-        CompletableFuture<QueryBackend> selected = CommandFutures.map(use.getFuture(), ignored -> this);
-        enqueue(use, CompletableFuture.completedStage(null));
-        return selected;
+        return CommandFutures.map(new QueryRequests(this).run(QueryCommands.useId(serverId, null)), ignored -> this);
     }
 
     @Override

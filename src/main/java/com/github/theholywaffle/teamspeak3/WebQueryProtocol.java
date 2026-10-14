@@ -6,6 +6,7 @@ import com.github.theholywaffle.teamspeak3.api.exception.TS3HttpException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 import com.github.theholywaffle.teamspeak3.commands.CommandTrait;
+import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 import com.github.theholywaffle.teamspeak3.commands.parameter.Parameter;
 import com.github.theholywaffle.teamspeak3.commands.parameter.ParameterSink;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
@@ -17,12 +18,12 @@ import com.google.gson.JsonParseException;
 import com.google.gson.Strictness;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.regex.Pattern;
+import java.util.StringJoiner;
 
 /**
  * Translates between ServerQuery commands and the TS3 Web Query HTTP/JSON format documented in the
@@ -37,7 +38,12 @@ final class WebQueryProtocol {
     static final String NO_HELP = "Web Query does not serve command help";
     static final String NO_EVENTS = "Web Query has no notification stream; use a RAW or SSH TS3Query for events";
     static final String NO_FILES = "Web Query does not support file commands or transfers; use a RAW or SSH TS3Query";
-    private static final Pattern ERROR_ID = Pattern.compile("\\d{1,9}");
+    // Ordered by priority: the first matching trait explains the rejection.
+    private static final Map<CommandTrait, String> UNSUPPORTED = new EnumMap<>(Map.of(
+            CommandTrait.CONNECTION, NO_CONNECTION,
+            CommandTrait.NOTIFICATIONS, NO_EVENTS,
+            CommandTrait.FILES, NO_FILES,
+            CommandTrait.HELP, NO_HELP));
     private static final Gson GSON = new GsonBuilder()
             .setStrictness(Strictness.STRICT)
             .disableHtmlEscaping()
@@ -47,15 +53,10 @@ final class WebQueryProtocol {
 
     /** @return why the server cannot execute {@code command} over Web Query, if it cannot */
     static Optional<String> unsupported(Command command) {
-        Set<CommandTrait> traits = command.getTraits();
-        String reason = traits.contains(CommandTrait.CONNECTION)
-                ? NO_CONNECTION
-                : traits.contains(CommandTrait.NOTIFICATIONS)
-                        ? NO_EVENTS
-                        : traits.contains(CommandTrait.FILES)
-                                ? NO_FILES
-                                : traits.contains(CommandTrait.HELP) ? NO_HELP : null;
-        return Optional.ofNullable(reason).map(text -> command.getName() + " is unsupported: " + text);
+        return UNSUPPORTED.entrySet().stream()
+                .filter(reason -> command.getTraits().contains(reason.getKey()))
+                .findFirst()
+                .map(reason -> command.getName() + " is unsupported: " + reason.getValue());
     }
 
     /**
@@ -149,23 +150,19 @@ final class WebQueryProtocol {
             };
             error.put(name, value == null ? "" : value);
         });
-        String id = error.get("id");
-        if (id == null || !ERROR_ID.matcher(id).matches()) {
-            throw new IllegalArgumentException("Status code is not a number");
-        }
         error.putIfAbsent("msg", "");
-        return new QueryError(error);
+        var line = new StringJoiner(" ", "error ", "");
+        error.forEach((key, value) -> line.add(new KeyValueParam(key, value).encoded()));
+        return DefaultArrayResponse.parseError(line.toString());
     }
 
+    /** Gson's rows, with null values read as empty text like ServerQuery's valueless fields. */
     private static List<Map<String, String>> rows(List<Map<String, String>> body) {
         if (body == null) return List.of();
-        List<Map<String, String>> rows = new ArrayList<>(body.size());
         for (Map<String, String> row : body) {
             if (row == null) throw new IllegalArgumentException("Row is null");
-            Map<String, String> fields = new LinkedHashMap<>();
-            row.forEach((key, value) -> fields.put(key, value == null ? "" : value));
-            rows.add(fields);
+            row.replaceAll((key, value) -> value == null ? "" : value);
         }
-        return rows;
+        return body;
     }
 }

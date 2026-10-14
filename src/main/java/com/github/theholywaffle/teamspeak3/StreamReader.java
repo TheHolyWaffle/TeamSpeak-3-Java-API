@@ -29,6 +29,7 @@ package com.github.theholywaffle.teamspeak3;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
 import com.github.theholywaffle.teamspeak3.commands.Command;
+import com.github.theholywaffle.teamspeak3.commands.CommandTrait;
 import com.github.theholywaffle.teamspeak3.commands.ProtocolRedactor;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 import com.github.theholywaffle.teamspeak3.commands.response.ResponseBuilder;
@@ -159,8 +160,7 @@ class StreamReader implements Runnable {
 
     private void handleCommandError(ResponseBuilder responseBuilder, String error) {
         Command command = responseBuilder.getCommand();
-        if (command.getName().equals("quit")) {
-            // Response to a quit command received, we're done
+        if (command.getTraits().contains(CommandTrait.ENDS_CONNECTION)) {
             Thread.currentThread().interrupt();
         }
 

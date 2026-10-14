@@ -1,6 +1,5 @@
 package com.github.theholywaffle.teamspeak3.commands;
 
-import java.util.EnumSet;
 import java.util.Set;
 
 /**
@@ -12,6 +11,8 @@ public enum CommandTrait {
     SESSION_STATE,
     /** Only meaningful on a persistent connection: login, logout, server selection and quit. */
     CONNECTION,
+    /** Asks the server to close the connection after responding. */
+    ENDS_CONNECTION,
     /** Registers or removes server notifications. */
     NOTIFICATIONS,
     /** Uses the file repository or its transfer channel. */
@@ -23,16 +24,23 @@ public enum CommandTrait {
      * The single definition of each command's traits, shared by built and raw commands.
      *
      * @param commandName the protocol command name
-     * @return the command's traits, empty for an ordinary request
+     * @return the command's immutable traits, empty for an ordinary request
      */
     static Set<CommandTrait> of(String commandName) {
         return switch (commandName) {
-            case "login", "logout", "use" -> EnumSet.of(SESSION_STATE, CONNECTION);
-            case "quit" -> EnumSet.of(CONNECTION);
-            case "clientupdate" -> EnumSet.of(SESSION_STATE);
-            case "servernotifyregister", "servernotifyunregister" -> EnumSet.of(SESSION_STATE, NOTIFICATIONS);
-            case "help" -> EnumSet.of(HELP);
-            default -> commandName.startsWith("ft") ? EnumSet.of(FILES) : EnumSet.noneOf(CommandTrait.class);
+            case "login", "logout", "use" -> SESSION_CONNECTION;
+            case "quit" -> QUIT;
+            case "clientupdate" -> SESSION;
+            case "servernotifyregister", "servernotifyunregister" -> SESSION_NOTIFICATIONS;
+            case "help" -> HELP_ONLY;
+            default -> commandName.startsWith("ft") ? FILES_ONLY : Set.of();
         };
     }
+
+    private static final Set<CommandTrait> SESSION_CONNECTION = Set.of(SESSION_STATE, CONNECTION);
+    private static final Set<CommandTrait> QUIT = Set.of(CONNECTION, ENDS_CONNECTION);
+    private static final Set<CommandTrait> SESSION = Set.of(SESSION_STATE);
+    private static final Set<CommandTrait> SESSION_NOTIFICATIONS = Set.of(SESSION_STATE, NOTIFICATIONS);
+    private static final Set<CommandTrait> HELP_ONLY = Set.of(HELP);
+    private static final Set<CommandTrait> FILES_ONLY = Set.of(FILES);
 }

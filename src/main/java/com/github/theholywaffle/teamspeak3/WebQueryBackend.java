@@ -17,8 +17,7 @@ record WebQueryBackend(TS3WebQuery query, String scope) implements QueryBackend 
 
     @Override
     public CompletableFuture<QueryBackend> onVirtualServer(int serverId) {
-        if (serverId < 1) throw new IllegalArgumentException("Virtual server ID must be positive");
-        return CompletableFuture.completedFuture(new WebQueryBackend(query, serverId + "/"));
+        return CompletableFuture.completedFuture(new WebQueryBackend(query, TS3WebQuery.serverScope(serverId)));
     }
 
     @Override
