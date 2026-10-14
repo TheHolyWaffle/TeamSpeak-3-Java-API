@@ -35,6 +35,7 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Permission;
 import com.github.theholywaffle.teamspeak3.api.wrapper.PrivilegeKey;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ServerGroupClient;
 import com.github.theholywaffle.teamspeak3.commands.QueryCommands;
+import com.google.gson.JsonParser;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -184,7 +185,12 @@ class WebQueryCompatibilityIT {
                         HttpResponse.BodyHandlers.ofString());
                 evidence.add(command + " HTTP " + response.statusCode() + " " + response.body());
                 assertEquals(401, response.statusCode(), command);
-                assertTrue(response.body().contains("\"code\":5120"), command + ": " + response.body());
+                int code = JsonParser.parseString(response.body())
+                        .getAsJsonObject()
+                        .getAsJsonObject("status")
+                        .get("code")
+                        .getAsInt();
+                assertEquals(5120, code, command + ": " + response.body());
             }
         } finally {
             record(target, "blocked-commands", evidence);

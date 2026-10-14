@@ -91,8 +91,9 @@ There is no client-side flood delay. A Web Query client that is not on the serve
 should limit its request rate, for example with a small request capacity. `close()` aborts requests in
 flight; they fail with an unknown outcome.
 
-Modular applications add `requires java.net.http;`: the library is an automatic module and does not
-resolve the JDK HTTP client on its own. Classpath applications need nothing extra.
+Modular applications add `requires java.net.http;` and `requires com.google.gson;`: the library is an
+automatic module and does not resolve these named modules on its own, so the first request would fail with
+`NoClassDefFoundError`. Classpath applications need nothing extra.
 
 ## Errors
 
@@ -180,7 +181,9 @@ Each command is a POST to `<base>/<command>`, `<base>/<sid>/<command>` or
 object whose values are strings; options such as `-topic` become members with empty values. A command
 with pipe-separated entries, such as several permissions or client IDs, becomes an array of objects
 whose first object also holds the shared parameters, as described in the server's
-`doc/webquery.md`. Values are sent as text, without ServerQuery escaping: each parameter passes its
+`doc/webquery.md`. Gson writes the body and reads the response, in strict mode and with its default
+nesting limit, so malformed, trailing or duplicate-member JSON fails as `TS3HttpException`. Values are
+sent as text, without ServerQuery escaping: each parameter passes its
 unencoded name and value to a `ParameterSink`, and only a hand-written `executeRawCommand` line is
 decoded first.
 
@@ -215,4 +218,4 @@ Implementation references: the TS3 server's `doc/webquery.md` and `doc/server_qu
 (shipped in the pinned image under `/opt/ts3server/doc/`) and its `serverquerydocs/apikeyadd.txt`,
 [Java 25 `HttpClient`](https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpClient.html),
 [`HttpRequest` timeouts](https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpRequest.Builder.html#timeout(java.time.Duration)),
-[RFC 8259 (JSON)](https://www.rfc-editor.org/rfc/rfc8259).
+[Gson 2.14 user guide](https://github.com/google/gson/blob/gson-parent-2.14.0/UserGuide.md) and [strictness](https://github.com/google/gson/blob/gson-parent-2.14.0/gson/src/main/java/com/google/gson/Strictness.java).

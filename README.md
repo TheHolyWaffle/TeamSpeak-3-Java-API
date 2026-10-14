@@ -49,7 +49,7 @@ is also available). Voice, audio and screen sharing are out of scope.
 
 The library is published to [Maven Central](https://central.sonatype.com/artifact/com.github.theholywaffle/teamspeak3-api)
 as one regular JAR with sources and Javadoc. Its POM brings in SSHJ, the patched Bouncy Castle
-modules and the SLF4J API. 2.0 no longer publishes a standalone `with-dependencies` JAR; see
+modules, the SLF4J API and Gson (JSON for Web Query). 2.0 no longer publishes a standalone `with-dependencies` JAR; see
 [packaging](docs/packaging.md#migration-from-the-standalone-jar).
 
 ```xml

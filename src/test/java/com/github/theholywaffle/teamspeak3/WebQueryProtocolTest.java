@@ -12,6 +12,7 @@ import com.github.theholywaffle.teamspeak3.commands.ClientCommands;
 import com.github.theholywaffle.teamspeak3.commands.FileCommands;
 import com.github.theholywaffle.teamspeak3.commands.QueryCommands;
 import com.github.theholywaffle.teamspeak3.commands.ServerCommands;
+import com.google.gson.JsonParser;
 import java.net.URI;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -100,6 +101,57 @@ class WebQueryProtocolTest {
                 WebQueryProtocol.body(
                         QueryCommands.rawCommand("x sgid=6 permsid=a permvalue=1|permsid=b permvalue=2")));
         assertEquals("{\"a\":\"\"}", WebQueryProtocol.body(QueryCommands.rawCommand("x  a= ")));
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                "{",
+                "{\"status\":{\"code\":0}",
+                "{\"status\":{\"code\":0},}",
+                "{status:{code:0}}",
+                "{\"status\":{\"code\":0}} {}",
+                "{\"status\":{\"code\":0},\"body\":[{\"a\":\"1\",\"a\":\"2\"}]}",
+                "{\"status\":{\"code\":0},\"body\":[null]}",
+                "'{}'",
+                "<html>"
+            })
+    void rejectsMalformedOrAmbiguousJson(String body) {
+        var error = assertThrows(TS3HttpException.class, () -> WebQueryProtocol.response("version", 200, body));
+        assertTrue(error.isOutcomeUnknown());
+    }
+
+    @Test
+    void decodesJsonEscapesAndSkipsUnknownMembers() {
+        var response = WebQueryProtocol.response(
+                "x",
+                200,
+                "{\"extra\":[[{\"a\":1}]],\"status\":{\"code\":0,\"message\":\"ok\"},\"body\":[{\"v\":"
+                        + "\"q\\\" b\\\\ s\\/ \\b\\f\\n\\r\\t \\u00e9 \\ud83d\\ude00\",\"n\":12,\"z\":null}]}");
+        var row = response.getFirstResponse().orElseThrow();
+        assertEquals("q\" b\\ s/ \b\f\n\r\t é 😀", row.require("v"));
+        assertEquals("12", row.require("n"));
+        assertEquals("", row.require("z"));
+    }
+
+    @Test
+    void boundsNestingInsteadOfRecursing() {
+        String deep = "[".repeat(100_000) + "]".repeat(100_000);
+        var error = assertThrows(
+                TS3HttpException.class,
+                () -> WebQueryProtocol.response("x", 200, "{\"extra\":" + deep + ",\"status\":{\"code\":0}}"));
+        assertTrue(error.isOutcomeUnknown());
+    }
+
+    @Test
+    void encodesControlCharactersAndUnicodeAsValidJson() {
+        String value = "\b\f\n\r\t\u0001\u001f q\"\\/ é😀 <tag> & =";
+        String body = WebQueryProtocol.body(ChannelCommands.channelFind(value));
+        assertTrue(body.chars().noneMatch(c -> c < 0x20), body);
+        assertTrue(body.contains("<tag> & ="), "no HTML escaping: " + body);
+        assertEquals(
+                value,
+                JsonParser.parseString(body).getAsJsonObject().get("pattern").getAsString());
     }
 
     @Test

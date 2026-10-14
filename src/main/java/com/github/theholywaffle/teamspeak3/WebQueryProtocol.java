@@ -9,6 +9,12 @@ import com.github.theholywaffle.teamspeak3.commands.CommandTrait;
 import com.github.theholywaffle.teamspeak3.commands.parameter.Parameter;
 import com.github.theholywaffle.teamspeak3.commands.parameter.ParameterSink;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.Strictness;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -16,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.StringJoiner;
 import java.util.regex.Pattern;
 
 /**
@@ -33,6 +38,10 @@ final class WebQueryProtocol {
     static final String NO_EVENTS = "Web Query has no notification stream; use a RAW or SSH TS3Query for events";
     static final String NO_FILES = "Web Query does not support file commands or transfers; use a RAW or SSH TS3Query";
     private static final Pattern ERROR_ID = Pattern.compile("\\d{1,9}");
+    private static final Gson GSON = new GsonBuilder()
+            .setStrictness(Strictness.STRICT)
+            .disableHtmlEscaping()
+            .create();
 
     private WebQueryProtocol() {}
 
@@ -68,25 +77,24 @@ final class WebQueryProtocol {
     }
 
     private static final class JsonBody implements ParameterSink {
-        private final List<StringBuilder> objects = new ArrayList<>(List.of(new StringBuilder()));
+        private final List<JsonObject> objects = new ArrayList<>(List.of(new JsonObject()));
 
         @Override
         public void put(String key, String value) {
-            StringBuilder object = objects.getLast();
-            if (!object.isEmpty()) object.append(',');
-            WebQueryJson.quote(value, WebQueryJson.quote(key, object).append(':'));
+            objects.getLast().addProperty(key, value);
         }
 
         @Override
         public void nextEntry() {
-            objects.add(new StringBuilder());
+            objects.add(new JsonObject());
         }
 
         @Override
         public String toString() {
-            var json = new StringJoiner(",", objects.size() > 1 ? "[" : "", objects.size() > 1 ? "]" : "");
-            for (StringBuilder object : objects) json.add("{" + object + "}");
-            return json.toString();
+            if (objects.size() == 1) return GSON.toJson(objects.getFirst());
+            var array = new JsonArray(objects.size());
+            objects.forEach(array::add);
+            return GSON.toJson(array);
         }
     }
 
@@ -99,17 +107,16 @@ final class WebQueryProtocol {
      * @throws TS3HttpException if the response has no usable status
      */
     static DefaultArrayResponse response(String commandName, int httpStatus, String body) {
-        WebQueryJson.Value root;
+        Response response;
         try {
-            root = WebQueryJson.parse(body);
-        } catch (IllegalArgumentException e) {
-            throw new TS3HttpException(commandName, httpStatus, "the body is not JSON", e);
+            response = GSON.fromJson(body, Response.class);
+        } catch (JsonParseException e) {
+            throw new TS3HttpException(commandName, httpStatus, "the body is not the documented JSON", e);
         }
-        Map<String, WebQueryJson.Value> response;
+        if (response == null) throw new TS3HttpException(commandName, httpStatus, "the body is empty", null);
         QueryError error;
         try {
-            response = root.members("response");
-            error = status(response.get("status"));
+            error = status(response.status());
         } catch (IllegalArgumentException e) {
             throw new TS3HttpException(commandName, httpStatus, "the JSON lacks a valid status", e);
         }
@@ -121,23 +128,26 @@ final class WebQueryProtocol {
             throw new TS3HttpException(commandName, httpStatus, "a successful status with an HTTP error", null);
         }
         try {
-            return DefaultArrayResponse.fromRows(rows(response.get("body")));
+            return DefaultArrayResponse.fromRows(rows(response.body()));
         } catch (IllegalArgumentException e) {
             throw new TS3HttpException(commandName, httpStatus, "the JSON body is not a list of rows", e);
         }
     }
 
-    private static QueryError status(WebQueryJson.Value value) {
-        if (value == null) throw new IllegalArgumentException("Missing status");
+    /** The documented response object; values are text, as in ServerQuery. */
+    private record Response(List<Map<String, String>> body, Map<String, String> status) {}
+
+    private static QueryError status(Map<String, String> status) {
+        if (status == null) throw new IllegalArgumentException("Missing status");
         Map<String, String> error = new LinkedHashMap<>();
-        value.members("status").forEach((key, member) -> {
+        status.forEach((key, value) -> {
             String name = switch (key) {
                 case "code" -> "id";
                 case "message" -> "msg";
                 case "extra_message" -> "extra_msg";
                 default -> key;
             };
-            error.put(name, member.text("status " + key));
+            error.put(name, value == null ? "" : value);
         });
         String id = error.get("id");
         if (id == null || !ERROR_ID.matcher(id).matches()) {
@@ -147,12 +157,13 @@ final class WebQueryProtocol {
         return new QueryError(error);
     }
 
-    private static List<Map<String, String>> rows(WebQueryJson.Value body) {
+    private static List<Map<String, String>> rows(List<Map<String, String>> body) {
         if (body == null) return List.of();
-        List<Map<String, String>> rows = new ArrayList<>();
-        for (WebQueryJson.Value row : body.elements("body")) {
+        List<Map<String, String>> rows = new ArrayList<>(body.size());
+        for (Map<String, String> row : body) {
+            if (row == null) throw new IllegalArgumentException("Row is null");
             Map<String, String> fields = new LinkedHashMap<>();
-            row.members("row").forEach((key, value) -> fields.put(key, value.text(key)));
+            row.forEach((key, value) -> fields.put(key, value == null ? "" : value));
             rows.add(fields);
         }
         return rows;

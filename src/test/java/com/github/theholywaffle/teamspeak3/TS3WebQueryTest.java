@@ -18,6 +18,9 @@ import com.github.theholywaffle.teamspeak3.api.exception.TS3TimeoutException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3UnknownOutcomeException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3UnsupportedOperationException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Version;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import java.io.ByteArrayOutputStream;
@@ -326,11 +329,21 @@ class TS3WebQueryTest {
     @Test
     void concurrentRequestsCompleteIndependently() {
         responder = request -> {
-            String cid = request.body().replaceAll("\\D", "");
-            return new Reply(
-                    200,
-                    "{\"body\":[{\"cid\":\"" + cid + "\",\"channel_name\":\"c" + cid + "\"}],"
-                            + "\"status\":{\"code\":0}}");
+            String cid = JsonParser.parseString(request.body())
+                    .getAsJsonObject()
+                    .get("cid")
+                    .getAsString();
+            var row = new JsonObject();
+            row.addProperty("cid", cid);
+            row.addProperty("channel_name", "c" + cid);
+            var body = new JsonArray();
+            body.add(row);
+            var status = new JsonObject();
+            status.addProperty("code", 0);
+            var reply = new JsonObject();
+            reply.add("body", body);
+            reply.add("status", status);
+            return new Reply(200, reply.toString());
         };
         try (var query = new TS3WebQuery(config().setRequestCapacity(64).build())) {
             var futures = new ArrayList<CompletableFuture<String>>();
