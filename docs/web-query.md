@@ -204,3 +204,9 @@ the staged JAR on the module path and on the classpath.
 
 Only TS3 3.13.8 on Linux amd64 is verified. Other server versions, voice-client targets and the
 operations marked "not verified" above are not claimed.
+
+Implementation references: the TS3 server's `doc/webquery.md` and `doc/server_quickstart.md`
+(shipped in the pinned image under `/opt/ts3server/doc/`) and its `serverquerydocs/apikeyadd.txt`,
+[Java 25 `HttpClient`](https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpClient.html),
+[`HttpRequest` timeouts](https://docs.oracle.com/en/java/javase/25/docs/api/java.net.http/java/net/http/HttpRequest.Builder.html#timeout(java.time.Duration)),
+[RFC 8259 (JSON)](https://www.rfc-editor.org/rfc/rfc8259).
