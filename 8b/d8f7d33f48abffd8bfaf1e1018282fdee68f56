@@ -1,0 +1,20 @@
+src/test/java/com/github/theholywaffle/teamspeak3/ExamplesIT.java
+  h_b0b95817cb397c 36-38,41-56,73,89,130
+src/test/java/com/github/theholywaffle/teamspeak3/TeamSpeakContainer.java
+  h_b0b95817cb397c 31,167,216-219,222,244
+src/test/java/com/github/theholywaffle/teamspeak3/WebQueryCompatibilityIT.java
+  h_b0b95817cb397c 107-111,808
+src/test/java/com/github/theholywaffle/teamspeak3/WebQueryConfigTest.java
+  h_b0b95817cb397c 89-90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8bd8f7d33f48abffd8bfaf1e1018282fdee68f56",
+  "prompts": {},
+  "humans": {
+    "h_b0b95817cb397c": {
+      "author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
