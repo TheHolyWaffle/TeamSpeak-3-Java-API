@@ -1,0 +1,14 @@
+docs/web-query.md
+  h_b0b95817cb397c 37,142,150
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ddb650ed62e74e4fd1d918b86426e01ef923d6b1",
+  "prompts": {},
+  "humans": {
+    "h_b0b95817cb397c": {
+      "author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
