@@ -1,0 +1,46 @@
+CONTRIBUTING.md
+  s_018ed3efc951e1::t_6064f263d747db 87-88
+SECURITY.md
+  s_018ed3efc951e1::t_6064f263d747db 48
+src/test/resources/teamspeak3/Dockerfile
+  s_018ed3efc951e1::t_6064f263d747db 2
+pom.xml
+  s_018ed3efc951e1::t_6064f263d747db 267
+.github/workflows/upstream-updates.yml
+  s_018ed3efc951e1::t_e1f07c1eae82a2 5
+docs/integration-tests.md
+  s_018ed3efc951e1::t_6064f263d747db 33,81
+src/test/consumers/gradle/gradle/wrapper/gradle-wrapper.properties
+  s_018ed3efc951e1::t_6064f263d747db 1
+docs/releases.md
+  s_018ed3efc951e1::t_6064f263d747db 92
+docs/maintenance.md
+  s_018ed3efc951e1::t_db4749b4763b89 68-76
+  s_018ed3efc951e1::t_23e54fa2db453c 3-4,23-24,31-32,38-40,54-56,95-99
+  s_018ed3efc951e1::t_93120a5133355b 5-7,13-22,83-84
+  s_018ed3efc951e1::t_e1f07c1eae82a2 25-30,35-36,44-47
+  s_018ed3efc951e1::t_abfbc9591a5d76 77
+docs/quality-checks.md
+  s_018ed3efc951e1::t_6064f263d747db 18,101-102,114
+.github/renovate.json5
+  s_018ed3efc951e1::t_777d979444e074 4
+  s_018ed3efc951e1::t_d5672b939c924f 1-3,5-6,8-10,15-17
+  s_018ed3efc951e1::t_ee764a4a9d4e4d 11-14
+  s_018ed3efc951e1::t_b52e45614ded5e 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "84a7ce722ebc84d8e9dcc48764e10355876f63d3",
+  "prompts": {},
+  "sessions": {
+    "s_018ed3efc951e1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "35ab9d2e-5eec-405a-90e3-5717403501ea",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
