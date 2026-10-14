@@ -9,6 +9,7 @@ import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedExcepti
 import com.github.theholywaffle.teamspeak3.api.exception.TS3HttpException;
 import com.github.theholywaffle.teamspeak3.commands.ChannelCommands;
 import com.github.theholywaffle.teamspeak3.commands.ClientCommands;
+import com.github.theholywaffle.teamspeak3.commands.FileCommands;
 import com.github.theholywaffle.teamspeak3.commands.QueryCommands;
 import com.github.theholywaffle.teamspeak3.commands.ServerCommands;
 import java.net.URI;
@@ -37,14 +38,28 @@ class WebQueryProtocolTest {
                 "ftcreatedir"
             })
     void rejectsCommandsTheServerDocumentsAsUnsupported(String command) {
-        var reason = WebQueryProtocol.unsupported(command);
+        var reason = WebQueryProtocol.unsupported(QueryCommands.rawCommand(command));
         assertTrue(reason.orElseThrow().startsWith(command + " is unsupported: "));
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"version", "whoami", "channellist", "clientupdate", "apikeyadd", "serveredit", "f"})
     void sendsEverythingElse(String command) {
-        assertEquals(Optional.empty(), WebQueryProtocol.unsupported(command));
+        assertEquals(Optional.empty(), WebQueryProtocol.unsupported(QueryCommands.rawCommand(command)));
+    }
+
+    @Test
+    void decidesFromTraitsForBuiltCommandsToo() {
+        for (var command : List.of(
+                QueryCommands.useId(1, null),
+                QueryCommands.logIn("serveradmin", "secret"),
+                QueryCommands.quit(),
+                QueryCommands.serverNotifyRegister(
+                        com.github.theholywaffle.teamspeak3.api.event.TS3EventType.SERVER, -1),
+                FileCommands.ftList())) {
+            assertTrue(WebQueryProtocol.unsupported(command).isPresent(), command.getName());
+        }
+        assertEquals(Optional.empty(), WebQueryProtocol.unsupported(ClientCommands.clientUpdate(Map.of())));
     }
 
     @Test

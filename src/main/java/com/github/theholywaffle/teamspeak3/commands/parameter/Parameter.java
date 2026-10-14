@@ -36,6 +36,12 @@ public sealed interface Parameter permits ArrayParameter, KeyValueParam, OptionP
     void appendTo(StringBuilder line);
 
     /**
+     * Passes this parameter to {@code sink} without ServerQuery escaping.
+     * @param sink the receiver of names, values and entry boundaries
+     */
+    void addTo(ParameterSink sink);
+
+    /**
      * Encodes this parameter on its own.
      * @return this parameter in ServerQuery syntax, with values escaped
      */

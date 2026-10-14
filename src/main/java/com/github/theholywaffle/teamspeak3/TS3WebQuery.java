@@ -161,7 +161,7 @@ public final class TS3WebQuery implements AutoCloseable {
 
     void send(String scope, Command command, CompletionStage<?> work) {
         CompletableFuture<DefaultArrayResponse> result = command.getFuture();
-        var unsupported = WebQueryProtocol.unsupported(command.getName());
+        var unsupported = WebQueryProtocol.unsupported(command);
         if (unsupported.isPresent()) {
             result.completeExceptionally(new TS3UnsupportedOperationException(unsupported.get()));
             return;

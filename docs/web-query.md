@@ -147,7 +147,7 @@ was checked, including from an independent ServerQuery session where noted. Erro
 | `complaints()` | all | | | |
 | `privilegeKeys()` | `list`, both `create...`, `delete` | `use` by the Web Query client (516) | | |
 | `queryLogins()` | `list`, `search`, both `create` (the instance login then authenticates over RAW), `delete` | `updateOwn`: the Web Query client has no own login (512) | | |
-| `messages()` | `sendPrivate`, both `sendChannel`, `sendServer(String)`, `broadcast`, `sendOffline`; `listOffline`, `getOffline`, `setOfflineRead` and `deleteOffline` with a key owned by the recipient | `sendOffline` to an unknown unique ID (512) | `sendServer(int, String)` (needs `use`; call `getApi(serverId).messages().sendServer(...)`) | |
+| `messages()` | all: both `sendServer` (by ID from any scope; over Web Query it addresses that server's URL and selects nothing), `sendPrivate`, both `sendChannel`, `broadcast`, `sendOffline`; `listOffline`, `getOffline`, `setOfflineRead` and `deleteOffline` with a key owned by the recipient | `sendOffline` to an unknown unique ID (512) | | |
 | `events()` | | | all | |
 | `files()` | | | all | |
 
@@ -155,7 +155,10 @@ The server's own documentation lists `ft*`, `help`, `login`, `logout`, `quit`,
 `servernotifyregister`, `servernotifyunregister` and `use` as unsupported, and the suite records that
 3.13.8 answers each of them with 5120 (HTTP 401). The library rejects them locally with a message
 that names the alternative, so a configuration problem is not mistaken for an authentication
-failure. Other commands sent through `executeRawCommand` are passed to the server unchanged.
+failure. The decision comes from each command's `CommandTrait`s (`CONNECTION`, `NOTIFICATIONS`,
+`FILES`, `HELP`), which are defined once for built and raw commands alike; the RAW/SSH reconnect rule
+for session changes reads the same traits. Other commands sent through `executeRawCommand` are passed
+to the server unchanged.
 
 ### Events
 
@@ -177,11 +180,14 @@ Each command is a POST to `<base>/<command>`, `<base>/<sid>/<command>` or
 object whose values are strings; options such as `-topic` become members with empty values. A command
 with pipe-separated entries, such as several permissions or client IDs, becomes an array of objects
 whose first object also holds the shared parameters, as described in the server's
-`doc/webquery.md`. Values are sent as text, without ServerQuery escaping.
+`doc/webquery.md`. Values are sent as text, without ServerQuery escaping: each parameter passes its
+unencoded name and value to a `ParameterSink`, and only a hand-written `executeRawCommand` line is
+decoded first.
 
 The `status` object (`code`, `message`, `extra_message`) becomes the shared `QueryError`, and each
-`body` row becomes a response row. `DefaultArrayResponse.getRawResponse()` is the ServerQuery encoding
-of those rows, the same for every transport.
+`body` row becomes a response row through `DefaultArrayResponse.fromRows`, which applies the same
+shared-field rule as ServerQuery responses. `DefaultArrayResponse.getRawResponse()` is the ServerQuery
+encoding of those rows, produced only when requested, so it reads the same for every transport.
 
 ## Verification
 

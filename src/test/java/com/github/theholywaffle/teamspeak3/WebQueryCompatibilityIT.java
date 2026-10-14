@@ -2,6 +2,7 @@ package com.github.theholywaffle.teamspeak3;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.github.theholywaffle.teamspeak3.ServerQueryCompatibilityIT.CreatedResource;
 import com.github.theholywaffle.teamspeak3.api.ApiKeyScope;
 import com.github.theholywaffle.teamspeak3.api.BanRequest;
 import com.github.theholywaffle.teamspeak3.api.ChannelGroupFilter;
@@ -33,6 +34,7 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.CustomPropertyAssignment;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Permission;
 import com.github.theholywaffle.teamspeak3.api.wrapper.PrivilegeKey;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ServerGroupClient;
+import com.github.theholywaffle.teamspeak3.commands.QueryCommands;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -170,7 +172,10 @@ class WebQueryCompatibilityIT {
                     "ftgetfileinfo",
                     "ftlist",
                     "ftstop")) {
-                assertTrue(WebQueryProtocol.unsupported(command).isPresent(), command);
+                assertTrue(
+                        WebQueryProtocol.unsupported(QueryCommands.rawCommand(command))
+                                .isPresent(),
+                        command);
                 var response = http.send(
                         HttpRequest.newBuilder(config.getBaseUri().resolve("1/" + command))
                                 .header("x-api-key", config.apiKey())
@@ -311,9 +316,15 @@ class WebQueryCompatibilityIT {
             var api = query.getApi(1);
             ClientDatabaseId member = api.databaseClients().list().getFirst().getDatabaseId();
             var serverGroups = api.serverGroups();
-            int group = serverGroups.create("web sg " + target + " | é");
-            int copy = serverGroups.copy(group, "web sg copy " + target, PermissionGroupDatabaseType.REGULAR);
-            try {
+            int group;
+            try (var groupResource = new CreatedResource<>(
+                            serverGroups.create("web sg " + target + " | é"), serverGroups::delete);
+                    var copyResource = new CreatedResource<>(
+                            serverGroups.copy(
+                                    groupResource.id(), "web sg copy " + target, PermissionGroupDatabaseType.REGULAR),
+                            id -> serverGroups.delete(id, true))) {
+                group = groupResource.id();
+                int copy = copyResource.id();
                 serverGroups.rename(group, "web sg renamed " + target);
                 assertTrue(serverGroups.list().stream()
                         .anyMatch(g -> g.getId() == group && g.getName().equals("web sg renamed " + target)));
@@ -327,9 +338,6 @@ class WebQueryCompatibilityIT {
                 serverGroups.removeMember(group, member);
                 assertEquals(List.of(), serverGroups.members(group));
                 serverGroups.overwrite(group, copy, PermissionGroupDatabaseType.REGULAR);
-            } finally {
-                serverGroups.delete(copy, true);
-                serverGroups.delete(group);
             }
             assertTrue(serverGroups.list().stream().noneMatch(g -> g.getId() == group));
             int typedGroup = serverGroups.create("web sg typed " + target, PermissionGroupDatabaseType.REGULAR);
@@ -343,11 +351,16 @@ class WebQueryCompatibilityIT {
             serverGroups.delete(typedGroup, false);
 
             var channelGroups = api.channelGroups();
-            int channelGroup = channelGroups.create("web cg " + target);
-            int channelCopy =
-                    channelGroups.copy(channelGroup, "web cg copy " + target, PermissionGroupDatabaseType.REGULAR);
             int defaultGroup = api.servers().info().getDefaultChannelGroup();
-            try {
+            int channelGroup;
+            try (var groupResource = new CreatedResource<>(
+                            channelGroups.create("web cg " + target), id -> channelGroups.delete(id, true));
+                    var copyResource = new CreatedResource<>(
+                            channelGroups.copy(
+                                    groupResource.id(), "web cg copy " + target, PermissionGroupDatabaseType.REGULAR),
+                            id -> channelGroups.delete(id, true))) {
+                channelGroup = groupResource.id();
+                int channelCopy = copyResource.id();
                 channelGroups.rename(channelGroup, "web cg renamed " + target);
                 assertTrue(channelGroups.list().stream()
                         .anyMatch(g -> g.getId() == channelGroup && g.getName().equals("web cg renamed " + target)));
@@ -357,9 +370,6 @@ class WebQueryCompatibilityIT {
                 assertTrue(members.contains(new ChannelGroupClient(1, member, channelGroup)));
                 channelGroups.assign(defaultGroup, 1, member);
                 channelGroups.overwrite(channelGroup, channelCopy, PermissionGroupDatabaseType.REGULAR);
-            } finally {
-                channelGroups.delete(channelCopy, true);
-                channelGroups.delete(channelGroup, true);
             }
             assertTrue(channelGroups.list().stream().noneMatch(g -> g.getId() == channelGroup));
             int typedChannelGroup = channelGroups.create("web cg typed " + target, PermissionGroupDatabaseType.REGULAR);
@@ -387,10 +397,15 @@ class WebQueryCompatibilityIT {
             assertEquals(1, permissions.ownValue("b_virtualserver_info_view"));
             assertFalse(permissions.assignments("b_virtualserver_info_view").isEmpty());
             ClientDatabaseId member = api.databaseClients().list().getFirst().getDatabaseId();
-            int group = api.serverGroups().create("web perms " + target);
-            int channel =
-                    api.channels().create("web perms " + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"));
-            try {
+            try (var groupResource = new CreatedResource<>(
+                            api.serverGroups().create("web perms " + target),
+                            id -> api.serverGroups().delete(id, true));
+                    var channelResource = new CreatedResource<>(
+                            api.channels()
+                                    .create("web perms " + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")),
+                            id -> api.channels().delete(id, true))) {
+                int group = groupResource.id();
+                int channel = channelResource.id();
                 for (PermissionTarget holder : List.of(
                         PermissionTarget.serverGroup(group),
                         PermissionTarget.channelGroup(api.servers().info().getDefaultChannelGroup()),
@@ -413,9 +428,6 @@ class WebQueryCompatibilityIT {
                 assertFalse(permissions.overview(channel, member).isEmpty());
                 permissions.addToAllServerGroups(ServerGroupType.SERVER_NORMAL, PermissionGrant.of("i_icon_id", 3));
                 permissions.deleteFromAllServerGroups(ServerGroupType.SERVER_NORMAL, "i_icon_id");
-            } finally {
-                api.channels().delete(channel, true);
-                api.serverGroups().delete(group, true);
             }
         } finally {
             record(target, "permissions", evidence);
@@ -520,8 +532,10 @@ class WebQueryCompatibilityIT {
             // inbox.
             assertEquals(List.of(), messages.listOffline());
             assertEquals(Optional.empty(), messages.getOffline(99_999));
-            var recipientKey = api.apiKeys().add(ApiKeyScope.WRITE, Duration.ofDays(1), id);
-            try (var recipient = web(target, recipientKey.getSecret().orElseThrow())) {
+            try (var recipientKey = new CreatedResource<>(
+                            api.apiKeys().add(ApiKeyScope.WRITE, Duration.ofDays(1), id),
+                            key -> api.apiKeys().delete(key.getId()));
+                    var recipient = web(target, recipientKey.id().getSecret().orElseThrow())) {
                 var inbox = recipient.getApi(1);
                 assertEquals(Optional.of(id), inbox.whoAmI().getDatabaseId());
                 var message = inbox.messages().listOffline().stream()
@@ -538,8 +552,6 @@ class WebQueryCompatibilityIT {
                         .hasBeenRead());
                 inbox.messages().deleteOffline(message.getId());
                 assertTrue(inbox.messages().listOffline().stream().noneMatch(m -> m.getId() == message.getId()));
-            } finally {
-                api.apiKeys().delete(recipientKey.getId());
             }
             assertEquals(
                     512,
@@ -550,29 +562,30 @@ class WebQueryCompatibilityIT {
 
             var instanceLogins = query.getApi().queryLogins();
             String loginName = "web-login-" + target;
-            var created = instanceLogins.create(loginName);
-            evidence.add("created login cldbid=" + created.getClientDatabaseId());
-            assertFalse(created.getQueryClientLoginPassword().isBlank());
-            try {
+            try (var login = new CreatedResource<>(
+                    instanceLogins.create(loginName),
+                    created -> instanceLogins.delete(created.getClientDatabaseId()))) {
+                var created = login.id();
+                evidence.add("created login cldbid=" + created.getClientDatabaseId());
+                assertFalse(created.getQueryClientLoginPassword().isBlank());
                 assertTrue(instanceLogins.list().stream()
                         .anyMatch(l -> l.getQueryClientLoginName().equals(loginName)));
                 assertEquals(1, instanceLogins.search(loginName).size());
-                try (var login = new TS3Query(ts3.config(TS3Query.Protocol.RAW)
+                try (var session = new TS3Query(ts3.config(TS3Query.Protocol.RAW)
                         .setLoginCredentials(loginName, created.getQueryClientLoginPassword()))) {
-                    login.connect();
-                    assertEquals(Optional.of(loginName), login.getApi().whoAmI().getLoginName());
+                    session.connect();
+                    assertEquals(
+                            Optional.of(loginName), session.getApi().whoAmI().getLoginName());
                 }
                 var serverLogin = api.queryLogins().create("web-srv-" + target, id);
                 assertEquals(id, serverLogin.getClientDatabaseId());
                 api.queryLogins().delete(id);
-            } finally {
-                instanceLogins.delete(created.getClientDatabaseId());
-                var ownLogin = assertThrows(
-                        TS3CommandFailedException.class, () -> api.queryLogins().updateOwn("web-own-" + target));
-                evidence.add("clientsetserverquerylogin "
-                        + new TreeMap<>(ownLogin.getError().getMap()));
-                assertEquals(512, ownLogin.getErrorId(), "the Web Query client has no own query login");
             }
+            var ownLogin = assertThrows(
+                    TS3CommandFailedException.class, () -> api.queryLogins().updateOwn("web-own-" + target));
+            evidence.add("clientsetserverquerylogin "
+                    + new TreeMap<>(ownLogin.getError().getMap()));
+            assertEquals(512, ownLogin.getErrorId(), "the Web Query client has no own query login");
             assertTrue(instanceLogins.list().stream()
                     .noneMatch(l -> l.getQueryClientLoginName().equals(loginName)));
             assertEquals(
@@ -640,9 +653,10 @@ class WebQueryCompatibilityIT {
             clients.edit(observerId, Map.of(ClientProperty.CLIENT_DESCRIPTION, "edited by web " + target));
             assertEquals("edited by web " + target, clients.info(observerId).getDescription());
 
-            int channel =
-                    api.channels().create("web clients " + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"));
-            try {
+            try (var channelResource = new CreatedResource<>(
+                    api.channels().create("web clients " + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")),
+                    id -> api.channels().delete(id, true))) {
+                int channel = channelResource.id();
                 var create = created.poll(5, TimeUnit.SECONDS);
                 assertNotNull(create, "ServerQuery observes channels created over Web Query");
                 assertEquals(channel, create.getChannelId());
@@ -663,6 +677,8 @@ class WebQueryCompatibilityIT {
                 assertEquals("again " + target, nextText(texts).getMessage());
                 api.messages().sendServer("server " + target);
                 assertEquals("server " + target, nextText(texts).getMessage());
+                query.getApi().messages().sendServer(1, "server by ID " + target);
+                assertEquals("server by ID " + target, nextText(texts).getMessage());
                 api.messages().broadcast("broadcast " + target);
                 assertEquals("broadcast " + target, nextText(texts).getMessage());
                 api.moveQuery(1);
@@ -689,8 +705,6 @@ class WebQueryCompatibilityIT {
                 assertEquals(516, ban.getErrorId());
                 assertEquals(516, poke.getErrorId());
                 assertTrue(clients.isOnline(observerId));
-            } finally {
-                api.channels().delete(channel, true);
             }
         } finally {
             record(target, "clients-messages", evidence);
@@ -816,8 +830,11 @@ class WebQueryCompatibilityIT {
         try (var query = web(target)) {
             var channels = query.getApi(1).channels();
             String name = "web " + target + " 日本語 | literal \\s\\p /";
-            int parent = channels.create(name, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"));
-            try {
+            int parent;
+            try (var parentResource = new CreatedResource<>(
+                    channels.create(name, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")),
+                    id -> channels.delete(id, true))) {
+                parent = parentResource.id();
                 int child = channels.create(
                         "child " + target,
                         Map.of(
@@ -846,8 +863,6 @@ class WebQueryCompatibilityIT {
                 var missing = assertThrows(TS3CommandFailedException.class, () -> channels.info(child));
                 evidence.add("missing " + new TreeMap<>(missing.getError().getMap()));
                 assertEquals(768, missing.getErrorId());
-            } finally {
-                channels.delete(parent, true);
             }
             assertTrue(channels.list().stream().noneMatch(channel -> channel.getId() == parent));
         } finally {

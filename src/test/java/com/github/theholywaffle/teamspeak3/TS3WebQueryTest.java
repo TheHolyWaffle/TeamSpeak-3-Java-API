@@ -125,6 +125,20 @@ class TS3WebQueryTest {
     }
 
     @Test
+    void sendsAServerMessageToTheAddressedVirtualServer() throws Exception {
+        responder = request -> new Reply(200, "{\"status\":{\"code\":0}}");
+        try (var query = new TS3WebQuery(config().build())) {
+            query.getApi().messages().sendServer(2, "hi");
+            Request request = requests.take();
+            assertEquals("/prefix/2/sendtextmessage", request.path());
+            assertEquals("{\"targetmode\":\"3\",\"target\":\"0\",\"msg\":\"hi\"}", request.body());
+            assertThrows(
+                    IllegalArgumentException.class,
+                    () -> query.getApi().messages().sendServer(0, "hi"));
+        }
+    }
+
+    @Test
     void rejectsInvalidScopes() {
         try (var query = new TS3WebQuery(config().build())) {
             assertSame(query.getApi(), query.getApi());
@@ -160,7 +174,6 @@ class TS3WebQueryTest {
                     () -> api.files().uploadIcon(new byte[] {1, 2, 3}),
                     () -> api.files().uploadIcon(new java.io.ByteArrayInputStream(new byte[] {1}), 1),
                     () -> api.files().icons(),
-                    () -> api.messages().sendServer(2, "hi"),
                     () -> api.executeRawCommand("help channellist"),
                     () -> api.executeRawCommand("ftgetfilelist cid=0 cpw= path=\\/"));
             for (Runnable operation : operations) {

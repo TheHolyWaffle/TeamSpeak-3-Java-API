@@ -19,6 +19,13 @@ interface QueryBackend {
     /** @throws com.github.theholywaffle.teamspeak3.api.exception.TS3UnsupportedOperationException without a notification stream */
     EventSubscription subscribe(TS3Listener listener);
 
+    /**
+     * Addresses a virtual server for the commands sent through the returned backend. ServerQuery
+     * selects it with {@code use}, so it stays selected for the session; Web Query only changes the
+     * request URL.
+     */
+    CompletableFuture<QueryBackend> onVirtualServer(int serverId);
+
     /** Runs a file transfer, or fails it when the backend has no file-transfer support. */
     <T> CompletableFuture<T> withFileTransfers(Function<FileTransfers, CompletableFuture<T>> transfer);
 }

@@ -5,12 +5,17 @@ import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedExcepti
 import com.github.theholywaffle.teamspeak3.api.exception.TS3HttpException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
 import com.github.theholywaffle.teamspeak3.commands.Command;
-import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
+import com.github.theholywaffle.teamspeak3.commands.CommandTrait;
+import com.github.theholywaffle.teamspeak3.commands.parameter.Parameter;
+import com.github.theholywaffle.teamspeak3.commands.parameter.ParameterSink;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.StringJoiner;
 import java.util.regex.Pattern;
 
@@ -21,25 +26,27 @@ import java.util.regex.Pattern;
 final class WebQueryProtocol {
 
     static final String API_KEY_HEADER = "x-api-key";
+    static final String NO_CONNECTION = "Web Query has no connection or session: every request carries the API key"
+            + " and addresses the instance or a virtual server in its URL (TS3WebQuery.getApi(int),"
+            + " getApiByPort(int)); close the TS3WebQuery instead of quitting";
+    static final String NO_HELP = "Web Query does not serve command help";
     static final String NO_EVENTS = "Web Query has no notification stream; use a RAW or SSH TS3Query for events";
     static final String NO_FILES = "Web Query does not support file commands or transfers; use a RAW or SSH TS3Query";
     private static final Pattern ERROR_ID = Pattern.compile("\\d{1,9}");
 
     private WebQueryProtocol() {}
 
-    /** @return why the server cannot execute {@code commandName} over Web Query, if it cannot */
-    static Optional<String> unsupported(String commandName) {
-        String reason = switch (commandName) {
-            case "use" ->
-                "Web Query selects the virtual server in each request URL; use TS3WebQuery.getApi(int)"
-                        + " or getApiByPort(int)";
-            case "login", "logout" -> "Web Query authenticates every request with its API key";
-            case "quit" -> "Web Query has no session to quit; close the TS3WebQuery";
-            case "servernotifyregister", "servernotifyunregister" -> NO_EVENTS;
-            case "help" -> "Web Query does not serve command help";
-            default -> commandName.startsWith("ft") ? NO_FILES : null;
-        };
-        return Optional.ofNullable(reason).map(text -> commandName + " is unsupported: " + text);
+    /** @return why the server cannot execute {@code command} over Web Query, if it cannot */
+    static Optional<String> unsupported(Command command) {
+        Set<CommandTrait> traits = command.getTraits();
+        String reason = traits.contains(CommandTrait.CONNECTION)
+                ? NO_CONNECTION
+                : traits.contains(CommandTrait.NOTIFICATIONS)
+                        ? NO_EVENTS
+                        : traits.contains(CommandTrait.FILES)
+                                ? NO_FILES
+                                : traits.contains(CommandTrait.HELP) ? NO_HELP : null;
+        return Optional.ofNullable(reason).map(text -> command.getName() + " is unsupported: " + text);
     }
 
     /**
@@ -55,34 +62,32 @@ final class WebQueryProtocol {
      * entry where the first holds the shared parameters. Options become members with empty values.
      */
     static String body(Command command) {
-        String line = command.encoded();
-        String parameters = line.length() > command.getName().length()
-                ? line.substring(command.getName().length() + 1)
-                : "";
-        String[] entries = parameters.split("\\|", -1);
-        var json = new StringBuilder();
-        if (entries.length > 1) json.append('[');
-        for (int i = 0; i < entries.length; i++) {
-            if (i > 0) json.append(',');
-            appendObject(entries[i], json);
-        }
-        if (entries.length > 1) json.append(']');
-        return json.toString();
+        var body = new JsonBody();
+        for (Parameter parameter : command.getParameters()) parameter.addTo(body);
+        return body.toString();
     }
 
-    private static void appendObject(String entry, StringBuilder json) {
-        json.append('{');
-        boolean first = true;
-        for (String token : entry.split(" ", -1)) {
-            if (token.isEmpty()) continue;
-            if (!first) json.append(',');
-            first = false;
-            int equals = token.indexOf('=');
-            String key = CommandEncoding.decode(equals < 0 ? token : token.substring(0, equals));
-            String value = equals < 0 ? "" : CommandEncoding.decode(token.substring(equals + 1));
-            WebQueryJson.quote(value, WebQueryJson.quote(key, json).append(':'));
+    private static final class JsonBody implements ParameterSink {
+        private final List<StringBuilder> objects = new ArrayList<>(List.of(new StringBuilder()));
+
+        @Override
+        public void put(String key, String value) {
+            StringBuilder object = objects.getLast();
+            if (!object.isEmpty()) object.append(',');
+            WebQueryJson.quote(value, WebQueryJson.quote(key, object).append(':'));
         }
-        json.append('}');
+
+        @Override
+        public void nextEntry() {
+            objects.add(new StringBuilder());
+        }
+
+        @Override
+        public String toString() {
+            var json = new StringJoiner(",", objects.size() > 1 ? "[" : "", objects.size() > 1 ? "]" : "");
+            for (StringBuilder object : objects) json.add("{" + object + "}");
+            return json.toString();
+        }
     }
 
     /**
@@ -116,7 +121,7 @@ final class WebQueryProtocol {
             throw new TS3HttpException(commandName, httpStatus, "a successful status with an HTTP error", null);
         }
         try {
-            return DefaultArrayResponse.parse(encodedRows(response.get("body")));
+            return DefaultArrayResponse.fromRows(rows(response.get("body")));
         } catch (IllegalArgumentException e) {
             throw new TS3HttpException(commandName, httpStatus, "the JSON body is not a list of rows", e);
         }
@@ -142,17 +147,14 @@ final class WebQueryProtocol {
         return new QueryError(error);
     }
 
-    /** @return the body rows in ServerQuery response encoding */
-    private static String encodedRows(WebQueryJson.Value body) {
-        if (body == null) return "";
-        var rows = new StringJoiner("|");
+    private static List<Map<String, String>> rows(WebQueryJson.Value body) {
+        if (body == null) return List.of();
+        List<Map<String, String>> rows = new ArrayList<>();
         for (WebQueryJson.Value row : body.elements("body")) {
-            var fields = new StringJoiner(" ");
-            row.members("row")
-                    .forEach((key, value) ->
-                            fields.add(CommandEncoding.encode(key) + "=" + CommandEncoding.encode(value.text(key))));
-            rows.add(fields.toString());
+            Map<String, String> fields = new LinkedHashMap<>();
+            row.members("row").forEach((key, value) -> fields.put(key, value.text(key)));
+            rows.add(fields);
         }
-        return rows.toString();
+        return rows;
     }
 }

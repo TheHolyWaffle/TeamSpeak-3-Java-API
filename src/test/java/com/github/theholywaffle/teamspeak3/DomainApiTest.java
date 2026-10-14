@@ -87,6 +87,23 @@ class DomainApiTest {
     }
 
     @Test
+    void serverMessageByIdSelectsThatServerFirst() throws Exception {
+        try (var peer = new FakeServerQuery(p -> {
+                    p.expect("use sid=2 -virtual");
+                    p.write(OK);
+                    p.expect("sendtextmessage targetmode=3 target=0 msg=hi");
+                    p.write(OK);
+                    p.finishQuit();
+                });
+                var query = query(peer)) {
+            query.connect();
+            query.getApi().messages().sendServer(2, "hi");
+            query.exit();
+            peer.await();
+        }
+    }
+
+    @Test
     void requiredResultsFailInsteadOfReturningDefaults() throws Exception {
         try (var peer = new FakeServerQuery(p -> {
                     p.expect("whoami");

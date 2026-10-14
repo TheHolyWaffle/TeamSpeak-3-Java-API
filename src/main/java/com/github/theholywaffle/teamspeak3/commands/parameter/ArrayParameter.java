@@ -62,6 +62,14 @@ public record ArrayParameter(List<List<Parameter>> entries) implements Parameter
     }
 
     @Override
+    public void addTo(ParameterSink sink) {
+        for (int i = 0; i < entries.size(); i++) {
+            if (i > 0) sink.nextEntry();
+            for (Parameter parameter : entries.get(i)) parameter.addTo(sink);
+        }
+    }
+
+    @Override
     public void appendTo(StringBuilder line) {
         for (int i = 0; i < entries.size(); i++) {
             if (i > 0) line.append('|');

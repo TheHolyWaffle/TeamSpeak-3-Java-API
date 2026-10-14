@@ -58,7 +58,8 @@ public final class MessageApi {
     }
 
     /**
-     * Selects a virtual server, then sends a text message to it. The server stays selected.
+     * Sends a text message to another virtual server. Over RAW and SSH this selects that server first,
+     * and it stays selected; over Web Query only this request addresses it.
      *
      * @param serverId the virtual server ID
      * @param message the message
