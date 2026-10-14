@@ -26,6 +26,8 @@ package com.github.theholywaffle.teamspeak3.commands.parameter;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
+
 /** One part of a ServerQuery command line. */
 public sealed interface Parameter permits ArrayParameter, KeyValueParam, OptionParam, RawParam, ValueParam {
 
@@ -36,10 +38,23 @@ public sealed interface Parameter permits ArrayParameter, KeyValueParam, OptionP
     void appendTo(StringBuilder line);
 
     /**
-     * Passes this parameter to {@code sink} without ServerQuery escaping.
+     * Passes this parameter to {@code sink} without ServerQuery escaping. The default decodes
+     * {@link #encoded()}: entries split at pipes, parameters at spaces.
      * @param sink the receiver of names, values and entry boundaries
      */
-    void addTo(ParameterSink sink);
+    default void addTo(ParameterSink sink) {
+        String[] entries = encoded().split("\\|", -1);
+        for (int i = 0; i < entries.length; i++) {
+            if (i > 0) sink.nextEntry();
+            for (String token : entries[i].split(" ", -1)) {
+                if (token.isEmpty()) continue;
+                int equals = token.indexOf('=');
+                sink.put(
+                        CommandEncoding.decode(equals < 0 ? token : token.substring(0, equals)),
+                        equals < 0 ? "" : CommandEncoding.decode(token.substring(equals + 1)));
+            }
+        }
+    }
 
     /**
      * Encodes this parameter on its own.
