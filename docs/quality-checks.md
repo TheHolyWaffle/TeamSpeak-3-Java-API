@@ -15,7 +15,7 @@ scripts.
 | Dependency vulnerabilities | GitHub dependency graph, Dependabot alerts, dependency review | (GitHub only) | Dependency graph and review |
 | API compatibility | japicmp | `verify`; `bash .github/scripts/test-api-compatibility.sh` | API compatibility |
 
-Tool versions are pinned in `pom.xml` and kept current by Dependabot; see
+Tool versions are pinned in `pom.xml` and kept current by Renovate; see
 [dependency and image maintenance](maintenance.md).
 
 ## Formatting
@@ -98,7 +98,8 @@ sees only direct dependencies, so the **Dependency graph and review** job submit
 Maven graph, including transitive and test dependencies and versions managed by the Bouncy
 Castle BOM, with `advanced-security/maven-dependency-submission-action`:
 
-- **Dependabot alerts and security updates** (enabled in the repository settings) use that graph.
+- **Dependabot alerts** (enabled in the repository settings) use that graph, and Renovate opens
+  the security update PRs for them.
   GitHub raises alerts for the default branch, `master`, and re-evaluates it whenever a new
   advisory is published, so no scheduled scan is needed there. Until the final integration
   merges 2.0 into `master`, alerts cover the 1.x graph on `master`, not `modernization/2.0`.
@@ -110,7 +111,7 @@ Castle BOM, with `advanced-security/maven-dependency-submission-action`:
 Dependency review checks changed dependencies only. A new advisory against an unchanged
 dependency surfaces as a Dependabot alert on `master`. Allow a vulnerability (`allow-ghsas`)
 only in a reviewed PR that states why it is not exploitable here. Maven build plugins and GitHub
-Actions are pinned and are not scanned here; Dependabot version updates keep them current (see
+Actions are pinned and are not scanned here; Renovate keeps them current (see
 [dependency and image maintenance](maintenance.md)).
 
 ## API compatibility

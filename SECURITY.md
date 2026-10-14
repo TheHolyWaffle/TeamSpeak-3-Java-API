@@ -45,7 +45,7 @@ Out of scope, please report upstream instead:
 
 - vulnerabilities in the TeamSpeak server itself: [TeamSpeak](https://teamspeak.com);
 - vulnerabilities in a dependency (SSHJ, Bouncy Castle, SLF4J, Gson) that this library does not make
-  worse: the dependency's project. Dependabot proposes patched versions here.
+  worse: the dependency's project. Renovate proposes patched versions here.
 
 Known, documented limitations are not vulnerabilities: file transfers use an unencrypted TCP
 connection even when the query uses SSH, raw TCP queries send the login in plain text, and

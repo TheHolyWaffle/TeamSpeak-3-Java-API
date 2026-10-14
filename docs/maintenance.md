@@ -1,60 +1,59 @@
 # Dependency and image maintenance
 
-[Dependabot version updates](https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference)
-keep every pinned version current, configured in [`.github/dependabot.yml`](../.github/dependabot.yml).
-Dependabot is built into GitHub, so it needs no app installation, token or extra Action, and it
-already provides this repository's vulnerability alerts and security updates. Each update arrives as
-an ordinary PR, runs the full **CI required** workflow with a read-only token, and is merged by a
-maintainer like any contributor PR. Nothing merges automatically.
+[Renovate](https://docs.renovatebot.com/) keeps every pinned version current, configured in
+[`.github/renovate.json5`](../.github/renovate.json5) and run by the Mend Renovate GitHub App. Each
+update arrives as an ordinary PR and runs the full **CI required** workflow. Minor, patch and
+digest updates, and major updates of test dependencies and build plugins, merge automatically once
+it passes; see [auto-merge](#auto-merge). A maintainer merges the other major updates.
 
 ## What is updated
 
 | Ecosystem | Files | PR title |
 | --- | --- | --- |
-| Maven | `pom.xml`, `src/test/consumers/maven/pom.xml`, `.mvn/wrapper/maven-wrapper.properties` | `deps:` for the runtime library, `build:` otherwise |
-| GitHub Actions | `.github/workflows/*.yml` (SHA pins with version comments) | `ci:` |
-| Docker | [`src/test/resources/teamspeak3/Dockerfile`](../src/test/resources/teamspeak3/Dockerfile) (tag and digest) | `test:` |
-| Gradle | `src/test/consumers/gradle` (Gradle version and consumer dependencies) | `test:` |
+| Maven | `pom.xml`, `src/test/consumers/maven/pom.xml`, `.mvn/wrapper/` (Maven and wrapper versions, SHA-256) | `fix(deps):` for the runtime library, `chore(deps):` otherwise |
+| GitHub Actions | `.github/workflows/*.yml` (SHA pins with version comments) | `chore(deps):` |
+| Docker | [`src/test/resources/teamspeak3/Dockerfile`](../src/test/resources/teamspeak3/Dockerfile) (tag and digest) | `chore(deps):` |
+| Gradle | `src/test/consumers/gradle` (Gradle version and consumer dependencies) | `chore(deps):` |
 
-Related updates share one PR per group (see the config): the build toolchain, release tooling
-(JReleaser, japicmp), SLF4J, test libraries, other build plugins, Actions other than
-release-please, and the Gradle consumer.
+These are the titles of Renovate's `config:recommended` preset, which classifies dependencies by
+Maven scope, so a new dependency needs no configuration. Runtime updates appear under "Bug Fixes"
+in the changelog. The preset also groups packages released together (JUnit, Testcontainers,
+SLF4J, ...) and dependencies sharing a Maven version property; a group mixing both kinds takes
+`fix(deps):`.
 
-Runtime dependencies (SSHJ, the Bouncy Castle BOM, Gson) and major updates arrive one per PR.
-Version updates wait seven days after a release (`cooldown`) so that broken or withdrawn releases
-are usually caught upstream first; security updates are not delayed. Every tool the build runs is
-declared where Dependabot reads it: plugins invoked by prefix (`help:evaluate`, `versions:set`)
-are in `pluginManagement`, the formatter version is shared with a Spotless plugin dependency, and
-the Gradle consumer reads its version from `gradle-wrapper.properties`.
+Version updates wait seven days after a release (`minimumReleaseAge`) so that broken or withdrawn
+releases are usually caught upstream first; Renovate opens the PR only after that. Security updates
+are not delayed. Renovate opens security PRs from this repository's Dependabot alerts, so keep
+alerts enabled and Dependabot security updates disabled in the repository settings. Every tool the
+build runs is declared where Renovate reads it: plugins invoked by prefix (`help:evaluate`,
+`versions:set`) are in `pluginManagement`, the formatter version is shared with a Spotless plugin
+dependency, and the Gradle consumer reads its version from `gradle-wrapper.properties`.
 
-Not updated by Dependabot, deliberately:
+Not updated by Renovate, deliberately:
 
 - The library's own version and the [API baseline](quality-checks.md#baseline): release-please and
-  the release process own them.
+  the release process own them. Renovate skips them because their versions are Maven properties
+  or script inputs.
 - The Java versions in CI (25 and the newest GA, currently 27): a support policy, not a dependency.
-- Another TeamSpeak major version: TS3 only is supported; major `teamspeak` updates are ignored.
-- The Maven distribution while Dependabot's Maven Wrapper support stays behind a feature flag
-  (`maven_wrapper_updater` in dependabot-core). Its group is configured already, and the
-  scheduled check below reports new Maven 3 releases until then. To update by hand, set the
-  version in `distributionUrl` and its SHA-256 in `distributionSha256Sum` of
-  `.mvn/wrapper/maven-wrapper.properties`, then run `./mvnw -v`.
-
-- actionlint and yq for the [release workflow check](releases.md#provenance-attestations): Dependabot
-  cannot track binaries downloaded by a script. To update, set the version and the SHA-256 of each
-  platform's archive from the project's published checksums in
+- actionlint and yq for the [release workflow check](releases.md#provenance-attestations): Renovate
+  cannot update the per-platform checksums of binaries downloaded by a script. To update, set the
+  version and the SHA-256 of each platform's archive from the project's published checksums in
   [`workflow-tools.sh`](../.github/scripts/workflow-tools.sh), then run
   `bash .github/scripts/test-check-release-workflow.sh`.
 
-Dependabot reads its configuration from the default branch only. The configuration lands on
-`modernization/2.0` and takes effect when the final integration (#451) merges it into `master`,
-the branch its PRs then target.
+Renovate also proposes updates that are support decisions, and CI fails them: Maven 4 (the
+enforcer requires Maven 3) and a new TeamSpeak major version. Close such a PR; Renovate does not
+reopen a closed major update. Its **Dependency Dashboard** issue lists pending and ignored updates
+and can trigger an update immediately.
 
 ## Reviewing an update PR
 
 Each PR runs the normal checks: unit tests on Java 25 and 27, the TS3 RAW and SSH integration
 suite, dependency review, API compatibility, the release-intent checks below, the signed
 non-publishing release rehearsal and the Maven and Gradle consumers. Review the linked release
-notes and merge with **Squash and merge**, keeping the title.
+notes and merge with **Squash and merge**, keeping the title. The squash commit takes the PR
+description as its body, so remove any `BREAKING CHANGE:` line quoted from upstream release notes;
+release-please would read it as this project's.
 
 Release-tool updates are exercised without publishing:
 
@@ -66,16 +65,23 @@ Release-tool updates are exercised without publishing:
 | Maven deploy, install, help, versions plugins | Local staging deploy and the synthetic release (**Validate publication bundle**) |
 | `actions/attest-build-provenance` | Only the workflow wiring check (**Validate publication bundle**); the action first runs in a real publication, where a failure blocks the upload |
 
+### Auto-merge
+
+Renovate enables GitHub auto-merge on minor, patch and digest updates, and on major updates of
+Maven test-scoped dependencies and build plugins. Other major updates (runtime dependencies,
+Actions, the Maven and Gradle distributions, the TS3 image) wait for a maintainer. The PR merges
+only once **CI required** passes, so a failing update, such as a new TS3 image tag, waits for a
+maintainer and merges by itself after the fix. Renovate sets the squash commit to its own title,
+not the PR description. Required checks run against the latest `master`; Renovate rebases PRs that
+fall behind on its next run. To stop an auto-merge, disable it on the PR.
+
 ### Release intent
 
 Bot titles go through the same **Release intent** and **API compatibility** jobs as contributor
 titles. The API compatibility job also compares the resolved runtime dependencies
 (`dependency:list -DincludeScope=runtime`) with the PR base: a change needs a releasing title
-(`deps:`, `fix:`, `feat:` or a breaking change), and `deps:` needs a change.
-
-Dependabot classifies the Maven distribution, annotation processors and plugin dependencies as
-production dependencies, so it titles `build-toolchain` PRs `deps:`. That check then fails; edit the
-title to `build:` (the job reruns on edits) before merging, so the update does not cause a release.
+(`deps:`, `fix:`, `feat:` or a breaking change), and `deps:` needs a change. Renovate's
+`fix(deps):` and `chore(deps):` titles follow the same split.
 
 ### TS3 image updates
 
@@ -86,14 +92,11 @@ support table and reviews the compatibility results.
 
 ## Scheduled detection
 
-**Upstream update detection** (`.github/workflows/upstream-updates.yml`) runs weekly and on demand:
-
-- It resolves the newest official TeamSpeak 3 image (the highest `3.x.y` tag on Docker Hub and its
-  current manifest digest). If that differs from the pin, it runs the full compatibility suite
-  against it, applied as its update PR would apply it, and fails if the server is incompatible.
-  The step summary records both images.
-- It fails while the Maven Wrapper is older than the newest Maven 3 release. Remove this job once
-  Dependabot's Maven Wrapper updates are generally available.
+**Upstream update detection** (`.github/workflows/upstream-updates.yml`) runs weekly and on demand.
+It resolves the newest official TeamSpeak 3 image (the highest `3.x.y` tag on Docker Hub and its
+current manifest digest). If that differs from the pin, it runs the full compatibility suite
+against it, applied as its update PR would apply it, and fails if the server is incompatible.
+The step summary records both images.
 
 **ServerQuery compatibility** also revalidates the pinned image every week. GitHub runs scheduled
 and manually dispatched workflows only when they exist on the default branch, so both start with

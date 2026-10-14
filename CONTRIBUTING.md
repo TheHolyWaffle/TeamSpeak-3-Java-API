@@ -84,8 +84,8 @@ check this by hand. See [API compatibility](docs/quality-checks.md#api-compatibi
 - **Snapshot PRs** (`autorelease: snapshot`) are disabled until 2.0.0 is published. Afterwards they
   move the development version on after each release; they publish nothing and are merged like
   other PRs.
-- **Dependabot PRs** follow the same checks. Retitle a build-only update from `deps:` to `build:`
-  before merging; see [dependency and image maintenance](docs/maintenance.md#release-intent).
+- **Renovate PRs** follow the same checks. Most merge automatically once they pass; see
+  [dependency and image maintenance](docs/maintenance.md#auto-merge).
 
 Do not edit `CHANGELOG.md`, `.release-please-manifest.json` or the project version by hand, and
 do not add changelog fragments: release-please owns them.

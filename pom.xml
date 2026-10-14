@@ -264,7 +264,7 @@
 						</format>
 					</formats>
 				</configuration>
-				<!-- Spotless resolves the formatter itself; this declaration lets Dependabot update the version. -->
+				<!-- Spotless resolves the formatter itself; this declaration lets Renovate update the version. -->
 				<dependencies>
 					<dependency>
 						<groupId>com.palantir.javaformat</groupId>

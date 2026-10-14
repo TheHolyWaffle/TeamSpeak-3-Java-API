@@ -30,7 +30,7 @@ setting fails before connecting.
 `TeamSpeakContainer` uses the official TS3 image pinned by version and manifest digest in
 [`src/test/resources/teamspeak3/Dockerfile`](../src/test/resources/teamspeak3/Dockerfile), the only
 place the image is named. Its tag is the server version the suite expects, and the README support
-table must name it. Dependabot maintains the pin; see
+table must name it. Renovate maintains the pin; see
 [dependency and image maintenance](maintenance.md).
 
 TS3 explicitly requests `linux/amd64`: Apple Silicon needs Docker amd64
@@ -78,7 +78,7 @@ of the pin. **Upstream update detection** runs the same suite against a newer of
 TS3 image as soon as one is published; see [scheduled detection](maintenance.md#scheduled-detection).
 GitHub runs scheduled and manually dispatched workflows only when they exist on the
 default branch, so both become active after final integration into `master`. No workflow
-here publishes artifacts or changes the pin; Dependabot proposes pin updates as PRs.
+here publishes artifacts or changes the pin; Renovate proposes pin updates as PRs.
 
 Review a newer official TS3 version/digest, inspect its manifest, rerun this suite
 on Linux amd64 and Apple Silicon, update the expected version and pins (including
