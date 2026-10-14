@@ -70,6 +70,22 @@ add `requires com.github.theholywaffle.teamspeak3;` to your `module-info.java`
 (see [Java modules](docs/packaging.md#java-modules)). Add an SLF4J provider as described under
 [logging](#logging).
 
+### Verify a release
+
+Every release from 2.0.0 on is built and published by this repository's
+[`release.yml`](.github/workflows/release.yml) with a signed GitHub build provenance attestation.
+Maven Central does not show it, so verify a downloaded artifact with the
+[GitHub CLI](https://cli.github.com/):
+
+```sh
+gh attestation verify teamspeak3-api-<version>.jar --repo TheHolyWaffle/TeamSpeak-3-Java-API \
+  --signer-workflow TheHolyWaffle/TeamSpeak-3-Java-API/.github/workflows/release.yml
+```
+
+This proves which workflow and commit produced the JAR. Reproducible builds confirm it
+independently: rebuilding the tagged commit yields byte-identical artifacts. See
+[verify a published release](docs/releases.md#verify-a-published-release).
+
 ## Quick start
 
 ```java

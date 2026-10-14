@@ -39,6 +39,12 @@ Not updated by Dependabot, deliberately:
   version in `distributionUrl` and its SHA-256 in `distributionSha256Sum` of
   `.mvn/wrapper/maven-wrapper.properties`, then run `./mvnw -v`.
 
+- actionlint and yq for the [release workflow check](releases.md#provenance-attestations): Dependabot
+  cannot track binaries downloaded by a script. To update, set the version and the SHA-256 of each
+  platform's archive from the project's published checksums in
+  [`workflow-tools.sh`](../.github/scripts/workflow-tools.sh), then run
+  `bash .github/scripts/test-check-release-workflow.sh`.
+
 Dependabot reads its configuration from the default branch only. The configuration lands on
 `modernization/2.0` and takes effect when the final integration (#451) merges it into `master`,
 the branch its PRs then target.
@@ -58,6 +64,7 @@ Release-tool updates are exercised without publishing:
 | japicmp | `verify` against the 1.3.1 baseline and the controlled examples (**API compatibility**) |
 | release-please Action | The release-please version locked by the pinned Action runs `release-pr --dry-run` against the PR branch (**Release preparation (dry run)**) |
 | Maven deploy, install, help, versions plugins | Local staging deploy and the synthetic release (**Validate publication bundle**) |
+| `actions/attest-build-provenance` | Only the workflow wiring check (**Validate publication bundle**); the action first runs in a real publication, where a failure blocks the upload |
 
 ### Release intent
 
