@@ -1,0 +1,14 @@
+src/main/java/com/github/theholywaffle/teamspeak3/commands/parameter/Parameter.java
+  h_b0b95817cb397c 29-30,41-42,45-57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7d51ef62f91f09427da5c0ff6772001f10858fc7",
+  "prompts": {},
+  "humans": {
+    "h_b0b95817cb397c": {
+      "author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
