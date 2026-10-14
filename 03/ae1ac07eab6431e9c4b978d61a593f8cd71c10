@@ -1,0 +1,31 @@
+src/main/java/com/github/theholywaffle/teamspeak3/CommandQueue.java
+  s_b323d294012cee::t_9e845b174800e0 106
+src/main/java/com/github/theholywaffle/teamspeak3/EventApiAsync.java
+  s_b323d294012cee::t_4d14906e8740e8 48
+src/main/java/com/github/theholywaffle/teamspeak3/FileApiAsync.java
+  s_b323d294012cee::t_a267d339111b20 113-126,143-150,156-161,178-194,234-235,238,248,264,274-275,283,287
+src/main/java/com/github/theholywaffle/teamspeak3/QueryBackend.java
+  s_b323d294012cee::t_207fb73fe2fd6a 1-29
+src/main/java/com/github/theholywaffle/teamspeak3/QueryRequests.java
+  s_b323d294012cee::t_4212f742514994 18,30,32,34-35,38-39,44
+src/main/java/com/github/theholywaffle/teamspeak3/ServerQueryBackend.java
+  s_b323d294012cee::t_37cd184c51057f 1-27
+src/main/java/com/github/theholywaffle/teamspeak3/TS3ApiAsync.java
+  s_b323d294012cee::t_27d2f0038dfa80 82-83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "03ae1ac07eab6431e9c4b978d61a593f8cd71c10",
+  "prompts": {},
+  "sessions": {
+    "s_b323d294012cee": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "01ea27ad-50cb-4cfa-a7ac-c6f61151d4de",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
