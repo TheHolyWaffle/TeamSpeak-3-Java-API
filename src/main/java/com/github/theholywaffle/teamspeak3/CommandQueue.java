@@ -33,9 +33,9 @@ import com.github.theholywaffle.teamspeak3.api.exception.TS3TimeoutException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3UnknownOutcomeException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3UnsupportedOperationException;
 import com.github.theholywaffle.teamspeak3.commands.Command;
+import com.github.theholywaffle.teamspeak3.commands.CommandTrait;
 import java.util.ArrayDeque;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Condition;
@@ -43,9 +43,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 class CommandQueue {
-
-    private static final Set<String> SESSION_COMMANDS =
-            Set.of("login", "logout", "use", "clientupdate", "servernotifyregister", "servernotifyunregister");
 
     /** Bookkeeping for one admitted command, guarded by queueLock. */
     private static final class Entry {
@@ -133,7 +130,7 @@ class CommandQueue {
                                 new TS3QueryShutDownException("Disconnected query has no restorable session"));
                 return;
             }
-            if (contextSealed && SESSION_COMMANDS.contains(command.getName())) {
+            if (contextSealed && command.getTraits().contains(CommandTrait.SESSION_STATE)) {
                 command.getFuture()
                         .completeExceptionally(new TS3UnsupportedOperationException(
                                 "Session changes require SessionConfiguration when reconnect is enabled"));
