@@ -1,0 +1,58 @@
+docs/api-differences-2.0.md
+  h_b0b95817cb397c 39
+docs/web-query.md
+  h_b0b95817cb397c 150,158-161,183-185,188-190
+src/main/java/com/github/theholywaffle/teamspeak3/MessageApi.java
+  h_b0b95817cb397c 61-62
+src/main/java/com/github/theholywaffle/teamspeak3/MessageApiAsync.java
+  h_b0b95817cb397c 51-52
+src/main/java/com/github/theholywaffle/teamspeak3/QueryBackend.java
+  h_b0b95817cb397c 22-28
+src/main/java/com/github/theholywaffle/teamspeak3/ServerQueryBackend.java
+  h_b0b95817cb397c 3,6,19-26
+src/main/java/com/github/theholywaffle/teamspeak3/TS3WebQuery.java
+  h_b0b95817cb397c 164
+src/main/java/com/github/theholywaffle/teamspeak3/WebQueryBackend.java
+  h_b0b95817cb397c 18-23
+src/main/java/com/github/theholywaffle/teamspeak3/WebQueryProtocol.java
+  h_b0b95817cb397c 8-10,13,15,18,29-32,39-49,65-67,70-89,124,150-152,154-156,158
+src/main/java/com/github/theholywaffle/teamspeak3/commands/parameter/ArrayParameter.java
+  h_b0b95817cb397c 64-71
+src/main/java/com/github/theholywaffle/teamspeak3/commands/parameter/KeyValueParam.java
+  h_b0b95817cb397c 55-59
+src/main/java/com/github/theholywaffle/teamspeak3/commands/parameter/OptionParam.java
+  h_b0b95817cb397c 37-41
+src/main/java/com/github/theholywaffle/teamspeak3/commands/parameter/Parameter.java
+  h_b0b95817cb397c 38-43
+src/main/java/com/github/theholywaffle/teamspeak3/commands/parameter/ParameterSink.java
+  h_b0b95817cb397c 1-14
+src/main/java/com/github/theholywaffle/teamspeak3/commands/parameter/RawParam.java
+  h_b0b95817cb397c 3-4,37-52
+src/main/java/com/github/theholywaffle/teamspeak3/commands/parameter/ValueParam.java
+  h_b0b95817cb397c 37-41
+src/main/java/com/github/theholywaffle/teamspeak3/commands/response/DefaultArrayResponse.java
+  h_b0b95817cb397c 34,39,55-80,82-83,85-86,88-95,137,140-142,144,147,162-164,170
+src/test/java/com/github/theholywaffle/teamspeak3/DomainApiTest.java
+  h_b0b95817cb397c 89-105
+src/test/java/com/github/theholywaffle/teamspeak3/TS3WebQueryTest.java
+  h_b0b95817cb397c 127-140
+src/test/java/com/github/theholywaffle/teamspeak3/WebQueryCompatibilityIT.java
+  h_b0b95817cb397c 5,37,175-178,319-327,355-363,400-408,535-538,565-570,574,576-578,584-588,656-659,680-681,833-837
+src/test/java/com/github/theholywaffle/teamspeak3/WebQueryProtocolTest.java
+  h_b0b95817cb397c 12,41,48-62
+src/test/java/com/github/theholywaffle/teamspeak3/commands/ParameterSinkTest.java
+  h_b0b95817cb397c 1-57
+src/test/java/com/github/theholywaffle/teamspeak3/commands/response/DefaultArrayResponseTest.java
+  h_b0b95817cb397c 17-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ca82b92076cea7336fa1403074b929a7bb86edbc",
+  "prompts": {},
+  "humans": {
+    "h_b0b95817cb397c": {
+      "author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
