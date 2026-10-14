@@ -1,0 +1,14 @@
+.gitignore
+  h_b0b95817cb397c 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cc062bfbe18a7bf33f7753646943e792b19f8451",
+  "prompts": {},
+  "humans": {
+    "h_b0b95817cb397c": {
+      "author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
