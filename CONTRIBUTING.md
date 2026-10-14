@@ -114,7 +114,8 @@ These are enforced by GitHub; contributors do not need to configure anything.
 
 - `master` and `modernization/2.0` cannot be pushed to directly, force-pushed or deleted. Changes
   arrive by squash-merged PR with resolved review threads; **CI required** must pass on an
-  up-to-date branch (`master` requires its legacy build check until #451).
+  up-to-date branch (`master` requires its legacy build check until the
+  [final integration](docs/releases.md#final-integration-into-master)).
 - `v*` tags cannot be moved or deleted, and published GitHub releases are immutable. Do not push
   tags: the release workflow creates them.
 - Workflows get a read-only `GITHUB_TOKEN` by default and request more per job.

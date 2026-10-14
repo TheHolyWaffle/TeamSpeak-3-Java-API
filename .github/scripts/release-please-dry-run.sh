@@ -24,3 +24,20 @@ release_as=$(jq -r '.packages["."]["release-as"] // empty' release-please-config
 [[ -z $release_as || ${BASH_REMATCH[1]} == "$release_as" ]] ||
   fail "Release PR proposes ${BASH_REMATCH[1]}, but release-as is $release_as"
 echo "Release preparation would open: $title"
+
+# The proposed changelog entry must pass the same notes gate as the release, without changing source.
+version=${BASH_REMATCH[1]}
+# The entry runs from its version heading to the footer separator release-please appends.
+awk '/^## \[/ { entry = 1 } entry { line[++n] = $0 }
+  END { for (i = 1; i < n; i++) if (line[i] == "---" && line[i + 1] ~ /^This PR was generated/) end = i
+        for (i = 1; i < end; i++) print line[i] }' "$log" > target/release-please-notes.md
+[[ -s target/release-please-notes.md ]] || fail 'The release PR body has no changelog entry'
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+printf '{".": "%s"}\n' "$version" > "$work/manifest.json"
+awk -v entry=target/release-please-notes.md '
+  !done && /^## \[/ { while ((getline line < entry) > 0) print line; print ""; done = 1 } { print }
+' CHANGELOG.md > "$work/CHANGELOG.md"
+bash .github/scripts/release-metadata.sh "$version" "v$version" "$work/CHANGELOG.md" "$work/manifest.json" \
+  target/release-please-proposed-notes.md || fail 'The proposed release notes fail the release notes gate'
+echo "Proposed $version notes: $(LC_ALL=C wc -c < target/release-please-proposed-notes.md | tr -d ' ') of 10000 bytes"

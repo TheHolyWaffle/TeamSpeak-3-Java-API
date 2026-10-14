@@ -1,6 +1,6 @@
 TeamSpeak 3 Java API
 ====================
-[![Build Status](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/actions/workflows/maven.yml/badge.svg?branch=modernization%2F2.0)](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/actions/workflows/maven.yml) [![Maven Central](https://img.shields.io/maven-central/v/com.github.theholywaffle/teamspeak3-api.svg)](https://central.sonatype.com/artifact/com.github.theholywaffle/teamspeak3-api) [![Javadocs](https://www.javadoc.io/badge/com.github.theholywaffle/teamspeak3-api.svg)](https://www.javadoc.io/doc/com.github.theholywaffle/teamspeak3-api)
+[![Build Status](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/actions/workflows/maven.yml/badge.svg?branch=master)](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/actions/workflows/maven.yml) [![Maven Central](https://img.shields.io/maven-central/v/com.github.theholywaffle/teamspeak3-api.svg)](https://central.sonatype.com/artifact/com.github.theholywaffle/teamspeak3-api) [![Javadocs](https://www.javadoc.io/badge/com.github.theholywaffle/teamspeak3-api.svg)](https://www.javadoc.io/doc/com.github.theholywaffle/teamspeak3-api)
 
 A Java library for the TeamSpeak 3 ServerQuery interface: server administration, notifications
 and file transfers over raw TCP or SSH.
@@ -327,9 +327,9 @@ server's `query_ip_allowlist.txt` (`query_ip_whitelist.txt` before TS3 3.13).
 ### Migrating from 1.x
 
 2.0 changes the build requirements, the API shape, futures, models, defaults and security behavior.
-Start with the [domain API migration guide](docs/api-migration.md) and the
-[release migration notes](docs/releases.md#modernization-migration-notes); the other guides are listed
-under [documentation](#documentation).
+Follow the [2.0 migration guide](docs/migration-2.0.md): it has an upgrade checklist, the changed
+defaults and links to the detailed guide for each area. Every API difference from 1.3.1 is
+[accounted for](docs/api-differences-2.0.md).
 
 ## Configuration reference
 
@@ -400,6 +400,7 @@ See [development server](docs/development-server.md).
 
 ### Documentation
 
+- [Migrating from 1.x](docs/migration-2.0.md) · [API differences from 1.3.1](docs/api-differences-2.0.md)
 - [Domain API, errors and absent results](docs/api-migration.md) · [Response models](docs/models-and-values.md) · [Implementation cleanup](docs/implementation-cleanup.md)
 - [Futures](docs/futures.md) · [Events and capacity](docs/events-and-capacity.md) · [Connection lifecycle](docs/connection-lifecycle.md) · [Reconnect and retry](docs/reconnect-and-retry.md)
 - [Configuration and transports](docs/configuration-and-transports.md) · [File transfers](docs/file-transfers.md)

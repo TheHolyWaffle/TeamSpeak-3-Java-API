@@ -22,6 +22,8 @@ export JRELEASER_MAVENCENTRAL_CENTRAL_PASSWORD=unused-dry-run
 ./mvnw -B -ntp jreleaser:release -Djreleaser.dry.run=true \
   -Djreleaser.config.file=jreleaser-github.yml
 cmp target/release-notes.md target/jreleaser/release/CHANGELOG.md
+rehearsed=$(./mvnw -q -ntp help:evaluate -Dexpression=project.version -DforceStdout)
+bash .github/scripts/release-consistency.sh "$rehearsed" "v$rehearsed" "$(git rev-parse HEAD)"
 # Verify signatures independently of JReleaser and assert the required artifacts.
 version=$(./mvnw -q -ntp help:evaluate \
   -Dexpression=project.version -DforceStdout)
