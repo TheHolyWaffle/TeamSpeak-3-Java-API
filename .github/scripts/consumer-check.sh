@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Build and run the Maven (module path) and Gradle (classpath) consumers against the staged library
-# and require that both loaded exactly the staged JAR. Gradle comes from PATH or $GRADLE.
+# and require that both loaded exactly the staged JAR. Run ./gradlew publish -Pversion=VERSION first.
+# Usage: consumer-check.sh VERSION
 set -euo pipefail
 version=${1:?staged version required}
-staging=$(cd "${2:-target/staging-deploy}" && pwd)
-gradle=${GRADLE:-gradle}
-jar="$staging/com/github/theholywaffle/teamspeak3-api/$version/teamspeak3-api-$version.jar"
+staging=$PWD/build/staging-deploy
+jar=$staging/com/github/theholywaffle/teamspeak3-api/$version/teamspeak3-api-$version.jar
 test -s "$jar"
-work=target/consumers
-rm -rf "$work/maven" "$work/gradle"
+work=build/consumers
+rm -rf "$work"
 mkdir -p "$work"
 cp -R src/test/consumers/maven src/test/consumers/gradle "$work"/
 
@@ -23,12 +23,12 @@ loaded() {
 }
 
 # A dedicated local repository: no cached or previously installed library can be resolved.
-./mvnw -B -ntp -f "$work/maven/pom.xml" -Dmaven.repo.local="$PWD/$work/m2" \
+mvn -B -ntp -f "$work/maven/pom.xml" -Dmaven.repo.local="$PWD/$work/m2" \
   -Dteamspeak3.version="$version" -Dstaging.repository="file://$staging" \
   compile exec:exec | tee "$work/maven.log"
 loaded "$work/maven.log" com.github.theholywaffle.teamspeak3
 
-"$gradle" --no-daemon -p "$work/gradle" -Pteamspeak3Version="$version" \
-  -PstagingRepository="file://$staging" run | tee "$work/gradle.log"
+./gradlew -q -p "$work/gradle" -Pteamspeak3Version="$version" -PstagingRepository="file://$staging" run \
+  | tee "$work/gradle.log"
 loaded "$work/gradle.log" null
 echo "Maven and Gradle consumers ran against staged teamspeak3-api $version"

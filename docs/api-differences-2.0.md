@@ -1,15 +1,10 @@
 # API differences from 1.3.1
 
-japicmp compares the 2.0 library with the published 1.3.1 JAR on every `verify` (see
-[API compatibility](quality-checks.md#api-compatibility)). Nothing is excluded. This table
-accounts for every type in that report: added, removed, modified, and types whose own
-signature is unchanged but whose superclass or class file changed. Each row names the
-[migration guide](migration-2.0.md) section that tells users what to do.
-
-`.github/scripts/api-accounting.sh` enforces the table in CI: the build fails if the report
-contains a type that no row covers, or if a row covers no type in the report. A new API
-difference therefore needs a row here, and with it a migration note. Type names are relative to
-`com.github.theholywaffle.teamspeak3`; `*` matches any characters.
+Every public and protected type that differs between the published 1.3.1 JAR and 2.0, as
+reported by [japicmp](https://siom79.github.io/japicmp/): added, removed, modified, and types whose
+own signature is unchanged but whose superclass or class file changed. Each row names the
+[migration guide](migration-2.0.md) section that tells users what to do. Type names are relative
+to `com.github.theholywaffle.teamspeak3`; `*` matches any characters.
 
 Every 1.3.1 type also changes from class file version 52 (Java 8) to 69 (Java 25), which
 japicmp reports as binary incompatible. That is the [Java 25](migration-2.0.md#java-25-and-the-build)
@@ -38,9 +33,6 @@ requirement; the first row lists the types for which it is the only difference.
 | `FileTransferConfig`, `FileTransferEndpointResolver` | Added file transfer limits and endpoint mapping | [File transfers](migration-2.0.md#file-transfers) |
 | `TS3WebQuery`, `WebQueryConfig`, `WebQueryConfig$Builder`, `api.ApiKeyScope`, `commands.ApiKeyCommands`, `commands.CommandTrait` | Added the optional Web Query transport, API key administration and command traits; nothing to migrate | [What 2.0 covers](migration-2.0.md#what-20-covers) |
 
-japicmp checks signatures only. Behavior, defaults, runtime and dependency changes are listed in
+Signatures are not the whole story. Behavior, defaults, runtime and dependency changes are listed in
 [behavior the compiler cannot find](migration-2.0.md#behavior-the-compiler-cannot-find) and
 [changed defaults](migration-2.0.md#changed-defaults).
-
-After 2.0.0 is published, the baseline moves to 2.0.0 and this table is retired (see
-[after 2.0.0 is published](releases.md#after-200-is-published)).

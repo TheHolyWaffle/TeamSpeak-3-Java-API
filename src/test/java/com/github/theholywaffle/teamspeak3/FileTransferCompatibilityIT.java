@@ -260,7 +260,7 @@ class FileTransferCompatibilityIT {
                 query.exit();
             }
         } finally {
-            var path = Path.of("target", "compatibility", target + "-reliable-files.txt");
+            var path = Path.of("build", "compatibility", target + "-reliable-files.txt");
             Files.createDirectories(path.getParent());
             Files.write(path, evidence);
         }

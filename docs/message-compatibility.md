@@ -44,7 +44,7 @@ The actor sends messages and the observer subscribes to `TEXT_SERVER`,
 
 Live help for `sendtextmessage`, `servernotifyregister` and
 `servernotifyunregister`, decoded event fields and error rows are saved in
-`target/compatibility/<target>-messages.txt`. The existing Docker CI uploads these
+`build/compatibility/<target>-messages.txt`. The existing Docker CI uploads these
 reports even after failure, alongside version/build/image/transport evidence.
 Help is the syntax source; actual operations establish the supported subset.
 
@@ -102,6 +102,6 @@ focused PRs. No voice-client Testcontainers guarantee is introduced.
 Official sources reviewed alongside live output:
 [TS6 beta13.1 release notes](https://github.com/teamspeak/teamspeak6-server/releases/tag/v6.0.0-beta13.1),
 [JUnit 6.1.3](https://docs.junit.org/6.1.3/overview.html),
-[Maven Failsafe verify usage](https://maven.apache.org/surefire/maven-failsafe-plugin/usage.html).
+[Gradle test tasks](https://docs.gradle.org/current/userguide/java_testing.html).
 Release notes do not substitute for the live message assertions. Rerun this
 inventory and review the current release documentation when image pins change.

@@ -4,10 +4,11 @@ Version 2.0 publishes one library artifact to Maven Central:
 
 | File | Contents |
 | --- | --- |
-| `teamspeak3-api-<version>.jar` | The library classes, `META-INF/maven` descriptors and `Automatic-Module-Name: com.github.theholywaffle.teamspeak3` |
+| `teamspeak3-api-<version>.jar` | The library classes and a manifest with `Automatic-Module-Name: com.github.theholywaffle.teamspeak3` and `Implementation-Version` |
 | `teamspeak3-api-<version>-sources.jar` | Exactly the sources under `src/main/java` |
 | `teamspeak3-api-<version>-javadoc.jar` | Javadoc for every library package |
-| `teamspeak3-api-<version>.pom` | The reviewed `pom.xml`, unchanged |
+| `teamspeak3-api-<version>.pom` | The POM generated from `build.gradle.kts`, with the project metadata Central requires |
+| `teamspeak3-api-<version>.module` | [Gradle Module Metadata](https://docs.gradle.org/current/userguide/publishing_gradle_module_metadata.html), the same dependencies for Gradle consumers |
 
 The POM declares SSHJ, the SLF4J API and Gson (with its annotations-only
 `error_prone_annotations` dependency) as compile dependencies and the patched Bouncy
@@ -61,49 +62,12 @@ The Maven consumer check below runs on the module path and verifies this.
 
 ## Reproducible artifacts
 
-`project.build.outputTimestamp` (`1980-01-01T00:00:02Z`) fixes every archive entry time,
-and Javadoc is generated with `notimestamp`. During `validate`, the Maven Artifact Plugin's
-`check-buildplan` goal fails the build if a plugin with a known reproducibility issue is in
-the build plan. [`reproducibility-check.sh`](../.github/scripts/reproducibility-check.sh)
-follows the [Maven reproducible builds guide](https://maven.apache.org/guides/mini/guide-reproducible-builds.html):
-it installs a clean build into a temporary local repository, then runs
-`clean verify artifact:compare` and requires the POM, library, sources and Javadoc JARs to
-be byte-identical. As a negative control, a rebuild with another `outputTimestamp` must be
-reported as different. The `.buildinfo` and `.buildcompare` fingerprints are kept under
-`target/reproducibility`. These are the unsigned artifacts; JReleaser adds signatures,
-which are not reproducible, only at publication. Consumers can combine such a rebuild with the release's
+Gradle writes archives without file timestamps, in a fixed entry order and with normalized
+permissions, and Javadoc is generated with `-notimestamp`. The **gradle jreleaserDeploy -PdryRun** CI job
+rebuilds the staged artifacts from a clean `build` directory, without the build cache, and requires
+every file to be byte-identical. These are the unsigned artifacts; JReleaser adds signatures, which
+are not reproducible, only at publication. Consumers can combine such a rebuild with the release's
 provenance attestation; see [verify a published release](releases.md#verify-a-published-release).
-
-## Staged publication checks
-
-[`verify-staged-artifacts.sh`](../.github/scripts/verify-staged-artifacts.sh) inspects
-the local `-Pcentral-staging deploy` repository that JReleaser signs and bundles:
-
-- the staging directory for the given version holds exactly the POM and the library, sources and Javadoc JARs,
-  so no shaded or other classifier is published, and the staged POM equals `pom.xml`;
-- the library JAR holds only project classes and its Maven descriptors, with no third-party
-  classes, service registrations or signature files, keeps the automatic module name,
-  embeds the given version and contains only Java 25 bytecode without preview features;
-- the sources JAR matches `src/main/java`, and the Javadoc JAR documents every package
-  without generation dates;
-- every entry of every JAR carries the configured `outputTimestamp`;
-- when given JReleaser's Central bundle, it holds exactly those four files with their
-  signatures and MD5/SHA-1/SHA-256/SHA-512 checksums, byte-identical to the staged files.
-
-The given version is the one `release-metadata.sh` has already approved: it requires the
-POM version, `.release-please-manifest.json`, the newest changelog entry and the tag to agree.
-
-[`test-verify-staged-artifacts.sh`](../.github/scripts/test-verify-staged-artifacts.sh)
-runs the verifier, then copies the valid staged repository and bundle and introduces one
-defect per copy. It requires each copy to be rejected for the intended reason: a shaded classifier,
-a missing Javadoc JAR, a changed POM, an unnormalized timestamp, a bundled logging
-configuration, preview bytecode, incomplete sources, and a bundle with a missing
-signature or a different library JAR.
-
-JReleaser's Central rules separately validate the POM metadata (name, description, URL,
-license, developers and SCM) and require sources and Javadoc. The release rehearsal checks
-every signature and that a bundle missing its sources is rejected. See
-[CI and releases](releases.md#local-validation-and-ci-rehearsal).
 
 ## Consumer checks
 
@@ -111,7 +75,7 @@ every signature and that a bundle missing its sources is rejected. See
 `src/test/consumers` against the staged repository and runs them:
 
 - **Maven**, as a named module on the module path, using SimpleLogger. Maven resolves
-  from a dedicated local repository under `target/consumers`, so no cached or installed
+  from a dedicated local repository under `build/consumers`, so no cached or installed
   library can stand in for the staged one.
 - **Gradle**, on the classpath, using `slf4j-jdk14`. An exclusive repository rule only
   allows the library from the staging repository.
@@ -126,24 +90,12 @@ Castle provider. It checks that exactly the application's chosen SLF4J provider 
 present and that the library's communication log reached it. The script then requires
 that each consumer loaded a library JAR identical to the staged one.
 
-Run the checks locally in a disposable copy of the repository with JDK 25, GnuPG and the
-Gradle version in `src/test/consumers/gradle/gradle/wrapper/gradle-wrapper.properties` (on
-`PATH`, or set `GRADLE`):
+Run the checks locally with JDK 25 and Maven on `PATH`, after staging a version:
 
 ```sh
-bash .github/scripts/synthetic-release.sh 0.0.0
-bash .github/scripts/release-rehearsal.sh
-bash .github/scripts/test-verify-staged-artifacts.sh 0.0.0 target/staging-deploy \
-  target/jreleaser/deploy/mavenCentral/central/com.github.theholywaffle-teamspeak3-api-0.0.0-bundle.zip
+./gradlew publish -Pversion=0.0.0
 bash .github/scripts/consumer-check.sh 0.0.0
-bash .github/scripts/reproducibility-check.sh
 ```
 
-[`synthetic-release.sh`](../.github/scripts/synthetic-release.sh) applies what a
-release-please PR changes: POM version, manifest and a newest changelog entry. It then
-extracts the release notes through the same gate as a real release. The JReleaser
-release dry-run in the rehearsal needs a Git checkout.
-
-The **Validate publication bundle (no upload)** CI job runs all but the last step;
-**Reproducible unsigned artifacts** runs the last. The explicit release workflow runs
-`verify-staged-artifacts.sh` with the approved version before JReleaser signs or deploys.
+The **gradle jreleaserDeploy -PdryRun** CI job runs the same steps after signing the staged artifacts with a
+disposable key and validating the Central bundle (`./gradlew publish jreleaserDeploy -PdryRun`).

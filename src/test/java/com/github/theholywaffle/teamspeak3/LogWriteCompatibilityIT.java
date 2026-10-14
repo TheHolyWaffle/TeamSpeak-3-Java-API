@@ -82,7 +82,7 @@ class LogWriteCompatibilityIT {
                 query.exit();
             }
         } finally {
-            var path = Path.of("target", "compatibility", target + "-log-writes.txt");
+            var path = Path.of("build", "compatibility", target + "-log-writes.txt");
             Files.createDirectories(path.getParent());
             Files.write(path, evidence);
         }

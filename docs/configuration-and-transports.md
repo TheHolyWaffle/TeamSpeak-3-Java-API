@@ -66,7 +66,7 @@ Container readiness bootstraps a key only from the freshly created disposable
 fixture, then supplies an in-memory pin to the library. Dedicated TOFU tests
 use JUnit temporary files. The development launcher pins the same key for its own
 smoke test and, for examples run from another terminal, writes that single key to a
-session-scoped `target/dev-server/<container-id>/known_hosts` file, removed when the
+session-scoped `build/dev-server/<container-id>/known_hosts` file, removed when the
 launcher stops. No flow changes `user.home` or writes trust under the developer's
 home directory. SSH shutdown joins its transport reader separately from the
 query-owned initialization caller.
@@ -114,5 +114,5 @@ reader or session semantics described here.
 
 Implementation references: [SSHJ 0.41.1 known-host verification](https://github.com/hierynomus/sshj/blob/v0.41.1/src/main/java/net/schmizz/sshj/transport/verification/OpenSSHKnownHosts.java),
 [SSHJ host verifier contract](https://github.com/hierynomus/sshj/blob/v0.41.1/src/main/java/net/schmizz/sshj/transport/verification/HostKeyVerifier.java),
-[Maven release targeting](https://maven.apache.org/plugins/maven-compiler-plugin/examples/set-compiler-release.html),
-[Failsafe verify lifecycle](https://maven.apache.org/surefire/maven-failsafe-plugin/usage.html).
+[Gradle release targeting](https://docs.gradle.org/current/userguide/building_java_projects.html#sec:compiling_with_release),
+[Gradle test tasks](https://docs.gradle.org/current/userguide/java_testing.html).

@@ -1,6 +1,6 @@
 TeamSpeak 3 Java API
 ====================
-[![Build Status](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/actions/workflows/maven.yml/badge.svg?branch=master)](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/actions/workflows/maven.yml) [![Maven Central](https://img.shields.io/maven-central/v/com.github.theholywaffle/teamspeak3-api.svg)](https://central.sonatype.com/artifact/com.github.theholywaffle/teamspeak3-api) [![Javadocs](https://www.javadoc.io/badge/com.github.theholywaffle/teamspeak3-api.svg)](https://www.javadoc.io/doc/com.github.theholywaffle/teamspeak3-api)
+[![Build Status](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/actions/workflows/ci.yml) [![Maven Central](https://img.shields.io/maven-central/v/com.github.theholywaffle/teamspeak3-api.svg)](https://central.sonatype.com/artifact/com.github.theholywaffle/teamspeak3-api) [![Javadocs](https://www.javadoc.io/badge/com.github.theholywaffle/teamspeak3-api.svg)](https://www.javadoc.io/doc/com.github.theholywaffle/teamspeak3-api)
 
 A Java library for the TeamSpeak 3 ServerQuery interface: server administration, notifications
 and file transfers over raw TCP or SSH, and optionally administration over HTTP(S) Web Query.
@@ -141,7 +141,7 @@ accepts it on your behalf.
 1. In a first terminal, start the [development server](docs/development-server.md):
 
    ```sh
-   ./mvnw -ntp -Pdev-server test-compile exec:exec
+   ./gradlew devServer
    ```
 
    When it is ready, it prints `export` lines with the host, the mapped ports, a disposable
@@ -152,19 +152,19 @@ accepts it on your behalf.
 
    ```sh
    export TS3_HOST='127.0.0.1' TS3_USERNAME='serveradmin' TS3_PASSWORD='…' …   # copied from terminal 1
-   ./mvnw -q -ntp -Pexample test-compile exec:exec -Dexample=ClientInfoExample
+   ./gradlew -q runExample -Pexample=ClientInfoExample
    ```
 
-   Choose any example with `-Dexample=<name>`. To use SSH instead of raw TCP, also paste the
+   Choose any example with `-Pexample=<name>`. To use SSH instead of raw TCP, also paste the
    second `export` line. `WebQueryExample` needs only the third `export` line. On Windows PowerShell, set each variable as `$env:TS3_HOST = '127.0.0.1'`
-   and use `mvnw.cmd`.
+   and use `gradlew.bat`.
 
 3. Press Enter in the first terminal to stop the server. All data, ports, keys and trust files are
    discarded; the next start is a clean server.
 
 ### Against your own server
 
-Set the variables yourself and run the same Maven command:
+Set the variables yourself and run the same Gradle command:
 
 | Variable | Required | Meaning |
 | --- | :---: | --- |
@@ -395,24 +395,24 @@ inconsistent retry configuration) before any connection is opened.
 
 Install a JDK 25 distribution (for example [Eclipse Temurin](https://adoptium.net/temurin/releases/?version=25))
 and set `JAVA_HOME` to it. On macOS: `export JAVA_HOME=$(/usr/libexec/java_home -v 25)`. On Windows, use
-`mvnw.cmd` instead of `./mvnw`. From a fresh checkout:
+`gradlew.bat` instead of `./gradlew`. From a fresh checkout:
 
 ```sh
-./mvnw -v                 # must report Java 25 or newer
-./mvnw -B -ntp verify
+./gradlew build
 ```
 
-The Maven Wrapper downloads and verifies the pinned Maven version, so no Maven installation is needed;
-the first build needs internet access. Maven Enforcer rejects JDKs older than 25 and Maven older than 3.10.
-`verify` compiles the library and the examples, runs the unit tests, and applies the formatting,
-static analysis, Javadoc, coverage and API compatibility checks described in
+The Gradle Wrapper downloads and verifies the pinned Gradle version, so no Gradle installation is
+needed; the first build needs internet access. Gradle runs on JDK 25 and downloads one if none is
+installed.
+`build` compiles the library and the examples, runs the unit tests, and applies the formatting,
+static analysis, Javadoc and coverage checks described in
 [quality checks](docs/quality-checks.md). It needs no Docker and publishes nothing. Run
-`./mvnw spotless:apply` to fix formatting. CI verifies Java 25 and Java 27.
+`./gradlew spotlessApply` to fix formatting.
 
 ### Integration tests
 
 ```sh
-./mvnw -B -ntp -Pintegration verify
+./gradlew build integrationTest
 ```
 
 Starts disposable TS3 servers in Docker and runs the RAW, SSH and Web Query compatibility suites, every
@@ -421,8 +421,8 @@ tests. See [integration tests](docs/integration-tests.md) for images, licenses a
 
 ### Local development server
 
-`./mvnw -ntp -Pdev-server test-compile exec:exec` starts a disposable server for manual testing, as
-shown in [run an example](#run-an-example). Add `-Ddev.once=true` to exit after its own smoke test.
+`./gradlew devServer` starts a disposable server for manual testing, as
+shown in [run an example](#run-an-example). Add `-PdevOnce=true` to exit after its own smoke test.
 See [development server](docs/development-server.md).
 
 ### Documentation

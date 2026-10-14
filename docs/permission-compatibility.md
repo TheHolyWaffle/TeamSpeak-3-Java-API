@@ -26,7 +26,7 @@ TS6 **6.0.0-beta13.1 SSH** using the pinned fixtures in
 
 The test captures live help for all 21 exercised commands, the complete decoded
 permission metadata, selected assignment rows and errors in
-`target/compatibility/<target>-permissions.txt`. CI uploads that evidence with
+`build/compatibility/<target>-permissions.txt`. CI uploads that evidence with
 version/build/image/transport reports. Help alone is not an operation guarantee.
 
 The ordinary `permfind` response contains `t`, `id1`, `id2` and `p`, but omits
@@ -129,7 +129,7 @@ The current official [TS6 beta13.1 release notes](https://github.com/teamspeak/t
 and [server configuration](https://github.com/teamspeak/teamspeak6-server/blob/main/CONFIG.md)
 were reviewed alongside actual query help/output. They do not define universal
 numeric permission IDs. Test execution follows official
-[Maven Failsafe verify usage](https://maven.apache.org/surefire/maven-failsafe-plugin/usage.html);
+[Gradle test tasks](https://docs.gradle.org/current/userguide/java_testing.html);
 the existing [JUnit](https://docs.junit.org/6.1.3/overview.html) and
 [Testcontainers wait](https://java.testcontainers.org/features/startup_and_waits/)
 contracts remain unchanged. Recheck help, release notes and the inventory when pins

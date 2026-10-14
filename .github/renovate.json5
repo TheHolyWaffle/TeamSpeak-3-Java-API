@@ -8,9 +8,33 @@
   minimumReleaseAge: '7 days',
   packageRules: [
     {
-      // Major updates of test-scoped dependencies and build plugins merge too; others need review.
-      matchManagers: ['maven'],
-      matchDepTypes: ['test', 'build'],
+      // Only the published library's runtime dependencies ship in a release (fix(deps):); build tools,
+      // test dependencies, wrappers and the consumer projects are chores.
+      matchManagers: ['gradle', 'gradle-wrapper', 'maven'],
+      semanticCommitType: 'chore',
+    },
+    {
+      matchManagers: ['gradle'],
+      matchPackageNames: ['com.hierynomus:sshj', 'org.slf4j:slf4j-api', 'com.google.code.gson:gson', 'org.bouncycastle:**'],
+      semanticCommitType: 'fix',
+    },
+    {
+      // Major updates of test dependencies and build tools merge too; others need review.
+      matchManagers: ['gradle', 'maven'],
+      matchPackageNames: [
+        'org.junit:**',
+        'org.testcontainers:**',
+        'org.slf4j:slf4j-simple',
+        'org.slf4j:slf4j-jdk14',
+        'com.google.errorprone:**',
+        'com.palantir.javaformat:**',
+        'org.jacoco:**',
+        'org.jreleaser:**',
+        'net.ltgt.errorprone{,.gradle.plugin}',
+        'com.diffplug.spotless{,.gradle.plugin}',
+        'org.apache.maven.plugins:**',
+        'org.codehaus.mojo:**',
+      ],
       automerge: true,
     },
   ],

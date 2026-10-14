@@ -49,7 +49,7 @@ The three target cases verify:
 
 Live help for `clientlist`, `clientinfo`, `clientfind`, `clientupdate`, `clientedit`
 and `clientmove`, decoded maps, raw normalized description, events and errors are
-saved in `target/compatibility/<target>-clients.txt`. Required Docker CI uploads
+saved in `build/compatibility/<target>-clients.txt`. Required Docker CI uploads
 these reports even after failures. The existing client-list API requests its
 normal property flags; this does not establish all raw option combinations.
 
@@ -97,6 +97,6 @@ remain #442 scope.
 
 Official [TS6 beta13.1 release notes](https://github.com/teamspeak/teamspeak6-server/releases/tag/v6.0.0-beta13.1),
 [JUnit 6.1.3](https://docs.junit.org/6.1.3/overview.html) and
-[Failsafe verify usage](https://maven.apache.org/surefire/maven-failsafe-plugin/usage.html)
+[Gradle test tasks](https://docs.gradle.org/current/userguide/java_testing.html)
 were reviewed. The release notes describe server-stop fixes, not client-operation
 coverage; the acceptance above comes from actual help/output and executed tests.

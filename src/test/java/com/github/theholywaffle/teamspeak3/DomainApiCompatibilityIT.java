@@ -204,7 +204,7 @@ class DomainApiCompatibilityIT {
 
     private static void write(ServerQueryCompatibilityIT.Target target, String name, List<String> evidence)
             throws Exception {
-        var report = Path.of("target", "compatibility", target + "-domain-" + name + ".txt");
+        var report = Path.of("build", "compatibility", target + "-domain-" + name + ".txt");
         Files.createDirectories(report.getParent());
         Files.writeString(report, String.join("\n", evidence) + "\n");
     }

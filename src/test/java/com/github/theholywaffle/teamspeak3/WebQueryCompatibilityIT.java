@@ -109,7 +109,7 @@ class WebQueryCompatibilityIT {
     }
 
     static void record(String name, List<String> evidence) throws Exception {
-        Path path = Path.of("target", "compatibility", name + ".txt");
+        Path path = Path.of("build", "compatibility", name + ".txt");
         Files.createDirectories(path.getParent());
         Files.write(path, evidence);
     }

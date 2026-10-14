@@ -270,7 +270,7 @@ class ServerQueryCompatibilityIT {
                 assertEquals(0, observer.getEventStatistics().malformedNotifications());
                 assertEquals(0, observer.getEventStatistics().listenerFailures());
                 assertEquals(0, observer.getEventStatistics().droppedEvents());
-                Path evidence = Path.of("target", "compatibility", target + "-notifications.txt");
+                Path evidence = Path.of("build", "compatibility", target + "-notifications.txt");
                 Files.createDirectories(evidence.getParent());
                 Files.write(evidence, rows);
             }
@@ -421,7 +421,7 @@ class ServerQueryCompatibilityIT {
             assertEquals(0, observer.getEventStatistics().listenerFailures());
             assertEquals(0, observer.getEventStatistics().droppedEvents());
         } finally {
-            Path path = Path.of("target", "compatibility", target + "-channels.txt");
+            Path path = Path.of("build", "compatibility", target + "-channels.txt");
             Files.createDirectories(path.getParent());
             Files.write(path, evidence);
         }
@@ -603,7 +603,7 @@ class ServerQueryCompatibilityIT {
             assertEquals(0, observer.getEventStatistics().listenerFailures());
             assertEquals(0, observer.getEventStatistics().droppedEvents());
         } finally {
-            Path path = Path.of("target", "compatibility", target + "-channel-configuration.txt");
+            Path path = Path.of("build", "compatibility", target + "-channel-configuration.txt");
             Files.createDirectories(path.getParent());
             Files.write(path, evidence);
         }
@@ -698,7 +698,7 @@ class ServerQueryCompatibilityIT {
             assertFalse(api.instance().version().version().isBlank());
             query.exit();
         } finally {
-            Path path = Path.of("target", "compatibility", target + "-ban-rules.txt");
+            Path path = Path.of("build", "compatibility", target + "-ban-rules.txt");
             Files.createDirectories(path.getParent());
             Files.write(path, evidence);
         }
@@ -846,7 +846,7 @@ class ServerQueryCompatibilityIT {
             assertEquals(0, observer.getEventStatistics().listenerFailures());
             assertEquals(0, observer.getEventStatistics().droppedEvents());
         } finally {
-            Path path = Path.of("target", "compatibility", target + "-privilege-keys.txt");
+            Path path = Path.of("build", "compatibility", target + "-privilege-keys.txt");
             Files.createDirectories(path.getParent());
             Files.write(path, evidence);
         }
@@ -1037,7 +1037,7 @@ class ServerQueryCompatibilityIT {
             }
             query.exit();
         } finally {
-            Path path = Path.of("target", "compatibility", target + "-files.txt");
+            Path path = Path.of("build", "compatibility", target + "-files.txt");
             Files.createDirectories(path.getParent());
             Files.write(path, evidence);
         }
@@ -1201,7 +1201,7 @@ class ServerQueryCompatibilityIT {
             assertEquals(0, observer.getEventStatistics().listenerFailures());
             assertEquals(0, observer.getEventStatistics().droppedEvents());
         } finally {
-            Path path = Path.of("target", "compatibility", target + "-clients.txt");
+            Path path = Path.of("build", "compatibility", target + "-clients.txt");
             Files.createDirectories(path.getParent());
             Files.write(path, evidence);
         }
@@ -1380,7 +1380,7 @@ class ServerQueryCompatibilityIT {
             assertEquals(0, observer.getEventStatistics().listenerFailures());
             assertEquals(0, observer.getEventStatistics().droppedEvents());
         } finally {
-            Path path = Path.of("target", "compatibility", target + "-servers.txt");
+            Path path = Path.of("build", "compatibility", target + "-servers.txt");
             Files.createDirectories(path.getParent());
             Files.write(path, evidence);
         }
@@ -1559,7 +1559,7 @@ class ServerQueryCompatibilityIT {
             assertEquals(0, observer.getEventStatistics().listenerFailures());
             assertEquals(0, observer.getEventStatistics().droppedEvents());
         } finally {
-            Path path = Path.of("target", "compatibility", target + "-messages.txt");
+            Path path = Path.of("build", "compatibility", target + "-messages.txt");
             Files.createDirectories(path.getParent());
             Files.write(path, evidence);
         }
@@ -1698,7 +1698,7 @@ class ServerQueryCompatibilityIT {
                 query.exit();
             }
         } finally {
-            Path path = Path.of("target", "compatibility", target + "-server-lifecycle.txt");
+            Path path = Path.of("build", "compatibility", target + "-server-lifecycle.txt");
             Files.createDirectories(path.getParent());
             Files.write(path, evidence);
         }
@@ -1769,7 +1769,7 @@ class ServerQueryCompatibilityIT {
             assertFalse(api.instance().version().version().isBlank());
             query.exit();
         } finally {
-            Path path = Path.of("target", "compatibility", target + "-logs.txt");
+            Path path = Path.of("build", "compatibility", target + "-logs.txt");
             Files.createDirectories(path.getParent());
             Files.write(path, evidence);
         }
@@ -1864,7 +1864,7 @@ class ServerQueryCompatibilityIT {
                 administrator.exit();
             }
         } finally {
-            Path path = Path.of("target", "compatibility", target + "-query-logins.txt");
+            Path path = Path.of("build", "compatibility", target + "-query-logins.txt");
             Files.createDirectories(path.getParent());
             Files.write(path, evidence);
         }
@@ -2051,7 +2051,7 @@ class ServerQueryCompatibilityIT {
             assertFalse(api.instance().version().version().isBlank());
             query.exit();
         } finally {
-            Path path = Path.of("target", "compatibility", target + "-group-copy.txt");
+            Path path = Path.of("build", "compatibility", target + "-group-copy.txt");
             Files.createDirectories(path.getParent());
             Files.write(path, evidence);
         }
@@ -2301,7 +2301,7 @@ class ServerQueryCompatibilityIT {
                     .noneMatch(g -> g.getName().equals("renamed channel " + target)));
             query.exit();
         } finally {
-            Path path = Path.of("target", "compatibility", target + "-permissions.txt");
+            Path path = Path.of("build", "compatibility", target + "-permissions.txt");
             Files.createDirectories(path.getParent());
             Files.write(path, evidence);
         }

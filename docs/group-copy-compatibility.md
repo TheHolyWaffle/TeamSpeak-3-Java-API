@@ -30,7 +30,7 @@ creation on the connected server. The test verifies:
 
 Live `servergroupcopy` and `channelgroupcopy` help, group/assignment maps,
 overwrite return values and errors are captured to
-`target/compatibility/<target>-group-copy.txt`. Required Docker CI uploads these
+`build/compatibility/<target>-group-copy.txt`. Required Docker CI uploads these
 with version/build/image/transport evidence and reports, including on failure.
 Existing independent-session event probes run unchanged; this slice claims no
 new group notification.
@@ -77,6 +77,6 @@ and NAT endpoints belong to #442.
 
 Official [TS6 beta13.1 release notes](https://github.com/teamspeak/teamspeak6-server/releases/tag/v6.0.0-beta13.1),
 [JUnit 6.1.3](https://docs.junit.org/6.1.3/overview.html) and
-[Failsafe verify](https://maven.apache.org/surefire/maven-failsafe-plugin/usage.html)
+[Gradle test tasks](https://docs.gradle.org/current/userguide/java_testing.html)
 were reviewed. Release notes discuss server-stop fixes; copy acceptance comes
 from executed help/output and operations.

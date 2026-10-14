@@ -107,8 +107,8 @@ class DocumentationTest {
     /** A new major version changes the support policy, so it fails until SECURITY.md is reviewed. */
     @Test
     void securityPolicyCoversTheDevelopedMajorVersion() throws IOException {
-        Matcher version = Pattern.compile("<artifactId>teamspeak3-api</artifactId>\\s*<version>(\\d+)\\.")
-                .matcher(Files.readString(Path.of("pom.xml")));
+        Matcher version = Pattern.compile("^version=(\\d+)\\.", Pattern.MULTILINE)
+                .matcher(Files.readString(Path.of("gradle.properties")));
         assertTrue(version.find());
         int newestDocumented = Pattern.compile("^\\| (\\d+)\\.x ", Pattern.MULTILINE)
                 .matcher(Files.readString(Path.of("SECURITY.md")))

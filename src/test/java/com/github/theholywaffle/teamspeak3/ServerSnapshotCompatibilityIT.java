@@ -105,7 +105,7 @@ class ServerSnapshotCompatibilityIT {
                 query.exit();
             }
         } finally {
-            var path = Path.of("target", "compatibility", target + "-snapshots.txt");
+            var path = Path.of("build", "compatibility", target + "-snapshots.txt");
             Files.createDirectories(path.getParent());
             Files.write(path, evidence);
         }

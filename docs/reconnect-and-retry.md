@@ -119,4 +119,4 @@ transport architecture remain owned by their later task issues.
 
 Implementation references: [Java 25 bounded random generation](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/ThreadLocalRandom.html),
 [Java 25 interruption and sleep](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Thread.html),
-and [Maven Failsafe integration-test inclusion](https://maven.apache.org/surefire/maven-failsafe-plugin/examples/inclusion-exclusion.html).
+and [Gradle test tasks](https://docs.gradle.org/current/userguide/java_testing.html).

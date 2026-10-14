@@ -37,7 +37,7 @@ server and channel groups plus a permanent channel, then verifies:
 
 Live help for `privilegekeyadd`, `privilegekeylist`, `privilegekeydelete` and
 `privilegekeyuse`, decoded key maps, error metadata and a private-message event
-fence are recorded in `target/compatibility/<target>-privilege-keys.txt`. Required
+fence are recorded in `build/compatibility/<target>-privilege-keys.txt`. Required
 Docker CI uploads these reports even after failures alongside version/build/image/
 transport evidence and test reports. Generated tokens belong to disposable
 fixtures and are deleted by the test. No production key is used.
@@ -107,6 +107,6 @@ behavior are unclaimed (Web Query evidence: [Web Query](web-query.md)); file-tra
 
 Official [TS6 beta13.1 release notes](https://github.com/teamspeak/teamspeak6-server/releases/tag/v6.0.0-beta13.1),
 [JUnit 6.1.3](https://docs.junit.org/6.1.3/overview.html) and
-[Failsafe verify usage](https://maven.apache.org/surefire/maven-failsafe-plugin/usage.html)
+[Gradle test tasks](https://docs.gradle.org/current/userguide/java_testing.html)
 were reviewed. The release notes concern server-stop fixes; the privilege-key
 acceptance here comes from actual help/output and executed probes.

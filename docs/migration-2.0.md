@@ -2,8 +2,8 @@
 
 2.0.0 is a major release with intentional source, binary and behavior breaks. Nothing is kept
 for compatibility: recompile, then work through the checklist below. Each section links the
-detailed guide for its area. Every API difference that japicmp reports against 1.3.1 is
-mapped to a section of this guide in the [API difference accounting](api-differences-2.0.md).
+detailed guide for its area. Every API difference from 1.3.1 is mapped to a section of this
+guide in [API differences from 1.3.1](api-differences-2.0.md).
 
 ## What 2.0 covers
 
@@ -42,7 +42,7 @@ it adds API, but no behavior or default changes for RAW or SSH.
 ## Java 25 and the build
 
 - Java 8–24 runtimes are not supported; classes are Java 25 bytecode (class file version 69).
-  Build from source with the Maven Wrapper (`./mvnw`), which needs JDK 25 and pins Maven.
+  Build from source with the Gradle Wrapper (`./gradlew`), which needs JDK 25.
 - The `with-dependencies` JAR and the `full` Maven profile are gone. Depend on the regular JAR
   with Maven or Gradle: [migration from the standalone JAR](packaging.md#migration-from-the-standalone-jar).
 - Runtime dependencies are SSHJ 0.41, Bouncy Castle 1.86 and the SLF4J 2.0 API. On the module

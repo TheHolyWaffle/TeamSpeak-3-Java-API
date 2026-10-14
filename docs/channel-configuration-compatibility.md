@@ -39,7 +39,7 @@ channel notifications before the actor changes configuration.
 
 The test captures live `channelcreate`, `channeledit` and `channelinfo` help,
 description event metadata, password event field names, configuration field names
-and actual errors in `target/compatibility/<target>-channel-configuration.txt`.
+and actual errors in `build/compatibility/<target>-channel-configuration.txt`.
 Five-second command/event bounds and a 60-second per-target timeout fail on missing
 responses/notifications; no sleeps or retries hide missing delivery. Listener
 failure, malformed notification and dropped-event counts must remain zero.
@@ -78,7 +78,7 @@ Query remain unclaimed; other #441 gaps stay in the overall inventory.
 
 Reviewed official [TS6 beta13.1 release notes](https://github.com/teamspeak/teamspeak6-server/releases/tag/v6.0.0-beta13.1),
 [JUnit 6.1.3 execution guidance](https://docs.junit.org/6.1.3/writing-tests/parallel-execution.html)
-and [Failsafe verify](https://maven.apache.org/surefire/maven-failsafe-plugin/usage.html).
+and [Gradle test tasks](https://docs.gradle.org/current/userguide/java_testing.html).
 The pinned release notes concern server-stop fixes; live help and executed
 assertions establish this channel subset. Tests keep the existing sequential
 fixture execution rather than enabling concurrent mutation of shared channels.
