@@ -1,0 +1,42 @@
+.github/workflows/ci.yml
+  h_b0b95817cb397c 23-24,36-44,50,82,103,115
+.github/workflows/release.yml
+  h_b0b95817cb397c 46-47,57,60,74-76,83
+CONTRIBUTING.md
+  h_b0b95817cb397c 14,55-57,76,88
+README.md
+  h_b0b95817cb397c 405-406,408
+build.gradle.kts
+  h_b0b95817cb397c 96-97,124,208,213,222-223,310-311,315
+docs/api-differences-2.0.md
+  h_b0b95817cb397c 3-7,36
+docs/maintenance.md
+  h_b0b95817cb397c 21-22,31-33,50
+docs/migration-2.0.md
+  h_b0b95817cb397c 5-6
+docs/packaging.md
+  h_b0b95817cb397c 101
+docs/quality-checks.md
+  h_b0b95817cb397c 1,30,112,114-115,117-119,121
+docs/releases.md
+  h_b0b95817cb397c 29-32,148-150
+gradle/gradle-daemon-jvm.properties
+  h_b0b95817cb397c 1-12
+gradle/libs.versions.toml
+  h_b0b95817cb397c 7,14,19
+release-please-config.json
+  h_b0b95817cb397c 8,13
+settings.gradle.kts
+  h_b0b95817cb397c 1-3,6-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "18734648016a190914af9ac80b69ae56c53c2413",
+  "prompts": {},
+  "humans": {
+    "h_b0b95817cb397c": {
+      "author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
