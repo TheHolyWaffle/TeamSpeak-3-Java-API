@@ -60,6 +60,22 @@ updates:
           - googleapis/release-please-action
         update-types: [minor, patch]
 
+  # Workflow lint and inspection tools for scripts/check-release-workflow.sh.
+  - package-ecosystem: gomod
+    directories:
+      - /.github/tools/actionlint
+      - /.github/tools/yq
+    schedule:
+      interval: weekly # Mondays
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: ci
+    groups:
+      workflow-tools:
+        patterns:
+          - '*'
+
   - package-ecosystem: docker
     directory: /src/test/resources/teamspeak3
     schedule:
