@@ -1,0 +1,20 @@
+src/test/java/com/github/theholywaffle/teamspeak3/ConnectionLifecycleTest.java
+  h_b0b95817cb397c 46-73
+src/main/java/com/github/theholywaffle/teamspeak3/CommandQueue.java
+  h_b0b95817cb397c 37,40,43,123-127,130,132-139,141-143,355-356,358-360,362-363
+src/main/java/com/github/theholywaffle/teamspeak3/DatabaseClientApiAsync.java
+  h_b0b95817cb397c 39-42
+src/test/java/com/github/theholywaffle/teamspeak3/DomainApiTest.java
+  h_b0b95817cb397c 106-121
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "080d0c56f30977f3d8499fdc3295527571197d59",
+  "prompts": {},
+  "humans": {
+    "h_b0b95817cb397c": {
+      "author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
