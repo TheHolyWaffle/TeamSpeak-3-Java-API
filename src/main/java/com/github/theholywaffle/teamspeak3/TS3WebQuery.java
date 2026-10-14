@@ -37,9 +37,9 @@ import javax.net.ssl.SSLHandshakeException;
  * Web Query has no session: every command is an independent, API-key-authenticated HTTP request
  * addressed to the instance, a virtual server ID or a virtual server port. Asynchronous commands run
  * concurrently and may complete in any order. There is no connect step, keep-alive, reconnect or
- * notification stream. Operations the server does not offer over Web Query, such as server selection,
- * login, events and file commands, fail locally with
- * {@link TS3UnsupportedOperationException} without sending a request.
+ * notification stream, so the APIs are the shared {@link TS3BaseApi} and {@link TS3BaseApiAsync}, without
+ * login or server selection. Event registration, file operations and other commands the server does not
+ * offer over Web Query fail locally with {@link TS3UnsupportedOperationException} without sending a request.
  * </p><p>
  * Instances are thread safe. Requests complete on virtual threads owned by this client; an open
  * client does not keep the JVM alive. Close it to abort requests and release its workers.
@@ -55,8 +55,8 @@ public final class TS3WebQuery implements AutoCloseable {
     private final Map<Long, CompletableFuture<?>> inFlight = new HashMap<>();
     private long nextRequest;
     private final Object lock = new Object();
-    private final TS3ApiAsync instanceAsyncApi;
-    private final TS3Api instanceApi;
+    private final TS3BaseApiAsync instanceAsyncApi;
+    private final TS3BaseApi instanceApi;
     private volatile boolean closed;
 
     /** @param config immutable endpoint, API key and limits */
@@ -73,16 +73,16 @@ public final class TS3WebQuery implements AutoCloseable {
         config.getSslContext().ifPresent(builder::sslContext);
         http = builder.build();
         instanceAsyncApi = api("");
-        instanceApi = new TS3Api(instanceAsyncApi);
+        instanceApi = new TS3BaseApi(instanceAsyncApi);
     }
 
     /** @return the synchronous API for instance commands such as {@code version} and {@code serverlist} */
-    public TS3Api getApi() {
+    public TS3BaseApi getApi() {
         return instanceApi;
     }
 
     /** @return the asynchronous API for instance commands */
-    public TS3ApiAsync getAsyncApi() {
+    public TS3BaseApiAsync getAsyncApi() {
         return instanceAsyncApi;
     }
 
@@ -90,15 +90,15 @@ public final class TS3WebQuery implements AutoCloseable {
      * @param virtualServerId the virtual server every command of the returned API addresses
      * @return the synchronous API for that virtual server
      */
-    public TS3Api getApi(int virtualServerId) {
-        return new TS3Api(getAsyncApi(virtualServerId));
+    public TS3BaseApi getApi(int virtualServerId) {
+        return new TS3BaseApi(getAsyncApi(virtualServerId));
     }
 
     /**
      * @param virtualServerId the virtual server every command of the returned API addresses
      * @return the asynchronous API for that virtual server
      */
-    public TS3ApiAsync getAsyncApi(int virtualServerId) {
+    public TS3BaseApiAsync getAsyncApi(int virtualServerId) {
         return api(serverScope(virtualServerId));
     }
 
@@ -112,15 +112,15 @@ public final class TS3WebQuery implements AutoCloseable {
      * @param port the UDP voice port of the virtual server every command of the returned API addresses
      * @return the synchronous API for that virtual server
      */
-    public TS3Api getApiByPort(int port) {
-        return new TS3Api(getAsyncApiByPort(port));
+    public TS3BaseApi getApiByPort(int port) {
+        return new TS3BaseApi(getAsyncApiByPort(port));
     }
 
     /**
      * @param port the UDP voice port of the virtual server every command of the returned API addresses
      * @return the asynchronous API for that virtual server
      */
-    public TS3ApiAsync getAsyncApiByPort(int port) {
+    public TS3BaseApiAsync getAsyncApiByPort(int port) {
         if (port < 1 || port > 65535) throw new IllegalArgumentException("Port must be between 1 and 65535");
         return api("byport/" + port + "/");
     }
@@ -160,8 +160,8 @@ public final class TS3WebQuery implements AutoCloseable {
         return http.isTerminated() && executor.isTerminated();
     }
 
-    private TS3ApiAsync api(String scope) {
-        return new TS3ApiAsync(new WebQueryBackend(this, scope));
+    private TS3BaseApiAsync api(String scope) {
+        return new TS3BaseApiAsync(new WebQueryBackend(this, scope));
     }
 
     void send(String scope, Command command, CompletionStage<?> work) {

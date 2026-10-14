@@ -156,13 +156,14 @@ class TS3WebQueryTest {
     @Test
     void sessionEventAndFileOperationsFailLocallyWithoutARequest() {
         try (var query = new TS3WebQuery(config().build())) {
-            TS3Api api = query.getApi(1);
-            TS3ApiAsync async = query.getAsyncApi(1);
+            TS3BaseApi api = query.getApi(1);
+            TS3BaseApiAsync async = query.getAsyncApi(1);
+            // Session methods are not part of the Web Query API; their raw commands still fail locally.
             List<Runnable> operations = List.of(
-                    () -> api.selectVirtualServerById(1),
-                    () -> api.selectVirtualServerByPort(9987),
-                    () -> api.login("serveradmin", "secret"),
-                    api::logout,
+                    () -> api.executeRawCommand("use sid=1"),
+                    () -> api.executeRawCommand("login serveradmin secret"),
+                    () -> api.executeRawCommand("logout"),
+                    () -> api.executeRawCommand("quit"),
                     () -> api.events().registerAll(),
                     () -> api.events().unregisterAll(),
                     () -> api.events().subscribe(new TS3EventAdapter() {}),

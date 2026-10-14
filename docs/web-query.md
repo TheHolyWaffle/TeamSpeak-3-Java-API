@@ -14,9 +14,9 @@ WebQueryConfig config = WebQueryConfig.builder(URI.create("https://ts.example.or
         .build();
 try (TS3WebQuery query = new TS3WebQuery(config)) {
     System.out.println(query.getApi().instance().version().version());
-    TS3Api server = query.getApi(1);           // virtual server ID 1
+    TS3BaseApi server = query.getApi(1);       // virtual server ID 1
     server.channels().create("Lobby", Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"));
-    TS3ApiAsync async = query.getAsyncApiByPort(9987);
+    TS3BaseApiAsync async = query.getAsyncApiByPort(9987);
     async.clients().list().thenAccept(clients -> System.out.println(clients.size()));
 }
 ```
@@ -134,7 +134,7 @@ was checked, including from an independent ServerQuery session where noted. Erro
 
 | Domain | Verified over HTTP and HTTPS | Rejected by the server, verified | Fails locally (unsupported) | Not verified |
 | --- | --- | --- | --- | --- |
-| `TS3Api` | `whoAmI`, `setNickname`, `updateClient`, `moveQuery`, `executeRawCommand` (including pipe-separated entries) | | `login`, `logout`, `selectVirtualServerById`, `selectVirtualServerByPort`; raw `use`, `login`, `logout`, `quit`, `help`, `servernotify*`, `ft*` | |
+| `TS3BaseApi` | `whoAmI`, `setNickname`, `updateClient`, `moveQuery`, `executeRawCommand` (including pipe-separated entries) | | raw `use`, `login`, `logout`, `quit`, `help`, `servernotify*`, `ft*`. `login`, `logout` and `selectVirtualServer*` exist only on the RAW/SSH `TS3Api` | |
 | `apiKeys()` | all | `delete` of an unknown ID (5123); an owner that is not a database client of the bound server (512) | | |
 | `instance()` | `info`, `edit`, `hostInfo`, `version`, `bindings`, `logEntries`, `stopProcess` | | | |
 | `servers()` | `list`, `findIdByPort`, `create`, `delete`, `start`, both `stop`, `info`, `edit` (seen by ServerQuery), `connectionInfo`, `createSnapshot`, `deploySnapshot`, `logEntries` | `delete` of a running server (1035), `start` of a deleted server (1024) | | |

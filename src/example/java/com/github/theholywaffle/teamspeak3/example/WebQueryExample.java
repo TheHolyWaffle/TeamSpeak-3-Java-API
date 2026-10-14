@@ -1,6 +1,6 @@
 package com.github.theholywaffle.teamspeak3.example;
 
-import com.github.theholywaffle.teamspeak3.TS3Api;
+import com.github.theholywaffle.teamspeak3.TS3BaseApi;
 import com.github.theholywaffle.teamspeak3.TS3WebQuery;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3UnsupportedOperationException;
@@ -22,7 +22,7 @@ public final class WebQueryExample {
                     "Server version: " + query.getApi().instance().version().version());
 
             // Every command of this API addresses the virtual server in its request URL.
-            TS3Api api = query.getApi(settings.virtualServerId());
+            TS3BaseApi api = query.getApi(settings.virtualServerId());
             for (Client client : api.clients().list()) {
                 System.out.println(client.getNickname() + " is online");
             }

@@ -7,6 +7,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
@@ -17,8 +18,8 @@ class DomainApiParityTest {
 
     @Test
     void everyDomainIsReachableFromBothEntryPoints() {
-        Map<String, Class<?>> sync = accessors(TS3Api.class);
-        Map<String, Class<?>> async = accessors(TS3ApiAsync.class);
+        Map<String, Class<?>> sync = accessors(TS3BaseApi.class);
+        Map<String, Class<?>> async = accessors(TS3BaseApiAsync.class);
         assertEquals(sync.keySet(), async.keySet());
         assertEquals(16, sync.size());
         sync.forEach((name, type) -> {
@@ -36,9 +37,31 @@ class DomainApiParityTest {
 
     @Test
     void syncAndAsyncOperationsMatchExactly() {
-        Map<String, Class<?>> async = accessors(TS3ApiAsync.class);
-        accessors(TS3Api.class).forEach((name, sync) -> assertParity(sync, async.get(name)));
+        Map<String, Class<?>> async = accessors(TS3BaseApiAsync.class);
+        accessors(TS3BaseApi.class).forEach((name, sync) -> assertParity(sync, async.get(name)));
+        assertParity(TS3BaseApi.class, TS3BaseApiAsync.class);
         assertParity(TS3Api.class, TS3ApiAsync.class);
+        assertEquals(TS3BaseApi.class, TS3Api.class.getSuperclass());
+        assertEquals(TS3BaseApiAsync.class, TS3ApiAsync.class.getSuperclass());
+    }
+
+    @Test
+    void sessionOperationsExistOnlyOnTheServerQueryApi() {
+        var session = java.util.Set.of("login", "logout", "selectVirtualServerById", "selectVirtualServerByPort");
+        for (Class<?> shared : List.of(TS3BaseApi.class, TS3BaseApiAsync.class)) {
+            assertTrue(
+                    Arrays.stream(shared.getMethods()).noneMatch(method -> session.contains(method.getName())),
+                    shared.getSimpleName());
+        }
+        for (Class<?> serverQuery : List.of(TS3Api.class, TS3ApiAsync.class)) {
+            assertEquals(
+                    session,
+                    Arrays.stream(serverQuery.getDeclaredMethods())
+                            .filter(method -> Modifier.isPublic(method.getModifiers()))
+                            .map(Method::getName)
+                            .collect(java.util.stream.Collectors.toSet()),
+                    serverQuery.getSimpleName());
+        }
     }
 
     private static void assertParity(Class<?> sync, Class<?> async) {

@@ -189,8 +189,10 @@ possible. `TrollExample` pokes, kicks and moves real clients: only run it on a t
 
 ### Domain APIs
 
-`TS3Api` holds the session operations (`login`, `selectVirtualServerById`, `setNickname`, `whoAmI`)
-and one domain API per area: `channels()`, `clients()`, `databaseClients()`, `serverGroups()`,
+`query.getApi()` returns a `TS3Api`. It holds the ServerQuery session operations (`login`,
+`logout`, `selectVirtualServerById`, `selectVirtualServerByPort`) on top of `TS3BaseApi`, the API
+shared with [Web Query](#web-query): query-client operations such as `setNickname` and `whoAmI`, and
+one domain API per area: `channels()`, `clients()`, `databaseClients()`, `serverGroups()`,
 `channelGroups()`, `permissions()`, `bans()`, `complaints()`, `messages()`, `files()`,
 `privilegeKeys()`, `queryLogins()`, `apiKeys()`, `servers()`, `instance()` and `events()`.
 
@@ -335,8 +337,9 @@ server's `query_ip_allowlist.txt` (`query_ip_whitelist.txt` before TS3 3.13).
 `TS3WebQuery` runs the same domain APIs over a TS3 server's HTTP(S) Web Query interface, authenticated
 by an API key (create one with `api.apiKeys()`). Each command is an independent request addressed to
 the instance (`getApi()`), a virtual server ID (`getApi(1)`) or a voice port (`getApiByPort(9987)`).
-There is no session, so `login`, `selectVirtualServerById`, events and file operations fail with
-`TS3UnsupportedOperationException`; keep a RAW or SSH query for those. HTTPS is required unless
+There is no session, so its API is the shared `TS3BaseApi`, without `login` or `selectVirtualServer*`.
+Events and file operations fail with `TS3UnsupportedOperationException`; keep a RAW or SSH query for
+those. HTTPS is required unless
 plaintext is explicitly allowed. Rejected keys raise `TS3AuthenticationFailedException`; responses
 without a usable status, for example from a proxy, raise `TS3HttpException`. Configuration, errors,
 security and the verified operations: [Web Query](docs/web-query.md).
