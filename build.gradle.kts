@@ -66,6 +66,10 @@ tasks.compileTestJava {
     options.errorprone.disable("FutureReturnValueIgnored")
 }
 
+tasks.withType<Jar>().configureEach {
+    from("LICENSE") { into("META-INF") }
+}
+
 tasks.jar {
     manifest {
         attributes(
