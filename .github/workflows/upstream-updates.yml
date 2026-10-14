@@ -31,4 +31,3 @@ jobs:
     uses: ./.github/workflows/compatibility.yml
     with:
       ts3-image: ${{ needs.ts3_image.outputs.candidate }}
-
