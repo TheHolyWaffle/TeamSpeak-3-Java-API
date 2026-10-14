@@ -5,7 +5,8 @@ set -euo pipefail
 scripts=$(dirname "$0")
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
-(cd "$scripts/../tools/yq" && go build -o "$work/" github.com/mikefarah/yq/v4)
+bash "$scripts/workflow-tools.sh" "$work"
+export WORKFLOW_TOOLS=$work
 
 bash "$scripts/check-release-workflow.sh" .github/workflows
 

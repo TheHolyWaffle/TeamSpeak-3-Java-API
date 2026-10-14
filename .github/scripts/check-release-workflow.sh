@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
 # Lint every workflow, then require the release provenance wiring without running it: only the
 # publish job of release.yml may attest, with least privilege, after the staged artifacts are
-# verified and before anything is signed or deployed. Builds the tools pinned in .github/tools.
+# verified and before anything is signed or deployed.
 set -euo pipefail
 workflows=${1:-.github/workflows}
 fail() { echo "Release workflow check failed: $*" >&2; exit 1; }
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
-tools=$(dirname "$0")/../tools
-(cd "$tools/actionlint" && go build -o "$work/" github.com/rhysd/actionlint/cmd/actionlint)
-(cd "$tools/yq" && go build -o "$work/" github.com/mikefarah/yq/v4)
+# WORKFLOW_TOOLS may name a directory already filled by workflow-tools.sh.
+tools=${WORKFLOW_TOOLS:-$work}
+[[ -n ${WORKFLOW_TOOLS:-} ]] || bash "$(dirname "$0")/workflow-tools.sh" "$tools"
 
-"$work/actionlint" "$workflows"/*.yml
+"$tools/actionlint" "$workflows"/*.yml
 
 json=$work/workflows.json
 for file in "$workflows"/*.yml; do
-  "$work/yq" -o=json '{"file": filename, "workflow": .}' "$file"
+  "$tools/yq" -o=json '{"file": filename, "workflow": .}' "$file"
 done | jq -s 'map({(.file | split("/") | last): .workflow}) | add' > "$json"
 check() { jq -e "$1" "$json" > /dev/null || fail "$2"; }
 

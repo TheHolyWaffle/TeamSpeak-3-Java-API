@@ -68,10 +68,6 @@ jobs:
           cache: maven
       - name: Test release metadata gates
         run: bash .github/scripts/test-release-metadata.sh
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version-file: .github/tools/yq/go.mod
-          cache-dependency-path: .github/tools/*/go.sum
       # Provenance is attested only by a real publication; the rehearsal checks its wiring.
       - name: Lint workflows and check the release provenance wiring
         run: bash .github/scripts/test-check-release-workflow.sh
