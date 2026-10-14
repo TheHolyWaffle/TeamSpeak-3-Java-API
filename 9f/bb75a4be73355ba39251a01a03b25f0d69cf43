@@ -1,0 +1,32 @@
+README.md
+  h_b0b95817cb397c 192-195,340-342
+docs/web-query.md
+  h_b0b95817cb397c 17,19,137
+src/example/java/com/github/theholywaffle/teamspeak3/example/WebQueryExample.java
+  h_b0b95817cb397c 3,25
+src/main/java/com/github/theholywaffle/teamspeak3/TS3Api.java
+  h_b0b95817cb397c 33-34,37-38,43,48
+src/main/java/com/github/theholywaffle/teamspeak3/TS3ApiAsync.java
+  h_b0b95817cb397c 33-34,38,41
+src/main/java/com/github/theholywaffle/teamspeak3/TS3BaseApi.java
+  h_b0b95817cb397c 1-238
+src/main/java/com/github/theholywaffle/teamspeak3/TS3BaseApiAsync.java
+  h_b0b95817cb397c 1-225
+src/main/java/com/github/theholywaffle/teamspeak3/TS3WebQuery.java
+  h_b0b95817cb397c 40-42,58-59,76,80,85,93-94,101,115-116,123,163-164
+src/test/java/com/github/theholywaffle/teamspeak3/DomainApiParityTest.java
+  h_b0b95817cb397c 10,21-22,40-42,44-64
+src/test/java/com/github/theholywaffle/teamspeak3/TS3WebQueryTest.java
+  h_b0b95817cb397c 159-161,163-166
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9fbb75a4be73355ba39251a01a03b25f0d69cf43",
+  "prompts": {},
+  "humans": {
+    "h_b0b95817cb397c": {
+      "author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
