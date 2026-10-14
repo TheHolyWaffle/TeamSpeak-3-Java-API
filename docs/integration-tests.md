@@ -92,7 +92,7 @@ or default changes. Testcontainers is test-scoped and is excluded from published
 runtime dependencies and the published artifacts. The integration profile is
 opt-in locally and mandatory in modernization CI. This baseline verifies only
 the exact two TS3 combinations above; it does not promise untested commands,
-notifications, file transfers, voice or Web Query. Broader command/event coverage
+notifications, file transfers or voice. Broader command/event coverage
 and transport redesign remain with their later owning tasks.
 
 Sources: [official TS3 image documentation](https://hub.docker.com/_/teamspeak),
@@ -116,3 +116,16 @@ the exact supported subset and remaining domains.
 
 TS6 server selection, fixtures, image pins, launcher options and CI coverage have
 been removed from this release scope. Historical PR evidence remains historical.
+
+## Web Query
+
+`WebQueryCompatibilityIT` uses `TeamSpeakContainer.withWebQuery()`, which also enables
+`http,https` and exposes ports 10080 and 10443. HTTPS uses a key pair and self-signed
+certificate generated with Bouncy Castle for each fixture, valid for one day for
+`localhost`, `127.0.0.1` and the Docker host. Only the test client trusts it, through an
+in-memory `SSLContext`; the server reads the PEM files copied into the container. Readiness
+additionally waits for both Web Query listeners. API keys are created over RAW for that
+fixture only and redacted from container logs and evidence. Each domain runs over HTTP and
+HTTPS against the same pinned image. Lifecycle, snapshots, permission reset and process
+shutdown use a second disposable server. Evidence goes to `target/compatibility/TS3_WEBQUERY*`.
+Coverage and limits are listed in [Web Query](web-query.md#supported-operations).

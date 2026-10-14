@@ -16,7 +16,8 @@ Help alone or a similar method name does not establish compatibility.
 Use Java 25 without preview features and `./mvnw -B -ntp -Pintegration verify`.
 The pinned versions, digests, architectures, authenticated readiness and required
 CI setup are documented in [integration tests](integration-tests.md). Every tested
-operation below runs against TS3 **3.13.8 RAW** and TS3 **3.13.8 SSH**. TS6 RAW and Web Query are not claimed.
+operation below runs against TS3 **3.13.8 RAW** and TS3 **3.13.8 SSH**. TS6 RAW is not claimed. Web Query
+coverage is listed separately in [Web Query](web-query.md#supported-operations).
 
 `ServerQueryCompatibilityIT.channelDomain` uses a separate actor query session to
 create, edit, move and delete channels observed by a subscribed query session.

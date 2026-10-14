@@ -102,8 +102,8 @@ active-transfer rows, overwrite/resume/stop semantics, cross-server storage
 backends, restricted-account failures and further path cases remain unclaimed.
 #441 retains the remaining file-command compatibility inventory; #442 owns
 transfer reliability and container/NAT endpoint handling. No file-transfer socket
-is opened by this slice. Voice clients, TS6 RAW, Web Query and other versions
-are not covered.
+is opened by this slice. Voice clients, TS6 RAW and other versions are not
+covered; Web Query rejects file commands ([Web Query](web-query.md#file-transfers)).
 
 Official [TS6 beta13.1 release notes](https://github.com/teamspeak/teamspeak6-server/releases/tag/v6.0.0-beta13.1),
 [Java 25 TimeUnit](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/TimeUnit.html),

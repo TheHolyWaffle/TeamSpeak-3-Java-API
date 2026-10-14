@@ -78,7 +78,7 @@ Virtual-server/client-bound logins, replacement/rotation (including
 `queryLogins().updateOwn`), name character/length constraints, wildcard/pagination
 behavior, duplicate names, denied roles, permissions/memberships, revocation of
 already connected sessions and other versions remain #441 scope. No notification
-or voice-client guarantee is introduced. TS6 RAW and Web Query are unclaimed;
+or voice-client guarantee is introduced. TS6 RAW is unclaimed; Web Query evidence is in [Web Query](web-query.md);
 remaining command domains stay in the overall inventory. Reliable file transfers
 and NAT endpoints belong to #442.
 

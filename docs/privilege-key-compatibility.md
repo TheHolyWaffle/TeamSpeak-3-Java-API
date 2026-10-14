@@ -101,8 +101,8 @@ and [additional command tests](additional-command-compatibility.md).
 Successful regular-client consumption/events, automatic membership/deletion,
 custom metadata, invalid group/channel references, description limits,
 restricted accounts and other versions remain in #441. Other administrative
-utilities are also still pending. TS6 RAW, Web Query and actual voice-client
-join/leave behavior are unclaimed; file-transfer reliability/NAT endpoints remain
+utilities are also still pending. TS6 RAW and actual voice-client join/leave
+behavior are unclaimed (Web Query evidence: [Web Query](web-query.md)); file-transfer reliability/NAT endpoints remain
 #442 scope.
 
 Official [TS6 beta13.1 release notes](https://github.com/teamspeak/teamspeak6-server/releases/tag/v6.0.0-beta13.1),

@@ -2,6 +2,7 @@ package com.github.theholywaffle.teamspeak3;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.github.theholywaffle.teamspeak3.api.ApiKeyScope;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Version;
 import java.io.BufferedReader;
 import java.io.EOFException;
@@ -75,6 +76,7 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer>
 
     PublicKey hostKey;
     SSLContext webQueryTrust;
+    private String webQueryCertificate;
     String sshBanner;
     String algorithms;
     String queryBanner;
@@ -187,7 +189,8 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer>
             trustManagers.init(trust);
             webQueryTrust = SSLContext.getInstance("TLS");
             webQueryTrust.init(null, trustManagers.getTrustManagers(), null);
-            withCopyToContainer(Transferable.of(pem(certificate), 0644), WEB_QUERY_CERTIFICATE);
+            webQueryCertificate = pem(certificate);
+            withCopyToContainer(Transferable.of(webQueryCertificate, 0644), WEB_QUERY_CERTIFICATE);
             withCopyToContainer(
                     Transferable.of(pem(new JcaPKCS8Generator(pair.getPrivate(), null)), 0644), WEB_QUERY_PRIVATE_KEY);
         } catch (GeneralSecurityException | OperatorCreationException | IOException e) {
@@ -214,6 +217,38 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer>
         var uri = URI.create((https ? "https://" : "http://") + getHost() + ":" + getMappedPort(https ? 10443 : 10080));
         var builder = WebQueryConfig.builder(uri, apiKey).setRequestTimeout(Duration.ofSeconds(10));
         return https ? builder.setSslContext(webQueryTrust) : builder.setPlaintextHttpAllowed(true);
+    }
+
+    /** @return the secret of a new unlimited instance-wide MANAGE key, created over RAW ServerQuery */
+    String createWebQueryKey() {
+        try (var query = new TS3Query(config(TS3Query.Protocol.RAW))) {
+            query.connect();
+            return query.getApi()
+                    .apiKeys()
+                    .add(ApiKeyScope.MANAGE, Duration.ZERO)
+                    .getSecret()
+                    .orElseThrow();
+        }
+    }
+
+    /**
+     * @param certificate where HTTPS writes the fixture certificate the examples trust
+     * @return the {@code TS3_*} variables {@code WebQueryExample} needs to reach this container
+     */
+    Map<String, String> webQueryEnvironment(boolean https, String apiKey, Path certificate) throws IOException {
+        var environment = new LinkedHashMap<String, String>();
+        environment.put(
+                "TS3_WEBQUERY_URI",
+                (https ? "https://" : "http://") + getHost() + ":" + getMappedPort(https ? 10443 : 10080));
+        environment.put("TS3_API_KEY", apiKey);
+        if (https) {
+            Files.createDirectories(certificate.getParent());
+            Files.writeString(certificate, webQueryCertificate, StandardCharsets.UTF_8);
+            environment.put("TS3_WEBQUERY_CERTIFICATE", certificate.toString());
+        } else {
+            environment.put("TS3_WEBQUERY_PLAINTEXT", "true");
+        }
+        return environment;
     }
 
     @Override

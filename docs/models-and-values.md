@@ -169,7 +169,8 @@ group/privilege-key commands reject it as input. `PrivilegeKey.getType()` return
   (the limited license allows one running server, so the model IT cannot add one).
 - Scripted only: complaints (need a voice client), privilege-key-used events (query clients
   cannot use keys, 516), and malformed or unknown values (a real server does not send them).
-- Out of scope: Web Query (#452), JPMS exports for the `commands` packages (#447).
+- Out of scope: JPMS exports for the `commands` packages (#447). Web Query responses map to the same
+  models; see [Web Query](web-query.md#request-mapping).
 
 ## Release intent
 

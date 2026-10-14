@@ -70,8 +70,8 @@ Ban enforcement, expiry, combined targets, invalid patterns, myTeamSpeak-only
 rules, client/bulk bans, mass deletion, pagination/large lists, restricted-role
 permissions and other versions remain in #441. No new notification is claimed;
 prior independent-session event tests remain regression evidence. Actual voice
-clients need a separate fixture or manual verification. TS6 RAW and Web Query
-remain unclaimed. Other pending commands remain in the overall inventory;
+clients need a separate fixture or manual verification. TS6 RAW remains unclaimed; Web Query
+evidence is in [Web Query](web-query.md). Other pending commands remain in the overall inventory;
 file-transfer reliability/NAT endpoints are #442 scope.
 
 Official [TS6 beta13.1 release notes](https://github.com/teamspeak/teamspeak6-server/releases/tag/v6.0.0-beta13.1),
