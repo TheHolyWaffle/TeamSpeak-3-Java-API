@@ -1,0 +1,29 @@
+.github/scripts/check-release-workflow.sh
+  s_946b96cdd3f8c4::t_999856616aead5 11-12,17-18,21-22,31-40
+.github/scripts/test-check-release-workflow.sh
+  s_946b96cdd3f8c4::t_0650208ac7e9c1 13-14,25-29,35
+.github/scripts/verify-attestations.sh
+  s_946b96cdd3f8c4::t_ff7aeec2a129df 6,19
+.github/scripts/workflow-tools.sh
+  s_946b96cdd3f8c4::t_fb8580d86b929a 31
+.github/workflows/release.yml
+  s_946b96cdd3f8c4::t_bb78ddc0272ad7 138,142,146,154,163
+docs/releases.md
+  s_946b96cdd3f8c4::t_f22b9d634b6c29 365-373
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "838f49761897d944b0251879ab9eb4baa704742b",
+  "prompts": {},
+  "sessions": {
+    "s_946b96cdd3f8c4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "09493001-efc7-4912-bd48-cec868b5f761",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
