@@ -25,7 +25,7 @@ check '.jobs.publish.permissions.contents == "write"' 'only the publication job 
 
 validate=$(yq '.jobs.validate.steps[] | select(.id == "approval") | .run' "$workflow")
 for gate in 'startswith("release-please--")' '"autorelease: pending"' '"CI required"' \
-  'git rev-parse "$RELEASE_TAG^{commit}"' '! grep -Fxq "$RELEASE_TAG" target-releases.txt'; do
+  'git rev-parse "$RELEASE_TAG^{commit}"' 'if grep -Fxq "$RELEASE_TAG" target-releases.txt; then exit 1; fi'; do
   grep -qF -- "$gate" <<< "$validate" || fail "validation lacks the gate $gate"
 done
 

@@ -53,7 +53,10 @@ Steps, in order:
    and `TheHolyWaffle/modernization-02-dependency-security-refresh`; delete them or accept that
    their workflows fail.
 7. **Retire** the legacy `SONATYPE_USERNAME` and `SONATYPE_PASSWORD` repository secrets, which only
-   the removed OSSRH publisher used.
+   the removed OSSRH publisher used. Once `MAVEN_GPG_PRIVATE_KEY` and `MAVEN_GPG_PASSPHRASE` also
+   exist as `release` environment secrets (see
+   [move the signing secrets](#maintainer-action-move-the-signing-secrets)), delete their
+   repository-level copies, which only the legacy publisher still read.
 8. **Release.** Configure `RELEASE_PR_TOKEN` (see [prepare a release PR](#prepare-a-release-pr)),
    run **Prepare release** on `master`, review the generated 2.0.0 PR against the rehearsed notes,
    squash-merge it after **CI required** passes, then run the explicit release action with
@@ -499,10 +502,11 @@ Secret names (never values) on 2026-10-14: the `release` environment holds
 `MAVEN_GPG_PRIVATE_KEY`, `MAVEN_GPG_PASSPHRASE` and the legacy `SONATYPE_USERNAME` and
 `SONATYPE_PASSWORD`.
 
-Owned by the final integration (#451), because `master` still runs its legacy workflow until
-then: requiring actions pinned to a full-length commit SHA (`sha_pinning_required` is currently
-`false`), switching `master`'s required check to **CI required**, landing the `master`
-publishing-isolation PR and retiring the `SONATYPE_*` secrets.
+Owned by the final integration, because `master` still runs its legacy workflow until then:
+requiring actions pinned to a full-length commit SHA (`sha_pinning_required` is currently
+`false`), switching `master`'s required check to **CI required** and retiring the `SONATYPE_*`
+secrets. See [final integration into master](#final-integration-into-master), which also explains
+why no separate publishing-isolation PR is needed.
 
 ### Maintainer action: move the signing secrets
 
