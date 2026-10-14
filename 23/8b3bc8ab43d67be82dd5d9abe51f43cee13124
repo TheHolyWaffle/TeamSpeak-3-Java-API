@@ -1,0 +1,16 @@
+src/main/java/com/github/theholywaffle/teamspeak3/CommandQueue.java
+  h_b0b95817cb397c 37,40,43,123-127,130,132-139,141-143,355-356,358-360,362-363
+src/test/java/com/github/theholywaffle/teamspeak3/ConnectionLifecycleTest.java
+  h_b0b95817cb397c 46-73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "238b3bc8ab43d67be82dd5d9abe51f43cee13124",
+  "prompts": {},
+  "humans": {
+    "h_b0b95817cb397c": {
+      "author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
