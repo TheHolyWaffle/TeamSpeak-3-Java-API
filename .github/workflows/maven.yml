@@ -60,13 +60,14 @@ jobs:
           (cd api-base && ./mvnw -B -ntp -q -DskipTests -Denforcer.skip -Djapicmp.skip -Djacoco.skip \
             -Dspotless.check.skip -Dmaven.javadoc.skip -Dmaven.source.skip package)
           impact=$(bash .github/scripts/api-impact.sh "$PR_TITLE" "$PR_BODY")
-          library() { ls "$1"/target/teamspeak3-api-*.jar | grep -vE -- '-(sources|javadoc)\.jar$'; }
+          library() { for jar in "$1"/target/teamspeak3-api-*.jar; do [[ $jar == *-sources.jar || $jar == *-javadoc.jar ]] || echo "$jar"; done; }
           status=0
           bash .github/scripts/api-compare.sh "$(library api-base)" "$(library .)" "$impact" target/api-impact || status=$?
+          # shellcheck disable=SC2016 # Markdown code spans, not expansions.
           {
             echo "### API change against \`$BASE_REF\`"
             echo
-            echo "Release impact from the PR title and body: **$impact**. Result: $([[ $status -eq 0 ]] && echo accepted || echo '**rejected**: use a larger Conventional Commit impact (\`feat:\` or \`!\`/\`BREAKING CHANGE:\`) with migration notes')."
+            echo "Release impact from the PR title and body: **$impact**. Result: $([[ $status -eq 0 ]] && echo accepted || echo '**rejected**: use a larger Conventional Commit impact (`feat:` or `!`/`BREAKING CHANGE:`) with migration notes')."
             echo
             echo '```'
             head -c 60000 target/api-impact/api-compatibility.diff
@@ -81,9 +82,12 @@ jobs:
         run: |
           for project in api-base .; do
             # Runtime dependencies come only from pom.xml; an unchanged POM needs no resolution.
-            cmp -s api-base/pom.xml pom.xml && : > "$project/target/runtime-dependencies.txt" ||
+            if cmp -s api-base/pom.xml pom.xml; then
+              : > "$project/target/runtime-dependencies.txt"
+            else
               ./mvnw -B -ntp -q -f "$project/pom.xml" dependency:list -DincludeScope=runtime -Dsort=true \
                 -DoutputFile=target/runtime-dependencies.txt
+            fi
           done
           bash .github/scripts/dependency-impact.sh api-base/target/runtime-dependencies.txt \
             target/runtime-dependencies.txt "$PR_TITLE" "$PR_BODY"

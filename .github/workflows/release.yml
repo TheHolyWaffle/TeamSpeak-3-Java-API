@@ -86,7 +86,7 @@ jobs:
           # Never repeat a completed GitHub release (or overwrite its artifacts).
           gh api "repos/$REPOSITORY/releases" --paginate \
             --jq '.[].tag_name' > target-releases.txt
-          ! grep -Fxq "$RELEASE_TAG" target-releases.txt
+          if grep -Fxq "$RELEASE_TAG" target-releases.txt; then exit 1; fi
           echo "commit=$RELEASE_COMMIT" >> "$GITHUB_OUTPUT"
       - name: Validate approved version and extract release-specific notes unchanged
         env:
