@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   release_please:
-    name: Release PR and tag
+    name: release-please
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
@@ -33,7 +33,7 @@ jobs:
           manifest-file: .release-please-manifest.json
 
   publish:
-    name: Publish to Maven Central
+    name: gradle jreleaserDeploy
     needs: release_please
     if: ${{ needs.release_please.outputs.created == 'true' }}
     environment: release

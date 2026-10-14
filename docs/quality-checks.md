@@ -1,17 +1,17 @@
 # Formatting, analysis, coverage and API compatibility
 
 Every check runs in the normal Gradle build, so a local `./gradlew build` on JDK 25 runs the
-same checks as the CI **Build** job.
+same checks as the CI **gradle build** job.
 
 | Check | Tool | Local command | CI job |
 | --- | --- | --- | --- |
-| Formatting | Spotless with Palantir Java Format, `.editorconfig` | `./gradlew spotlessApply`, checked by `build` | Build |
-| Compiler and bug patterns | `javac -Xlint:all -Werror`, Error Prone | `build` | Build |
-| Javadoc | `-Xdoclint` for protected API, `javadoc` with `-Xwerror` | `build` | Build |
-| Coverage | JaCoCo per-class floors | `build`; `integrationTest` adds the TS3 suite | Build, ServerQuery compatibility (reports) |
-| Log redaction | `CommunicationLogRedactionTest` in its own DEBUG-logging test task | `build` | Build |
-| Dependency vulnerabilities | GitHub dependency graph, Dependabot alerts, dependency review | (GitHub only) | Dependency graph and review |
-| API compatibility | japicmp | `build` (`./gradlew japicmp`) | Build |
+| Formatting | Spotless with Palantir Java Format, `.editorconfig` | `./gradlew spotlessApply`, checked by `build` | gradle build |
+| Compiler and bug patterns | `javac -Xlint:all -Werror`, Error Prone | `build` | gradle build |
+| Javadoc | `-Xdoclint` for protected API, `javadoc` with `-Xwerror` | `build` | gradle build |
+| Coverage | JaCoCo per-class floors | `build`; `integrationTest` adds the TS3 suite | gradle build, gradle integrationTest |
+| Log redaction | `CommunicationLogRedactionTest` in its own DEBUG-logging test task | `build` | gradle build |
+| Dependency vulnerabilities | GitHub dependency graph, Dependabot alerts, dependency review | (GitHub only) | dependency submission and review |
+| API compatibility | japicmp | `build` (`./gradlew japicmp`) | gradle build |
 
 Tool versions are pinned in [`gradle/libs.versions.toml`](../gradle/libs.versions.toml) and kept
 current by Renovate; see
@@ -130,7 +130,7 @@ that as a breaking change with migration notes, not an exclusion.
 ### What is compared
 
 japicmp compares the public and protected API of every package, with no includes or excludes.
-The report is written to `build/japicmp/api-compatibility.diff` and uploaded by the **Build** job.
+The report is written to `build/japicmp/api-compatibility.diff` and uploaded by the **gradle build** job.
 
 The library JAR is compared with the baseline. japicmp takes each version from the file name, so
 the new version is the one release-please maintains in `gradle.properties` (`2.0.0-SNAPSHOT`, then

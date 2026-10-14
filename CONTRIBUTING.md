@@ -39,7 +39,7 @@ commits on the release branch. Every PR is **squash-merged**, and the repository
 description you get approved are therefore the release record:
 
 - The title must be a [Conventional Commit](https://www.conventionalcommits.org/en/v1.0.0/); the
-  **Release intent** check rejects anything else and reruns when you edit the title.
+  **PR title** check rejects anything else and reruns when you edit the title.
 - The title becomes the changelog line for releasing types, so write it for library users
   ("fix: decode escaped pipes in client lists", not "fix: review comments").
 - Reference issues in the description with `Closes #123` or `Refs #123`; they stay in the commit.

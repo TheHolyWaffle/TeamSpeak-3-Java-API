@@ -69,7 +69,7 @@ container startup diagnostics.
 
 ## CI and scheduled revalidation
 
-The **ServerQuery compatibility** job in `ci.yml` runs on Linux with Java 25, and
+The **gradle integrationTest** job in `ci.yml` runs on Linux with Java 25, and
 the aggregate `CI required` job requires its success. CI also runs weekly to
 revalidate the pin. Renovate proposes newer official TS3 images as PRs, which run
 this suite; see [TS3 image updates](maintenance.md#ts3-image-updates).

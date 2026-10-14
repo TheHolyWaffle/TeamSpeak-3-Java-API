@@ -63,7 +63,7 @@ The Maven consumer check below runs on the module path and verifies this.
 ## Reproducible artifacts
 
 Gradle writes archives without file timestamps, in a fixed entry order and with normalized
-permissions, and Javadoc is generated with `-notimestamp`. The **Publication rehearsal** CI job
+permissions, and Javadoc is generated with `-notimestamp`. The **gradle jreleaserDeploy -PdryRun** CI job
 rebuilds the staged artifacts from a clean `build` directory, without the build cache, and requires
 every file to be byte-identical. These are the unsigned artifacts; JReleaser adds signatures, which
 are not reproducible, only at publication. Consumers can combine such a rebuild with the release's
@@ -97,5 +97,5 @@ Run the checks locally with JDK 25 and Maven on `PATH`, after staging a version:
 bash .github/scripts/consumer-check.sh 0.0.0
 ```
 
-The **Publication rehearsal** CI job runs the same steps after signing the staged artifacts with a
+The **gradle jreleaserDeploy -PdryRun** CI job runs the same steps after signing the staged artifacts with a
 disposable key and validating the Central bundle (`./gradlew jreleaserDeploy -PdryRun`).

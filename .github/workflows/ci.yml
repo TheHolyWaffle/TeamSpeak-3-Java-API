@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build
+    name: gradle build
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -46,8 +46,8 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-  integration:
-    name: ServerQuery compatibility (Docker)
+  integrationTest:
+    name: gradle integrationTest
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -72,8 +72,8 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  publication:
-    name: Publication rehearsal (no upload)
+  jreleaserDeploy:
+    name: gradle jreleaserDeploy -PdryRun
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -115,8 +115,8 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  workflows:
-    name: Lint workflows
+  actionlint:
+    name: actionlint
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -129,7 +129,7 @@ jobs:
             rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667 -color
 
   dependencies:
-    name: Dependency graph and review
+    name: dependency submission and review
     if: ${{ github.event_name != 'schedule' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -154,8 +154,8 @@ jobs:
           fail-on-severity: low
           fail-on-scopes: runtime, development, unknown
 
-  release_intent:
-    name: Release intent
+  prTitle:
+    name: PR title
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -184,7 +184,7 @@ jobs:
   required:
     name: CI required
     if: ${{ always() }}
-    needs: [build, integration, publication, workflows, dependencies, release_intent]
+    needs: [build, integrationTest, jreleaserDeploy, actionlint, dependencies, prTitle]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

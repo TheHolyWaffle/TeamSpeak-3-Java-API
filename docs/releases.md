@@ -16,7 +16,7 @@ Two workflows run everything:
 Use Conventional Commit PR titles and **Squash and merge**; the squash commit is the PR title and
 description (see [contributing](../CONTRIBUTING.md#pull-request-titles-and-releases)), so
 release-please sees the reviewed type, breaking-change notes and issue references. The
-**Release intent** job validates PR titles, including generated release PRs, and reruns when a
+**PR title** job validates PR titles, including generated release PRs, and reruns when a
 title changes.
 
 | Title | Impact | Use |
@@ -43,7 +43,7 @@ version than the commits declare, the release PR fails. Fix that with a `feat!:`
    every `!` commit must appear under **BREAKING CHANGES** with usable migration notes.
 3. **Tag and GitHub release.** On that merge, release-please creates `vX.Y.Z` and the GitHub
    release with exactly the changelog entry.
-4. **Approve publication.** The `publish` job waits for a reviewer of the protected `release`
+4. **Approve publication.** The **gradle jreleaserDeploy** job waits for a reviewer of the protected `release`
    environment. It checks out the tag, requires `gradle.properties` to hold the released version,
    runs the full build and stages the artifacts under `build/staging-deploy`, attests their
    [provenance](#verify-a-published-release), then signs, validates and deploys them to the Central
@@ -69,7 +69,7 @@ describes; release-please rewrites the release PR on its next run.
 Published Maven versions are immutable; never create another version merely to recover.
 
 - **Failed before the upload** (build, attestation, JReleaser validation): fix the cause on
-  `master` if needed and re-run the `publish` job; it rebuilds the same tag.
+  `master` if needed and re-run the **gradle jreleaserDeploy** job; it rebuilds the same tag.
 - **Upload succeeded but publishing failed or timed out:** check the deployment in the
   [Central Portal](https://central.sonatype.com/publishing/deployments). Publish or drop it there;
   re-run the job only after dropping it. The job's `release-X.Y.Z` artifact keeps the staged files
@@ -106,7 +106,7 @@ The same command works for the `.pom`, `.module`, `-sources.jar` and `-javadoc.j
 the file was built by this repository's `release.yml` on a GitHub-hosted runner. To require the
 release commit, add `--source-ref refs/heads/master --source-digest "$(git rev-parse "v$version^{commit}")"`:
 the release runs on the push to `master` that merged the release PR, which is the tagged commit.
-The publish job verifies every file with this policy before it uploads anything. Attestations trust that run; a
+The release job verifies every file with this policy before it uploads anything. Attestations trust that run; a
 [reproducible rebuild](packaging.md#reproducible-artifacts) checks the build itself: check out
 `v$version`, run `./gradlew publish` with JDK 25 and compare the SHA-256 of the files under
 `build/staging-deploy` with the downloaded ones. The `.asc` PGP signatures, which Central requires,
