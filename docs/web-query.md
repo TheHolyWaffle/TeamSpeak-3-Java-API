@@ -1,9 +1,9 @@
 # TS3 Web Query
 
 `TS3WebQuery` talks to the HTTP(S) Web Query interface of a TeamSpeak 3 server (3.12 or later). It uses
-the same domain APIs, models and exceptions as RAW and SSH. Web Query is an **optional** transport: it is
-verified separately (below) and is outside the 2.0.0 release acceptance. Only TeamSpeak 3 is
-considered; TeamSpeak 6 is not supported.
+the same domain APIs, models and exceptions as RAW and SSH. Web Query is an **optional** transport, new in 2.0,
+verified as described [below](#verification). Only TeamSpeak 3 is considered; TeamSpeak 6 is not
+supported.
 
 Use it for stateless administration where an HTTP endpoint suits better than a long-lived query
 session. It cannot replace RAW or SSH for events or file transfers.
