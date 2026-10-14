@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -33,32 +33,32 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * Consider extending {@link TS3EventAdapter} instead.
  * </i></p>
  *
- * @see com.github.theholywaffle.teamspeak3.TS3Api#addTS3Listeners(TS3Listener...)
- * @see com.github.theholywaffle.teamspeak3.TS3ApiAsync#addTS3Listeners(TS3Listener...)
+ * @see com.github.theholywaffle.teamspeak3.TS3Query#subscribe(TS3Listener)
+ * @see com.github.theholywaffle.teamspeak3.EventApi#subscribe(TS3Listener)
  */
 public interface TS3Listener {
 
-	void onTextMessage(TextMessageEvent e);
+    void onTextMessage(TextMessageEvent e);
 
-	void onClientJoin(ClientJoinEvent e);
+    void onClientJoin(ClientJoinEvent e);
 
-	void onClientLeave(ClientLeaveEvent e);
+    void onClientLeave(ClientLeaveEvent e);
 
-	void onServerEdit(ServerEditedEvent e);
+    void onServerEdit(ServerEditedEvent e);
 
-	void onChannelEdit(ChannelEditedEvent e);
+    void onChannelEdit(ChannelEditedEvent e);
 
-	void onChannelDescriptionChanged(ChannelDescriptionEditedEvent e);
+    void onChannelDescriptionChanged(ChannelDescriptionEditedEvent e);
 
-	void onClientMoved(ClientMovedEvent e);
+    void onClientMoved(ClientMovedEvent e);
 
-	void onChannelCreate(ChannelCreateEvent e);
+    void onChannelCreate(ChannelCreateEvent e);
 
-	void onChannelDeleted(ChannelDeletedEvent e);
+    void onChannelDeleted(ChannelDeletedEvent e);
 
-	void onChannelMoved(ChannelMovedEvent e);
+    void onChannelMoved(ChannelMovedEvent e);
 
-	void onChannelPasswordChanged(ChannelPasswordChangedEvent e);
+    void onChannelPasswordChanged(ChannelPasswordChangedEvent e);
 
-	void onPrivilegeKeyUsed(PrivilegeKeyUsedEvent e);
+    void onPrivilegeKeyUsed(PrivilegeKeyUsedEvent e);
 }

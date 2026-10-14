@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -28,14 +28,19 @@ package com.github.theholywaffle.teamspeak3.api.event;
 
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 
+/**
+ * Notification of a virtual-server edit. The payload is partial and may omit
+ * changed properties and the reason ID, depending on the server. Check field
+ * presence in {@link #getMap()} and fetch server information for current values.
+ */
 public class ServerEditedEvent extends BaseEvent {
 
-	public ServerEditedEvent(Wrapper wrapper) {
-		super(wrapper);
-	}
+    public ServerEditedEvent(Wrapper wrapper) {
+        super(wrapper);
+    }
 
-	@Override
-	public void fire(TS3Listener listener) {
-		listener.onServerEdit(this);
-	}
+    @Override
+    public void fire(TS3Listener listener) {
+        listener.onServerEdit(this);
+    }
 }

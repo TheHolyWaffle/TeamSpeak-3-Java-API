@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,136 +27,185 @@ package com.github.theholywaffle.teamspeak3;
  */
 
 import com.github.theholywaffle.teamspeak3.api.event.*;
-import com.github.theholywaffle.teamspeak3.api.exception.TS3UnknownEventException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
+import java.util.ArrayDeque;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Function;
-
 class EventManager {
 
-	private static final Logger log = LoggerFactory.getLogger(EventManager.class);
-	private static final Map<String, Function<Wrapper, TS3Event>> eventByName = new HashMap<>(12);
-	static {
-		eventByName.put("notifytextmessage", TextMessageEvent::new);
-		eventByName.put("notifycliententerview", ClientJoinEvent::new);
-		eventByName.put("notifyclientleftview", ClientLeaveEvent::new);
-		eventByName.put("notifyserveredited", ServerEditedEvent::new);
-		eventByName.put("notifychanneledited", ChannelEditedEvent::new);
-		eventByName.put("notifychanneldescriptionchanged", ChannelDescriptionEditedEvent::new);
-		eventByName.put("notifyclientmoved", ClientMovedEvent::new);
-		eventByName.put("notifychannelcreated", ChannelCreateEvent::new);
-		eventByName.put("notifychanneldeleted", ChannelDeletedEvent::new);
-		eventByName.put("notifychannelmoved", ChannelMovedEvent::new);
-		eventByName.put("notifychannelpasswordchanged", ChannelPasswordChangedEvent::new);
-		eventByName.put("notifytokenused", PrivilegeKeyUsedEvent::new);
-	}
+    private static final Logger log = LoggerFactory.getLogger(EventManager.class);
+    private static final Map<String, Function<Wrapper, TS3Event>> EVENT_BY_NAME = Map.ofEntries(
+            Map.entry("notifytextmessage", TextMessageEvent::new),
+            Map.entry("notifycliententerview", ClientJoinEvent::new),
+            Map.entry("notifyclientleftview", ClientLeaveEvent::new),
+            Map.entry("notifyserveredited", ServerEditedEvent::new),
+            Map.entry("notifychanneledited", ChannelEditedEvent::new),
+            Map.entry("notifychanneldescriptionchanged", ChannelDescriptionEditedEvent::new),
+            Map.entry("notifyclientmoved", ClientMovedEvent::new),
+            Map.entry("notifychannelcreated", ChannelCreateEvent::new),
+            Map.entry("notifychanneldeleted", ChannelDeletedEvent::new),
+            Map.entry("notifychannelmoved", ChannelMovedEvent::new),
+            Map.entry("notifychannelpasswordchanged", ChannelPasswordChangedEvent::new),
+            Map.entry("notifytokenused", PrivilegeKeyUsedEvent::new));
 
-	// CopyOnWriteArrayList for thread safety
-	private final Collection<ListenerTask> tasks = new CopyOnWriteArrayList<>();
-	private final TS3Query ts3;
+    private final CopyOnWriteArrayList<ListenerTask> tasks = new CopyOnWriteArrayList<>();
+    private final TS3Query ts3;
+    private final ThreadPoolExecutor executor;
+    private final AtomicLong dropped = new AtomicLong();
+    private final AtomicLong unknown = new AtomicLong();
+    private final AtomicLong malformed = new AtomicLong();
+    private final AtomicLong failures = new AtomicLong();
+    private final AtomicLong rejected = new AtomicLong();
+    private boolean closed;
 
-	EventManager(TS3Query query) {
-		ts3 = query;
-	}
+    EventManager(TS3Query query) {
+        ts3 = query;
+        int threads = query.getConfig().getEventCallbackThreads();
+        executor = new ThreadPoolExecutor(
+                threads,
+                threads,
+                0,
+                TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(query.getConfig().getListenerCapacity()),
+                Thread.ofPlatform()
+                        .name("[TeamSpeak-3-Java-API] Event-", 0)
+                        .daemon(true)
+                        .factory(),
+                new ThreadPoolExecutor.AbortPolicy());
+    }
 
-	void addListeners(TS3Listener... listeners) {
-		for (TS3Listener listener : listeners) {
-			if (listener == null) throw new IllegalArgumentException("A listener was null");
-			ListenerTask task = new ListenerTask(listener);
-			tasks.add(task);
-		}
-	}
+    synchronized EventSubscription subscribe(TS3Listener listener) {
+        Objects.requireNonNull(listener, "listener");
+        if (closed) throw new IllegalStateException("Query event subscriptions are closed");
+        if (tasks.size() >= ts3.getConfig().getListenerCapacity())
+            throw new IllegalStateException("Listener capacity exceeded");
+        ListenerTask task = new ListenerTask(listener);
+        tasks.add(task);
+        return () -> remove(task);
+    }
 
-	void removeListeners(TS3Listener... listeners) {
-		// Bad performance (O(n*m)), but this method is rarely if ever used
-		List<TS3Listener> listenersToRemove = Arrays.asList(listeners);
-		tasks.removeIf(listenerTask -> listenersToRemove.contains(listenerTask.listener));
-	}
+    private synchronized void remove(ListenerTask task) {
+        task.close();
+        tasks.remove(task);
+    }
 
-	void fireEvent(String notifyName, String notifyBody) {
-		final DefaultArrayResponse response = DefaultArrayResponse.parse(notifyBody);
+    void fireEvent(String notifyName, String notifyBody) {
+        Function<Wrapper, TS3Event> constructor = EVENT_BY_NAME.get(notifyName);
+        if (constructor == null) {
+            unknown.incrementAndGet();
+            log.debug("Ignoring unsupported notification type: {}", notifyName);
+            return;
+        }
+        if (notifyBody == null || notifyBody.isBlank()) {
+            malformedNotification();
+            return;
+        }
+        try {
+            for (Wrapper data : DefaultArrayResponse.parse(notifyBody).getResponses()) {
+                fireEvent(constructor.apply(data));
+            }
+        } catch (RuntimeException failure) {
+            malformedNotification();
+        }
+    }
 
-		for (Wrapper eventData : response.getResponses()) {
-			TS3Event event = createEvent(notifyName, eventData);
-			fireEvent(event);
-		}
-	}
+    void malformedNotification() {
+        malformed.incrementAndGet();
+        log.debug("Ignoring malformed notification");
+    }
 
-	void fireEvent(TS3Event event) {
-		if (event == null) throw new IllegalArgumentException("TS3Event was null");
-		for (ListenerTask task : tasks) {
-			task.enqueueEvent(event);
-		}
-	}
+    EventStatistics statistics() {
+        return new EventStatistics(dropped.get(), unknown.get(), malformed.get(), failures.get(), rejected.get());
+    }
 
-	private static TS3Event createEvent(String notifyName, Wrapper eventData) {
-		Function<Wrapper, TS3Event> constructor = eventByName.get(notifyName);
-		if (constructor == null) throw new TS3UnknownEventException(notifyName + " " + eventData);
-		return constructor.apply(eventData);
-	}
+    void fireEvent(TS3Event event) {
+        Objects.requireNonNull(event, "event");
+        for (ListenerTask task : tasks) task.enqueueEvent(event);
+    }
 
-	/*
-	 * Do not synchronize on instances of this class from outside the class itself!
-	 */
-	private class ListenerTask implements Runnable {
+    synchronized void close() {
+        closed = true;
+        for (ListenerTask task : tasks) task.close();
+        tasks.clear();
+        executor.shutdownNow();
+    }
 
-		private static final int START_QUEUE_SIZE = 16;
+    void awaitTermination(Deadline deadline) {
+        try {
+            executor.awaitTermination(deadline.remaining(), TimeUnit.NANOSECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
 
-		private final TS3Listener listener;
-		private final Queue<TS3Event> eventQueue;
+    boolean isTerminated() {
+        return executor.isTerminated();
+    }
 
-		ListenerTask(TS3Listener ts3Listener) {
-			listener = ts3Listener;
-			eventQueue = new ArrayDeque<>(START_QUEUE_SIZE);
-		}
+    private final class ListenerTask implements Runnable {
+        private final TS3Listener listener;
+        private final Queue<TS3Event> events = new ArrayDeque<>();
+        private boolean running;
+        private boolean removed;
 
-		TS3Listener getListener() {
-			return listener;
-		}
+        ListenerTask(TS3Listener listener) {
+            this.listener = listener;
+        }
 
-		synchronized void enqueueEvent(TS3Event event) {
-			if (eventQueue.isEmpty()) {
-				// Add the event to the queue and start a task to process this event and any events
-				// that might be enqueued before the last event is removed from the queue
-				eventQueue.add(event);
-				ts3.submitUserTask("Event listener task", this);
-			} else {
-				// Just add the event to the queue, the running task will pick it up
-				eventQueue.add(event);
-			}
-		}
+        synchronized void close() {
+            removed = true;
+            events.clear();
+            executor.remove(this);
+        }
 
-		@Override
-		public void run() {
-			TS3Event currentEvent;
-			synchronized (this) {
-				currentEvent = eventQueue.peek();
-				if (currentEvent == null) throw new IllegalStateException("Task started without events");
-			}
+        synchronized void enqueueEvent(TS3Event event) {
+            if (removed) return;
+            if (events.size() >= ts3.getConfig().getListenerQueueCapacity()) {
+                dropped.incrementAndGet();
+                return; // Drop newest; reader never waits for callbacks.
+            }
+            events.add(event);
+            if (running) return;
+            running = true;
+            try {
+                executor.execute(this);
+            } catch (RejectedExecutionException failure) {
+                rejected.incrementAndGet();
+                dropped.addAndGet(events.size());
+                events.clear();
+                running = false;
+            }
+        }
 
-			do {
-				try {
-					currentEvent.fire(listener);
-				} catch (Throwable throwable) {
-					log.error("Event listener threw an exception", throwable);
-				}
-
-				synchronized (this) {
-					eventQueue.remove();
-					currentEvent = eventQueue.peek();
-				}
-			} while (currentEvent != null);
-		}
-	}
+        @Override
+        public void run() {
+            while (true) {
+                TS3Event event;
+                synchronized (this) {
+                    if (removed || (event = events.poll()) == null) {
+                        running = false;
+                        return;
+                    }
+                }
+                try {
+                    ts3.runUserTask(() -> event.fire(listener));
+                } catch (Throwable failure) {
+                    failures.incrementAndGet();
+                    log.error("Event listener threw an exception", failure);
+                }
+            }
+        }
+    }
 }

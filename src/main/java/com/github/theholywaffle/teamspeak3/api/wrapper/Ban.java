@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,60 +26,83 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.Date;
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
+import java.util.Optional;
 
+/**
+ * A ban rule from {@code banlist}. A rule matches on any combination of IP pattern, name pattern,
+ * unique ID and myTeamSpeak ID; criteria that are not part of the rule are empty.
+ */
 public class Ban extends Wrapper {
 
-	public Ban(Map<String, String> map) {
-		super(map);
-	}
+    public Ban(Map<String, String> map) {
+        super(map);
+    }
 
-	public int getId() {
-		return getInt("banid");
-	}
+    public int getId() {
+        return requireInt("banid");
+    }
 
-	public String getBannedIp() {
-		return get("ip");
-	}
+    /** @return the banned IP pattern, or empty if the rule does not match on IP */
+    public Optional<String> getBannedIp() {
+        return findText("ip");
+    }
 
-	public String getBannedName() {
-		return get("name");
-	}
+    /** @return the banned name pattern, or empty if the rule does not match on name */
+    public Optional<String> getBannedName() {
+        return findText("name");
+    }
 
-	public String getBannedUId() {
-		return get("uid");
-	}
+    /** @return the banned unique ID, or empty if the rule does not match on unique ID */
+    public Optional<String> getBannedUId() {
+        return findText("uid");
+    }
 
-	public String getLastNickname() {
-		return get("lastnickname");
-	}
+    /** @return the banned myTeamSpeak ID, or empty if the rule does not match on it */
+    public Optional<String> getBannedMyTeamSpeakId() {
+        return findText("mytsid");
+    }
 
-	public Date getCreatedDate() {
-		return new Date(getLong("created") * 1000);
-	}
+    /** @return the last nickname of the banned client, or empty if unknown */
+    public Optional<String> getLastNickname() {
+        return findText("lastnickname");
+    }
 
-	public long getDuration() {
-		return getLong("duration");
-	}
+    public Instant getCreatedDate() {
+        return requireInstant("created");
+    }
 
-	public String getInvokerName() {
-		return get("invokername");
-	}
+    /** @return the ban duration with second precision; {@link Duration#ZERO} for a permanent ban */
+    public Duration getDuration() {
+        return requireSeconds("duration");
+    }
 
-	public int getInvokerClientDBId() {
-		return getInt("invokercldbid");
-	}
+    public boolean isPermanent() {
+        return getDuration().isZero();
+    }
 
-	public String getInvokerUId() {
-		return get("invokeruid");
-	}
+    public String getInvokerName() {
+        return require("invokername");
+    }
 
-	public String getReason() {
-		return get("reason");
-	}
+    /** @return the database ID of the client who created the ban, or empty if none ({@code 0}) */
+    public Optional<ClientDatabaseId> getInvokerClientDBId() {
+        return findDatabaseId("invokercldbid");
+    }
 
-	public int getEnforcements() {
-		return getInt("enforcements");
-	}
+    public String getInvokerUId() {
+        return require("invokeruid");
+    }
+
+    /** @return the reason, or empty if none was given */
+    public Optional<String> getReason() {
+        return findText("reason");
+    }
+
+    public int getEnforcements() {
+        return requireInt("enforcements");
+    }
 }

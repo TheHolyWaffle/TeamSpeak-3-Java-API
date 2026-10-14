@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,60 +26,53 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.Map;
-
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
+import java.util.Map;
 
 public class ServerGroup extends Wrapper {
 
-	public ServerGroup(Map<String, String> map) {
-		super(map);
-	}
+    public ServerGroup(Map<String, String> map) {
+        super(map);
+    }
 
-	public int getId() {
-		return getInt("sgid");
-	}
+    public int getId() {
+        return requireInt("sgid");
+    }
 
-	public String getName() {
-		return get("name");
-	}
+    public String getName() {
+        return require("name");
+    }
 
-	public PermissionGroupDatabaseType getType() {
-		final int type = getInt("type");
-		for (final PermissionGroupDatabaseType p : PermissionGroupDatabaseType.values()) {
-			if (p.getIndex() == type) {
-				return p;
-			}
-		}
-		return null;
-	}
+    /** @return the group type, or {@link PermissionGroupDatabaseType#UNKNOWN} for a type this library does not know */
+    public PermissionGroupDatabaseType getType() {
+        return requireCode("type", PermissionGroupDatabaseType::fromIndex);
+    }
 
-	public long getIconId() {
-		return getLong("iconid");
-	}
+    public long getIconId() {
+        return requireLong("iconid");
+    }
 
-	public int getSaveDb() {
-		return getInt("savedb");
-	}
+    public boolean isSavedInDatabase() {
+        return requireBoolean("savedb");
+    }
 
-	public int getSortId() {
-		return getInt("sortid");
-	}
+    public int getSortId() {
+        return requireInt("sortid");
+    }
 
-	public int getNameMode() {
-		return getInt("namemode");
-	}
+    public int getNameMode() {
+        return requireInt("namemode");
+    }
 
-	public int getModifyPower() {
-		return getInt("n_modifyp");
-	}
+    public int getModifyPower() {
+        return requireInt("n_modifyp");
+    }
 
-	public int getMemberAddPower() {
-		return getInt("n_member_addp");
-	}
+    public int getMemberAddPower() {
+        return requireInt("n_member_addp");
+    }
 
-	public int getMemberRemovePower() {
-		return getInt("n_member_removep");
-	}
-
+    public int getMemberRemovePower() {
+        return requireInt("n_member_removep");
+    }
 }

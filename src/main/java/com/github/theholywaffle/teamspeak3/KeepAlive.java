@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,39 +26,56 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
+import java.util.concurrent.CompletableFuture;
+import java.util.function.LongSupplier;
+import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class KeepAlive extends Thread {
+/** Sends a probe command whenever the connection has been idle for one interval. */
+class KeepAlive implements Runnable {
 
-	private static final Logger log = LoggerFactory.getLogger(KeepAlive.class);
-	private static final int SLEEP = 60_000;
+    private static final long INTERVAL_MILLIS = 60_000;
 
-	private final Connection con;
+    private static final Logger log = LoggerFactory.getLogger(KeepAlive.class);
 
-	public KeepAlive(Connection connection) {
-		super("[TeamSpeak-3-Java-API] KeepAlive");
-		con = connection;
-	}
+    private final LongSupplier idleMillis;
+    private final Supplier<CompletableFuture<?>> probe;
+    private final Runnable onFailure;
+    private final long intervalMillis;
 
-	@Override
-	public void run() {
-		try {
-			while (!isInterrupted()) {
-				final long idleTime = con.getIdleTime();
-				if (idleTime >= SLEEP) {
-					// Using the asynchronous API so we get InterruptedExceptions
-					TS3ApiAsync asyncApi = con.getCommandQueue().getAsyncApi();
-					asyncApi.whoAmI().await();
-				} else {
-					Thread.sleep(SLEEP - idleTime);
-				}
-			}
-		} catch (InterruptedException ignored) {
-			// Thread stopped properly, ignore
-		} catch (Exception e) {
-			log.warn("KeepAlive thread has stopped!", e);
-			con.internalDisconnect();
-		}
-	}
+    KeepAlive(Connection connection) {
+        this(
+                connection::getIdleTime,
+                () -> connection.getCommandQueue().getAsyncApi().whoAmI(),
+                connection::internalDisconnect,
+                INTERVAL_MILLIS);
+    }
+
+    KeepAlive(LongSupplier idleMillis, Supplier<CompletableFuture<?>> probe, Runnable onFailure, long intervalMillis) {
+        this.idleMillis = idleMillis;
+        this.probe = probe;
+        this.onFailure = onFailure;
+        this.intervalMillis = intervalMillis;
+    }
+
+    @Override
+    public void run() {
+        try {
+            while (!Thread.currentThread().isInterrupted()) {
+                long idleTime = idleMillis.getAsLong();
+                if (idleTime >= intervalMillis) {
+                    // Server errors still count as activity; only interruption or a local failure stops the loop.
+                    probe.get().handle((value, failure) -> null).get();
+                } else {
+                    Thread.sleep(intervalMillis - idleTime);
+                }
+            }
+        } catch (InterruptedException ignored) {
+            // Thread stopped properly, ignore
+        } catch (Exception e) {
+            log.warn("KeepAlive thread has stopped!", e);
+            onFailure.run();
+        }
+    }
 }

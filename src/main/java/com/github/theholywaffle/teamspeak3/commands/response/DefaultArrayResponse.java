@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.commands.response;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -29,92 +29,106 @@ package com.github.theholywaffle.teamspeak3.commands.response;
 import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
-
+import com.github.theholywaffle.teamspeak3.commands.ProtocolRedactor;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class DefaultArrayResponse {
 
-	public static DefaultArrayResponse parse(String rawResponse) {
-		if (rawResponse == null || rawResponse.isEmpty()) return EMPTY;
+    /**
+     * Parses rows separated by pipes, inheriting shared fields from the first row.
+     * Empty rows, including trailing rows, inherit those same fields. Null or
+     * empty input represents no rows; valueless fields represent empty strings.
+     *
+     * @param rawResponse the encoded response
+     * @return the parsed response
+     */
+    public static DefaultArrayResponse parse(String rawResponse) {
+        if (rawResponse == null || rawResponse.isEmpty()) return EMPTY;
 
-		String[] rawMaps = rawResponse.split("\\|");
-		List<Wrapper> responses = new ArrayList<>(rawMaps.length);
-		if (rawMaps.length == 0) return new DefaultArrayResponse(responses, rawResponse);
+        String[] rawRows = rawResponse.split("\\|", -1);
+        Map<String, String> shared = parseMap(rawRows[0]);
+        List<Wrapper> rows = new ArrayList<>(rawRows.length);
+        rows.add(new Wrapper(shared));
+        for (int i = 1; i < rawRows.length; i++) {
+            Map<String, String> row = new LinkedHashMap<>(shared);
+            row.putAll(parseMap(rawRows[i]));
+            rows.add(new Wrapper(row));
+        }
 
-		// First response, just use the parsed map
-		Map<String, String> firstResponse = parseMap(rawMaps[0]);
-		responses.add(new Wrapper(firstResponse));
+        return new DefaultArrayResponse(rows, rawResponse);
+    }
 
-		// Array response: use "default" values from the first response, then add the parsed map
-		for (int i = 1; i < rawMaps.length; ++i) {
-			final Map<String, String> responseMap = new HashMap<>(firstResponse);
-			final Map<String, String> ithResponse = parseMap(rawMaps[i]);
-			responseMap.putAll(ithResponse);
+    /**
+     * Parses a terminating error line. IDs 0 and 1281 represent success.
+     *
+     * @param rawError the encoded error line
+     * @return the parsed error
+     * @throws IllegalArgumentException if the prefix or nonnegative integer ID is missing or invalid
+     */
+    public static QueryError parseError(String rawError) {
+        if (rawError == null || !rawError.startsWith("error ")) {
+            throw new IllegalArgumentException("Expected an error line");
+        }
+        String error = rawError.substring("error ".length());
+        Map<String, String> errorMap = parseMap(error);
+        String id = errorMap.get("id");
+        try {
+            if (id == null || Integer.parseInt(id) < 0) {
+                throw new IllegalArgumentException("Error line requires a nonnegative integer id");
+            }
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Error line requires a nonnegative integer id", e);
+        }
+        return new QueryError(errorMap);
+    }
 
-			responses.add(new Wrapper(responseMap));
-		}
+    private static Map<String, String> parseMap(String rawMap) {
+        if (rawMap.isEmpty()) return Map.of();
+        Map<String, String> map = new LinkedHashMap<>();
+        for (String param : rawMap.split(" ", -1)) {
+            if (param.isEmpty()) continue;
+            int pos = param.indexOf('=');
+            if (pos == -1) map.put(CommandEncoding.decode(param), "");
+            else
+                map.put(
+                        CommandEncoding.decode(param.substring(0, pos)),
+                        CommandEncoding.decode(param.substring(pos + 1)));
+        }
+        return map;
+    }
 
-		return new DefaultArrayResponse(responses, rawResponse);
-	}
+    private static final DefaultArrayResponse EMPTY = new DefaultArrayResponse(List.of(), "");
 
-	public static QueryError parseError(String rawError) {
-		String error = rawError.substring("error ".length());
-		Map<String, String> errorMap = parseMap(error);
-		return new QueryError(errorMap);
-	}
+    private final List<Wrapper> responses;
+    private final String rawResponse;
 
-	private static Map<String, String> parseMap(String rawMap) {
-		if (rawMap == null || rawMap.isEmpty()) return Collections.emptyMap();
+    private DefaultArrayResponse(List<Wrapper> responses, String rawResponse) {
+        this.responses = List.copyOf(responses);
+        this.rawResponse = rawResponse;
+    }
 
-		final String[] parameters = rawMap.split(" ");
-		final Map<String, String> map = new HashMap<>(parameters.length);
+    /** @return the immutable rows, in received order */
+    public List<Wrapper> getResponses() {
+        return responses;
+    }
 
-		for (String param : parameters) {
-			if (param.isEmpty()) continue;
-			final int pos = param.indexOf("=");
+    /** @return the first row, or empty if the response has no rows */
+    public Optional<Wrapper> getFirstResponse() {
+        return responses.stream().findFirst();
+    }
 
-			if (pos == -1) {
-				final String valuelessKey = CommandEncoding.decode(param);
-				map.put(valuelessKey, "");
-			} else {
-				final String key = CommandEncoding.decode(param.substring(0, pos));
-				final String value = CommandEncoding.decode(param.substring(pos + 1));
-				map.put(key, value);
-			}
-		}
+    /** @return the encoded response, including secrets; {@link #toString()} redacts them */
+    public String getRawResponse() {
+        return rawResponse;
+    }
 
-		return map;
-	}
-
-	private static final DefaultArrayResponse EMPTY = new DefaultArrayResponse(Collections.emptyList(), "");
-
-	private final List<Wrapper> responses;
-	private final String rawResponse;
-
-	private DefaultArrayResponse(List<Wrapper> responses, String rawResponse) {
-		this.responses = Collections.unmodifiableList(responses);
-		this.rawResponse = rawResponse;
-	}
-
-	public List<Wrapper> getResponses() {
-		return responses;
-	}
-
-	public Wrapper getFirstResponse() {
-		if (responses.isEmpty()) return Wrapper.EMPTY;
-		return responses.get(0);
-	}
-
-	public String getRawResponse() {
-		return rawResponse;
-	}
-
-	@Override
-	public String toString() {
-		return rawResponse;
-	}
+    /** @return the encoded response with {@linkplain ProtocolRedactor secrets} redacted */
+    @Override
+    public String toString() {
+        return ProtocolRedactor.redactLine(rawResponse);
+    }
 }

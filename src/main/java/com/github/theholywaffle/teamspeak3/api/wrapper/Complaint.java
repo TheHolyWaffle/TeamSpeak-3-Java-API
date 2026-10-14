@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,37 +26,37 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.Date;
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
+import java.time.Instant;
 import java.util.Map;
 
 public class Complaint extends Wrapper {
 
-	public Complaint(Map<String, String> map) {
-		super(map);
-	}
+    public Complaint(Map<String, String> map) {
+        super(map);
+    }
 
-	public int getTargetClientDatabaseId() {
-		return getInt("tcldbid");
-	}
+    public ClientDatabaseId getTargetClientDatabaseId() {
+        return requireDatabaseId("tcldbid");
+    }
 
-	public String getTargetName() {
-		return get("tname");
-	}
+    public String getTargetName() {
+        return require("tname");
+    }
 
-	public int getSourceClientDatabaseId() {
-		return getInt("fcldbid");
-	}
+    public ClientDatabaseId getSourceClientDatabaseId() {
+        return requireDatabaseId("fcldbid");
+    }
 
-	public String getSourceName() {
-		return get("fname");
-	}
+    public String getSourceName() {
+        return require("fname");
+    }
 
-	public String getMessage() {
-		return get("message");
-	}
+    public String getMessage() {
+        return require("message");
+    }
 
-	public Date getTimestamp() {
-		return new Date(getLong("timestamp") * 1000);
-	}
-
+    public Instant getTimestamp() {
+        return requireInstant("timestamp");
+    }
 }

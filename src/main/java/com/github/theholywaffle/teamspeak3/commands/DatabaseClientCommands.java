@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.commands;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -29,46 +29,49 @@ package com.github.theholywaffle.teamspeak3.commands;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 import com.github.theholywaffle.teamspeak3.commands.parameter.OptionParam;
-
 import java.util.Map;
 
 public final class DatabaseClientCommands {
 
-	private DatabaseClientCommands() {
-		throw new Error("No instances");
-	}
+    private DatabaseClientCommands() {
+        throw new Error("No instances");
+    }
 
-	public static Command clientDBDelete(int clientDBId) {
-		return new CommandBuilder("clientdbdelete", 1).add(new KeyValueParam("cldbid", clientDBId)).build();
-	}
+    public static Command clientDBDelete(int clientDBId) {
+        return new CommandBuilder("clientdbdelete")
+                .add(new KeyValueParam("cldbid", clientDBId))
+                .build();
+    }
 
-	public static Command clientDBEdit(int clientDBId, Map<ClientProperty, String> options) {
-		CommandBuilder builder = new CommandBuilder("clientdbedit", 2);
-		builder.add(new KeyValueParam("cldbid", clientDBId));
-		builder.addProperties(options);
-		return builder.build();
-	}
+    public static Command clientDBEdit(int clientDBId, Map<ClientProperty, String> options) {
+        CommandBuilder builder = new CommandBuilder("clientdbedit");
+        builder.add(new KeyValueParam("cldbid", clientDBId));
+        builder.addProperties(options);
+        return builder.build();
+    }
 
-	public static Command clientDBFind(String pattern, boolean uid) {
-		if (pattern == null || pattern.isEmpty()) {
-			throw new IllegalArgumentException("Pattern must be a non-empty string");
-		}
+    public static Command clientDBFind(String pattern, boolean uid) {
+        if (pattern == null || pattern.isEmpty()) {
+            throw new IllegalArgumentException("Pattern must be a non-empty string");
+        }
 
-		CommandBuilder builder = new CommandBuilder("clientdbfind", 2);
-		builder.add(new KeyValueParam("pattern", pattern));
-		builder.addIf(uid, new OptionParam("uid"));
-		return builder.build();
-	}
+        CommandBuilder builder = new CommandBuilder("clientdbfind");
+        builder.add(new KeyValueParam("pattern", pattern));
+        builder.addIf(uid, new OptionParam("uid"));
+        return builder.build();
+    }
 
-	public static Command clientDBInfo(int clientDBId) {
-		return new CommandBuilder("clientdbinfo", 1).add(new KeyValueParam("cldbid", clientDBId)).build();
-	}
+    public static Command clientDBInfo(int clientDBId) {
+        return new CommandBuilder("clientdbinfo")
+                .add(new KeyValueParam("cldbid", clientDBId))
+                .build();
+    }
 
-	public static Command clientDBList(int begin, int amount, boolean count) {
-		CommandBuilder builder = new CommandBuilder("clientdblist", 3);
-		builder.add(new KeyValueParam("start", begin));
-		builder.add(new KeyValueParam("duration", amount));
-		builder.addIf(count, new OptionParam("count"));
-		return builder.build();
-	}
+    public static Command clientDBList(int begin, int amount, boolean count) {
+        CommandBuilder builder = new CommandBuilder("clientdblist");
+        builder.add(new KeyValueParam("start", begin));
+        builder.add(new KeyValueParam("duration", amount));
+        builder.addIf(count, new OptionParam("count"));
+        return builder.build();
+    }
 }

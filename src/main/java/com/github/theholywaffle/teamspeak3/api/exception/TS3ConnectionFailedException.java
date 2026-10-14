@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api.exception;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,19 +26,20 @@ package com.github.theholywaffle.teamspeak3.api.exception;
  * #L%
  */
 
-public class TS3ConnectionFailedException extends TS3Exception {
+/** Connecting or initializing the ServerQuery session failed. */
+public class TS3ConnectionFailedException extends TS3TransportException {
 
-	private static final long serialVersionUID = 6849777544299282019L;
+    private static final long serialVersionUID = 6849777544299282019L;
 
-	public TS3ConnectionFailedException(String msg) {
-		super(msg);
-	}
+    public TS3ConnectionFailedException(String msg) {
+        super(msg);
+    }
 
-	public TS3ConnectionFailedException(Throwable c) {
-		super("Could not connect to the TeamSpeak3 server", c);
-	}
+    public TS3ConnectionFailedException(Throwable c) {
+        super("Could not connect to the TeamSpeak3 server", c);
+    }
 
-	public TS3ConnectionFailedException(String msg, Throwable cause) {
-		super(msg, cause);
-	}
+    public TS3ConnectionFailedException(String msg, Throwable cause) {
+        super(msg, cause);
+    }
 }

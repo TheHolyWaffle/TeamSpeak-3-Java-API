@@ -27,107 +27,137 @@ package com.github.theholywaffle.teamspeak3;
  */
 
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
-import net.schmizz.sshj.SSHClient;
-import net.schmizz.sshj.common.KeyType;
-import net.schmizz.sshj.connection.channel.direct.Session;
-import net.schmizz.sshj.transport.verification.OpenSSHKnownHosts;
-import net.schmizz.sshj.userauth.UserAuthException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.File;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.security.PublicKey;
-import java.util.Collections;
-import java.util.List;
+import java.time.Duration;
+import javax.net.SocketFactory;
+import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.connection.channel.direct.Session;
+import net.schmizz.sshj.userauth.UserAuthException;
 
-class SSHChannel implements IOChannel {
+class SSHChannel implements QueryTransport {
 
-	private static final Logger log = LoggerFactory.getLogger(SSHChannel.class);
-	private static final String KNOWN_HOSTS_FILE_NAME = "known_ts3_hosts";
+    private final SSHClient client = new SSHClient();
+    private volatile Thread initializingThread;
+    private volatile Thread transportReader;
+    private final Socket socket = new Socket() {
+        @Override
+        public InputStream getInputStream() throws IOException {
+            return new FilterInputStream(super.getInputStream()) {
+                // Thread identity decides which reader owns the transport.
+                @SuppressWarnings("ReferenceEquality")
+                private void trackReader() {
+                    // SSHJ reads identification on the caller before starting its single owned reader.
+                    // The query owns that caller; only the asynchronous reader belongs to the transport.
+                    Thread current = Thread.currentThread();
+                    if (transportReader == null && current != initializingThread) transportReader = current;
+                }
 
-	private final SSHClient client;
-	private final Session session;
+                @Override
+                public int read() throws IOException {
+                    trackReader();
+                    return in.read();
+                }
 
-	SSHChannel(TS3Config config) throws IOException {
-		if (!config.hasLoginCredentials()) {
-			throw new TS3ConnectionFailedException("Anonymous queries are not supported when using SSH.\n" +
-					"\t\tYou must specify a query username and password using TS3Config#setLoginCredentials.");
-		}
+                @Override
+                public int read(byte[] bytes, int offset, int length) throws IOException {
+                    trackReader();
+                    return in.read(bytes, offset, length);
+                }
+            };
+        }
+    };
+    private final QueryConfig config;
+    private volatile Session session;
 
-		try {
-			client = new SSHClient();
-			File knownHostsFile = new File(OpenSSHKnownHosts.detectSSHDir(), KNOWN_HOSTS_FILE_NAME);
-			client.addHostKeyVerifier(new AutoAddKnownHosts(knownHostsFile));
-			client.setConnectTimeout(config.getCommandTimeout());
-			client.setTimeout(config.getCommandTimeout());
-			client.setRemoteCharset(StandardCharsets.UTF_8);
+    SSHChannel(QueryConfig config) {
+        this.config = config;
+    }
 
-			client.connect(config.getHost(), config.getQueryPort());
-			client.getSocket().setTcpNoDelay(true);
-			client.authPassword(config.getUsername(), config.getPassword());
-			session = client.startSession();
-			session.startShell();
-		} catch (UserAuthException uae) {
-			close();
-			throw new TS3ConnectionFailedException("Invalid query username or password");
-		} catch (IOException ioe) {
-			close();
-			throw ioe;
-		}
-	}
+    @Override
+    public void connect(QueryTransport.Connected connection) throws IOException {
+        initializingThread = Thread.currentThread();
+        if (!config.hasLoginCredentials()) {
+            throw new TS3ConnectionFailedException("SSH requires query login credentials");
+        }
+        socket.connect(
+                new InetSocketAddress(config.getHost(), config.getQueryPort()),
+                TS3Config.socketTimeout(config.getConnectTimeout()));
+        connection.transportConnected();
+        socket.setTcpNoDelay(true);
+        client.setSocketFactory(new SocketFactory() {
+            @Override
+            public Socket createSocket() {
+                return socket;
+            }
 
-	@Override
-	public InputStream getInputStream() {
-		return session.getInputStream();
-	}
+            @Override
+            public Socket createSocket(String host, int port) {
+                return socket;
+            }
 
-	@Override
-	public OutputStream getOutputStream() {
-		return session.getOutputStream();
-	}
+            @Override
+            public Socket createSocket(String host, int port, InetAddress local, int localPort) {
+                return socket;
+            }
 
-	@Override
-	public void close() throws IOException {
-		if (session != null) session.close();
-		if (client != null) client.close();
-	}
+            @Override
+            public Socket createSocket(InetAddress host, int port) {
+                return socket;
+            }
 
-	private static class AutoAddKnownHosts extends OpenSSHKnownHosts {
+            @Override
+            public Socket createSocket(InetAddress host, int port, InetAddress local, int localPort) {
+                return socket;
+            }
+        });
+        client.addHostKeyVerifier(config.getSshHostKeyPolicy().verifier());
+        client.setTimeout(TS3Config.socketTimeout(config.getHandshakeTimeout()));
+        client.setRemoteCharset(StandardCharsets.UTF_8);
+        try {
+            client.connect(config.getHost(), config.getQueryPort());
+            client.authPassword(config.getUsername(), config.getPassword());
+            session = client.startSession();
+            session.startShell();
+        } catch (UserAuthException e) {
+            throw new TS3ConnectionFailedException("Invalid query username or password", e);
+        }
+    }
 
-		public AutoAddKnownHosts(File khFile) throws IOException {
-			super(khFile);
-		}
+    @Override
+    public InputStream getInputStream() {
+        return session.getInputStream();
+    }
 
-		@Override
-		protected boolean hostKeyUnverifiableAction(String hostname, PublicKey key) {
-			try {
-				entries().add(new HostEntry(null, hostname, KeyType.fromKey(key), key));
-				write();
+    @Override
+    public OutputStream getOutputStream() {
+        return session.getOutputStream();
+    }
 
-				return true;
-			} catch (IOException ioe) {
-				throw new RuntimeException("Could not write host keys to file", ioe);
-			}
-		}
+    @Override
+    public void close() throws IOException {
+        // Abort the underlying socket first: SSH channel/client close may write to the peer.
+        socket.close();
+        client.close();
+    }
 
-		@Override
-		protected boolean hostKeyChangedAction(String hostname, PublicKey key) {
-			Logger log = SSHChannel.log; // OpenSSHKnownHosts also has a "log" field...
-			log.error("The host key for {} has changed!", hostname);
-			log.error("This could be because someone is eavesdropping on you (man-in-the-middle attack).");
-			log.error("It could also be that the host key has changed, e.g. because the TS3 server was re-installed .");
-			log.error("If you trust that the new host key is genuine, correct or remove the entry" +
-					" for {} in your known hosts file ({}).", hostname, khFile);
-			return false;
-		}
+    @Override
+    public void awaitTermination(Duration timeout) {
+        Deadline deadline = new Deadline(timeout);
+        deadline.join(transportReader);
+        deadline.join(client.getConnection().getKeepAlive());
+    }
 
-		@Override
-		public List<String> findExistingAlgorithms(String hostname, int port) {
-			return Collections.emptyList();
-		}
-	}
+    @Override
+    public boolean isTerminated() {
+        Thread reader = transportReader;
+        return (reader == null || !reader.isAlive())
+                && !client.getConnection().getKeepAlive().isAlive();
+    }
 }

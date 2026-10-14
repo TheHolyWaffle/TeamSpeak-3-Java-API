@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api.reconnect;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,131 +26,195 @@ package com.github.theholywaffle.teamspeak3.api.reconnect;
  * #L%
  */
 
+/**
+ * What a query does after an unexpected connection loss. Configure it with
+ * {@link com.github.theholywaffle.teamspeak3.TS3Config#setReconnectStrategy(ReconnectStrategy)}.
+ * <p>
+ * Built-in backoff strategies make up to ten connection attempts per disconnect, then close the query.
+ * Each delay is chosen with equal jitter between half its upper bound and the upper bound, in milliseconds.
+ * Commands whose outcome became unknown are never resent unless a
+ * {@link CommandRetryPolicy} explicitly allows it; see {@link SessionConfiguration} for what is restored.
+ * </p>
+ */
 public abstract class ReconnectStrategy {
 
-	private static final int CONSTANT_BACKOFF = 10000;
-	private static final int START_TIMEOUT = 1000;
-	private static final int TIMEOUT_CAP = 60000;
-	private static final int ADDEND = 2000;
-	private static final double MULTIPLIER = 1.5;
+    private static final int CONSTANT_BACKOFF = 10000;
+    private static final int START_TIMEOUT = 1000;
+    private static final int TIMEOUT_CAP = 60000;
+    private static final int ADDEND = 2000;
+    private static final double MULTIPLIER = 1.5;
+    private static final int DEFAULT_ATTEMPTS = 10;
 
-	private ReconnectStrategy() {}
+    private final boolean reconnectEnabled;
 
-	public abstract ConnectionHandler create(ConnectionHandler userConnectionHandler);
+    private ReconnectStrategy(boolean reconnectEnabled) {
+        this.reconnectEnabled = reconnectEnabled;
+    }
 
-	public static ReconnectStrategy userControlled() {
-		return new UserControlled();
-	}
+    /**
+     * @param userConnectionHandler the application's handler, or {@code null}
+     * @return the handler the query calls on connect and disconnect
+     */
+    public abstract ConnectionHandler create(ConnectionHandler userConnectionHandler);
 
-	public static ReconnectStrategy disconnect() {
-		return new Disconnect();
-	}
+    /** @return whether this policy permits a new connection after transport loss */
+    public final boolean isReconnectEnabled() {
+        return reconnectEnabled;
+    }
 
-	public static ReconnectStrategy constantBackoff() {
-		return constantBackoff(CONSTANT_BACKOFF);
-	}
+    /**
+     * Returns a copy using a finite attempt limit. Built-in backoff strategies default to ten attempts.
+     * All delays have a finite cap and equal jitter; interruption or query closure cancels retries.
+     * @param attempts maximum connection attempts per disconnect
+     * @return a bounded strategy
+     */
+    public final ReconnectStrategy withMaxAttempts(int attempts) {
+        if (attempts <= 0) throw new IllegalArgumentException("Attempts must be positive");
+        return copyWithMaxAttempts(attempts);
+    }
 
-	public static ReconnectStrategy constantBackoff(int timeout) {
-		return new Constant(timeout);
-	}
+    ReconnectStrategy copyWithMaxAttempts(int attempts) {
+        throw new IllegalArgumentException("Attempt limits require a built-in backoff strategy");
+    }
 
-	public static ReconnectStrategy linearBackoff() {
-		return linearBackoff(START_TIMEOUT, ADDEND, TIMEOUT_CAP);
-	}
+    /**
+     * Leaves reconnecting to the application: {@link ConnectionHandler#onDisconnect} must call
+     * {@code connect()} itself, otherwise the query closes when it returns.
+     * @return a strategy that requires a connection handler
+     */
+    public static ReconnectStrategy userControlled() {
+        return new UserControlled();
+    }
 
-	public static ReconnectStrategy linearBackoff(int startTimeout, int addend) {
-		return linearBackoff(startTimeout, addend, TIMEOUT_CAP);
-	}
+    /** @return the default strategy: never reconnect, and close the query after a connection loss */
+    public static ReconnectStrategy disconnect() {
+        return new Disconnect();
+    }
 
-	public static ReconnectStrategy linearBackoff(int startTimeout, int addend, int timeoutCap) {
-		return new Linear(startTimeout, addend, timeoutCap);
-	}
+    /** @return constant delays of up to 10 seconds */
+    public static ReconnectStrategy constantBackoff() {
+        return constantBackoff(CONSTANT_BACKOFF);
+    }
 
-	public static ReconnectStrategy exponentialBackoff() {
-		return exponentialBackoff(START_TIMEOUT, MULTIPLIER, TIMEOUT_CAP);
-	}
+    /**
+     * @param timeout the delay upper bound in milliseconds
+     * @return constant delays
+     */
+    public static ReconnectStrategy constantBackoff(int timeout) {
+        if (timeout <= 0) throw new IllegalArgumentException("Timeout must be greater than 0");
+        return new Backoff(timeout, timeout, 0, 1.0, DEFAULT_ATTEMPTS);
+    }
 
-	public static ReconnectStrategy exponentialBackoff(int startTimeout, double multiplier) {
-		return exponentialBackoff(startTimeout, multiplier, TIMEOUT_CAP);
-	}
+    /** @return delays starting at 1 second, growing by 2 seconds, capped at 60 seconds */
+    public static ReconnectStrategy linearBackoff() {
+        return linearBackoff(START_TIMEOUT, ADDEND, TIMEOUT_CAP);
+    }
 
-	public static ReconnectStrategy exponentialBackoff(int startTimeout, double multiplier, int timeoutCap) {
-		return new Exponential(startTimeout, multiplier, timeoutCap);
-	}
+    /**
+     * @param startTimeout the first delay upper bound in milliseconds
+     * @param addend milliseconds added after each attempt
+     * @return linearly growing delays, capped at 60 seconds
+     */
+    public static ReconnectStrategy linearBackoff(int startTimeout, int addend) {
+        return linearBackoff(startTimeout, addend, TIMEOUT_CAP);
+    }
 
-	private static class UserControlled extends ReconnectStrategy {
+    /**
+     * @param startTimeout the first delay upper bound in milliseconds
+     * @param addend milliseconds added after each attempt
+     * @param timeoutCap the largest delay upper bound in milliseconds, at least {@code startTimeout}
+     * @return linearly growing delays
+     */
+    public static ReconnectStrategy linearBackoff(int startTimeout, int addend, int timeoutCap) {
+        if (addend <= 0) throw new IllegalArgumentException("Addend must be greater than 0");
+        return backoff(startTimeout, timeoutCap, addend, 1.0);
+    }
 
-		@Override
-		public ConnectionHandler create(ConnectionHandler userConnectionHandler) {
-			String message = "userConnectionHandler cannot be null when using strategy UserControlled!";
-			if (userConnectionHandler == null) throw new IllegalArgumentException(message);
-			return userConnectionHandler;
-		}
-	}
+    /** @return delays starting at 1 second, multiplied by 1.5, capped at 60 seconds */
+    public static ReconnectStrategy exponentialBackoff() {
+        return exponentialBackoff(START_TIMEOUT, MULTIPLIER, TIMEOUT_CAP);
+    }
 
-	private static class Disconnect extends ReconnectStrategy {
+    /**
+     * @param startTimeout the first delay upper bound in milliseconds
+     * @param multiplier the growth factor, greater than 1
+     * @return exponentially growing delays, capped at 60 seconds
+     */
+    public static ReconnectStrategy exponentialBackoff(int startTimeout, double multiplier) {
+        return exponentialBackoff(startTimeout, multiplier, TIMEOUT_CAP);
+    }
 
-		@Override
-		public ConnectionHandler create(ConnectionHandler userConnectionHandler) {
-			return new DisconnectingConnectionHandler(userConnectionHandler);
-		}
-	}
+    /**
+     * @param startTimeout the first delay upper bound in milliseconds
+     * @param multiplier the growth factor, greater than 1
+     * @param timeoutCap the largest delay upper bound in milliseconds, at least {@code startTimeout}
+     * @return exponentially growing delays
+     */
+    public static ReconnectStrategy exponentialBackoff(int startTimeout, double multiplier, int timeoutCap) {
+        if (!Double.isFinite(multiplier) || multiplier <= 1.0)
+            throw new IllegalArgumentException("Multiplier must be greater than 1");
+        return backoff(startTimeout, timeoutCap, 0, multiplier);
+    }
 
-	private static class Constant extends ReconnectStrategy {
+    private static ReconnectStrategy backoff(int startTimeout, int timeoutCap, int addend, double multiplier) {
+        if (startTimeout <= 0) throw new IllegalArgumentException("Starting timeout must be greater than 0");
+        if (timeoutCap < startTimeout) throw new IllegalArgumentException("Cap must be >= starting timeout");
+        return new Backoff(startTimeout, timeoutCap, addend, multiplier, DEFAULT_ATTEMPTS);
+    }
 
-		private final int timeout;
+    private static final class UserControlled extends ReconnectStrategy {
+        private UserControlled() {
+            super(true);
+        }
 
-		public Constant(int timeout) {
-			if (timeout <= 0) throw new IllegalArgumentException("Timeout must be greater than 0");
+        @Override
+        public ConnectionHandler create(ConnectionHandler userConnectionHandler) {
+            if (userConnectionHandler == null) {
+                throw new IllegalArgumentException(
+                        "userConnectionHandler cannot be null when using strategy UserControlled!");
+            }
+            return userConnectionHandler;
+        }
+    }
 
-			this.timeout = timeout;
-		}
+    private static final class Disconnect extends ReconnectStrategy {
+        private Disconnect() {
+            super(false);
+        }
 
-		@Override
-		public ConnectionHandler create(ConnectionHandler userConnectionHandler) {
-			return new ReconnectingConnectionHandler(userConnectionHandler, timeout, timeout, 0, 1.0);
-		}
-	}
+        @Override
+        public ConnectionHandler create(ConnectionHandler userConnectionHandler) {
+            return new DisconnectingConnectionHandler(userConnectionHandler);
+        }
+    }
 
-	private static class Linear extends ReconnectStrategy {
+    /** Constant, linear and exponential delays: {@code min(cap, ceil(delay * multiplier) + addend)}. */
+    private static final class Backoff extends ReconnectStrategy {
 
-		private final int startTimeout;
-		private final int addend;
-		private final int timeoutCap;
+        private final int startTimeout;
+        private final int timeoutCap;
+        private final int addend;
+        private final double multiplier;
+        private final int maxAttempts;
 
-		private Linear(int startTimeout, int addend, int timeoutCap) {
-			if (startTimeout <= 0) throw new IllegalArgumentException("Starting timeout must be greater than 0");
-			if (addend <= 0) throw new IllegalArgumentException("Addend must be greater than 0");
+        private Backoff(int startTimeout, int timeoutCap, int addend, double multiplier, int maxAttempts) {
+            super(true);
+            this.startTimeout = startTimeout;
+            this.timeoutCap = timeoutCap;
+            this.addend = addend;
+            this.multiplier = multiplier;
+            this.maxAttempts = maxAttempts;
+        }
 
-			this.startTimeout = startTimeout;
-			this.addend = addend;
-			this.timeoutCap = timeoutCap;
-		}
+        @Override
+        ReconnectStrategy copyWithMaxAttempts(int attempts) {
+            return new Backoff(startTimeout, timeoutCap, addend, multiplier, attempts);
+        }
 
-		@Override
-		public ConnectionHandler create(ConnectionHandler userConnectionHandler) {
-			return new ReconnectingConnectionHandler(userConnectionHandler, startTimeout, timeoutCap, addend, 1.0);
-		}
-	}
-
-	private static class Exponential extends ReconnectStrategy {
-
-		private final int startTimeout;
-		private final double multiplier;
-		private final int timeoutCap;
-
-		private Exponential(int startTimeout, double multiplier, int timeoutCap) {
-			if (startTimeout <= 0) throw new IllegalArgumentException("Starting timeout must be greater than 0");
-			if (multiplier <= 1.0) throw new IllegalArgumentException("Multiplier must be greater than 1");
-
-			this.startTimeout = startTimeout;
-			this.multiplier = multiplier;
-			this.timeoutCap = timeoutCap;
-		}
-
-		@Override
-		public ConnectionHandler create(ConnectionHandler userConnectionHandler) {
-			return new ReconnectingConnectionHandler(userConnectionHandler, startTimeout, timeoutCap, 0, multiplier);
-		}
-	}
+        @Override
+        public ConnectionHandler create(ConnectionHandler userConnectionHandler) {
+            return new ReconnectingConnectionHandler(
+                    userConnectionHandler, startTimeout, timeoutCap, addend, multiplier, maxAttempts);
+        }
+    }
 }

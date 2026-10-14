@@ -29,35 +29,39 @@ package com.github.theholywaffle.teamspeak3;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 
-class SocketChannel implements IOChannel {
+class SocketChannel implements QueryTransport {
 
-	private final Socket socket;
+    private final Socket socket = new Socket();
+    private final QueryConfig config;
 
-	SocketChannel(TS3Config config) throws IOException {
-		try {
-			socket = new Socket(config.getHost(), config.getQueryPort());
-			socket.setTcpNoDelay(true);
-			socket.setSoTimeout(config.getCommandTimeout());
-		} catch (IOException ioe) {
-			close();
-			throw ioe;
-		}
-	}
+    SocketChannel(QueryConfig config) {
+        this.config = config;
+    }
 
-	@Override
-	public InputStream getInputStream() throws IOException {
-		return socket.getInputStream();
-	}
+    @Override
+    public void connect(QueryTransport.Connected connection) throws IOException {
+        socket.connect(
+                new InetSocketAddress(config.getHost(), config.getQueryPort()),
+                TS3Config.socketTimeout(config.getConnectTimeout()));
+        connection.transportConnected();
+        socket.setTcpNoDelay(true);
+    }
 
-	@Override
-	public OutputStream getOutputStream() throws IOException {
-		return socket.getOutputStream();
-	}
+    @Override
+    public InputStream getInputStream() throws IOException {
+        return socket.getInputStream();
+    }
 
-	@Override
-	public void close() throws IOException {
-		if (socket != null) socket.close();
-	}
+    @Override
+    public OutputStream getOutputStream() throws IOException {
+        return socket.getOutputStream();
+    }
+
+    @Override
+    public void close() throws IOException {
+        socket.close();
+    }
 }

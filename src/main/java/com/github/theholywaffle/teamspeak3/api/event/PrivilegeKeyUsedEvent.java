@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,49 +26,51 @@ package com.github.theholywaffle.teamspeak3.api.event;
  * #L%
  */
 
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.PrivilegeKeyType;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 
 public class PrivilegeKeyUsedEvent extends BaseEvent {
 
-	public PrivilegeKeyUsedEvent(Wrapper wrapper) {
-		super(wrapper);
-	}
+    public PrivilegeKeyUsedEvent(Wrapper wrapper) {
+        super(wrapper);
+    }
 
-	public int getClientId() {
-		return getInt("clid");
-	}
+    public ClientId getClientId() {
+        return requireClientId("clid");
+    }
 
-	public int getClientDatabaseId() {
-		return getInt("cldbid");
-	}
+    public ClientDatabaseId getClientDatabaseId() {
+        return requireDatabaseId("cldbid");
+    }
 
-	public String getClientUniqueIdentifier() {
-		return get("cluid");
-	}
+    public String getClientUniqueIdentifier() {
+        return require("cluid");
+    }
 
-	public String getPrivilegeKey() {
-		return get("token");
-	}
+    public String getPrivilegeKey() {
+        return require("token");
+    }
 
-	public PrivilegeKeyType getPrivilegeKeyType() {
-		if (getPrivilegeKeyChannelId() == 0) {
-			return PrivilegeKeyType.SERVER_GROUP;
-		} else {
-			return PrivilegeKeyType.CHANNEL_GROUP;
-		}
-	}
+    public PrivilegeKeyType getPrivilegeKeyType() {
+        if (getPrivilegeKeyChannelId() == 0) {
+            return PrivilegeKeyType.SERVER_GROUP;
+        } else {
+            return PrivilegeKeyType.CHANNEL_GROUP;
+        }
+    }
 
-	public int getPrivilegeKeyGroupId() {
-		return getInt("token1");
-	}
+    public int getPrivilegeKeyGroupId() {
+        return requireInt("token1");
+    }
 
-	public int getPrivilegeKeyChannelId() {
-		return getInt("token2");
-	}
+    public int getPrivilegeKeyChannelId() {
+        return requireInt("token2");
+    }
 
-	@Override
-	public void fire(TS3Listener listener) {
-		listener.onPrivilegeKeyUsed(this);
-	}
+    @Override
+    public void fire(TS3Listener listener) {
+        listener.onPrivilegeKeyUsed(this);
+    }
 }

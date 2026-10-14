@@ -1,50 +1,189 @@
-# This workflow will check out the project, build it using Maven, and run
-# unit tests every time someone pushes to the repo or a pull request is opened.
-# For pushes to master, the project will also be packaged and deployed to Maven Central.
+name: Maven CI
 
-name: Maven
+on:
+  push:
+    branches: [master, modernization/2.0]
+  pull_request:
+    branches: [master, modernization/2.0]
+    types: [opened, reopened, synchronize, edited]
+  workflow_dispatch:
 
-on: [ push, pull_request ]
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build_and_test:
-    name: Build and run tests
+  verify:
+    uses: ./.github/workflows/verify.yml
+
+  compatibility:
+    uses: ./.github/workflows/compatibility.yml
+
+  dependencies:
+    uses: ./.github/workflows/dependencies.yml
+    permissions:
+      contents: write
+
+  api_compatibility:
+    name: API compatibility
     runs-on: ubuntu-latest
-
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up JDK 8
-        uses: actions/setup-java@v3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          java-version: '8'
-          distribution: 'zulu'
-          cache: maven
-      - name: Run tests with Maven
-        run: mvn test -B
-
-  deploy:
-    name: Deploy to Maven Central
-    runs-on: ubuntu-latest
-    needs: [ build_and_test ]
-
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
-
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up JDK 8
-        uses: actions/setup-java@v3
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
-          java-version: '8'
-          distribution: 'zulu'
+          java-version: '25'
+          distribution: temurin
           cache: maven
-          server-id: ossrh
-          server-username: SONATYPE_USERNAME
-          server-password: SONATYPE_PASSWORD
-          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
-          gpg-passphrase: MAVEN_GPG_PASSPHRASE
-      - name: Publish to Maven Central
-        run: mvn deploy -B -Pfull,ossrh -DskipTests=true
+      # The verify jobs already compare the pending version with 1.3.1.
+      - name: Run controlled compatibility examples
+        run: bash .github/scripts/test-api-compatibility.sh
+      - name: Test the API difference accounting check
+        run: bash .github/scripts/test-api-accounting.sh
+      - name: Check out the PR base
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: api-base
+          persist-credentials: false
+      - name: Require a release impact that covers the API change
+        if: ${{ github.event_name == 'pull_request' }}
         env:
-          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          # The head's wrapper: 1.x master has none.
+          (cd api-base && ../mvnw -B -ntp -q -DskipTests -Denforcer.skip -Djapicmp.skip -Djacoco.skip \
+            -Dspotless.check.skip -Dmaven.javadoc.skip -Dmaven.source.skip package)
+          impact=$(bash .github/scripts/api-impact.sh "$PR_TITLE" "$PR_BODY")
+          library() { for jar in "$1"/target/teamspeak3-api-*.jar; do [[ $jar == *-sources.jar || $jar == *-javadoc.jar ]] || echo "$jar"; done; }
+          status=0
+          bash .github/scripts/api-compare.sh "$(library api-base)" "$(library .)" "$impact" target/api-impact || status=$?
+          # shellcheck disable=SC2016 # Markdown code spans, not expansions.
+          {
+            echo "### API change against \`$BASE_REF\`"
+            echo
+            echo "Release impact from the PR title and body: **$impact**. Result: $([[ $status -eq 0 ]] && echo accepted || echo '**rejected**: use a larger Conventional Commit impact (`feat:` or `!`/`BREAKING CHANGE:`) with migration notes')."
+            echo
+            echo '```'
+            head -c 60000 target/api-impact/api-compatibility.diff
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+      - name: Require a release impact that covers runtime dependency changes
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          for project in api-base .; do
+            # Runtime dependencies come only from pom.xml; an unchanged POM needs no resolution.
+            if cmp -s api-base/pom.xml pom.xml; then
+              : > "$project/target/runtime-dependencies.txt"
+            else
+              ./mvnw -B -ntp -q -f "$project/pom.xml" dependency:list -DincludeScope=runtime -Dsort=true \
+                -DoutputFile=target/runtime-dependencies.txt
+            fi
+          done
+          bash .github/scripts/dependency-impact.sh api-base/target/runtime-dependencies.txt \
+            target/runtime-dependencies.txt "$PR_TITLE" "$PR_BODY"
+      - name: Upload API reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: api-compatibility
+          path: |
+            target/japicmp/
+            target/api-impact/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  release_preparation:
+    name: Release preparation (dry run)
+    # Release-please reads its configuration from the pushed branch, which a fork PR's head is not;
+    # editing the PR title or body cannot change its result.
+    if: ${{ github.event_name != 'pull_request' || (!github.event.pull_request.head.repo.fork && github.event.action != 'edited') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Read the release-please Action pinned for release preparation
+        id: action
+        run: |
+          sha=$(sed -n 's#.*googleapis/release-please-action@\([0-9a-f]\{40\}\).*#\1#p' .github/workflows/release-prepare.yml)
+          test "${#sha}" = 40
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+      - name: Check out that Action and its locked dependencies
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: googleapis/release-please-action
+          ref: ${{ steps.action.outputs.sha }}
+          path: target/release-please-action
+          persist-credentials: false
+      - name: Dry-run release preparation; nothing is created
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: bash .github/scripts/release-please-dry-run.sh target/release-please-action "$BRANCH"
+
+  release_intent:
+    name: Release intent
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Validate Conventional Commit PR title
+        uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          types: |
+            feat
+            fix
+            perf
+            deps
+            revert
+            docs
+            style
+            chore
+            refactor
+            test
+            build
+            ci
+
+  required:
+    name: CI required
+    if: ${{ always() }}
+    needs: [verify, compatibility, dependencies, api_compatibility, release_preparation, release_intent]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every applicable verification job to succeed
+        env:
+          BUILD_RESULT: ${{ needs.verify.result }}
+          COMPATIBILITY_RESULT: ${{ needs.compatibility.result }}
+          DEPENDENCY_RESULT: ${{ needs.dependencies.result }}
+          API_RESULT: ${{ needs.api_compatibility.result }}
+          INTENT_RESULT: ${{ needs.release_intent.result }}
+          PREPARATION_RESULT: ${{ needs.release_preparation.result }}
+        run: |
+          test "$BUILD_RESULT" = success
+          test "$COMPATIBILITY_RESULT" = success
+          test "$DEPENDENCY_RESULT" = success
+          test "$API_RESULT" = success
+          test "$INTENT_RESULT" = success || test "$INTENT_RESULT" = skipped
+          test "$PREPARATION_RESULT" = success || test "$PREPARATION_RESULT" = skipped

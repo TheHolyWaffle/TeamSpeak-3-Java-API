@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.commands;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -28,39 +28,71 @@ package com.github.theholywaffle.teamspeak3.commands;
 
 public final class CommandEncoding {
 
-	private CommandEncoding() {}
+    private CommandEncoding() {}
 
-	public static String encode(String str) {
-		str = str.replace("\\", "\\\\");
+    public static String encode(String str) {
+        return encode(str, new StringBuilder(str.length())).toString();
+    }
 
-		str = str.replace(" ", "\\s");
-		str = str.replace("/", "\\/");
-		str = str.replace("|", "\\p");
-		str = str.replace("\b", "\\b");
-		str = str.replace("\f", "\\f");
-		str = str.replace("\n", "\\n");
-		str = str.replace("\r", "\\r");
-		str = str.replace("\t", "\\t");
-		str = str.replace(String.valueOf((char) 7), "\\a");
-		str = str.replace(String.valueOf((char) 11), "\\v");
+    /**
+     * Appends the escaped form of a value.
+     *
+     * @param str the plain value
+     * @param encoded the builder to append to
+     * @return {@code encoded}
+     */
+    public static StringBuilder encode(String str, StringBuilder encoded) {
+        for (int i = 0; i < str.length(); i++) {
+            char ch = str.charAt(i);
+            switch (ch) {
+                case '\\' -> encoded.append("\\\\");
+                case ' ' -> encoded.append("\\s");
+                case '/' -> encoded.append("\\/");
+                case '|' -> encoded.append("\\p");
+                case '\b' -> encoded.append("\\b");
+                case '\f' -> encoded.append("\\f");
+                case '\n' -> encoded.append("\\n");
+                case '\r' -> encoded.append("\\r");
+                case '\t' -> encoded.append("\\t");
+                case 7 -> encoded.append("\\a");
+                case 11 -> encoded.append("\\v");
+                default -> encoded.append(ch);
+            }
+        }
+        return encoded;
+    }
 
-		return str;
-	}
-
-	public static String decode(String str) {
-		str = str.replace("\\s", " ");
-		str = str.replace("\\/", "/");
-		str = str.replace("\\p", "|");
-		str = str.replace("\\b", "\b");
-		str = str.replace("\\f", "\f");
-		str = str.replace("\\n", "\n");
-		str = str.replace("\\r", "\r");
-		str = str.replace("\\t", "\t");
-		str = str.replace("\\a", String.valueOf((char) 7)); // Bell
-		str = str.replace("\\v", String.valueOf((char) 11)); // Vertical Tab
-
-		str = str.replace("\\\\", "\\");
-
-		return str;
-	}
+    /**
+     * Decodes each escape once. Unknown escapes and a trailing backslash are
+     * preserved verbatim, allowing forward-compatible and malformed values.
+     *
+     * @param str the encoded value
+     * @return the decoded value
+     */
+    public static String decode(String str) {
+        StringBuilder decoded = new StringBuilder(str.length());
+        for (int i = 0; i < str.length(); i++) {
+            char ch = str.charAt(i);
+            if (ch != '\\' || i + 1 == str.length()) {
+                decoded.append(ch);
+                continue;
+            }
+            char escaped = str.charAt(++i);
+            switch (escaped) {
+                case '\\' -> decoded.append('\\');
+                case 's' -> decoded.append(' ');
+                case '/' -> decoded.append('/');
+                case 'p' -> decoded.append('|');
+                case 'b' -> decoded.append('\b');
+                case 'f' -> decoded.append('\f');
+                case 'n' -> decoded.append('\n');
+                case 'r' -> decoded.append('\r');
+                case 't' -> decoded.append('\t');
+                case 'a' -> decoded.append((char) 7);
+                case 'v' -> decoded.append((char) 11);
+                default -> decoded.append('\\').append(escaped);
+            }
+        }
+        return decoded.toString();
+    }
 }

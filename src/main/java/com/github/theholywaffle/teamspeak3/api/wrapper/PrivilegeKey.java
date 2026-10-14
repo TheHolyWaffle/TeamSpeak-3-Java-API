@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,44 +26,46 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.Date;
+import com.github.theholywaffle.teamspeak3.api.PrivilegeKeyType;
+import java.time.Instant;
 import java.util.Map;
 
 public class PrivilegeKey extends Wrapper {
 
-	public PrivilegeKey(Map<String, String> map) {
-		super(map);
-	}
+    public PrivilegeKey(Map<String, String> map) {
+        super(map);
+    }
 
-	public String getToken() {
-		return get("token");
-	}
+    public String getToken() {
+        return require("token");
+    }
 
-	public int getType() {
-		return getInt("token_type");
-	}
+    /** @return the key type, or {@link PrivilegeKeyType#UNKNOWN} for a type this library does not know */
+    public PrivilegeKeyType getType() {
+        return requireCode("token_type", PrivilegeKeyType::fromIndex);
+    }
 
-	public boolean isServerGroupToken() {
-		return getType() == 0;
-	}
+    public boolean isServerGroupToken() {
+        return getType() == PrivilegeKeyType.SERVER_GROUP;
+    }
 
-	public boolean isChannelGroupToken() {
-		return !isServerGroupToken();
-	}
+    public boolean isChannelGroupToken() {
+        return getType() == PrivilegeKeyType.CHANNEL_GROUP;
+    }
 
-	public int getGroupId() {
-		return getInt("token_id1");
-	}
+    public int getGroupId() {
+        return requireInt("token_id1");
+    }
 
-	public int getChannelId() {
-		return getInt("token_id2");
-	}
+    public int getChannelId() {
+        return requireInt("token_id2");
+    }
 
-	public Date getCreated() {
-		return new Date(getLong("token_created") * 1000);
-	}
+    public Instant getCreated() {
+        return requireInstant("token_created");
+    }
 
-	public String getDescription() {
-		return get("token_description");
-	}
+    public String getDescription() {
+        return require("token_description");
+    }
 }

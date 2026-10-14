@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Ask a question
+    url: https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/discussions/categories/q-a
+    about: Usage questions and help with your setup go to Discussions Q&A.
+  - name: Report a vulnerability
+    url: https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/security/advisories/new
+    about: Report security issues privately, never in a public issue.

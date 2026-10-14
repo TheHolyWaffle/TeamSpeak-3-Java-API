@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,18 +27,29 @@ package com.github.theholywaffle.teamspeak3.api;
  */
 
 public enum PrivilegeKeyType {
+    SERVER_GROUP(0),
+    CHANNEL_GROUP(1),
 
-	SERVER_GROUP(0),
-	CHANNEL_GROUP(1);
+    /** A code this library does not know; read the raw value from the model's properties. */
+    UNKNOWN(-1);
 
-	private final int i;
+    private static final PrivilegeKeyType[] VALUES = values();
 
-	PrivilegeKeyType(int i) {
-		this.i = i;
-	}
+    private final int i;
 
-	public int getIndex() {
-		return i;
-	}
+    PrivilegeKeyType(int i) {
+        this.i = i;
+    }
 
+    public int getIndex() {
+        return i;
+    }
+
+    /**
+     * @param index the ServerQuery code
+     * @return the matching constant, or {@link #UNKNOWN} for a code this library does not know
+     */
+    public static PrivilegeKeyType fromIndex(int index) {
+        return CodeLookup.byIndex(VALUES, PrivilegeKeyType::getIndex, index, UNKNOWN);
+    }
 }

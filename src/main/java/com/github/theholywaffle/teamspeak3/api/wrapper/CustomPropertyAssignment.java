@@ -26,43 +26,27 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.Map;
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
+import java.util.Objects;
 
 /**
- * Wrapper class for the result to a {@code customsearch} command.
+ * A custom client property matched by {@code customsearch}.
+ *
+ * @param clientDatabaseId the client that has the property
+ * @param key the property key
+ * @param value the property value
  */
-public class CustomPropertyAssignment extends Wrapper {
+public record CustomPropertyAssignment(ClientDatabaseId clientDatabaseId, String key, String value) {
 
-	public CustomPropertyAssignment(Map<String, String> map) {
-		super(map);
-	}
+    public CustomPropertyAssignment {
+        Objects.requireNonNull(clientDatabaseId, "clientDatabaseId");
+        Objects.requireNonNull(key, "key");
+        Objects.requireNonNull(value, "value");
+    }
 
-	/**
-	 * Gets the database ID of the client that matched the custom client property search.
-	 *
-	 * @return the client's database ID
-	 *
-	 * @see Client#getDatabaseId()
-	 */
-	public int getClientDatabaseId() {
-		return getInt("cldbid");
-	}
-
-	/**
-	 * Gets the key of the matched custom client property.
-	 *
-	 * @return the key of the property
-	 */
-	public String getKey() {
-		return get("ident");
-	}
-
-	/**
-	 * Gets the value of the matched custom client property.
-	 *
-	 * @return the value of the property
-	 */
-	public String getValue() {
-		return get("value");
-	}
+    /** @throws com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException if a property is missing or malformed */
+    public static CustomPropertyAssignment from(Wrapper row) {
+        return new CustomPropertyAssignment(
+                row.requireDatabaseId("cldbid"), row.require("ident"), row.require("value"));
+    }
 }

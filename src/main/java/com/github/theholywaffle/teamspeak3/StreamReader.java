@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,177 +26,162 @@ package com.github.theholywaffle.teamspeak3;
  * #L%
  */
 
-import com.github.theholywaffle.teamspeak3.api.CommandFuture;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
 import com.github.theholywaffle.teamspeak3.commands.Command;
+import com.github.theholywaffle.teamspeak3.commands.ProtocolRedactor;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 import com.github.theholywaffle.teamspeak3.commands.response.ResponseBuilder;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.SocketTimeoutException;
+import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.SocketTimeoutException;
-import java.nio.charset.StandardCharsets;
+class StreamReader implements Runnable {
 
-class StreamReader extends Thread {
+    private static final Logger log = LoggerFactory.getLogger(StreamReader.class);
 
-	private static final Logger log = LoggerFactory.getLogger(StreamReader.class);
+    private final TS3Query ts3;
+    private final Connection con;
+    private final ProtocolLineReader in;
+    private final boolean logComms;
 
-	private final TS3Query ts3;
-	private final Connection con;
-	private final BufferedReader in;
-	private final boolean logComms;
+    private CommandQueue commandQueue = null;
+    private ResponseBuilder responseBuilder = null;
+    private boolean receivingResponses;
 
-	private CommandQueue commandQueue = null;
-	private ResponseBuilder responseBuilder = null;
-	private String lastEvent = "";
+    StreamReader(Connection connection, InputStream inStream, TS3Query query, QueryConfig config) throws IOException {
+        ts3 = query;
+        con = connection;
+        in = new ProtocolLineReader(inStream);
+        logComms = config.getEnableCommunicationsLogging();
+    }
 
-	StreamReader(Connection connection, InputStream inStream, TS3Query query, TS3Config config) throws IOException {
-		super("[TeamSpeak-3-Java-API] StreamReader");
+    @Override
+    public void run() {
+        while (!Thread.currentThread().isInterrupted()) {
+            String line;
 
-		ts3 = query;
-		con = connection;
-		in = new BufferedReader(new InputStreamReader(inStream, StandardCharsets.UTF_8));
-		logComms = config.getEnableCommunicationsLogging();
+            try {
+                // Will block until a full line of text could be read.
+                line = in.readLine();
+            } catch (SocketTimeoutException socketTimeout) {
+                // Really disconnected or just no data transferred for <commandTimeout> milliseconds?
+                if (con.isTimedOut()) {
+                    log.error("Connection timed out.", socketTimeout);
+                    break;
+                } else {
+                    continue;
+                }
+            } catch (IOException io) {
+                if (!Thread.currentThread().isInterrupted()) {
+                    log.error("Connection error occurred.", io);
+                }
+                break;
+            }
 
-		readWelcomeMessage();
-	}
+            if (line == null) {
+                // End of stream: connection terminated by server
+                log.error("Connection closed by the server.");
+                break;
+            } else if (line.isEmpty()) {
+                continue; // The server is sending garbage
+            }
 
-	private void readWelcomeMessage() throws IOException {
-		for (int i = 0; i < 4 || in.ready(); ++i) {
-			String welcomeMessage = in.readLine();
-			if (logComms) log.debug("< {}", welcomeMessage);
-		}
-	}
+            if (line.startsWith("notify")) {
+                handleEvent(line);
+            } else if (receivingResponses || line.startsWith("error ") || startsWithField(line)) {
+                // Welcome text is informational, not a fixed-size response frame.
+                // Protocol data is key/value text; error lines terminate a command.
+                receivingResponses = true;
+                // Response fragments never extend a command deadline.
+                try {
+                    handleCommandResponse(line);
+                } catch (IllegalArgumentException malformed) {
+                    log.error("Malformed command response: {}", ProtocolRedactor.redactLine(line), malformed);
+                    break;
+                }
+            } else {
+                logReceived("welcome", line);
+            }
+        }
 
-	@Override
-	public void run() {
-		while (!isInterrupted()) {
-			String line;
+        try {
+            in.close();
+        } catch (IOException ignored) {
+            // Ignore
+        }
 
-			try {
-				// Will block until a full line of text could be read.
-				line = in.readLine();
-			} catch (SocketTimeoutException socketTimeout) {
-				// Really disconnected or just no data transferred for <commandTimeout> milliseconds?
-				if (con.isTimedOut()) {
-					log.error("Connection timed out.", socketTimeout);
-					break;
-				} else {
-					continue;
-				}
-			} catch (IOException io) {
-				if (!isInterrupted()) {
-					log.error("Connection error occurred.", io);
-				}
-				break;
-			}
+        if (!Thread.currentThread().isInterrupted()) {
+            con.internalDisconnect();
+        }
+    }
 
-			if (line == null) {
-				// End of stream: connection terminated by server
-				log.error("Connection closed by the server.");
-				break;
-			} else if (line.isEmpty()) {
-				continue; // The server is sending garbage
-			}
+    private static boolean startsWithField(String line) {
+        int equals = line.indexOf('=');
+        int space = line.indexOf(' ');
+        return equals > 0 && (space == -1 || equals < space);
+    }
 
-			if (line.startsWith("notify")) {
-				handleEvent(line);
-			} else {
-				con.resetIdleTime();
-				handleCommandResponse(line);
-			}
-		}
+    private void handleEvent(String event) {
+        logReceived("event", event);
 
-		try {
-			in.close();
-		} catch (IOException ignored) {
-			// Ignore
-		}
+        String[] parts = event.split(" ", 2);
+        if (parts.length == 2) ts3.getEventManager().fireEvent(parts[0], parts[1]);
+        else ts3.getEventManager().malformedNotification();
+    }
 
-		if (!isInterrupted()) {
-			con.internalDisconnect();
-		}
-	}
+    private void handleCommandResponse(String response) {
+        if (responseBuilder == null) {
+            commandQueue = con.getCommandQueue();
+            Command command = commandQueue.peekReceiveQueue();
 
-	private void handleEvent(String event) {
-		if (logComms) log.debug("[event] < {}", event);
+            if (command == null) {
+                log.warn("[UNHANDLED] < {}", ProtocolRedactor.redactLine(response));
+                return;
+            }
 
-		// Filter out duplicate events for join, quit and channel move events
-		if (isDuplicate(event)) return;
+            responseBuilder = new ResponseBuilder(command);
+        }
 
-		String arr[] = event.split(" ", 2);
-		ts3.getEventManager().fireEvent(arr[0], arr[1]);
-	}
+        logReceived(responseBuilder.getCommand().getName(), response);
 
-	private void handleCommandResponse(String response) {
-		if (responseBuilder == null) {
-			commandQueue = con.getCommandQueue();
-			Command command = commandQueue.peekReceiveQueue();
+        if (response.startsWith("error ")) {
+            handleCommandError(responseBuilder, response);
 
-			if (command == null) {
-				log.warn("[UNHANDLED] < {}", response);
-				return;
-			}
+            responseBuilder = null;
+        } else {
+            responseBuilder.appendResponse(response);
+        }
+    }
 
-			responseBuilder = new ResponseBuilder(command);
-		}
+    private void handleCommandError(ResponseBuilder responseBuilder, String error) {
+        Command command = responseBuilder.getCommand();
+        if (command.getName().equals("quit")) {
+            // Response to a quit command received, we're done
+            Thread.currentThread().interrupt();
+        }
 
-		if (logComms) log.debug("[{}] < {}", responseBuilder.getCommand().getName(), response);
+        QueryError queryError = DefaultArrayResponse.parseError(error);
+        CompletableFuture<DefaultArrayResponse> future = command.getFuture();
 
-		if (response.startsWith("error ")) {
-			handleCommandError(responseBuilder, response);
+        if (queryError.isSuccessful()) {
+            DefaultArrayResponse response = responseBuilder.buildResponse();
 
-			commandQueue.removeFromReceiveQueue();
-			responseBuilder = null;
-		} else {
-			responseBuilder.appendResponse(response);
-		}
-	}
+            commandQueue.completeResponse(command, con, () -> future.complete(response));
+        } else {
+            log.debug("TS3 command error: {}", queryError);
 
-	private void handleCommandError(ResponseBuilder responseBuilder, String error) {
-		Command command = responseBuilder.getCommand();
-		if (command.getName().equals("quit")) {
-			// Response to a quit command received, we're done
-			interrupt();
-		}
+            commandQueue.completeResponse(
+                    command,
+                    con,
+                    () -> future.completeExceptionally(new TS3CommandFailedException(queryError, command.getName())));
+        }
+    }
 
-		QueryError queryError = DefaultArrayResponse.parseError(error);
-		CommandFuture<DefaultArrayResponse> future = command.getFuture();
-
-		if (queryError.isSuccessful()) {
-			DefaultArrayResponse response = responseBuilder.buildResponse();
-
-			ts3.submitUserTask("Future SuccessListener (" + command.getName() + ")",
-					() -> future.set(response));
-		} else {
-			log.debug("TS3 command error: {}", queryError);
-
-			ts3.submitUserTask("Future FailureListener (" + command.getName() + ")",
-					() -> future.fail(new TS3CommandFailedException(queryError, command.getName())));
-		}
-	}
-
-	private boolean isDuplicate(String eventMessage) {
-		if (!(eventMessage.startsWith("notifyclientmoved")
-				|| eventMessage.startsWith("notifycliententerview")
-				|| eventMessage.startsWith("notifyclientleftview"))) {
-
-			// Event that will never cause duplicates
-			return false;
-		}
-
-		if (eventMessage.equals(lastEvent)) {
-			// Duplicate event!
-			lastEvent = ""; // Let's only ever filter one duplicate
-			return true;
-		}
-
-		lastEvent = eventMessage;
-		return false;
-	}
+    private void logReceived(String name, String line) {
+        if (logComms && log.isDebugEnabled()) log.debug("[{}] < {}", name, ProtocolRedactor.redactLine(line));
+    }
 }

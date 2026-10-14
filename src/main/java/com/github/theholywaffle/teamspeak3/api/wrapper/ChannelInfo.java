@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,71 +26,93 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.Map;
-import java.util.UUID;
-
+import com.github.theholywaffle.teamspeak3.api.ChannelBannerMode;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 public class ChannelInfo extends ChannelBase {
 
-	private final int channelId;
+    private final int channelId;
 
-	public ChannelInfo(int channelId, Map<String, String> map) {
-		super(map);
-		this.channelId = channelId;
-	}
+    public ChannelInfo(int channelId, Map<String, String> map) {
+        super(map);
+        this.channelId = channelId;
+    }
 
-	@Override
-	public int getId() {
-		return channelId;
-	}
+    @Override
+    public int getId() {
+        return channelId;
+    }
 
-	public String getDescription() {
-		return get(ChannelProperty.CHANNEL_DESCRIPTION);
-	}
+    public String getDescription() {
+        return require(ChannelProperty.CHANNEL_DESCRIPTION);
+    }
 
-	public String getPassword() {
-		return get(ChannelProperty.CHANNEL_PASSWORD);
-	}
+    /** @return the hashed channel password, or empty if the channel has no password */
+    public Optional<String> getPassword() {
+        return findText(ChannelProperty.CHANNEL_PASSWORD);
+    }
 
-	public int getCodecLatencyFactor() {
-		return getInt(ChannelProperty.CHANNEL_CODEC_LATENCY_FACTOR);
-	}
+    /** @return the banner mode, or {@link ChannelBannerMode#UNKNOWN} for a mode this library does not know */
+    public ChannelBannerMode getBannerMode() {
+        return requireCode(ChannelProperty.CHANNEL_BANNER_MODE, ChannelBannerMode::fromIndex);
+    }
 
-	public UUID getUniqueIdentifier() {
-		return UUID.fromString(get(ChannelProperty.CHANNEL_UNIQUE_IDENTIFIER));
-	}
+    /** @return the banner image URL, or empty if none is set */
+    public Optional<String> getBannerGraphicsUrl() {
+        return findText(ChannelProperty.CHANNEL_BANNER_GFX_URL);
+    }
 
-	public boolean isEncrypted() {
-		return !getBoolean(ChannelProperty.CHANNEL_CODEC_IS_UNENCRYPTED);
-	}
+    public int getCodecLatencyFactor() {
+        return requireInt(ChannelProperty.CHANNEL_CODEC_LATENCY_FACTOR);
+    }
 
-	public boolean hasUnlimitedClients() {
-		return getBoolean(ChannelProperty.CHANNEL_FLAG_MAXCLIENTS_UNLIMITED);
-	}
+    public UUID getUniqueIdentifier() {
+        return requireParsed(ChannelProperty.CHANNEL_UNIQUE_IDENTIFIER.getName(), "a UUID", UUID::fromString);
+    }
 
-	public boolean hasUnlimitedFamilyClients() {
-		return getBoolean(ChannelProperty.CHANNEL_FLAG_MAXFAMILYCLIENTS_UNLIMITED);
-	}
+    public boolean isEncrypted() {
+        return !requireBoolean(ChannelProperty.CHANNEL_CODEC_IS_UNENCRYPTED);
+    }
 
-	public boolean hasInheritedMaxFamilyClients() {
-		return getBoolean(ChannelProperty.CHANNEL_FLAG_MAXFAMILYCLIENTS_INHERITED);
-	}
+    public boolean hasUnlimitedClients() {
+        return requireBoolean(ChannelProperty.CHANNEL_FLAG_MAXCLIENTS_UNLIMITED);
+    }
 
-	public String getFilePath() {
-		return get(ChannelProperty.CHANNEL_FILEPATH);
-	}
+    public boolean hasUnlimitedFamilyClients() {
+        return requireBoolean(ChannelProperty.CHANNEL_FLAG_MAXFAMILYCLIENTS_UNLIMITED);
+    }
 
-	public boolean isForcedSilence() {
-		return getBoolean(ChannelProperty.CHANNEL_FORCED_SILENCE);
-	}
+    public boolean hasInheritedMaxFamilyClients() {
+        return requireBoolean(ChannelProperty.CHANNEL_FLAG_MAXFAMILYCLIENTS_INHERITED);
+    }
 
-	public String getPhoneticName() {
-		return get(ChannelProperty.CHANNEL_NAME_PHONETIC);
-	}
+    public String getFilePath() {
+        return require(ChannelProperty.CHANNEL_FILEPATH);
+    }
 
-	@Override
-	public boolean isFamilyEmpty() {
-		return (getSecondsEmpty() >= 0);
-	}
+    public boolean isForcedSilence() {
+        return requireBoolean(ChannelProperty.CHANNEL_FORCED_SILENCE);
+    }
+
+    public String getPhoneticName() {
+        return require(ChannelProperty.CHANNEL_NAME_PHONETIC);
+    }
+
+    @Override
+    public boolean isFamilyEmpty() {
+        return getTimeEmpty().isPresent();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return super.equals(other) && channelId == ((ChannelInfo) other).channelId;
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * super.hashCode() + channelId;
+    }
 }

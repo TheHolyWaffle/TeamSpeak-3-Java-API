@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,24 +26,24 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.Map;
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
+import java.util.Objects;
 
-public class ChannelGroupClient extends Wrapper {
+/**
+ * A channel group membership from {@code channelgroupclientlist}.
+ *
+ * @param channelId the channel in which the client has the group
+ * @param clientDatabaseId the member
+ * @param channelGroupId the channel group
+ */
+public record ChannelGroupClient(int channelId, ClientDatabaseId clientDatabaseId, int channelGroupId) {
 
-	public ChannelGroupClient(Map<String, String> map) {
-		super(map);
-	}
+    public ChannelGroupClient {
+        Objects.requireNonNull(clientDatabaseId, "clientDatabaseId");
+    }
 
-	public int getChannelId() {
-		return getInt("cid");
-	}
-
-	public int getClientDatabaseId() {
-		return getInt("cldbid");
-	}
-
-	public int getChannelGroupId() {
-		return getInt("cgid");
-	}
-
+    /** @throws com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException if a property is missing or malformed */
+    public static ChannelGroupClient from(Wrapper row) {
+        return new ChannelGroupClient(row.requireInt("cid"), row.requireDatabaseId("cldbid"), row.requireInt("cgid"));
+    }
 }

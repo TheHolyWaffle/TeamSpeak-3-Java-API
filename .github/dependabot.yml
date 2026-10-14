@@ -1,0 +1,88 @@
+# Version updates for everything the build pins. See docs/maintenance.md.
+version: 2
+updates:
+  - package-ecosystem: maven
+    directories:
+      - /
+      - /src/test/consumers/maven
+    schedule:
+      interval: weekly # Mondays
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: deps
+      prefix-development: build
+    ignore:
+      # The API baseline and the consumers' staged library change only with a release.
+      - dependency-name: com.github.theholywaffle:teamspeak3-api
+    groups:
+      # Titled deps: by Dependabot; retitle build: (docs/maintenance.md#release-intent).
+      build-toolchain:
+        patterns:
+          - org.apache.maven:apache-maven
+          - org.apache.maven.wrapper:*
+          - com.google.errorprone:*
+          - com.palantir.javaformat:*
+      release-tooling:
+        patterns:
+          - org.jreleaser:*
+          - com.github.siom79.japicmp:*
+      # slf4j-api and the test binding share a version property.
+      slf4j:
+        patterns:
+          - org.slf4j:*
+      test-libraries:
+        dependency-type: development
+        patterns:
+          - org.junit*
+          - org.testcontainers:*
+        update-types: [minor, patch]
+      build-plugins:
+        dependency-type: development
+        patterns:
+          - '*'
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly # Mondays
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns:
+          - '*'
+        exclude-patterns:
+          # Release tooling gets its own PR and validation.
+          - googleapis/release-please-action
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directory: /src/test/resources/teamspeak3
+    schedule:
+      interval: weekly # Mondays
+    commit-message:
+      prefix: test
+    ignore:
+      # TeamSpeak 3 only; another major version is a support decision, not an update.
+      - dependency-name: teamspeak
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: gradle
+    directory: /src/test/consumers/gradle
+    schedule:
+      interval: weekly # Mondays
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: test
+    ignore:
+      - dependency-name: com.github.theholywaffle:teamspeak3-api
+    groups:
+      gradle-consumer:
+        patterns:
+          - '*'
+        update-types: [minor, patch]

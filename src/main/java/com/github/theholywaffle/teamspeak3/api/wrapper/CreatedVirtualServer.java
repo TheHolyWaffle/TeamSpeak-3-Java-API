@@ -12,10 +12,10 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,23 +26,24 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
  * #L%
  */
 
-import java.util.Map;
+import java.util.Objects;
 
-public class CreatedVirtualServer extends Wrapper {
+/**
+ * A newly created virtual server, from {@code servercreate}.
+ *
+ * @param id the virtual server ID
+ * @param port the voice port
+ * @param serverAdminToken the privilege key granting the server admin group
+ */
+public record CreatedVirtualServer(int id, int port, String serverAdminToken) {
 
-	public CreatedVirtualServer(Map<String, String> map) {
-		super(map);
-	}
+    public CreatedVirtualServer {
+        Objects.requireNonNull(serverAdminToken, "serverAdminToken");
+    }
 
-	public int getId() {
-		return getInt("sid");
-	}
-
-	public int getPort() {
-		return getInt("virtualserver_port");
-	}
-
-	public String getServerAdminToken() {
-		return get("token");
-	}
+    /** @throws com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException if a property is missing or malformed */
+    public static CreatedVirtualServer from(Wrapper row) {
+        return new CreatedVirtualServer(
+                row.requireInt("sid"), row.requireInt("virtualserver_port"), row.require("token"));
+    }
 }
