@@ -1,0 +1,27 @@
+.github/scripts/api-accounting.sh
+  s_946b96cdd3f8c4::t_5dd40124c9eafc 1-34
+.github/scripts/test-api-accounting.sh
+  s_946b96cdd3f8c4::t_f8b7c463897d7c 1-25
+.github/workflows/maven.yml
+  s_946b96cdd3f8c4::t_f776f22305a152 46-47
+.github/workflows/verify.yml
+  s_946b96cdd3f8c4::t_9f2684ef3876b4 33-34
+docs/api-differences-2.0.md
+  s_946b96cdd3f8c4::t_10469f100d88b9 1-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "093e267be0de24205e30e63e8be7cd4cfd7815f8",
+  "prompts": {},
+  "sessions": {
+    "s_946b96cdd3f8c4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "09493001-efc7-4912-bd48-cec868b5f761",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}

@@ -1,0 +1,27 @@
+.github/scripts/release-consistency.sh
+  s_4b59aeaac7f409::t_a0d300b203abc7 1-16
+.github/scripts/release-rehearsal.sh
+  s_4b59aeaac7f409::t_f92aaa88b5b139 25-26
+.github/scripts/test-release-workflow.sh
+  s_4b59aeaac7f409::t_263b60f9105619 42
+.github/workflows/release.yml
+  s_4b59aeaac7f409::t_d903fba4976e04 173-174,205-206
+docs/releases.md
+  s_4b59aeaac7f409::t_239d3ac5e4e941 555-556,591
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a134865edc89d0b0c884b70077f5a033d4e3e9e6",
+  "prompts": {},
+  "sessions": {
+    "s_4b59aeaac7f409": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "47454da8-fbca-4629-844f-741d95d231fa",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}

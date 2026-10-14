@@ -1,0 +1,21 @@
+.github/scripts/release-please-dry-run.sh
+  s_946b96cdd3f8c4::t_9417a9034ecb8d 27-43
+.github/scripts/synthetic-release.sh
+  s_946b96cdd3f8c4::t_caec3e7cf27f97 4-5,8,13-16,18-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d99ccfe72a591753ddded324c04b0c08493c60e0",
+  "prompts": {},
+  "sessions": {
+    "s_946b96cdd3f8c4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "09493001-efc7-4912-bd48-cec868b5f761",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
