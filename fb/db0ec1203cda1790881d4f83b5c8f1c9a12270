@@ -1,0 +1,18 @@
+README.md
+  h_b0b95817cb397c 36
+docs/migration-2.0.md
+  h_b0b95817cb397c 15,17,22-24
+docs/web-query.md
+  h_b0b95817cb397c 4-6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fbdb0ec1203cda1790881d4f83b5c8f1c9a12270",
+  "prompts": {},
+  "humans": {
+    "h_b0b95817cb397c": {
+      "author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
