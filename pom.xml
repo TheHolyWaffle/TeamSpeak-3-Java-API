@@ -441,6 +441,11 @@
 										<include>com.github.theholywaffle.teamspeak3.FileTransferHelper*</include>
 										<include>com.github.theholywaffle.teamspeak3.QueryConfig</include>
 										<include>com.github.theholywaffle.teamspeak3.SshHostKeyPolicy*</include>
+										<include>com.github.theholywaffle.teamspeak3.TS3WebQuery</include>
+										<include>com.github.theholywaffle.teamspeak3.WebQuery*</include>
+										<include>com.github.theholywaffle.teamspeak3.ServerQueryBackend</include>
+										<include>com.github.theholywaffle.teamspeak3.api.exception.TS3AuthenticationFailedException</include>
+										<include>com.github.theholywaffle.teamspeak3.api.exception.TS3HttpException</include>
 										<include>com.github.theholywaffle.teamspeak3.api.CommandFutures*</include>
 										<include>com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException</include>
 										<include>com.github.theholywaffle.teamspeak3.api.exception.TS3TimeoutException</include>

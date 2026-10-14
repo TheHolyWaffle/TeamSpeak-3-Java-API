@@ -59,8 +59,8 @@ suite writes `target/site/jacoco-it/`. CI uploads both.
 The check is not a global percentage. Per-class floors cover the code where a regression is
 hard to see in review: the protocol codec, line reader, stream reader/writer and redaction,
 commands and responses, command queue, connection lifecycle, deadlines, keep-alive, events,
-file transfer, futures, reconnect strategies and handlers, SSH host-key policy and core
-exceptions. Each class needs 80% of lines and 75% of branches. Four classes need 50% of
+file transfer, futures, reconnect strategies and handlers, SSH host-key policy, the Web Query
+client, configuration, JSON codec and protocol mapping, and core exceptions. Each class needs 80% of lines and 75% of branches. Four classes need 50% of
 branches: `CommandFutures.RequestFuture`, `ReconnectingConnectionHandler`,
 `ReconnectStrategy.UserControlled` and `SessionConfiguration.Subscription`. Their remaining
 branches are concurrent state races, which the integration suite exercises. Domain facades

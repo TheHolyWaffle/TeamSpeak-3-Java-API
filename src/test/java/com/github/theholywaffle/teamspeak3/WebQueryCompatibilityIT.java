@@ -210,6 +210,12 @@ class WebQueryCompatibilityIT {
             assertEquals(databaseClient, owned.getOwner());
             assertTrue(keys.list(databaseClient).stream().anyMatch(key -> key.getId() == owned.getId()));
             keys.delete(owned.getId());
+            var notOnServer = assertThrows(
+                    TS3CommandFailedException.class,
+                    () -> keys.add(ApiKeyScope.READ, Duration.ofDays(1), readKey.getOwner()));
+            evidence.add("owner without a database client on the server "
+                    + new TreeMap<>(notOnServer.getError().getMap()));
+            assertEquals(512, notOnServer.getErrorId());
             try (var reader = web(target, readKey.getSecret().orElseThrow())) {
                 assertFalse(reader.getApi(1).channels().list().isEmpty());
                 var denied = assertThrows(
@@ -322,6 +328,15 @@ class WebQueryCompatibilityIT {
                 serverGroups.delete(group);
             }
             assertTrue(serverGroups.list().stream().noneMatch(g -> g.getId() == group));
+            int typedGroup = serverGroups.create("web sg typed " + target, PermissionGroupDatabaseType.REGULAR);
+            assertEquals(
+                    PermissionGroupDatabaseType.REGULAR,
+                    serverGroups.list().stream()
+                            .filter(g -> g.getId() == typedGroup)
+                            .findFirst()
+                            .orElseThrow()
+                            .getType());
+            serverGroups.delete(typedGroup, false);
 
             var channelGroups = api.channelGroups();
             int channelGroup = channelGroups.create("web cg " + target);
@@ -343,6 +358,10 @@ class WebQueryCompatibilityIT {
                 channelGroups.delete(channelGroup, true);
             }
             assertTrue(channelGroups.list().stream().noneMatch(g -> g.getId() == channelGroup));
+            int typedChannelGroup = channelGroups.create("web cg typed " + target, PermissionGroupDatabaseType.REGULAR);
+            assertTrue(channelGroups.list().stream().anyMatch(g -> g.getId() == typedChannelGroup));
+            channelGroups.delete(typedChannelGroup);
+            assertTrue(channelGroups.list().stream().noneMatch(g -> g.getId() == typedChannelGroup));
         } finally {
             record(target, "groups", evidence);
         }
@@ -619,6 +638,7 @@ class WebQueryCompatibilityIT {
                 api.messages().sendServer("server " + target);
                 assertEquals("server " + target, nextText(texts).getMessage());
                 api.messages().broadcast("broadcast " + target);
+                assertEquals("broadcast " + target, nextText(texts).getMessage());
                 api.moveQuery(1);
                 assertEquals(1, api.whoAmI().getChannelId());
                 api.setNickname("web-" + target);
