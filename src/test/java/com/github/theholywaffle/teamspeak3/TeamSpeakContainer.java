@@ -8,24 +8,46 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.StringWriter;
 import java.io.UncheckedIOException;
+import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.GeneralSecurityException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
 import java.security.PublicKey;
+import java.security.cert.X509Certificate;
 import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 import net.schmizz.sshj.DefaultConfig;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.common.KeyType;
 import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.transport.verification.HostKeyVerifier;
 import net.schmizz.sshj.transport.verification.OpenSSHKnownHosts;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.GeneralName;
+import org.bouncycastle.asn1.x509.GeneralNames;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
+import org.bouncycastle.openssl.jcajce.JcaPKCS8Generator;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -48,7 +70,11 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer>
     /** The server version the pinned image reports: its tag. */
     static final String TS3_VERSION = TS3_IMAGE.substring("teamspeak:".length(), TS3_IMAGE.indexOf('@'));
 
+    private static final String WEB_QUERY_CERTIFICATE = "/tmp/webquery-certificate.pem";
+    private static final String WEB_QUERY_PRIVATE_KEY = "/tmp/webquery-private-key.pem";
+
     PublicKey hostKey;
+    SSLContext webQueryTrust;
     String sshBanner;
     String algorithms;
     String queryBanner;
@@ -74,8 +100,12 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer>
                             try {
                                 // Connections before the allowlist is active count against flood protection
                                 // and can block later queries from the Docker gateway address.
-                                if (!getLogs().contains(ALLOWLIST_LOADED))
-                                    throw new IOException("Allowlist not loaded");
+                                String logs = getLogs();
+                                if (!logs.contains(ALLOWLIST_LOADED)) throw new IOException("Allowlist not loaded");
+                                if (webQueryTrust != null
+                                        && !(logs.contains("listening for http query")
+                                                && logs.contains("listening for https query")))
+                                    throw new IOException("Web Query not listening");
                                 probeSsh();
                                 probeRaw();
                                 return;
@@ -117,6 +147,73 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer>
     TeamSpeakContainer withFileTransferPort() {
         addExposedPort(30033);
         return this;
+    }
+
+    /**
+     * Also serves Web Query over HTTP (10080) and HTTPS (10443). HTTPS uses a certificate generated for
+     * this fixture only, trusted by {@link #webQueryTrust} and never by the JVM default trust store.
+     */
+    TeamSpeakContainer withWebQuery() {
+        try {
+            KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+            generator.initialize(2048);
+            KeyPair pair = generator.generateKeyPair();
+            X500Name subject = new X500Name("CN=teamspeak3-api integration fixture");
+            Instant now = Instant.now();
+            String dockerHost = DockerClientFactory.instance().dockerHostIpAddress();
+            var names = new java.util.LinkedHashSet<GeneralName>(List.of(
+                    new GeneralName(GeneralName.dNSName, "localhost"),
+                    new GeneralName(GeneralName.iPAddress, "127.0.0.1")));
+            names.add(new GeneralName(
+                    dockerHost.matches("[0-9.]+|.*:.*") ? GeneralName.iPAddress : GeneralName.dNSName, dockerHost));
+            X509Certificate certificate = new JcaX509CertificateConverter()
+                    .getCertificate(new JcaX509v3CertificateBuilder(
+                                    subject,
+                                    BigInteger.valueOf(now.toEpochMilli()),
+                                    Date.from(now.minus(Duration.ofHours(1))),
+                                    Date.from(now.plus(Duration.ofDays(1))),
+                                    subject,
+                                    pair.getPublic())
+                            .addExtension(
+                                    Extension.subjectAlternativeName,
+                                    false,
+                                    new GeneralNames(names.toArray(GeneralName[]::new)))
+                            .build(new JcaContentSignerBuilder("SHA256withRSA").build(pair.getPrivate())));
+            KeyStore trust = KeyStore.getInstance(KeyStore.getDefaultType());
+            trust.load(null, null);
+            trust.setCertificateEntry("fixture", certificate);
+            TrustManagerFactory trustManagers =
+                    TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            trustManagers.init(trust);
+            webQueryTrust = SSLContext.getInstance("TLS");
+            webQueryTrust.init(null, trustManagers.getTrustManagers(), null);
+            withCopyToContainer(Transferable.of(pem(certificate), 0644), WEB_QUERY_CERTIFICATE);
+            withCopyToContainer(
+                    Transferable.of(pem(new JcaPKCS8Generator(pair.getPrivate(), null)), 0644), WEB_QUERY_PRIVATE_KEY);
+        } catch (GeneralSecurityException | OperatorCreationException | IOException e) {
+            throw new IllegalStateException("Could not create the Web Query fixture certificate", e);
+        }
+        addExposedPorts(10080, 10443);
+        withEnv("TS3SERVER_QUERY_PROTOCOLS", "raw,ssh,http,https");
+        return withCommand(
+                "ts3server",
+                "query_https_certificate_file=" + WEB_QUERY_CERTIFICATE,
+                "query_https_private_key_file=" + WEB_QUERY_PRIVATE_KEY);
+    }
+
+    private static String pem(Object object) throws IOException {
+        var text = new StringWriter();
+        try (var writer = new JcaPEMWriter(text)) {
+            writer.writeObject(object);
+        }
+        return text.toString();
+    }
+
+    /** @return a Web Query configuration for this fixture; HTTPS trusts only the fixture certificate */
+    WebQueryConfig.Builder webQueryConfig(boolean https, String apiKey) {
+        var uri = URI.create((https ? "https://" : "http://") + getHost() + ":" + getMappedPort(https ? 10443 : 10080));
+        var builder = WebQueryConfig.builder(uri, apiKey).setRequestTimeout(Duration.ofSeconds(10));
+        return https ? builder.setSslContext(webQueryTrust) : builder.setPlaintextHttpAllowed(true);
     }
 
     @Override
