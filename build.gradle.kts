@@ -128,6 +128,9 @@ val integrationTest = tasks.register<Test>("integrationTest") {
     classpath = sourceSets.test.get().runtimeClasspath
     include("**/*IT.class")
     timeout = Duration.ofMinutes(10)
+    // The result depends on a live server, and the evidence in build/compatibility is not a task output.
+    outputs.upToDateWhen { false }
+    outputs.doNotCacheIf("it verifies a live server") { true }
     shouldRunAfter(tasks.test, debugLoggingTest)
     finalizedBy("jacocoIntegrationTestReport")
 }
