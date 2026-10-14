@@ -4,8 +4,6 @@ import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Semaphore;
 import java.util.function.Function;
 
 /** Executes the commands of the shared domain APIs: a ServerQuery session or Web Query requests. */
@@ -23,7 +21,4 @@ interface QueryBackend {
 
     /** Runs a file transfer, or fails it when the backend has no file-transfer support. */
     <T> CompletableFuture<T> withFileTransfers(Function<FileTransfers, CompletableFuture<T>> transfer);
-
-    /** Resources shared by the file transfers of one query. */
-    record FileTransfers(FileTransferHelper helper, Semaphore admission, Executor callbacks) {}
 }

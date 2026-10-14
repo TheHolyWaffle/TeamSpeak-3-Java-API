@@ -232,7 +232,7 @@ public final class FileApiAsync {
     }
 
     private <T> CompletableFuture<T> executeTransfer(
-            QueryBackend.FileTransfers files, Command command, String failureMessage, TransferWork<T> transfer) {
+            FileTransfers files, Command command, String failureMessage, TransferWork<T> transfer) {
         var finished = new CompletableFuture<Void>();
         var work = new CompletableFuture<T>();
         var operation = files.helper().newOperation();
@@ -272,7 +272,7 @@ public final class FileApiAsync {
     }
 
     private static <T> void runFileWork(
-            QueryBackend.FileTransfers files,
+            FileTransfers files,
             FileTransferHelper.Operation operation,
             CompletableFuture<T> work,
             String abortMessage,
