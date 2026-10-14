@@ -1,6 +1,6 @@
 [versions]
 jacoco = "0.8.15"
-palantir-java-format = "2.99.0"
+palantir-java-format = "2.102.0"
 slf4j = "2.0.20"
 
 [libraries]
