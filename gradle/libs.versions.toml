@@ -4,7 +4,7 @@ palantir-java-format = "2.102.0"
 slf4j = "2.0.20"
 
 [libraries]
-bouncycastle-bom = "org.bouncycastle:bc-jdk18on-bom:1.86"
+bouncycastle-bom = "org.bouncycastle:bc-jdk18on-bom:1.86.2"
 bouncycastle-pkix = { module = "org.bouncycastle:bcpkix-jdk18on" }
 bouncycastle-prov = { module = "org.bouncycastle:bcprov-jdk18on" }
 gson = "com.google.code.gson:gson:2.14.0"
