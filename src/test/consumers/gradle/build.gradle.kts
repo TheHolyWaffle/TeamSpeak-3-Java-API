@@ -3,8 +3,8 @@ plugins {
     application
 }
 
-val teamspeak3Version: String by project
-val stagingRepository: String by project
+val teamspeak3Version = providers.gradleProperty("teamspeak3Version").get()
+val stagingRepository = providers.gradleProperty("stagingRepository").get()
 
 repositories {
     // The library may only come from the staged repository, never a cache or Central.

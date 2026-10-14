@@ -72,7 +72,7 @@ identity, byte equality cannot distinguish duplicate delivery from a legitimate
 repeat, and the previous filter could discard events even across intervening
 traffic. Consumers that require action deduplication must define it for their own
 application. The integration probe records join/move/leave payloads for the pinned
-TS3 RAW and TS3 SSH combinations in `target/compatibility/*-notifications.txt`;
+TS3 RAW and TS3 SSH combinations in `build/compatibility/*-notifications.txt`;
 scripted regressions cover malformed/unknown input and identical repeated frames.
 
 Bounds here cover command/event counts and callback concurrency, not payload byte

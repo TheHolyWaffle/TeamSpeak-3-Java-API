@@ -1,18 +1,16 @@
 # ServerQuery integration tests
 
-Use JDK 25, the Maven Wrapper, and a running Docker daemon. No existing TeamSpeak
+Use JDK 25 and a running Docker daemon. No existing TeamSpeak
 server, persistent data, query account or SSH trust file is needed:
 
 ```sh
-./mvnw -B -ntp -Pintegration verify
+./gradlew build integrationTest
 ```
 
-The default `./mvnw -B -ntp verify` runs fast Surefire tests without starting
-Docker. The integration profile adds Failsafe `*IT` tests; use `verify`, not just
-`integration-test`, so failures fail the build. Docker absence, image pull or
-license failures, failed readiness and missing integration tests fail this profile;
-none are treated as skipped compatibility checks. Failsafe bounds the entire
-fork to ten minutes, and each fixture allows ninety seconds for authenticated
+The default `./gradlew build` runs fast unit tests without starting Docker.
+`integrationTest` runs the `*IT` tests. Docker absence, image pull or license
+failures, failed readiness and missing integration tests fail the task; none are
+treated as skipped compatibility checks. The task is bounded to ten minutes, and each fixture allows ninety seconds for authenticated
 readiness. First image pulls also need registry access.
 
 For an interactive server session using the same fixture, see the
@@ -64,21 +62,17 @@ usable framing after an error. Additional live SSH regressions cover first-key
 persistence, subsequent trusted connection, rejected credentials and a changed
 RSA host key. The readiness client records server SSH banners, negotiated crypto
 and the query greeting before any transport/API redesign. Reports under
-`target/compatibility/` and Failsafe reports record exact server version/build,
+`build/compatibility/` and the test reports record exact server version/build,
 image digest and daemon architecture. CI uploads them even on failure. Generated
 server credentials (passwords, privilege keys and API keys) are redacted from
 container startup diagnostics.
 
 ## CI and scheduled revalidation
 
-The required Maven CI calls `compatibility.yml` on Linux with Java 25, and the
-aggregate `CI required` job requires its success. The workflow also supports
-manual runs, optionally against a candidate image, and weekly scheduled revalidation
-of the pin. **Upstream update detection** runs the same suite against a newer official
-TS3 image as soon as one is published; see [scheduled detection](maintenance.md#scheduled-detection).
-GitHub runs scheduled and manually dispatched workflows only when they exist on the
-default branch, so both become active after final integration into `master`. No workflow
-here publishes artifacts or changes the pin; Renovate proposes pin updates as PRs.
+The **ServerQuery compatibility** job in `ci.yml` runs on Linux with Java 25, and
+the aggregate `CI required` job requires its success. CI also runs weekly to
+revalidate the pin. Renovate proposes newer official TS3 images as PRs, which run
+this suite; see [TS3 image updates](maintenance.md#ts3-image-updates).
 
 Review a newer official TS3 version/digest, inspect its manifest, rerun this suite
 on Linux amd64 and Apple Silicon, update the expected version and pins (including
@@ -89,8 +83,8 @@ Scheduled failures require investigation, not skipped tests.
 
 This is test/build infrastructure (`test:` release intent), with no production API
 or default changes. Testcontainers is test-scoped and is excluded from published
-runtime dependencies and the published artifacts. The integration profile is
-opt-in locally and mandatory in modernization CI. This baseline verifies only
+runtime dependencies and the published artifacts. The integration suite is
+opt-in locally and mandatory in CI. This baseline verifies only
 the exact two TS3 combinations above; it does not promise untested commands,
 notifications, file transfers or voice. Broader command/event coverage
 and transport redesign remain with their later owning tasks.
@@ -99,12 +93,12 @@ Sources: [official TS3 image documentation](https://hub.docker.com/_/teamspeak),
 [TS3 image entrypoint](https://github.com/TeamSpeak-Systems/teamspeak-linux-docker-images/blob/e03f9a91761c389d42568b7c0cdee63e77d38fb0/alpine/entrypoint.sh),
 [Testcontainers waits](https://java.testcontainers.org/features/startup_and_waits/),
 [Testcontainers 2.0.5 release](https://github.com/testcontainers/testcontainers-java/releases/tag/2.0.5),
-[FailSafe usage](https://maven.apache.org/surefire/maven-failsafe-plugin/usage.html).
+[Gradle test tasks](https://docs.gradle.org/current/userguide/java_testing.html).
 
 The task #438 notification probe additionally registers overlapping server/channel
 subscriptions and checks query-client join, move and leave frames on TS3 RAW,
 and TS3 SSH. It records decoded payloads in
-`target/compatibility/*-notifications.txt` and asserts one frame per tested action,
+`build/compatibility/*-notifications.txt` and asserts one frame per tested action,
 no malformed notifications, callback failures or event loss. Scripted tests cover
 unknown/malformed notifications and repeated identical frames that real servers
 are not expected to emit on demand. See [event migration notes](events-and-capacity.md).
@@ -127,5 +121,5 @@ in-memory `SSLContext`; the server reads the PEM files copied into the container
 additionally waits for both Web Query listeners. API keys are created over RAW for that
 fixture only and redacted from container logs and evidence. Each domain runs over HTTP and
 HTTPS against the same pinned image. Lifecycle, snapshots, permission reset and process
-shutdown use a second disposable server. Evidence goes to `target/compatibility/TS3_WEBQUERY*`.
+shutdown use a second disposable server. Evidence goes to `build/compatibility/TS3_WEBQUERY*`.
 Coverage and limits are listed in [Web Query](web-query.md#supported-operations).

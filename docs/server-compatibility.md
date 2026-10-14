@@ -43,7 +43,7 @@ It does not complete the server domain or the issue.
 Live help for `serverinfo`, `serverlist`, `serveridgetbyport`, `hostinfo`,
 `instanceinfo`, `serverrequestconnectioninfo`, `serveredit` and
 `servernotifyregister`, complete decoded info maps, edit event fields and errors
-are recorded in `target/compatibility/<target>-servers.txt`. Required Docker CI
+are recorded in `build/compatibility/<target>-servers.txt`. Required Docker CI
 uploads these reports even after failures alongside version/build/image/transport
 reports. Live help establishes syntax; actual operations establish this subset.
 
@@ -126,6 +126,6 @@ unclaimed; Web Query evidence is in [Web Query](web-query.md). Field presence do
 administration support. Reliable transfers/NAT endpoints remain #442 scope.
 
 Official [JUnit 6.1.3](https://docs.junit.org/6.1.3/overview.html) and
-[Maven Failsafe verify usage](https://maven.apache.org/surefire/maven-failsafe-plugin/usage.html)
+[Gradle test tasks](https://docs.gradle.org/current/userguide/java_testing.html)
 were reviewed for test execution. Recheck current release documentation, help and
 output when updating image pins.

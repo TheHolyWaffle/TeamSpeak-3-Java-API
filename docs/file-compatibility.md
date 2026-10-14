@@ -46,7 +46,7 @@ Both channels are disposable and tracked by the existing cleanup resource. It
 attempts every channel deletion even after failures and preserves the original
 failure through try-with-resources suppression. Sessions also close on failure.
 The suite uploads live help, decoded directory rows and error metadata in
-`target/compatibility/<target>-files.txt`, alongside version/build/image/transport
+`build/compatibility/<target>-files.txt`, alongside version/build/image/transport
 and test reports. Help is captured for `ftcreatedir`, `ftgetfilelist`,
 `ftgetfileinfo`, `ftrenamefile`, `ftdeletefile` and `ftlist`; executed operations
 establish the supported subset rather than help examples alone.
@@ -108,7 +108,7 @@ covered; Web Query rejects file commands ([Web Query](web-query.md#file-transfer
 Official [TS6 beta13.1 release notes](https://github.com/teamspeak/teamspeak6-server/releases/tag/v6.0.0-beta13.1),
 [Java 25 TimeUnit](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/TimeUnit.html),
 [JUnit 6.1.3](https://docs.junit.org/6.1.3/overview.html) and
-[Failsafe verify usage](https://maven.apache.org/surefire/maven-failsafe-plugin/usage.html)
+[Gradle test tasks](https://docs.gradle.org/current/userguide/java_testing.html)
 were reviewed. The release notes discuss virtual-server stop fixes rather than
 file-name compatibility. Recheck live help/output and release documentation when
 updating the pins; the observed differences above come from executed probes.

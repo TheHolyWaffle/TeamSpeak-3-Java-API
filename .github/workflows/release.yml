@@ -1,25 +1,11 @@
-name: Explicit release publication
+name: Release
 
+# release-please keeps a release PR up to date with every releasable commit on master. Merging it
+# creates the version tag and GitHub release; the publish job then deploys that exact tag to Central
+# once a maintainer approves the protected release environment.
 on:
-  workflow_dispatch:
-    inputs:
-      release_commit:
-        description: Full SHA of the reviewed release-please merge commit at master HEAD
-        required: true
-        type: string
-      release_tag:
-        description: Exact stable version tag (for example v2.0.0); JReleaser creates it
-        required: true
-        type: string
-      action:
-        description: Validate by default; publication and recovery are explicit
-        required: true
-        default: validate
-        type: choice
-        options: [validate, publish, resume-central, finish-github]
-      deployment_id:
-        description: Existing Portal deployment ID, required only for resume-central
-        type: string
+  push:
+    branches: [master]
 
 permissions:
   contents: read
@@ -29,204 +15,97 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  validate:
-    if: ${{ github.ref == 'refs/heads/master' }}
+  release_please:
+    name: Release PR and tag
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: read
-      pull-requests: read
-      checks: read
     outputs:
-      commit: ${{ steps.approval.outputs.commit }}
+      created: ${{ steps.release.outputs.release_created }}
+      tag: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
-          persist-credentials: false
-          fetch-depth: 0
-      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
-        with:
-          java-version: '25'
-          distribution: temurin
-          cache: maven
-      - name: Require the reviewed release commit and successful required CI
-        id: approval
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPOSITORY: ${{ github.repository }}
-          RELEASE_COMMIT: ${{ inputs.release_commit }}
-          RELEASE_TAG: ${{ inputs.release_tag }}
-          RELEASE_ACTION: ${{ inputs.action }}
-          DEPLOYMENT_ID: ${{ inputs.deployment_id }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          [[ "$RELEASE_COMMIT" =~ ^[0-9a-f]{40}$ ]]
-          [[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
-          test "$RELEASE_COMMIT" = "$(git rev-parse HEAD)"
-          test "$RELEASE_COMMIT" = "$(gh api "repos/$REPOSITORY/git/ref/heads/master" --jq '.object.sha')"
-          gh api "repos/$REPOSITORY/commits/$RELEASE_COMMIT/pulls" > target-pulls.json
-          jq -e --arg sha "$RELEASE_COMMIT" 'any(.[];
-            .merged_at != null and .merge_commit_sha == $sha and .base.ref == "master" and
-            (.head.ref | startswith("release-please--")) and
-            any(.labels[]; .name == "autorelease: pending"))' target-pulls.json
-          gh api --paginate --slurp "repos/$REPOSITORY/commits/$RELEASE_COMMIT/check-runs" > target-checks.json
-          jq -e '[.[].check_runs[] | select(.name == "CI required")] | max_by(.id) |
-            .status == "completed" and .conclusion == "success"' target-checks.json
-          case "$RELEASE_ACTION" in validate|publish|resume-central|finish-github) ;; *) exit 1 ;; esac
-          if test "$RELEASE_ACTION" = resume-central; then
-            [[ "$DEPLOYMENT_ID" =~ ^[0-9a-fA-F-]{36}$ ]]
-          else
-            test -z "$DEPLOYMENT_ID"
-          fi
-          # Existing tags are permitted only when they already identify this commit.
-          if git show-ref --verify --quiet "refs/tags/$RELEASE_TAG"; then
-            test "$(git rev-parse "$RELEASE_TAG^{commit}")" = "$RELEASE_COMMIT"
-          fi
-          # Never repeat a completed GitHub release (or overwrite its artifacts).
-          gh api "repos/$REPOSITORY/releases" --paginate \
-            --jq '.[].tag_name' > target-releases.txt
-          if grep -Fxq "$RELEASE_TAG" target-releases.txt; then exit 1; fi
-          echo "commit=$RELEASE_COMMIT" >> "$GITHUB_OUTPUT"
-      - name: Validate approved version and extract release-specific notes unchanged
-        env:
-          RELEASE_TAG: ${{ inputs.release_tag }}
-        run: |
-          mkdir -p target
-          ./mvnw -B -ntp help:evaluate \
-            -Dexpression=project.version -Doutput=target/release-version.txt
-          bash .github/scripts/release-metadata.sh "$(cat target/release-version.txt)" "$RELEASE_TAG"
-
-  verify:
-    needs: validate
-    uses: ./.github/workflows/verify.yml
+          # A dedicated fine-grained PAT, so the release PR receives normal pull_request CI events.
+          token: ${{ secrets.RELEASE_PR_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
 
   publish:
-    name: Publish the approved release (protected environment)
-    needs: [validate, verify]
-    if: ${{ needs.validate.result == 'success' && needs.verify.result == 'success' && inputs.action != 'validate' }}
+    name: Publish to Maven Central
+    needs: release_please
+    if: ${{ needs.release_please.outputs.created == 'true' }}
     environment: release
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
-      contents: write # JReleaser alone creates the version tag and GitHub release.
-      id-token: write # Sigstore signing certificate for the provenance attestation.
+      contents: read
+      id-token: write # Sigstore certificate for the provenance attestation.
       attestations: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ needs.validate.outputs.commit }}
+          ref: ${{ needs.release_please.outputs.tag }}
           persist-credentials: false
-          fetch-depth: 0
       - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           java-version: '25'
           distribution: temurin
-          cache: maven
-      - name: Recheck immutable inputs in the restricted release environment
+      # No build cache in the release job: everything published is built from the tag.
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-disabled: true
+      - name: Build, verify and stage the tagged version
         env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
-          RELEASE_TAG: ${{ inputs.release_tag }}
+          VERSION: ${{ needs.release_please.outputs.version }}
         run: |
-          test "$RELEASE_COMMIT" = "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/master" --jq '.object.sha')"
-          mkdir -p target
-          ./mvnw -B -ntp help:evaluate \
-            -Dexpression=project.version -Doutput=target/release-version.txt
-          bash .github/scripts/release-metadata.sh "$(cat target/release-version.txt)" "$RELEASE_TAG"
-      - name: Package the normal library into a local repository
-        id: stage
-        if: ${{ inputs.action != 'finish-github' }}
-        run: ./mvnw -B -ntp -Pcentral-staging deploy
-      - name: Verify the staged artifacts carry the approved version
-        id: staged
-        if: ${{ inputs.action != 'finish-github' }}
-        run: bash .github/scripts/verify-staged-artifacts.sh "$(cat target/release-version.txt)"
+          # The provenance names the triggering commit; it must be the tagged one that is built.
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          grep -qx "version=$VERSION" gradle.properties
+          ./gradlew build publish --no-build-cache
       - name: Attest build provenance of the staged artifacts
         id: attest
-        if: ${{ inputs.action != 'finish-github' }}
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: |
-            target/staging-deploy/com/github/theholywaffle/teamspeak3-api/*/teamspeak3-api-*.pom
-            target/staging-deploy/com/github/theholywaffle/teamspeak3-api/*/teamspeak3-api-*.jar
+            build/staging-deploy/com/github/theholywaffle/teamspeak3-api/*/teamspeak3-api-*.pom
+            build/staging-deploy/com/github/theholywaffle/teamspeak3-api/*/teamspeak3-api-*.module
+            build/staging-deploy/com/github/theholywaffle/teamspeak3-api/*/teamspeak3-api-*.jar
+      # The same policy a consumer verifies with; JReleaser uploads exactly these files plus signatures.
       - name: Require verifiable provenance before deployment
-        id: provenance
-        if: ${{ inputs.action != 'finish-github' }}
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
+          BUNDLE: ${{ steps.attest.outputs.bundle-path }}
         run: |
-          bash .github/scripts/verify-attestations.sh "$(cat target/release-version.txt)" \
-            target/staging-deploy "$RELEASE_COMMIT"
-      - name: Sign, validate and deploy through Central Portal
-        id: deploy
-        if: ${{ inputs.action != 'finish-github' }}
+          for file in build/staging-deploy/com/github/theholywaffle/teamspeak3-api/*/teamspeak3-api-*.{pom,module,jar}; do
+            gh attestation verify "$file" --bundle "$BUNDLE" --repo "$GITHUB_REPOSITORY" \
+              --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml" \
+              --source-ref refs/heads/master --source-digest "$GITHUB_SHA" --deny-self-hosted-runners
+          done
+      - name: Sign, validate and deploy through the Central Portal
         env:
           JRELEASER_GITHUB_TOKEN: ${{ github.token }}
           JRELEASER_MAVENCENTRAL_CENTRAL_USERNAME: ${{ secrets.CENTRAL_PORTAL_USERNAME }}
           JRELEASER_MAVENCENTRAL_CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PORTAL_PASSWORD }}
-          SIGNING_SECRET_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          JRELEASER_GPG_SECRET_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           JRELEASER_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-          RELEASE_ACTION: ${{ inputs.action }}
-          DEPLOYMENT_ID: ${{ inputs.deployment_id }}
-          RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
-          RELEASE_TAG: ${{ inputs.release_tag }}
-        shell: bash
         run: |
-          set -euo pipefail
-          test -n "$JRELEASER_MAVENCENTRAL_CENTRAL_USERNAME"
-          test -n "$JRELEASER_MAVENCENTRAL_CENTRAL_PASSWORD"
-          test -n "$SIGNING_SECRET_KEY"
-          test -n "$JRELEASER_GPG_PASSPHRASE"
-          keydir=$(mktemp -d)
-          trap 'rm -rf "$keydir"' EXIT
-          chmod 700 "$keydir"
-          umask 077
-          printf '%s' "$SIGNING_SECRET_KEY" > "$keydir/secret.asc"
-          bash .github/scripts/derive-signing-public-key.sh "$keydir/secret.asc" "$keydir/public.asc"
-          export JRELEASER_GPG_PUBLIC_KEY="$keydir/public.asc"
-          export JRELEASER_GPG_SECRET_KEY="$keydir/secret.asc"
-          if test "$RELEASE_ACTION" = resume-central; then
-            # Read-only status check: reject another namespace/version or a completed deployment.
-            printf 'Authorization: Bearer %s\n' "$(printf '%s:%s' \
-              "$JRELEASER_MAVENCENTRAL_CENTRAL_USERNAME" "$JRELEASER_MAVENCENTRAL_CENTRAL_PASSWORD" \
-              | base64 | tr -d '\r\n')" > "$keydir/auth.headers"
-            curl --fail --silent --show-error --request POST --header "@$keydir/auth.headers" \
-              "https://central.sonatype.com/api/v1/publisher/status?id=$DEPLOYMENT_ID" \
-              --output target/portal-status.json
-            bash .github/scripts/check-portal-deployment.sh "$DEPLOYMENT_ID" \
-              "$(cat target/release-version.txt)" target/portal-status.json
-            export JRELEASER_MAVENCENTRAL_CENTRAL_STAGE=PUBLISH
-            export JRELEASER_MAVENCENTRAL_CENTRAL_DEPLOYMENT_ID="$DEPLOYMENT_ID"
-          fi
-          ./mvnw -B -ntp jreleaser:deploy
-          cp target/jreleaser/output.properties target/jreleaser/deployment-output.properties
-          bash .github/scripts/release-consistency.sh "$(cat target/release-version.txt)" "$RELEASE_TAG" \
-            "$RELEASE_COMMIT" target/jreleaser/deployment-output.properties
-      - name: Require Central availability before creating the GitHub release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          JRELEASER_GITHUB_TOKEN: ${{ github.token }}
-          RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
-        run: |
-          version=$(cat target/release-version.txt)
-          curl --fail --silent --show-error --retry 10 --retry-delay 30 --retry-all-errors \
-            "https://repo.maven.apache.org/maven2/com/github/theholywaffle/teamspeak3-api/$version/teamspeak3-api-$version.pom" \
-            --output target/published.pom
-          # JReleaser creates the remote tag against its configured branch.
-          # Check again after deployment/propagation, immediately before that operation.
-          test "$RELEASE_COMMIT" = "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/master" --jq '.object.sha')"
-          ./mvnw -B -ntp jreleaser:release -Djreleaser.config.file=jreleaser-github.yml
-      - name: Retain recovery state without signing material
+          # The public key follows from the private key, so it needs no secret of its own.
+          export GNUPGHOME=$RUNNER_TEMP/gnupg
+          mkdir -m 700 "$GNUPGHOME"
+          gpg --batch --import <<< "$JRELEASER_GPG_SECRET_KEY"
+          JRELEASER_GPG_PUBLIC_KEY=$(gpg --armor --export)
+          export JRELEASER_GPG_PUBLIC_KEY
+          ./gradlew jreleaserDeploy --no-build-cache
+      - name: Retain the deployment state
         if: ${{ always() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: release-state-${{ github.run_id }}
+          name: release-${{ needs.release_please.outputs.version }}
           path: |
-            target/jreleaser/output.properties
-            target/jreleaser/deployment-output.properties
-            target/staging-deploy/
-            target/release-notes.md
+            build/staging-deploy/
+            build/jreleaser/output.properties
+            build/jreleaser/trace.log
           if-no-files-found: ignore
           retention-days: 30

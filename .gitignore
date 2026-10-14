@@ -9,6 +9,9 @@
 /bin
 /releases
 /target
+/build
+/.gradle
+/.kotlin
 
 # Eclise Files
 .settings

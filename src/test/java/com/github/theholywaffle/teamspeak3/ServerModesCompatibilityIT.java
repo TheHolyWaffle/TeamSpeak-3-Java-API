@@ -63,7 +63,7 @@ class ServerModesCompatibilityIT {
                 query.exit();
             }
         } finally {
-            var path = Path.of("target", "compatibility", target + "-server-modes.txt");
+            var path = Path.of("build", "compatibility", target + "-server-modes.txt");
             Files.createDirectories(path.getParent());
             Files.write(path, evidence);
         }
@@ -85,7 +85,7 @@ class ServerModesCompatibilityIT {
                             "Process stop must terminate the owned server and connection");
                     java.util.concurrent.TimeUnit.MILLISECONDS.sleep(25);
                 }
-                var path = Path.of("target", "compatibility", target + "-process-stop.txt");
+                var path = Path.of("build", "compatibility", target + "-process-stop.txt");
                 Files.createDirectories(path.getParent());
                 Files.writeString(path, "typed process stop acknowledged; owned process and query terminated\n");
             }

@@ -195,7 +195,7 @@ encoding of those rows, so it reads the same for every transport.
 ## Verification
 
 ```sh
-./mvnw -B -ntp -Pintegration verify
+./gradlew build integrationTest
 ```
 
 `WebQueryCompatibilityIT` runs in the required integration profile. Its fixture starts the pinned TS3
@@ -204,7 +204,7 @@ client. A RAW session provisions an instance `MANAGE` key through `apiKeys()`. E
 over HTTP and HTTPS. A separate disposable server covers virtual-server lifecycle, snapshots,
 permission reset and process shutdown. The suite also checks rejected, out-of-scope and revoked keys,
 an untrusted HTTPS certificate, and that the server rejects every command the library blocks.
-Evidence is written to `target/compatibility/TS3_WEBQUERY*`.
+Evidence is written to `build/compatibility/TS3_WEBQUERY*`.
 
 Unit tests cover JSON parsing and quoting, request and response mapping, configuration validation, and
 client behavior against an in-process HTTP server: paths, headers, timeouts, capacity, cancellation,

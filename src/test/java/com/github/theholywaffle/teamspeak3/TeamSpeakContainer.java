@@ -375,7 +375,7 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer>
     }
 
     void record(String name, Version version) throws IOException {
-        Path directory = Path.of("target", "compatibility");
+        Path directory = Path.of("build", "compatibility");
         Files.createDirectories(directory);
         Files.writeString(
                 directory.resolve(name + ".txt"),

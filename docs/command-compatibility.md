@@ -13,7 +13,7 @@ Help alone or a similar method name does not establish compatibility.
 
 ## Exact targets and evidence
 
-Use Java 25 without preview features and `./mvnw -B -ntp -Pintegration verify`.
+Use Java 25 without preview features and `./gradlew build integrationTest`.
 The pinned versions, digests, architectures, authenticated readiness and required
 CI setup are documented in [integration tests](integration-tests.md). Every tested
 operation below runs against TS3 **3.13.8 RAW** and TS3 **3.13.8 SSH**. TS6 RAW is not claimed. Web Query
@@ -22,7 +22,7 @@ coverage is listed separately in [Web Query](web-query.md#supported-operations).
 `ServerQueryCompatibilityIT.channelDomain` uses a separate actor query session to
 create, edit, move and delete channels observed by a subscribed query session.
 It captures live `help` for every tested channel command, decoded response fields,
-event payloads and errors in `target/compatibility/<target>-channels.txt`.
+event payloads and errors in `build/compatibility/<target>-channels.txt`.
 `<target>.txt` records version/build, image and transport negotiation evidence.
 The required Docker CI uploads these reports even after failures. Help establishes
 syntax; assertions against actual operations establish the supported subset.
@@ -116,5 +116,5 @@ Remaining operations stay within the same #441 implementation PR before it can b
 
 Tool documentation reviewed: [JUnit parameterized tests](https://docs.junit.org/6.1.3/overview.html),
 [Testcontainers authenticated waits](https://java.testcontainers.org/features/startup_and_waits/),
-[Maven Failsafe verify](https://maven.apache.org/surefire/maven-failsafe-plugin/),
+[Gradle test tasks](https://docs.gradle.org/current/userguide/java_testing.html),
 [Adoptium archive installation](https://adoptium.net/installation/archives/).

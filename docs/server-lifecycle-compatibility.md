@@ -46,7 +46,7 @@ Lifecycle commands retain five-second deadlines, including the TS6 stop calls;
 each target has a 120-second outer timeout that includes its container startup.
 Assertions check state directly after command completion, without sleeps,
 retries or acceptance based solely on a successful response. Reports at
-`target/compatibility/<target>-server-lifecycle.txt` retain help, allowlisted
+`build/compatibility/<target>-server-lifecycle.txt` retain help, allowlisted
 identity/state metadata, creation field names, query context observations and
 actual errors. Required Docker CI uploads reports alongside pinned version,
 image/architecture and transport evidence.
@@ -87,5 +87,5 @@ stop/start transitions with deadlines; they do not validate internal accounting,
 Windows socket cleanup or all server fixes from that release. Reviewed
 [server configuration](https://github.com/teamspeak/teamspeak6-server/blob/main/CONFIG.md),
 [JUnit 6.1.3](https://docs.junit.org/6.1.3/overview.html) and
-[Failsafe verify](https://maven.apache.org/surefire/maven-failsafe-plugin/usage.html).
+[Gradle test tasks](https://docs.gradle.org/current/userguide/java_testing.html).
 Live help and executed assertions establish the lifecycle subset above.

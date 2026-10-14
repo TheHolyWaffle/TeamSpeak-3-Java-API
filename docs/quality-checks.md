@@ -1,37 +1,34 @@
 # Formatting, analysis, coverage and API compatibility
 
-Every check runs in the normal Maven build, so a local `./mvnw -B -ntp verify` on JDK 25 runs
-the same checks as the CI **Verify Java 25** job. A few checks that need extra inputs (such as a PR
-title, a second checkout or a scanner binary) run from the scripts below, and CI calls the same
-scripts.
+Every check runs in the normal Gradle build, so a local `./gradlew build` on JDK 25 runs the
+same checks as the CI **Build** job.
 
 | Check | Tool | Local command | CI job |
 | --- | --- | --- | --- |
-| Formatting | Spotless with Palantir Java Format, `.editorconfig` | `./mvnw spotless:apply`, checked by `verify` | Verify Java 25 |
-| Compiler and bug patterns | `javac -Xlint:all -Werror`, Error Prone | `verify` | Verify Java 25 and 27 |
-| Javadoc | `-Xdoclint` for protected API, `javadoc` with `failOnWarnings` | `verify` | Verify Java 25 and 27 |
-| Coverage | JaCoCo per-class floors | `verify`; `-Pintegration verify` adds the TS3 suite | Verify (report artifact), Docker compatibility (`jacoco-it`) |
-| Log redaction | `CommunicationLogRedactionTest` in its own DEBUG-logging Surefire run | `verify` | Verify Java 25 and 27 |
+| Formatting | Spotless with Palantir Java Format, `.editorconfig` | `./gradlew spotlessApply`, checked by `build` | Build |
+| Compiler and bug patterns | `javac -Xlint:all -Werror`, Error Prone | `build` | Build |
+| Javadoc | `-Xdoclint` for protected API, `javadoc` with `-Xwerror` | `build` | Build |
+| Coverage | JaCoCo per-class floors | `build`; `integrationTest` adds the TS3 suite | Build, ServerQuery compatibility (reports) |
+| Log redaction | `CommunicationLogRedactionTest` in its own DEBUG-logging test task | `build` | Build |
 | Dependency vulnerabilities | GitHub dependency graph, Dependabot alerts, dependency review | (GitHub only) | Dependency graph and review |
-| API compatibility | japicmp | `verify`; `bash .github/scripts/test-api-compatibility.sh` | API compatibility |
+| API compatibility | japicmp | `build` (`./gradlew japicmp`) | Build |
 
-Tool versions are pinned in `pom.xml` and kept current by Renovate; see
+Tool versions are pinned in [`gradle/libs.versions.toml`](../gradle/libs.versions.toml) and kept
+current by Renovate; see
 [dependency and image maintenance](maintenance.md).
 
 ## Formatting
 
 `.editorconfig` sets UTF-8, LF, final newlines and indentation for every file type;
-`.gitattributes` normalizes line endings to LF (CRLF only for `mvnw.cmd`). Java sources in
-`src/main`, `src/test`, `src/test/api-fixtures` and `example` use Palantir Java Format: 4-space
+`.gitattributes` normalizes line endings to LF (CRLF only for `gradlew.bat`). Java sources in
+`src/main`, `src/test`, `src/test/consumers` and `src/example` use Palantir Java Format: 4-space
 indentation and 120 columns, with imports ordered and unused imports removed. It does not
 reformat comments, so license notices are unchanged. The format of YAML, shell, JSON,
-properties and `pom.xml` files is checked for trailing whitespace and final newlines.
+properties, Gradle and consumer build files is checked for trailing whitespace and final newlines.
 
-Run `./mvnw spotless:apply` before committing; `verify` fails on unformatted files. The
-formatter parses with the running JDK's compiler, and no formatter release supports JDK 26+
-compiler internals yet. A build on JDK 26 or newer therefore skips the format check through
-the `format-check-on-baseline-jdk-only` profile. Formatting is independent of the build JDK,
-and the Java 25 build and CI job enforce it.
+Run `./gradlew spotlessApply` before committing; `build` fails on unformatted files. The
+formatter parses with the running JDK's compiler and supports no JDK 26+ compiler internals yet,
+which is why the build requires JDK 25.
 
 ## Static analysis and Javadoc
 
@@ -49,12 +46,13 @@ that one check at the smallest scope with a comment that says why the code is in
 The current suppressions mark identity comparisons, `getClass()`-based model equality and
 `whenComplete` listeners. Doclint validates syntax, HTML and references in public and
 protected Javadoc at compile time, and the `javadoc` tool, which builds the Javadoc JAR in
-`verify`, fails on any warning with the same policy.
+`build`, fails on any warning with the same policy.
 
 ## Coverage
 
-`verify` writes `target/site/jacoco/` (HTML, XML and CSV). With `-Pintegration`, the Docker TS3
-suite writes `target/site/jacoco-it/`. CI uploads both.
+`build` writes `build/reports/jacoco/test/`, from the unit and DEBUG-logging test tasks.
+`integrationTest` writes `build/reports/jacoco/jacocoIntegrationTestReport/` for the Docker TS3
+suite. CI uploads both.
 
 The check is not a global percentage. Per-class floors cover the code where a regression is
 hard to see in review: the protocol codec, line reader, stream reader/writer and redaction,
@@ -93,24 +91,22 @@ fails if any password, key or token appears in it, or if an expected redacted li
 
 ## Dependency vulnerabilities
 
-GitHub scans dependencies; the build runs no scanner of its own. GitHub's own `pom.xml` parsing
-sees only direct dependencies, so the **Dependency graph and review** job submits the resolved
-Maven graph, including transitive and test dependencies and versions managed by the Bouncy
-Castle BOM, with `advanced-security/maven-dependency-submission-action`:
+GitHub scans dependencies; the build runs no scanner of its own. The **Dependency graph and
+review** job submits the resolved Gradle graph, including transitive and test dependencies and
+versions managed by the Bouncy Castle BOM, with `gradle/actions/dependency-submission`:
 
 - **Dependabot alerts** (enabled in the repository settings) use that graph, and Renovate opens
   the security update PRs for them.
   GitHub raises alerts for the default branch, `master`, and re-evaluates it whenever a new
-  advisory is published, so no scheduled scan is needed there. Until the final integration
-  merges 2.0 into `master`, alerts cover the 1.x graph on `master`, not `modernization/2.0`.
+  advisory is published, so no scheduled scan is needed there.
 - **Dependency review** (`actions/dependency-review-action`) runs on every PR after its graph is
   submitted. It fails the PR if a dependency it adds or changes has a known vulnerability of any
   severity. PRs from forks get a read-only token and cannot submit a graph, so their review sees
-  only the direct dependencies GitHub parses from `pom.xml`.
+  no resolved graph; review their dependency changes by hand.
 
 Dependency review checks changed dependencies only. A new advisory against an unchanged
 dependency surfaces as a Dependabot alert on `master`. Allow a vulnerability (`allow-ghsas`)
-only in a reviewed PR that states why it is not exploitable here. Maven build plugins and GitHub
+only in a reviewed PR that states why it is not exploitable here. Gradle plugins and GitHub
 Actions are pinned and are not scanned here; Renovate keeps them current (see
 [dependency and image maintenance](maintenance.md)).
 
@@ -119,7 +115,7 @@ Actions are pinned and are not scanned here; Renovate keeps them current (see
 ### Baseline
 
 The baseline is the latest published release, `com.github.theholywaffle:teamspeak3-api:1.3.1`
-from Maven Central. `verify` fetches it into `target/api-baseline/` and fails unless its
+from Maven Central. The `japicmp` task fetches it into `build/api-baseline/` and fails unless its
 SHA-256 is `e76bfdb446c5d814a23ddd4f5f49486c1361fa61bcb2c8f393c7c13d96794756`. That JAR's
 Central SHA-1 matches, and its signature is valid for the maintainer key
 `72BF 8ED7 AA59 66B2 F5CA AA83 BEE1 8CF6 E79F 7B17`.
@@ -127,71 +123,41 @@ Central SHA-1 matches, and its signature is valid for the maintainer key
 The artifact identity is unchanged in 2.0: groupId, artifactId, the
 `com.github.theholywaffle.teamspeak3` packages and the `Automatic-Module-Name`
 `com.github.theholywaffle.teamspeak3` all match 1.3.1. japicmp compares classes by name. If a
-future release renames the artifact or a package, set `api.baseline.version` and the
-coordinates explicitly. Expect every moved type to be reported as removed and added, and treat
+future release renames the artifact or a package, set `apiBaselineVersion` in `build.gradle.kts`
+and the baseline repository in `settings.gradle.kts` explicitly. Expect every moved type to be reported as removed and added, and treat
 that as a breaking change with migration notes, not an exclusion.
 
 ### What is compared
 
-japicmp compares the public and protected API of every package, with no includes or
-excludes. The `commands` packages are public until #447 hides them, so their changes count.
-Reports are written to `target/japicmp/api-compatibility.{diff,md,html,xml}` and uploaded by the
-**API compatibility** job.
+japicmp compares the public and protected API of every package, with no includes or excludes.
+The report is written to `build/japicmp/api-compatibility.diff` and uploaded by the **Build** job.
 
-- **Pending release (`verify`).** The library JAR is compared with 1.3.1. japicmp takes each
-  version from the file name, so the new version is the pom version that release-please
-  maintains (`2.0.0-SNAPSHOT`, then `2.0.0` in the release PR). The build fails if that version
-  is too small for the changes found. For example, publishing this API as `1.4.0` is rejected
-  (see the examples).
-- **Each PR (CI).** The job builds the PR base, derives the release impact that release-please
-  will apply from the PR title and body (`.github/scripts/api-impact.sh`), and compares base
-  and head (`.github/scripts/api-compare.sh`) with the limits for that impact below, instead of
-  the version check. The job summary shows the impact, the result and the change list.
+The library JAR is compared with the baseline. japicmp takes each version from the file name, so
+the new version is the one release-please maintains in `gradle.properties` (`2.0.0-SNAPSHOT`, then
+`2.0.0` in the release PR). The build fails if that version is too small for the changes found;
+publishing this API as `1.4.0`, for example, is rejected. Because the release PR carries the
+version derived from the merged commits, a `fix:` that removes API fails the release PR, before
+anything is published. Find the offending commit in the report and declare its impact with a
+[commit override](releases.md#correct-release-notes).
 
 | Release impact | Title | Allowed API change |
 | --- | --- | --- |
 | major | `type!:` or a `BREAKING CHANGE:` footer | Any |
 | minor | `feat:` | Binary- and source-compatible changes, such as additions |
 | patch | `fix:`, `perf:`, `deps:`, `revert:` | None |
-| none | `refactor:`, `test:`, `ci:`, `docs:`, `build:`, `chore:`, `style:` | None |
-
-To check a change locally, build both JARs and run, for example:
-
-```sh
-bash .github/scripts/api-compare.sh base.jar target/teamspeak3-api-2.0.0-SNAPSHOT.jar \
-  "$(bash .github/scripts/api-impact.sh 'feat: add lookup')" target/api-impact
-```
-
-### Controlled examples
-
-`.github/scripts/test-api-compatibility.sh` compiles the fixture versions in
-`src/test/api-fixtures/` and runs them through the project's own `api-compatibility`
-execution. The examples check that:
-
-- a removed method and a changed return type are reported, pass as major and are rejected as
-  minor or patch;
-- a method added to an interface is binary compatible but source incompatible, so it passes as
-  major and is rejected as minor;
-- an added method passes as minor and is rejected as patch or none;
-- an implementation-only change passes as patch or none;
-- a `fix:` title is mapped to patch and its API removal is rejected;
-- the real library is rejected against 1.3.1 as `1.4.0` and accepted as the pending `2.0.0`.
-
-It also tests the title/body mapping for each type.
 
 ### Intentional 2.0 breaks
 
 The 1.3.1 comparison reports every 2.0 break, and the build accepts them only because the
 pending version is a major release. Nothing is excluded. Every change since 1.3.1 stays
-visible in the report artifact. Each break is reviewed when it lands, because the PR check
-rejects an API break unless its title declares `!` or a `BREAKING CHANGE:` footer. The PR
-then carries migration notes, which release-please copies into the 2.0.0 notes. The
+visible in the report artifact. Each break is reviewed when it lands and declares `!` or a
+`BREAKING CHANGE:` footer with migration notes, which release-please copies into the 2.0.0 notes. The
 operation-by-operation mapping is in the [domain API migration guide](api-migration.md),
 and the other breaks are in the task guides linked from the README.
 
-After 2.0.0 is published, set `api.baseline.version` to `2.0.0` and `api.baseline.sha256` to
-the published JAR's checksum, and remove `release-as` from the release-please config. From then
-on, the pending-release check enforces SemVer against 2.0.0 for every release.
+After 2.0.0 is published, move the baseline as described in
+[after 2.0.0 is published](releases.md#after-200-is-published). From then on, the check enforces
+SemVer against 2.0.0 for every release.
 
 ### Limits
 

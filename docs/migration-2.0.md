@@ -42,7 +42,7 @@ it adds API, but no behavior or default changes for RAW or SSH.
 ## Java 25 and the build
 
 - Java 8–24 runtimes are not supported; classes are Java 25 bytecode (class file version 69).
-  Build from source with the Maven Wrapper (`./mvnw`), which needs JDK 25 and pins Maven.
+  Build from source with the Gradle Wrapper (`./gradlew`), which needs JDK 25.
 - The `with-dependencies` JAR and the `full` Maven profile are gone. Depend on the regular JAR
   with Maven or Gradle: [migration from the standalone JAR](packaging.md#migration-from-the-standalone-jar).
 - Runtime dependencies are SSHJ 0.41, Bouncy Castle 1.86 and the SLF4J 2.0 API. On the module

@@ -76,7 +76,7 @@ class DevelopmentServerIT {
                     .orElseThrow();
             String id = ready.substring(ready.indexOf("container=") + "container=".length());
             assertFalse(
-                    Files.exists(Path.of("target", "dev-server", id)),
+                    Files.exists(Path.of("build", "dev-server", id)),
                     "Stopping the launcher must remove its SSH and Web Query trust");
             assertThrows(
                     NotFoundException.class,

@@ -54,7 +54,7 @@ combinations. The library exposes `TS3CommandFailedException` with that metadata
 a subsequent version command succeeds. This is an observed error contract for
 the pins, not a universal mapping or restricted-role guarantee.
 
-Evidence is saved to `target/compatibility/<target>-ban-rules.txt`, alongside
+Evidence is saved to `build/compatibility/<target>-ban-rules.txt`, alongside
 version/build/image/transport metadata. Required Docker CI uploads it even on
 failure with the test reports. No production rules or credentials are used.
 
@@ -76,6 +76,6 @@ file-transfer reliability/NAT endpoints are #442 scope.
 
 Official [TS6 beta13.1 release notes](https://github.com/teamspeak/teamspeak6-server/releases/tag/v6.0.0-beta13.1),
 [JUnit 6.1.3](https://docs.junit.org/6.1.3/overview.html) and
-[Failsafe verify usage](https://maven.apache.org/surefire/maven-failsafe-plugin/usage.html)
+[Gradle test tasks](https://docs.gradle.org/current/userguide/java_testing.html)
 were reviewed. The release notes describe server-stop fixes, not ban semantics;
 acceptance here comes from actual help/output and executed operations.

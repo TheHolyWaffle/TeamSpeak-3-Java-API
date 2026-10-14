@@ -29,7 +29,7 @@ help, then reads existing logs from the authenticated disposable fixtures:
 - Raw `logadd loglevel=5` fails with **1538 / `invalid parameter`** on every
   target. A later version command succeeds, preserving error/recovery behavior.
 
-Reports at `target/compatibility/<target>-logs.txt` include live help, row counts,
+Reports at `build/compatibility/<target>-logs.txt` include live help, row counts,
 response field names and error metadata. Arbitrary log content is excluded
 because startup logs can contain generated privilege keys or other credentials.
 Assertions inspect only known startup version/category/server-ID markers and do
@@ -42,7 +42,7 @@ retain five-second deadlines, and its session closes on failure.
 instance and selected-server contexts through the controlled raw command API.
 It checks exact Unicode/literal-escape suffixes, forward/reverse ordering and
 one-line continuation using returned byte positions. Reports are in
-`target/compatibility/<TARGET>-log-writes.txt`.
+`build/compatibility/<TARGET>-log-writes.txt`.
 
 The #475 finding remains a real server behavior boundary: TS6 can acknowledge a
 custom write while subsequent reads do not yet expose it. Independent inspection
@@ -90,6 +90,6 @@ Reviewed official [TS6 beta13.1 release notes](https://github.com/teamspeak/team
 [logging configuration](https://github.com/teamspeak/teamspeak6-server/blob/main/CONFIG.md#logging),
 [JUnit 6.1.3](https://docs.junit.org/6.1.3/overview.html),
 [Testcontainers readiness](https://java.testcontainers.org/features/startup_and_waits/)
-and [Failsafe verification](https://maven.apache.org/surefire/maven-failsafe-plugin/usage.html).
+and [Gradle test tasks](https://docs.gradle.org/current/userguide/java_testing.html).
 Configuration documents log paths, append behavior and timestamp zones; actual
 help/output and assertions establish the command subset above.

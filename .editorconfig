@@ -8,13 +8,13 @@ trim_trailing_whitespace = true
 indent_style = space
 indent_size = 4
 
-[*.{yml,yaml,json}]
+[*.{yml,yaml,json,json5}]
 indent_size = 2
 
 [*.md]
 trim_trailing_whitespace = false
 
-[pom.xml]
+[src/test/consumers/maven/pom.xml]
 indent_style = tab
 
 [*.cmd]

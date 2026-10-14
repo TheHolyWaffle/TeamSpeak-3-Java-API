@@ -11,4 +11,4 @@ behavior/default change, add migration notes: what users must change. -->
 
 ## Validation
 
-<!-- Commands you ran and their result, for example `./mvnw -B -ntp verify`. -->
+<!-- Commands you ran and their result, for example `./gradlew build`. -->

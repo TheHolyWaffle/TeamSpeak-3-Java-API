@@ -240,7 +240,7 @@ class ModelCompatibilityIT {
             observer.exit();
             assertEquals(0, observer.getEventStatistics().listenerFailures());
         }
-        Path report = Path.of("target", "compatibility", target + "-models.txt");
+        Path report = Path.of("build", "compatibility", target + "-models.txt");
         Files.createDirectories(report.getParent());
         Files.write(report, evidence);
         assertEquals(List.of(), failures);

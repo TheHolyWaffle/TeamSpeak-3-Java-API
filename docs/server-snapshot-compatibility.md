@@ -6,7 +6,7 @@
 
 `ServerSnapshotCompatibilityIT.snapshotRoundtrip` uses an owned disposable server
 for TS3 3.13.8 RAW and TS3 3.13.8 SSH. Run with Java 25
-and `./mvnw -B -ntp -Pintegration verify`; no preview or manual steps are used.
+and `./gradlew build integrationTest`; no preview or manual steps are used.
 
 It records live snapshot/instance-edit help, edits and restores the instance download
 bandwidth setting, and captures a server with Unicode/literal-escape name and welcome
@@ -17,7 +17,7 @@ The default fixture license allows only one running server; deleting the origina
 before deployment avoids treating a license limit as snapshot incompatibility.
 
 Snapshots contain identities and credentials and are never written into acceptance
-reports. `target/compatibility/<TARGET>-snapshots.txt` records help and assertions.
+reports. `build/compatibility/<TARGET>-snapshots.txt` records help and assertions.
 The group name is kept within the server's size boundary; an oversized test name
 initially returned **1541**, `invalid parameter size`, on both TS3 targets.
 

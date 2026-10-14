@@ -1,7 +1,7 @@
 # Additional TS3 command coverage
 
 Targets: TS3 3.13.8 RAW and SSH using the digest-pinned disposable server.
-Run `./mvnw -B -ntp -Pintegration verify` with Java 25 without preview.
+Run `./gradlew build integrationTest` with Java 25 without preview.
 All fixtures are headless and reproducible through Maven and Docker.
 
 ## File contents and icons
@@ -39,7 +39,7 @@ A second concurrently running server is rejected with 2816 by the bundled licens
 licensed multi-running-server operation is not claimed. `processStop` verifies the
 typed instance-stop command terminates the owned server/query within five seconds.
 
-Reports are under `target/compatibility/*-file-contents.txt`, `*-permission-modes.txt`,
+Reports are under `build/compatibility/*-file-contents.txt`, `*-permission-modes.txt`,
 `*-server-modes.txt` and `*-process-stop.txt`.
 Server help/output and assertions define the tested operations; arbitrary property
 combinations, licensed concurrency and all possible permissions are not implied.

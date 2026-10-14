@@ -147,7 +147,7 @@ class PermissionModesCompatibilityIT {
                 query.exit();
             }
         } finally {
-            var path = Path.of("target", "compatibility", target + "-permission-modes.txt");
+            var path = Path.of("build", "compatibility", target + "-permission-modes.txt");
             Files.createDirectories(path.getParent());
             Files.write(path, evidence);
         }

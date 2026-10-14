@@ -35,6 +35,6 @@ permission lookup returns512; deleted channels768; credential failure is RAW520 
 Untested server versions and licensed multi-running-server configurations are not
 advertised; Web Query coverage is listed in [Web Query](web-query.md#supported-operations). TS6-specific code and acceptance have been removed.
 
-For tested operations, syntax is captured from live server help in `target/compatibility/`. Exact
+For tested operations, syntax is captured from live server help in `build/compatibility/`. Exact
 version/digest/architecture and test reports accompany CI artifacts. See the
 [domain inventory](command-compatibility.md) for behavioral and migration details.

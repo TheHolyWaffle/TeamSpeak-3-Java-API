@@ -4,7 +4,7 @@
 
 | Version | Status |
 | --- | --- |
-| 2.x (in development on `modernization/2.0`) | Supported once 2.0.0 is published: fixes go into the latest 2.x minor release |
+| 2.x (in development on `master`) | Supported once 2.0.0 is published: fixes go into the latest 2.x minor release |
 | 1.3.x (current release on `master`) | Fixes until 2.0.0 is published, then end of life |
 | 1.2 and older | End of life |
 

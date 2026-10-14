@@ -17,7 +17,7 @@ public final class DevelopmentServer {
 
     public static void main(String[] args) throws Exception {
         if (args.length != 2 || !args[0].equals("ts3") || !(args[1].equals("true") || args[1].equals("false"))) {
-            throw new IllegalArgumentException("Use -Ddev.server=ts3 and -Ddev.once=true|false");
+            throw new IllegalArgumentException("Use -PdevServer=ts3 and -PdevOnce=true|false");
         }
         try (Resources resources =
                 new Resources(new TeamSpeakContainer().withFileTransferPort().withWebQuery())) {
@@ -37,7 +37,7 @@ public final class DevelopmentServer {
                         + ", https://" + server.getHost() + ":" + server.getMappedPort(10443));
                 // Trusts only this container's key and certificate, for this session; removed when the launcher stops.
                 Path session =
-                        Path.of("target", "dev-server", server.getContainerId()).toAbsolutePath();
+                        Path.of("build", "dev-server", server.getContainerId()).toAbsolutePath();
                 resources.knownHosts = server.writeKnownHosts(session.resolve("known_hosts"));
                 resources.webQueryCertificate = session.resolve("webquery-certificate.pem");
                 Map<String, String> web =
@@ -70,7 +70,7 @@ public final class DevelopmentServer {
         System.out.println();
         System.out.println("Run an example from another terminal in this directory (POSIX shell):");
         System.out.println("  " + EXPORT_PREFIX + exports(raw));
-        System.out.println("  ./mvnw -q -ntp -Pexample test-compile exec:exec -Dexample=ClientInfoExample");
+        System.out.println("  ./gradlew -q runExample -Pexample=ClientInfoExample");
         System.out.println("To use SSH instead of raw TCP, also run:");
         System.out.println("  " + EXPORT_PREFIX + exports(ssh));
         System.out.println("For WebQueryExample (HTTPS, a disposable API key and this server's certificate), run:");

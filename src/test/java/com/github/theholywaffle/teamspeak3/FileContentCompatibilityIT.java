@@ -156,7 +156,7 @@ class FileContentCompatibilityIT {
                         "actual upload/download bytes, positive/bulk metadata, pending transfer/stop and file deletion passed");
             }
         } finally {
-            var path = Path.of("target", "compatibility", target + "-file-contents.txt");
+            var path = Path.of("build", "compatibility", target + "-file-contents.txt");
             Files.createDirectories(path.getParent());
             Files.write(path, evidence);
         }

@@ -103,7 +103,7 @@ It checks 65,537-byte exact content, empty files, direct-memory rejection, missi
 file error **2051**, existing-file rejection **2050**, download suffix/EOF offsets,
 truncated upload and retained-prefix resume, active upload/download cancellation,
 caller ownership and query recovery. Help/output and server version/image evidence
-are written to `target/compatibility/*-reliable-files*.txt`; transfer keys are not
+are written to `build/compatibility/*-reliable-files*.txt`; transfer keys are not
 recorded. This is evidence for those combinations, not other TS3 versions or
 arbitrary NAT layouts.
 

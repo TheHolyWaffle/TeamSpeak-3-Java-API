@@ -39,7 +39,7 @@ class SessionCommandsCompatibilityIT {
                         TeamSpeakContainer.TS3_VERSION, api.instance().version().version());
                 query.exit();
             }
-            var report = Path.of("target", "compatibility", target + "-session-commands.txt");
+            var report = Path.of("build", "compatibility", target + "-session-commands.txt");
             Files.createDirectories(report.getParent());
             Files.writeString(
                     report,
