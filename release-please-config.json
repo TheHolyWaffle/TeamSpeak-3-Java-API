@@ -9,7 +9,7 @@
       "extra-files": [
         "gradle.properties"
       ],
-      "versioning-strategy": "prerelease",
+      "versioning": "prerelease",
       "prerelease-type": "beta.1",
       "prerelease": true,
       "skip-snapshot": true,
