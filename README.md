@@ -19,7 +19,7 @@ and file transfers over raw TCP or SSH, and optionally administration over HTTP(
   [flood rate](#flood-rate), [Web Query](#web-query)
 - [Configuration reference](#configuration-reference)
 - [Development](#development)
-- [Getting help and contributing](#getting-help-and-contributing)
+- [Getting help](#getting-help)
 
 ## Requirements and compatibility
 
@@ -33,13 +33,11 @@ and file transfers over raw TCP or SSH, and optionally administration over HTTP(
 | --- | --- | --- |
 | TeamSpeak 3 server 3.13.8 (official Docker image, Linux amd64) | Raw TCP (port 10011) | Verified by the integration suite in CI |
 | TeamSpeak 3 server 3.13.8 (official Docker image, Linux amd64) | SSH (port 10022) | Verified by the integration suite in CI |
-| TeamSpeak 3 server 3.13.8 (official Docker image, Linux amd64) | Web Query over HTTP (10080) and HTTPS (10443) | Optional, new in 2.0; operations listed in [Web Query](docs/web-query.md#supported-operations) verified by the integration suite in CI |
+| TeamSpeak 3 server 3.13.8 (official Docker image, Linux amd64) | Web Query over HTTP (10080) and HTTPS (10443) | Optional, new in 2.0; verified by the integration suite in CI |
 | Other TeamSpeak 3 server versions | Raw TCP, SSH, Web Query | Not verified |
 | TeamSpeak 6 | — | Not supported |
 
-The exact image digest and per-command results are listed in the
-[command compatibility inventory](docs/command-compatibility.md) and
-[integration tests](docs/integration-tests.md). On Apple Silicon the TS3 image runs under Docker's
+On Apple Silicon the TS3 image runs under Docker's
 amd64 emulation; that is not native arm64 support. The ServerQuery commands themselves are
 described in the `doc/` and `serverquerydocs/` folders shipped with every TS3 server
 (an unofficial copy of the [ServerQuery manual](https://www.teamspeak-info.de/downloads/ts3_serverquery_manual.pdf)
@@ -50,7 +48,7 @@ is also available). Voice, audio and screen sharing are out of scope.
 The library is published to [Maven Central](https://central.sonatype.com/artifact/com.github.theholywaffle/teamspeak3-api)
 as one regular JAR with sources and Javadoc. Its POM brings in SSHJ, the patched Bouncy Castle
 modules, the SLF4J API and Gson (JSON for Web Query). 2.0 no longer publishes a standalone `with-dependencies` JAR; see
-[packaging](docs/packaging.md#migration-from-the-standalone-jar).
+the [migration guide](MIGRATION.md#java-25-and-dependencies).
 
 ```xml
 <dependency>
@@ -67,8 +65,7 @@ dependencies {
 ```
 
 On the module path, the JAR is the automatic module `com.github.theholywaffle.teamspeak3`:
-add `requires com.github.theholywaffle.teamspeak3;` to your `module-info.java`
-(see [Java modules](docs/packaging.md#java-modules)). Add an SLF4J provider as described under
+add `requires com.github.theholywaffle.teamspeak3;` to your `module-info.java`. Add an SLF4J provider as described under
 [logging](#logging).
 
 ### Verify a release
@@ -84,8 +81,7 @@ gh attestation verify teamspeak3-api-<version>.jar --repo TheHolyWaffle/TeamSpea
 ```
 
 This proves which workflow and commit produced the JAR. Reproducible builds confirm it
-independently: rebuilding the tagged commit yields byte-identical artifacts. See
-[verify a published release](docs/releases.md#verify-a-published-release).
+independently: rebuilding the tagged commit yields byte-identical artifacts.
 
 ## Quick start
 
@@ -138,7 +134,7 @@ Needs JDK 25 in `JAVA_HOME` and a running Docker daemon. Read the
 [TeamSpeak 3 server license](https://hub.docker.com/_/teamspeak) first; the development server
 accepts it on your behalf.
 
-1. In a first terminal, start the [development server](docs/development-server.md):
+1. In a first terminal, start the development server:
 
    ```sh
    ./gradlew devServer
@@ -204,8 +200,7 @@ one domain API per area: `channels()`, `clients()`, `databaseClients()`, `server
 - Lookups that can find nothing return an empty `Optional` or list; no method returns `null` or `-1`.
 - Responses are immutable models with typed values such as `ClientId` and `ClientDatabaseId`.
 
-See the [API and error guide](docs/api-migration.md), the [model guide](docs/models-and-values.md) and
-the [Javadoc](https://www.javadoc.io/doc/com.github.theholywaffle/teamspeak3-api).
+See the [Javadoc](https://www.javadoc.io/doc/com.github.theholywaffle/teamspeak3-api).
 
 ### Asynchronous API and futures
 
@@ -213,8 +208,7 @@ the [Javadoc](https://www.javadoc.io/doc/com.github.theholywaffle/teamspeak3-api
 complete in the order they were received on one query-owned worker; keep callbacks short or pass your
 own executor to `thenAcceptAsync` and similar methods. Failures complete the future with the same
 `TS3Exception` subtypes. Waiting with a timeout or `orTimeout` only stops waiting: the command still
-runs. Cancelling the original future removes a command that has not been sent yet. Details:
-[futures](docs/futures.md).
+runs. Cancelling the original future removes a command that has not been sent yet.
 
 ### Events
 
@@ -236,7 +230,7 @@ event at a time per subscription, in the order received. A slow listener never b
 command responses; if its queue (`setListenerQueueCapacity`, default 256) is full, the newest events
 are dropped and counted in `query.getEventStatistics()`. Exceptions thrown by listeners are counted and
 do not stop delivery. Close the subscription to remove the listener. The library does not deduplicate
-notifications. Details: [events and capacity](docs/events-and-capacity.md).
+notifications.
 
 ### Deadlines and closing
 
@@ -245,8 +239,7 @@ session restoration and `onConnect`), queue wait, command response and close. A 
 answered in time fails with `TS3TimeoutException` and, because later responses could otherwise be
 mismatched, the connection is closed. `close()` aborts immediately and fails outstanding commands;
 `exit()` first tries to drain and send `quit` within half the close budget. An open query keeps the JVM
-alive until it is closed. A keep-alive `whoami` is sent after 60 seconds without commands. Details:
-[connection lifecycle and deadlines](docs/connection-lifecycle.md).
+alive until it is closed. A keep-alive `whoami` is sent after 60 seconds without commands.
 
 ### Reconnect guarantees
 
@@ -271,8 +264,7 @@ config.setLoginCredentials(user, password)
 ```
 
 Reconcile mutations that failed with an unknown outcome before retrying them yourself. See
-[ReconnectExample](src/example/java/com/github/theholywaffle/teamspeak3/example/ReconnectExample.java)
-and [safe reconnect and retry](docs/reconnect-and-retry.md).
+[ReconnectExample](src/example/java/com/github/theholywaffle/teamspeak3/example/ReconnectExample.java).
 
 ### File transfers
 
@@ -289,8 +281,6 @@ the library) and supports resume. Limitations:
 - Channel and client icons are assigned with the `i_icon_id` permission using the ID's signed
   32-bit value; TS3 rejects the `channel_icon_id` and `client_icon_id` properties.
 
-Details: [file transfers](docs/file-transfers.md).
-
 ### SSH host key trust
 
 SSH connections verify the server's host key; unknown and changed keys are rejected. By default the
@@ -303,8 +293,7 @@ with `setSshHostKeyPolicy`:
   application-owned file and rejects later changes. Only use it where the first connection is trusted.
 
 The client authenticates with password, then keyboard-interactive. It uses SSHJ's default algorithms,
-which still include legacy ones; compression is off. Details:
-[configuration and transports](docs/configuration-and-transports.md#ssh-host-trust).
+which still include legacy ones; compression is off.
 
 ### Logging
 
@@ -341,8 +330,7 @@ There is no session, so its API is the shared `TS3BaseApi`, without `login` or `
 Events and file operations fail with `TS3UnsupportedOperationException`; keep a RAW or SSH query for
 those. HTTPS is required unless
 plaintext is explicitly allowed. Rejected keys raise `TS3AuthenticationFailedException`; responses
-without a usable status, for example from a proxy, raise `TS3HttpException`. Configuration, errors,
-security and the verified operations: [Web Query](docs/web-query.md).
+without a usable status, for example from a proxy, raise `TS3HttpException`.
 
 ```java
 var config = WebQueryConfig.builder(URI.create("https://ts.example.org:10443"), apiKey).build();
@@ -354,9 +342,8 @@ try (TS3WebQuery query = new TS3WebQuery(config)) {
 ### Migrating from 1.x
 
 2.0 changes the build requirements, the API shape, futures, models, defaults and security behavior.
-Follow the [2.0 migration guide](docs/migration-2.0.md): it has an upgrade checklist, the changed
-defaults and links to the detailed guide for each area. Every API difference from 1.3.1 is
-[accounted for](docs/api-differences-2.0.md).
+Follow the [2.0 migration guide](MIGRATION.md): it has an upgrade checklist, the changed
+defaults and a replacement for every 1.3.1 API method.
 
 ## Configuration reference
 
@@ -387,7 +374,7 @@ inconsistent retry configuration) before any connection is opened.
 | `setCommandRetryPolicy(CommandRetryPolicy)` | `none()` | Reads that may be replayed after a reconnect; requires a session configuration |
 | `setConnectionHandler(ConnectionHandler)` | none | Callbacks after each connection and connection loss |
 | `setFileTransferConfig(FileTransferConfig)` | 4 s connect/read, 5 min total, 16 MiB, advertised endpoint | File transfer limits and endpoint mapping |
-| `setTransportFactory(QueryTransportFactory)` | built-in raw/SSH | Custom stream transport; see [adding a transport](docs/configuration-and-transports.md#adding-a-transport) |
+| `setTransportFactory(QueryTransportFactory)` | built-in raw/SSH | Custom stream transport |
 
 ## Development
 
@@ -405,8 +392,7 @@ The Gradle Wrapper downloads and verifies the pinned Gradle version, so no Gradl
 needed; the first build needs internet access. Gradle runs on JDK 25 and downloads one if none is
 installed.
 `build` compiles the library and the examples, runs the unit tests, and applies the formatting,
-static analysis, Javadoc and coverage checks described in
-[quality checks](docs/quality-checks.md). It needs no Docker and publishes nothing. Run
+static analysis, Javadoc and coverage checks. It needs no Docker and publishes nothing. Run
 `./gradlew spotlessApply` to fix formatting.
 
 ### Integration tests
@@ -417,25 +403,17 @@ static analysis, Javadoc and coverage checks described in
 
 Starts disposable TS3 servers in Docker and runs the RAW, SSH and Web Query compatibility suites, every
 example and the development server launcher. A missing Docker daemon fails the build instead of skipping
-tests. See [integration tests](docs/integration-tests.md) for images, licenses and Apple Silicon notes.
+tests.
 
 ### Local development server
 
 `./gradlew devServer` starts a disposable server for manual testing, as
 shown in [run an example](#run-an-example). Add `-PdevOnce=true` to exit after its own smoke test.
-See [development server](docs/development-server.md).
 
-### Documentation
+## Getting help
 
-- [Migrating from 1.x](docs/migration-2.0.md) · [API differences from 1.3.1](docs/api-differences-2.0.md)
-- [Domain API, errors and absent results](docs/api-migration.md) · [Response models](docs/models-and-values.md) · [Implementation cleanup](docs/implementation-cleanup.md)
-- [Futures](docs/futures.md) · [Events and capacity](docs/events-and-capacity.md) · [Connection lifecycle](docs/connection-lifecycle.md) · [Reconnect and retry](docs/reconnect-and-retry.md)
-- [Configuration and transports](docs/configuration-and-transports.md) · [File transfers](docs/file-transfers.md) · [Web Query](docs/web-query.md)
-- [Command compatibility](docs/command-compatibility.md) · [Integration tests](docs/integration-tests.md) · [Development server](docs/development-server.md)
-- [Packaging](docs/packaging.md) · [Quality checks](docs/quality-checks.md) · [CI and releases](docs/releases.md)
-
-## Getting help and contributing
-
-See [getting help](SUPPORT.md) for questions, bug reports and private vulnerability reports, the
-[security policy](SECURITY.md) for supported versions, and the [contributing guide](CONTRIBUTING.md)
-for building, PR titles, releases and review.
+Ask questions in [Discussions](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/discussions) and
+report bugs as [issues](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/issues). Report
+vulnerabilities privately through
+[GitHub's vulnerability reporting](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/security/advisories/new),
+never in a public issue.

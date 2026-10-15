@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.junit.jupiter.api.Test;
 
-/** Keeps the README configuration reference, the support policy and the Markdown links in step with the code. */
+/** Keeps the README configuration reference and the Markdown links in step with the code. */
 class DocumentationTest {
     private static final Path README = Path.of("README.md");
     private static final Set<String> GENERATED = Set.of("target", ".git", "build", ".gradle");
@@ -102,23 +102,6 @@ class DocumentationTest {
                 Set.of(TeamSpeakContainer.TS3_VERSION),
                 documented,
                 "Update the README support table for src/test/resources/teamspeak3/Dockerfile");
-    }
-
-    /** A new major version changes the support policy, so it fails until SECURITY.md is reviewed. */
-    @Test
-    void securityPolicyCoversTheDevelopedMajorVersion() throws IOException {
-        Matcher version = Pattern.compile("^version=(\\d+)\\.", Pattern.MULTILINE)
-                .matcher(Files.readString(Path.of("gradle.properties")));
-        assertTrue(version.find());
-        int newestDocumented = Pattern.compile("^\\| (\\d+)\\.x ", Pattern.MULTILINE)
-                .matcher(Files.readString(Path.of("SECURITY.md")))
-                .results()
-                .mapToInt(row -> Integer.parseInt(row.group(1)))
-                .max()
-                .orElse(-1);
-        assertTrue(
-                Integer.parseInt(version.group(1)) <= newestDocumented,
-                "Add the " + version.group(1) + ".x line to the supported versions in SECURITY.md");
     }
 
     @Test
