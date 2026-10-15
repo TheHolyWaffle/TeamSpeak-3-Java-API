@@ -1,0 +1,82 @@
+MIGRATION.md
+  h_b0b95817cb397c 252-253,494,604
+src/example/java/com/github/theholywaffle/teamspeak3/example/ChatBotExample.java
+  h_b0b95817cb397c 29
+src/example/java/com/github/theholywaffle/teamspeak3/example/ReconnectExample.java
+  h_b0b95817cb397c 52
+src/main/java/com/github/theholywaffle/teamspeak3/ApiKeyApiAsync.java
+  h_b0b95817cb397c 10,28,33,38,43
+src/main/java/com/github/theholywaffle/teamspeak3/DatabaseClientApiAsync.java
+  h_b0b95817cb397c 41
+src/main/java/com/github/theholywaffle/teamspeak3/EventApiAsync.java
+  h_b0b95817cb397c 38
+src/main/java/com/github/theholywaffle/teamspeak3/MessageApiAsync.java
+  h_b0b95817cb397c 70
+src/main/java/com/github/theholywaffle/teamspeak3/PermissionApi.java
+  h_b0b95817cb397c 12,83,85
+src/main/java/com/github/theholywaffle/teamspeak3/PermissionApiAsync.java
+  h_b0b95817cb397c 17,62-63
+src/main/java/com/github/theholywaffle/teamspeak3/QueryRequests.java
+  h_b0b95817cb397c 105-106
+src/main/java/com/github/theholywaffle/teamspeak3/api/FileLocation.java
+  h_b0b95817cb397c 12,14,19,29,37,41,45
+src/main/java/com/github/theholywaffle/teamspeak3/api/PermissionGroupType.java
+  h_b0b95817cb397c 3,6
+src/main/java/com/github/theholywaffle/teamspeak3/api/event/BaseEvent.java
+  h_b0b95817cb397c 45,63,101
+src/main/java/com/github/theholywaffle/teamspeak3/api/event/TextMessageEvent.java
+  h_b0b95817cb397c 31
+src/main/java/com/github/theholywaffle/teamspeak3/api/reconnect/SessionConfiguration.java
+  h_b0b95817cb397c 17,20-21,36,38-39,47,55,87,89-93
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/FileTransferParameters.java
+  h_b0b95817cb397c 115
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/PermissionAssignment.java
+  h_b0b95817cb397c 6,8,28,30-31,41,43-44,59,61-62
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/PermissionSource.java
+  h_b0b95817cb397c 1-76
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/ServerQueryInfo.java
+  h_b0b95817cb397c 14,57,59-61,133,135-137
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/Wrapper.java
+  h_b0b95817cb397c 494,637
+src/main/java/com/github/theholywaffle/teamspeak3/commands/ApiKeyCommands.java
+  h_b0b95817cb397c 18,20,30,34-36
+src/main/java/com/github/theholywaffle/teamspeak3/commands/FileCommands.java
+  h_b0b95817cb397c 29,52,100,109-113
+src/test/java/com/github/theholywaffle/teamspeak3/ApiKeyApiTest.java
+  h_b0b95817cb397c 94-95,99-104,107-108
+src/test/java/com/github/theholywaffle/teamspeak3/CommandFuturesTest.java
+  h_b0b95817cb397c 40-41,53,233,261,290,361,496-497,611-615
+src/test/java/com/github/theholywaffle/teamspeak3/DomainApiCompatibilityIT.java
+  h_b0b95817cb397c 76
+src/test/java/com/github/theholywaffle/teamspeak3/DomainApiTest.java
+  h_b0b95817cb397c 27,129-133
+src/test/java/com/github/theholywaffle/teamspeak3/EventResilienceTest.java
+  h_b0b95817cb397c 191-195,248-249
+src/test/java/com/github/theholywaffle/teamspeak3/FileContentCompatibilityIT.java
+  h_b0b95817cb397c 115-116
+src/test/java/com/github/theholywaffle/teamspeak3/FileTransferApiTest.java
+  h_b0b95817cb397c 52,123-124
+src/test/java/com/github/theholywaffle/teamspeak3/ModelCompatibilityIT.java
+  h_b0b95817cb397c 142,159
+src/test/java/com/github/theholywaffle/teamspeak3/OfflineMessageTest.java
+  h_b0b95817cb397c 6,24-25,48-50
+src/test/java/com/github/theholywaffle/teamspeak3/ReconnectSemanticsTest.java
+  h_b0b95817cb397c 133-134
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryCompatibilityIT.java
+  h_b0b95817cb397c 183,190,256,307-308,462-463,735,1097,1099,1231,1265-1266,1405,1441,1591
+src/test/java/com/github/theholywaffle/teamspeak3/WebQueryCompatibilityIT.java
+  h_b0b95817cb397c 660
+src/test/java/com/github/theholywaffle/teamspeak3/api/wrapper/ModelValuesTest.java
+  h_b0b95817cb397c 211-212,215,342-344
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "77d1b4449aacff4f71ab54f6ad5fe68288ccb8ce",
+  "prompts": {},
+  "humans": {
+    "h_b0b95817cb397c": {
+      "author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
