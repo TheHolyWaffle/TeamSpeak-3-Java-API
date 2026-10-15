@@ -6,7 +6,7 @@ package com.github.theholywaffle.teamspeak3.api;
  *
  * @param value the positive ID
  */
-public record ChannelGroupId(long value) {
+public record ChannelGroupId(long value) implements EntityId {
 
     public ChannelGroupId {
         if (value <= 0) throw new IllegalArgumentException("Channel group ID must be positive");

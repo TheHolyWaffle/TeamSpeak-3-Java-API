@@ -11,7 +11,7 @@ public class ChannelPasswordChangedEvent extends BaseEvent {
     }
 
     public ChannelId getChannelId() {
-        return requireId(ChannelProperty.CID, ChannelId::new);
+        return requireId(ChannelProperty.CID, ChannelId::of);
     }
 
     @Override

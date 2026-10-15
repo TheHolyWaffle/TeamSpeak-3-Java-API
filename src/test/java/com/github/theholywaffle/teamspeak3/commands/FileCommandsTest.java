@@ -1,173 +1,96 @@
 package com.github.theholywaffle.teamspeak3.commands;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
+import com.github.theholywaffle.teamspeak3.api.FileLocation;
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class FileCommandsTest {
 
+    private static FileLocation inChannel1(String path) {
+        return FileLocation.of(ChannelId.of(1), path);
+    }
+
     @Test
-    public void ftCreateDir_NullPathException() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftCreateDir(null, 1, null));
+    public void fileLocation_InvalidPathException() {
+        Assertions.assertThrows(NullPointerException.class, () -> inChannel1(null));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> inChannel1(""));
+        Assertions.assertThrows(NullPointerException.class, () -> FileLocation.ofServer(null));
+        Assertions.assertThrows(
+                IllegalArgumentException.class, () -> inChannel1("/a").withPath(""));
     }
 
     @Test
     public void ftCreateDir() {
         final String expected = "ftcreatedir cid=1 cpw= dirname=\\/dir1";
         Assertions.assertEquals(
-                expected, FileCommands.ftCreateDir("/dir1", 1, null).encoded());
+                expected, FileCommands.ftCreateDir(inChannel1("/dir1")).encoded());
         Assertions.assertEquals(
-                expected, FileCommands.ftCreateDir("dir1", 1, null).encoded());
+                expected, FileCommands.ftCreateDir(inChannel1("dir1")).encoded());
     }
 
     @Test
-    public void ftDeleteFile_EmptyFileArrayException() {
-        final String[] filePaths = {};
-        Assertions.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftDeleteFile(1, null, filePaths));
+    public void ftDeleteFile_EmptyListException() {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftDeleteFile(List.of()));
     }
 
     @Test
-    public void ftDeleteFile_NullFileArrayException() {
+    public void ftDeleteFile_MixedChannelsException() {
         Assertions.assertThrows(
-                IllegalArgumentException.class, () -> FileCommands.ftDeleteFile(1, null, (String[]) null));
-    }
-
-    @Test
-    public void ftDeleteFile_NullFilePathException() {
-        final String[] filePaths = {null};
-        Assertions.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftDeleteFile(1, null, filePaths));
+                IllegalArgumentException.class,
+                () -> FileCommands.ftDeleteFile(List.of(inChannel1("/a"), FileLocation.ofServer("/b"))));
+        Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> FileCommands.ftDeleteFile(
+                        List.of(inChannel1("/a"), inChannel1("/b").withChannelPassword("x"))));
     }
 
     @Test
     public void ftDeleteFile() {
-        final String[] filePaths = {"dir1", "/dir2"};
         final String expected = "ftdeletefile cid=1 cpw= name=\\/dir1|name=\\/dir2";
         Assertions.assertEquals(
-                expected, FileCommands.ftDeleteFile(1, null, filePaths).encoded());
-    }
-
-    @Test
-    public void ftGetFileInfo_EmptyFileArrayException() {
-        final String[] filePaths = {};
-        Assertions.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(1, null, filePaths));
-    }
-
-    @Test
-    public void ftGetFileInfo_NullFileArrayException() {
-        Assertions.assertThrows(
-                IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(1, null, (String[]) null));
-    }
-
-    @Test
-    public void ftGetFileInfo_NullFilePathException() {
-        final String[] filePaths = {null};
-        Assertions.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(1, null, filePaths));
-    }
-
-    @Test
-    public void ftGetFileInfo() {
-        final String[] filePaths = {"dir1", "/dir2"};
-        final String expected = "ftgetfileinfo cid=1 cpw= name=\\/dir1|cid=1 cpw= name=\\/dir2";
-        Assertions.assertEquals(
-                expected, FileCommands.ftGetFileInfo(1, null, filePaths).encoded());
-    }
-
-    @Test
-    public void ftGetFileInfoArray_EmptyChannelIDArrayException() {
-        final long[] channelIds = {};
-        Assertions.assertThrows(
-                IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(channelIds, null, null));
-    }
-
-    @Test
-    public void ftGetFileInfoArray_NullChannelIDArrayException() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(null, null, null));
-    }
-
-    @Test
-    public void ftGetFileInfoArray_EmptyFileArrayException() {
-        final long[] channelIds = {1};
-        final String[] filePaths = {};
-        Assertions.assertThrows(
-                IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(channelIds, null, filePaths));
-    }
-
-    @Test
-    public void ftGetFileInfoArray_NullFileArrayException() {
-        final long[] channelIds = {1};
-        Assertions.assertThrows(
-                IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(channelIds, null, null));
-    }
-
-    @Test
-    public void ftGetFileInfoArray_ChannelIDsLengthFilePathsLengthException() {
-        final long[] channelIds = {1};
-        final String[] filePaths = {"dir1", "dir2"};
-        Assertions.assertThrows(
-                IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(channelIds, null, filePaths));
-    }
-
-    @Test
-    public void ftGetFileInfoArray_PasswordsLengthFilePathsLengthException() {
-        final long[] channelIds = {1, 2};
-        final String[] channelPasswords = {null};
-        final String[] filePaths = {"dir1", "dir2"};
-        Assertions.assertThrows(
-                IllegalArgumentException.class,
-                () -> FileCommands.ftGetFileInfo(channelIds, channelPasswords, filePaths));
-    }
-
-    @Test
-    public void ftGetFileInfoArray_NullFilePathException() {
-        final long[] channelIds = {1};
-        final String[] filePaths = {null};
-        Assertions.assertThrows(
-                IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(channelIds, null, filePaths));
-    }
-
-    @Test
-    public void ftGetFileInfoArray() {
-        final long[] channelIds = {1, 2};
-        final String[] channelPasswords = {null, "pass2"};
-        final String[] filePaths = {"dir1", "/dir2"};
-        final String expected = "ftgetfileinfo cid=1 cpw= name=\\/dir1|cid=2 cpw=pass2 name=\\/dir2";
-        Assertions.assertEquals(
                 expected,
-                FileCommands.ftGetFileInfo(channelIds, channelPasswords, filePaths)
+                FileCommands.ftDeleteFile(List.of(inChannel1("dir1"), inChannel1("/dir2")))
+                        .encoded());
+        Assertions.assertEquals(
+                "ftdeletefile cid=0 cpw= name=\\/icon_5",
+                FileCommands.ftDeleteFile(List.of(FileLocation.ofServer("/icon_5")))
                         .encoded());
     }
 
     @Test
-    public void ftGetFileList_NullDirectoryPathException() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftGetFileList(null, 1, null));
+    public void ftGetFileInfo_EmptyListException() {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(List.of()));
+    }
+
+    @Test
+    public void ftGetFileInfo() {
+        final String expected = "ftgetfileinfo cid=1 cpw= name=\\/dir1|cid=2 cpw=pass2 name=\\/dir2";
+        Assertions.assertEquals(
+                expected,
+                FileCommands.ftGetFileInfo(List.of(
+                                inChannel1("dir1"),
+                                FileLocation.of(ChannelId.of(2), "/dir2").withChannelPassword("pass2")))
+                        .encoded());
     }
 
     @Test
     public void ftGetFileList() {
         final String expected = "ftgetfilelist cid=1 cpw= path=\\/dir1\\/";
         Assertions.assertEquals(
-                expected, FileCommands.ftGetFileList("/dir1", 1, null).encoded());
+                expected, FileCommands.ftGetFileList(inChannel1("/dir1")).encoded());
         Assertions.assertEquals(
-                expected, FileCommands.ftGetFileList("dir1/", 1, null).encoded());
-    }
-
-    @Test
-    public void ftInitDownload_NullDirectoryPathException() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftInitDownload(1, null, 1, null, 0));
+                expected, FileCommands.ftGetFileList(inChannel1("dir1/")).encoded());
     }
 
     @Test
     public void ftInitDownload() {
         final String expected = "ftinitdownload clientftfid=1 name=\\/dir1 cid=1 cpw= seekpos=0 proto=0";
         Assertions.assertEquals(
-                expected, FileCommands.ftInitDownload(1, "/dir1", 1, null, 0).encoded());
+                expected, FileCommands.ftInitDownload(1, inChannel1("/dir1"), 0).encoded());
         Assertions.assertEquals(
-                expected, FileCommands.ftInitDownload(1, "dir1", 1, null, 0).encoded());
-    }
-
-    @Test
-    public void ftInitUpload_NullDirectoryPathException() {
-        Assertions.assertThrows(
-                IllegalArgumentException.class, () -> FileCommands.ftInitUpload(1, null, 1, null, 1024, true, false));
+                expected, FileCommands.ftInitDownload(1, inChannel1("dir1"), 0).encoded());
     }
 
     @Test
@@ -176,48 +99,30 @@ public class FileCommandsTest {
                 "ftinitupload clientftfid=1 name=\\/dir1 cid=1 cpw= size=1024 overwrite=1 resume=0 proto=0";
         Assertions.assertEquals(
                 expected,
-                FileCommands.ftInitUpload(1, "/dir1", 1, null, 1024, true, false)
+                FileCommands.ftInitUpload(1, inChannel1("/dir1"), 1024, true, false)
                         .encoded());
         Assertions.assertEquals(
                 expected,
-                FileCommands.ftInitUpload(1, "dir1", 1, null, 1024, true, false).encoded());
+                FileCommands.ftInitUpload(1, inChannel1("dir1"), 1024, true, false)
+                        .encoded());
     }
 
     @Test
     public void ftList() {
-        final String expected = "ftlist";
-        Assertions.assertEquals(expected, FileCommands.ftList().encoded());
-    }
-
-    @Test
-    public void ftRenameFile_NullOldPathException() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftRenameFile(null, "dir2", 1, null));
-    }
-
-    @Test
-    public void ftRenameFile_NullNewPathException() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> FileCommands.ftRenameFile("dir1", null, 1, null));
+        Assertions.assertEquals("ftlist", FileCommands.ftList().encoded());
     }
 
     @Test
     public void ftRenameFile() {
         final String expected = "ftrenamefile cid=1 cpw= oldname=\\/dir1 newname=\\/dir2";
         Assertions.assertEquals(
-                expected, FileCommands.ftRenameFile("/dir1", "dir2", 1, null).encoded());
+                expected,
+                FileCommands.ftRenameFile(inChannel1("/dir1"), inChannel1("dir2"))
+                        .encoded());
         Assertions.assertEquals(
-                expected, FileCommands.ftRenameFile("dir1", "/dir2", 1, null).encoded());
-    }
-
-    @Test
-    public void ftRenameFileAndChannel_NullOldPathException() {
-        Assertions.assertThrows(
-                IllegalArgumentException.class, () -> FileCommands.ftRenameFile(null, "dir2", 1, null, 2, null));
-    }
-
-    @Test
-    public void ftRenameFileAndChannel_NullNewPathException() {
-        Assertions.assertThrows(
-                IllegalArgumentException.class, () -> FileCommands.ftRenameFile("dir1", null, 1, null, 2, null));
+                expected,
+                FileCommands.ftRenameFile(inChannel1("dir1"), inChannel1("/dir2"))
+                        .encoded());
     }
 
     @Test
@@ -225,9 +130,11 @@ public class FileCommandsTest {
         final String expected = "ftrenamefile cid=1 cpw= tcid=2 tcpw= oldname=\\/dir1 newname=\\/dir2";
         Assertions.assertEquals(
                 expected,
-                FileCommands.ftRenameFile("/dir1", "dir2", 1, null, 2, null).encoded());
+                FileCommands.ftRenameFile(inChannel1("/dir1"), FileLocation.of(ChannelId.of(2), "dir2"))
+                        .encoded());
         Assertions.assertEquals(
-                expected,
-                FileCommands.ftRenameFile("dir1", "/dir2", 1, null, 2, null).encoded());
+                "ftrenamefile cid=1 cpw= tcid=0 tcpw= oldname=\\/dir1 newname=\\/dir2",
+                FileCommands.ftRenameFile(inChannel1("/dir1"), FileLocation.ofServer("/dir2"))
+                        .encoded());
     }
 }

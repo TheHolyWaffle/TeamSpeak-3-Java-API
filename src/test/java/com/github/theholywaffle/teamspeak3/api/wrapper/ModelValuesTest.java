@@ -12,7 +12,7 @@ import com.github.theholywaffle.teamspeak3.api.Codec;
 import com.github.theholywaffle.teamspeak3.api.IconId;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupType;
-import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
+import com.github.theholywaffle.teamspeak3.api.PrivilegeKeyGrant;
 import com.github.theholywaffle.teamspeak3.api.PrivilegeKeyType;
 import com.github.theholywaffle.teamspeak3.api.ServerFileTransferId;
 import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
@@ -21,6 +21,7 @@ import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerStatus;
 import com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent;
+import com.github.theholywaffle.teamspeak3.api.event.PrivilegeKeyUsedEvent;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException;
 import com.github.theholywaffle.teamspeak3.commands.ServerGroupCommands;
@@ -128,7 +129,6 @@ class ModelValuesTest {
 
     @Test
     void unknownCodesCannotBeSent() {
-        assertThrows(IllegalArgumentException.class, () -> new PermissionTarget(PermissionGroupType.UNKNOWN, 1, 0));
         assertThrows(
                 IllegalArgumentException.class,
                 () -> ServerGroupCommands.serverGroupAdd("x", PermissionGroupDatabaseType.UNKNOWN));
@@ -244,13 +244,15 @@ class ModelValuesTest {
         assertEquals(Optional.empty(), new FileInfo(Map.of("cid", "0")).getChannelId());
 
         var serverKey = new PrivilegeKey(Map.of("token_type", "0", "token_id1", "6", "token_id2", "0"));
-        assertEquals(Optional.of(ServerGroupId.of(6)), serverKey.getServerGroupId());
-        assertEquals(Optional.empty(), serverKey.getChannelGroupId());
-        assertEquals(Optional.empty(), serverKey.getChannelId());
+        assertEquals(PrivilegeKeyGrant.serverGroup(ServerGroupId.of(6)), serverKey.getGrant());
         var channelKey = new PrivilegeKey(Map.of("token_type", "1", "token_id1", "5", "token_id2", "3"));
-        assertEquals(Optional.empty(), channelKey.getServerGroupId());
-        assertEquals(Optional.of(ChannelGroupId.of(5)), channelKey.getChannelGroupId());
-        assertEquals(Optional.of(ChannelId.of(3)), channelKey.getChannelId());
+        assertEquals(PrivilegeKeyGrant.channelGroup(ChannelGroupId.of(5), ChannelId.of(3)), channelKey.getGrant());
+        var usedEvent = new PrivilegeKeyUsedEvent(new Wrapper(Map.of("token1", "5", "token2", "3")));
+        assertEquals(PrivilegeKeyGrant.channelGroup(ChannelGroupId.of(5), ChannelId.of(3)), usedEvent.getGrant());
+        assertEquals(PrivilegeKeyType.CHANNEL_GROUP, usedEvent.getPrivilegeKeyType());
+        assertEquals(
+                PrivilegeKeyGrant.serverGroup(ServerGroupId.of(6)),
+                new PrivilegeKeyUsedEvent(new Wrapper(Map.of("token1", "6", "token2", "0"))).getGrant());
 
         assertEquals(
                 List.of(ServerGroupId.of(2), ServerGroupId.of(beyondInt)),

@@ -1,40 +1,97 @@
 package com.github.theholywaffle.teamspeak3.api;
 
-/**
- * The holder of a permission assignment. Create it with the factories, which take typed IDs.
- *
- * @param type the type of holder
- * @param id the server group, channel group, channel or client database ID
- * @param clientDatabaseId the client database ID for {@link PermissionGroupType#CHANNEL_CLIENT}, otherwise 0
- */
-public record PermissionTarget(PermissionGroupType type, long id, long clientDatabaseId) {
+import java.util.Objects;
 
-    public PermissionTarget {
-        if (type == null || type == PermissionGroupType.UNKNOWN)
-            throw new IllegalArgumentException("Type must be a known holder type");
-        if (id <= 0) throw new IllegalArgumentException("ID must be positive");
-        if ((type == PermissionGroupType.CHANNEL_CLIENT) != (clientDatabaseId > 0)) {
-            throw new IllegalArgumentException("Only channel-client targets use a positive client database ID");
+/**
+ * The holder of a permission assignment: a server group, channel group, channel, client, or client
+ * within one channel. Create it with the factories.
+ */
+public sealed interface PermissionTarget {
+
+    static ServerGroupTarget serverGroup(ServerGroupId serverGroupId) {
+        return new ServerGroupTarget(serverGroupId);
+    }
+
+    static ChannelGroupTarget channelGroup(ChannelGroupId channelGroupId) {
+        return new ChannelGroupTarget(channelGroupId);
+    }
+
+    static ChannelTarget channel(ChannelId channelId) {
+        return new ChannelTarget(channelId);
+    }
+
+    static ClientTarget client(ClientDatabaseId clientDatabaseId) {
+        return new ClientTarget(clientDatabaseId);
+    }
+
+    static ChannelClientTarget channelClient(ChannelId channelId, ClientDatabaseId clientDatabaseId) {
+        return new ChannelClientTarget(channelId, clientDatabaseId);
+    }
+
+    /** @return the type of holder */
+    PermissionGroupType type();
+
+    /** @param serverGroupId the server group */
+    record ServerGroupTarget(ServerGroupId serverGroupId) implements PermissionTarget {
+        public ServerGroupTarget {
+            Objects.requireNonNull(serverGroupId, "serverGroupId");
+        }
+
+        @Override
+        public PermissionGroupType type() {
+            return PermissionGroupType.SERVER_GROUP;
         }
     }
 
-    public static PermissionTarget serverGroup(ServerGroupId serverGroupId) {
-        return new PermissionTarget(PermissionGroupType.SERVER_GROUP, serverGroupId.value(), 0);
+    /** @param channelGroupId the channel group */
+    record ChannelGroupTarget(ChannelGroupId channelGroupId) implements PermissionTarget {
+        public ChannelGroupTarget {
+            Objects.requireNonNull(channelGroupId, "channelGroupId");
+        }
+
+        @Override
+        public PermissionGroupType type() {
+            return PermissionGroupType.CHANNEL_GROUP;
+        }
     }
 
-    public static PermissionTarget channelGroup(ChannelGroupId channelGroupId) {
-        return new PermissionTarget(PermissionGroupType.CHANNEL_GROUP, channelGroupId.value(), 0);
+    /** @param channelId the channel */
+    record ChannelTarget(ChannelId channelId) implements PermissionTarget {
+        public ChannelTarget {
+            Objects.requireNonNull(channelId, "channelId");
+        }
+
+        @Override
+        public PermissionGroupType type() {
+            return PermissionGroupType.CHANNEL;
+        }
     }
 
-    public static PermissionTarget channel(ChannelId channelId) {
-        return new PermissionTarget(PermissionGroupType.CHANNEL, channelId.value(), 0);
+    /** @param clientDatabaseId the client, in every channel */
+    record ClientTarget(ClientDatabaseId clientDatabaseId) implements PermissionTarget {
+        public ClientTarget {
+            Objects.requireNonNull(clientDatabaseId, "clientDatabaseId");
+        }
+
+        @Override
+        public PermissionGroupType type() {
+            return PermissionGroupType.GLOBAL_CLIENT;
+        }
     }
 
-    public static PermissionTarget client(ClientDatabaseId clientDatabaseId) {
-        return new PermissionTarget(PermissionGroupType.GLOBAL_CLIENT, clientDatabaseId.value(), 0);
-    }
+    /**
+     * @param channelId the channel
+     * @param clientDatabaseId the client within that channel
+     */
+    record ChannelClientTarget(ChannelId channelId, ClientDatabaseId clientDatabaseId) implements PermissionTarget {
+        public ChannelClientTarget {
+            Objects.requireNonNull(channelId, "channelId");
+            Objects.requireNonNull(clientDatabaseId, "clientDatabaseId");
+        }
 
-    public static PermissionTarget channelClient(ChannelId channelId, ClientDatabaseId clientDatabaseId) {
-        return new PermissionTarget(PermissionGroupType.CHANNEL_CLIENT, channelId.value(), clientDatabaseId.value());
+        @Override
+        public PermissionGroupType type() {
+            return PermissionGroupType.CHANNEL_CLIENT;
+        }
     }
 }

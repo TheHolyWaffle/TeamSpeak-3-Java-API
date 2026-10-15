@@ -5,7 +5,7 @@ package com.github.theholywaffle.teamspeak3.api;
  *
  * @param value the positive ID
  */
-public record ApiKeyId(long value) {
+public record ApiKeyId(long value) implements EntityId {
 
     public ApiKeyId {
         if (value <= 0) throw new IllegalArgumentException("API key ID must be positive");

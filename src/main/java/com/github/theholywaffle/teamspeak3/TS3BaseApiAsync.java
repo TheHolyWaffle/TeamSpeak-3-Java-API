@@ -195,6 +195,6 @@ public class TS3BaseApiAsync {
 
     /** @see TS3BaseApi#moveQuery(ChannelId, String) */
     public CompletableFuture<Void> moveQuery(ChannelId channelId, String channelPassword) {
-        return requests.run(ClientCommands.clientMove(0, channelId.value(), channelPassword));
+        return requests.run(ClientCommands.clientMoveSelf(channelId, channelPassword));
     }
 }

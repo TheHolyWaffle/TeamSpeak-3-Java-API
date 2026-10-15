@@ -12,7 +12,7 @@ public class Channel extends ChannelBase {
 
     @Override
     public ChannelId getId() {
-        return requireId(ChannelProperty.CID, ChannelId::new);
+        return requireId(ChannelProperty.CID, ChannelId::of);
     }
 
     public int getTotalClientsFamily() {

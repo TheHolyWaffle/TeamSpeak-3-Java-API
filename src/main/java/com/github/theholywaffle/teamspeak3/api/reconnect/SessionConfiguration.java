@@ -83,11 +83,7 @@ public record SessionConfiguration(VirtualServerId virtualServerId, String nickn
         api.selectVirtualServerById(virtualServerId);
         if (nickname != null) api.setNickname(nickname);
         for (Subscription subscription : subscriptions) {
-            subscription
-                    .channelId()
-                    .ifPresentOrElse(
-                            channel -> api.events().register(subscription.eventType(), channel),
-                            () -> api.events().register(subscription.eventType()));
+            api.events().register(subscription.eventType(), subscription.channelId());
         }
     }
 }

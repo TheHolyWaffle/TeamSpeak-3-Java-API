@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3.commands;
 
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 
 public final class CustomPropertyCommands {
@@ -8,20 +9,20 @@ public final class CustomPropertyCommands {
         throw new Error("No instances");
     }
 
-    public static Command customDelete(long clientDBId, String key) {
+    public static Command customDelete(ClientDatabaseId clientDBId, String key) {
         CommandBuilder builder = new CommandBuilder("customdelete");
         builder.add(new KeyValueParam("cldbid", clientDBId));
         builder.add(new KeyValueParam("ident", key));
         return builder.build();
     }
 
-    public static Command customInfo(long clientDBId) {
+    public static Command customInfo(ClientDatabaseId clientDBId) {
         return new CommandBuilder("custominfo")
                 .add(new KeyValueParam("cldbid", clientDBId))
                 .build();
     }
 
-    public static Command customSet(long clientDBId, String key, String value) {
+    public static Command customSet(ClientDatabaseId clientDBId, String key, String value) {
         CommandBuilder builder = new CommandBuilder("customset");
         builder.add(new KeyValueParam("cldbid", clientDBId));
         builder.add(new KeyValueParam("ident", key));

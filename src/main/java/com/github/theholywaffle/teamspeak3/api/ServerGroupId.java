@@ -6,7 +6,7 @@ package com.github.theholywaffle.teamspeak3.api;
  *
  * @param value the positive ID
  */
-public record ServerGroupId(long value) {
+public record ServerGroupId(long value) implements EntityId {
 
     public ServerGroupId {
         if (value <= 0) throw new IllegalArgumentException("Server group ID must be positive");

@@ -172,7 +172,7 @@ public class ClientInfo extends Client {
 
     private static ChannelId parseDefaultChannel(String value) {
         if (!value.startsWith("/")) throw new IllegalArgumentException("Missing / prefix");
-        return new ChannelId(Long.parseLong(value.substring(1)));
+        return ChannelId.of(Long.parseLong(value.substring(1)));
     }
 
     @Override

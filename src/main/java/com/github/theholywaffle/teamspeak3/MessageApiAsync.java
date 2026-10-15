@@ -40,7 +40,7 @@ public final class MessageApiAsync {
     /** @see MessageApi#sendChannel(ChannelId, String) */
     public CompletableFuture<Void> sendChannel(ChannelId channelId, String message) {
         return CommandFutures.compose(
-                requests.run(ClientCommands.clientMove(0, channelId.value(), null)), _ -> sendChannel(message));
+                requests.run(ClientCommands.clientMoveSelf(channelId, null)), _ -> sendChannel(message));
     }
 
     /** @see MessageApi#sendServer(String) */
@@ -68,8 +68,7 @@ public final class MessageApiAsync {
     /** @see MessageApi#getOffline(MessageId) */
     public CompletableFuture<Optional<String>> getOffline(MessageId messageId) {
         return requests.optional(
-                MessageCommands.messageGet(messageId.value()),
-                row -> row.getMap().get("message"));
+                MessageCommands.messageGet(messageId), row -> row.getMap().get("message"));
     }
 
     /** @see MessageApi#sendOffline(String, String, String) */
@@ -79,12 +78,12 @@ public final class MessageApiAsync {
 
     /** @see MessageApi#deleteOffline(MessageId) */
     public CompletableFuture<Void> deleteOffline(MessageId messageId) {
-        return requests.run(MessageCommands.messageDel(messageId.value()));
+        return requests.run(MessageCommands.messageDel(messageId));
     }
 
     /** @see MessageApi#setOfflineRead(MessageId, boolean) */
     public CompletableFuture<Void> setOfflineRead(MessageId messageId, boolean read) {
-        return requests.run(MessageCommands.messageUpdateFlag(messageId.value(), read));
+        return requests.run(MessageCommands.messageUpdateFlag(messageId, read));
     }
 
     private CompletableFuture<Void> send(TextMessageTargetMode mode, int targetId, String message) {

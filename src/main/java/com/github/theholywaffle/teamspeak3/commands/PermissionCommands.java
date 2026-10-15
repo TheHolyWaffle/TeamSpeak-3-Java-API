@@ -1,5 +1,9 @@
 package com.github.theholywaffle.teamspeak3.commands;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelGroupId;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
+import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import com.github.theholywaffle.teamspeak3.api.ServerGroupType;
 import com.github.theholywaffle.teamspeak3.commands.parameter.ArrayParameter;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
@@ -38,7 +42,7 @@ public final class PermissionCommands {
         return new CommandBuilder("permissionlist").build();
     }
 
-    public static Command permOverview(long channelId, long clientDBId) {
+    public static Command permOverview(ChannelId channelId, ClientDatabaseId clientDBId) {
         CommandBuilder builder = new CommandBuilder("permoverview");
         builder.add(new KeyValueParam("cid", channelId));
         builder.add(new KeyValueParam("cldbid", clientDBId));
@@ -54,7 +58,7 @@ public final class PermissionCommands {
      * Client commands
      */
 
-    public static Command clientAddPerm(long clientDBId, String permName, int permValue, boolean skip) {
+    public static Command clientAddPerm(ClientDatabaseId clientDBId, String permName, int permValue, boolean skip) {
         nonEmptyPermissionName(permName);
 
         CommandBuilder builder = new CommandBuilder("clientaddperm");
@@ -65,7 +69,7 @@ public final class PermissionCommands {
         return builder.build();
     }
 
-    public static Command clientDelPerm(long clientDBId, String permName) {
+    public static Command clientDelPerm(ClientDatabaseId clientDBId, String permName) {
         nonEmptyPermissionName(permName);
 
         CommandBuilder builder = new CommandBuilder("clientdelperm");
@@ -74,7 +78,7 @@ public final class PermissionCommands {
         return builder.build();
     }
 
-    public static Command clientPermList(long clientDBId) {
+    public static Command clientPermList(ClientDatabaseId clientDBId) {
         CommandBuilder builder = new CommandBuilder("clientpermlist");
         builder.add(new KeyValueParam("cldbid", clientDBId));
         builder.add(new OptionParam("permsid"));
@@ -85,7 +89,7 @@ public final class PermissionCommands {
      * Channel commands
      */
 
-    public static Command channelAddPerm(long channelId, String permName, int permValue) {
+    public static Command channelAddPerm(ChannelId channelId, String permName, int permValue) {
         nonEmptyPermissionName(permName);
 
         CommandBuilder builder = new CommandBuilder("channeladdperm");
@@ -95,7 +99,7 @@ public final class PermissionCommands {
         return builder.build();
     }
 
-    public static Command channelDelPerm(long channelId, String permName) {
+    public static Command channelDelPerm(ChannelId channelId, String permName) {
         nonEmptyPermissionName(permName);
 
         CommandBuilder builder = new CommandBuilder("channeldelperm");
@@ -104,7 +108,7 @@ public final class PermissionCommands {
         return builder.build();
     }
 
-    public static Command channelPermList(long channelId) {
+    public static Command channelPermList(ChannelId channelId) {
         CommandBuilder builder = new CommandBuilder("channelpermlist");
         builder.add(new KeyValueParam("cid", channelId));
         builder.add(new OptionParam("permsid"));
@@ -115,7 +119,8 @@ public final class PermissionCommands {
      * Channel client commands
      */
 
-    public static Command channelClientAddPerm(long channelId, long clientDBId, String permName, int permValue) {
+    public static Command channelClientAddPerm(
+            ChannelId channelId, ClientDatabaseId clientDBId, String permName, int permValue) {
         nonEmptyPermissionName(permName);
 
         CommandBuilder builder = new CommandBuilder("channelclientaddperm");
@@ -126,7 +131,7 @@ public final class PermissionCommands {
         return builder.build();
     }
 
-    public static Command channelClientDelPerm(long channelId, long clientDBId, String permName) {
+    public static Command channelClientDelPerm(ChannelId channelId, ClientDatabaseId clientDBId, String permName) {
         nonEmptyPermissionName(permName);
 
         CommandBuilder builder = new CommandBuilder("channelclientdelperm");
@@ -136,7 +141,7 @@ public final class PermissionCommands {
         return builder.build();
     }
 
-    public static Command channelClientPermList(long channelId, long clientDBId) {
+    public static Command channelClientPermList(ChannelId channelId, ClientDatabaseId clientDBId) {
         CommandBuilder builder = new CommandBuilder("channelclientpermlist");
         builder.add(new KeyValueParam("cid", channelId));
         builder.add(new KeyValueParam("cldbid", clientDBId));
@@ -148,7 +153,7 @@ public final class PermissionCommands {
      * Channel group commands
      */
 
-    public static Command channelGroupAddPerm(long groupId, String permName, int permValue) {
+    public static Command channelGroupAddPerm(ChannelGroupId groupId, String permName, int permValue) {
         nonEmptyPermissionName(permName);
 
         CommandBuilder builder = new CommandBuilder("channelgroupaddperm");
@@ -158,7 +163,7 @@ public final class PermissionCommands {
         return builder.build();
     }
 
-    public static Command channelGroupDelPerm(long groupId, String permName) {
+    public static Command channelGroupDelPerm(ChannelGroupId groupId, String permName) {
         nonEmptyPermissionName(permName);
 
         CommandBuilder builder = new CommandBuilder("channelgroupdelperm");
@@ -167,7 +172,7 @@ public final class PermissionCommands {
         return builder.build();
     }
 
-    public static Command channelGroupPermList(long groupId) {
+    public static Command channelGroupPermList(ChannelGroupId groupId) {
         CommandBuilder builder = new CommandBuilder("channelgrouppermlist");
         builder.add(new KeyValueParam("cgid", groupId));
         builder.add(new OptionParam("permsid"));
@@ -179,7 +184,7 @@ public final class PermissionCommands {
      */
 
     public static Command serverGroupAddPerm(
-            long groupId, String permName, int permValue, boolean negate, boolean skip) {
+            ServerGroupId groupId, String permName, int permValue, boolean negate, boolean skip) {
         nonEmptyPermissionName(permName);
 
         CommandBuilder builder = new CommandBuilder("servergroupaddperm");
@@ -205,7 +210,7 @@ public final class PermissionCommands {
         return builder.build();
     }
 
-    public static Command serverGroupDelPerm(long groupId, String permName) {
+    public static Command serverGroupDelPerm(ServerGroupId groupId, String permName) {
         nonEmptyPermissionName(permName);
 
         CommandBuilder builder = new CommandBuilder("servergroupdelperm");
@@ -224,7 +229,7 @@ public final class PermissionCommands {
         return builder.build();
     }
 
-    public static Command serverGroupPermList(long groupId) {
+    public static Command serverGroupPermList(ServerGroupId groupId) {
         CommandBuilder builder = new CommandBuilder("servergrouppermlist");
         builder.add(new KeyValueParam("sgid", groupId));
         builder.add(new OptionParam("permsid"));

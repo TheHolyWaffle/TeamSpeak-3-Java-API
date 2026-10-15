@@ -16,10 +16,6 @@ public class IconFile extends FileListEntry {
      * @return this file's icon ID, or empty if the file name is not {@code icon_<id>} with a valid ID
      */
     public Optional<IconId> getIconId() {
-        String fileName = getName();
-        if (!fileName.matches("icon_\\d{1,10}")) return Optional.empty();
-        long id = Long.parseLong(fileName.substring("icon_".length()));
-        if (id == 0 || id > 0xFFFF_FFFFL) return Optional.empty();
-        return Optional.of(IconId.of(id));
+        return IconId.fromFileName(getName());
     }
 }

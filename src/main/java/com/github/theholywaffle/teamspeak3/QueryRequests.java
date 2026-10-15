@@ -1,8 +1,8 @@
 package com.github.theholywaffle.teamspeak3;
 
-import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
+import com.github.theholywaffle.teamspeak3.api.EntityId;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.Command;
@@ -76,10 +76,6 @@ final class QueryRequests {
         return optional(command, row -> row.requireInt(property));
     }
 
-    <T> CompletableFuture<Optional<T>> optionalId(Command command, String property, LongFunction<T> type) {
-        return optional(command, row -> row.requireId(property, type));
-    }
-
     CompletableFuture<String> string(Command command, String property) {
         return one(command, row -> row.require(property));
     }
@@ -92,11 +88,11 @@ final class QueryRequests {
         return rows(command, row -> row.requireInt(property));
     }
 
-    <T> CompletableFuture<T> id(Command command, String property, LongFunction<T> type) {
+    <T extends EntityId> CompletableFuture<T> id(Command command, String property, LongFunction<T> type) {
         return one(command, row -> row.requireId(property, type));
     }
 
-    <T> CompletableFuture<List<T>> ids(Command command, String property, LongFunction<T> type) {
+    <T extends EntityId> CompletableFuture<List<T>> ids(Command command, String property, LongFunction<T> type) {
         return rows(command, row -> row.requireId(property, type));
     }
 
@@ -141,10 +137,6 @@ final class QueryRequests {
                     }
                 }),
                 request);
-    }
-
-    static long valueOrZero(ChannelId channelId) {
-        return channelId == null ? 0 : channelId.value();
     }
 
     static int[] values(Collection<ClientId> clientIds) {

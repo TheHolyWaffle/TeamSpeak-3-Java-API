@@ -33,7 +33,7 @@ public class TS3ApiAsync extends TS3BaseApiAsync {
 
     /** @see TS3Api#selectVirtualServerById(VirtualServerId, String) */
     public CompletableFuture<Void> selectVirtualServerById(VirtualServerId id, String nickname) {
-        return requests.run(QueryCommands.useId(id.value(), nickname));
+        return requests.run(QueryCommands.useId(id, nickname));
     }
 
     /** @see TS3Api#selectVirtualServerByPort(int) */

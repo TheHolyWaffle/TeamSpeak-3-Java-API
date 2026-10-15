@@ -19,12 +19,12 @@ public abstract class ChannelBase extends Wrapper {
 
     /** @return the parent channel, or empty for a top-level channel */
     public Optional<ChannelId> getParentChannelId() {
-        return requireOptionalId(ChannelProperty.PID, ChannelId::new);
+        return requireOptionalId(ChannelProperty.PID, ChannelId::of);
     }
 
     /** @return the sibling channel this channel is sorted below, or empty if it is the first */
     public Optional<ChannelId> getOrder() {
-        return requireOptionalId(ChannelProperty.CHANNEL_ORDER, ChannelId::new);
+        return requireOptionalId(ChannelProperty.CHANNEL_ORDER, ChannelId::of);
     }
 
     public String getName() {

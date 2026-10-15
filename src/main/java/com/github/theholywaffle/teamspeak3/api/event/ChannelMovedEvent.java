@@ -12,17 +12,17 @@ public class ChannelMovedEvent extends BaseEvent {
     }
 
     public ChannelId getChannelId() {
-        return requireId(ChannelProperty.CID, ChannelId::new);
+        return requireId(ChannelProperty.CID, ChannelId::of);
     }
 
     /** @return the new parent channel, or empty if the channel moved to the top level */
     public Optional<ChannelId> getChannelParentId() {
-        return requireOptionalId(ChannelProperty.CPID, ChannelId::new);
+        return requireOptionalId(ChannelProperty.CPID, ChannelId::of);
     }
 
     /** @return the sibling channel the channel is now sorted below, or empty if it is the first */
     public Optional<ChannelId> getChannelOrder() {
-        return requireOptionalId("order", ChannelId::new);
+        return requireOptionalId("order", ChannelId::of);
     }
 
     @Override

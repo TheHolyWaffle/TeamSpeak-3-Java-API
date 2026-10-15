@@ -34,25 +34,24 @@ public final class ServerGroupApiAsync {
 
     /** @see ServerGroupApi#create(String, PermissionGroupDatabaseType) */
     public CompletableFuture<ServerGroupId> create(String name, PermissionGroupDatabaseType type) {
-        return requests.id(ServerGroupCommands.serverGroupAdd(name, type), "sgid", ServerGroupId::new);
+        return requests.id(ServerGroupCommands.serverGroupAdd(name, type), "sgid", ServerGroupId::of);
     }
 
     /** @see ServerGroupApi#copy(ServerGroupId, String, PermissionGroupDatabaseType) */
     public CompletableFuture<ServerGroupId> copy(
             ServerGroupId sourceGroupId, String name, PermissionGroupDatabaseType type) {
-        return requests.id(
-                ServerGroupCommands.serverGroupCopy(sourceGroupId.value(), name, type), "sgid", ServerGroupId::new);
+        return requests.id(ServerGroupCommands.serverGroupCopy(sourceGroupId, name, type), "sgid", ServerGroupId::of);
     }
 
     /** @see ServerGroupApi#overwrite(ServerGroupId, ServerGroupId, PermissionGroupDatabaseType) */
     public CompletableFuture<Void> overwrite(
             ServerGroupId sourceGroupId, ServerGroupId targetGroupId, PermissionGroupDatabaseType type) {
-        return requests.run(ServerGroupCommands.serverGroupCopy(sourceGroupId.value(), targetGroupId.value(), type));
+        return requests.run(ServerGroupCommands.serverGroupCopy(sourceGroupId, targetGroupId, type));
     }
 
     /** @see ServerGroupApi#rename(ServerGroupId, String) */
     public CompletableFuture<Void> rename(ServerGroupId groupId, String name) {
-        return requests.run(ServerGroupCommands.serverGroupRename(groupId.value(), name));
+        return requests.run(ServerGroupCommands.serverGroupRename(groupId, name));
     }
 
     /** @see ServerGroupApi#delete(ServerGroupId) */
@@ -62,28 +61,27 @@ public final class ServerGroupApiAsync {
 
     /** @see ServerGroupApi#delete(ServerGroupId, boolean) */
     public CompletableFuture<Void> delete(ServerGroupId groupId, boolean force) {
-        return requests.run(ServerGroupCommands.serverGroupDel(groupId.value(), force));
+        return requests.run(ServerGroupCommands.serverGroupDel(groupId, force));
     }
 
     /** @see ServerGroupApi#members(ServerGroupId) */
     public CompletableFuture<List<ServerGroupClient>> members(ServerGroupId groupId) {
-        return requests.rows(ServerGroupCommands.serverGroupClientList(groupId.value()), ServerGroupClient::from);
+        return requests.rows(ServerGroupCommands.serverGroupClientList(groupId), ServerGroupClient::from);
     }
 
     /** @see ServerGroupApi#addMember(ServerGroupId, ClientDatabaseId) */
     public CompletableFuture<Void> addMember(ServerGroupId groupId, ClientDatabaseId clientDatabaseId) {
-        return requests.run(ServerGroupCommands.serverGroupAddClient(groupId.value(), clientDatabaseId.value()));
+        return requests.run(ServerGroupCommands.serverGroupAddClient(groupId, clientDatabaseId));
     }
 
     /** @see ServerGroupApi#removeMember(ServerGroupId, ClientDatabaseId) */
     public CompletableFuture<Void> removeMember(ServerGroupId groupId, ClientDatabaseId clientDatabaseId) {
-        return requests.run(ServerGroupCommands.serverGroupDelClient(groupId.value(), clientDatabaseId.value()));
+        return requests.run(ServerGroupCommands.serverGroupDelClient(groupId, clientDatabaseId));
     }
 
     /** @see ServerGroupApi#ofClient(ClientDatabaseId) */
     public CompletableFuture<List<ServerGroup>> ofClient(ClientDatabaseId clientDatabaseId) {
-        var ids = requests.ids(
-                ServerGroupCommands.serverGroupsByClientId(clientDatabaseId.value()), "sgid", ServerGroupId::new);
+        var ids = requests.ids(ServerGroupCommands.serverGroupsByClientId(clientDatabaseId), "sgid", ServerGroupId::of);
         return QueryRequests.findByKey(ids, list(), ServerGroup::getId);
     }
 }

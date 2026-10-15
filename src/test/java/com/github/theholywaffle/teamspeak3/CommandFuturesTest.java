@@ -551,7 +551,10 @@ class CommandFuturesTest {
         try (var files = new java.net.ServerSocket(0, 1, java.net.InetAddress.getLoopbackAddress());
                 var peer = new FakeServerQuery(p -> {
                     p.expect(com.github.theholywaffle.teamspeak3.commands.FileCommands.ftInitDownload(
-                                    0, "/test", 0, "", 0)
+                                    0,
+                                    com.github.theholywaffle.teamspeak3.api.FileLocation.ofServer("/test")
+                                            .withChannelPassword(""),
+                                    0)
                             .encoded());
                     p.write("clientftfid=0 serverftfid=1 ftkey=k port=" + files.getLocalPort()
                             + " size=1\nerror id=0 msg=ok\n");

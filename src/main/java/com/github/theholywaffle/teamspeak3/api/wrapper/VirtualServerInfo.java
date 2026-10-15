@@ -89,15 +89,15 @@ public class VirtualServerInfo extends VirtualServer {
     }
 
     public ChannelGroupId getDefaultChannelAdminGroup() {
-        return requireId(VirtualServerProperty.VIRTUALSERVER_DEFAULT_CHANNEL_ADMIN_GROUP, ChannelGroupId::new);
+        return requireId(VirtualServerProperty.VIRTUALSERVER_DEFAULT_CHANNEL_ADMIN_GROUP, ChannelGroupId::of);
     }
 
     public ChannelGroupId getDefaultChannelGroup() {
-        return requireId(VirtualServerProperty.VIRTUALSERVER_DEFAULT_CHANNEL_GROUP, ChannelGroupId::new);
+        return requireId(VirtualServerProperty.VIRTUALSERVER_DEFAULT_CHANNEL_GROUP, ChannelGroupId::of);
     }
 
     public ServerGroupId getDefaultServerGroup() {
-        return requireId(VirtualServerProperty.VIRTUALSERVER_DEFAULT_SERVER_GROUP, ServerGroupId::new);
+        return requireId(VirtualServerProperty.VIRTUALSERVER_DEFAULT_SERVER_GROUP, ServerGroupId::of);
     }
 
     /** @return the monthly download quota in MiB, or empty if unlimited (TeamSpeak sends 2<sup>64</sup>-1) */

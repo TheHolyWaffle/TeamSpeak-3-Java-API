@@ -52,6 +52,6 @@ public final class ApiKeyApiAsync {
 
     /** @see ApiKeyApi#delete(ApiKeyId) */
     public CompletableFuture<Void> delete(ApiKeyId id) {
-        return requests.run(ApiKeyCommands.apiKeyDelete(id.value()));
+        return requests.run(ApiKeyCommands.apiKeyDelete(id));
     }
 }

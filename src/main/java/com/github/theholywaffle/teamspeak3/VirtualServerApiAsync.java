@@ -34,7 +34,8 @@ public final class VirtualServerApiAsync {
 
     /** @see VirtualServerApi#findIdByPort(int) */
     public CompletableFuture<Optional<VirtualServerId>> findIdByPort(int port) {
-        var id = requests.optionalId(VirtualServerCommands.serverIdGetByPort(port), "server_id", VirtualServerId::new);
+        var id = requests.optional(
+                VirtualServerCommands.serverIdGetByPort(port), row -> row.requireId("server_id", VirtualServerId::of));
         return QueryRequests.recover(id, QueryRequests.INVALID_SERVER_ID, Optional.empty());
     }
 
@@ -45,12 +46,12 @@ public final class VirtualServerApiAsync {
 
     /** @see VirtualServerApi#delete(VirtualServerId) */
     public CompletableFuture<Void> delete(VirtualServerId serverId) {
-        return requests.run(VirtualServerCommands.serverDelete(serverId.value()));
+        return requests.run(VirtualServerCommands.serverDelete(serverId));
     }
 
     /** @see VirtualServerApi#start(VirtualServerId) */
     public CompletableFuture<Void> start(VirtualServerId serverId) {
-        return requests.run(VirtualServerCommands.serverStart(serverId.value()));
+        return requests.run(VirtualServerCommands.serverStart(serverId));
     }
 
     /** @see VirtualServerApi#stop(VirtualServerId) */
@@ -60,7 +61,7 @@ public final class VirtualServerApiAsync {
 
     /** @see VirtualServerApi#stop(VirtualServerId, String) */
     public CompletableFuture<Void> stop(VirtualServerId serverId, String reason) {
-        return requests.run(VirtualServerCommands.serverStop(serverId.value(), reason));
+        return requests.run(VirtualServerCommands.serverStop(serverId, reason));
     }
 
     /** @see VirtualServerApi#info() */

@@ -1,6 +1,8 @@
 package com.github.theholywaffle.teamspeak3.commands;
 
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
+import java.util.Optional;
 
 public final class QueryLoginCommands {
 
@@ -8,14 +10,15 @@ public final class QueryLoginCommands {
         throw new Error("No instances");
     }
 
-    public static Command queryLoginAdd(String loginName, long clientDBId) {
+    /** @param clientDBId the owning client, or empty for the invoker */
+    public static Command queryLoginAdd(String loginName, Optional<ClientDatabaseId> clientDBId) {
         CommandBuilder builder = new CommandBuilder("queryloginadd");
         builder.add(new KeyValueParam("client_login_name", loginName));
-        builder.addIf(clientDBId > 0, new KeyValueParam("cldbid", clientDBId));
+        builder.addIfPresent("cldbid", clientDBId);
         return builder.build();
     }
 
-    public static Command queryLoginDel(long clientDBId) {
+    public static Command queryLoginDel(ClientDatabaseId clientDBId) {
         return new CommandBuilder("querylogindel")
                 .add(new KeyValueParam("cldbid", clientDBId))
                 .build();

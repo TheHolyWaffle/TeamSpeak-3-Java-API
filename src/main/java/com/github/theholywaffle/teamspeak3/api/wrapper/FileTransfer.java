@@ -64,8 +64,7 @@ public class FileTransfer extends Wrapper {
      * @return the client's file transfer ID
      */
     public ClientFileTransferId getClientTransferId() {
-        return requireParsed(
-                "clientftfid", "a client file transfer ID", id -> new ClientFileTransferId(Integer.parseInt(id)));
+        return requireNonNegativeId("clientftfid", ClientFileTransferId::of);
     }
 
     /**
@@ -75,8 +74,7 @@ public class FileTransfer extends Wrapper {
      * @return the server's file transfer ID
      */
     public ServerFileTransferId getServerTransferId() {
-        return requireParsed(
-                "serverftfid", "a server file transfer ID", id -> new ServerFileTransferId(Integer.parseInt(id)));
+        return requireNonNegativeId("serverftfid", ServerFileTransferId::of);
     }
 
     /**

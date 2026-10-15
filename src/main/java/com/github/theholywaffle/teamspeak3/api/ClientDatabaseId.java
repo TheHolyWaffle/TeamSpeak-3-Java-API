@@ -6,7 +6,7 @@ package com.github.theholywaffle.teamspeak3.api;
  *
  * @param value the positive ID
  */
-public record ClientDatabaseId(long value) {
+public record ClientDatabaseId(long value) implements EntityId {
 
     public ClientDatabaseId {
         if (value <= 0) throw new IllegalArgumentException("Client database ID must be positive");

@@ -10,8 +10,11 @@ import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ClientJoinEvent extends BaseEvent {
+
+    private final AtomicReference<List<ServerGroupId>> serverGroups = new AtomicReference<>();
 
     public ClientJoinEvent(Wrapper wrapper) {
         super(wrapper);
@@ -19,12 +22,12 @@ public class ClientJoinEvent extends BaseEvent {
 
     /** @return the channel the client came from, or empty when it connected to the server ({@code 0}) */
     public Optional<ChannelId> getClientFromId() {
-        return requireOptionalId("cfid", ChannelId::new);
+        return requireOptionalId("cfid", ChannelId::of);
     }
 
     /** @return the channel the client joined */
     public ChannelId getClientTargetId() {
-        return requireId("ctid", ChannelId::new);
+        return requireId("ctid", ChannelId::of);
     }
 
     public ClientId getClientId() {
@@ -72,7 +75,7 @@ public class ClientJoinEvent extends BaseEvent {
     }
 
     public ChannelGroupId getClientChannelGroupId() {
-        return requireId(ClientProperty.CLIENT_CHANNEL_GROUP_ID, ChannelGroupId::new);
+        return requireId(ClientProperty.CLIENT_CHANNEL_GROUP_ID, ChannelGroupId::of);
     }
 
     public int getAmountOfServerGroups() {
@@ -81,7 +84,7 @@ public class ClientJoinEvent extends BaseEvent {
 
     /** @return the IDs of the client's server groups, in received order */
     public List<ServerGroupId> getClientServerGroups() {
-        return requireIdList(ClientProperty.CLIENT_SERVERGROUPS, ServerGroupId::new);
+        return requireServerGroups(serverGroups);
     }
 
     public boolean isClientAway() {
@@ -154,7 +157,7 @@ public class ClientJoinEvent extends BaseEvent {
 
     /** @return the ID of the channel from which the client's channel group is inherited */
     public ChannelId getClientInheritedChannelGroupId() {
-        return requireId(ClientProperty.CLIENT_CHANNEL_GROUP_INHERITED_CHANNEL_ID, ChannelId::new);
+        return requireId(ClientProperty.CLIENT_CHANNEL_GROUP_INHERITED_CHANNEL_ID, ChannelId::of);
     }
 
     @Override

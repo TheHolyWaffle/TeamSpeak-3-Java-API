@@ -5,6 +5,11 @@ import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.PermissionGrant;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupType;
 import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
+import com.github.theholywaffle.teamspeak3.api.PermissionTarget.ChannelClientTarget;
+import com.github.theholywaffle.teamspeak3.api.PermissionTarget.ChannelGroupTarget;
+import com.github.theholywaffle.teamspeak3.api.PermissionTarget.ChannelTarget;
+import com.github.theholywaffle.teamspeak3.api.PermissionTarget.ClientTarget;
+import com.github.theholywaffle.teamspeak3.api.PermissionTarget.ServerGroupTarget;
 import com.github.theholywaffle.teamspeak3.api.ServerGroupType;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Permission;
 import com.github.theholywaffle.teamspeak3.api.wrapper.PermissionAssignment;
@@ -60,9 +65,7 @@ public final class PermissionApiAsync {
     /** @see PermissionApi#overview(ChannelId, ClientDatabaseId) */
     public CompletableFuture<List<PermissionAssignment>> overview(
             ChannelId channelId, ClientDatabaseId clientDatabaseId) {
-        return requests.models(
-                PermissionCommands.permOverview(channelId.value(), clientDatabaseId.value()),
-                PermissionAssignment::new);
+        return requests.models(PermissionCommands.permOverview(channelId, clientDatabaseId), PermissionAssignment::new);
     }
 
     /** @see PermissionApi#reset() */
@@ -72,13 +75,13 @@ public final class PermissionApiAsync {
 
     /** @see PermissionApi#assigned(PermissionTarget) */
     public CompletableFuture<List<Permission>> assigned(PermissionTarget target) {
-        Command command = switch (target.type()) {
-            case SERVER_GROUP -> PermissionCommands.serverGroupPermList(target.id());
-            case CHANNEL_GROUP -> PermissionCommands.channelGroupPermList(target.id());
-            case CHANNEL -> PermissionCommands.channelPermList(target.id());
-            case GLOBAL_CLIENT -> PermissionCommands.clientPermList(target.id());
-            case CHANNEL_CLIENT -> PermissionCommands.channelClientPermList(target.id(), target.clientDatabaseId());
-            case UNKNOWN -> throw new IllegalArgumentException("Unknown permission holder type");
+        Command command = switch (target) {
+            case ServerGroupTarget(var group) -> PermissionCommands.serverGroupPermList(group);
+            case ChannelGroupTarget(var group) -> PermissionCommands.channelGroupPermList(group);
+            case ChannelTarget(var channel) -> PermissionCommands.channelPermList(channel);
+            case ClientTarget(var client) -> PermissionCommands.clientPermList(client);
+            case ChannelClientTarget(var channel, var client) ->
+                PermissionCommands.channelClientPermList(channel, client);
         };
         return requests.rows(command, Permission::from);
     }
@@ -91,33 +94,29 @@ public final class PermissionApiAsync {
     /** @see PermissionApi#add(PermissionTarget, PermissionGrant) */
     public CompletableFuture<Void> add(PermissionTarget target, PermissionGrant grant) {
         grant.requireSupportedBy(target.type());
-        Command command = switch (target.type()) {
-            case SERVER_GROUP ->
-                PermissionCommands.serverGroupAddPerm(
-                        target.id(), grant.permissionName(), grant.value(), grant.negated(), grant.skipped());
-            case CHANNEL_GROUP ->
-                PermissionCommands.channelGroupAddPerm(target.id(), grant.permissionName(), grant.value());
-            case CHANNEL -> PermissionCommands.channelAddPerm(target.id(), grant.permissionName(), grant.value());
-            case GLOBAL_CLIENT ->
-                PermissionCommands.clientAddPerm(target.id(), grant.permissionName(), grant.value(), grant.skipped());
-            case CHANNEL_CLIENT ->
-                PermissionCommands.channelClientAddPerm(
-                        target.id(), target.clientDatabaseId(), grant.permissionName(), grant.value());
-            case UNKNOWN -> throw new IllegalArgumentException("Unknown permission holder type");
+        String name = grant.permissionName();
+        int value = grant.value();
+        Command command = switch (target) {
+            case ServerGroupTarget(var group) ->
+                PermissionCommands.serverGroupAddPerm(group, name, value, grant.negated(), grant.skipped());
+            case ChannelGroupTarget(var group) -> PermissionCommands.channelGroupAddPerm(group, name, value);
+            case ChannelTarget(var channel) -> PermissionCommands.channelAddPerm(channel, name, value);
+            case ClientTarget(var client) -> PermissionCommands.clientAddPerm(client, name, value, grant.skipped());
+            case ChannelClientTarget(var channel, var client) ->
+                PermissionCommands.channelClientAddPerm(channel, client, name, value);
         };
         return requests.run(command);
     }
 
     /** @see PermissionApi#delete(PermissionTarget, String) */
     public CompletableFuture<Void> delete(PermissionTarget target, String permissionName) {
-        Command command = switch (target.type()) {
-            case SERVER_GROUP -> PermissionCommands.serverGroupDelPerm(target.id(), permissionName);
-            case CHANNEL_GROUP -> PermissionCommands.channelGroupDelPerm(target.id(), permissionName);
-            case CHANNEL -> PermissionCommands.channelDelPerm(target.id(), permissionName);
-            case GLOBAL_CLIENT -> PermissionCommands.clientDelPerm(target.id(), permissionName);
-            case CHANNEL_CLIENT ->
-                PermissionCommands.channelClientDelPerm(target.id(), target.clientDatabaseId(), permissionName);
-            case UNKNOWN -> throw new IllegalArgumentException("Unknown permission holder type");
+        Command command = switch (target) {
+            case ServerGroupTarget(var group) -> PermissionCommands.serverGroupDelPerm(group, permissionName);
+            case ChannelGroupTarget(var group) -> PermissionCommands.channelGroupDelPerm(group, permissionName);
+            case ChannelTarget(var channel) -> PermissionCommands.channelDelPerm(channel, permissionName);
+            case ClientTarget(var client) -> PermissionCommands.clientDelPerm(client, permissionName);
+            case ChannelClientTarget(var channel, var client) ->
+                PermissionCommands.channelClientDelPerm(channel, client, permissionName);
         };
         return requests.run(command);
     }

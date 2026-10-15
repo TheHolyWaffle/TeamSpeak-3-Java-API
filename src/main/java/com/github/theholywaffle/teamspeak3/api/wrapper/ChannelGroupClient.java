@@ -24,8 +24,8 @@ public record ChannelGroupClient(
     /** @throws com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException if a property is missing or malformed */
     public static ChannelGroupClient from(Wrapper row) {
         return new ChannelGroupClient(
-                row.requireId("cid", ChannelId::new),
+                row.requireId("cid", ChannelId::of),
                 row.requireDatabaseId("cldbid"),
-                row.requireId("cgid", ChannelGroupId::new));
+                row.requireId("cgid", ChannelGroupId::of));
     }
 }

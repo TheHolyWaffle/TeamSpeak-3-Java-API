@@ -19,7 +19,7 @@ public class ClientMovedEvent extends BaseEvent {
      * @see Channel#getId()
      */
     public ChannelId getTargetChannelId() {
-        return requireId("ctid", ChannelId::new);
+        return requireId("ctid", ChannelId::of);
     }
 
     public ClientId getClientId() {

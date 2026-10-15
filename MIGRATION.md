@@ -80,7 +80,7 @@ Request objects replace long or nullable positional argument lists:
 | --- | --- |
 | `BanRequest.ip(..)` / `name(..)` / `uniqueId(..)` / `myTeamSpeakId(..)` with `with…` | four nullable patterns, a seconds count and a nullable reason |
 | `ClientBan.of(ids...)` with `withDuration`, `withReason`, `continuingOnError` | `banClient`/`banClients` overloads |
-| `PermissionTarget.serverGroup/channelGroup/channel/client/channelClient` | five families of add/delete/list methods |
+| `PermissionTarget.serverGroup/channelGroup/channel/client/channelClient`, a sealed interface with one record per holder (`ServerGroupTarget`, `ChannelGroupTarget`, `ChannelTarget`, `ClientTarget`, `ChannelClientTarget`) | five families of add/delete/list methods |
 | `PermissionGrant.of(name or enum, value)` with `withNegated()`, `withSkip()` | positional `negated`/`skipped` booleans |
 | `FileLocation.of(channelId, path)` or `FileLocation.ofServer(path)` with `withChannelPassword(..)` | path/channel/nullable-password triples and parallel arrays; `ofServer` replaces channel `0` |
 | `UploadMode.CREATE` / `OVERWRITE` / `RESUME` | the `overwrite` and `resume` booleans |
@@ -93,7 +93,8 @@ Other API changes:
 - `BPermissionType.getId()` and `IPermissionType.getId()` are removed; resolve IDs with
   `permissions().idByName(...)`.
 - The public `commands` packages are command builders used by the domain APIs. Their parameter classes
-  are records, `Command.encoded()` returns the wire text and some obsolete overloads are removed. Use
+  are records, factories take typed IDs and `FileLocation`, `Command.encoded()` returns the wire text and
+  some obsolete overloads are removed. Use
   the domain APIs, or `executeRawCommand` for commands they do not cover.
 
 ### Example
@@ -246,7 +247,7 @@ return a new `UNKNOWN` constant where they returned `null`.
 | `int` virtual server IDs (`sid`, `whoAmI`, query logins) | `VirtualServerId` (`long`-backed); no selected server or an instance-wide login (`0`) is an empty `Optional` |
 | `int` ban and offline message IDs | `BanId`, `MessageId` (`long`-backed) |
 | `int` file transfer IDs (`clientftfid`, `serverftfid`) | `ClientFileTransferId`, `ServerFileTransferId` (`int`-backed) |
-| `PrivilegeKey.getGroupId()`, `PrivilegeKeyUsedEvent.getPrivilegeKeyGroupId()` | `getServerGroupId()`/`getChannelGroupId()` and `getPrivilegeKeyServerGroupId()`/`getPrivilegeKeyChannelGroupId()`, present for the matching key type |
+| `PrivilegeKey.getGroupId()`/`getChannelId()`, `PrivilegeKeyUsedEvent.getPrivilegeKeyGroupId()`/`getPrivilegeKeyChannelId()` | `getGrant()` on both: a sealed `PrivilegeKeyGrant`, either `ServerGroupGrant(serverGroupId)` or `ChannelGroupGrant(channelGroupId, channelId)` |
 | `PermissionAssignment.getMajorId()`/`getMinorId()` `int` | `long` |
 | `Date` timestamps, `int`/`long` durations | `Instant`, `Duration` |
 | `Client.getServerGroups()` `int[]`, `getBadgeGUIDs()` `String[]` | `List<ServerGroupId>`, `List<String>` |

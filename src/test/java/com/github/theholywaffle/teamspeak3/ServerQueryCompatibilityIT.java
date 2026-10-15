@@ -18,6 +18,7 @@ import com.github.theholywaffle.teamspeak3.api.IconId;
 import com.github.theholywaffle.teamspeak3.api.PermissionGrant;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupType;
 import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
+import com.github.theholywaffle.teamspeak3.api.PrivilegeKeyGrant;
 import com.github.theholywaffle.teamspeak3.api.PrivilegeKeyType;
 import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
@@ -782,24 +783,21 @@ class ServerQueryCompatibilityIT {
                             .findFirst()
                             .orElseThrow();
                     assertPrivilegeKey(
-                            serverEntry, PrivilegeKeyType.SERVER_GROUP, serverGroup.id(), null, description, evidence);
+                            serverEntry, PrivilegeKeyGrant.serverGroup(serverGroup.id()), description, evidence);
                     var channelEntry = listed.stream()
                             .filter(k -> k.getToken().equals(channelKey.token()))
                             .findFirst()
                             .orElseThrow();
                     assertPrivilegeKey(
                             channelEntry,
-                            PrivilegeKeyType.CHANNEL_GROUP,
-                            channelGroup.id(),
-                            channel,
+                            PrivilegeKeyGrant.channelGroup(channelGroup.id(), channel),
                             description,
                             evidence);
                     var genericEntry = listed.stream()
                             .filter(k -> k.getToken().equals(genericKey.token()))
                             .findFirst()
                             .orElseThrow();
-                    assertPrivilegeKey(
-                            genericEntry, PrivilegeKeyType.SERVER_GROUP, serverGroup.id(), null, "", evidence);
+                    assertPrivilegeKey(genericEntry, PrivilegeKeyGrant.serverGroup(serverGroup.id()), "", evidence);
                     var serverUse = assertThrows(
                             TS3CommandFailedException.class,
                             () -> actor.getApi().privilegeKeys().use(serverEntry.getToken()));
@@ -864,23 +862,13 @@ class ServerQueryCompatibilityIT {
     }
 
     private static void assertPrivilegeKey(
-            PrivilegeKey key,
-            PrivilegeKeyType type,
-            Object group,
-            ChannelId channel,
-            String description,
-            java.util.List<String> evidence) {
+            PrivilegeKey key, PrivilegeKeyGrant grant, String description, java.util.List<String> evidence) {
         evidence.add("key " + new java.util.TreeMap<>(key.getMap()));
         assertFalse(key.getToken().isBlank());
-        assertEquals(type, key.getType());
-        assertEquals(type == PrivilegeKeyType.SERVER_GROUP, key.isServerGroupToken());
-        assertEquals(type == PrivilegeKeyType.CHANNEL_GROUP, key.isChannelGroupToken());
-        assertEquals(
-                group,
-                type == PrivilegeKeyType.SERVER_GROUP
-                        ? key.getServerGroupId().orElseThrow()
-                        : key.getChannelGroupId().orElseThrow());
-        assertEquals(Optional.ofNullable(channel), key.getChannelId());
+        assertEquals(grant.type(), key.getType());
+        assertEquals(grant.type() == PrivilegeKeyType.SERVER_GROUP, key.isServerGroupToken());
+        assertEquals(grant.type() == PrivilegeKeyType.CHANNEL_GROUP, key.isChannelGroupToken());
+        assertEquals(grant, key.getGrant());
         assertTrue(key.getMap().containsKey("token_description"));
         assertEquals(description, key.getDescription());
         assertTrue(Math.abs(System.currentTimeMillis() - key.getCreated().toEpochMilli()) < 60_000);

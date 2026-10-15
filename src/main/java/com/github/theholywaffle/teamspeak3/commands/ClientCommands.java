@@ -1,5 +1,7 @@
 package com.github.theholywaffle.teamspeak3.commands;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
+import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 import com.github.theholywaffle.teamspeak3.api.ReasonIdentifier;
 import com.github.theholywaffle.teamspeak3.commands.parameter.ArrayParameter;
@@ -13,9 +15,9 @@ public final class ClientCommands {
         throw new Error("No instances");
     }
 
-    public static Command clientEdit(int clientId, Map<ClientProperty, String> options) {
+    public static Command clientEdit(ClientId clientId, Map<ClientProperty, String> options) {
         CommandBuilder builder = new CommandBuilder("clientedit");
-        builder.add(new KeyValueParam("clid", clientId));
+        builder.add(new KeyValueParam("clid", clientId.value()));
         builder.addProperties(options);
         return builder.build();
     }
@@ -50,9 +52,9 @@ public final class ClientCommands {
                 .build();
     }
 
-    public static Command clientInfo(int clientId) {
+    public static Command clientInfo(ClientId clientId) {
         return new CommandBuilder("clientinfo")
-                .add(new KeyValueParam("clid", clientId))
+                .add(new KeyValueParam("clid", clientId.value()))
                 .build();
     }
 
@@ -85,7 +87,16 @@ public final class ClientCommands {
         return builder.build();
     }
 
-    public static Command clientMove(int clientId, long channelId, String channelPassword) {
+    public static Command clientMove(ClientId clientId, ChannelId channelId, String channelPassword) {
+        return clientMove(clientId.value(), channelId, channelPassword);
+    }
+
+    /** Moves the query client itself. */
+    public static Command clientMoveSelf(ChannelId channelId, String channelPassword) {
+        return clientMove(0, channelId, channelPassword);
+    }
+
+    private static Command clientMove(int clientId, ChannelId channelId, String channelPassword) {
         CommandBuilder builder = new CommandBuilder("clientmove");
         builder.add(new KeyValueParam("clid", clientId));
         builder.add(new KeyValueParam("cid", channelId));
@@ -93,7 +104,7 @@ public final class ClientCommands {
         return builder.build();
     }
 
-    public static Command clientMove(int[] clientIds, long channelId, String channelPassword) {
+    public static Command clientMove(int[] clientIds, ChannelId channelId, String channelPassword) {
         if (clientIds == null || clientIds.length == 0) {
             throw new IllegalArgumentException("Client ID array cannot be null or empty");
         }
@@ -106,9 +117,9 @@ public final class ClientCommands {
         return builder.build();
     }
 
-    public static Command clientPoke(int clientId, String message) {
+    public static Command clientPoke(ClientId clientId, String message) {
         CommandBuilder builder = new CommandBuilder("clientpoke");
-        builder.add(new KeyValueParam("clid", clientId));
+        builder.add(new KeyValueParam("clid", clientId.value()));
         builder.add(new KeyValueParam("msg", message));
         return builder.build();
     }

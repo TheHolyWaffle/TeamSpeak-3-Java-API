@@ -1,9 +1,13 @@
 package com.github.theholywaffle.teamspeak3.api.wrapper;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelGroupId;
 import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
+import com.github.theholywaffle.teamspeak3.api.ClientProperty;
+import com.github.theholywaffle.teamspeak3.api.EntityId;
 import com.github.theholywaffle.teamspeak3.api.IconId;
+import com.github.theholywaffle.teamspeak3.api.PrivilegeKeyGrant;
 import com.github.theholywaffle.teamspeak3.api.Property;
 import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
@@ -22,6 +26,7 @@ import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
 import java.util.StringJoiner;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.LongFunction;
@@ -400,6 +405,28 @@ public class Wrapper {
     }
 
     /**
+     * Gets an optional duration sent in seconds.
+     *
+     * @param propertyName the property name
+     * @return the duration, or empty if the property is missing or has no value
+     * @throws TS3InvalidValueException if the value is not an integer
+     */
+    protected final Optional<Duration> findSeconds(String propertyName) {
+        return findParsed(propertyName, "a 64-bit integer", value -> Duration.ofSeconds(Long.parseLong(value)));
+    }
+
+    /**
+     * Gets an optional duration sent in seconds.
+     *
+     * @param property the property
+     * @return the duration, or empty if the property is missing or has no value
+     * @throws TS3InvalidValueException if the value is not an integer
+     */
+    protected final Optional<Duration> findSeconds(Property property) {
+        return findSeconds(property.getName());
+    }
+
+    /**
      * Gets a duration sent in milliseconds.
      *
      * @param propertyName the property name
@@ -442,7 +469,7 @@ public class Wrapper {
      * @throws TS3InvalidValueException if the property is missing or not a 32-bit integer
      */
     protected final Optional<IconId> requireIconId(String propertyName) {
-        return toIconId(requireParsed(propertyName, ICON_ID, Wrapper::parseIconId));
+        return requireParsed(propertyName, ICON_ID, Wrapper::parseIconId);
     }
 
     /**
@@ -464,11 +491,7 @@ public class Wrapper {
      * @throws TS3InvalidValueException if the value is not a 32-bit integer
      */
     protected final Optional<IconId> findIconId(Property property) {
-        return findParsed(property.getName(), ICON_ID, Wrapper::parseIconId).flatMap(Wrapper::toIconId);
-    }
-
-    private static Optional<IconId> toIconId(long unsigned) {
-        return unsigned == 0 ? Optional.empty() : Optional.of(IconId.of(unsigned));
+        return findParsed(property.getName(), ICON_ID, Wrapper::parseIconId).flatMap(id -> id);
     }
 
     /**
@@ -479,7 +502,7 @@ public class Wrapper {
      * @throws TS3InvalidValueException if the property is missing or not a nonnegative integer
      */
     public final ClientId requireClientId(String propertyName) {
-        return new ClientId(requireNonNegative(propertyName));
+        return requireNonNegativeId(propertyName, ClientId::of);
     }
 
     /**
@@ -502,7 +525,9 @@ public class Wrapper {
      */
     protected final Optional<ClientId> findClientId(String propertyName) {
         OptionalInt id = findInt(propertyName);
-        return id.isEmpty() ? Optional.empty() : Optional.of(new ClientId(nonNegative(propertyName, id.getAsInt())));
+        return id.isEmpty()
+                ? Optional.empty()
+                : Optional.of(ClientId.of((int) nonNegative(propertyName, id.getAsInt())));
     }
 
     /**
@@ -513,7 +538,7 @@ public class Wrapper {
      * @throws TS3InvalidValueException if the property is missing or not a positive integer
      */
     public final ClientDatabaseId requireDatabaseId(String propertyName) {
-        return requireId(propertyName, ClientDatabaseId::new);
+        return requireId(propertyName, ClientDatabaseId::of);
     }
 
     /**
@@ -535,7 +560,7 @@ public class Wrapper {
      * @throws TS3InvalidValueException if the value is not a nonnegative integer
      */
     protected final Optional<ClientDatabaseId> findDatabaseId(String propertyName) {
-        return findId(propertyName, ClientDatabaseId::new);
+        return findId(propertyName, ClientDatabaseId::of);
     }
 
     /**
@@ -553,12 +578,12 @@ public class Wrapper {
      * Gets a positive ID, such as a {@link ChannelId}, {@link ServerGroupId} or {@link VirtualServerId}.
      *
      * @param propertyName the property name
-     * @param type creates the ID from its value, such as {@code ChannelId::new}
+     * @param type creates the ID from its value, such as {@code ChannelId::of}
      * @param <T> the ID type
      * @return the ID
      * @throws TS3InvalidValueException if the property is missing or not a positive integer
      */
-    public final <T> T requireId(String propertyName, LongFunction<T> type) {
+    public final <T extends EntityId> T requireId(String propertyName, LongFunction<T> type) {
         return requireParsed(propertyName, POSITIVE_ID, value -> type.apply(Long.parseLong(value)));
     }
 
@@ -566,12 +591,12 @@ public class Wrapper {
      * Gets a positive ID, such as a {@link ChannelId}, {@link ServerGroupId} or {@link VirtualServerId}.
      *
      * @param property the property
-     * @param type creates the ID from its value, such as {@code ChannelId::new}
+     * @param type creates the ID from its value, such as {@code ChannelId::of}
      * @param <T> the ID type
      * @return the ID
      * @throws TS3InvalidValueException if the property is missing or not a positive integer
      */
-    public final <T> T requireId(Property property, LongFunction<T> type) {
+    public final <T extends EntityId> T requireId(Property property, LongFunction<T> type) {
         return requireId(property.getName(), type);
     }
 
@@ -579,12 +604,12 @@ public class Wrapper {
      * Gets an ID where TeamSpeak sends {@code 0} for none, such as the parent of a top-level channel.
      *
      * @param propertyName the property name
-     * @param type creates the ID from its positive value, such as {@code ChannelId::new}
+     * @param type creates the ID from its positive value, such as {@code ChannelId::of}
      * @param <T> the ID type
      * @return the ID, or empty for {@code 0}
      * @throws TS3InvalidValueException if the property is missing or not a nonnegative integer
      */
-    protected final <T> Optional<T> requireOptionalId(String propertyName, LongFunction<T> type) {
+    protected final <T extends EntityId> Optional<T> requireOptionalId(String propertyName, LongFunction<T> type) {
         return toId(propertyName, requireLong(propertyName), type);
     }
 
@@ -592,12 +617,12 @@ public class Wrapper {
      * Gets an ID where TeamSpeak sends {@code 0} for none, such as the parent of a top-level channel.
      *
      * @param property the property
-     * @param type creates the ID from its positive value, such as {@code ChannelId::new}
+     * @param type creates the ID from its positive value, such as {@code ChannelId::of}
      * @param <T> the ID type
      * @return the ID, or empty for {@code 0}
      * @throws TS3InvalidValueException if the property is missing or not a nonnegative integer
      */
-    protected final <T> Optional<T> requireOptionalId(Property property, LongFunction<T> type) {
+    protected final <T extends EntityId> Optional<T> requireOptionalId(Property property, LongFunction<T> type) {
         return requireOptionalId(property.getName(), type);
     }
 
@@ -605,31 +630,46 @@ public class Wrapper {
      * Gets an optional ID where {@code 0} also means none.
      *
      * @param propertyName the property name
-     * @param type creates the ID from its positive value, such as {@code ChannelId::new}
+     * @param type creates the ID from its positive value, such as {@code ChannelId::of}
      * @param <T> the ID type
      * @return the ID, or empty if the property is missing, empty or {@code 0}
      * @throws TS3InvalidValueException if the value is not a nonnegative integer
      */
-    protected final <T> Optional<T> findId(String propertyName, LongFunction<T> type) {
+    protected final <T extends EntityId> Optional<T> findId(String propertyName, LongFunction<T> type) {
         OptionalLong id = findLong(propertyName);
         return id.isEmpty() ? Optional.empty() : toId(propertyName, id.getAsLong(), type);
     }
 
-    private <T> Optional<T> toId(String propertyName, long id, LongFunction<T> type) {
-        if (id < 0) throw new TS3InvalidValueException(propertyName, map.get(propertyName), NONNEGATIVE_ID, null);
-        return id == 0 ? Optional.empty() : Optional.of(type.apply(id));
+    /**
+     * Gets the client's server groups from {@code client_servergroups}, parsed at most once per cache.
+     *
+     * @param cache holds the parsed list for this instance
+     * @return the unmodifiable server group IDs in received order
+     * @throws TS3InvalidValueException if the property is missing or an element is not a positive integer
+     */
+    protected final List<ServerGroupId> requireServerGroups(AtomicReference<List<ServerGroupId>> cache) {
+        List<ServerGroupId> groups = cache.get();
+        if (groups == null) {
+            groups = requireIdList(ClientProperty.CLIENT_SERVERGROUPS, ServerGroupId::of);
+            cache.compareAndSet(null, groups);
+        }
+        return groups;
+    }
+
+    private <T extends EntityId> Optional<T> toId(String propertyName, long id, LongFunction<T> type) {
+        return nonNegative(propertyName, id) == 0 ? Optional.empty() : Optional.of(type.apply(id));
     }
 
     /**
      * Gets comma-separated positive IDs, where an empty value is an empty list.
      *
      * @param property the property
-     * @param type creates an ID from its value, such as {@code ServerGroupId::new}
+     * @param type creates an ID from its value, such as {@code ServerGroupId::of}
      * @param <T> the ID type
      * @return the unmodifiable IDs in received order
      * @throws TS3InvalidValueException if the property is missing or an element is not a positive integer
      */
-    protected final <T> List<T> requireIdList(Property property, LongFunction<T> type) {
+    protected final <T extends EntityId> List<T> requireIdList(Property property, LongFunction<T> type) {
         String name = property.getName();
         if (require(name).isEmpty()) return List.of();
         return requireParsed(
@@ -640,13 +680,38 @@ public class Wrapper {
                         .toList());
     }
 
-    private int requireNonNegative(String propertyName) {
-        return nonNegative(propertyName, requireInt(propertyName));
+    /**
+     * Gets a nonnegative 32-bit ID, such as a {@link ClientId} or a file transfer ID.
+     *
+     * @param propertyName the property name
+     * @param type creates the ID from its value, such as {@code ClientId::of}
+     * @param <T> the ID type
+     * @return the ID
+     * @throws TS3InvalidValueException if the property is missing or not a nonnegative integer
+     */
+    protected final <T> T requireNonNegativeId(String propertyName, IntFunction<T> type) {
+        return type.apply((int) nonNegative(propertyName, requireInt(propertyName)));
     }
 
-    private int nonNegative(String propertyName, int value) {
+    private long nonNegative(String propertyName, long value) {
         if (value < 0) throw new TS3InvalidValueException(propertyName, map.get(propertyName), NONNEGATIVE_ID, null);
         return value;
+    }
+
+    /**
+     * Gets what a privilege key grants: a channel group if the channel property is nonzero,
+     * otherwise a server group.
+     *
+     * @param groupProperty the property holding the group ID
+     * @param channelProperty the property holding the channel ID, or {@code 0} for a server group key
+     * @return the grant
+     * @throws TS3InvalidValueException if a property is missing or not a valid ID
+     */
+    protected final PrivilegeKeyGrant requirePrivilegeKeyGrant(String groupProperty, String channelProperty) {
+        Optional<ChannelId> channel = requireOptionalId(channelProperty, ChannelId::of);
+        return channel.isEmpty()
+                ? PrivilegeKeyGrant.serverGroup(requireId(groupProperty, ServerGroupId::of))
+                : PrivilegeKeyGrant.channelGroup(requireId(groupProperty, ChannelGroupId::of), channel.get());
     }
 
     /**
@@ -716,10 +781,8 @@ public class Wrapper {
         return parsed;
     }
 
-    private static long parseIconId(String value) {
-        long id = Long.parseLong(value);
-        if (id < Integer.MIN_VALUE || id > 0xFFFF_FFFFL) throw new NumberFormatException("Not 32 bits");
-        return id & 0xFFFF_FFFFL;
+    private static Optional<IconId> parseIconId(String value) {
+        return IconId.fromWire(Long.parseLong(value));
     }
 
     private static Boolean parseBoolean(String value) {

@@ -13,7 +13,6 @@ import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
 import com.github.theholywaffle.teamspeak3.api.IconId;
 import com.github.theholywaffle.teamspeak3.api.PermissionGrant;
-import com.github.theholywaffle.teamspeak3.api.PermissionGroupType;
 import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
 import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import com.github.theholywaffle.teamspeak3.api.ServerGroupType;
@@ -325,9 +324,7 @@ class DomainApiTest {
         assertThrows(IllegalArgumentException.class, () -> BanRequest.ip("x").withDuration(Duration.ofSeconds(-1)));
         assertThrows(IllegalArgumentException.class, ClientBan::of);
         assertThrows(IllegalArgumentException.class, () -> PermissionTarget.channel(ChannelId.of(0)));
-        assertThrows(IllegalArgumentException.class, () -> new PermissionTarget(PermissionGroupType.CHANNEL, 1, 2));
-        assertThrows(
-                IllegalArgumentException.class, () -> new PermissionTarget(PermissionGroupType.CHANNEL_CLIENT, 1, 0));
+        assertThrows(NullPointerException.class, () -> PermissionTarget.channelClient(ChannelId.of(1), null));
         assertThrows(IllegalArgumentException.class, () -> PermissionGrant.of("", 1));
         assertThrows(IllegalArgumentException.class, () -> FileLocation.of(ChannelId.of(-1), "/a"));
         assertThrows(IllegalArgumentException.class, () -> FileLocation.of(ChannelId.of(1), ""));

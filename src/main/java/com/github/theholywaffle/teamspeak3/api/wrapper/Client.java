@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 /**
@@ -22,6 +23,8 @@ import java.util.regex.Pattern;
  * that a client or server may leave unset.
  */
 public class Client extends Wrapper {
+
+    private final AtomicReference<List<ServerGroupId>> serverGroups = new AtomicReference<>();
 
     private static final Pattern BADGE_SEPARATOR = Pattern.compile("[\\s:;]");
 
@@ -47,11 +50,11 @@ public class Client extends Wrapper {
     }
 
     public ChannelGroupId getChannelGroupId() {
-        return requireId(ClientProperty.CLIENT_CHANNEL_GROUP_ID, ChannelGroupId::new);
+        return requireId(ClientProperty.CLIENT_CHANNEL_GROUP_ID, ChannelGroupId::of);
     }
 
     public ChannelId getChannelId() {
-        return requireId(ClientProperty.CID, ChannelId::new);
+        return requireId(ClientProperty.CID, ChannelId::of);
     }
 
     /**
@@ -101,7 +104,7 @@ public class Client extends Wrapper {
 
     /** @return the ID of the channel from which the client's channel group is inherited */
     public ChannelId getInheritedChannelGroupId() {
-        return requireId(ClientProperty.CLIENT_CHANNEL_GROUP_INHERITED_CHANNEL_ID, ChannelId::new);
+        return requireId(ClientProperty.CLIENT_CHANNEL_GROUP_INHERITED_CHANNEL_ID, ChannelId::of);
     }
 
     /** @return the client's IP address, or empty if the server does not reveal it */
@@ -124,7 +127,7 @@ public class Client extends Wrapper {
 
     /** @return the IDs of the client's server groups, in received order */
     public List<ServerGroupId> getServerGroups() {
-        return requireIdList(ClientProperty.CLIENT_SERVERGROUPS, ServerGroupId::new);
+        return requireServerGroups(serverGroups);
     }
 
     public int getTalkPower() {

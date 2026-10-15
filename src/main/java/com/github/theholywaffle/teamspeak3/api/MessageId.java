@@ -5,7 +5,7 @@ package com.github.theholywaffle.teamspeak3.api;
  *
  * @param value the positive ID
  */
-public record MessageId(long value) {
+public record MessageId(long value) implements EntityId {
 
     public MessageId {
         if (value <= 0) throw new IllegalArgumentException("Message ID must be positive");

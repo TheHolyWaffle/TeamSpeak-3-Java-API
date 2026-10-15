@@ -1,6 +1,5 @@
 package com.github.theholywaffle.teamspeak3;
 
-import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
 import com.github.theholywaffle.teamspeak3.api.IconId;
@@ -46,29 +45,22 @@ public final class FileApiAsync {
 
     /** @see FileApi#list(FileLocation) */
     public CompletableFuture<List<FileListEntry>> list(FileLocation directory) {
-        return requests.models(
-                FileCommands.ftGetFileList(directory.path(), channel(directory), directory.channelPassword()),
-                FileListEntry::new);
+        return requests.models(FileCommands.ftGetFileList(directory), FileListEntry::new);
     }
 
     /** @see FileApi#info(FileLocation) */
     public CompletableFuture<FileInfo> info(FileLocation file) {
-        return requests.model(
-                FileCommands.ftGetFileInfo(channel(file), file.channelPassword(), file.path()), FileInfo::new);
+        return requests.model(FileCommands.ftGetFileInfo(List.of(file)), FileInfo::new);
     }
 
     /** @see FileApi#info(List) */
     public CompletableFuture<List<FileInfo>> info(List<FileLocation> files) {
-        long[] channels = files.stream().mapToLong(FileApiAsync::channel).toArray();
-        String[] passwords = files.stream().map(FileLocation::channelPassword).toArray(String[]::new);
-        String[] paths = files.stream().map(FileLocation::path).toArray(String[]::new);
-        return requests.models(FileCommands.ftGetFileInfo(channels, passwords, paths), FileInfo::new);
+        return requests.models(FileCommands.ftGetFileInfo(files), FileInfo::new);
     }
 
     /** @see FileApi#createDirectory(FileLocation) */
     public CompletableFuture<Void> createDirectory(FileLocation directory) {
-        return requests.run(
-                FileCommands.ftCreateDir(directory.path(), channel(directory), directory.channelPassword()));
+        return requests.run(FileCommands.ftCreateDir(directory));
     }
 
     /** @see FileApi#delete(FileLocation) */
@@ -78,29 +70,12 @@ public final class FileApiAsync {
 
     /** @see FileApi#delete(List) */
     public CompletableFuture<Void> delete(List<FileLocation> files) {
-        if (files.isEmpty()) throw new IllegalArgumentException("At least one file is required");
-        FileLocation first = files.getFirst();
-        for (FileLocation file : files) {
-            if (channel(file) != channel(first) || !Objects.equals(file.channelPassword(), first.channelPassword())) {
-                throw new IllegalArgumentException("Files deleted together must share a channel and password");
-            }
-        }
-        String[] paths = files.stream().map(FileLocation::path).toArray(String[]::new);
-        return requests.run(FileCommands.ftDeleteFile(channel(first), first.channelPassword(), paths));
+        return requests.run(FileCommands.ftDeleteFile(files));
     }
 
     /** @see FileApi#move(FileLocation, FileLocation) */
     public CompletableFuture<Void> move(FileLocation from, FileLocation to) {
-        Command command = channel(from) == channel(to)
-                ? FileCommands.ftRenameFile(from.path(), to.path(), channel(from), from.channelPassword())
-                : FileCommands.ftRenameFile(
-                        from.path(),
-                        to.path(),
-                        channel(from),
-                        from.channelPassword(),
-                        channel(to),
-                        to.channelPassword());
-        return requests.run(command);
+        return requests.run(FileCommands.ftRenameFile(from, to));
     }
 
     /** @see FileApi#transfers() */
@@ -115,13 +90,7 @@ public final class FileApiAsync {
         boolean resume = mode == UploadMode.RESUME;
         return executeTransfer(
                 helper -> FileCommands.ftInitUpload(
-                        helper.getClientTransferId(),
-                        target.path(),
-                        channel(target),
-                        target.channelPassword(),
-                        length,
-                        mode == UploadMode.OVERWRITE,
-                        resume),
+                        helper.getClientTransferId(), target, length, mode == UploadMode.OVERWRITE, resume),
                 "Upload failed",
                 (helper, params, operation) -> {
                     helper.uploadFile(data, length, params, resume, operation);
@@ -143,8 +112,7 @@ public final class FileApiAsync {
     public CompletableFuture<Long> download(FileLocation file, OutputStream out, long offset) {
         Objects.requireNonNull(out, "out");
         return executeTransfer(
-                helper -> FileCommands.ftInitDownload(
-                        helper.getClientTransferId(), file.path(), channel(file), file.channelPassword(), offset),
+                helper -> FileCommands.ftInitDownload(helper.getClientTransferId(), file, offset),
                 "Download failed",
                 (helper, params, operation) -> {
                     helper.downloadFile(out, params, offset, operation);
@@ -155,8 +123,7 @@ public final class FileApiAsync {
     /** @see FileApi#downloadBytes(FileLocation) */
     public CompletableFuture<byte[]> downloadBytes(FileLocation file) {
         return executeTransfer(
-                helper -> FileCommands.ftInitDownload(
-                        helper.getClientTransferId(), file.path(), channel(file), file.channelPassword(), 0),
+                helper -> FileCommands.ftInitDownload(helper.getClientTransferId(), file, 0),
                 "Download failed",
                 FileTransferHelper::downloadBytes);
     }
@@ -216,12 +183,7 @@ public final class FileApiAsync {
     }
 
     private static FileLocation iconLocation(IconId iconId) {
-        return FileLocation.ofServer("/icon_" + iconId.value());
-    }
-
-    /** TeamSpeak addresses the virtual server's own files as channel {@code 0}. */
-    private static long channel(FileLocation location) {
-        return location.channelId().map(ChannelId::value).orElse(0L);
+        return FileLocation.ofServer(iconId.path());
     }
 
     @FunctionalInterface

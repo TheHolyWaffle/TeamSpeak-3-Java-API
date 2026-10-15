@@ -44,9 +44,13 @@ class FileContentCompatibilityIT {
                 byte[] bytes = "actual bytes 日本語 | literal \\s\n".getBytes(java.nio.charset.StandardCharsets.UTF_8);
                 api.files().createDirectory(FileLocation.of(cid, "/contents"));
                 String name = "/contents/content 日本語.txt";
-                var upload = api.executeRawCommand(
-                                FileCommands.ftInitUpload(1, name, cid.value(), "", bytes.length, true, false)
-                                        .toString())
+                var upload = api.executeRawCommand(FileCommands.ftInitUpload(
+                                        1,
+                                        FileLocation.of(cid, name).withChannelPassword(""),
+                                        bytes.length,
+                                        true,
+                                        false)
+                                .toString())
                         .getFirstResponse()
                         .orElseThrow();
                 evidence.add("upload status=" + upload.find("status").orElse("") + " message="
@@ -67,9 +71,9 @@ class FileContentCompatibilityIT {
                 assertTrue(info.isFile());
                 assertEquals(name, info.getPath());
                 String second = "/contents/second.bin";
-                var secondUpload = api.executeRawCommand(
-                                FileCommands.ftInitUpload(6, second, cid.value(), "", 1, true, false)
-                                        .toString())
+                var secondUpload = api.executeRawCommand(FileCommands.ftInitUpload(
+                                        6, FileLocation.of(cid, second).withChannelPassword(""), 1, true, false)
+                                .toString())
                         .getFirstResponse()
                         .orElseThrow();
                 upload(new byte[] {42}, mapped(server, secondUpload.getMap()));
@@ -86,15 +90,20 @@ class FileContentCompatibilityIT {
                 assertEquals(Map.of(name, (long) bytes.length, second, 1L), sizes);
                 evidence.add("positive file-info fields="
                         + new java.util.TreeSet<>(info.getMap().keySet()));
-                var download = api.executeRawCommand(FileCommands.ftInitDownload(2, name, cid.value(), "", 0)
+                var download = api.executeRawCommand(FileCommands.ftInitDownload(
+                                        2, FileLocation.of(cid, name).withChannelPassword(""), 0)
                                 .encoded())
                         .getFirstResponse()
                         .orElseThrow();
                 assertEquals(bytes.length, download.requireLong("size"));
                 assertArrayEquals(bytes, download(mapped(server, download.getMap())));
-                var pending = api.executeRawCommand(
-                                FileCommands.ftInitUpload(3, "/pending.bin", cid.value(), "", 100, true, false)
-                                        .toString())
+                var pending = api.executeRawCommand(FileCommands.ftInitUpload(
+                                        3,
+                                        FileLocation.of(cid, "/pending.bin").withChannelPassword(""),
+                                        100,
+                                        true,
+                                        false)
+                                .toString())
                         .getFirstResponse()
                         .orElseThrow();
                 var transfer = ServerFileTransferId.of(pending.requireInt("serverftfid"));
@@ -125,9 +134,13 @@ class FileContentCompatibilityIT {
                         .decode(
                                 "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aXh8AAAAASUVORK5CYII=");
                 var iconId = FileTransferHelper.getIconId(icon);
-                var iconUpload = api.executeRawCommand(
-                                FileCommands.ftInitUpload(4, "/icon_" + iconId, 0, "", icon.length, true, false)
-                                        .toString())
+                var iconUpload = api.executeRawCommand(FileCommands.ftInitUpload(
+                                        4,
+                                        FileLocation.ofServer(iconId.path()).withChannelPassword(""),
+                                        icon.length,
+                                        true,
+                                        false)
+                                .toString())
                         .getFirstResponse()
                         .orElseThrow();
                 upload(icon, mapped(server, iconUpload.getMap()));
@@ -141,7 +154,8 @@ class FileContentCompatibilityIT {
                         .toList();
                 assertEquals(1, icons.size());
                 assertEquals(icon.length, icons.getFirst().getFileSize());
-                var iconDownload = api.executeRawCommand(FileCommands.ftInitDownload(5, "/icon_" + iconId, 0, "", 0)
+                var iconDownload = api.executeRawCommand(FileCommands.ftInitDownload(
+                                        5, FileLocation.ofServer(iconId.path()).withChannelPassword(""), 0)
                                 .toString())
                         .getFirstResponse()
                         .orElseThrow();

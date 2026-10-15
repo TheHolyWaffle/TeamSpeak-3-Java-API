@@ -7,7 +7,7 @@ package com.github.theholywaffle.teamspeak3.api;
  *
  * @param value the positive ID
  */
-public record VirtualServerId(long value) {
+public record VirtualServerId(long value) implements EntityId {
 
     public VirtualServerId {
         if (value <= 0) throw new IllegalArgumentException("Virtual server ID must be positive");

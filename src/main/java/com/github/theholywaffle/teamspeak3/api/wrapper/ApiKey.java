@@ -20,12 +20,12 @@ public class ApiKey extends Wrapper {
     }
 
     public ApiKeyId getId() {
-        return requireId("id", ApiKeyId::new);
+        return requireId("id", ApiKeyId::of);
     }
 
     /** @return the virtual server the key is bound to, or empty for the server instance */
     public Optional<VirtualServerId> getVirtualServerId() {
-        return requireOptionalId("sid", VirtualServerId::new);
+        return requireOptionalId("sid", VirtualServerId::of);
     }
 
     /** @return the client whose permissions the key's requests use */

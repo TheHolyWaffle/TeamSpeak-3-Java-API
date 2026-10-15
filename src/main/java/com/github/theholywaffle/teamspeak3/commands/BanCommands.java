@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3.commands;
 
+import com.github.theholywaffle.teamspeak3.api.BanId;
 import com.github.theholywaffle.teamspeak3.commands.parameter.ArrayParameter;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 import com.github.theholywaffle.teamspeak3.commands.parameter.OptionParam;
@@ -35,7 +36,7 @@ public final class BanCommands {
         return builder.build();
     }
 
-    public static Command banDel(long banId) {
+    public static Command banDel(BanId banId) {
         return new CommandBuilder("bandel")
                 .add(new KeyValueParam("banid", banId))
                 .build();

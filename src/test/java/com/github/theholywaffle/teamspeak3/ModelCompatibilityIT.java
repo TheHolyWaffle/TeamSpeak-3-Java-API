@@ -167,7 +167,12 @@ class ModelCompatibilityIT {
                                     api.databaseClients().info(databaseClient).getUniqueIdentifier(),
                                     "models",
                                     "offline " + target);
-                    api.executeRawCommand(FileCommands.ftInitUpload(41, upload, 1, "", 8, true, false)
+                    api.executeRawCommand(FileCommands.ftInitUpload(
+                                    41,
+                                    FileLocation.of(ChannelId.of(1), upload).withChannelPassword(""),
+                                    8,
+                                    true,
+                                    false)
                             .toString());
 
                     for (Object model : List.of(

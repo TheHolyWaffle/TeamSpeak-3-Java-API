@@ -32,7 +32,7 @@ public final class ChannelApiAsync {
 
     /** @see ChannelApi#info(ChannelId) */
     public CompletableFuture<ChannelInfo> info(ChannelId channelId) {
-        return requests.model(ChannelCommands.channelInfo(channelId.value()), map -> new ChannelInfo(channelId, map));
+        return requests.model(ChannelCommands.channelInfo(channelId), map -> new ChannelInfo(channelId, map));
     }
 
     /** @see ChannelApi#findByName(String, boolean) */
@@ -44,19 +44,19 @@ public final class ChannelApiAsync {
 
     /** @see ChannelApi#search(String) */
     public CompletableFuture<List<Channel>> search(String namePart) {
-        var ids = requests.ids(ChannelCommands.channelFind(namePart), "cid", ChannelId::new);
+        var ids = requests.ids(ChannelCommands.channelFind(namePart), "cid", ChannelId::of);
         return QueryRequests.recover(
                 QueryRequests.findByKey(ids, list(), Channel::getId), QueryRequests.INVALID_CHANNEL_ID, List.of());
     }
 
     /** @see ChannelApi#create(String, Map) */
     public CompletableFuture<ChannelId> create(String name, Map<ChannelProperty, String> properties) {
-        return requests.id(ChannelCommands.channelCreate(name, properties), "cid", ChannelId::new);
+        return requests.id(ChannelCommands.channelCreate(name, properties), "cid", ChannelId::of);
     }
 
     /** @see ChannelApi#edit(ChannelId, Map) */
     public CompletableFuture<Void> edit(ChannelId channelId, Map<ChannelProperty, String> properties) {
-        return requests.run(ChannelCommands.channelEdit(channelId.value(), properties));
+        return requests.run(ChannelCommands.channelEdit(channelId, properties));
     }
 
     /** @see ChannelApi#delete(ChannelId) */
@@ -66,7 +66,7 @@ public final class ChannelApiAsync {
 
     /** @see ChannelApi#delete(ChannelId, boolean) */
     public CompletableFuture<Void> delete(ChannelId channelId, boolean force) {
-        return requests.run(ChannelCommands.channelDelete(channelId.value(), force));
+        return requests.run(ChannelCommands.channelDelete(channelId, force));
     }
 
     /** @see ChannelApi#move(ChannelId, ChannelId) */
@@ -77,8 +77,6 @@ public final class ChannelApiAsync {
     /** @see ChannelApi#move(ChannelId, ChannelId, ChannelId) */
     public CompletableFuture<Void> move(ChannelId channelId, ChannelId parentChannelId, ChannelId afterChannelId) {
         return requests.run(ChannelCommands.channelMove(
-                channelId.value(),
-                QueryRequests.valueOrZero(parentChannelId),
-                QueryRequests.valueOrZero(afterChannelId)));
+                channelId, Optional.ofNullable(parentChannelId), Optional.ofNullable(afterChannelId)));
     }
 }

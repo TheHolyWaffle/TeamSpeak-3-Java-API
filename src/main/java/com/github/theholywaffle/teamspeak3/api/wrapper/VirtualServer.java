@@ -15,7 +15,7 @@ public class VirtualServer extends Wrapper {
     }
 
     public VirtualServerId getId() {
-        return requireId(VirtualServerProperty.VIRTUALSERVER_ID, VirtualServerId::new);
+        return requireId(VirtualServerProperty.VIRTUALSERVER_ID, VirtualServerId::of);
     }
 
     public int getPort() {
@@ -48,9 +48,7 @@ public class VirtualServer extends Wrapper {
 
     /** @return the uptime, or empty for a server that is not running */
     public Optional<Duration> getUptime() {
-        return findLong(VirtualServerProperty.VIRTUALSERVER_UPTIME).stream()
-                .mapToObj(Duration::ofSeconds)
-                .findFirst();
+        return findSeconds(VirtualServerProperty.VIRTUALSERVER_UPTIME);
     }
 
     public String getName() {

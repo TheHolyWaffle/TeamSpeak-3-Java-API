@@ -1,8 +1,11 @@
 package com.github.theholywaffle.teamspeak3.commands;
 
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
+import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 import com.github.theholywaffle.teamspeak3.commands.parameter.OptionParam;
+import java.util.Optional;
 
 public final class ServerGroupCommands {
 
@@ -23,30 +26,35 @@ public final class ServerGroupCommands {
         return builder.build();
     }
 
-    public static Command serverGroupAddClient(long groupId, long clientDBId) {
+    public static Command serverGroupAddClient(ServerGroupId groupId, ClientDatabaseId clientDBId) {
         CommandBuilder builder = new CommandBuilder("servergroupaddclient");
         builder.add(new KeyValueParam("sgid", groupId));
         builder.add(new KeyValueParam("cldbid", clientDBId));
         return builder.build();
     }
 
-    public static Command serverGroupClientList(long groupId) {
+    public static Command serverGroupClientList(ServerGroupId groupId) {
         CommandBuilder builder = new CommandBuilder("servergroupclientlist");
         builder.add(new KeyValueParam("sgid", groupId));
         builder.add(new OptionParam("names"));
         return builder.build();
     }
 
-    public static Command serverGroupCopy(long sourceGroupId, long targetGroupId, PermissionGroupDatabaseType type) {
-        return serverGroupCopy(sourceGroupId, targetGroupId, "name", type);
+    public static Command serverGroupCopy(
+            ServerGroupId sourceGroupId, ServerGroupId targetGroupId, PermissionGroupDatabaseType type) {
+        return serverGroupCopy(sourceGroupId, Optional.of(targetGroupId), "name", type);
     }
 
-    public static Command serverGroupCopy(long sourceGroupId, String groupName, PermissionGroupDatabaseType type) {
-        return serverGroupCopy(sourceGroupId, 0, groupName, type);
+    public static Command serverGroupCopy(
+            ServerGroupId sourceGroupId, String groupName, PermissionGroupDatabaseType type) {
+        return serverGroupCopy(sourceGroupId, Optional.empty(), groupName, type);
     }
 
     private static Command serverGroupCopy(
-            long sourceGroupId, long targetGroupId, String groupName, PermissionGroupDatabaseType type) {
+            ServerGroupId sourceGroupId,
+            Optional<ServerGroupId> targetGroupId,
+            String groupName,
+            PermissionGroupDatabaseType type) {
         if (type == null) {
             throw new IllegalArgumentException("Group type cannot be null");
         }
@@ -56,20 +64,20 @@ public final class ServerGroupCommands {
 
         CommandBuilder builder = new CommandBuilder("servergroupcopy");
         builder.add(new KeyValueParam("ssgid", sourceGroupId));
-        builder.add(new KeyValueParam("tsgid", targetGroupId));
+        builder.add(KeyValueParam.idOrZero("tsgid", targetGroupId));
         builder.add(new KeyValueParam("name", groupName));
         builder.add(new KeyValueParam("type", KnownCodes.require(type.getIndex())));
         return builder.build();
     }
 
-    public static Command serverGroupDel(long id, boolean force) {
+    public static Command serverGroupDel(ServerGroupId id, boolean force) {
         CommandBuilder builder = new CommandBuilder("servergroupdel");
         builder.add(new KeyValueParam("sgid", id));
         builder.add(new KeyValueParam("force", force));
         return builder.build();
     }
 
-    public static Command serverGroupDelClient(long groupId, long clientDBId) {
+    public static Command serverGroupDelClient(ServerGroupId groupId, ClientDatabaseId clientDBId) {
         CommandBuilder builder = new CommandBuilder("servergroupdelclient");
         builder.add(new KeyValueParam("sgid", groupId));
         builder.add(new KeyValueParam("cldbid", clientDBId));
@@ -80,7 +88,7 @@ public final class ServerGroupCommands {
         return new CommandBuilder("servergrouplist").build();
     }
 
-    public static Command serverGroupRename(long id, String groupName) {
+    public static Command serverGroupRename(ServerGroupId id, String groupName) {
         if (groupName == null || groupName.isEmpty()) {
             throw new IllegalArgumentException("Server group name must be a non-empty string");
         }
@@ -91,7 +99,7 @@ public final class ServerGroupCommands {
         return builder.build();
     }
 
-    public static Command serverGroupsByClientId(long clientDBId) {
+    public static Command serverGroupsByClientId(ClientDatabaseId clientDBId) {
         return new CommandBuilder("servergroupsbyclientid")
                 .add(new KeyValueParam("cldbid", clientDBId))
                 .build();

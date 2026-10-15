@@ -35,7 +35,7 @@ public final class ClientApiAsync {
 
     /** @see ClientApi#info(ClientId) */
     public CompletableFuture<ClientInfo> info(ClientId clientId) {
-        return requests.model(ClientCommands.clientInfo(clientId.value()), map -> new ClientInfo(clientId, map));
+        return requests.model(ClientCommands.clientInfo(clientId), map -> new ClientInfo(clientId, map));
     }
 
     /** @see ClientApi#findByName(String, boolean) */
@@ -62,7 +62,7 @@ public final class ClientApiAsync {
     /** @see ClientApi#isOnline(ClientId) */
     public CompletableFuture<Boolean> isOnline(ClientId clientId) {
         return QueryRequests.recover(
-                requests.response(ClientCommands.clientInfo(clientId.value()), _ -> true),
+                requests.response(ClientCommands.clientInfo(clientId), _ -> true),
                 QueryRequests.INVALID_CLIENT_ID,
                 false);
     }
@@ -81,7 +81,7 @@ public final class ClientApiAsync {
 
     /** @see ClientApi#move(ClientId, ChannelId, String) */
     public CompletableFuture<Void> move(ClientId clientId, ChannelId channelId, String channelPassword) {
-        return requests.run(ClientCommands.clientMove(clientId.value(), channelId.value(), channelPassword));
+        return requests.run(ClientCommands.clientMove(clientId, channelId, channelPassword));
     }
 
     /** @see ClientApi#moveAll(Collection, ChannelId, String) */
@@ -89,7 +89,7 @@ public final class ClientApiAsync {
             Collection<ClientId> clientIds, ChannelId channelId, String channelPassword) {
         int[] ids = QueryRequests.values(clientIds);
         if (ids.length == 0) return CompletableFuture.completedFuture(null);
-        return requests.run(ClientCommands.clientMove(ids, channelId.value(), channelPassword));
+        return requests.run(ClientCommands.clientMove(ids, channelId, channelPassword));
     }
 
     /** @see ClientApi#kickFromChannel(String, ClientId...) */
@@ -106,11 +106,11 @@ public final class ClientApiAsync {
 
     /** @see ClientApi#poke(ClientId, String) */
     public CompletableFuture<Void> poke(ClientId clientId, String message) {
-        return requests.run(ClientCommands.clientPoke(clientId.value(), message));
+        return requests.run(ClientCommands.clientPoke(clientId, message));
     }
 
     /** @see ClientApi#edit(ClientId, Map) */
     public CompletableFuture<Void> edit(ClientId clientId, Map<ClientProperty, String> properties) {
-        return requests.run(ClientCommands.clientEdit(clientId.value(), properties));
+        return requests.run(ClientCommands.clientEdit(clientId, properties));
     }
 }

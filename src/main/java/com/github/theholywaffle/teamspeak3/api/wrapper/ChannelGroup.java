@@ -13,7 +13,7 @@ public class ChannelGroup extends Wrapper {
     }
 
     public ChannelGroupId getId() {
-        return requireId("cgid", ChannelGroupId::new);
+        return requireId("cgid", ChannelGroupId::of);
     }
 
     public String getName() {

@@ -17,7 +17,7 @@ public class FileInfo extends Wrapper {
      * @return the ID of the file's channel, or empty for the virtual server's own files, such as icons
      */
     public Optional<ChannelId> getChannelId() {
-        return requireOptionalId("cid", ChannelId::new);
+        return requireOptionalId("cid", ChannelId::of);
     }
 
     /**

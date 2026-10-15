@@ -11,7 +11,7 @@ public class Message extends Wrapper {
     }
 
     public MessageId getId() {
-        return requireId("msgid", MessageId::new);
+        return requireId("msgid", MessageId::of);
     }
 
     public String getSenderUniqueIdentifier() {

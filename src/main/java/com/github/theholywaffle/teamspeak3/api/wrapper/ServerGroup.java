@@ -13,7 +13,7 @@ public class ServerGroup extends Wrapper {
     }
 
     public ServerGroupId getId() {
-        return requireId("sgid", ServerGroupId::new);
+        return requireId("sgid", ServerGroupId::of);
     }
 
     public String getName() {

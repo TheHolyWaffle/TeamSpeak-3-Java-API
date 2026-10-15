@@ -17,7 +17,7 @@ public class QueryLogin extends Wrapper {
 
     /** @return the virtual server the login belongs to, or empty for an instance-wide login */
     public Optional<VirtualServerId> getVirtualServerId() {
-        return requireOptionalId("sid", VirtualServerId::new);
+        return requireOptionalId("sid", VirtualServerId::of);
     }
 
     public String getQueryClientLoginName() {

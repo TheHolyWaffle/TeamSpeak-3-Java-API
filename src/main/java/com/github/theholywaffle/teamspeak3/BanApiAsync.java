@@ -37,7 +37,7 @@ public final class BanApiAsync {
                         ban.duration().toSeconds(),
                         ban.reason()),
                 "banid",
-                BanId::new);
+                BanId::of);
     }
 
     /** @see BanApi#banClients(ClientBan) */
@@ -46,12 +46,12 @@ public final class BanApiAsync {
         return requests.ids(
                 BanCommands.banClient(ids, ban.duration().toSeconds(), ban.reason(), ban.continueOnError()),
                 "banid",
-                BanId::new);
+                BanId::of);
     }
 
     /** @see BanApi#delete(BanId) */
     public CompletableFuture<Void> delete(BanId banId) {
-        return requests.run(BanCommands.banDel(banId.value()));
+        return requests.run(BanCommands.banDel(banId));
     }
 
     /** @see BanApi#deleteAll() */

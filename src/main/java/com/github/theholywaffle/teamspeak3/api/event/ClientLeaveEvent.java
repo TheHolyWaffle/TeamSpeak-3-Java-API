@@ -14,12 +14,12 @@ public class ClientLeaveEvent extends BaseEvent {
 
     /** @return the channel the client was in */
     public ChannelId getClientFromId() {
-        return requireId("cfid", ChannelId::new);
+        return requireId("cfid", ChannelId::of);
     }
 
     /** @return the channel the client moved to, or empty when it left the server ({@code 0}) */
     public Optional<ChannelId> getClientTargetId() {
-        return requireOptionalId("ctid", ChannelId::new);
+        return requireOptionalId("ctid", ChannelId::of);
     }
 
     /**
@@ -29,7 +29,7 @@ public class ClientLeaveEvent extends BaseEvent {
      *         or empty if the client was not banned
      */
     public Optional<Duration> getBanDuration() {
-        return findLong("bantime").stream().mapToObj(Duration::ofSeconds).findFirst();
+        return findSeconds("bantime");
     }
 
     public ClientId getClientId() {

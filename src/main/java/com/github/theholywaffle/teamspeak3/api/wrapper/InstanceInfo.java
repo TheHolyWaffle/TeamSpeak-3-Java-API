@@ -32,7 +32,7 @@ public class InstanceInfo extends Wrapper {
     }
 
     public ServerGroupId getGuestServerQueryGroup() {
-        return requireId(ServerInstanceProperty.SERVERINSTANCE_GUEST_SERVERQUERY_GROUP, ServerGroupId::new);
+        return requireId(ServerInstanceProperty.SERVERINSTANCE_GUEST_SERVERQUERY_GROUP, ServerGroupId::of);
     }
 
     public int getMaxFloodCommands() {
@@ -48,19 +48,19 @@ public class InstanceInfo extends Wrapper {
     }
 
     public ServerGroupId getServerAdminGroup() {
-        return requireId(ServerInstanceProperty.SERVERINSTANCE_TEMPLATE_SERVERADMIN_GROUP, ServerGroupId::new);
+        return requireId(ServerInstanceProperty.SERVERINSTANCE_TEMPLATE_SERVERADMIN_GROUP, ServerGroupId::of);
     }
 
     public ServerGroupId getDefaultServerGroup() {
-        return requireId(ServerInstanceProperty.SERVERINSTANCE_TEMPLATE_SERVERDEFAULT_GROUP, ServerGroupId::new);
+        return requireId(ServerInstanceProperty.SERVERINSTANCE_TEMPLATE_SERVERDEFAULT_GROUP, ServerGroupId::of);
     }
 
     public ChannelGroupId getChannelAdminGroup() {
-        return requireId(ServerInstanceProperty.SERVERINSTANCE_TEMPLATE_CHANNELADMIN_GROUP, ChannelGroupId::new);
+        return requireId(ServerInstanceProperty.SERVERINSTANCE_TEMPLATE_CHANNELADMIN_GROUP, ChannelGroupId::of);
     }
 
     public ChannelGroupId getDefaultChannelGroup() {
-        return requireId(ServerInstanceProperty.SERVERINSTANCE_TEMPLATE_CHANNELDEFAULT_GROUP, ChannelGroupId::new);
+        return requireId(ServerInstanceProperty.SERVERINSTANCE_TEMPLATE_CHANNELDEFAULT_GROUP, ChannelGroupId::of);
     }
 
     public int getPermissionsVersion() {

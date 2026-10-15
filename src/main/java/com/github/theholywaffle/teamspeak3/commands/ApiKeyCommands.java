@@ -1,9 +1,11 @@
 package com.github.theholywaffle.teamspeak3.commands;
 
+import com.github.theholywaffle.teamspeak3.api.ApiKeyId;
 import com.github.theholywaffle.teamspeak3.api.ApiKeyScope;
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 import java.time.Duration;
+import java.util.Optional;
 
 public final class ApiKeyCommands {
 
@@ -25,14 +27,14 @@ public final class ApiKeyCommands {
         return new CommandBuilder("apikeyadd")
                 .add(new KeyValueParam("scope", scope.getName()))
                 .add(new KeyValueParam("lifetime", lifetime.toDays()))
-                .addIf(owner != null, new KeyValueParam("cldbid", String.valueOf(owner)))
+                .addIfPresent("cldbid", Optional.ofNullable(owner))
                 .build();
     }
 
     /** @param owner the owning client, or {@code null} for the invoker */
     public static Command apiKeyList(ClientDatabaseId owner) {
         return new CommandBuilder("apikeylist")
-                .addIf(owner != null, new KeyValueParam("cldbid", String.valueOf(owner)))
+                .addIfPresent("cldbid", Optional.ofNullable(owner))
                 .build();
     }
 
@@ -42,7 +44,7 @@ public final class ApiKeyCommands {
                 .build();
     }
 
-    public static Command apiKeyDelete(long id) {
+    public static Command apiKeyDelete(ApiKeyId id) {
         return new CommandBuilder("apikeydel").add(new KeyValueParam("id", id)).build();
     }
 }

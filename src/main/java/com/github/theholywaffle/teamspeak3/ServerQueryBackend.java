@@ -19,7 +19,7 @@ record ServerQueryBackend(TS3Query query, CommandQueue queue) implements QueryBa
 
     @Override
     public CompletableFuture<QueryBackend> onVirtualServer(VirtualServerId serverId) {
-        return CommandFutures.map(new QueryRequests(this).run(QueryCommands.useId(serverId.value(), null)), _ -> this);
+        return CommandFutures.map(new QueryRequests(this).run(QueryCommands.useId(serverId, null)), _ -> this);
     }
 
     @Override

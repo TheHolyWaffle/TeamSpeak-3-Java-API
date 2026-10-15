@@ -18,7 +18,7 @@ public class Ban extends Wrapper {
     }
 
     public BanId getId() {
-        return requireId("banid", BanId::new);
+        return requireId("banid", BanId::of);
     }
 
     /** @return the banned IP pattern, or empty if the rule does not match on IP */

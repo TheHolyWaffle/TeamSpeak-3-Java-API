@@ -1,11 +1,13 @@
 package com.github.theholywaffle.teamspeak3.commands;
 
+import com.github.theholywaffle.teamspeak3.api.EntityId;
 import com.github.theholywaffle.teamspeak3.api.Property;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 import com.github.theholywaffle.teamspeak3.commands.parameter.Parameter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 final class CommandBuilder {
 
@@ -23,6 +25,11 @@ final class CommandBuilder {
 
     CommandBuilder addIf(boolean test, Parameter parameter) {
         return test ? add(parameter) : this;
+    }
+
+    CommandBuilder addIfPresent(String key, Optional<? extends EntityId> id) {
+        id.ifPresent(present -> add(new KeyValueParam(key, present)));
+        return this;
     }
 
     CommandBuilder addProperties(Map<? extends Property, String> properties) {

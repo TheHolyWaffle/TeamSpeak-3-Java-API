@@ -34,7 +34,7 @@ public class ServerQueryInfo extends Wrapper {
      * @return the ID of the current channel, or empty until a virtual server is selected
      */
     public Optional<ChannelId> getChannelId() {
-        return requireOptionalId("client_channel_id", ChannelId::new);
+        return requireOptionalId("client_channel_id", ChannelId::of);
     }
 
     /**
@@ -96,7 +96,7 @@ public class ServerQueryInfo extends Wrapper {
      *         logged in or uses an instance-wide login such as {@code serveradmin} (TeamSpeak sends {@code 0})
      */
     public Optional<VirtualServerId> getOriginServerId() {
-        return requireOptionalId("client_origin_server_id", VirtualServerId::new);
+        return requireOptionalId("client_origin_server_id", VirtualServerId::of);
     }
 
     /**
@@ -122,7 +122,7 @@ public class ServerQueryInfo extends Wrapper {
      * @return the ID of the current virtual server, or empty if none is selected (TeamSpeak sends {@code 0})
      */
     public Optional<VirtualServerId> getVirtualServerId() {
-        return requireOptionalId(VirtualServerProperty.VIRTUALSERVER_ID, VirtualServerId::new);
+        return requireOptionalId(VirtualServerProperty.VIRTUALSERVER_ID, VirtualServerId::of);
     }
 
     /**

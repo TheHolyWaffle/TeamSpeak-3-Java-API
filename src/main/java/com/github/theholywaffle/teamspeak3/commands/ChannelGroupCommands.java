@@ -1,7 +1,12 @@
 package com.github.theholywaffle.teamspeak3.commands;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelGroupFilter;
+import com.github.theholywaffle.teamspeak3.api.ChannelGroupId;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
+import java.util.Optional;
 
 public final class ChannelGroupCommands {
 
@@ -22,24 +27,29 @@ public final class ChannelGroupCommands {
         return builder.build();
     }
 
-    public static Command channelGroupClientList(long channelId, long clientDBId, long groupId) {
-        CommandBuilder builder = new CommandBuilder("channelgroupclientlist");
-        builder.addIf(channelId > 0, new KeyValueParam("cid", channelId));
-        builder.addIf(clientDBId > 0, new KeyValueParam("cldbid", clientDBId));
-        builder.addIf(groupId > 0, new KeyValueParam("cgid", groupId));
-        return builder.build();
+    public static Command channelGroupClientList(ChannelGroupFilter filter) {
+        return new CommandBuilder("channelgroupclientlist")
+                .addIfPresent("cid", filter.channelId())
+                .addIfPresent("cldbid", filter.clientDatabaseId())
+                .addIfPresent("cgid", filter.groupId())
+                .build();
     }
 
-    public static Command channelGroupCopy(long sourceGroupId, long targetGroupId, PermissionGroupDatabaseType type) {
-        return channelGroupCopy(sourceGroupId, targetGroupId, "name", type);
+    public static Command channelGroupCopy(
+            ChannelGroupId sourceGroupId, ChannelGroupId targetGroupId, PermissionGroupDatabaseType type) {
+        return channelGroupCopy(sourceGroupId, Optional.of(targetGroupId), "name", type);
     }
 
-    public static Command channelGroupCopy(long sourceGroupId, String groupName, PermissionGroupDatabaseType type) {
-        return channelGroupCopy(sourceGroupId, 0, groupName, type);
+    public static Command channelGroupCopy(
+            ChannelGroupId sourceGroupId, String groupName, PermissionGroupDatabaseType type) {
+        return channelGroupCopy(sourceGroupId, Optional.empty(), groupName, type);
     }
 
     private static Command channelGroupCopy(
-            long sourceGroupId, long targetGroupId, String groupName, PermissionGroupDatabaseType type) {
+            ChannelGroupId sourceGroupId,
+            Optional<ChannelGroupId> targetGroupId,
+            String groupName,
+            PermissionGroupDatabaseType type) {
         if (type == null) {
             throw new IllegalArgumentException("Group type cannot be null");
         }
@@ -49,13 +59,13 @@ public final class ChannelGroupCommands {
 
         CommandBuilder builder = new CommandBuilder("channelgroupcopy");
         builder.add(new KeyValueParam("scgid", sourceGroupId));
-        builder.add(new KeyValueParam("tcgid", targetGroupId));
+        builder.add(KeyValueParam.idOrZero("tcgid", targetGroupId));
         builder.add(new KeyValueParam("name", groupName));
         builder.add(new KeyValueParam("type", KnownCodes.require(type.getIndex())));
         return builder.build();
     }
 
-    public static Command channelGroupDel(long channelGroupId, boolean forced) {
+    public static Command channelGroupDel(ChannelGroupId channelGroupId, boolean forced) {
         CommandBuilder builder = new CommandBuilder("channelgroupdel");
         builder.add(new KeyValueParam("cgid", channelGroupId));
         builder.add(new KeyValueParam("force", forced));
@@ -66,7 +76,7 @@ public final class ChannelGroupCommands {
         return new CommandBuilder("channelgrouplist").build();
     }
 
-    public static Command channelGroupRename(long groupId, String groupName) {
+    public static Command channelGroupRename(ChannelGroupId groupId, String groupName) {
         if (groupName == null || groupName.isEmpty()) {
             throw new IllegalArgumentException("Channel group name must be a non-empty string");
         }
@@ -77,7 +87,8 @@ public final class ChannelGroupCommands {
         return builder.build();
     }
 
-    public static Command setClientChannelGroup(long groupId, long channelId, long clientDBId) {
+    public static Command setClientChannelGroup(
+            ChannelGroupId groupId, ChannelId channelId, ClientDatabaseId clientDBId) {
         CommandBuilder builder = new CommandBuilder("setclientchannelgroup");
         builder.add(new KeyValueParam("cgid", groupId));
         builder.add(new KeyValueParam("cid", channelId));

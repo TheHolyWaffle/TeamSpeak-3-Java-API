@@ -20,6 +20,6 @@ public record CreatedVirtualServer(VirtualServerId id, int port, String serverAd
     /** @throws com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException if a property is missing or malformed */
     public static CreatedVirtualServer from(Wrapper row) {
         return new CreatedVirtualServer(
-                row.requireId("sid", VirtualServerId::new), row.requireInt("virtualserver_port"), row.require("token"));
+                row.requireId("sid", VirtualServerId::of), row.requireInt("virtualserver_port"), row.require("token"));
     }
 }

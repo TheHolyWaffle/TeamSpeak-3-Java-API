@@ -2,7 +2,7 @@ package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelGroupId;
 import com.github.theholywaffle.teamspeak3.api.ChannelId;
-import com.github.theholywaffle.teamspeak3.api.PrivilegeKeyType;
+import com.github.theholywaffle.teamspeak3.api.PrivilegeKeyGrant;
 import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import com.github.theholywaffle.teamspeak3.api.wrapper.PrivilegeKey;
 import com.github.theholywaffle.teamspeak3.commands.PrivilegeKeyCommands;
@@ -30,8 +30,7 @@ public final class PrivilegeKeyApiAsync {
     /** @see PrivilegeKeyApi#createForServerGroup(ServerGroupId, String) */
     public CompletableFuture<String> createForServerGroup(ServerGroupId serverGroupId, String description) {
         return requests.string(
-                PrivilegeKeyCommands.privilegeKeyAdd(
-                        PrivilegeKeyType.SERVER_GROUP, serverGroupId.value(), 0, description),
+                PrivilegeKeyCommands.privilegeKeyAdd(PrivilegeKeyGrant.serverGroup(serverGroupId), description),
                 "token");
     }
 
@@ -40,7 +39,7 @@ public final class PrivilegeKeyApiAsync {
             ChannelGroupId channelGroupId, ChannelId channelId, String description) {
         return requests.string(
                 PrivilegeKeyCommands.privilegeKeyAdd(
-                        PrivilegeKeyType.CHANNEL_GROUP, channelGroupId.value(), channelId.value(), description),
+                        PrivilegeKeyGrant.channelGroup(channelGroupId, channelId), description),
                 "token");
     }
 
