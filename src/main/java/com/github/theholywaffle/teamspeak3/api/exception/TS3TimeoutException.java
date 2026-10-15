@@ -1,8 +1,11 @@
 package com.github.theholywaffle.teamspeak3.api.exception;
 
+import java.io.Serial;
+
 /** A configured command deadline expired. */
 public class TS3TimeoutException extends TS3Exception {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /** The deadline that expired. */

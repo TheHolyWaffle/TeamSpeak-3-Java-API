@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3.api.exception;
 
+import java.io.Serial;
 import java.util.Optional;
 
 /**
@@ -8,6 +9,7 @@ import java.util.Optional;
  */
 public class TS3InvalidValueException extends TS3Exception {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final String property;

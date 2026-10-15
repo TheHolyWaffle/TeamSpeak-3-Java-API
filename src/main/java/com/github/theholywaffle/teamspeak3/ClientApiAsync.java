@@ -38,6 +38,11 @@ public final class ClientApiAsync {
         return requests.model(ClientCommands.clientInfo(clientId), map -> new ClientInfo(clientId, map));
     }
 
+    /** @see ClientApi#uniqueId(ClientId) */
+    public CompletableFuture<String> uniqueId(ClientId clientId) {
+        return requests.string(ClientCommands.clientGetUIdFromClId(clientId), "cluid");
+    }
+
     /** @see ClientApi#findByName(String, boolean) */
     public CompletableFuture<Optional<Client>> findByName(String nickname, boolean ignoreCase) {
         Objects.requireNonNull(nickname, "nickname");

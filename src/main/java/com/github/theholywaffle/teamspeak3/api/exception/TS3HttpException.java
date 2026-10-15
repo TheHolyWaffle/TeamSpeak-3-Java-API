@@ -1,5 +1,7 @@
 package com.github.theholywaffle.teamspeak3.api.exception;
 
+import java.io.Serial;
+
 /**
  * A Web Query response carried no usable ServerQuery status: an unexpected HTTP status, for example
  * from a reverse proxy, or a body that is not the documented JSON. A 4xx status means the server did
@@ -7,6 +9,7 @@ package com.github.theholywaffle.teamspeak3.api.exception;
  */
 public class TS3HttpException extends TS3TransportException {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final int statusCode;

@@ -1,11 +1,13 @@
 package com.github.theholywaffle.teamspeak3.api.exception;
 
 import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
+import java.io.Serial;
 import java.util.LinkedHashMap;
 
 /** The server answered a command with an error; the command was not executed. */
 public class TS3CommandFailedException extends TS3Exception {
 
+    @Serial
     private static final long serialVersionUID = 8179203326662268882L;
 
     // QueryError is not serializable; its properties are.

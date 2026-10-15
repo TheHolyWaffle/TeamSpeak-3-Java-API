@@ -1,8 +1,11 @@
 package com.github.theholywaffle.teamspeak3.api.exception;
 
+import java.io.Serial;
+
 /** Connecting or initializing the ServerQuery session failed. */
 public class TS3ConnectionFailedException extends TS3TransportException {
 
+    @Serial
     private static final long serialVersionUID = 6849777544299282019L;
 
     public TS3ConnectionFailedException(String msg) {

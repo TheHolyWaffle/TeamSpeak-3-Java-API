@@ -1,5 +1,7 @@
 package com.github.theholywaffle.teamspeak3.api.exception;
 
+import java.io.Serial;
+
 /**
  * Base type of every failure reported by this library.
  * <p>
@@ -12,6 +14,7 @@ package com.github.theholywaffle.teamspeak3.api.exception;
  */
 public class TS3Exception extends RuntimeException {
 
+    @Serial
     private static final long serialVersionUID = 7167169981592989359L;
 
     public TS3Exception(String msg) {

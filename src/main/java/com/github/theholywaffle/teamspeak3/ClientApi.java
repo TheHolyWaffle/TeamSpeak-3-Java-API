@@ -50,6 +50,17 @@ public final class ClientApi {
     }
 
     /**
+     * Looks up a connected client's unique identifier in one query, without fetching full client information.
+     *
+     * @param clientId the connected client's ID
+     * @return the client's unique identifier
+     * @throws com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException with error 512 if the client is not connected
+     */
+    public String uniqueId(ClientId clientId) {
+        return CommandFutures.join(async.uniqueId(clientId));
+    }
+
+    /**
      * Finds the first connected client whose complete nickname equals {@code nickname}.
      *
      * @param nickname the complete nickname

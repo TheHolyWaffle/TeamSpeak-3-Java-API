@@ -1,15 +1,18 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.LogLevel;
 import com.github.theholywaffle.teamspeak3.api.Snapshot;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ConnectionInfo;
 import com.github.theholywaffle.teamspeak3.api.wrapper.CreatedVirtualServer;
+import com.github.theholywaffle.teamspeak3.api.wrapper.TemporaryServerPassword;
 import com.github.theholywaffle.teamspeak3.api.wrapper.VirtualServer;
 import com.github.theholywaffle.teamspeak3.api.wrapper.VirtualServerInfo;
 import com.github.theholywaffle.teamspeak3.commands.ServerCommands;
 import com.github.theholywaffle.teamspeak3.commands.VirtualServerCommands;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -99,5 +102,31 @@ public final class VirtualServerApiAsync {
     /** @see VirtualServerApi#logEntries(int) */
     public CompletableFuture<List<String>> logEntries(int lines) {
         return requests.rows(ServerCommands.logView(lines, false), row -> row.require("l"));
+    }
+
+    /** @see VirtualServerApi#addTemporaryPassword(String, String, Duration) */
+    public CompletableFuture<Void> addTemporaryPassword(String password, String description, Duration lifetime) {
+        return addTemporaryPassword(password, description, lifetime, Optional.empty(), Optional.empty());
+    }
+
+    /** @see VirtualServerApi#addTemporaryPassword(String, String, Duration, Optional, Optional) */
+    public CompletableFuture<Void> addTemporaryPassword(
+            String password,
+            String description,
+            Duration lifetime,
+            Optional<ChannelId> targetChannel,
+            Optional<String> targetChannelPassword) {
+        return requests.run(VirtualServerCommands.serverTempPasswordAdd(
+                password, description, lifetime, targetChannel, targetChannelPassword));
+    }
+
+    /** @see VirtualServerApi#temporaryPasswords() */
+    public CompletableFuture<List<TemporaryServerPassword>> temporaryPasswords() {
+        return requests.models(VirtualServerCommands.serverTempPasswordList(), TemporaryServerPassword::new);
+    }
+
+    /** @see VirtualServerApi#deleteTemporaryPassword(String) */
+    public CompletableFuture<Void> deleteTemporaryPassword(String password) {
+        return requests.run(VirtualServerCommands.serverTempPasswordDelete(password));
     }
 }

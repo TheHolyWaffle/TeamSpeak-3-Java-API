@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.LogLevel;
 import com.github.theholywaffle.teamspeak3.api.Snapshot;
@@ -7,14 +8,22 @@ import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ConnectionInfo;
 import com.github.theholywaffle.teamspeak3.api.wrapper.CreatedVirtualServer;
+import com.github.theholywaffle.teamspeak3.api.wrapper.TemporaryServerPassword;
 import com.github.theholywaffle.teamspeak3.api.wrapper.VirtualServer;
 import com.github.theholywaffle.teamspeak3.api.wrapper.VirtualServerInfo;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 /**
  * Virtual server lifecycle on the instance and administration of the selected virtual server.
+ * <p>Temporary passwords allow time-limited access to the selected server:</p>
+ * <pre>{@code
+ * api.servers().addTemporaryPassword("guest-pass", "Guest access", Duration.ofHours(2));
+ * var passwords = api.servers().temporaryPasswords();
+ * api.servers().deleteTemporaryPassword("guest-pass");
+ * }</pre>
  *
  * @see VirtualServerApiAsync the asynchronous form
  */
@@ -157,5 +166,60 @@ public final class VirtualServerApi {
      */
     public List<String> logEntries(int lines) {
         return CommandFutures.join(async.logEntries(lines));
+    }
+
+    /**
+     * Creates a temporary password for the selected virtual server, placing joining clients in its default channel.
+     * Requires {@code b_virtualserver_modify_password}.
+     *
+     * @param password the nonempty, unencoded temporary password
+     * @param description the unencoded description, possibly empty
+     * @param lifetime a positive duration in whole seconds
+     */
+    public void addTemporaryPassword(String password, String description, Duration lifetime) {
+        CommandFutures.join(async.addTemporaryPassword(password, description, lifetime));
+    }
+
+    /**
+     * Creates a temporary server password that also directs joining clients to a channel.
+     * Requires {@code b_virtualserver_modify_password}.
+     *
+     * @param password the nonempty, unencoded temporary password
+     * @param description the unencoded description, possibly empty
+     * @param lifetime a positive duration in whole seconds
+     * @param targetChannel the channel to join, or empty for the default channel
+     * @param targetChannelPassword the unencoded channel password, or empty if none is required
+     */
+    public void addTemporaryPassword(
+            String password,
+            String description,
+            Duration lifetime,
+            Optional<ChannelId> targetChannel,
+            Optional<String> targetChannelPassword) {
+        CommandFutures.join(
+                async.addTemporaryPassword(password, description, lifetime, targetChannel, targetChannelPassword));
+    }
+
+    /**
+     * Lists active temporary passwords on the selected virtual server, including their clear-text secrets.
+     * Requires {@code b_virtualserver_modify_password}.
+     * Each result exposes the creator, validity times and target channel; its {@code toString()}
+     * redacts both the server and target-channel passwords.
+     *
+     * @return the passwords, or an empty list if none are active
+     */
+    public List<TemporaryServerPassword> temporaryPasswords() {
+        return CommandFutures.join(async.temporaryPasswords());
+    }
+
+    /**
+     * Deletes one temporary password on the selected virtual server. Deleting a password that is
+     * already absent succeeds.
+     * Requires {@code b_virtualserver_modify_password}.
+     *
+     * @param password the nonempty, unencoded password to delete
+     */
+    public void deleteTemporaryPassword(String password) {
+        CommandFutures.join(async.deleteTemporaryPassword(password));
     }
 }

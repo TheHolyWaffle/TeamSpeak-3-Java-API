@@ -44,6 +44,87 @@ class DomainApiTest {
     }
 
     @Test
+    void clientUidLookupPreservesDeniedAndMalformedResponses() throws Exception {
+        try (var peer = new FakeServerQuery(p -> {
+                    p.expect("clientgetuidfromclid clid=7");
+                    p.write("error id=2568 msg=insufficient\\sclient\\spermissions\n");
+                    p.expect("clientgetuidfromclid clid=8");
+                    p.write("clid=8 nickname=name\n" + OK);
+                    p.expect("servertemppasswordadd pw=secret desc= duration=1 tcid=0 tcpw=");
+                    p.write("error id=2568 msg=insufficient\\sclient\\spermissions\n");
+                    p.expect("servertemppasswordlist");
+                    p.write("error id=2568 msg=insufficient\\sclient\\spermissions\n");
+                    p.expect("servertemppassworddel pw=secret");
+                    p.write("error id=2568 msg=insufficient\\sclient\\spermissions\n");
+                    p.finishQuit();
+                });
+                var query = query(peer)) {
+            query.connect();
+            var api = query.getApi();
+            assertEquals(
+                    2568,
+                    assertThrows(
+                                    TS3CommandFailedException.class,
+                                    () -> api.clients().uniqueId(ClientId.of(7)))
+                            .getErrorId());
+            assertEquals(
+                    "cluid",
+                    assertThrows(
+                                    TS3InvalidValueException.class,
+                                    () -> api.clients().uniqueId(ClientId.of(8)))
+                            .getProperty());
+            assertEquals(
+                    2568,
+                    assertThrows(
+                                    TS3CommandFailedException.class,
+                                    () -> api.servers().addTemporaryPassword("secret", "", Duration.ofSeconds(1)))
+                            .getErrorId());
+            assertEquals(
+                    2568,
+                    assertThrows(
+                                    TS3CommandFailedException.class,
+                                    () -> api.servers().temporaryPasswords())
+                            .getErrorId());
+            assertEquals(
+                    2568,
+                    assertThrows(
+                                    TS3CommandFailedException.class,
+                                    () -> api.servers().deleteTemporaryPassword("secret"))
+                            .getErrorId());
+            query.exit();
+            peer.await();
+        }
+    }
+
+    @Test
+    void temporaryPasswordInputValidationHappensBeforeEnqueue() {
+        try (var query = new TS3Query(new TS3Config())) {
+            var servers = query.getAsyncApi().servers();
+            assertThrows(
+                    IllegalArgumentException.class, () -> servers.addTemporaryPassword("", "", Duration.ofSeconds(1)));
+            assertThrows(
+                    IllegalArgumentException.class,
+                    () -> servers.addTemporaryPassword(null, "", Duration.ofSeconds(1)));
+            for (var lifetime : List.of(Duration.ZERO, Duration.ofSeconds(-1), Duration.ofMillis(1500))) {
+                assertThrows(IllegalArgumentException.class, () -> servers.addTemporaryPassword("pw", "", lifetime));
+            }
+            assertThrows(NullPointerException.class, () -> servers.addTemporaryPassword("pw", "", null));
+            assertThrows(
+                    NullPointerException.class, () -> servers.addTemporaryPassword("pw", null, Duration.ofSeconds(1)));
+            assertThrows(
+                    NullPointerException.class,
+                    () -> servers.addTemporaryPassword("pw", "", Duration.ofSeconds(1), null, Optional.empty()));
+            assertThrows(
+                    NullPointerException.class,
+                    () -> servers.addTemporaryPassword("pw", "", Duration.ofSeconds(1), Optional.empty(), null));
+            assertThrows(IllegalArgumentException.class, () -> servers.deleteTemporaryPassword(""));
+            assertThrows(
+                    NullPointerException.class,
+                    () -> query.getAsyncApi().clients().uniqueId(null));
+        }
+    }
+
+    @Test
     void logWritingAndTransferStoppingUseTypedApis() throws Exception {
         try (var peer = new FakeServerQuery(p -> {
                     p.expect("logadd loglevel=4 logmsg=hello\\s日本語\\s\\p\\s\\\\s");
