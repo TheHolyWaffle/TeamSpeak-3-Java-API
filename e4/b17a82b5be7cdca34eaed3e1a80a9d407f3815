@@ -1,0 +1,21 @@
+src/test/java/com/github/theholywaffle/teamspeak3/TeamSpeakContainer.java
+  s_320874a6bdb6fd::t_bc6e262e30ce8f 86
+src/test/java/com/github/theholywaffle/teamspeak3/LogLimitsCompatibilityIT.java
+  s_320874a6bdb6fd::t_ea4ff83279d5f6 12,17-19,25-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e4b17a82b5be7cdca34eaed3e1a80a9d407f3815",
+  "prompts": {},
+  "sessions": {
+    "s_320874a6bdb6fd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a14139-4a27-70b1-915d-00e8d227143e",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
