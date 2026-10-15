@@ -1,6 +1,7 @@
 package com.github.theholywaffle.teamspeak3.api.exception;
 
 import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
+import java.io.Serial;
 
 /**
  * The server rejected the credentials of a Web Query request with HTTP 401 or 403: the API key is
@@ -9,6 +10,7 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.QueryError;
  */
 public class TS3AuthenticationFailedException extends TS3CommandFailedException {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public TS3AuthenticationFailedException(QueryError error, String commandName) {

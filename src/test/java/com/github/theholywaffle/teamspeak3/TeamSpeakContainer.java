@@ -83,7 +83,11 @@ final class TeamSpeakContainer extends GenericContainer<TeamSpeakContainer>
     String queryBanner;
 
     TeamSpeakContainer() {
-        super(DockerImageName.parse(TS3_IMAGE));
+        this(TS3_IMAGE);
+    }
+
+    TeamSpeakContainer(String image) {
+        super(DockerImageName.parse(image));
         // Only this disposable server: permit Docker's dynamically assigned bridge peers.
         withCopyToContainer(Transferable.of("0.0.0.0/0\n::/0\n"), "/tmp/query-allowlist.txt");
         withExposedPorts(10011, 10022);

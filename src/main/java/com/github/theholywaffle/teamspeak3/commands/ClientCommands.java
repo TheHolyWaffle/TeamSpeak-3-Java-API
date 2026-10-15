@@ -58,6 +58,12 @@ public final class ClientCommands {
                 .build();
     }
 
+    public static Command clientGetUIdFromClId(ClientId clientId) {
+        return new CommandBuilder("clientgetuidfromclid")
+                .add(new KeyValueParam("clid", clientId.value()))
+                .build();
+    }
+
     public static Command clientGetIds(String clientUId) {
         if (clientUId == null || clientUId.isEmpty()) {
             throw new IllegalArgumentException("Client UId must be a non-empty string");

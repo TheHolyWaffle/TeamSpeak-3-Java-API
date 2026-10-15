@@ -1,11 +1,15 @@
 package com.github.theholywaffle.teamspeak3.commands;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 import com.github.theholywaffle.teamspeak3.commands.parameter.OptionParam;
 import com.github.theholywaffle.teamspeak3.commands.parameter.RawParam;
+import java.time.Duration;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 public final class VirtualServerCommands {
 
@@ -80,5 +84,43 @@ public final class VirtualServerCommands {
         builder.add(new KeyValueParam("sid", id));
         builder.addIf(reason != null, new KeyValueParam("reasonmsg", reason));
         return builder.build();
+    }
+
+    public static Command serverTempPasswordAdd(
+            String password,
+            String description,
+            Duration lifetime,
+            Optional<ChannelId> targetChannel,
+            Optional<String> targetChannelPassword) {
+        requirePassword(password);
+        Objects.requireNonNull(description, "description");
+        Objects.requireNonNull(lifetime, "lifetime");
+        if (lifetime.isNegative() || lifetime.isZero() || lifetime.getNano() != 0) {
+            throw new IllegalArgumentException("Temporary password lifetime must be positive whole seconds");
+        }
+        return new CommandBuilder("servertemppasswordadd")
+                .add(new KeyValueParam("pw", password))
+                .add(new KeyValueParam("desc", description))
+                .add(new KeyValueParam("duration", lifetime.getSeconds()))
+                .add(KeyValueParam.idOrZero("tcid", targetChannel))
+                .add(new KeyValueParam("tcpw", targetChannelPassword.orElse("")))
+                .build();
+    }
+
+    public static Command serverTempPasswordDelete(String password) {
+        requirePassword(password);
+        return new CommandBuilder("servertemppassworddel")
+                .add(new KeyValueParam("pw", password))
+                .build();
+    }
+
+    public static Command serverTempPasswordList() {
+        return new CommandBuilder("servertemppasswordlist").build();
+    }
+
+    private static void requirePassword(String password) {
+        if (password == null || password.isEmpty()) {
+            throw new IllegalArgumentException("Temporary password must be a non-empty string");
+        }
     }
 }
