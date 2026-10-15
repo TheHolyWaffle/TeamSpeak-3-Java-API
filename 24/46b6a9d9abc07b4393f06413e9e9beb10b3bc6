@@ -1,0 +1,19 @@
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/Wrapper.java
+  s_5c36f592f1c7c5::t_007e8d8ac97937 527,610,636-637,656-658,691
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2446b6a9d9abc07b4393f06413e9e9beb10b3bc6",
+  "prompts": {},
+  "sessions": {
+    "s_5c36f592f1c7c5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a77b7773-dff1-4da5-b565-e6cde2f604a3",
+        "model": "unknown"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
