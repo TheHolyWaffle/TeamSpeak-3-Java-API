@@ -9,7 +9,9 @@
       "extra-files": [
         "gradle.properties"
       ],
-      "release-as": "2.0.0",
+      "versioning-strategy": "prerelease",
+      "prerelease-type": "beta.1",
+      "prerelease": true,
       "skip-snapshot": true,
       "changelog-path": "CHANGELOG.md",
       "changelog-sections": [
