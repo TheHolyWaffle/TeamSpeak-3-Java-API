@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.github.theholywaffle.teamspeak3.TS3Query.Protocol;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
-import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
+import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -110,7 +110,7 @@ class ExamplesIT {
             TS3Api api = query.getApi();
             api.selectVirtualServerById(VirtualServerId.of(1));
             CompletableFuture<String> reply = new CompletableFuture<>();
-            api.events().subscribe(new TS3EventAdapter() {
+            api.events().subscribe(new TS3Listener() {
                 @Override
                 public void onTextMessage(TextMessageEvent e) {
                     if (e.getMessage().equals("pong"))

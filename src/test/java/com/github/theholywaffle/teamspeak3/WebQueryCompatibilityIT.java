@@ -26,8 +26,8 @@ import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerStatus;
 import com.github.theholywaffle.teamspeak3.api.event.ChannelCreateEvent;
-import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
+import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3AuthenticationFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
@@ -646,7 +646,7 @@ class WebQueryCompatibilityIT {
             observed.events().register(TS3EventType.TEXT_CHANNEL);
             observed.events().register(TS3EventType.TEXT_SERVER);
             observed.events().register(TS3EventType.CHANNEL);
-            observer.subscribe(new TS3EventAdapter() {
+            observer.subscribe(new TS3Listener() {
                 @Override
                 public void onTextMessage(TextMessageEvent e) {
                     texts.publish(e);

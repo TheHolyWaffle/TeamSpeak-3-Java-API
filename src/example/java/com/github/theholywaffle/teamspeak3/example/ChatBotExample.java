@@ -4,8 +4,8 @@ import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3Query;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
-import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
+import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
 import java.util.Locale;
 import java.util.Optional;
@@ -29,7 +29,7 @@ public final class ChatBotExample {
             ClientId self = api.whoAmI().getId().orElseThrow();
 
             // Listeners run on the query's event threads; the subscription is active until the query closes.
-            api.events().subscribe(new TS3EventAdapter() {
+            api.events().subscribe(new TS3Listener() {
                 @Override
                 public void onTextMessage(TextMessageEvent e) {
                     if (e.getTargetMode() != TextMessageTargetMode.CHANNEL

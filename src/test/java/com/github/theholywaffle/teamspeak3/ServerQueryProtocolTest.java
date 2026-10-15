@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
-import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
+import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3QueryShutDownException;
@@ -106,7 +106,7 @@ class ServerQueryProtocolTest {
             p.finishQuit();
         })) {
             var query = query(peer);
-            query.subscribe(new TS3EventAdapter() {
+            query.subscribe(new TS3Listener() {
                 @Override
                 public void onTextMessage(TextMessageEvent event) {
                     notification.complete(event.getMessage());

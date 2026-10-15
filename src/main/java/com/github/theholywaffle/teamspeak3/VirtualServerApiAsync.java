@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.LogLevel;
 import com.github.theholywaffle.teamspeak3.api.Snapshot;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
@@ -88,6 +89,11 @@ public final class VirtualServerApiAsync {
     /** @see VirtualServerApi#deploySnapshot(Snapshot) */
     public CompletableFuture<Void> deploySnapshot(Snapshot snapshot) {
         return requests.run(VirtualServerCommands.serverSnapshotDeploy(snapshot.data()));
+    }
+
+    /** @see VirtualServerApi#addLogEntry(LogLevel, String) */
+    public CompletableFuture<Void> addLogEntry(LogLevel level, String message) {
+        return requests.run(ServerCommands.logAdd(level, message));
     }
 
     /** @see VirtualServerApi#logEntries(int) */

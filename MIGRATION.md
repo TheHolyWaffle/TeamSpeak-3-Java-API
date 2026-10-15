@@ -334,6 +334,10 @@ notification types with the server is a separate `api.events().register(...)` ca
 (`setListenerQueueCapacity`) is full the newest events are dropped. Overflow, listener failures and
 unknown notifications are counted in `query.getEventStatistics()`.
 
+`TS3Listener` now supplies default no-op callbacks. Implement it directly and override only the
+events you need. `TS3EventAdapter` has been removed: replace `extends TS3EventAdapter` with
+`implements TS3Listener`, or `new TS3EventAdapter()` with `new TS3Listener()` for anonymous listeners.
+
 ## File transfers
 
 File transfers have finite deadlines and a 16 MiB limit for in-memory downloads and icons; stream

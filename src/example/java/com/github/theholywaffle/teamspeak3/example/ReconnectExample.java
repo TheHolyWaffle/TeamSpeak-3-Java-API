@@ -8,8 +8,8 @@ import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
-import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
+import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
 import com.github.theholywaffle.teamspeak3.api.reconnect.CommandRetryPolicy;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
@@ -64,7 +64,7 @@ public final class ReconnectExample {
 
             // Listeners belong to the query and survive reconnects; register them only once.
             TS3Api api = query.getApi();
-            api.events().subscribe(new TS3EventAdapter() {
+            api.events().subscribe(new TS3Listener() {
                 @Override
                 public void onTextMessage(TextMessageEvent e) {
                     if (e.getTargetMode() == TextMessageTargetMode.CHANNEL

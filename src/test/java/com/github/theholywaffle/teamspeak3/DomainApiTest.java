@@ -12,8 +12,10 @@ import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
 import com.github.theholywaffle.teamspeak3.api.IconId;
+import com.github.theholywaffle.teamspeak3.api.LogLevel;
 import com.github.theholywaffle.teamspeak3.api.PermissionGrant;
 import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
+import com.github.theholywaffle.teamspeak3.api.ServerFileTransferId;
 import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import com.github.theholywaffle.teamspeak3.api.ServerGroupType;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
@@ -21,6 +23,7 @@ import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException;
+import com.github.theholywaffle.teamspeak3.api.wrapper.ClientIdentity;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -38,6 +41,100 @@ class DomainApiTest {
                 .setHost("127.0.0.1")
                 .setQueryPort(peer.port())
                 .setFloodRate(TS3Query.FloodRate.UNLIMITED));
+    }
+
+    @Test
+    void logWritingAndTransferStoppingUseTypedApis() throws Exception {
+        try (var peer = new FakeServerQuery(p -> {
+                    p.expect("logadd loglevel=4 logmsg=hello\\s日本語\\s\\p\\s\\\\s");
+                    p.write(OK);
+                    p.expect("logadd loglevel=2 logmsg=denied");
+                    p.write("error id=2568 msg=insufficient\\sclient\\spermissions\n");
+                    p.expect("ftstop serverftfid=0 delete=1");
+                    p.write(OK);
+                    p.expect("ftstop serverftfid=7 delete=0");
+                    p.write("error id=2055 msg=file\\stransfer\\snot\\sfound\n");
+                    p.finishQuit();
+                });
+                var query = query(peer)) {
+            query.connect();
+            query.getApi().servers().addLogEntry(LogLevel.INFO, "hello 日本語 | \\s");
+            var denied = assertThrows(
+                    TS3CommandFailedException.class,
+                    () -> query.getApi().servers().addLogEntry(LogLevel.WARNING, "denied"));
+            assertEquals(2568, denied.getErrorId());
+            query.getAsyncApi().files().stop(ServerFileTransferId.of(0), true).join();
+            var missing = assertThrows(
+                    TS3CommandFailedException.class,
+                    () -> query.getApi().files().stop(ServerFileTransferId.of(7), false));
+            assertEquals(2055, missing.getErrorId());
+            query.exit();
+            peer.await();
+        }
+    }
+
+    @Test
+    void identityLookupsNeedOneQueryAndKeepMissingMalformedAndDeniedDistinct() throws Exception {
+        try (var peer = new FakeServerQuery(p -> {
+                    p.expect("clientgetnamefromuid cluid=a/b=quote".replace("/", "\\/"));
+                    p.write("cluid=a\\/b=quote cldbid=42 name=日本語\\sName\n" + OK);
+                    p.expect("clientgetnamefromdbid cldbid=42");
+                    p.write("cluid=a\\/b=quote cldbid=42 name=日本語\\sName\n" + OK);
+                    p.expect("clientgetnamefromuid cluid=gone");
+                    p.write("error id=512 msg=invalid\\sclientID\n");
+                    p.expect("clientgetnamefromdbid cldbid=99");
+                    p.write("error id=512 msg=invalid\\sclientID\n");
+                    p.expect("clientgetnamefromuid cluid=empty");
+                    p.write(EMPTY);
+                    p.expect("clientgetnamefromuid cluid=denied");
+                    p.write("error id=2568 msg=insufficient\\sclient\\spermissions\n");
+                    p.expect("clientgetnamefromdbid cldbid=43");
+                    p.write("cluid=x cldbid=bad name=Name\n" + OK);
+                    p.finishQuit();
+                });
+                var query = query(peer)) {
+            query.connect();
+            var expected = Optional.of(new ClientIdentity("a/b=quote", ClientDatabaseId.of(42), "日本語 Name"));
+            var api = query.getApi().databaseClients();
+            assertEquals(expected, api.findIdentityByUniqueId("a/b=quote"));
+            assertEquals(
+                    expected,
+                    query.getAsyncApi()
+                            .databaseClients()
+                            .findIdentityByDatabaseId(ClientDatabaseId.of(42))
+                            .join());
+            assertEquals(Optional.empty(), api.findIdentityByUniqueId("gone"));
+            assertEquals(Optional.empty(), api.findIdentityByDatabaseId(ClientDatabaseId.of(99)));
+            assertEquals(Optional.empty(), api.findIdentityByUniqueId("empty"));
+            assertEquals(
+                    2568,
+                    assertThrows(TS3CommandFailedException.class, () -> api.findIdentityByUniqueId("denied"))
+                            .getErrorId());
+            assertEquals(
+                    "cldbid",
+                    assertThrows(
+                                    TS3InvalidValueException.class,
+                                    () -> api.findIdentityByDatabaseId(ClientDatabaseId.of(43)))
+                            .getProperty());
+            query.exit();
+            peer.await();
+        }
+    }
+
+    @Test
+    void newCommandsRejectInvalidInputBeforeSending() {
+        try (var query = new TS3Query(new TS3Config())) {
+            var api = query.getAsyncApi();
+            assertThrows(NullPointerException.class, () -> api.servers().addLogEntry(null, "message"));
+            assertThrows(IllegalArgumentException.class, () -> api.servers().addLogEntry(LogLevel.INFO, ""));
+            assertThrows(IllegalArgumentException.class, () -> api.servers().addLogEntry(LogLevel.INFO, null));
+            assertThrows(
+                    IllegalArgumentException.class, () -> api.databaseClients().findIdentityByUniqueId(""));
+            assertThrows(
+                    IllegalArgumentException.class, () -> api.databaseClients().findIdentityByUniqueId(null));
+            assertThrows(NullPointerException.class, () -> api.databaseClients().findIdentityByDatabaseId(null));
+            assertThrows(NullPointerException.class, () -> api.files().stop(null, false));
+        }
     }
 
     @Test

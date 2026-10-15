@@ -1,8 +1,10 @@
 package com.github.theholywaffle.teamspeak3.commands;
 
+import com.github.theholywaffle.teamspeak3.api.LogLevel;
 import com.github.theholywaffle.teamspeak3.api.ServerInstanceProperty;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 import java.util.Map;
+import java.util.Objects;
 
 public final class ServerCommands {
 
@@ -32,6 +34,17 @@ public final class ServerCommands {
 
     public static Command instanceEdit(Map<ServerInstanceProperty, String> options) {
         return new CommandBuilder("instanceedit").addProperties(options).build();
+    }
+
+    public static Command logAdd(LogLevel level, String message) {
+        Objects.requireNonNull(level, "level");
+        if (message == null || message.isEmpty()) {
+            throw new IllegalArgumentException("Log message must be a non-empty string");
+        }
+        return new CommandBuilder("logadd")
+                .add(new KeyValueParam("loglevel", level.getIndex()))
+                .add(new KeyValueParam("logmsg", message))
+                .build();
     }
 
     public static Command logView(int lines, boolean instance) {

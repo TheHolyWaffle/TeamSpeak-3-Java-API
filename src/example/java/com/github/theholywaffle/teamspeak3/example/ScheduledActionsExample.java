@@ -6,8 +6,8 @@ import com.github.theholywaffle.teamspeak3.TS3Query;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent;
-import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
+import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Channel;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -46,7 +46,7 @@ public final class ScheduledActionsExample {
 
             // The asynchronous API never blocks the single scheduler thread.
             TS3ApiAsync async = query.getAsyncApi();
-            api.events().subscribe(new TS3EventAdapter() {
+            api.events().subscribe(new TS3Listener() {
                 @Override
                 public void onClientJoin(ClientJoinEvent e) {
                     ClientId client = e.getClientId();

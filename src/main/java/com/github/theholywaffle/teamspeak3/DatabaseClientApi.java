@@ -3,6 +3,7 @@ package com.github.theholywaffle.teamspeak3;
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
+import com.github.theholywaffle.teamspeak3.api.wrapper.ClientIdentity;
 import com.github.theholywaffle.teamspeak3.api.wrapper.CustomPropertyAssignment;
 import com.github.theholywaffle.teamspeak3.api.wrapper.DatabaseClient;
 import com.github.theholywaffle.teamspeak3.api.wrapper.DatabaseClientInfo;
@@ -72,6 +73,27 @@ public final class DatabaseClientApi {
      */
     public Optional<DatabaseClientInfo> findByUniqueId(String uniqueId) {
         return CommandFutures.join(async.findByUniqueId(uniqueId));
+    }
+
+    /**
+     * Looks up a last-known nickname and database identity in one query, even for an offline client.
+     * Use {@link #findByUniqueId(String)} when full database information is needed.
+     *
+     * @param uniqueId the nonempty client unique identifier
+     * @return the identity, or empty if the server does not know the client
+     */
+    public Optional<ClientIdentity> findIdentityByUniqueId(String uniqueId) {
+        return CommandFutures.join(async.findIdentityByUniqueId(uniqueId));
+    }
+
+    /**
+     * Looks up a last-known nickname and unique identifier in one query, even for an offline client.
+     *
+     * @param databaseId the client database ID
+     * @return the identity, or empty if the server does not know the client
+     */
+    public Optional<ClientIdentity> findIdentityByDatabaseId(ClientDatabaseId databaseId) {
+        return CommandFutures.join(async.findIdentityByDatabaseId(databaseId));
     }
 
     /**
