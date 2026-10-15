@@ -2,6 +2,7 @@ package com.github.theholywaffle.teamspeak3;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3QueueFullException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3UnsupportedOperationException;
@@ -102,8 +103,7 @@ class RawCommandTest {
             var cancelled = query.getAsyncApi().executeRawCommand("channeldelete cid=5 force=1");
             assertThrows(TS3QueueFullException.class, () -> query.getApi().executeRawCommand("version"));
             var replacement = new AtomicReference<CompletableFuture<DefaultArrayResponse>>();
-            cancelled.whenComplete(
-                    (value, failure) -> replacement.set(query.getAsyncApi().executeRawCommand("version")));
+            cancelled.whenComplete((_, _) -> replacement.set(query.getAsyncApi().executeRawCommand("version")));
             assertTrue(cancelled.cancel(false));
             var next = replacement.get();
             assertNotNull(next);
@@ -131,11 +131,13 @@ class RawCommandTest {
                 });
                 var query = new TS3Query(config(peer)
                         .setFloodRate(TS3Query.FloodRate.UNLIMITED)
-                        .setSessionConfiguration(SessionConfiguration.forServer(1))
+                        .setSessionConfiguration(SessionConfiguration.forServer(VirtualServerId.of(1)))
                         .setReconnectStrategy(ReconnectStrategy.constantBackoff(50)))) {
             query.connect();
             assertThrows(
                     TS3UnsupportedOperationException.class, () -> query.getApi().executeRawCommand("use sid=2"));
+            assertThrows(
+                    TS3UnsupportedOperationException.class, () -> query.getApi().deselectVirtualServer());
             query.exit();
             peer.await();
         }

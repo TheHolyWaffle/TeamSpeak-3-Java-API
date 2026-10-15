@@ -1,6 +1,8 @@
 package com.github.theholywaffle.teamspeak3.commands.parameter;
 
+import com.github.theholywaffle.teamspeak3.api.EntityId;
 import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
+import java.util.Optional;
 
 /**
  * A {@code key=value} pair.
@@ -24,6 +26,19 @@ public record KeyValueParam(String key, String value) implements Parameter {
 
     public KeyValueParam(String key, boolean value) {
         this(key, value ? "1" : "0");
+    }
+
+    public KeyValueParam(String key, EntityId id) {
+        this(key, id.value());
+    }
+
+    /**
+     * @param key unencoded key
+     * @param id the ID, or empty where the command expects {@code 0} for none
+     * @return the pair, with value {@code 0} for an empty ID
+     */
+    public static KeyValueParam idOrZero(String key, Optional<? extends EntityId> id) {
+        return new KeyValueParam(key, id.map(EntityId::value).orElse(0L));
     }
 
     @Override

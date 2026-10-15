@@ -24,7 +24,7 @@ public enum ChannelProperty implements Property {
     /**
      * The unsigned icon ID shown for this channel. TS3 3.13 rejects this property in edits; assign an icon
      * through the {@code i_icon_id} permission instead, for example
-     * {@code permissions().add(PermissionTarget.channel(channelId), "i_icon_id", (int) iconId)}.
+     * {@code permissions().add(PermissionTarget.channel(channelId), PermissionGrant.icon(iconId))}.
      */
     CHANNEL_ICON_ID(true),
     CHANNEL_MAXCLIENTS(true),

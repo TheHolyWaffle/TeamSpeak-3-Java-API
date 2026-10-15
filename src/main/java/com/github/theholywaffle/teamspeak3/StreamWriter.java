@@ -44,19 +44,15 @@ class StreamWriter implements Runnable {
                 out.flush();
             }
         } catch (IOException e) {
-            if (!Thread.currentThread().isInterrupted()) con.internalDisconnect();
+            if (!Thread.currentThread().isInterrupted()) {
+                log.debug("Write failed", e);
+                con.internalDisconnect();
+            }
         } catch (RuntimeException e) {
             log.warn("Command encoding or write failed", e);
             con.internalDisconnect();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException _) {
             Thread.currentThread().interrupt(); // Regular shutdown
-        }
-
-        // The connection closes the transport before joining this thread.
-
-        if (!Thread.currentThread().isInterrupted()) {
-            log.warn("StreamWriter has stopped!");
-            con.internalDisconnect();
         }
     }
 }

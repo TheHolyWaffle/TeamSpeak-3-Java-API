@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3.api.wrapper;
 
+import com.github.theholywaffle.teamspeak3.api.PrivilegeKeyGrant;
 import com.github.theholywaffle.teamspeak3.api.PrivilegeKeyType;
 import java.time.Instant;
 import java.util.Map;
@@ -27,12 +28,9 @@ public class PrivilegeKey extends Wrapper {
         return getType() == PrivilegeKeyType.CHANNEL_GROUP;
     }
 
-    public int getGroupId() {
-        return requireInt("token_id1");
-    }
-
-    public int getChannelId() {
-        return requireInt("token_id2");
+    /** @return what the key grants */
+    public PrivilegeKeyGrant getGrant() {
+        return requirePrivilegeKeyGrant("token_id1", "token_id2");
     }
 
     public Instant getCreated() {

@@ -2,13 +2,16 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
 
 import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3ApiAsync;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerStatus;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 /**
  * A class containing information about a server query, returned by the
@@ -29,10 +32,10 @@ public class ServerQueryInfo extends Wrapper {
     /**
      * Gets the ID of the channel the server query is currently in.
      *
-     * @return the ID of the current channel
+     * @return the ID of the current channel, or empty until a virtual server is selected
      */
-    public int getChannelId() {
-        return requireInt("client_channel_id");
+    public Optional<ChannelId> getChannelId() {
+        return requireOptionalId("client_channel_id", ChannelId::of);
     }
 
     /**
@@ -51,10 +54,11 @@ public class ServerQueryInfo extends Wrapper {
     /**
      * Gets the client ID of the server query.
      *
-     * @return the server query's client ID; {@code 0} until a virtual server is selected
+     * @return the server query's client ID, or empty until a virtual server is selected (TeamSpeak sends {@code 0})
      */
-    public ClientId getId() {
-        return requireClientId("client_id");
+    public Optional<ClientId> getId() {
+        ClientId id = requireClientId("client_id");
+        return id.value() == 0 ? Optional.empty() : Optional.of(id);
     }
 
     /**
@@ -89,15 +93,12 @@ public class ServerQueryInfo extends Wrapper {
 
     /**
      * Gets the ID of the virtual server on which the server query login was created.
-     * <p>
-     * This method will return {@code 0} (the ID of the template server) if a server query is
-     * not logged in or using the {@code serveradmin} login.
-     * </p>
      *
-     * @return the ID of the virtual server this server query belongs to
+     * @return the ID of the virtual server this server query belongs to, or empty if the query is not
+     *         logged in or uses an instance-wide login such as {@code serveradmin} (TeamSpeak sends {@code 0})
      */
-    public int getOriginServerId() {
-        return requireInt("client_origin_server_id");
+    public Optional<VirtualServerId> getOriginServerId() {
+        return requireOptionalId("client_origin_server_id", VirtualServerId::of);
     }
 
     /**
@@ -118,26 +119,22 @@ public class ServerQueryInfo extends Wrapper {
      * <p>
      * If used on a non-commercial TeamSpeak instance which can only host 1 virtual server,
      * this ID will always be 1.
-     * <br>
-     * If no virtual server has been selected yet, this method will return {@code 0}.
      * </p>
      *
-     * @return the ID of the current virtual server or {@code 0} if none is selected
+     * @return the ID of the current virtual server, or empty if none is selected (TeamSpeak sends {@code 0})
      */
-    public int getVirtualServerId() {
-        return requireInt(VirtualServerProperty.VIRTUALSERVER_ID);
+    public Optional<VirtualServerId> getVirtualServerId() {
+        return requireOptionalId(VirtualServerProperty.VIRTUALSERVER_ID, VirtualServerId::of);
     }
 
     /**
      * Gets the port used by the currently selected virtual server.
-     * <p>
-     * If no virtual server has been selected yet, this method will return {@code 0}.
-     * </p>
      *
-     * @return the port used by the current virtual server or {@code 0} if none is selected
+     * @return the port used by the current virtual server, or empty if none is selected (TeamSpeak sends {@code 0})
      */
-    public int getVirtualServerPort() {
-        return requireInt(VirtualServerProperty.VIRTUALSERVER_PORT);
+    public OptionalInt getVirtualServerPort() {
+        int port = requireInt(VirtualServerProperty.VIRTUALSERVER_PORT);
+        return port == 0 ? OptionalInt.empty() : OptionalInt.of(port);
     }
 
     /**

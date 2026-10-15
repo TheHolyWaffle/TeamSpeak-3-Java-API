@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.BanId;
 import com.github.theholywaffle.teamspeak3.api.BanRequest;
 import com.github.theholywaffle.teamspeak3.api.ClientBan;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Ban;
@@ -26,8 +27,8 @@ public final class BanApiAsync {
     }
 
     /** @see BanApi#add(BanRequest) */
-    public CompletableFuture<Integer> add(BanRequest ban) {
-        return requests.integer(
+    public CompletableFuture<BanId> add(BanRequest ban) {
+        return requests.id(
                 BanCommands.banAdd(
                         ban.ip(),
                         ban.name(),
@@ -35,18 +36,21 @@ public final class BanApiAsync {
                         ban.myTeamSpeakId(),
                         ban.duration().toSeconds(),
                         ban.reason()),
-                "banid");
+                "banid",
+                BanId::of);
     }
 
     /** @see BanApi#banClients(ClientBan) */
-    public CompletableFuture<List<Integer>> banClients(ClientBan ban) {
+    public CompletableFuture<List<BanId>> banClients(ClientBan ban) {
         int[] ids = QueryRequests.values(ban.clientIds());
-        return requests.integers(
-                BanCommands.banClient(ids, ban.duration().toSeconds(), ban.reason(), ban.continueOnError()), "banid");
+        return requests.ids(
+                BanCommands.banClient(ids, ban.duration().toSeconds(), ban.reason(), ban.continueOnError()),
+                "banid",
+                BanId::of);
     }
 
-    /** @see BanApi#delete(int) */
-    public CompletableFuture<Void> delete(int banId) {
+    /** @see BanApi#delete(BanId) */
+    public CompletableFuture<Void> delete(BanId banId) {
         return requests.run(BanCommands.banDel(banId));
     }
 

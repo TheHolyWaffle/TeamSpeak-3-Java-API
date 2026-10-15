@@ -2,6 +2,7 @@ package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.Snapshot;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ConnectionInfo;
 import com.github.theholywaffle.teamspeak3.api.wrapper.CreatedVirtualServer;
@@ -39,7 +40,7 @@ public final class VirtualServerApi {
      * @param port the UDP voice port
      * @return the virtual server ID, or empty if no virtual server uses that port
      */
-    public Optional<Integer> findIdByPort(int port) {
+    public Optional<VirtualServerId> findIdByPort(int port) {
         return CommandFutures.join(async.findIdByPort(port));
     }
 
@@ -59,7 +60,7 @@ public final class VirtualServerApi {
      *
      * @param serverId the virtual server ID
      */
-    public void delete(int serverId) {
+    public void delete(VirtualServerId serverId) {
         CommandFutures.join(async.delete(serverId));
     }
 
@@ -68,7 +69,7 @@ public final class VirtualServerApi {
      *
      * @param serverId the virtual server ID
      */
-    public void start(int serverId) {
+    public void start(VirtualServerId serverId) {
         CommandFutures.join(async.start(serverId));
     }
 
@@ -77,7 +78,7 @@ public final class VirtualServerApi {
      *
      * @param serverId the virtual server ID
      */
-    public void stop(int serverId) {
+    public void stop(VirtualServerId serverId) {
         CommandFutures.join(async.stop(serverId));
     }
 
@@ -87,7 +88,7 @@ public final class VirtualServerApi {
      * @param serverId the virtual server ID
      * @param reason the reason, or {@code null}
      */
-    public void stop(int serverId, String reason) {
+    public void stop(VirtualServerId serverId, String reason) {
         CommandFutures.join(async.stop(serverId, reason));
     }
 

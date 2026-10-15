@@ -1,6 +1,9 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelGroupId;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
+import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import com.github.theholywaffle.teamspeak3.api.wrapper.PrivilegeKey;
 import java.util.List;
 
@@ -33,7 +36,7 @@ public final class PrivilegeKeyApi {
      * @param description a description, or {@code null}
      * @return the token
      */
-    public String createForServerGroup(int serverGroupId, String description) {
+    public String createForServerGroup(ServerGroupId serverGroupId, String description) {
         return CommandFutures.join(async.createForServerGroup(serverGroupId, description));
     }
 
@@ -45,7 +48,7 @@ public final class PrivilegeKeyApi {
      * @param description a description, or {@code null}
      * @return the token
      */
-    public String createForChannelGroup(int channelGroupId, int channelId, String description) {
+    public String createForChannelGroup(ChannelGroupId channelGroupId, ChannelId channelId, String description) {
         return CommandFutures.join(async.createForChannelGroup(channelGroupId, channelId, description));
     }
 

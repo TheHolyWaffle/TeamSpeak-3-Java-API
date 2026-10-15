@@ -2,9 +2,9 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
 
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
+import com.github.theholywaffle.teamspeak3.api.IconId;
 import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalLong;
 
 public class DatabaseClientInfo extends DatabaseClient {
 
@@ -38,9 +38,9 @@ public class DatabaseClientInfo extends DatabaseClient {
         return requireLong(ClientProperty.CLIENT_TOTAL_BYTES_DOWNLOADED);
     }
 
-    /** @return the icon ID, or empty if the server omits it (TeamSpeak 3.13 does) */
-    public OptionalLong getIconId() {
-        return findLong(ClientProperty.CLIENT_ICON_ID);
+    /** @return the client's icon, or empty if it has none or the server omits it (TeamSpeak 3.13 does) */
+    public Optional<IconId> getIconId() {
+        return findIconId(ClientProperty.CLIENT_ICON_ID);
     }
 
     /** @return the base64 hash of the unique ID, or empty if the server sends none */

@@ -2,10 +2,13 @@ package com.github.theholywaffle.teamspeak3;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.PermissionGrant;
 import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
+import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import com.github.theholywaffle.teamspeak3.api.ServerInstanceProperty;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,7 +30,7 @@ class ServerSnapshotCompatibilityIT {
             try (var query = new TS3Query(server.config(target.protocol))) {
                 query.connect();
                 var api = query.getApi();
-                api.selectVirtualServerById(1);
+                api.selectVirtualServerById(VirtualServerId.of(1));
                 server.record(target.name(), api.instance().version());
                 for (String command : List.of("serversnapshotcreate", "serversnapshotdeploy", "instanceedit")) {
                     var help = api.executeRawCommand("help " + command).getRawResponse();
@@ -53,7 +56,7 @@ class ServerSnapshotCompatibilityIT {
                                 name,
                                 VirtualServerProperty.VIRTUALSERVER_HOSTBANNER_URL,
                                 "https://example.invalid/banner"));
-                int channel = api.channels()
+                ChannelId channel = api.channels()
                         .create(
                                 name,
                                 Map.of(
@@ -62,7 +65,7 @@ class ServerSnapshotCompatibilityIT {
                                         ChannelProperty.CHANNEL_DESCRIPTION,
                                         name));
                 String groupName = "snapshot-" + target;
-                int group = api.serverGroups().create(groupName);
+                ServerGroupId group = api.serverGroups().create(groupName);
                 api.permissions()
                         .add(
                                 PermissionTarget.serverGroup(group),
@@ -70,8 +73,8 @@ class ServerSnapshotCompatibilityIT {
                 var snapshot = api.servers().createSnapshot();
                 assertFalse(snapshot.data().isBlank());
                 evidence.add("snapshot contains configuration; contents redacted (identities and keys)");
-                api.servers().stop(1);
-                api.servers().delete(1);
+                api.servers().stop(VirtualServerId.of(1));
+                api.servers().delete(VirtualServerId.of(1));
                 assertTrue(api.servers().list().isEmpty());
                 api.servers().deploySnapshot(snapshot);
                 var restored = api.servers().list();

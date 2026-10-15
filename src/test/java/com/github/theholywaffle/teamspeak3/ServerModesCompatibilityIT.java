@@ -2,13 +2,16 @@ package com.github.theholywaffle.teamspeak3;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerStatus;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -24,32 +27,33 @@ class ServerModesCompatibilityIT {
             try (var query = new TS3Query(server.config(target.protocol))) {
                 query.connect();
                 var api = query.getApi();
-                api.selectVirtualServerById(1);
-                int originalDefault = api.channels().list().stream()
+                api.selectVirtualServerById(VirtualServerId.of(1));
+                ChannelId originalDefault = api.channels().list().stream()
                         .filter(row -> row.isDefault())
                         .findFirst()
                         .orElseThrow()
                         .getId();
-                int permanent =
+                ChannelId permanent =
                         api.channels().create("restart-permanent", Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"));
-                int semi =
+                ChannelId semi =
                         api.channels().create("restart-semi", Map.of(ChannelProperty.CHANNEL_FLAG_SEMI_PERMANENT, "1"));
                 api.channels().edit(permanent, Map.of(ChannelProperty.CHANNEL_FLAG_DEFAULT, "1"));
                 assertTrue(api.channels().info(permanent).isDefault());
                 assertFalse(api.channels().info(originalDefault).isDefault());
-                api.servers().stop(1);
+                api.servers().stop(VirtualServerId.of(1));
                 assertEquals(
                         VirtualServerStatus.OFFLINE,
                         api.servers().list().getFirst().getStatus());
-                api.servers().start(1);
+                api.servers().start(VirtualServerId.of(1));
                 api.selectVirtualServerByPort(api.servers().list().getFirst().getPort(), "restart-query");
                 var restartedQuery = api.whoAmI();
-                assertEquals(1, restartedQuery.getVirtualServerId());
+                assertEquals(Optional.of(VirtualServerId.of(1)), restartedQuery.getVirtualServerId());
                 assertEquals("restart-query", restartedQuery.getNickname());
                 var restartedChannel = api.channels().info(permanent);
                 assertTrue(restartedChannel.isPermanent());
                 assertTrue(restartedChannel.isDefault());
-                assertTrue(api.channels().list().stream().noneMatch(row -> row.getId() == semi));
+                assertTrue(api.channels().list().stream()
+                        .noneMatch(row -> row.getId().equals(semi)));
                 api.channels().edit(originalDefault, Map.of(ChannelProperty.CHANNEL_FLAG_DEFAULT, "1"));
                 assertTrue(api.channels().info(originalDefault).isDefault());
                 api.channels().delete(permanent, true);

@@ -2,6 +2,7 @@ package com.github.theholywaffle.teamspeak3;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
@@ -10,6 +11,7 @@ import com.github.theholywaffle.teamspeak3.api.exception.TS3QueryShutDownExcepti
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -62,12 +64,12 @@ class ServerQueryProtocolTest {
                 query.connect();
                 var rows = query.getAsyncApi()
                         .files()
-                        .list(FileLocation.of(7, "/"))
+                        .list(FileLocation.of(ChannelId.of(7), "/"))
                         .get(5, TimeUnit.SECONDS);
                 assertEquals(2, rows.size());
                 assertEquals("/first", rows.get(0).getPath());
                 assertEquals("/second", rows.get(1).getPath());
-                assertEquals(7, rows.get(1).getChannelId());
+                assertEquals(Optional.of(ChannelId.of(7)), rows.get(1).getChannelId());
             } finally {
                 query.exit();
             }
@@ -112,19 +114,19 @@ class ServerQueryProtocolTest {
             });
             try {
                 query.connect();
-                var first = query.getAsyncApi().files().list(FileLocation.of(7, "/"));
+                var first = query.getAsyncApi().files().list(FileLocation.of(ChannelId.of(7), "/"));
                 assertTrue(fragmentSent.await(5, TimeUnit.SECONDS));
                 assertFalse(first.isDone(), "A partial UTF-8 line must not complete the command");
                 releaseFragment.countDown();
                 assertTrue(responseStarted.await(5, TimeUnit.SECONDS));
                 assertEquals("hello world", notification.get(5, TimeUnit.SECONDS));
                 assertFalse(first.isDone(), "Data and notifications must not finish a response");
-                var second = query.getAsyncApi().files().list(FileLocation.of(7, "/"));
+                var second = query.getAsyncApi().files().list(FileLocation.of(ChannelId.of(7), "/"));
                 releaseResponse.countDown();
                 var rows = first.get(5, TimeUnit.SECONDS);
                 assertEquals("日本語\\n", rows.get(0).getName());
                 assertEquals("/second", rows.get(1).getPath());
-                assertEquals(7, rows.get(1).getChannelId());
+                assertEquals(Optional.of(ChannelId.of(7)), rows.get(1).getChannelId());
                 var next = second.get(5, TimeUnit.SECONDS);
                 assertEquals(1, next.size());
                 assertEquals("next", next.get(0).getName());
@@ -153,7 +155,7 @@ class ServerQueryProtocolTest {
             var query = query(peer);
             try {
                 query.connect();
-                var response = query.getAsyncApi().files().list(FileLocation.of(7, "/"));
+                var response = query.getAsyncApi().files().list(FileLocation.of(ChannelId.of(7), "/"));
                 if (error.contains("256")) {
                     var failure = assertThrows(
                             TS3CommandFailedException.class,
@@ -166,7 +168,7 @@ class ServerQueryProtocolTest {
                         "after",
                         query.getAsyncApi()
                                 .files()
-                                .list(FileLocation.of(7, "/"))
+                                .list(FileLocation.of(ChannelId.of(7), "/"))
                                 .get(5, TimeUnit.SECONDS)
                                 .get(0)
                                 .getName());
@@ -198,7 +200,7 @@ class ServerQueryProtocolTest {
             var query = query(peer);
             try {
                 query.connect();
-                var response = query.getAsyncApi().files().list(FileLocation.of(7, "/"));
+                var response = query.getAsyncApi().files().list(FileLocation.of(ChannelId.of(7), "/"));
                 assertThrows(
                         TS3QueryShutDownException.class, () -> FutureAssertions.read(response, 5, TimeUnit.SECONDS));
             } finally {

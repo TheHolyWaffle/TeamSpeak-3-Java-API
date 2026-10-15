@@ -1,5 +1,7 @@
 package com.github.theholywaffle.teamspeak3.api.wrapper;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelGroupId;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import java.util.Objects;
 
@@ -10,14 +12,20 @@ import java.util.Objects;
  * @param clientDatabaseId the member
  * @param channelGroupId the channel group
  */
-public record ChannelGroupClient(int channelId, ClientDatabaseId clientDatabaseId, int channelGroupId) {
+public record ChannelGroupClient(
+        ChannelId channelId, ClientDatabaseId clientDatabaseId, ChannelGroupId channelGroupId) {
 
     public ChannelGroupClient {
+        Objects.requireNonNull(channelId, "channelId");
         Objects.requireNonNull(clientDatabaseId, "clientDatabaseId");
+        Objects.requireNonNull(channelGroupId, "channelGroupId");
     }
 
     /** @throws com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException if a property is missing or malformed */
     public static ChannelGroupClient from(Wrapper row) {
-        return new ChannelGroupClient(row.requireInt("cid"), row.requireDatabaseId("cldbid"), row.requireInt("cgid"));
+        return new ChannelGroupClient(
+                row.requireId("cid", ChannelId::of),
+                row.requireDatabaseId("cldbid"),
+                row.requireId("cgid", ChannelGroupId::of));
     }
 }

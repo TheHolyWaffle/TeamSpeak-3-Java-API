@@ -2,6 +2,7 @@ package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
+import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ServerGroup;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ServerGroupClient;
 import com.github.theholywaffle.teamspeak3.commands.ServerGroupCommands;
@@ -27,60 +28,60 @@ public final class ServerGroupApiAsync {
     }
 
     /** @see ServerGroupApi#create(String) */
-    public CompletableFuture<Integer> create(String name) {
+    public CompletableFuture<ServerGroupId> create(String name) {
         return create(name, PermissionGroupDatabaseType.REGULAR);
     }
 
     /** @see ServerGroupApi#create(String, PermissionGroupDatabaseType) */
-    public CompletableFuture<Integer> create(String name, PermissionGroupDatabaseType type) {
-        return requests.createdId(ServerGroupCommands.serverGroupAdd(name, type), "sgid");
+    public CompletableFuture<ServerGroupId> create(String name, PermissionGroupDatabaseType type) {
+        return requests.id(ServerGroupCommands.serverGroupAdd(name, type), "sgid", ServerGroupId::of);
     }
 
-    /** @see ServerGroupApi#copy(int, String, PermissionGroupDatabaseType) */
-    public CompletableFuture<Integer> copy(int sourceGroupId, String name, PermissionGroupDatabaseType type) {
-        return requests.createdId(ServerGroupCommands.serverGroupCopy(sourceGroupId, name, type), "sgid");
+    /** @see ServerGroupApi#copy(ServerGroupId, String, PermissionGroupDatabaseType) */
+    public CompletableFuture<ServerGroupId> copy(
+            ServerGroupId sourceGroupId, String name, PermissionGroupDatabaseType type) {
+        return requests.id(ServerGroupCommands.serverGroupCopy(sourceGroupId, name, type), "sgid", ServerGroupId::of);
     }
 
-    /** @see ServerGroupApi#overwrite(int, int, PermissionGroupDatabaseType) */
-    public CompletableFuture<Void> overwrite(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
-        if (targetGroupId <= 0)
-            throw new IllegalArgumentException("Target group ID must be positive; use copy to create a group");
+    /** @see ServerGroupApi#overwrite(ServerGroupId, ServerGroupId, PermissionGroupDatabaseType) */
+    public CompletableFuture<Void> overwrite(
+            ServerGroupId sourceGroupId, ServerGroupId targetGroupId, PermissionGroupDatabaseType type) {
         return requests.run(ServerGroupCommands.serverGroupCopy(sourceGroupId, targetGroupId, type));
     }
 
-    /** @see ServerGroupApi#rename(int, String) */
-    public CompletableFuture<Void> rename(int groupId, String name) {
+    /** @see ServerGroupApi#rename(ServerGroupId, String) */
+    public CompletableFuture<Void> rename(ServerGroupId groupId, String name) {
         return requests.run(ServerGroupCommands.serverGroupRename(groupId, name));
     }
 
-    /** @see ServerGroupApi#delete(int) */
-    public CompletableFuture<Void> delete(int groupId) {
+    /** @see ServerGroupApi#delete(ServerGroupId) */
+    public CompletableFuture<Void> delete(ServerGroupId groupId) {
         return delete(groupId, true);
     }
 
-    /** @see ServerGroupApi#delete(int, boolean) */
-    public CompletableFuture<Void> delete(int groupId, boolean force) {
+    /** @see ServerGroupApi#delete(ServerGroupId, boolean) */
+    public CompletableFuture<Void> delete(ServerGroupId groupId, boolean force) {
         return requests.run(ServerGroupCommands.serverGroupDel(groupId, force));
     }
 
-    /** @see ServerGroupApi#members(int) */
-    public CompletableFuture<List<ServerGroupClient>> members(int groupId) {
+    /** @see ServerGroupApi#members(ServerGroupId) */
+    public CompletableFuture<List<ServerGroupClient>> members(ServerGroupId groupId) {
         return requests.rows(ServerGroupCommands.serverGroupClientList(groupId), ServerGroupClient::from);
     }
 
-    /** @see ServerGroupApi#addMember(int, ClientDatabaseId) */
-    public CompletableFuture<Void> addMember(int groupId, ClientDatabaseId clientDatabaseId) {
-        return requests.run(ServerGroupCommands.serverGroupAddClient(groupId, clientDatabaseId.value()));
+    /** @see ServerGroupApi#addMember(ServerGroupId, ClientDatabaseId) */
+    public CompletableFuture<Void> addMember(ServerGroupId groupId, ClientDatabaseId clientDatabaseId) {
+        return requests.run(ServerGroupCommands.serverGroupAddClient(groupId, clientDatabaseId));
     }
 
-    /** @see ServerGroupApi#removeMember(int, ClientDatabaseId) */
-    public CompletableFuture<Void> removeMember(int groupId, ClientDatabaseId clientDatabaseId) {
-        return requests.run(ServerGroupCommands.serverGroupDelClient(groupId, clientDatabaseId.value()));
+    /** @see ServerGroupApi#removeMember(ServerGroupId, ClientDatabaseId) */
+    public CompletableFuture<Void> removeMember(ServerGroupId groupId, ClientDatabaseId clientDatabaseId) {
+        return requests.run(ServerGroupCommands.serverGroupDelClient(groupId, clientDatabaseId));
     }
 
     /** @see ServerGroupApi#ofClient(ClientDatabaseId) */
     public CompletableFuture<List<ServerGroup>> ofClient(ClientDatabaseId clientDatabaseId) {
-        var ids = requests.integers(ServerGroupCommands.serverGroupsByClientId(clientDatabaseId.value()), "sgid");
+        var ids = requests.ids(ServerGroupCommands.serverGroupsByClientId(clientDatabaseId), "sgid", ServerGroupId::of);
         return QueryRequests.findByKey(ids, list(), ServerGroup::getId);
     }
 }

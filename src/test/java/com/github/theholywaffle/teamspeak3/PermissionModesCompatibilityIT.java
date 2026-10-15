@@ -2,15 +2,19 @@ package com.github.theholywaffle.teamspeak3;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelGroupId;
 import com.github.theholywaffle.teamspeak3.api.IPermissionType;
 import com.github.theholywaffle.teamspeak3.api.PermissionGrant;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
 import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
+import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import com.github.theholywaffle.teamspeak3.api.ServerGroupType;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -26,7 +30,7 @@ class PermissionModesCompatibilityIT {
             try (var query = new TS3Query(server.config(target.protocol))) {
                 query.connect();
                 var api = query.getApi();
-                api.selectVirtualServerById(1);
+                api.selectVirtualServerById(VirtualServerId.of(1));
                 for (String command : List.of(
                         "servergroupautoaddperm",
                         "servergroupautodelperm",
@@ -43,15 +47,15 @@ class PermissionModesCompatibilityIT {
                         PermissionGroupDatabaseType.REGULAR,
                         PermissionGroupDatabaseType.QUERY)) {
                     String name = "mode-source-" + type;
-                    int source = api.serverGroups().create(name, type);
+                    ServerGroupId source = api.serverGroups().create(name, type);
                     api.permissions()
                             .add(
                                     PermissionTarget.serverGroup(source),
                                     PermissionGrant.of(IPermissionType.I_CLIENT_TALK_POWER.getName(), 47)
                                             .withSkip());
-                    int copy = api.serverGroups().copy(source, "mode-copy-" + type, type);
+                    ServerGroupId copy = api.serverGroups().copy(source, "mode-copy-" + type, type);
                     var row = api.serverGroups().list().stream()
-                            .filter(group -> group.getId() == copy)
+                            .filter(group -> group.getId().equals(copy))
                             .findFirst()
                             .orElseThrow();
                     assertEquals(type, row.getType());
@@ -66,14 +70,14 @@ class PermissionModesCompatibilityIT {
                     evidence.add("server group " + type + " create/copy/permission/delete passed");
                 }
                 for (var type : List.of(PermissionGroupDatabaseType.TEMPLATE, PermissionGroupDatabaseType.REGULAR)) {
-                    int source = api.channelGroups().create("channel-source-" + type, type);
+                    ChannelGroupId source = api.channelGroups().create("channel-source-" + type, type);
                     api.permissions()
                             .add(
                                     PermissionTarget.channelGroup(source),
                                     PermissionGrant.of(IPermissionType.I_CLIENT_TALK_POWER.getName(), 48));
-                    int copy = api.channelGroups().copy(source, "channel-copy-" + type, type);
+                    ChannelGroupId copy = api.channelGroups().copy(source, "channel-copy-" + type, type);
                     var row = api.channelGroups().list().stream()
-                            .filter(group -> group.getId() == copy)
+                            .filter(group -> group.getId().equals(copy))
                             .findFirst()
                             .orElseThrow();
                     assertEquals(type, row.getType());
@@ -93,8 +97,8 @@ class PermissionModesCompatibilityIT {
                                 .create("unsupported-query-channel", PermissionGroupDatabaseType.QUERY));
                 assertEquals(1538, queryChannelGroup.getError().getId());
                 evidence.add("channelgroupadd typeQUERY rejected1538 despite live help listing type2");
-                int automatic = api.serverGroups().create("mode-auto");
-                int unrelated = api.serverGroups().create("mode-unrelated");
+                ServerGroupId automatic = api.serverGroups().create("mode-auto");
+                ServerGroupId unrelated = api.serverGroups().create("mode-unrelated");
                 api.permissions()
                         .add(
                                 PermissionTarget.serverGroup(automatic),
@@ -130,8 +134,9 @@ class PermissionModesCompatibilityIT {
                 evidence.add("automatic permission deletion removed configured assignment");
                 String token = api.permissions().reset();
                 assertFalse(token.isBlank());
-                assertEquals(0, api.whoAmI().getVirtualServerId(), "Permission reset clears query selection");
-                api.selectVirtualServerById(1);
+                assertEquals(
+                        Optional.empty(), api.whoAmI().getVirtualServerId(), "Permission reset clears query selection");
+                api.selectVirtualServerById(VirtualServerId.of(1));
                 assertTrue(api.privilegeKeys().list().stream()
                         .anyMatch(key -> key.getToken().equals(token)));
                 var restoredGroups = api.serverGroups().list();

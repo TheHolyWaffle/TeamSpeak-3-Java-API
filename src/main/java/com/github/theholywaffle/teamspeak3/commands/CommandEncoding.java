@@ -33,8 +33,8 @@ public final class CommandEncoding {
                 case '\n' -> encoded.append("\\n");
                 case '\r' -> encoded.append("\\r");
                 case '\t' -> encoded.append("\\t");
-                case 7 -> encoded.append("\\a");
-                case 11 -> encoded.append("\\v");
+                case '\u0007' -> encoded.append("\\a");
+                case '\u000B' -> encoded.append("\\v");
                 default -> encoded.append(ch);
             }
         }
@@ -67,8 +67,8 @@ public final class CommandEncoding {
                 case 'n' -> decoded.append('\n');
                 case 'r' -> decoded.append('\r');
                 case 't' -> decoded.append('\t');
-                case 'a' -> decoded.append((char) 7);
-                case 'v' -> decoded.append((char) 11);
+                case 'a' -> decoded.append('\u0007');
+                case 'v' -> decoded.append('\u000B');
                 default -> decoded.append('\\').append(escaped);
             }
         }

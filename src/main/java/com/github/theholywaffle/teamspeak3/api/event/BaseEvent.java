@@ -42,7 +42,7 @@ public abstract class BaseEvent extends Wrapper implements TS3Event {
      * @return the nickname of the invoker, or empty if the event does not contain an invoker
      */
     public Optional<String> getInvokerName() {
-        return find("invokername");
+        return findText("invokername");
     }
 
     /**
@@ -60,7 +60,7 @@ public abstract class BaseEvent extends Wrapper implements TS3Event {
      * @return the unique ID of the invoker, or empty if the event does not contain one
      */
     public Optional<String> getInvokerUniqueId() {
-        return find("invokeruid");
+        return findText("invokeruid");
     }
 
     /**
@@ -98,6 +98,6 @@ public abstract class BaseEvent extends Wrapper implements TS3Event {
      * @return the reason for this event, or empty if no reason message is present
      */
     public Optional<String> getReasonMessage() {
-        return find("reasonmsg");
+        return findText("reasonmsg");
     }
 }

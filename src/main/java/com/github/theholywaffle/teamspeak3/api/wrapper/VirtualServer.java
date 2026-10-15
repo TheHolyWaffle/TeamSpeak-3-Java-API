@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3.api.wrapper;
 
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerStatus;
 import java.time.Duration;
@@ -13,8 +14,8 @@ public class VirtualServer extends Wrapper {
         super(map);
     }
 
-    public int getId() {
-        return requireInt(VirtualServerProperty.VIRTUALSERVER_ID);
+    public VirtualServerId getId() {
+        return requireId(VirtualServerProperty.VIRTUALSERVER_ID, VirtualServerId::of);
     }
 
     public int getPort() {
@@ -47,9 +48,7 @@ public class VirtualServer extends Wrapper {
 
     /** @return the uptime, or empty for a server that is not running */
     public Optional<Duration> getUptime() {
-        return findLong(VirtualServerProperty.VIRTUALSERVER_UPTIME).stream()
-                .mapToObj(Duration::ofSeconds)
-                .findFirst();
+        return findSeconds(VirtualServerProperty.VIRTUALSERVER_UPTIME);
     }
 
     public String getName() {

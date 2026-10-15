@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.BanId;
 import com.github.theholywaffle.teamspeak3.api.BanRequest;
 import com.github.theholywaffle.teamspeak3.api.ClientBan;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
@@ -34,7 +35,7 @@ public final class BanApi {
      * @param ban the patterns, duration and reason
      * @return the ID of the new ban rule
      */
-    public int add(BanRequest ban) {
+    public BanId add(BanRequest ban) {
         return CommandFutures.join(async.add(ban));
     }
 
@@ -44,7 +45,7 @@ public final class BanApi {
      * @param ban the clients, duration and reason
      * @return the IDs of the ban rules created, in server order
      */
-    public List<Integer> banClients(ClientBan ban) {
+    public List<BanId> banClients(ClientBan ban) {
         return CommandFutures.join(async.banClients(ban));
     }
 
@@ -53,7 +54,7 @@ public final class BanApi {
      *
      * @param banId the ban rule ID
      */
-    public void delete(int banId) {
+    public void delete(BanId banId) {
         CommandFutures.join(async.delete(banId));
     }
 

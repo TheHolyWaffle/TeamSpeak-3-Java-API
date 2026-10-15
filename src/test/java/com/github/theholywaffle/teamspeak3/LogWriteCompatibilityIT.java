@@ -3,12 +3,14 @@ package com.github.theholywaffle.teamspeak3;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.github.theholywaffle.teamspeak3.api.LogLevel;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -25,8 +27,13 @@ class LogWriteCompatibilityIT {
             try (var query = new TS3Query(server.config(target.protocol))) {
                 query.connect();
                 var api = query.getApi();
-                for (int sid : List.of(0, 1)) {
-                    api.selectVirtualServerById(sid);
+                for (int sid : List.of(1, 0)) {
+                    if (sid == 0) {
+                        api.deselectVirtualServer();
+                        assertEquals(Optional.empty(), api.whoAmI().getVirtualServerId());
+                    } else {
+                        api.selectVirtualServerById(VirtualServerId.of(sid));
+                    }
                     var markers = new ArrayList<String>();
                     for (var level : LogLevel.values()) {
                         String marker = "issue441-log-" + sid + "-" + level.getIndex() + " 日本語 | literal \\s";

@@ -1,6 +1,7 @@
 package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 
 /**
@@ -8,7 +9,7 @@ import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedExcepti
  * session, login and virtual server selection.
  * <p>
  * Most commands require a login and a selected virtual server. Pass credentials to {@link TS3Config}
- * or call {@link #login(String, String)}, then {@link #selectVirtualServerById(int)}. Server errors throw
+ * or call {@link #login(String, String)}, then {@link #selectVirtualServerById(VirtualServerId)}. Server errors throw
  * {@link TS3CommandFailedException}.
  * </p>
  *
@@ -44,7 +45,7 @@ public class TS3Api extends TS3BaseApi {
      *
      * @param id the virtual server ID
      */
-    public void selectVirtualServerById(int id) {
+    public void selectVirtualServerById(VirtualServerId id) {
         CommandFutures.join(asyncApi.selectVirtualServerById(id));
     }
 
@@ -54,7 +55,7 @@ public class TS3Api extends TS3BaseApi {
      * @param id the virtual server ID
      * @param nickname the nickname, or {@code null} to keep the default
      */
-    public void selectVirtualServerById(int id, String nickname) {
+    public void selectVirtualServerById(VirtualServerId id, String nickname) {
         CommandFutures.join(asyncApi.selectVirtualServerById(id, nickname));
     }
 
@@ -75,5 +76,15 @@ public class TS3Api extends TS3BaseApi {
      */
     public void selectVirtualServerByPort(int port, String nickname) {
         CommandFutures.join(asyncApi.selectVirtualServerByPort(port, nickname));
+    }
+
+    /**
+     * Deselects the virtual server, returning this session to the server instance as right after login,
+     * for example to write instance log entries. Sends {@code use sid=0}. Like selecting a server, it is
+     * rejected while a reconnect strategy restores a
+     * {@link com.github.theholywaffle.teamspeak3.api.reconnect.SessionConfiguration}.
+     */
+    public void deselectVirtualServer() {
+        CommandFutures.join(asyncApi.deselectVirtualServer());
     }
 }

@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3.commands;
 
+import com.github.theholywaffle.teamspeak3.api.MessageId;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 
 public final class MessageCommands {
@@ -20,13 +21,13 @@ public final class MessageCommands {
         return builder.build();
     }
 
-    public static Command messageDel(int messageId) {
+    public static Command messageDel(MessageId messageId) {
         return new CommandBuilder("messagedel")
                 .add(new KeyValueParam("msgid", messageId))
                 .build();
     }
 
-    public static Command messageGet(int messageId) {
+    public static Command messageGet(MessageId messageId) {
         return new CommandBuilder("messageget")
                 .add(new KeyValueParam("msgid", messageId))
                 .build();
@@ -36,7 +37,7 @@ public final class MessageCommands {
         return new CommandBuilder("messagelist").build();
     }
 
-    public static Command messageUpdateFlag(int messageId, boolean read) {
+    public static Command messageUpdateFlag(MessageId messageId, boolean read) {
         CommandBuilder builder = new CommandBuilder("messageupdateflag");
         builder.add(new KeyValueParam("msgid", messageId));
         builder.add(new KeyValueParam("flag", read));

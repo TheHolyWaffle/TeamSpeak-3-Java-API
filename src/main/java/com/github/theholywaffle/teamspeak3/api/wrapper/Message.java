@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3.api.wrapper;
 
+import com.github.theholywaffle.teamspeak3.api.MessageId;
 import java.time.Instant;
 import java.util.Map;
 
@@ -9,8 +10,8 @@ public class Message extends Wrapper {
         super(map);
     }
 
-    public int getId() {
-        return requireInt("msgid");
+    public MessageId getId() {
+        return requireId("msgid", MessageId::of);
     }
 
     public String getSenderUniqueIdentifier() {

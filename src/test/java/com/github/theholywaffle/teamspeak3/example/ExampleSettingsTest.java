@@ -9,6 +9,7 @@ import com.github.theholywaffle.teamspeak3.FileTransferEndpointResolver;
 import com.github.theholywaffle.teamspeak3.QueryConfig;
 import com.github.theholywaffle.teamspeak3.TS3Query.FloodRate;
 import com.github.theholywaffle.teamspeak3.TS3Query.Protocol;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,7 +37,7 @@ class ExampleSettingsTest {
         assertEquals("secret", config.getPassword());
         assertEquals(FloodRate.DEFAULT, config.getFloodRate());
         assertFalse(config.getEnableCommunicationsLogging());
-        assertEquals(1, with().virtualServerId());
+        assertEquals(VirtualServerId.of(1), with().virtualServerId());
         assertEquals("Java API example", with().nickname());
         assertEndpoint(
                 "192.0.2.10",
@@ -65,7 +66,7 @@ class ExampleSettingsTest {
                 "SshHostKeyPolicy[KNOWN_HOSTS]", config.getSshHostKeyPolicy().toString());
         FileTransferEndpointResolver resolver = config.getFileTransferConfig().endpointResolver();
         assertEndpoint("198.51.100.7", 43033, resolver.resolve("q", "10.0.0.2", 30033));
-        assertEquals(7, settings.virtualServerId());
+        assertEquals(VirtualServerId.of(7), settings.virtualServerId());
         assertEquals("Bot", settings.nickname());
     }
 

@@ -161,7 +161,7 @@ final class WebQueryProtocol {
         if (body == null) return List.of();
         for (Map<String, String> row : body) {
             if (row == null) throw new IllegalArgumentException("Row is null");
-            row.replaceAll((key, value) -> value == null ? "" : value);
+            row.replaceAll((_, value) -> value == null ? "" : value);
         }
         return body;
     }

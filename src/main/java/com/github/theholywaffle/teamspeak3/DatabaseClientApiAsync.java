@@ -38,7 +38,7 @@ public final class DatabaseClientApiAsync {
     public CompletableFuture<List<DatabaseClient>> list() {
         // An empty database answers with error 1281 and no count row.
         var count = CommandFutures.map(
-                requests.optionalInteger(DatabaseClientCommands.clientDBList(0, 1, true), "count"),
+                requests.optional(DatabaseClientCommands.clientDBList(0, 1, true), row -> row.requireInt("count")),
                 found -> found.orElse(0));
         return CommandFutures.map(
                 CommandFutures.compose(count, total -> {
@@ -57,7 +57,7 @@ public final class DatabaseClientApiAsync {
 
     /** @see DatabaseClientApi#info(ClientDatabaseId) */
     public CompletableFuture<DatabaseClientInfo> info(ClientDatabaseId databaseId) {
-        return requests.model(DatabaseClientCommands.clientDBInfo(databaseId.value()), DatabaseClientInfo::new);
+        return requests.model(DatabaseClientCommands.clientDBInfo(databaseId), DatabaseClientInfo::new);
     }
 
     /** @see DatabaseClientApi#search(String) */
@@ -77,17 +77,17 @@ public final class DatabaseClientApiAsync {
 
     /** @see DatabaseClientApi#edit(ClientDatabaseId, Map) */
     public CompletableFuture<Void> edit(ClientDatabaseId databaseId, Map<ClientProperty, String> properties) {
-        return requests.run(DatabaseClientCommands.clientDBEdit(databaseId.value(), properties));
+        return requests.run(DatabaseClientCommands.clientDBEdit(databaseId, properties));
     }
 
     /** @see DatabaseClientApi#delete(ClientDatabaseId) */
     public CompletableFuture<Void> delete(ClientDatabaseId databaseId) {
-        return requests.run(DatabaseClientCommands.clientDBDelete(databaseId.value()));
+        return requests.run(DatabaseClientCommands.clientDBDelete(databaseId));
     }
 
     /** @see DatabaseClientApi#customProperties(ClientDatabaseId) */
     public CompletableFuture<Map<String, String>> customProperties(ClientDatabaseId databaseId) {
-        return requests.response(CustomPropertyCommands.customInfo(databaseId.value()), response -> {
+        return requests.response(CustomPropertyCommands.customInfo(databaseId), response -> {
             Map<String, String> properties = new LinkedHashMap<>();
             for (Wrapper row : response.getResponses()) properties.put(row.require("ident"), row.require("value"));
             return Collections.unmodifiableMap(properties);
@@ -97,7 +97,7 @@ public final class DatabaseClientApiAsync {
     /** @see DatabaseClientApi#setCustomProperty(ClientDatabaseId, String, String) */
     public CompletableFuture<Void> setCustomProperty(ClientDatabaseId databaseId, String key, String value) {
         Objects.requireNonNull(key, "key");
-        return requests.run(CustomPropertyCommands.customSet(databaseId.value(), key, value));
+        return requests.run(CustomPropertyCommands.customSet(databaseId, key, value));
     }
 
     /** @see DatabaseClientApi#setCustomProperties(ClientDatabaseId, Map) */
@@ -111,7 +111,7 @@ public final class DatabaseClientApiAsync {
     /** @see DatabaseClientApi#deleteCustomProperty(ClientDatabaseId, String) */
     public CompletableFuture<Void> deleteCustomProperty(ClientDatabaseId databaseId, String key) {
         Objects.requireNonNull(key, "key");
-        return requests.run(CustomPropertyCommands.customDelete(databaseId.value(), key));
+        return requests.run(CustomPropertyCommands.customDelete(databaseId, key));
     }
 
     /** @see DatabaseClientApi#searchCustomProperty(String, String) */

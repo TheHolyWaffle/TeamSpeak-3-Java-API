@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3.api.wrapper;
 
+import com.github.theholywaffle.teamspeak3.api.BanId;
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import java.time.Duration;
 import java.time.Instant;
@@ -16,8 +17,8 @@ public class Ban extends Wrapper {
         super(map);
     }
 
-    public int getId() {
-        return requireInt("banid");
+    public BanId getId() {
+        return requireId("banid", BanId::of);
     }
 
     /** @return the banned IP pattern, or empty if the rule does not match on IP */

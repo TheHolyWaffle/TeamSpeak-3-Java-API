@@ -47,7 +47,8 @@ class DomainApiParityTest {
 
     @Test
     void sessionOperationsExistOnlyOnTheServerQueryApi() {
-        var session = java.util.Set.of("login", "logout", "selectVirtualServerById", "selectVirtualServerByPort");
+        var session = java.util.Set.of(
+                "login", "logout", "selectVirtualServerById", "selectVirtualServerByPort", "deselectVirtualServer");
         for (Class<?> shared : List.of(TS3BaseApi.class, TS3BaseApiAsync.class)) {
             assertTrue(
                     Arrays.stream(shared.getMethods()).noneMatch(method -> session.contains(method.getName())),

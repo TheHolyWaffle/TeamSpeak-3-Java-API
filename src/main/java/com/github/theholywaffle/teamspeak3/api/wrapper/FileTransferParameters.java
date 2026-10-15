@@ -1,5 +1,7 @@
 package com.github.theholywaffle.teamspeak3.api.wrapper;
 
+import com.github.theholywaffle.teamspeak3.api.ClientFileTransferId;
+import com.github.theholywaffle.teamspeak3.api.ServerFileTransferId;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -19,8 +21,8 @@ public class FileTransferParameters extends Wrapper {
      *
      * @return the client's file transfer ID
      */
-    public int getClientTransferId() {
-        return requireInt("clientftfid");
+    public ClientFileTransferId getClientTransferId() {
+        return requireNonNegativeId("clientftfid", ClientFileTransferId::of);
     }
 
     /**
@@ -29,8 +31,8 @@ public class FileTransferParameters extends Wrapper {
      *
      * @return the server's file transfer ID
      */
-    public int getServerTransferId() {
-        return requireInt("serverftfid");
+    public ServerFileTransferId getServerTransferId() {
+        return requireNonNegativeId("serverftfid", ServerFileTransferId::of);
     }
 
     /**
@@ -110,6 +112,6 @@ public class FileTransferParameters extends Wrapper {
      * @return the failure message, or empty if none was reported
      */
     public Optional<String> getMessage() {
-        return find("msg");
+        return findText("msg");
     }
 }

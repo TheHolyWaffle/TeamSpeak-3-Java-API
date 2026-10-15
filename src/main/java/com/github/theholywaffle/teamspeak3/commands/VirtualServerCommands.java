@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3.commands;
 
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 import com.github.theholywaffle.teamspeak3.commands.parameter.OptionParam;
@@ -23,7 +24,7 @@ public final class VirtualServerCommands {
         return builder.build();
     }
 
-    public static Command serverDelete(int id) {
+    public static Command serverDelete(VirtualServerId id) {
         return new CommandBuilder("serverdelete")
                 .add(new KeyValueParam("sid", id))
                 .build();
@@ -68,13 +69,13 @@ public final class VirtualServerCommands {
                 .build();
     }
 
-    public static Command serverStart(int id) {
+    public static Command serverStart(VirtualServerId id) {
         return new CommandBuilder("serverstart")
                 .add(new KeyValueParam("sid", id))
                 .build();
     }
 
-    public static Command serverStop(int id, String reason) {
+    public static Command serverStop(VirtualServerId id, String reason) {
         CommandBuilder builder = new CommandBuilder("serverstop");
         builder.add(new KeyValueParam("sid", id));
         builder.addIf(reason != null, new KeyValueParam("reasonmsg", reason));

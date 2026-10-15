@@ -2,7 +2,6 @@ package com.github.theholywaffle.teamspeak3.api;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalInt;
 
 /**
  * Restricts a channel group membership listing. Empty criteria match everything.
@@ -12,16 +11,15 @@ import java.util.OptionalInt;
  * @param groupId the channel group whose members to list
  */
 public record ChannelGroupFilter(
-        OptionalInt channelId, Optional<ClientDatabaseId> clientDatabaseId, OptionalInt groupId) {
+        Optional<ChannelId> channelId, Optional<ClientDatabaseId> clientDatabaseId, Optional<ChannelGroupId> groupId) {
 
     private static final ChannelGroupFilter ALL =
-            new ChannelGroupFilter(OptionalInt.empty(), Optional.empty(), OptionalInt.empty());
+            new ChannelGroupFilter(Optional.empty(), Optional.empty(), Optional.empty());
 
     public ChannelGroupFilter {
+        Objects.requireNonNull(channelId, "channelId");
         Objects.requireNonNull(clientDatabaseId, "clientDatabaseId");
-        for (OptionalInt id : new OptionalInt[] {channelId, groupId}) {
-            if (id.isPresent() && id.getAsInt() <= 0) throw new IllegalArgumentException("ID must be positive");
-        }
+        Objects.requireNonNull(groupId, "groupId");
     }
 
     /** @return a filter matching every membership */
@@ -29,15 +27,15 @@ public record ChannelGroupFilter(
         return ALL;
     }
 
-    public ChannelGroupFilter inChannel(int id) {
-        return new ChannelGroupFilter(OptionalInt.of(id), clientDatabaseId, groupId);
+    public ChannelGroupFilter inChannel(ChannelId id) {
+        return new ChannelGroupFilter(Optional.of(id), clientDatabaseId, groupId);
     }
 
     public ChannelGroupFilter ofClient(ClientDatabaseId databaseId) {
         return new ChannelGroupFilter(channelId, Optional.of(databaseId), groupId);
     }
 
-    public ChannelGroupFilter inGroup(int id) {
-        return new ChannelGroupFilter(channelId, clientDatabaseId, OptionalInt.of(id));
+    public ChannelGroupFilter inGroup(ChannelGroupId id) {
+        return new ChannelGroupFilter(channelId, clientDatabaseId, Optional.of(id));
     }
 }

@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
 import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
@@ -13,8 +14,8 @@ final class CommonWorkflow {
     private CommonWorkflow() {}
 
     // workflow-sync-start
-    static int prepareLobby(TS3Api api, String uniqueId, byte[] rules) {
-        int lobby = api.channels()
+    static ChannelId prepareLobby(TS3Api api, String uniqueId, byte[] rules) {
+        ChannelId lobby = api.channels()
                 .findByName("Lobby", false)
                 .map(Channel::getId)
                 .orElseGet(() -> api.channels().create("Lobby", Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
@@ -33,7 +34,7 @@ final class CommonWorkflow {
     // workflow-sync-end
 
     // workflow-async-start
-    static CompletableFuture<Integer> prepareLobby(TS3ApiAsync api, String uniqueId, byte[] rules) {
+    static CompletableFuture<ChannelId> prepareLobby(TS3ApiAsync api, String uniqueId, byte[] rules) {
         return api.channels()
                 .findByName("Lobby", false)
                 .thenCompose(found -> found.map(channel -> CompletableFuture.completedFuture(channel.getId()))
@@ -43,14 +44,14 @@ final class CommonWorkflow {
                         .add(PermissionTarget.channel(lobby), "i_channel_needed_join_power", 10)
                         .thenCompose(done ->
                                 api.files().upload(FileLocation.of(lobby, "/rules.txt"), rules, UploadMode.OVERWRITE))
-                        .thenCompose(done -> api.clients().findByUniqueId(uniqueId))
+                        .thenCompose(_ -> api.clients().findByUniqueId(uniqueId))
                         .thenCompose(client -> client.isEmpty()
                                 ? api.messages().sendOffline(uniqueId, "Lobby", "Welcome to the lobby")
                                 : api.clients()
                                         .move(client.get().getId(), lobby)
-                                        .thenCompose(done -> api.messages()
+                                        .thenCompose(_ -> api.messages()
                                                 .sendPrivate(client.get().getId(), "Welcome to the lobby")))
-                        .thenApply(done -> lobby));
+                        .thenApply(_ -> lobby));
     }
     // workflow-async-end
 }

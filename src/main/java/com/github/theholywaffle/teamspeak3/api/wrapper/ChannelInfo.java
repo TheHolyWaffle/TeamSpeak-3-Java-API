@@ -1,22 +1,24 @@
 package com.github.theholywaffle.teamspeak3.api.wrapper;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelBannerMode;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
 public class ChannelInfo extends ChannelBase {
 
-    private final int channelId;
+    private final ChannelId channelId;
 
-    public ChannelInfo(int channelId, Map<String, String> map) {
+    public ChannelInfo(ChannelId channelId, Map<String, String> map) {
         super(map);
-        this.channelId = channelId;
+        this.channelId = Objects.requireNonNull(channelId, "channelId");
     }
 
     @Override
-    public int getId() {
+    public ChannelId getId() {
         return channelId;
     }
 
@@ -82,11 +84,11 @@ public class ChannelInfo extends ChannelBase {
 
     @Override
     public boolean equals(Object other) {
-        return super.equals(other) && channelId == ((ChannelInfo) other).channelId;
+        return super.equals(other) && other instanceof ChannelInfo info && channelId.equals(info.channelId);
     }
 
     @Override
     public int hashCode() {
-        return 31 * super.hashCode() + channelId;
+        return 31 * super.hashCode() + channelId.hashCode();
     }
 }

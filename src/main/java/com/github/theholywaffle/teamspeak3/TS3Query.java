@@ -293,7 +293,7 @@ public final class TS3Query implements AutoCloseable {
         if (!userTask.get()) {
             try {
                 completions.awaitTermination(deadline.remaining() / 3, TimeUnit.NANOSECONDS);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException _) {
                 Thread.currentThread().interrupt();
             }
         }
@@ -303,7 +303,7 @@ public final class TS3Query implements AutoCloseable {
         if (!userTask.get()) {
             try {
                 userThreadPool.awaitTermination(deadline.remaining() / 2, TimeUnit.NANOSECONDS);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException _) {
                 Thread.currentThread().interrupt();
             }
         }
@@ -311,7 +311,7 @@ public final class TS3Query implements AutoCloseable {
         if (!userTask.get()) {
             try {
                 userThreadPool.awaitTermination(deadline.remaining(), TimeUnit.NANOSECONDS);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException _) {
                 Thread.currentThread().interrupt();
             }
         }
@@ -429,10 +429,10 @@ public final class TS3Query implements AutoCloseable {
                 try {
                     runUserTask(task);
                 } catch (Throwable e) {
-                    log.error(name + " threw an exception", e);
+                    log.error("{} threw an exception", name, e);
                 }
             });
-        } catch (RejectedExecutionException ignored) {
+        } catch (RejectedExecutionException _) {
             // Shutdown has already settled pending commands and rejects new callbacks.
         }
     }

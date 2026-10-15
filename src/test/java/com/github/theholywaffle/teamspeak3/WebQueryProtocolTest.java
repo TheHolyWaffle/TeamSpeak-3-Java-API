@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.ReasonIdentifier;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3AuthenticationFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3HttpException;
@@ -52,11 +53,11 @@ class WebQueryProtocolTest {
     @Test
     void decidesFromTraitsForBuiltCommandsToo() {
         for (var command : List.of(
-                QueryCommands.useId(1, null),
+                QueryCommands.useId(VirtualServerId.of(1), null),
                 QueryCommands.logIn("serveradmin", "secret"),
                 QueryCommands.quit(),
                 QueryCommands.serverNotifyRegister(
-                        com.github.theholywaffle.teamspeak3.api.event.TS3EventType.SERVER, -1),
+                        com.github.theholywaffle.teamspeak3.api.event.TS3EventType.SERVER, java.util.Optional.empty()),
                 FileCommands.ftList())) {
             assertTrue(WebQueryProtocol.unsupported(command).isPresent(), command.getName());
         }

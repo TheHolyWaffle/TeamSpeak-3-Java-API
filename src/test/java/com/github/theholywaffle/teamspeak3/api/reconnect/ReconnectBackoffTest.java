@@ -35,16 +35,16 @@ class ReconnectBackoffTest {
 
     @Test
     void builtInStrategiesKeepTheirDelayProgressionAndAttemptLimit() {
-        assertEquals(List.of(100L, 100L, 100L), delays(ReconnectStrategy.constantBackoff(100), 3));
-        assertEquals(List.of(10L, 15L, 20L, 25L, 30L, 30L), delays(ReconnectStrategy.linearBackoff(10, 5, 30), 6));
-        assertEquals(List.of(10L, 20L, 40L, 50L), delays(ReconnectStrategy.exponentialBackoff(10, 2, 50), 4));
-        assertEquals(List.of(1000L, 1500L, 2250L), delays(ReconnectStrategy.exponentialBackoff(), 3));
-        assertEquals(List.of(1000L, 3000L, 5000L), delays(ReconnectStrategy.linearBackoff(), 3));
+        assertEquals(List.of(100, 100, 100), delays(ReconnectStrategy.constantBackoff(100), 3));
+        assertEquals(List.of(10, 15, 20, 25, 30, 30), delays(ReconnectStrategy.linearBackoff(10, 5, 30), 6));
+        assertEquals(List.of(10, 20, 40, 50), delays(ReconnectStrategy.exponentialBackoff(10, 2, 50), 4));
+        assertEquals(List.of(1000, 1500, 2250), delays(ReconnectStrategy.exponentialBackoff(), 3));
+        assertEquals(List.of(1000, 3000, 5000), delays(ReconnectStrategy.linearBackoff(), 3));
         assertEquals(10, handler(ReconnectStrategy.constantBackoff()).maxAttempts());
         assertEquals(
                 3, handler(ReconnectStrategy.linearBackoff().withMaxAttempts(3)).maxAttempts());
         assertEquals(
-                List.of(10L, 20L),
+                List.of(10, 20),
                 delays(ReconnectStrategy.exponentialBackoff(10, 2, 50).withMaxAttempts(3), 2));
         assertEquals(
                 "Timeout must be greater than 0",
@@ -64,10 +64,10 @@ class ReconnectBackoffTest {
         return (ReconnectingConnectionHandler) strategy.create(null);
     }
 
-    private static List<Long> delays(ReconnectStrategy strategy, int count) {
+    private static List<Integer> delays(ReconnectStrategy strategy, int count) {
         var handler = handler(strategy);
-        var delays = new ArrayList<Long>();
-        for (long delay = handler.startTimeout(); delays.size() < count; delay = handler.nextDelay(delay))
+        var delays = new ArrayList<Integer>();
+        for (int delay = handler.startTimeout(); delays.size() < count; delay = handler.nextDelay(delay))
             delays.add(delay);
         return delays;
     }

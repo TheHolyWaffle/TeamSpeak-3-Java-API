@@ -2,8 +2,8 @@ package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
+import com.github.theholywaffle.teamspeak3.api.EntityId;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
-import com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
@@ -17,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
+import java.util.function.LongFunction;
 import java.util.stream.Collectors;
 
 /** The single command execution path shared by every asynchronous domain API. */
@@ -25,7 +26,6 @@ final class QueryRequests {
     static final int INVALID_CLIENT_ID = 512;
     static final int INVALID_CHANNEL_ID = 768;
     static final int INVALID_SERVER_ID = 1024;
-    static final int FILE_EXISTS = 2050;
 
     private static final CompletionStage<?> NO_ASYNC_WORK = CompletableFuture.completedStage(null);
 
@@ -46,7 +46,7 @@ final class QueryRequests {
     }
 
     CompletableFuture<Void> run(Command command) {
-        return response(command, ignored -> null);
+        return response(command, _ -> null);
     }
 
     <T> CompletableFuture<List<T>> rows(Command command, Function<Wrapper, T> fn) {
@@ -72,10 +72,6 @@ final class QueryRequests {
         return response(command, response -> response.getFirstResponse().map(fn));
     }
 
-    CompletableFuture<Optional<Integer>> optionalInteger(Command command, String property) {
-        return optional(command, row -> row.requireInt(property));
-    }
-
     CompletableFuture<String> string(Command command, String property) {
         return one(command, row -> row.require(property));
     }
@@ -88,12 +84,12 @@ final class QueryRequests {
         return rows(command, row -> row.requireInt(property));
     }
 
-    CompletableFuture<Integer> createdId(Command command, String property) {
-        return one(command, row -> {
-            int id = row.requireInt(property);
-            if (id <= 0) throw new TS3InvalidValueException(property, row.require(property), "a positive ID", null);
-            return id;
-        });
+    <T extends EntityId> CompletableFuture<T> id(Command command, String property, LongFunction<T> type) {
+        return one(command, row -> row.requireId(property, type));
+    }
+
+    <T extends EntityId> CompletableFuture<List<T>> ids(Command command, String property, LongFunction<T> type) {
+        return rows(command, row -> row.requireId(property, type));
     }
 
     private static Wrapper firstRow(Command command, DefaultArrayResponse response) {
@@ -106,9 +102,8 @@ final class QueryRequests {
             CompletableFuture<Optional<K>> id, Function<K, CompletableFuture<T>> lookup) {
         return CommandFutures.compose(
                 id,
-                found -> found.isEmpty()
-                        ? CompletableFuture.completedFuture(Optional.empty())
-                        : CommandFutures.map(lookup.apply(found.get()), Optional::of));
+                found -> found.map(key -> CommandFutures.map(lookup.apply(key), Optional::of))
+                        .orElseGet(() -> CompletableFuture.completedFuture(Optional.empty())));
     }
 
     static <T> Optional<T> firstNamed(List<T> items, Function<T, String> name, String expected, boolean ignoreCase) {
@@ -144,7 +139,7 @@ final class QueryRequests {
     }
 
     static CompletableFuture<Void> discard(CompletableFuture<?> request) {
-        return CommandFutures.map(request, ignored -> null);
+        return CommandFutures.map(request, _ -> null);
     }
 
     static <K, V> CompletableFuture<List<V>> findByKey(
@@ -156,7 +151,7 @@ final class QueryRequests {
                         keysFuture,
                         keys -> CommandFutures.map(valuesFuture, values -> {
                             Map<K, V> valueMap = values.stream()
-                                    .collect(Collectors.toMap(keyMapper, Function.identity(), (l, r) -> l));
+                                    .collect(Collectors.toMap(keyMapper, Function.identity(), (l, _) -> l));
                             return keys.stream()
                                     .filter(Objects::nonNull)
                                     .map(valueMap::get)

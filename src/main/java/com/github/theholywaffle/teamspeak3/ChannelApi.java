@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Channel;
@@ -41,7 +42,7 @@ public final class ChannelApi {
      * @return the channel information
      * @throws com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException with error 768 if the channel does not exist
      */
-    public ChannelInfo info(int channelId) {
+    public ChannelInfo info(ChannelId channelId) {
         return CommandFutures.join(async.info(channelId));
     }
 
@@ -73,7 +74,7 @@ public final class ChannelApi {
      * @param properties further channel properties, for example parent, type or password; may be empty
      * @return the ID of the new channel
      */
-    public int create(String name, Map<ChannelProperty, String> properties) {
+    public ChannelId create(String name, Map<ChannelProperty, String> properties) {
         return CommandFutures.join(async.create(name, properties));
     }
 
@@ -83,7 +84,7 @@ public final class ChannelApi {
      * @param channelId the channel ID
      * @param properties the properties to change
      */
-    public void edit(int channelId, Map<ChannelProperty, String> properties) {
+    public void edit(ChannelId channelId, Map<ChannelProperty, String> properties) {
         CommandFutures.join(async.edit(channelId, properties));
     }
 
@@ -92,7 +93,7 @@ public final class ChannelApi {
      *
      * @param channelId the channel ID
      */
-    public void delete(int channelId) {
+    public void delete(ChannelId channelId) {
         CommandFutures.join(async.delete(channelId));
     }
 
@@ -102,7 +103,7 @@ public final class ChannelApi {
      * @param channelId the channel ID
      * @param force whether to delete a channel that still contains clients
      */
-    public void delete(int channelId, boolean force) {
+    public void delete(ChannelId channelId, boolean force) {
         CommandFutures.join(async.delete(channelId, force));
     }
 
@@ -110,9 +111,9 @@ public final class ChannelApi {
      * Moves a channel to become the first child of another channel.
      *
      * @param channelId the channel to move
-     * @param parentChannelId the new parent channel, or 0 for the top level
+     * @param parentChannelId the new parent channel, or {@code null} for the top level
      */
-    public void move(int channelId, int parentChannelId) {
+    public void move(ChannelId channelId, ChannelId parentChannelId) {
         CommandFutures.join(async.move(channelId, parentChannelId));
     }
 
@@ -120,10 +121,10 @@ public final class ChannelApi {
      * Moves a channel below a parent channel and sibling.
      *
      * @param channelId the channel to move
-     * @param parentChannelId the new parent channel, or 0 for the top level
-     * @param order the ID of the sibling to place it after, or 0 to make it the first child
+     * @param parentChannelId the new parent channel, or {@code null} for the top level
+     * @param afterChannelId the sibling to place it after, or {@code null} to make it the first child
      */
-    public void move(int channelId, int parentChannelId, int order) {
-        CommandFutures.join(async.move(channelId, parentChannelId, order));
+    public void move(ChannelId channelId, ChannelId parentChannelId, ChannelId afterChannelId) {
+        CommandFutures.join(async.move(channelId, parentChannelId, afterChannelId));
     }
 }

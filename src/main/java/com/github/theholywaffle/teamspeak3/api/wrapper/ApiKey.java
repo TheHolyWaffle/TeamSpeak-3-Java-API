@@ -1,7 +1,9 @@
 package com.github.theholywaffle.teamspeak3.api.wrapper;
 
+import com.github.theholywaffle.teamspeak3.api.ApiKeyId;
 import com.github.theholywaffle.teamspeak3.api.ApiKeyScope;
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
@@ -17,13 +19,13 @@ public class ApiKey extends Wrapper {
         super(map);
     }
 
-    public int getId() {
-        return requireInt("id");
+    public ApiKeyId getId() {
+        return requireId("id", ApiKeyId::of);
     }
 
-    /** @return the virtual server the key is bound to, or {@code 0} for the server instance */
-    public int getVirtualServerId() {
-        return requireInt("sid");
+    /** @return the virtual server the key is bound to, or empty for the server instance */
+    public Optional<VirtualServerId> getVirtualServerId() {
+        return requireOptionalId("sid", VirtualServerId::of);
     }
 
     /** @return the client whose permissions the key's requests use */

@@ -2,6 +2,7 @@ package com.github.theholywaffle.teamspeak3;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
@@ -69,7 +70,7 @@ class ErrorCategoriesTest {
             query.connect();
             var failure = assertThrows(
                     TS3CommandFailedException.class,
-                    () -> query.getApi().channels().info(99));
+                    () -> query.getApi().channels().info(ChannelId.of(99)));
             assertEquals(768, failure.getErrorId());
             assertEquals("channelinfo", failure.getCommandName());
             assertTrue(failure.matchesQueryError(768));

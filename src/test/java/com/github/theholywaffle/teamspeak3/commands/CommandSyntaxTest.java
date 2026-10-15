@@ -3,7 +3,13 @@ package com.github.theholywaffle.teamspeak3.commands;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelGroupFilter;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
+import com.github.theholywaffle.teamspeak3.api.PrivilegeKeyGrant;
+import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
+import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.commands.parameter.ArrayParameter;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 import com.github.theholywaffle.teamspeak3.commands.parameter.OptionParam;
@@ -14,6 +20,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import org.junit.jupiter.api.Test;
 
@@ -64,7 +71,35 @@ class CommandSyntaxTest {
         assertThrows(IllegalArgumentException.class, () -> PermissionCommands.permGet());
         assertEquals(
                 "channelmove cid=1 cpid=0 order=0",
-                ChannelCommands.channelMove(1, 0, -5).encoded());
+                ChannelCommands.channelMove(ChannelId.of(1), Optional.empty(), Optional.empty())
+                        .encoded());
+        assertEquals(
+                "channelmove cid=1 cpid=2 order=3",
+                ChannelCommands.channelMove(ChannelId.of(1), Optional.of(ChannelId.of(2)), Optional.of(ChannelId.of(3)))
+                        .encoded());
+        assertEquals(
+                "servernotifyregister event=channel id=0",
+                QueryCommands.serverNotifyRegister(TS3EventType.CHANNEL, Optional.empty())
+                        .encoded());
+        assertEquals(
+                "servernotifyregister event=server",
+                QueryCommands.serverNotifyRegister(TS3EventType.SERVER, Optional.empty())
+                        .encoded());
+        assertEquals(
+                "servernotifyregister event=server id=4",
+                QueryCommands.serverNotifyRegister(TS3EventType.SERVER, Optional.of(ChannelId.of(4)))
+                        .encoded());
+        assertEquals(
+                "complainlist", ComplaintCommands.complainList(Optional.empty()).encoded());
+        assertEquals(
+                "channelgroupclientlist cldbid=3",
+                ChannelGroupCommands.channelGroupClientList(
+                                ChannelGroupFilter.all().ofClient(ClientDatabaseId.of(3)))
+                        .encoded());
+        assertEquals(
+                "privilegekeyadd tokentype=0 tokenid1=6 tokenid2=0",
+                PrivilegeKeyCommands.privilegeKeyAdd(PrivilegeKeyGrant.serverGroup(ServerGroupId.of(6)), null)
+                        .encoded());
     }
 
     @Test
@@ -74,11 +109,13 @@ class CommandSyntaxTest {
         properties.put(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1");
         assertEquals(
                 "channeledit cid=5 channel_topic=a\\stopic channel_flag_permanent=1",
-                ChannelCommands.channelEdit(5, properties).encoded());
+                ChannelCommands.channelEdit(ChannelId.of(5), properties).encoded());
         assertEquals(
-                "channeledit cid=5", ChannelCommands.channelEdit(5, Map.of()).encoded());
+                "channeledit cid=5",
+                ChannelCommands.channelEdit(ChannelId.of(5), Map.of()).encoded());
         assertThrows(
-                IllegalArgumentException.class, () -> ChannelCommands.channelEdit(5, Map.of(ChannelProperty.CID, "1")));
+                IllegalArgumentException.class,
+                () -> ChannelCommands.channelEdit(ChannelId.of(5), Map.of(ChannelProperty.CID, "1")));
     }
 
     @Test

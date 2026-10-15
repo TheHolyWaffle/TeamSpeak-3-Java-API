@@ -2,6 +2,7 @@ package com.github.theholywaffle.teamspeak3.commands;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import java.util.EnumSet;
 import java.util.List;
@@ -17,10 +18,11 @@ class CommandTraitTest {
                 QueryCommands.logIn("serveradmin", "secret"),
                         EnumSet.of(CommandTrait.SESSION_STATE, CommandTrait.CONNECTION),
                 QueryCommands.logOut(), EnumSet.of(CommandTrait.SESSION_STATE, CommandTrait.CONNECTION),
-                QueryCommands.useId(1, null), EnumSet.of(CommandTrait.SESSION_STATE, CommandTrait.CONNECTION),
+                QueryCommands.useId(VirtualServerId.of(1), null),
+                        EnumSet.of(CommandTrait.SESSION_STATE, CommandTrait.CONNECTION),
                 QueryCommands.quit(), EnumSet.of(CommandTrait.CONNECTION, CommandTrait.ENDS_CONNECTION),
                 ClientCommands.clientUpdate(Map.of()), EnumSet.of(CommandTrait.SESSION_STATE),
-                QueryCommands.serverNotifyRegister(TS3EventType.SERVER, -1),
+                QueryCommands.serverNotifyRegister(TS3EventType.SERVER, java.util.Optional.empty()),
                         EnumSet.of(CommandTrait.SESSION_STATE, CommandTrait.NOTIFICATIONS),
                 QueryCommands.serverNotifyUnregister(),
                         EnumSet.of(CommandTrait.SESSION_STATE, CommandTrait.NOTIFICATIONS),

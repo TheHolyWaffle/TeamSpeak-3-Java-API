@@ -30,6 +30,14 @@ public record PermissionGrant(String permissionName, int value, boolean negated,
         return of(permission.getName(), value ? 1 : 0);
     }
 
+    /**
+     * @param iconId the icon to show for the permission holder
+     * @return an {@code i_icon_id} grant with the icon's {@linkplain IconId#permissionValue() permission value}
+     */
+    public static PermissionGrant icon(IconId iconId) {
+        return of(IPermissionType.I_ICON_ID, iconId.permissionValue());
+    }
+
     /** @return a negated copy */
     public PermissionGrant withNegated() {
         return new PermissionGrant(permissionName, value, true, skipped);

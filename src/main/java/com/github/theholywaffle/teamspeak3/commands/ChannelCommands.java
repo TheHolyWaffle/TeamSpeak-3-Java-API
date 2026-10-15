@@ -1,9 +1,11 @@
 package com.github.theholywaffle.teamspeak3.commands;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 import com.github.theholywaffle.teamspeak3.commands.parameter.OptionParam;
 import java.util.Map;
+import java.util.Optional;
 
 public final class ChannelCommands {
 
@@ -22,14 +24,14 @@ public final class ChannelCommands {
         return builder.build();
     }
 
-    public static Command channelDelete(int channelId, boolean force) {
+    public static Command channelDelete(ChannelId channelId, boolean force) {
         CommandBuilder builder = new CommandBuilder("channeldelete");
         builder.add(new KeyValueParam("cid", channelId));
         builder.add(new KeyValueParam("force", force));
         return builder.build();
     }
 
-    public static Command channelEdit(int channelId, Map<ChannelProperty, String> options) {
+    public static Command channelEdit(ChannelId channelId, Map<ChannelProperty, String> options) {
         CommandBuilder builder = new CommandBuilder("channeledit");
         builder.add(new KeyValueParam("cid", channelId));
         builder.addProperties(options);
@@ -46,7 +48,7 @@ public final class ChannelCommands {
                 .build();
     }
 
-    public static Command channelInfo(int channelId) {
+    public static Command channelInfo(ChannelId channelId) {
         return new CommandBuilder("channelinfo")
                 .add(new KeyValueParam("cid", channelId))
                 .build();
@@ -64,11 +66,16 @@ public final class ChannelCommands {
         return builder.build();
     }
 
-    public static Command channelMove(int channelId, int channelParentId, int order) {
+    /**
+     * @param parentChannelId the new parent, or empty for the top level
+     * @param afterChannelId the sibling to sort after, or empty to sort first
+     */
+    public static Command channelMove(
+            ChannelId channelId, Optional<ChannelId> parentChannelId, Optional<ChannelId> afterChannelId) {
         CommandBuilder builder = new CommandBuilder("channelmove");
         builder.add(new KeyValueParam("cid", channelId));
-        builder.add(new KeyValueParam("cpid", channelParentId));
-        builder.add(new KeyValueParam("order", Math.max(0, order)));
+        builder.add(KeyValueParam.idOrZero("cpid", parentChannelId));
+        builder.add(KeyValueParam.idOrZero("order", afterChannelId));
         return builder.build();
     }
 }

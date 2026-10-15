@@ -26,7 +26,7 @@ public final class ChatBotExample {
             TS3Api api = query.getApi();
             api.selectVirtualServerById(settings.virtualServerId());
             api.setNickname(settings.nickname());
-            ClientId self = api.whoAmI().getId();
+            ClientId self = api.whoAmI().getId().orElseThrow();
 
             // Listeners run on the query's event threads; the subscription is active until the query closes.
             api.events().subscribe(new TS3EventAdapter() {

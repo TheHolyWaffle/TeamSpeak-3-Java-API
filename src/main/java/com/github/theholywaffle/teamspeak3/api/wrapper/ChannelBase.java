@@ -1,7 +1,9 @@
 package com.github.theholywaffle.teamspeak3.api.wrapper;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.Codec;
+import com.github.theholywaffle.teamspeak3.api.IconId;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
@@ -13,14 +15,16 @@ public abstract class ChannelBase extends Wrapper {
         super(map);
     }
 
-    public abstract int getId();
+    public abstract ChannelId getId();
 
-    public int getParentChannelId() {
-        return requireInt(ChannelProperty.PID);
+    /** @return the parent channel, or empty for a top-level channel */
+    public Optional<ChannelId> getParentChannelId() {
+        return requireOptionalId(ChannelProperty.PID, ChannelId::of);
     }
 
-    public int getOrder() {
-        return requireInt(ChannelProperty.CHANNEL_ORDER);
+    /** @return the sibling channel this channel is sorted below, or empty if it is the first */
+    public Optional<ChannelId> getOrder() {
+        return requireOptionalId(ChannelProperty.CHANNEL_ORDER, ChannelId::of);
     }
 
     public String getName() {
@@ -60,8 +64,9 @@ public abstract class ChannelBase extends Wrapper {
         return requireInt(ChannelProperty.CHANNEL_NEEDED_TALK_POWER);
     }
 
-    public long getIconId() {
-        return requireLong(ChannelProperty.CHANNEL_ICON_ID);
+    /** @return the channel's icon, or empty if it has none */
+    public Optional<IconId> getIconId() {
+        return requireIconId(ChannelProperty.CHANNEL_ICON_ID);
     }
 
     /** @return the client limit, or empty if the channel is unlimited ({@code -1}) */

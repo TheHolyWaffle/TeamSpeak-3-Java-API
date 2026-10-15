@@ -1,126 +1,85 @@
 package com.github.theholywaffle.teamspeak3.commands;
 
+import com.github.theholywaffle.teamspeak3.api.FileLocation;
 import com.github.theholywaffle.teamspeak3.commands.parameter.ArrayParameter;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 import com.github.theholywaffle.teamspeak3.commands.parameter.Parameter;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.IntStream;
 
+/** File commands; TeamSpeak addresses the virtual server's own files as channel {@code 0}. */
 public final class FileCommands {
 
     private FileCommands() {
         throw new Error("No instances");
     }
 
-    public static Command ftCreateDir(String path, int channelId, String channelPassword) {
+    public static Command ftCreateDir(FileLocation directory) {
         CommandBuilder builder = new CommandBuilder("ftcreatedir");
-        builder.add(new KeyValueParam("cid", channelId));
-        builder.add(new KeyValueParam("cpw", channelPassword));
-        builder.add(new KeyValueParam("dirname", prefixSlash(path)));
+        addChannel(builder, directory);
+        builder.add(new KeyValueParam("dirname", prefixSlash(directory.path())));
         return builder.build();
     }
 
-    public static Command ftDeleteFile(int channelId, String channelPassword, String... filePaths) {
-        if (filePaths == null || filePaths.length == 0) {
-            throw new IllegalArgumentException("File array cannot be null or empty");
+    /** @param files the files to delete, which must share a channel and password */
+    public static Command ftDeleteFile(List<FileLocation> files) {
+        if (files == null || files.isEmpty()) throw new IllegalArgumentException("At least one file is required");
+        FileLocation first = files.getFirst();
+        for (FileLocation file : files) {
+            if (!file.channelId().equals(first.channelId())
+                    || !file.channelPassword().equals(first.channelPassword())) {
+                throw new IllegalArgumentException("Files deleted together must share a channel and password");
+            }
         }
 
         CommandBuilder builder = new CommandBuilder("ftdeletefile");
-        builder.add(new KeyValueParam("cid", channelId));
-        builder.add(new KeyValueParam("cpw", channelPassword));
-
+        addChannel(builder, first);
         builder.add(ArrayParameter.of(
-                "name", Arrays.stream(filePaths).map(FileCommands::prefixSlash).toList()));
+                "name", files.stream().map(file -> prefixSlash(file.path())).toList()));
         return builder.build();
     }
 
-    public static Command ftGetFileInfo(int channelId, String channelPassword, String... filePaths) {
-        if (filePaths == null || filePaths.length == 0) {
-            throw new IllegalArgumentException("File array cannot be null or empty");
-        }
-
-        return ftGetFileInfo(Arrays.stream(filePaths)
-                .map(path -> fileEntry(channelId, channelPassword, path))
-                .toList());
-    }
-
-    public static Command ftGetFileInfo(int[] channelIds, String[] channelPasswords, String[] filePaths) {
-        if (channelIds == null || channelIds.length == 0) {
-            throw new IllegalArgumentException("Channel ID array cannot be null or empty");
-        }
-        if (filePaths == null || filePaths.length == 0) {
-            throw new IllegalArgumentException("File array cannot be null or empty");
-        }
-        if (channelIds.length != filePaths.length) {
-            throw new IllegalArgumentException("Channel IDs length doesn't match file paths length");
-        }
-        if (channelPasswords != null && filePaths.length != channelPasswords.length) {
-            throw new IllegalArgumentException("Passwords length doesn't match file paths length");
-        }
-
-        return ftGetFileInfo(IntStream.range(0, filePaths.length)
-                .mapToObj(i ->
-                        fileEntry(channelIds[i], channelPasswords == null ? null : channelPasswords[i], filePaths[i]))
-                .toList());
-    }
-
-    private static Command ftGetFileInfo(List<List<Parameter>> files) {
+    public static Command ftGetFileInfo(List<FileLocation> files) {
+        if (files == null || files.isEmpty()) throw new IllegalArgumentException("At least one file is required");
         return new CommandBuilder("ftgetfileinfo")
-                .add(new ArrayParameter(files))
+                .add(new ArrayParameter(
+                        files.stream().map(FileCommands::fileEntry).toList()))
                 .build();
     }
 
-    private static List<Parameter> fileEntry(int channelId, String channelPassword, String path) {
+    private static List<Parameter> fileEntry(FileLocation file) {
         return List.of(
-                new KeyValueParam("cid", channelId),
-                new KeyValueParam("cpw", channelPassword),
-                new KeyValueParam("name", prefixSlash(path)));
+                channelId("cid", file),
+                channelPassword("cpw", file),
+                new KeyValueParam("name", prefixSlash(file.path())));
     }
 
-    public static Command ftGetFileList(String directoryPath, int channelId, String channelPassword) {
-        if (directoryPath == null) throw new IllegalArgumentException("Directory path cannot be null");
-
+    public static Command ftGetFileList(FileLocation directory) {
         CommandBuilder builder = new CommandBuilder("ftgetfilelist");
-        builder.add(new KeyValueParam("cid", channelId));
-        builder.add(new KeyValueParam("cpw", channelPassword));
-
-        String path = directoryPath; // Make sure path starts and ends with /
-        if (!path.startsWith("/")) path = "/" + path;
-        if (!path.endsWith("/")) path += "/";
-        builder.add(new KeyValueParam("path", path));
-
+        addChannel(builder, directory);
+        String path = prefixSlash(directory.path());
+        builder.add(new KeyValueParam("path", path.endsWith("/") ? path : path + "/"));
         return builder.build();
     }
 
-    public static Command ftInitDownload(
-            int transferId, String path, int channelId, String channelPassword, long seekPosition) {
+    public static Command ftInitDownload(int transferId, FileLocation file, long seekPosition) {
         if (seekPosition < 0) throw new IllegalArgumentException("Negative download seek position");
         CommandBuilder builder = new CommandBuilder("ftinitdownload");
         builder.add(new KeyValueParam("clientftfid", transferId));
-        builder.add(new KeyValueParam("name", prefixSlash(path)));
-        builder.add(new KeyValueParam("cid", channelId));
-        builder.add(new KeyValueParam("cpw", channelPassword));
+        builder.add(new KeyValueParam("name", prefixSlash(file.path())));
+        addChannel(builder, file);
         builder.add(new KeyValueParam("seekpos", seekPosition));
         builder.add(new KeyValueParam("proto", 0)); // Use current (old) protocol for as long as possible
         return builder.build();
     }
 
     public static Command ftInitUpload(
-            int transferId,
-            String path,
-            int channelId,
-            String channelPassword,
-            long size,
-            boolean overwrite,
-            boolean resume) {
+            int transferId, FileLocation file, long size, boolean overwrite, boolean resume) {
         if (size < 0) throw new IllegalArgumentException("Negative upload length");
         if (resume && overwrite) throw new IllegalArgumentException("Resume cannot overwrite a file");
         CommandBuilder builder = new CommandBuilder("ftinitupload");
         builder.add(new KeyValueParam("clientftfid", transferId));
-        builder.add(new KeyValueParam("name", prefixSlash(path)));
-        builder.add(new KeyValueParam("cid", channelId));
-        builder.add(new KeyValueParam("cpw", channelPassword));
+        builder.add(new KeyValueParam("name", prefixSlash(file.path())));
+        addChannel(builder, file);
         builder.add(new KeyValueParam("size", size));
         builder.add(new KeyValueParam("overwrite", overwrite));
         builder.add(new KeyValueParam("resume", resume));
@@ -132,40 +91,33 @@ public final class FileCommands {
         return new CommandBuilder("ftlist").build();
     }
 
-    public static Command ftRenameFile(String oldPath, String newPath, int channelId, String channelPassword) {
-        if (oldPath == null) throw new IllegalArgumentException("Old file path cannot be null");
-        if (newPath == null) throw new IllegalArgumentException("New file path cannot be null");
-
+    /** Moves within one channel, or across channels when {@code to} names another channel. */
+    public static Command ftRenameFile(FileLocation from, FileLocation to) {
         CommandBuilder builder = new CommandBuilder("ftrenamefile");
-        builder.add(new KeyValueParam("cid", channelId));
-        builder.add(new KeyValueParam("cpw", channelPassword));
-        builder.add(new KeyValueParam("oldname", prefixSlash(oldPath)));
-        builder.add(new KeyValueParam("newname", prefixSlash(newPath)));
+        addChannel(builder, from);
+        if (!from.channelId().equals(to.channelId())) {
+            builder.add(channelId("tcid", to));
+            builder.add(channelPassword("tcpw", to));
+        }
+        builder.add(new KeyValueParam("oldname", prefixSlash(from.path())));
+        builder.add(new KeyValueParam("newname", prefixSlash(to.path())));
         return builder.build();
     }
 
-    public static Command ftRenameFile(
-            String oldPath,
-            String newPath,
-            int oldChannelId,
-            String oldChannelPassword,
-            int newChannelId,
-            String newChannelPassword) {
-        if (oldPath == null) throw new IllegalArgumentException("Old file path cannot be null");
-        if (newPath == null) throw new IllegalArgumentException("New file path cannot be null");
+    private static void addChannel(CommandBuilder builder, FileLocation location) {
+        builder.add(channelId("cid", location));
+        builder.add(channelPassword("cpw", location));
+    }
 
-        CommandBuilder builder = new CommandBuilder("ftrenamefile");
-        builder.add(new KeyValueParam("cid", oldChannelId));
-        builder.add(new KeyValueParam("cpw", oldChannelPassword));
-        builder.add(new KeyValueParam("tcid", newChannelId));
-        builder.add(new KeyValueParam("tcpw", newChannelPassword));
-        builder.add(new KeyValueParam("oldname", prefixSlash(oldPath)));
-        builder.add(new KeyValueParam("newname", prefixSlash(newPath)));
-        return builder.build();
+    private static KeyValueParam channelPassword(String key, FileLocation location) {
+        return new KeyValueParam(key, location.channelPassword().orElse(""));
+    }
+
+    private static KeyValueParam channelId(String key, FileLocation location) {
+        return KeyValueParam.idOrZero(key, location.channelId());
     }
 
     private static String prefixSlash(String path) {
-        if (path == null) throw new IllegalArgumentException("File path cannot be null");
         return path.startsWith("/") ? path : "/" + path;
     }
 }

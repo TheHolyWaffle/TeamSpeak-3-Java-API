@@ -3,6 +3,7 @@ package com.github.theholywaffle.teamspeak3;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
+import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.reconnect.ConnectionHandler;
 import java.util.concurrent.TimeUnit;
@@ -40,14 +41,18 @@ class GroupCopyTest {
                 });
                 var query = new TS3Query(config(peer))) {
             query.connect();
-            query.getApi().serverGroups().overwrite(9, 42, PermissionGroupDatabaseType.REGULAR);
+            query.getApi()
+                    .serverGroups()
+                    .overwrite(ServerGroupId.of(9), ServerGroupId.of(42), PermissionGroupDatabaseType.REGULAR);
             assertNull(query.getAsyncApi()
                     .serverGroups()
-                    .overwrite(9, 43, PermissionGroupDatabaseType.REGULAR)
+                    .overwrite(ServerGroupId.of(9), ServerGroupId.of(43), PermissionGroupDatabaseType.REGULAR)
                     .get(5, TimeUnit.SECONDS));
             var error = assertThrows(
                     TS3CommandFailedException.class,
-                    () -> query.getApi().serverGroups().overwrite(9, 44, PermissionGroupDatabaseType.REGULAR));
+                    () -> query.getApi()
+                            .serverGroups()
+                            .overwrite(ServerGroupId.of(9), ServerGroupId.of(44), PermissionGroupDatabaseType.REGULAR));
             assertEquals(2560, error.getError().getId());
             assertEquals("invalid group ID", error.getError().getMessage());
             FutureAssertions.awaitCommandAdmission(query);
@@ -66,11 +71,13 @@ class GroupCopyTest {
                     p.finishQuit();
                 });
                 var query = new TS3Query(config(peer).setCommandCapacity(1))) {
-            var cancelled = query.getAsyncApi().serverGroups().overwrite(9, 42, PermissionGroupDatabaseType.REGULAR);
+            var cancelled = query.getAsyncApi()
+                    .serverGroups()
+                    .overwrite(ServerGroupId.of(9), ServerGroupId.of(42), PermissionGroupDatabaseType.REGULAR);
             var next = new java.util.concurrent.atomic.AtomicReference<
                     java.util.concurrent.CompletableFuture<com.github.theholywaffle.teamspeak3.api.wrapper.Version>>();
             cancelled.whenComplete(
-                    (value, failure) -> next.set(query.getAsyncApi().instance().version()));
+                    (_, _) -> next.set(query.getAsyncApi().instance().version()));
             assertTrue(cancelled.cancel(false));
             assertNotNull(next.get());
             query.connect();
@@ -95,8 +102,10 @@ class GroupCopyTest {
                     p.finishQuit();
                 });
                 var query = new TS3Query(config(peer).setCommandCapacity(1))) {
-            var result = query.getAsyncApi().serverGroups().overwrite(9, 42, PermissionGroupDatabaseType.REGULAR);
-            var observer = result.whenComplete((value, failure) -> {
+            var result = query.getAsyncApi()
+                    .serverGroups()
+                    .overwrite(ServerGroupId.of(9), ServerGroupId.of(42), PermissionGroupDatabaseType.REGULAR);
+            var observer = result.whenComplete((_, _) -> {
                 published.countDown();
                 try {
                     assertTrue(releaseObserver.await(5, TimeUnit.SECONDS));

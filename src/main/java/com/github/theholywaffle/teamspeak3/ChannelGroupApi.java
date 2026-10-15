@@ -1,6 +1,8 @@
 package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelGroupFilter;
+import com.github.theholywaffle.teamspeak3.api.ChannelGroupId;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
@@ -10,7 +12,7 @@ import java.util.List;
 
 /**
  * Channel group administration. Channel group permissions are managed through
- * {@link PermissionApi} with {@link com.github.theholywaffle.teamspeak3.api.PermissionTarget#channelGroup(int)}.
+ * {@link PermissionApi} with {@link com.github.theholywaffle.teamspeak3.api.PermissionTarget#channelGroup(ChannelGroupId)}.
  *
  * @see ChannelGroupApiAsync the asynchronous form
  */
@@ -37,7 +39,7 @@ public final class ChannelGroupApi {
      * @param name the group name
      * @return the ID of the new group
      */
-    public int create(String name) {
+    public ChannelGroupId create(String name) {
         return CommandFutures.join(async.create(name));
     }
 
@@ -48,7 +50,7 @@ public final class ChannelGroupApi {
      * @param type the group type, or {@code null} for a regular group
      * @return the ID of the new group
      */
-    public int create(String name, PermissionGroupDatabaseType type) {
+    public ChannelGroupId create(String name, PermissionGroupDatabaseType type) {
         return CommandFutures.join(async.create(name, type));
     }
 
@@ -60,7 +62,7 @@ public final class ChannelGroupApi {
      * @param type the new group's type
      * @return the ID of the new group
      */
-    public int copy(int sourceGroupId, String name, PermissionGroupDatabaseType type) {
+    public ChannelGroupId copy(ChannelGroupId sourceGroupId, String name, PermissionGroupDatabaseType type) {
         return CommandFutures.join(async.copy(sourceGroupId, name, type));
     }
 
@@ -71,7 +73,8 @@ public final class ChannelGroupApi {
      * @param targetGroupId the existing group to overwrite
      * @param type the target group's type
      */
-    public void overwrite(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
+    public void overwrite(
+            ChannelGroupId sourceGroupId, ChannelGroupId targetGroupId, PermissionGroupDatabaseType type) {
         CommandFutures.join(async.overwrite(sourceGroupId, targetGroupId, type));
     }
 
@@ -81,7 +84,7 @@ public final class ChannelGroupApi {
      * @param groupId the group ID
      * @param name the new name
      */
-    public void rename(int groupId, String name) {
+    public void rename(ChannelGroupId groupId, String name) {
         CommandFutures.join(async.rename(groupId, name));
     }
 
@@ -90,7 +93,7 @@ public final class ChannelGroupApi {
      *
      * @param groupId the group ID
      */
-    public void delete(int groupId) {
+    public void delete(ChannelGroupId groupId) {
         CommandFutures.join(async.delete(groupId));
     }
 
@@ -100,7 +103,7 @@ public final class ChannelGroupApi {
      * @param groupId the group ID
      * @param force whether to delete a group that still has members
      */
-    public void delete(int groupId, boolean force) {
+    public void delete(ChannelGroupId groupId, boolean force) {
         CommandFutures.join(async.delete(groupId, force));
     }
 
@@ -121,7 +124,7 @@ public final class ChannelGroupApi {
      * @param channelId the channel ID
      * @param clientDatabaseId the client database ID
      */
-    public void assign(int groupId, int channelId, ClientDatabaseId clientDatabaseId) {
+    public void assign(ChannelGroupId groupId, ChannelId channelId, ClientDatabaseId clientDatabaseId) {
         CommandFutures.join(async.assign(groupId, channelId, clientDatabaseId));
     }
 }

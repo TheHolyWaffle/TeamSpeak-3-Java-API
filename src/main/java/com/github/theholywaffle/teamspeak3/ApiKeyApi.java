@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ApiKeyId;
 import com.github.theholywaffle.teamspeak3.api.ApiKeyScope;
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
@@ -74,10 +75,10 @@ public final class ApiKeyApi {
     /**
      * Deletes an API key, immediately rejecting its requests.
      *
-     * @param id the key ID
+     * @param id the key's {@link ApiKey#getId() ID}
      * @throws com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException with error 5123 for an unknown ID
      */
-    public void delete(int id) {
+    public void delete(ApiKeyId id) {
         CommandFutures.join(async.delete(id));
     }
 }

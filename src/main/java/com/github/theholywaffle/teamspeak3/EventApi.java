@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
@@ -34,9 +35,9 @@ public final class EventApi {
      * Registers this query session for one notification type.
      *
      * @param eventType the event type
-     * @param channelId the channel to observe for channel events, 0 for every channel, or -1 for other types
+     * @param channelId the one channel to observe for channel events
      */
-    public void register(TS3EventType eventType, int channelId) {
+    public void register(TS3EventType eventType, ChannelId channelId) {
         CommandFutures.join(async.register(eventType, channelId));
     }
 

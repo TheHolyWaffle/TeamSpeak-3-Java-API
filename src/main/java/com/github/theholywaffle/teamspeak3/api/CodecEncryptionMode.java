@@ -15,7 +15,7 @@ public enum CodecEncryptionMode {
     /**
      * Each channel manages audio encryption on its own.
      *
-     * @see ChannelApi#edit(int, Map)
+     * @see ChannelApi#edit(ChannelId, Map)
      */
     CODEC_CRYPT_INDIVIDUAL(0),
 

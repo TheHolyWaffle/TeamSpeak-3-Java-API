@@ -1,6 +1,8 @@
 package com.github.theholywaffle.teamspeak3.commands;
 
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
+import java.util.Optional;
 
 public final class ComplaintCommands {
 
@@ -8,29 +10,30 @@ public final class ComplaintCommands {
         throw new Error("No instances");
     }
 
-    public static Command complainAdd(int clientDBId, String message) {
+    public static Command complainAdd(ClientDatabaseId clientDBId, String message) {
         CommandBuilder builder = new CommandBuilder("complainadd");
         builder.add(new KeyValueParam("tcldbid", clientDBId));
         builder.add(new KeyValueParam("message", message));
         return builder.build();
     }
 
-    public static Command complainDel(int clientDBId, int fromClientDBId) {
+    public static Command complainDel(ClientDatabaseId clientDBId, ClientDatabaseId fromClientDBId) {
         CommandBuilder builder = new CommandBuilder("complaindel");
         builder.add(new KeyValueParam("tcldbid", clientDBId));
         builder.add(new KeyValueParam("fcldbid", fromClientDBId));
         return builder.build();
     }
 
-    public static Command complainDelAll(int clientDBId) {
+    public static Command complainDelAll(ClientDatabaseId clientDBId) {
         return new CommandBuilder("complaindelall")
                 .add(new KeyValueParam("tcldbid", clientDBId))
                 .build();
     }
 
-    public static Command complainList(int clientDBId) {
+    /** @param clientDBId the target client, or empty for all complaints */
+    public static Command complainList(Optional<ClientDatabaseId> clientDBId) {
         return new CommandBuilder("complainlist")
-                .addIf(clientDBId > 0, new KeyValueParam("tcldbid", clientDBId))
+                .addIfPresent("tcldbid", clientDBId)
                 .build();
     }
 }

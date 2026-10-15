@@ -24,7 +24,7 @@ final class ProtocolLineReader implements Closeable {
                 partialLine.setLength(0);
                 return line;
             }
-            partialLine.append((char) ch);
+            partialLine.appendCodePoint(ch);
         }
         // EOF cannot complete an unterminated protocol line.
         partialLine.setLength(0);

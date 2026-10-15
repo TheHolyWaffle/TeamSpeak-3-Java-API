@@ -2,16 +2,21 @@ package com.github.theholywaffle.teamspeak3;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.github.theholywaffle.teamspeak3.api.BanId;
 import com.github.theholywaffle.teamspeak3.api.BanRequest;
 import com.github.theholywaffle.teamspeak3.api.ChannelGroupFilter;
+import com.github.theholywaffle.teamspeak3.api.ChannelGroupId;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientBan;
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
+import com.github.theholywaffle.teamspeak3.api.IconId;
 import com.github.theholywaffle.teamspeak3.api.PermissionGrant;
-import com.github.theholywaffle.teamspeak3.api.PermissionGroupType;
 import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
+import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import com.github.theholywaffle.teamspeak3.api.ServerGroupType;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
@@ -19,6 +24,7 @@ import com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueExceptio
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -79,7 +85,7 @@ class DomainApiTest {
                                     TS3CommandFailedException.class,
                                     () -> api.servers().findIdByPort(2))
                             .getErrorId());
-            assertEquals(Optional.of(1), api.servers().findIdByPort(9987));
+            assertEquals(Optional.of(VirtualServerId.of(1)), api.servers().findIdByPort(9987));
             assertEquals(List.of(), api.channels().search("none"));
             query.exit();
             peer.await();
@@ -97,7 +103,34 @@ class DomainApiTest {
                 });
                 var query = query(peer)) {
             query.connect();
-            query.getApi().messages().sendServer(2, "hi");
+            query.getApi().messages().sendServer(VirtualServerId.of(2), "hi");
+            query.exit();
+            peer.await();
+        }
+    }
+
+    @Test
+    void deselectingReturnsTheSessionToTheInstance() throws Exception {
+        try (var peer = new FakeServerQuery(p -> {
+                    p.expect("use sid=1 -virtual");
+                    p.write(OK);
+                    p.expect("use sid=0");
+                    p.write(OK);
+                    p.expect("whoami");
+                    p.write("virtualserver_status=unknown virtualserver_id=0 virtualserver_port=0 client_id=0"
+                            + " client_channel_id=0\n" + OK);
+                    p.finishQuit();
+                });
+                var query = query(peer)) {
+            query.connect();
+            var api = query.getApi();
+            api.selectVirtualServerById(VirtualServerId.of(1));
+            api.deselectVirtualServer();
+            var whoAmI = api.whoAmI();
+            assertEquals(Optional.empty(), whoAmI.getVirtualServerId());
+            assertEquals(Optional.empty(), whoAmI.getId());
+            assertEquals(OptionalInt.empty(), whoAmI.getVirtualServerPort());
+            assertEquals(Optional.empty(), whoAmI.getChannelId());
             query.exit();
             peer.await();
         }
@@ -145,14 +178,15 @@ class DomainApiTest {
                     assertThrows(TS3Exception.class, () -> api.permissions().idByName("i_empty"))
                             .getMessage());
             var missing = assertThrows(
-                    TS3InvalidValueException.class, () -> api.privilegeKeys().createForServerGroup(6, null));
+                    TS3InvalidValueException.class,
+                    () -> api.privilegeKeys().createForServerGroup(ServerGroupId.of(6), null));
             assertEquals("token", missing.getProperty());
             assertEquals(Optional.empty(), missing.getRawValue());
             assertEquals(
                     768,
                     assertThrows(
                                     TS3CommandFailedException.class,
-                                    () -> api.channels().info(99))
+                                    () -> api.channels().info(ChannelId.of(99)))
                             .getErrorId());
             var malformed = assertThrows(
                     TS3InvalidValueException.class, () -> api.clients().findByUniqueId("malformed"));
@@ -193,35 +227,37 @@ class DomainApiTest {
             query.connect();
             var permissions = query.getApi().permissions();
             permissions.add(
-                    PermissionTarget.serverGroup(6),
+                    PermissionTarget.serverGroup(ServerGroupId.of(6)),
                     PermissionGrant.of("b_x", 1).withNegated().withSkip());
-            permissions.add(PermissionTarget.channelGroup(5), PermissionGrant.of("b_x", 1));
-            permissions.add(PermissionTarget.channel(4), "i_x", 7);
+            permissions.add(PermissionTarget.channelGroup(ChannelGroupId.of(5)), PermissionGrant.of("b_x", 1));
+            permissions.add(PermissionTarget.channel(ChannelId.of(4)), "i_x", 7);
             permissions.add(
                     PermissionTarget.client(ClientDatabaseId.of(3)),
                     PermissionGrant.of("i_x", 7).withSkip());
-            permissions.add(PermissionTarget.channelClient(4, ClientDatabaseId.of(3)), "i_x", 7);
+            permissions.add(PermissionTarget.channelClient(ChannelId.of(4), ClientDatabaseId.of(3)), "i_x", 7);
             permissions.addToAllServerGroups(ServerGroupType.CHANNEL_GUEST, PermissionGrant.of("i_x", 7));
             assertThrows(
                     IllegalArgumentException.class,
                     () -> permissions.add(
-                            PermissionTarget.channel(4),
+                            PermissionTarget.channel(ChannelId.of(4)),
                             PermissionGrant.of("i_x", 7).withSkip()));
             assertThrows(
                     IllegalArgumentException.class,
                     () -> permissions.add(
                             PermissionTarget.client(ClientDatabaseId.of(3)),
                             PermissionGrant.of("i_x", 7).withNegated()));
-            permissions.delete(PermissionTarget.serverGroup(6), "b_x");
-            permissions.delete(PermissionTarget.channelGroup(5), "b_x");
-            permissions.delete(PermissionTarget.channel(4), "i_x");
+            permissions.delete(PermissionTarget.serverGroup(ServerGroupId.of(6)), "b_x");
+            permissions.delete(PermissionTarget.channelGroup(ChannelGroupId.of(5)), "b_x");
+            permissions.delete(PermissionTarget.channel(ChannelId.of(4)), "i_x");
             permissions.delete(PermissionTarget.client(ClientDatabaseId.of(3)), "i_x");
-            permissions.delete(PermissionTarget.channelClient(4, ClientDatabaseId.of(3)), "i_x");
+            permissions.delete(PermissionTarget.channelClient(ChannelId.of(4), ClientDatabaseId.of(3)), "i_x");
             permissions.deleteFromAllServerGroups(ServerGroupType.CHANNEL_GUEST, "i_x");
-            var assigned = permissions.assigned(PermissionTarget.serverGroup(6));
+            var assigned = permissions.assigned(PermissionTarget.serverGroup(ServerGroupId.of(6)));
             assertTrue(assigned.getFirst().negated() && assigned.getFirst().skipped());
             assertThrows(UnsupportedOperationException.class, () -> assigned.add(assigned.getFirst()));
-            assertEquals(List.of(), permissions.assigned(PermissionTarget.channelClient(4, ClientDatabaseId.of(3))));
+            assertEquals(
+                    List.of(),
+                    permissions.assigned(PermissionTarget.channelClient(ChannelId.of(4), ClientDatabaseId.of(3))));
             query.exit();
             peer.await();
         }
@@ -251,28 +287,36 @@ class DomainApiTest {
                 var query = query(peer)) {
             query.connect();
             var api = query.getApi();
-            assertEquals(11, api.bans().add(BanRequest.myTeamSpeakId("empty").withReason("no account")));
             assertEquals(
-                    12,
+                    BanId.of(11),
+                    api.bans().add(BanRequest.myTeamSpeakId("empty").withReason("no account")));
+            assertEquals(
+                    BanId.of(12),
                     api.bans().add(BanRequest.ip("1.2.3.4").withName("spam.*").withDuration(Duration.ofHours(1))));
             assertEquals(
-                    List.of(13, 14),
+                    List.of(BanId.of(13), BanId.of(14)),
                     api.bans()
                             .banClients(ClientBan.of(ClientId.of(3), ClientId.of(4))
                                     .withReason("bye")
                                     .continuingOnError()));
-            var a = FileLocation.of(2, "/a").withChannelPassword("pw");
+            var a = FileLocation.of(ChannelId.of(2), "/a").withChannelPassword("pw");
             api.files().delete(List.of(a, a.withPath("/b")));
             assertThrows(
-                    IllegalArgumentException.class, () -> api.files().delete(List.of(a, FileLocation.of(3, "/b"))));
-            api.files().move(a, FileLocation.of(3, "/c").withChannelPassword(""));
+                    IllegalArgumentException.class,
+                    () -> api.files().delete(List.of(a, FileLocation.of(ChannelId.of(3), "/b"))));
+            api.files().move(a, FileLocation.of(ChannelId.of(3), "/c").withChannelPassword(""));
             assertEquals(
                     List.of(),
                     api.channelGroups()
-                            .members(ChannelGroupFilter.all().inChannel(2).inGroup(8)));
+                            .members(ChannelGroupFilter.all()
+                                    .inChannel(ChannelId.of(2))
+                                    .inGroup(ChannelGroupId.of(8))));
             api.events().register(TS3EventType.CHANNEL, TS3EventType.TEXT_PRIVATE);
             assertNull(
-                    query.getAsyncApi().clients().moveAll(List.of(), 2, null).getNow(null),
+                    query.getAsyncApi()
+                            .clients()
+                            .moveAll(List.of(), ChannelId.of(2), null)
+                            .getNow(null),
                     "An empty move sends nothing");
             query.exit();
             peer.await();
@@ -284,17 +328,16 @@ class DomainApiTest {
         assertThrows(IllegalArgumentException.class, () -> new BanRequest(null, null, null, null, Duration.ZERO, null));
         assertThrows(IllegalArgumentException.class, () -> BanRequest.ip("x").withDuration(Duration.ofSeconds(-1)));
         assertThrows(IllegalArgumentException.class, ClientBan::of);
-        assertThrows(IllegalArgumentException.class, () -> PermissionTarget.channel(0));
-        assertThrows(IllegalArgumentException.class, () -> new PermissionTarget(PermissionGroupType.CHANNEL, 1, 2));
-        assertThrows(
-                IllegalArgumentException.class, () -> new PermissionTarget(PermissionGroupType.CHANNEL_CLIENT, 1, 0));
+        assertThrows(IllegalArgumentException.class, () -> PermissionTarget.channel(ChannelId.of(0)));
+        assertThrows(NullPointerException.class, () -> PermissionTarget.channelClient(ChannelId.of(1), null));
         assertThrows(IllegalArgumentException.class, () -> PermissionGrant.of("", 1));
-        assertThrows(IllegalArgumentException.class, () -> FileLocation.of(-1, "/a"));
-        assertThrows(IllegalArgumentException.class, () -> FileLocation.of(1, ""));
+        assertThrows(IllegalArgumentException.class, () -> FileLocation.of(ChannelId.of(-1), "/a"));
+        assertThrows(IllegalArgumentException.class, () -> FileLocation.of(ChannelId.of(1), ""));
         assertThrows(
-                IllegalArgumentException.class, () -> ChannelGroupFilter.all().inGroup(0));
+                IllegalArgumentException.class, () -> ChannelGroupFilter.all().inGroup(ChannelGroupId.of(0)));
         assertEquals(
-                ChannelGroupFilter.all().inChannel(2), ChannelGroupFilter.all().inChannel(2));
+                ChannelGroupFilter.all().inChannel(ChannelId.of(2)),
+                ChannelGroupFilter.all().inChannel(ChannelId.of(2)));
         assertTrue(ChannelGroupFilter.all().groupId().isEmpty());
         assertEquals(
                 1,
@@ -302,5 +345,15 @@ class DomainApiTest {
                                 com.github.theholywaffle.teamspeak3.api.BPermissionType.B_CHANNEL_CREATE_PERMANENT,
                                 true)
                         .value());
+        assertEquals(PermissionGrant.of("i_icon_id", -479260183), PermissionGrant.icon(IconId.of(3815707113L)));
+        assertEquals(PermissionGrant.of("i_icon_id", 7), PermissionGrant.icon(IconId.of(7)));
+        assertEquals(-1, PermissionGrant.icon(IconId.of(0xFFFF_FFFFL)).value());
+        assertEquals(IconId.of(3815707113L), IconId.fromPermissionValue(-479260183));
+        assertEquals(IconId.of(7), IconId.fromPermissionValue(7));
+        assertEquals("3815707113", IconId.of(3815707113L).toString());
+        assertThrows(IllegalArgumentException.class, () -> IconId.of(0));
+        assertThrows(IllegalArgumentException.class, () -> IconId.of(-1));
+        assertThrows(IllegalArgumentException.class, () -> IconId.of(0x1_0000_0000L));
+        assertThrows(IllegalArgumentException.class, () -> IconId.fromPermissionValue(0));
     }
 }

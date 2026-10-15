@@ -6,6 +6,7 @@ import com.github.theholywaffle.teamspeak3.TS3Config;
 import com.github.theholywaffle.teamspeak3.TS3Query.FloodRate;
 import com.github.theholywaffle.teamspeak3.TS3Query.Protocol;
 import com.github.theholywaffle.teamspeak3.WebQueryConfig;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -84,7 +85,7 @@ public final class ExampleSettings {
                     defaults.readTimeout(),
                     defaults.transferTimeout(),
                     defaults.maxInMemoryBytes(),
-                    (queryHost, advertisedHost, advertisedPort) -> new InetSocketAddress(host, port)));
+                    (_, _, _) -> new InetSocketAddress(host, port)));
         }
         return config;
     }
@@ -100,7 +101,7 @@ public final class ExampleSettings {
         URI uri;
         try {
             uri = URI.create(endpoint);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             throw unsupported("TS3_WEBQUERY_URI");
         }
         WebQueryConfig.Builder builder = WebQueryConfig.builder(uri, required("TS3_API_KEY"))
@@ -133,8 +134,8 @@ public final class ExampleSettings {
     }
 
     /** @return {@code TS3_VIRTUAL_SERVER_ID}, default 1 */
-    public int virtualServerId() {
-        return integer("TS3_VIRTUAL_SERVER_ID", "1", Integer.MAX_VALUE);
+    public VirtualServerId virtualServerId() {
+        return VirtualServerId.of(integer("TS3_VIRTUAL_SERVER_ID", "1", Integer.MAX_VALUE));
     }
 
     /** @return {@code TS3_NICKNAME}, default "Java API example" */
@@ -186,7 +187,7 @@ public final class ExampleSettings {
         try {
             int number = Integer.parseInt(value);
             if (number > 0 && number <= max) return number;
-        } catch (NumberFormatException ignored) {
+        } catch (NumberFormatException _) {
             // Reported below.
         }
         throw new IllegalArgumentException(name + " must be an integer between 1 and " + max + ": " + value);

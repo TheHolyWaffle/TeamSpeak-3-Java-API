@@ -1,6 +1,7 @@
 package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3Exception;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3QueryShutDownException;
@@ -90,7 +91,7 @@ public final class TS3WebQuery implements AutoCloseable {
      * @param virtualServerId the virtual server every command of the returned API addresses
      * @return the synchronous API for that virtual server
      */
-    public TS3BaseApi getApi(int virtualServerId) {
+    public TS3BaseApi getApi(VirtualServerId virtualServerId) {
         return new TS3BaseApi(getAsyncApi(virtualServerId));
     }
 
@@ -98,14 +99,13 @@ public final class TS3WebQuery implements AutoCloseable {
      * @param virtualServerId the virtual server every command of the returned API addresses
      * @return the asynchronous API for that virtual server
      */
-    public TS3BaseApiAsync getAsyncApi(int virtualServerId) {
+    public TS3BaseApiAsync getAsyncApi(VirtualServerId virtualServerId) {
         return api(serverScope(virtualServerId));
     }
 
     /** @return the request path prefix addressing a virtual server by ID */
-    static String serverScope(int virtualServerId) {
-        if (virtualServerId < 1) throw new IllegalArgumentException("Virtual server ID must be positive");
-        return virtualServerId + "/";
+    static String serverScope(VirtualServerId virtualServerId) {
+        return virtualServerId.value() + "/";
     }
 
     /**
@@ -149,7 +149,7 @@ public final class TS3WebQuery implements AutoCloseable {
             var _ = http.awaitTermination(Duration.ofNanos(deadline.remaining() / 2));
             executor.shutdown();
             var _ = executor.awaitTermination(deadline.remaining(), TimeUnit.NANOSECONDS);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException _) {
             Thread.currentThread().interrupt();
         } finally {
             executor.shutdownNow();
@@ -220,10 +220,10 @@ public final class TS3WebQuery implements AutoCloseable {
             } catch (RuntimeException e) {
                 result.completeExceptionally(e);
             } finally {
-                var _ = work.whenComplete((value, ignored) -> admission.release());
+                var _ = work.whenComplete((_, _) -> admission.release());
             }
         });
-        var _ = result.whenComplete((value, failure) -> {
+        var _ = result.whenComplete((_, _) -> {
             if (result.isCancelled()) exchange.cancel(true);
         });
     }

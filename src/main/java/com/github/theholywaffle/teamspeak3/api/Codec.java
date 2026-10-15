@@ -6,7 +6,7 @@ import java.util.Map;
 /**
  * Voice codecs currently used by TeamSpeak3.
  * <p>
- * A channel's codec may be edited by using {@link ChannelApi#edit(int, Map)}.
+ * A channel's codec may be edited by using {@link ChannelApi#edit(ChannelId, Map)}.
  * All voice data may also be encrypted.
  * </p>
  */

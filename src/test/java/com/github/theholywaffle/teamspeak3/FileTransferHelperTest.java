@@ -243,14 +243,12 @@ class FileTransferHelperTest {
 
     @Test
     void lengthsMemoryLimitsAndNoProgressFailBeforeAllocationOrSocket() throws Exception {
-        assertThrows(
-                IOException.class, () -> FileTransferHelper.readFully(InputStream.nullInputStream(), -1, 1024, null));
-        assertThrows(
-                IOException.class,
-                () -> FileTransferHelper.readFully(InputStream.nullInputStream(), Long.MAX_VALUE, 1024, null));
-        assertArrayEquals(new byte[0], FileTransferHelper.readFully(InputStream.nullInputStream(), 0, 0, null));
-        assertThrows(
-                IOException.class, () -> FileTransferHelper.readFully(InputStream.nullInputStream(), 1, 1024, null));
+        assertThrows(IOException.class, () -> FileTransferHelper.inMemoryLength(-1, 1024));
+        assertThrows(IOException.class, () -> FileTransferHelper.inMemoryLength(1025, 1024));
+        assertThrows(IOException.class, () -> FileTransferHelper.inMemoryLength(Long.MAX_VALUE, 1024));
+        assertEquals(1024, FileTransferHelper.inMemoryLength(1024, 1024));
+        assertArrayEquals(new byte[0], FileTransferHelper.readFully(InputStream.nullInputStream(), 0, null));
+        assertThrows(IOException.class, () -> FileTransferHelper.readFully(InputStream.nullInputStream(), 1, null));
         var noProgress = new InputStream() {
             @Override
             public int read() {
@@ -262,7 +260,7 @@ class FileTransferHelperTest {
                 return 0;
             }
         };
-        assertThrows(IOException.class, () -> FileTransferHelper.readFully(noProgress, 1, 1024, null));
+        assertThrows(IOException.class, () -> FileTransferHelper.readFully(noProgress, 1, null));
         try (var fixture = new Fixture();
                 var operation = fixture.operation()) {
             assertThrows(
@@ -384,9 +382,9 @@ class FileTransferHelperTest {
                         socket.getOutputStream().write(7);
                         Thread.sleep(20);
                     }
-                } catch (IOException expectedWhenClientAborts) {
+                } catch (IOException _) {
                     // The client aborts the transfer on purpose.
-                } catch (InterruptedException failure) {
+                } catch (InterruptedException _) {
                     Thread.currentThread().interrupt();
                 }
             });
@@ -422,7 +420,7 @@ class FileTransferHelperTest {
                     try {
                         socket.connect(
                                 new InetSocketAddress(InetAddress.getLoopbackAddress(), listener.getLocalPort()), 100);
-                    } catch (SocketTimeoutException expected) {
+                    } catch (SocketTimeoutException _) {
                         saturated = true;
                         break;
                     }

@@ -44,10 +44,15 @@ warning and discards the output. The standalone JAR's bundled SimpleLogger is go
 configuration. Communication logs and the `toString()` of commands, responses and configuration
 redact passwords, privilege keys, API keys and file transfer keys.
 
+Disconnects no longer log at ERROR. The cause (timeout, I/O error, server close) logs at DEBUG; the
+disconnect itself logs once, at WARN without reconnecting or INFO with a reconnect strategy. ERROR is
+reserved for failures the application cannot otherwise observe, such as exceptions thrown by
+listeners and callbacks.
+
 ## API shape
 
 `TS3Api` and `TS3ApiAsync` keep only the session operations (`login`, `logout`, `whoAmI`,
-`selectVirtualServerById`, `selectVirtualServerByPort`, `setNickname`, `updateClient`, `moveQuery`,
+`selectVirtualServerById`, `selectVirtualServerByPort`, `deselectVirtualServer`, `setNickname`, `updateClient`, `moveQuery`,
 `executeRawCommand`). Everything else moved to one domain API per area, each with a sync and an
 async variant:
 
@@ -75,9 +80,9 @@ Request objects replace long or nullable positional argument lists:
 | --- | --- |
 | `BanRequest.ip(..)` / `name(..)` / `uniqueId(..)` / `myTeamSpeakId(..)` with `with…` | four nullable patterns, a seconds count and a nullable reason |
 | `ClientBan.of(ids...)` with `withDuration`, `withReason`, `continuingOnError` | `banClient`/`banClients` overloads |
-| `PermissionTarget.serverGroup/channelGroup/channel/client/channelClient` | five families of add/delete/list methods |
+| `PermissionTarget.serverGroup/channelGroup/channel/client/channelClient`, a sealed interface with one record per holder (`ServerGroupTarget`, `ChannelGroupTarget`, `ChannelTarget`, `ClientTarget`, `ChannelClientTarget`) | five families of add/delete/list methods |
 | `PermissionGrant.of(name or enum, value)` with `withNegated()`, `withSkip()` | positional `negated`/`skipped` booleans |
-| `FileLocation.of(channelId, path)` with `withChannelPassword(..)` | path/channel/nullable-password triples and parallel arrays |
+| `FileLocation.of(channelId, path)` or `FileLocation.ofServer(path)` with `withChannelPassword(..)` | path/channel/nullable-password triples and parallel arrays; `ofServer` replaces channel `0` |
 | `UploadMode.CREATE` / `OVERWRITE` / `RESUME` | the `overwrite` and `resume` booleans |
 | `ChannelGroupFilter.all()` with `inChannel`, `ofClient`, `inGroup` | `-1` "ignore" sentinels |
 
@@ -88,7 +93,8 @@ Other API changes:
 - `BPermissionType.getId()` and `IPermissionType.getId()` are removed; resolve IDs with
   `permissions().idByName(...)`.
 - The public `commands` packages are command builders used by the domain APIs. Their parameter classes
-  are records, `Command.encoded()` returns the wire text and some obsolete overloads are removed. Use
+  are records, factories take typed IDs and `FileLocation`, `Command.encoded()` returns the wire text and
+  some obsolete overloads are removed. Use
   the domain APIs, or `executeRawCommand` for commands they do not cover.
 
 ### Example
@@ -120,8 +126,8 @@ static int prepareLobby(TS3Api api, String uniqueId, byte[] rules) {
 2.0, synchronous:
 
 ```java
-static int prepareLobby(TS3Api api, String uniqueId, byte[] rules) {
-    int lobby = api.channels()
+static ChannelId prepareLobby(TS3Api api, String uniqueId, byte[] rules) {
+    ChannelId lobby = api.channels()
             .findByName("Lobby", false)
             .map(Channel::getId)
             .orElseGet(() -> api.channels().create("Lobby", Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
@@ -142,7 +148,7 @@ static int prepareLobby(TS3Api api, String uniqueId, byte[] rules) {
 2.0, asynchronous:
 
 ```java
-static CompletableFuture<Integer> prepareLobby(TS3ApiAsync api, String uniqueId, byte[] rules) {
+static CompletableFuture<ChannelId> prepareLobby(TS3ApiAsync api, String uniqueId, byte[] rules) {
     return api.channels()
             .findByName("Lobby", false)
             .thenCompose(found -> found.map(channel -> CompletableFuture.completedFuture(channel.getId()))
@@ -152,14 +158,14 @@ static CompletableFuture<Integer> prepareLobby(TS3ApiAsync api, String uniqueId,
                     .add(PermissionTarget.channel(lobby), "i_channel_needed_join_power", 10)
                     .thenCompose(done ->
                             api.files().upload(FileLocation.of(lobby, "/rules.txt"), rules, UploadMode.OVERWRITE))
-                    .thenCompose(done -> api.clients().findByUniqueId(uniqueId))
+                    .thenCompose(_ -> api.clients().findByUniqueId(uniqueId))
                     .thenCompose(client -> client.isEmpty()
                             ? api.messages().sendOffline(uniqueId, "Lobby", "Welcome to the lobby")
                             : api.clients()
                                     .move(client.get().getId(), lobby)
-                                    .thenCompose(done -> api.messages()
+                                    .thenCompose(_ -> api.messages()
                                             .sendPrivate(client.get().getId(), "Welcome to the lobby")))
-                    .thenApply(done -> lobby));
+                    .thenApply(_ -> lobby));
 }
 ```
 
@@ -219,9 +225,13 @@ Nothing returns `null` or `-1` any more:
 
 ## Models and values
 
-Response models and events are immutable. Getters return typed values: `ClientId`,
-`ClientDatabaseId`, `Instant`, `Duration`, `Optional*`, unmodifiable lists instead of arrays, and
-records such as `Binding` and `Snapshot`. Enums gain static lookups such as `fromIndex`/`fromName`;
+Response models and events are immutable. Getters return typed values: IDs such as `ClientId`,
+`ChannelId` or `ServerGroupId`, `IconId`, `Instant`, `Duration`, `Optional*`, unmodifiable lists
+instead of arrays, and records such as `Binding` and `Snapshot`. Parameters take the same ID types; create
+them with `of(..)`, and `value()` returns the number. ID types are not interchangeable even when their
+values are equal. Where TeamSpeak sends `0` for "none", such as the parent of a top-level channel, the
+getter returns an empty `Optional` and an ID type never holds `0` (except `ClientId`, whose `0` is the
+server as event invoker, and the file transfer IDs). Enums gain static lookups such as `fromIndex`/`fromName`;
 `PermissionGroupType`, `PermissionGroupDatabaseType`, `PrivilegeKeyType` and `TextMessageTargetMode`
 return a new `UNKNOWN` constant where they returned `null`.
 
@@ -229,17 +239,29 @@ return a new `UNKNOWN` constant where they returned `null`.
 | --- | --- |
 | `wrapper.get/getInt/getLong/getDouble/getBoolean(name)` (defaults `""`/`-1`/`false`) | `find*` (optional) or `require*` (throwing) |
 | `DefaultArrayResponse.getFirstResponse()` returning `Wrapper.EMPTY` | `Optional<Wrapper>` |
-| `int` client / database IDs in models, events and parameters | `ClientId` / `ClientDatabaseId` |
+| `int` client IDs (`clid`) in models, events and parameters | `ClientId` (`int`-backed) |
+| `int` client database IDs (`cldbid`) | `ClientDatabaseId`; `value()` is a `long` |
+| `int` channel IDs (`cid`, `pid`/`cpid`, `cfid`/`ctid`, channel order, privilege key channel) | `ChannelId` (`long`-backed); `0` is an empty `Optional` |
+| `int` server group IDs (`sgid`, default and template groups) | `ServerGroupId` (`long`-backed) |
+| `int` channel group IDs (`cgid`, `client_channel_group_id`, default and template groups) | `ChannelGroupId` (`long`-backed) |
+| `int` virtual server IDs (`sid`, `whoAmI`, query logins) | `VirtualServerId` (`long`-backed); no selected server or an instance-wide login (`0`) is an empty `Optional` |
+| `int` ban and offline message IDs | `BanId`, `MessageId` (`long`-backed) |
+| `int` file transfer IDs (`clientftfid`, `serverftfid`) | `ClientFileTransferId`, `ServerFileTransferId` (`int`-backed) |
+| `PrivilegeKey.getGroupId()`/`getChannelId()`, `PrivilegeKeyUsedEvent.getPrivilegeKeyGroupId()`/`getPrivilegeKeyChannelId()` | `getGrant()` on both: a sealed `PrivilegeKeyGrant`, either `ServerGroupGrant(serverGroupId)` or `ChannelGroupGrant(channelGroupId, channelId)` |
+| `PermissionAssignment.getMajorId()`/`getMinorId()` `int` | `long` |
+| `PermissionAssignment` from `getPermissionAssignments` (`permfind`), whose value and flags defaulted | `PermissionSource`, without value and flags; `permissions().overview(..)` still returns `PermissionAssignment` |
+| `ServerQueryInfo.getId()`/`getVirtualServerPort()` `0` before a virtual server is selected | `Optional<ClientId>`, `OptionalInt` |
 | `Date` timestamps, `int`/`long` durations | `Instant`, `Duration` |
-| `Client.getServerGroups()` `int[]`, `getBadgeGUIDs()` `String[]` | `List<Integer>`, `List<String>` |
-| `ClientJoinEvent.getClientServerGroups()` comma-separated `String` | `List<Integer>` |
+| `Client.getServerGroups()` `int[]`, `getBadgeGUIDs()` `String[]` | `List<ServerGroupId>`, `List<String>` |
+| `ClientJoinEvent.getClientServerGroups()` comma-separated `String` | `List<ServerGroupId>` |
 | `ChannelBase.getBannerMode()`, `getBannerGraphicsUrl()` | only on `ChannelInfo` |
 | `VirtualServerInfo.getBandwidthReceivedLastMinute()` `int` | `long` |
 | `ServerGroup.getSaveDb()` `int` | `isSavedInDatabase()` |
 | `PrivilegeKey.getType()` `int` | `PrivilegeKeyType` |
 | `FileTransferParameters.getStatus()`, `getQueryError()` | `OptionalInt`, `findFailure()` |
-| `IconFile.getIconId()` `-1` | `OptionalLong` |
-| `ClientInfo(int, Map)`, `ClientInfo.getDefaultChannel()` `-1` | `ClientInfo(ClientId, Map)`, `OptionalInt` |
+| `long` icon IDs in models, events and `files()` icon methods; `0` or `-1` for none | `IconId` (unsigned, also for group lists that send it signed); getters return `Optional<IconId>` |
+| signed `int` values of the `i_icon_id` permission | `PermissionGrant.icon(iconId)`; `IconId.fromPermissionValue(value)` reads an `i_icon_id` value |
+| `ClientInfo(int, Map)`, `ChannelInfo(int, Map)`, `ClientInfo.getDefaultChannel()` `-1` | `ClientInfo(ClientId, Map)`, `ChannelInfo(ChannelId, Map)`, `Optional<ChannelId>` |
 | `Snapshot.get()` | `Snapshot.data()` |
 
 ## Configuration and closing
@@ -336,8 +358,9 @@ These changes keep their signatures, so recompiling does not reveal them:
 
 Every public method of the 1.3.1 `TS3Api` and `TS3ApiAsync` (identical sets of 238 signatures) has one
 row. **Retained**: same entry point and parameters. **Replaced**: moved to a domain API or reshaped,
-same capability. **Removed**: a convenience overload or variant, with its replacement. Client (`clid`)
-and client database (`cldbid`) parameters are `ClientId` and `ClientDatabaseId`.
+same capability. **Removed**: a convenience overload or variant, with its replacement. ID parameters and
+results use the [typed IDs](#models-and-values): `ClientId`, `ClientDatabaseId`, `ChannelId`,
+`ServerGroupId`, `ChannelGroupId`, `VirtualServerId`, `BanId` and `MessageId`.
 
 | Previous operation | Status | 2.0 replacement | Notes |
 | --- | --- | --- | --- |
@@ -363,7 +386,7 @@ and client database (`cldbid`) parameters are `ClientId` and `ClientDatabaseId`.
 | `addServerGroupPermission(int, String, int, boolean, boolean)` | Replaced | `permissions().add(PermissionTarget, PermissionGrant)` | `PermissionTarget.serverGroup(id)`; flags via `withNegated()`/`withSkip()` |
 | `addServerQueryLogin(String, int)` | Replaced | `queryLogins().create(loginName, cldbid)` | `cldbid` 0 (new identity, no server selected) is `create(loginName)` since #444 |
 | `addTS3Listeners(TS3Listener...)` | Removed | `events().subscribe(listener)` | one listener per call; keep the returned `EventSubscription` (same as `TS3Query#subscribe`) |
-| `banClient(int, long)` | Replaced | `bans().banClients(ClientBan)` | `ClientBan.of(clid).withDuration(Duration.ofSeconds(s))`; returns `List<Integer>` |
+| `banClient(int, long)` | Replaced | `bans().banClients(ClientBan)` | `ClientBan.of(clid).withDuration(Duration.ofSeconds(s))`; returns `List<BanId>` |
 | `banClient(int, long, String)` | Replaced | `bans().banClients(ClientBan)` | add `withReason(..)` |
 | `banClient(int, String)` | Replaced | `bans().banClients(ClientBan)` | `ClientBan.of(clid).withReason(..)` |
 | `banClients(int[], long, String, boolean)` | Replaced | `bans().banClients(ClientBan)` | `ClientBan.of(ids...)`, `continuingOnError()`; an empty ID list is rejected |
@@ -397,8 +420,8 @@ and client database (`cldbid`) parameters are `ClientId` and `ClientDatabaseId`.
 | `deleteFile(String, int, String)` | Replaced | `files().delete(FileLocation)` | `withChannelPassword(..)` |
 | `deleteFiles(String[], int)` | Replaced | `files().delete(List<FileLocation>)` | all locations must share channel and password |
 | `deleteFiles(String[], int, String)` | Replaced | `files().delete(List<FileLocation>)` | all locations must share channel and password |
-| `deleteIcon(long)` | Replaced | `files().deleteIcons(iconIds...)` |  |
-| `deleteIcons(long...)` | Replaced | `files().deleteIcons(iconIds...)` |  |
+| `deleteIcon(long)` | Replaced | `files().deleteIcons(iconIds...)` | `IconId` |
+| `deleteIcons(long...)` | Replaced | `files().deleteIcons(iconIds...)` | `IconId` |
 | `deleteOfflineMessage(int)` | Replaced | `messages().deleteOffline(messageId)` |  |
 | `deletePermissionFromAllServerGroups(ServerGroupType, String)` | Replaced | `permissions().deleteFromAllServerGroups(type, name)` |  |
 | `deletePrivilegeKey(String)` | Replaced | `privilegeKeys().delete(token)` |  |
@@ -414,8 +437,8 @@ and client database (`cldbid`) parameters are `ClientId` and `ClientDatabaseId`.
 | `downloadFile(OutputStream, String, int, String, long)` | Replaced | `files().download(FileLocation, out, offset)` |  |
 | `downloadFileDirect(String, int)` | Replaced | `files().downloadBytes(FileLocation)` |  |
 | `downloadFileDirect(String, int, String)` | Replaced | `files().downloadBytes(FileLocation)` | `withChannelPassword(..)` |
-| `downloadIcon(OutputStream, long)` | Replaced | `files().downloadIcon(iconId, out)` | icon ID comes first |
-| `downloadIconDirect(long)` | Replaced | `files().downloadIcon(iconId)` |  |
+| `downloadIcon(OutputStream, long)` | Replaced | `files().downloadIcon(iconId, out)` | `IconId`, which comes first |
+| `downloadIconDirect(long)` | Replaced | `files().downloadIcon(iconId)` | `IconId` |
 | `editChannel(int, Map<ChannelProperty, String>)` | Replaced | `channels().edit(channelId, properties)` |  |
 | `editChannel(int, ChannelProperty, String)` | Removed | `channels().edit(channelId, properties)` | use `Map.of(property, value)` |
 | `editClient(int, Map<ClientProperty, String>)` | Replaced | `clients().edit(clientId, properties)` |  |
@@ -468,7 +491,7 @@ and client database (`cldbid`) parameters are `ClientId` and `ClientDatabaseId`.
 | `getOfflineMessage(int)` | Replaced | `messages().getOffline(messageId)` | returns `Optional<String>` instead of `null` for a missing message |
 | `getOfflineMessage(Message)` | Removed | `messages().getOffline(messageId)` | pass `message.getId()` |
 | `getOfflineMessages()` | Replaced | `messages().listOffline()` |  |
-| `getPermissionAssignments(String)` | Replaced | `permissions().assignments(name)` |  |
+| `getPermissionAssignments(String)` | Replaced | `permissions().assignments(name)` | returns `PermissionSource`, which has no value or flags |
 | `getPermissionIdByName(String)` | Replaced | `permissions().idByName(name)` |  |
 | `getPermissionIdsByName(String...)` | Replaced | `permissions().idsByName(names...)` | returns `List<Integer>` instead of `int[]` |
 | `getPermissionOverview(int, int)` | Replaced | `permissions().overview(channelId, cldbid)` |  |
@@ -483,7 +506,7 @@ and client database (`cldbid`) parameters are `ClientId` and `ClientDatabaseId`.
 | `getServerGroups()` | Replaced | `serverGroups().list()` |  |
 | `getServerGroupsByClientId(int)` | Replaced | `serverGroups().ofClient(cldbid)` |  |
 | `getServerGroupsByClient(Client)` | Removed | `serverGroups().ofClient(cldbid)` | pass `client.getDatabaseId()` |
-| `getServerIdByPort(int)` | Replaced | `servers().findIdByPort(port)` | returns `Optional<Integer>`; an unused port (server error 1024) is empty |
+| `getServerIdByPort(int)` | Replaced | `servers().findIdByPort(port)` | returns `Optional<VirtualServerId>`; an unused port (server error 1024) is empty |
 | `getServerInfo()` | Replaced | `servers().info()` |  |
 | `getServerQueryLogins()` | Replaced | `queryLogins().list()` |  |
 | `getServerQueryLoginsByName(String)` | Replaced | `queryLogins().search(pattern)` |  |
@@ -503,10 +526,10 @@ and client database (`cldbid`) parameters are `ClientId` and `ClientDatabaseId`.
 | `kickClientFromServer(String, Client...)` | Removed | `clients().kickFromServer(reason, clientIds...)` | pass client IDs |
 | `login(String, String)` | Retained | `login(username, password)` |  |
 | `logout()` | Retained | `logout()` |  |
-| `moveChannel(int, int)` | Replaced | `channels().move(channelId, parentId)` |  |
-| `moveChannel(int, int, int)` | Replaced | `channels().move(channelId, parentId, order)` |  |
+| `moveChannel(int, int)` | Replaced | `channels().move(channelId, parentId)` | `null` parent instead of `0` for the top level |
+| `moveChannel(int, int, int)` | Replaced | `channels().move(channelId, parentId, afterId)` | the sibling to sort below, or `null` instead of `0` for the first position |
 | `moveClient(int, int)` | Replaced | `clients().move(clientId, channelId)` |  |
-| `moveClients(int[], int)` | Replaced | `clients().moveAll(clientIds, channelId, password)` | `Collection<Integer>`, `null` password |
+| `moveClients(int[], int)` | Replaced | `clients().moveAll(clientIds, channelId, password)` | `Collection<ClientId>`, `null` password |
 | `moveClient(Client, ChannelBase)` | Removed | `clients().move(clientId, channelId)` | pass IDs |
 | `moveClients(Client[], ChannelBase)` | Removed | `clients().moveAll(clientIds, channelId, password)` | pass IDs |
 | `moveClient(int, int, String)` | Replaced | `clients().move(clientId, channelId, password)` |  |
@@ -517,14 +540,14 @@ and client database (`cldbid`) parameters are `ClientId` and `ClientDatabaseId`.
 | `moveFile(String, String, int, int)` | Replaced | `files().move(FileLocation, FileLocation)` | locations in different channels |
 | `moveFile(String, String, int, String)` | Replaced | `files().move(FileLocation, FileLocation)` | `withChannelPassword(..)` |
 | `moveFile(String, String, int, String, int, String)` | Replaced | `files().move(FileLocation, FileLocation)` |  |
-| `moveQuery(int)` | Retained | `moveQuery(channelId)` |  |
+| `moveQuery(int)` | Replaced | `moveQuery(channelId)` | takes a `ChannelId` |
 | `moveQuery(ChannelBase)` | Removed | `moveQuery(channelId)` | pass `channel.getId()` |
-| `moveQuery(int, String)` | Retained | `moveQuery(channelId, password)` |  |
+| `moveQuery(int, String)` | Replaced | `moveQuery(channelId, password)` | takes a `ChannelId` |
 | `moveQuery(ChannelBase, String)` | Removed | `moveQuery(channelId, password)` | pass `channel.getId()` |
 | `pokeClient(int, String)` | Replaced | `clients().poke(clientId, message)` |  |
 | `registerAllEvents()` | Replaced | `events().registerAll()` |  |
 | `registerEvent(TS3EventType)` | Replaced | `events().register(eventTypes...)` |  |
-| `registerEvent(TS3EventType, int)` | Replaced | `events().register(eventType, channelId)` |  |
+| `registerEvent(TS3EventType, int)` | Replaced | `events().register(eventType, channelId)` | one `ChannelId`; `register(eventTypes...)` instead of `0` or `-1` |
 | `registerEvents(TS3EventType...)` | Replaced | `events().register(eventTypes...)` |  |
 | `removeClientFromServerGroup(int, int)` | Replaced | `serverGroups().removeMember(groupId, cldbid)` |  |
 | `removeClientFromServerGroup(ServerGroup, Client)` | Removed | `serverGroups().removeMember(groupId, cldbid)` | pass `group.getId()`, `client.getDatabaseId()` |
@@ -536,8 +559,8 @@ and client database (`cldbid`) parameters are `ClientId` and `ClientDatabaseId`.
 | `resetPermissions()` | Replaced | `permissions().reset()` |  |
 | `searchCustomClientProperty(String)` | Removed | `databaseClients().searchCustomProperty(key, valuePattern)` | pass `"%"` |
 | `searchCustomClientProperty(String, String)` | Replaced | `databaseClients().searchCustomProperty(key, valuePattern)` |  |
-| `selectVirtualServerById(int)` | Retained | `selectVirtualServerById(id)` |  |
-| `selectVirtualServerById(int, String)` | Retained | `selectVirtualServerById(id, nickname)` |  |
+| `selectVirtualServerById(int)` | Replaced | `selectVirtualServerById(id)` | takes a `VirtualServerId`; to deselect (`0`), call `deselectVirtualServer()` |
+| `selectVirtualServerById(int, String)` | Replaced | `selectVirtualServerById(id, nickname)` | takes a `VirtualServerId`; to deselect (`0`), call `deselectVirtualServer()` |
 | `selectVirtualServerByPort(int)` | Retained | `selectVirtualServerByPort(port)` |  |
 | `selectVirtualServerByPort(int, String)` | Retained | `selectVirtualServerByPort(port, nickname)` |  |
 | `selectVirtualServer(VirtualServer)` | Removed | `selectVirtualServerById(id)` | pass `server.getId()` |
@@ -574,8 +597,8 @@ and client database (`cldbid`) parameters are `ClientId` and `ClientDatabaseId`.
 | `uploadFile(InputStream, long, String, boolean, int, String, boolean)` | Replaced | `files().upload(FileLocation, data, length, UploadMode)` | `resume` becomes `UploadMode.RESUME` |
 | `uploadFileDirect(byte[], String, boolean, int)` | Replaced | `files().upload(FileLocation, data, UploadMode)` |  |
 | `uploadFileDirect(byte[], String, boolean, int, String)` | Replaced | `files().upload(FileLocation, data, UploadMode)` |  |
-| `uploadIcon(InputStream, long)` | Replaced | `files().uploadIcon(data, length)` |  |
-| `uploadIconDirect(byte[])` | Replaced | `files().uploadIcon(data)` |  |
+| `uploadIcon(InputStream, long)` | Replaced | `files().uploadIcon(data, length)` | returns `IconId` |
+| `uploadIconDirect(byte[])` | Replaced | `files().uploadIcon(data)` | returns `IconId` |
 | `usePrivilegeKey(String)` | Replaced | `privilegeKeys().use(token)` |  |
 | `usePrivilegeKey(PrivilegeKey)` | Removed | `privilegeKeys().use(token)` | pass `key.getToken()` |
-| `whoAmI()` | Retained | `whoAmI()` |  |
+| `whoAmI()` | Retained | `whoAmI()` | `getId()` and `getVirtualServerPort()` are empty before a virtual server is selected |

@@ -1,7 +1,9 @@
 package com.github.theholywaffle.teamspeak3.api.wrapper;
 
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import java.util.Map;
+import java.util.Optional;
 
 public class QueryLogin extends Wrapper {
 
@@ -13,8 +15,9 @@ public class QueryLogin extends Wrapper {
         return requireDatabaseId("cldbid");
     }
 
-    public int getVirtualServerId() {
-        return requireInt("sid");
+    /** @return the virtual server the login belongs to, or empty for an instance-wide login */
+    public Optional<VirtualServerId> getVirtualServerId() {
+        return requireOptionalId("sid", VirtualServerId::of);
     }
 
     public String getQueryClientLoginName() {

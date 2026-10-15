@@ -1,6 +1,8 @@
 package com.github.theholywaffle.teamspeak3.api.wrapper;
 
+import com.github.theholywaffle.teamspeak3.api.ClientFileTransferId;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
+import com.github.theholywaffle.teamspeak3.api.ServerFileTransferId;
 import java.time.Duration;
 import java.util.Map;
 
@@ -61,8 +63,8 @@ public class FileTransfer extends Wrapper {
      *
      * @return the client's file transfer ID
      */
-    public int getClientTransferId() {
-        return requireInt("clientftfid");
+    public ClientFileTransferId getClientTransferId() {
+        return requireNonNegativeId("clientftfid", ClientFileTransferId::of);
     }
 
     /**
@@ -71,8 +73,8 @@ public class FileTransfer extends Wrapper {
      *
      * @return the server's file transfer ID
      */
-    public int getServerTransferId() {
-        return requireInt("serverftfid");
+    public ServerFileTransferId getServerTransferId() {
+        return requireNonNegativeId("serverftfid", ServerFileTransferId::of);
     }
 
     /**

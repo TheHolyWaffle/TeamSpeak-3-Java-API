@@ -1,8 +1,11 @@
 package com.github.theholywaffle.teamspeak3.api.wrapper;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelGroupId;
 import com.github.theholywaffle.teamspeak3.api.CodecEncryptionMode;
 import com.github.theholywaffle.teamspeak3.api.HostBannerMode;
 import com.github.theholywaffle.teamspeak3.api.HostMessageMode;
+import com.github.theholywaffle.teamspeak3.api.IconId;
+import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 import java.time.Duration;
 import java.time.Instant;
@@ -85,16 +88,16 @@ public class VirtualServerInfo extends VirtualServer {
         return requireInstant(VirtualServerProperty.VIRTUALSERVER_CREATED);
     }
 
-    public int getDefaultChannelAdminGroup() {
-        return requireInt(VirtualServerProperty.VIRTUALSERVER_DEFAULT_CHANNEL_ADMIN_GROUP);
+    public ChannelGroupId getDefaultChannelAdminGroup() {
+        return requireId(VirtualServerProperty.VIRTUALSERVER_DEFAULT_CHANNEL_ADMIN_GROUP, ChannelGroupId::of);
     }
 
-    public int getDefaultChannelGroup() {
-        return requireInt(VirtualServerProperty.VIRTUALSERVER_DEFAULT_CHANNEL_GROUP);
+    public ChannelGroupId getDefaultChannelGroup() {
+        return requireId(VirtualServerProperty.VIRTUALSERVER_DEFAULT_CHANNEL_GROUP, ChannelGroupId::of);
     }
 
-    public int getDefaultServerGroup() {
-        return requireInt(VirtualServerProperty.VIRTUALSERVER_DEFAULT_SERVER_GROUP);
+    public ServerGroupId getDefaultServerGroup() {
+        return requireId(VirtualServerProperty.VIRTUALSERVER_DEFAULT_SERVER_GROUP, ServerGroupId::of);
     }
 
     /** @return the monthly download quota in MiB, or empty if unlimited (TeamSpeak sends 2<sup>64</sup>-1) */
@@ -160,8 +163,9 @@ public class VirtualServerInfo extends VirtualServer {
         return requireCode(VirtualServerProperty.VIRTUALSERVER_HOSTMESSAGE_MODE, HostMessageMode::fromIndex);
     }
 
-    public long getIconId() {
-        return requireLong(VirtualServerProperty.VIRTUALSERVER_ICON_ID);
+    /** @return the server's icon, or empty if it has none */
+    public Optional<IconId> getIconId() {
+        return requireIconId(VirtualServerProperty.VIRTUALSERVER_ICON_ID);
     }
 
     /** @return the configured bind addresses, comma separated, or empty if none are configured */

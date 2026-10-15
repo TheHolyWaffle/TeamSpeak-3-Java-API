@@ -1,6 +1,7 @@
 package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 import com.github.theholywaffle.teamspeak3.commands.QueryCommands;
@@ -17,8 +18,8 @@ record ServerQueryBackend(TS3Query query, CommandQueue queue) implements QueryBa
     }
 
     @Override
-    public CompletableFuture<QueryBackend> onVirtualServer(int serverId) {
-        return CommandFutures.map(new QueryRequests(this).run(QueryCommands.useId(serverId, null)), ignored -> this);
+    public CompletableFuture<QueryBackend> onVirtualServer(VirtualServerId serverId) {
+        return CommandFutures.map(new QueryRequests(this).run(QueryCommands.useId(serverId, null)), _ -> this);
     }
 
     @Override

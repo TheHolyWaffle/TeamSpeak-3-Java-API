@@ -1,10 +1,13 @@
 package com.github.theholywaffle.teamspeak3.commands;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 import com.github.theholywaffle.teamspeak3.commands.parameter.OptionParam;
 import com.github.theholywaffle.teamspeak3.commands.parameter.RawParam;
 import com.github.theholywaffle.teamspeak3.commands.parameter.ValueParam;
+import java.util.Optional;
 
 public final class QueryCommands {
 
@@ -56,14 +59,19 @@ public final class QueryCommands {
         return new CommandBuilder("quit").build();
     }
 
-    public static Command serverNotifyRegister(TS3EventType eventType, int channelId) {
+    /**
+     * @param channelId the one channel to observe, or empty for the event type's default: every channel
+     *     for {@link TS3EventType#CHANNEL} and {@link TS3EventType#TEXT_CHANNEL}, otherwise no channel
+     */
+    public static Command serverNotifyRegister(TS3EventType eventType, Optional<ChannelId> channelId) {
         if (eventType == null) {
             throw new IllegalArgumentException("Event type cannot be null");
         }
 
         CommandBuilder builder = new CommandBuilder("servernotifyregister");
         builder.add(new KeyValueParam("event", eventType.toString()));
-        builder.addIf(channelId >= 0, new KeyValueParam("id", channelId));
+        boolean allChannels = eventType == TS3EventType.CHANNEL || eventType == TS3EventType.TEXT_CHANNEL;
+        if (channelId.isPresent() || allChannels) builder.add(KeyValueParam.idOrZero("id", channelId));
         return builder.build();
     }
 
@@ -71,12 +79,16 @@ public final class QueryCommands {
         return new CommandBuilder("servernotifyunregister").build();
     }
 
-    public static Command useId(int id, String nickname) {
+    public static Command useId(VirtualServerId id, String nickname) {
         CommandBuilder builder = new CommandBuilder("use");
         builder.add(new KeyValueParam("sid", id));
         builder.add(new OptionParam("virtual"));
         builder.addIf(nickname != null, new KeyValueParam("client_nickname", nickname));
         return builder.build();
+    }
+
+    public static Command useInstance() {
+        return new CommandBuilder("use").add(new KeyValueParam("sid", 0)).build();
     }
 
     public static Command usePort(int port, String nickname) {

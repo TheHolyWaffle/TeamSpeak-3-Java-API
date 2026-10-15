@@ -3,13 +3,14 @@ package com.github.theholywaffle.teamspeak3;
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
+import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ServerGroup;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ServerGroupClient;
 import java.util.List;
 
 /**
  * Server group administration. Server group permissions are managed through
- * {@link PermissionApi} with {@link com.github.theholywaffle.teamspeak3.api.PermissionTarget#serverGroup(int)}.
+ * {@link PermissionApi} with {@link com.github.theholywaffle.teamspeak3.api.PermissionTarget#serverGroup(ServerGroupId)}.
  *
  * @see ServerGroupApiAsync the asynchronous form
  */
@@ -36,7 +37,7 @@ public final class ServerGroupApi {
      * @param name the group name
      * @return the ID of the new group
      */
-    public int create(String name) {
+    public ServerGroupId create(String name) {
         return CommandFutures.join(async.create(name));
     }
 
@@ -47,7 +48,7 @@ public final class ServerGroupApi {
      * @param type the group type
      * @return the ID of the new group
      */
-    public int create(String name, PermissionGroupDatabaseType type) {
+    public ServerGroupId create(String name, PermissionGroupDatabaseType type) {
         return CommandFutures.join(async.create(name, type));
     }
 
@@ -59,7 +60,7 @@ public final class ServerGroupApi {
      * @param type the new group's type
      * @return the ID of the new group
      */
-    public int copy(int sourceGroupId, String name, PermissionGroupDatabaseType type) {
+    public ServerGroupId copy(ServerGroupId sourceGroupId, String name, PermissionGroupDatabaseType type) {
         return CommandFutures.join(async.copy(sourceGroupId, name, type));
     }
 
@@ -70,7 +71,7 @@ public final class ServerGroupApi {
      * @param targetGroupId the existing group to overwrite
      * @param type the target group's type
      */
-    public void overwrite(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
+    public void overwrite(ServerGroupId sourceGroupId, ServerGroupId targetGroupId, PermissionGroupDatabaseType type) {
         CommandFutures.join(async.overwrite(sourceGroupId, targetGroupId, type));
     }
 
@@ -80,7 +81,7 @@ public final class ServerGroupApi {
      * @param groupId the group ID
      * @param name the new name
      */
-    public void rename(int groupId, String name) {
+    public void rename(ServerGroupId groupId, String name) {
         CommandFutures.join(async.rename(groupId, name));
     }
 
@@ -89,7 +90,7 @@ public final class ServerGroupApi {
      *
      * @param groupId the group ID
      */
-    public void delete(int groupId) {
+    public void delete(ServerGroupId groupId) {
         CommandFutures.join(async.delete(groupId));
     }
 
@@ -99,7 +100,7 @@ public final class ServerGroupApi {
      * @param groupId the group ID
      * @param force whether to delete a group that still has members
      */
-    public void delete(int groupId, boolean force) {
+    public void delete(ServerGroupId groupId, boolean force) {
         CommandFutures.join(async.delete(groupId, force));
     }
 
@@ -110,7 +111,7 @@ public final class ServerGroupApi {
      * @return the members
      * @throws com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException with error 2560 if the group does not exist
      */
-    public List<ServerGroupClient> members(int groupId) {
+    public List<ServerGroupClient> members(ServerGroupId groupId) {
         return CommandFutures.join(async.members(groupId));
     }
 
@@ -120,7 +121,7 @@ public final class ServerGroupApi {
      * @param groupId the group ID
      * @param clientDatabaseId the client database ID
      */
-    public void addMember(int groupId, ClientDatabaseId clientDatabaseId) {
+    public void addMember(ServerGroupId groupId, ClientDatabaseId clientDatabaseId) {
         CommandFutures.join(async.addMember(groupId, clientDatabaseId));
     }
 
@@ -130,7 +131,7 @@ public final class ServerGroupApi {
      * @param groupId the group ID
      * @param clientDatabaseId the client database ID
      */
-    public void removeMember(int groupId, ClientDatabaseId clientDatabaseId) {
+    public void removeMember(ServerGroupId groupId, ClientDatabaseId clientDatabaseId) {
         CommandFutures.join(async.removeMember(groupId, clientDatabaseId));
     }
 

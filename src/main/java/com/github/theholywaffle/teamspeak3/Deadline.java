@@ -28,7 +28,7 @@ final class Deadline {
         if (left == 0) return;
         try {
             TimeUnit.NANOSECONDS.timedJoin(thread, left);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException _) {
             Thread.currentThread().interrupt();
         }
     }

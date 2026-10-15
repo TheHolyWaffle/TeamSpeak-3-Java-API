@@ -39,7 +39,7 @@ class FileTransferApiTest {
                 Duration.ofSeconds(1),
                 Duration.ofSeconds(1),
                 maxInMemoryBytes,
-                (host, ip, port) -> {
+                (host, _, port) -> {
                     calls.incrementAndGet();
                     return new InetSocketAddress(host, port);
                 });
@@ -49,7 +49,7 @@ class FileTransferApiTest {
         FutureAssertions.awaitCommandAdmission(query);
         assertEquals(
                 ClientId.of(42),
-                query.getAsyncApi().whoAmI().get(2, TimeUnit.SECONDS).getId());
+                query.getAsyncApi().whoAmI().get(2, TimeUnit.SECONDS).getId().orElseThrow());
         query.exit();
     }
 
@@ -84,12 +84,12 @@ class FileTransferApiTest {
     @Test
     void startupIconPreparationUsesStartupAdmissionEvenWhenApplicationQueueIsFull() throws Exception {
         byte[] bytes = {7};
-        long iconId = FileTransferHelper.getIconId(bytes);
+        var iconId = FileTransferHelper.getIconId(bytes);
         var received = new CompletableFuture<byte[]>();
         try (var files = new ServerSocket(0, 1, InetAddress.getLoopbackAddress());
                 var peer = new FakeServerQuery(p -> {
                     p.expect("ftinitupload clientftfid=0 name=\\/icon_" + iconId
-                            + " cid=0 cpw= size=1 overwrite=0 resume=0 proto=0");
+                            + " cid=0 cpw= size=1 overwrite=1 resume=0 proto=0");
                     response(p, files.getLocalPort(), "seekpos=0");
                     nextQuery(p);
                 });
@@ -120,7 +120,8 @@ class FileTransferApiTest {
             var pending = query.getAsyncApi().whoAmI();
             assertEquals(0, query.commandAdmission(true).availablePermits());
             query.connect();
-            assertEquals(ClientId.of(42), pending.get(2, TimeUnit.SECONDS).getId());
+            assertEquals(
+                    ClientId.of(42), pending.get(2, TimeUnit.SECONDS).getId().orElseThrow());
             assertArrayEquals(bytes, received.get(2, TimeUnit.SECONDS));
             FutureAssertions.awaitCommandAdmission(query);
             query.exit();
@@ -155,7 +156,7 @@ class FileTransferApiTest {
         try (var peer = new FakeServerQuery(FileTransferApiTest::nextQuery);
                 var query = new TS3Query(config(peer.port()).setFileTransferConfig(countingConfig(calls, 10)))) {
             var transfer =
-                    query.getAsyncApi().files().download(FileLocation.of(0, "/file"), new ByteArrayOutputStream());
+                    query.getAsyncApi().files().download(FileLocation.ofServer("/file"), new ByteArrayOutputStream());
             assertTrue(transfer.cancel(false));
             query.connect();
             recovered(query);
@@ -179,7 +180,7 @@ class FileTransferApiTest {
                 var query = new TS3Query(config(peer.port()).setFileTransferConfig(countingConfig(calls, 10)))) {
             query.connect();
             var transfer =
-                    query.getAsyncApi().files().download(FileLocation.of(0, "/file"), new ByteArrayOutputStream());
+                    query.getAsyncApi().files().download(FileLocation.ofServer("/file"), new ByteArrayOutputStream());
             assertTrue(received.await(2, TimeUnit.SECONDS));
             assertTrue(transfer.cancel(true));
             release.countDown();
@@ -230,7 +231,7 @@ class FileTransferApiTest {
                 }
             };
             query.connect();
-            var transfer = query.getAsyncApi().files().download(FileLocation.of(0, "/file"), output);
+            var transfer = query.getAsyncApi().files().download(FileLocation.ofServer("/file"), output);
             assertTrue(authenticated.await(2, TimeUnit.SECONDS));
             if (close) {
                 query.close();
@@ -272,7 +273,7 @@ class FileTransferApiTest {
             var input = new CallerStreams.BlockingInput();
             query.connect();
             var transfer =
-                    query.getAsyncApi().files().upload(FileLocation.of(0, "/file"), input, 2, UploadMode.OVERWRITE);
+                    query.getAsyncApi().files().upload(FileLocation.ofServer("/file"), input, 2, UploadMode.OVERWRITE);
             assertTrue(input.entered.await(2, TimeUnit.SECONDS));
             assertTrue(transfer.cancel(false));
             recovered(query);
@@ -306,7 +307,7 @@ class FileTransferApiTest {
                 });
                 var query = new TS3Query(config(peer.port()).setFileTransferConfig(countingConfig(calls, 16)))) {
             query.connect();
-            var transfer = query.getAsyncApi().files().downloadBytes(FileLocation.of(0, "/file"));
+            var transfer = query.getAsyncApi().files().downloadBytes(FileLocation.ofServer("/file"));
             if (fields.startsWith("status=2050"))
                 assertEquals(
                         2050,
@@ -338,13 +339,13 @@ class FileTransferApiTest {
                                 Duration.ofSeconds(1),
                                 close ? Duration.ofSeconds(3) : Duration.ofMillis(100),
                                 16,
-                                (host, ip, port) -> {
+                                (host, _, port) -> {
                                     entered.countDown();
                                     boolean interrupted = false;
                                     while (release.getCount() > 0) {
                                         try {
                                             release.await();
-                                        } catch (InterruptedException failure) {
+                                        } catch (InterruptedException _) {
                                             interrupted = true;
                                         }
                                     }
@@ -352,7 +353,7 @@ class FileTransferApiTest {
                                     return new InetSocketAddress(host, port);
                                 })))) {
             query.connect();
-            var transfer = query.getAsyncApi().files().downloadBytes(FileLocation.of(0, "/file"));
+            var transfer = query.getAsyncApi().files().downloadBytes(FileLocation.ofServer("/file"));
             assertTrue(entered.await(2, TimeUnit.SECONDS));
             if (close) query.close();
             var failure = assertThrows(ExecutionException.class, () -> transfer.get(2, TimeUnit.SECONDS));

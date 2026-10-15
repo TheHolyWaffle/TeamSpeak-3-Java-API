@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.IconId;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.FileTransferParameters;
 import java.io.IOException;
@@ -132,7 +133,7 @@ class FileTransferHelper implements AutoCloseable {
             if (socket != null) {
                 try {
                     socket.close();
-                } catch (IOException ignored) {
+                } catch (IOException _) {
                     // The transfer outcome is already decided.
                 }
             }
@@ -167,19 +168,23 @@ class FileTransferHelper implements AutoCloseable {
     }
 
     byte[] downloadBytes(FileTransferParameters params, Operation operation) throws IOException {
-        long size = field(params::getFileSize);
-        if (size < 0 || size > config.maxInMemoryBytes())
-            throw new IOException("Invalid file size or in-memory limit exceeded");
+        int size = inMemoryLength(field(params::getFileSize), config.maxInMemoryBytes());
         try (Socket socket = operation.connect(params)) {
             InputStream in = socket.getInputStream();
-            byte[] data = readFully(in, size, config.maxInMemoryBytes(), operation);
+            byte[] data = readFully(in, size, operation);
             expectEnd(in, operation);
             return data;
         }
     }
 
     byte[] bufferFully(InputStream dataIn, long dataLength, Operation operation) throws IOException {
-        return readFully(dataIn, dataLength, config.maxInMemoryBytes(), operation);
+        return readFully(dataIn, inMemoryLength(dataLength, config.maxInMemoryBytes()), operation);
+    }
+
+    static int inMemoryLength(long length, int limit) throws IOException {
+        int bounded = Math.clamp(length, 0, limit);
+        if (bounded != length) throw new IOException("File exceeds in-memory limit or has negative length");
+        return bounded;
     }
 
     private static void expectEnd(InputStream in, Operation operation) throws IOException {
@@ -217,7 +222,7 @@ class FileTransferHelper implements AutoCloseable {
             throws IOException {
         while (size > 0) {
             operation.check();
-            int read = in.read(buffer, 0, (int) Math.min(buffer.length, size));
+            int read = in.read(buffer, 0, Math.clamp(size, 0, buffer.length));
             if (read <= 0) throw new IOException(shortReadMessage);
             operation.check();
             out.write(buffer, 0, read);
@@ -231,7 +236,7 @@ class FileTransferHelper implements AutoCloseable {
             long skipped = in.skip(Math.min(size, SKIP_CHUNK));
             if (skipped <= 0) {
                 // skip cannot signal end of stream; a read can
-                int read = in.read(buffer, 0, (int) Math.min(buffer.length, size));
+                int read = in.read(buffer, 0, Math.clamp(size, 0, buffer.length));
                 if (read <= 0) throw new IOException("User stream did not contain resume prefix or made no progress");
                 skipped = read;
             }
@@ -239,16 +244,16 @@ class FileTransferHelper implements AutoCloseable {
         }
     }
 
-    static long getIconId(byte[] data) {
+    static IconId getIconId(byte[] data) {
         final CRC32 crc32 = new CRC32();
         crc32.update(data);
-        return crc32.getValue();
+        long crc = crc32.getValue();
+        if (crc == 0) throw new IllegalArgumentException("Icon content has CRC32 0, which TeamSpeak treats as no icon");
+        return IconId.of(crc);
     }
 
-    static byte[] readFully(InputStream dataIn, long dataLength, int limit, Operation operation) throws IOException {
-        if (dataLength < 0 || dataLength > limit)
-            throw new IOException("File exceeds in-memory limit or has negative length");
-        byte[] data = new byte[(int) dataLength];
+    static byte[] readFully(InputStream dataIn, int length, Operation operation) throws IOException {
+        byte[] data = new byte[length];
         int total = 0;
         while (total < data.length) {
             if (operation != null) operation.check();

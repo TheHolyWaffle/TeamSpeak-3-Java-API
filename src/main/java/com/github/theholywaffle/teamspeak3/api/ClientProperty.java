@@ -38,7 +38,7 @@ public enum ClientProperty implements Property {
     /**
      * The unsigned icon ID shown for this client. TS3 3.13 rejects this property in edits; assign an icon
      * through the {@code i_icon_id} permission instead, for example
-     * {@code permissions().add(PermissionTarget.client(databaseId), "i_icon_id", (int) iconId)}.
+     * {@code permissions().add(PermissionTarget.client(databaseId), PermissionGrant.icon(iconId))}.
      */
     CLIENT_ICON_ID(true),
     CLIENT_IDLE_TIME(false),

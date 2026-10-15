@@ -2,6 +2,7 @@ package com.github.theholywaffle.teamspeak3.example;
 
 import com.github.theholywaffle.teamspeak3.TS3BaseApi;
 import com.github.theholywaffle.teamspeak3.TS3WebQuery;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3UnsupportedOperationException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
@@ -27,7 +28,7 @@ public final class WebQueryExample {
                 System.out.println(client.getNickname() + " is online");
             }
 
-            int channelId = api.channels()
+            ChannelId channelId = api.channels()
                     .create(
                             "Java API Web Query example",
                             Map.of(

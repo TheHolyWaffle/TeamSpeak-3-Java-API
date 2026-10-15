@@ -2,8 +2,11 @@ package com.github.theholywaffle.teamspeak3.example;
 
 import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3Query;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
+import com.github.theholywaffle.teamspeak3.api.IconId;
+import com.github.theholywaffle.teamspeak3.api.PermissionGrant;
 import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
 import com.github.theholywaffle.teamspeak3.api.UploadMode;
 import java.awt.Color;
@@ -48,14 +51,14 @@ public final class FileTransferExample {
             api.setNickname(settings.nickname());
 
             // Semi-permanent: the channel would also disappear when the server restarts.
-            int channelId = api.channels()
+            ChannelId channelId = api.channels()
                     .create("Java API file transfer example", Map.of(ChannelProperty.CHANNEL_FLAG_SEMI_PERMANENT, "1"));
             try {
                 FileLocation file = FileLocation.of(channelId, FILE_NAME);
                 api.files().createDirectory(FileLocation.of(channelId, DIRECTORY));
 
                 // Byte arrays: simplest, but downloads are limited by FileTransferConfig.maxInMemoryBytes().
-                long redIcon = api.files().uploadIcon(icon(Color.RED));
+                IconId redIcon = api.files().uploadIcon(icon(Color.RED));
                 api.files().upload(file, CONTENT, UploadMode.CREATE);
                 byte[] downloaded = api.files().downloadBytes(file);
                 System.out.println("Byte array download: " + new String(downloaded, StandardCharsets.UTF_8));
@@ -63,7 +66,7 @@ public final class FileTransferExample {
                 // Streams: use files instead of in-memory streams for large data.
                 // The library never closes or flushes streams owned by the caller.
                 byte[] blue = icon(Color.BLUE);
-                long blueIcon;
+                IconId blueIcon;
                 try (InputStream iconIn = new ByteArrayInputStream(blue);
                         InputStream dataIn = new ByteArrayInputStream(CONTENT)) {
                     blueIcon = api.files().uploadIcon(iconIn, blue.length);
@@ -76,10 +79,10 @@ public final class FileTransferExample {
                 System.out.println(
                         "Stream download (" + length + " bytes): " + dataOut.toString(StandardCharsets.UTF_8));
 
-                // TS3 assigns channel icons through the i_icon_id permission, using the ID's signed 32-bit form.
-                api.permissions().add(PermissionTarget.channel(channelId), "i_icon_id", (int) blueIcon);
+                // TS3 assigns channel icons through the i_icon_id permission.
+                api.permissions().add(PermissionTarget.channel(channelId), PermissionGrant.icon(blueIcon));
                 System.out.println("Uploaded icons " + redIcon + " and " + blueIcon + "; channel icon is now "
-                        + api.channels().info(channelId).getIconId());
+                        + api.channels().info(channelId).getIconId().orElseThrow());
                 api.files().deleteIcons(redIcon, blueIcon);
             } finally {
                 api.channels().delete(channelId, true);
