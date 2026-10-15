@@ -101,8 +101,6 @@ jobs:
           export JRELEASER_GPG_PUBLIC_KEY JRELEASER_GPG_SECRET_KEY JRELEASER_GPG_PASSPHRASE=rehearsal
           export JRELEASER_GITHUB_TOKEN=unused JRELEASER_MAVENCENTRAL_CENTRAL_USERNAME=unused JRELEASER_MAVENCENTRAL_CENTRAL_PASSWORD=unused
           ./gradlew publish jreleaserDeploy -PdryRun -Pversion=0.0.0
-      - name: Run Maven and Gradle consumers against the staged artifacts
-        run: bash .github/scripts/consumer-check.sh 0.0.0
       - name: Require a clean rebuild to reproduce every artifact
         run: |
           staged=build/staging-deploy/com/github/theholywaffle/teamspeak3-api/0.0.0

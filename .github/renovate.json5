@@ -2,15 +2,15 @@
 {
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: ['config:recommended', ':semanticCommits', ':automergeMinor', ':automergeDigest'],
-  // config:recommended skips test directories; the consumers and the TS3 image live under src/test.
+  // config:recommended skips test directories; the TS3 image lives under src/test.
   ignorePaths: [],
   // Broken or withdrawn releases are usually caught upstream within a week.
   minimumReleaseAge: '7 days',
   packageRules: [
     {
       // Only the published library's runtime dependencies ship in a release (fix(deps):); build tools,
-      // test dependencies, wrappers and the consumer projects are chores.
-      matchManagers: ['gradle', 'gradle-wrapper', 'maven'],
+      // test dependencies and wrappers are chores.
+      matchManagers: ['gradle', 'gradle-wrapper'],
       semanticCommitType: 'chore',
     },
     {
@@ -20,20 +20,17 @@
     },
     {
       // Major updates of test dependencies and build tools merge too; others need review.
-      matchManagers: ['gradle', 'maven'],
+      matchManagers: ['gradle'],
       matchPackageNames: [
         'org.junit:**',
         'org.testcontainers:**',
         'org.slf4j:slf4j-simple',
-        'org.slf4j:slf4j-jdk14',
         'com.google.errorprone:**',
         'com.palantir.javaformat:**',
         'org.jacoco:**',
         'org.jreleaser:**',
         'net.ltgt.errorprone{,.gradle.plugin}',
         'com.diffplug.spotless{,.gradle.plugin}',
-        'org.apache.maven.plugins:**',
-        'org.codehaus.mojo:**',
       ],
       automerge: true,
     },
