@@ -37,8 +37,12 @@ class LogWriteCompatibilityIT {
                     for (var level : LogLevel.values()) {
                         String marker = "issue441-log-" + sid + "-" + level.getIndex() + " 日本語 | literal \\s";
                         markers.add(marker);
-                        if (sid == 0) api.addLogEntry(level, marker);
-                        else query.getAsyncApi().addLogEntry(level, marker).get(5, TimeUnit.SECONDS);
+                        if (sid == 0) api.servers().addLogEntry(level, marker);
+                        else
+                            query.getAsyncApi()
+                                    .servers()
+                                    .addLogEntry(level, marker)
+                                    .get(5, TimeUnit.SECONDS);
                     }
                     String scope = sid == 0 ? " instance=1" : "";
                     long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);

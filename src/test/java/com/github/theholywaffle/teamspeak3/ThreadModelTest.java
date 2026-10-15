@@ -2,7 +2,7 @@ package com.github.theholywaffle.teamspeak3;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
+import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
 import java.time.Duration;
 import java.util.Map;
@@ -41,7 +41,7 @@ class ThreadModelTest {
                     .get();
             try (query) {
                 var callbackThread = new CompletableFuture<Thread>();
-                query.subscribe(new TS3EventAdapter() {
+                query.subscribe(new TS3Listener() {
                     @Override
                     public void onTextMessage(TextMessageEvent e) {
                         callbackThread.complete(Thread.currentThread());

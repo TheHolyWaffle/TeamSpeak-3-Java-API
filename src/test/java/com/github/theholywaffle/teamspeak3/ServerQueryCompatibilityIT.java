@@ -36,8 +36,8 @@ import com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ClientMovedEvent;
 import com.github.theholywaffle.teamspeak3.api.event.PrivilegeKeyUsedEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ServerEditedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
+import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
@@ -171,7 +171,7 @@ class ServerQueryCompatibilityIT {
                 }
             });
             try (var query = new TS3Query(config)) {
-                query.subscribe(new TS3EventAdapter() {
+                query.subscribe(new TS3Listener() {
                     @Override
                     public void onChannelCreate(ChannelCreateEvent notification) {
                         event.countDown();
@@ -222,7 +222,7 @@ class ServerQueryCompatibilityIT {
             observer.getApi().selectVirtualServerById(VirtualServerId.of(1));
             observer.getApi().events().register(TS3EventType.SERVER);
             observer.getApi().events().register(TS3EventType.CHANNEL);
-            try (var subscription = observer.subscribe(new TS3EventAdapter() {
+            try (var subscription = observer.subscribe(new TS3Listener() {
                 @Override
                 public void onClientJoin(com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent e) {
                     assertTrue(e.getClientId().value() > 0);
@@ -307,7 +307,7 @@ class ServerQueryCompatibilityIT {
             ClientId actorId = api.whoAmI().getId().orElseThrow();
             assertNotEquals(actorId, observer.getApi().whoAmI().getId().orElseThrow());
             observer.getApi().events().register(TS3EventType.CHANNEL);
-            try (var subscription = observer.subscribe(new TS3EventAdapter() {
+            try (var subscription = observer.subscribe(new TS3Listener() {
                 @Override
                 public void onChannelCreate(ChannelCreateEvent e) {
                     created.add(e);
@@ -486,7 +486,7 @@ class ServerQueryCompatibilityIT {
                 assertEquals(6, initial.getCodecQuality());
                 api.clients().move(observerId, channel);
                 observer.getApi().events().register(TS3EventType.CHANNEL, channel);
-                try (var subscription = observer.subscribe(new TS3EventAdapter() {
+                try (var subscription = observer.subscribe(new TS3Listener() {
                     @Override
                     public void onChannelDescriptionChanged(ChannelDescriptionEditedEvent e) {
                         descriptions.capture(() -> descriptions.publish(e));
@@ -753,7 +753,7 @@ class ServerQueryCompatibilityIT {
                     var channelGroup = new CreatedResource<>(
                             api.channelGroups().create("key-channel-" + target),
                             id -> api.channelGroups().delete(id, true));
-                    var subscription = observer.subscribe(new TS3EventAdapter() {
+                    var subscription = observer.subscribe(new TS3Listener() {
                         @Override
                         public void onPrivilegeKeyUsed(PrivilegeKeyUsedEvent event) {
                             assertTrue(used.offer(event));
@@ -1075,7 +1075,7 @@ class ServerQueryCompatibilityIT {
             observer.getApi().events().register(TS3EventType.SERVER);
             observer.getApi().events().register(TS3EventType.CHANNEL);
             try (var channels = new ChannelCleanup(api);
-                    var subscription = observer.subscribe(new TS3EventAdapter() {
+                    var subscription = observer.subscribe(new TS3Listener() {
                         @Override
                         public void onClientJoin(ClientJoinEvent event) {
                             assertTrue(joins.offer(event));
@@ -1323,7 +1323,7 @@ class ServerQueryCompatibilityIT {
                     info.getHostMessage());
             observer.getApi().events().register(TS3EventType.SERVER);
             try (var restoration = new ServerSettings(api, original);
-                    var subscription = observer.subscribe(new TS3EventAdapter() {
+                    var subscription = observer.subscribe(new TS3Listener() {
                         @Override
                         public void onServerEdit(ServerEditedEvent event) {
                             assertTrue(edits.offer(event));
@@ -1448,7 +1448,7 @@ class ServerQueryCompatibilityIT {
                 evidence.add("help " + command + "\n" + help);
             }
             try (var channels = new ChannelCleanup(recipient);
-                    var subscription = observer.subscribe(new TS3EventAdapter() {
+                    var subscription = observer.subscribe(new TS3Listener() {
                         @Override
                         public void onTextMessage(TextMessageEvent event) {
                             assertTrue(messages.offer(event));

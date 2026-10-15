@@ -2,8 +2,7 @@ package com.github.theholywaffle.teamspeak3.api.event;
 
 /**
  * Interface used to listen to events from a TeamSpeak3 server.
- * <p>All callbacks default to no-ops. Implement only the events you need;
- * {@link TS3EventAdapter} remains available for existing subclasses.</p>
+ * <p>All callbacks default to no-ops. Implement only the events you need.</p>
  *
  * @see com.github.theholywaffle.teamspeak3.TS3Query#subscribe(TS3Listener)
  * @see com.github.theholywaffle.teamspeak3.EventApi#subscribe(TS3Listener)

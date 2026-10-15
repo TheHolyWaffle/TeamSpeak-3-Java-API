@@ -24,8 +24,8 @@ import com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ClientMovedEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ServerEditedEvent;
-import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
+import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3UnsupportedOperationException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
@@ -80,7 +80,7 @@ class ModelCompatibilityIT {
             api.selectVirtualServerById(VirtualServerId.of(1));
             api.events().register(TS3EventType.SERVER, TS3EventType.TEXT_PRIVATE);
             api.events().register(TS3EventType.CHANNEL);
-            try (var subscription = observer.subscribe(new TS3EventAdapter() {
+            try (var subscription = observer.subscribe(new TS3Listener() {
                 @Override
                 public void onClientJoin(ClientJoinEvent e) {
                     events.add(e);

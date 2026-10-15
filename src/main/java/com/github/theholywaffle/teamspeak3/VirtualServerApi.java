@@ -1,6 +1,7 @@
 package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
+import com.github.theholywaffle.teamspeak3.api.LogLevel;
 import com.github.theholywaffle.teamspeak3.api.Snapshot;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
@@ -135,6 +136,17 @@ public final class VirtualServerApi {
      */
     public void deploySnapshot(Snapshot snapshot) {
         CommandFutures.join(async.deploySnapshot(snapshot));
+    }
+
+    /**
+     * Writes a custom server log entry. The selected virtual server and the caller's permissions
+     * determine its destination; this command has no explicit instance-log selector.
+     *
+     * @param level the severity
+     * @param message the nonempty, unencoded log message
+     */
+    public void addLogEntry(LogLevel level, String message) {
+        CommandFutures.join(async.addLogEntry(level, message));
     }
 
     /**

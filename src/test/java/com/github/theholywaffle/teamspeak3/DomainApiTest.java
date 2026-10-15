@@ -58,9 +58,10 @@ class DomainApiTest {
                 });
                 var query = query(peer)) {
             query.connect();
-            query.getApi().addLogEntry(LogLevel.INFO, "hello 日本語 | \\s");
+            query.getApi().servers().addLogEntry(LogLevel.INFO, "hello 日本語 | \\s");
             var denied = assertThrows(
-                    TS3CommandFailedException.class, () -> query.getApi().addLogEntry(LogLevel.WARNING, "denied"));
+                    TS3CommandFailedException.class,
+                    () -> query.getApi().servers().addLogEntry(LogLevel.WARNING, "denied"));
             assertEquals(2568, denied.getErrorId());
             query.getAsyncApi().files().stop(ServerFileTransferId.of(0), true).join();
             var missing = assertThrows(
@@ -124,9 +125,9 @@ class DomainApiTest {
     void newCommandsRejectInvalidInputBeforeSending() {
         try (var query = new TS3Query(new TS3Config())) {
             var api = query.getAsyncApi();
-            assertThrows(NullPointerException.class, () -> api.addLogEntry(null, "message"));
-            assertThrows(IllegalArgumentException.class, () -> api.addLogEntry(LogLevel.INFO, ""));
-            assertThrows(IllegalArgumentException.class, () -> api.addLogEntry(LogLevel.INFO, null));
+            assertThrows(NullPointerException.class, () -> api.servers().addLogEntry(null, "message"));
+            assertThrows(IllegalArgumentException.class, () -> api.servers().addLogEntry(LogLevel.INFO, ""));
+            assertThrows(IllegalArgumentException.class, () -> api.servers().addLogEntry(LogLevel.INFO, null));
             assertThrows(
                     IllegalArgumentException.class, () -> api.databaseClients().findIdentityByUniqueId(""));
             assertThrows(

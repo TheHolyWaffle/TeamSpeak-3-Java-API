@@ -12,8 +12,8 @@ import com.github.theholywaffle.teamspeak3.api.MessageId;
 import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
 import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
-import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
+import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3QueryShutDownException;
@@ -63,7 +63,7 @@ class DomainApiCompatibilityIT {
             observer.connect();
             observer.getApi().selectVirtualServerById(VirtualServerId.of(1), "observer-" + target);
             observer.getApi().events().register(TS3EventType.TEXT_PRIVATE);
-            observer.subscribe(new TS3EventAdapter() {
+            observer.subscribe(new TS3Listener() {
                 @Override
                 public void onTextMessage(TextMessageEvent e) {
                     messages.add(e);

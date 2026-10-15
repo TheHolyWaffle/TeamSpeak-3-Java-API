@@ -29,19 +29,13 @@ class EventResilienceTest {
     }
 
     @Test
-    void singleCallbackListenerIgnoresUnhandledEventsAndAdapterStillReceivesMessages() {
-        var received = new CountDownLatch(2);
+    void singleCallbackListenerIgnoresUnhandledEvents() {
+        var received = new CountDownLatch(1);
         try (var query = new TS3Query(new TS3Config())) {
             query.subscribe(new TS3Listener() {
                 @Override
                 public void onTextMessage(TextMessageEvent event) {
                     assertEquals("1", event.getMessage());
-                    received.countDown();
-                }
-            });
-            query.subscribe(new TS3EventAdapter() {
-                @Override
-                public void onTextMessage(TextMessageEvent event) {
                     received.countDown();
                 }
             });
@@ -59,7 +53,7 @@ class EventResilienceTest {
         var delivered = new CountDownLatch(3);
         var received = new CopyOnWriteArrayList<Integer>();
         try (var query = new TS3Query(new TS3Config().setListenerQueueCapacity(2))) {
-            query.subscribe(new TS3EventAdapter() {
+            query.subscribe(new TS3Listener() {
                 @Override
                 public void onTextMessage(TextMessageEvent e) {
                     int value = Integer.parseInt(e.getMessage());
@@ -93,7 +87,7 @@ class EventResilienceTest {
         var release = new CountDownLatch(1);
         var calls = new AtomicInteger();
         try (var query = new TS3Query(new TS3Config().setListenerCapacity(1))) {
-            var listener = new TS3EventAdapter() {
+            var listener = new TS3Listener() {
                 @Override
                 public void onTextMessage(TextMessageEvent e) {
                     calls.incrementAndGet();
@@ -127,7 +121,7 @@ class EventResilienceTest {
         var release = new CountDownLatch(1);
         var resumed = new CountDownLatch(1);
         try (var query = new TS3Query(new TS3Config().setEventCallbackThreads(1).setListenerCapacity(1))) {
-            var blocked = query.subscribe(new TS3EventAdapter() {
+            var blocked = query.subscribe(new TS3Listener() {
                 @Override
                 public void onTextMessage(TextMessageEvent e) {
                     entered.countDown();
@@ -138,7 +132,7 @@ class EventResilienceTest {
                 query.getEventManager().fireEvent(event(0));
                 await(entered);
                 blocked.close();
-                var listener = new TS3EventAdapter() {
+                var listener = new TS3Listener() {
                     @Override
                     public void onTextMessage(TextMessageEvent e) {
                         resumed.countDown();
@@ -191,14 +185,14 @@ class EventResilienceTest {
                             @Override
                             public void onDisconnect(TS3Query query) {}
                         }))) {
-            query.subscribe(new TS3EventAdapter() {
+            query.subscribe(new TS3Listener() {
                 @Override
                 public void onTextMessage(TextMessageEvent e) {
                     entered.countDown();
                     await(release);
                 }
             });
-            query.subscribe(new TS3EventAdapter() {
+            query.subscribe(new TS3Listener() {
                 @Override
                 public void onClientMoved(ClientMovedEvent e) {
                     assertFalse(Thread.currentThread().getName().contains("StreamReader"));
@@ -291,7 +285,7 @@ class EventResilienceTest {
     void eventCallbackCanCloseItsQueryWithoutWaitingForItself() throws Exception {
         var closed = new CompletableFuture<Void>();
         var query = new TS3Query(new TS3Config().setCloseTimeout(java.time.Duration.ofMillis(500)));
-        query.subscribe(new TS3EventAdapter() {
+        query.subscribe(new TS3Listener() {
             @Override
             public void onTextMessage(TextMessageEvent e) {
                 query.close();
@@ -361,7 +355,7 @@ class EventResilienceTest {
             assertEquals(1024, query.getConfig().getCommandCapacity());
             assertThrows(
                     NullPointerException.class, () -> query.getApi().events().subscribe(null));
-            try (var subscription = query.subscribe(new TS3EventAdapter() {})) {}
+            try (var subscription = query.subscribe(new TS3Listener() {})) {}
         }
     }
 }

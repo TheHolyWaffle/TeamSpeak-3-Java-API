@@ -10,8 +10,8 @@ import com.github.theholywaffle.teamspeak3.api.LogLevel;
 import com.github.theholywaffle.teamspeak3.api.ServerFileTransferId;
 import com.github.theholywaffle.teamspeak3.api.UploadMode;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
-import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
+import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3AuthenticationFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
@@ -140,7 +140,7 @@ class TS3WebQueryTest {
         try (var query = new TS3WebQuery(config().build())) {
             var api = query.getApi(VirtualServerId.of(3));
             responder = _ -> new Reply(200, "{\"status\":{\"code\":0}}");
-            api.addLogEntry(LogLevel.INFO, "日本語 | log");
+            api.servers().addLogEntry(LogLevel.INFO, "日本語 | log");
             Request log = requests.take();
             assertEquals("/prefix/3/logadd", log.path());
             assertEquals("{\"loglevel\":\"4\",\"logmsg\":\"日本語 | log\"}", log.body());
@@ -204,8 +204,8 @@ class TS3WebQueryTest {
                     () -> api.executeRawCommand("quit"),
                     () -> api.events().registerAll(),
                     () -> api.events().unregisterAll(),
-                    () -> api.events().subscribe(new TS3EventAdapter() {}),
-                    () -> async.events().subscribe(new TS3EventAdapter() {}),
+                    () -> api.events().subscribe(new TS3Listener() {}),
+                    () -> async.events().subscribe(new TS3Listener() {}),
                     () -> api.events().register(TS3EventType.SERVER),
                     () -> api.files().list(FileLocation.of(ChannelId.of(1), "/")),
                     () -> api.files().transfers(),
