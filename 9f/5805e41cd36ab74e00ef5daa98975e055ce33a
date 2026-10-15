@@ -1,0 +1,49 @@
+MIGRATION.md
+  s_1b5bea48fe9492::t_17ca4279f9ec3a 337-339
+README.md
+  s_1b5bea48fe9492::t_cb87e104dab740 183,294
+src/main/java/com/github/theholywaffle/teamspeak3/VirtualServerApi.java
+  s_1b5bea48fe9492::t_67b9a92ed802bb 4,141-151
+src/main/java/com/github/theholywaffle/teamspeak3/VirtualServerApiAsync.java
+  s_1b5bea48fe9492::t_6643f4e77b2459 3,94-98
+src/main/java/com/github/theholywaffle/teamspeak3/api/event/TS3Listener.java
+  s_1b5bea48fe9492::t_50f85d82483e8e 5
+src/test/java/com/github/theholywaffle/teamspeak3/DomainApiCompatibilityIT.java
+  s_1b5bea48fe9492::t_9a854b2e4dcb84 16,66
+src/test/java/com/github/theholywaffle/teamspeak3/DomainApiTest.java
+  s_1b5bea48fe9492::t_143b89cac6acca 61,63-64,128-130
+src/test/java/com/github/theholywaffle/teamspeak3/EventResilienceTest.java
+  s_1b5bea48fe9492::t_0089de5cc7f7e3 32-33,56,90,124,135,188,195,288,358
+src/test/java/com/github/theholywaffle/teamspeak3/ExamplesIT.java
+  s_1b5bea48fe9492::t_fabb425e101b51 9,113
+src/test/java/com/github/theholywaffle/teamspeak3/LogWriteCompatibilityIT.java
+  s_1b5bea48fe9492::t_b074ecd92a4653 40-45
+src/test/java/com/github/theholywaffle/teamspeak3/ModelCompatibilityIT.java
+  s_1b5bea48fe9492::t_93d020a66906fe 28,83
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryCompatibilityIT.java
+  s_1b5bea48fe9492::t_b332d099db2b59 40,174,225,310,489,756,1078,1326,1451
+src/test/java/com/github/theholywaffle/teamspeak3/ServerQueryProtocolTest.java
+  s_1b5bea48fe9492::t_a1e6bfe3ebd4ab 7,109
+src/test/java/com/github/theholywaffle/teamspeak3/TS3WebQueryTest.java
+  s_1b5bea48fe9492::t_76add0e2c0be62 14,143,207-208
+src/test/java/com/github/theholywaffle/teamspeak3/ThreadModelTest.java
+  s_1b5bea48fe9492::t_09fbffcf1bfb76 5,44
+src/test/java/com/github/theholywaffle/teamspeak3/WebQueryCompatibilityIT.java
+  s_1b5bea48fe9492::t_34cae976b3cbe5 30,649
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9f5805e41cd36ab74e00ef5daa98975e055ce33a",
+  "prompts": {},
+  "sessions": {
+    "s_1b5bea48fe9492": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a14110-66bc-7a63-970c-2d31b2300856",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
