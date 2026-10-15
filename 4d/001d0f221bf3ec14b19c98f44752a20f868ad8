@@ -1,0 +1,86 @@
+src/main/java/com/github/theholywaffle/teamspeak3/commands/ClientCommands.java
+  s_320874a6bdb6fd::t_6d8cd80ce14a94 61-66
+src/test/java/com/github/theholywaffle/teamspeak3/ServerAdministrationCompatibilityIT.java
+  s_320874a6bdb6fd::t_f076987e891d5f 156-158
+  s_320874a6bdb6fd::t_9b241fc9b67df6 139
+  s_320874a6bdb6fd::t_64538fd7101159 1-28,35-37,39-45,51-71,79-91,96-118,121-126,136,140-146,149-155,159-160
+  s_320874a6bdb6fd::t_6ca0f3eff358ef 29-34,38,46-50,72-78,92-95,119-120,127-135,137-138,147-148
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3UnsupportedOperationException.java
+  s_320874a6bdb6fd::t_3f74014df50a57 3-4,8
+src/main/java/com/github/theholywaffle/teamspeak3/ClientApiAsync.java
+  s_320874a6bdb6fd::t_6d8cd80ce14a94 41-45
+src/main/java/com/github/theholywaffle/teamspeak3/VirtualServerApiAsync.java
+  s_320874a6bdb6fd::t_6d8cd80ce14a94 3,10,15,106-131
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3UnknownOutcomeException.java
+  s_320874a6bdb6fd::t_3f74014df50a57 3-4,7
+  s_320874a6bdb6fd::t_72640edb1ab6c3 9
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3ConnectionFailedException.java
+  s_320874a6bdb6fd::t_3f74014df50a57 3-4,8
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3InvalidValueException.java
+  s_320874a6bdb6fd::t_3f74014df50a57 3,12
+src/test/java/com/github/theholywaffle/teamspeak3/LogLimitsCompatibilityIT.java
+  s_320874a6bdb6fd::t_4f5fc928a38672 1-58
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3HttpException.java
+  s_320874a6bdb6fd::t_3f74014df50a57 3-4,12
+src/audit/java/com/github/theholywaffle/teamspeak3/ServerQueryCommandAudit.java
+  s_320874a6bdb6fd::t_055eefe00037c9 12-23
+  s_320874a6bdb6fd::t_240b7fc5e49e8b 1-11,24-108
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3CommandFailedException.java
+  s_320874a6bdb6fd::t_3f74014df50a57 10
+  s_320874a6bdb6fd::t_72640edb1ab6c3 4
+src/main/java/com/github/theholywaffle/teamspeak3/api/wrapper/TemporaryServerPassword.java
+  s_320874a6bdb6fd::t_6d8cd80ce14a94 1-30,32-35,37-50
+  s_320874a6bdb6fd::t_055eefe00037c9 31,36
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3QueueFullException.java
+  s_320874a6bdb6fd::t_3f74014df50a57 3-4,7
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3FileTransferFailedException.java
+  s_320874a6bdb6fd::t_3f74014df50a57 12
+  s_320874a6bdb6fd::t_72640edb1ab6c3 4
+src/main/java/com/github/theholywaffle/teamspeak3/commands/VirtualServerCommands.java
+  s_320874a6bdb6fd::t_6d8cd80ce14a94 3,9,11-12,88-125
+README.md
+  s_320874a6bdb6fd::t_055eefe00037c9 390-391
+  s_320874a6bdb6fd::t_45166d7e47711c 392
+src/test/java/com/github/theholywaffle/teamspeak3/TeamSpeakContainer.java
+  s_320874a6bdb6fd::t_a022f56a1c9b4c 86-90
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3TransportException.java
+  s_320874a6bdb6fd::t_3f74014df50a57 3-4,8
+src/main/java/com/github/theholywaffle/teamspeak3/VirtualServerApi.java
+  s_320874a6bdb6fd::t_f076987e891d5f 216-217
+  s_320874a6bdb6fd::t_6d8cd80ce14a94 3,11,14,170-205,208-215,218-224
+  s_320874a6bdb6fd::t_055eefe00037c9 21-26,206-207
+build.gradle.kts
+  s_320874a6bdb6fd::t_a022f56a1c9b4c 28-33,75-92
+  s_320874a6bdb6fd::t_a19ef2621a30cb 93
+src/test/java/com/github/theholywaffle/teamspeak3/DomainApiTest.java
+  s_320874a6bdb6fd::t_05ff56e21f625e 46-63,94-102,107-108,110,116,119-120,124-126
+  s_320874a6bdb6fd::t_c08c637db71b57 64-93,103-106,109,111-115,117-118,121-123
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3AuthenticationFailedException.java
+  s_320874a6bdb6fd::t_72640edb1ab6c3 4
+  s_320874a6bdb6fd::t_3f74014df50a57 13
+src/main/java/com/github/theholywaffle/teamspeak3/ClientApi.java
+  s_320874a6bdb6fd::t_6d8cd80ce14a94 53-62
+  s_320874a6bdb6fd::t_7f7c9656bc75a9 52
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3Exception.java
+  s_320874a6bdb6fd::t_3f74014df50a57 3-4,17
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3TimeoutException.java
+  s_320874a6bdb6fd::t_3f74014df50a57 3-4,8
+src/main/java/com/github/theholywaffle/teamspeak3/api/exception/TS3QueryShutDownException.java
+  s_320874a6bdb6fd::t_3f74014df50a57 3-4,11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4d001d0f221bf3ec14b19c98f44752a20f868ad8",
+  "prompts": {},
+  "sessions": {
+    "s_320874a6bdb6fd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a14139-4a27-70b1-915d-00e8d227143e",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
