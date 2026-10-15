@@ -40,7 +40,7 @@ class CommandFuturesTest {
             var one = source.thenApply(value -> value.getId().value() + 1);
             var two = source.thenApply(value -> value.getId().value() * 2);
             var thrown = new IllegalArgumentException("callback");
-            var bad = source.thenApply(value -> {
+            var bad = source.thenApply(_ -> {
                 throw thrown;
             });
             respond.countDown();
@@ -66,7 +66,7 @@ class CommandFuturesTest {
         assertTrue(source.isCancelled());
         var first = new CompletableFuture<Integer>();
         var next = new CompletableFuture<String>();
-        var chained = CommandFutures.compose(first, value -> next);
+        var chained = CommandFutures.compose(first, _ -> next);
         first.complete(1);
         chained.cancel(false);
         assertTrue(next.isCancelled());
@@ -102,7 +102,7 @@ class CommandFuturesTest {
         var entered = new CountDownLatch(1);
         var release = new CountDownLatch(1);
         var next = new CompletableFuture<Integer>();
-        var result = CommandFutures.compose(source, value -> {
+        var result = CommandFutures.compose(source, _ -> {
             entered.countDown();
             try {
                 await(release);
@@ -159,7 +159,7 @@ class CommandFuturesTest {
         var result = CommandFutures.all(List.of(first, second));
         var observed = new CountDownLatch(1);
         var release = new CountDownLatch(1);
-        result.whenComplete((value, failure) -> {
+        result.whenComplete((_, _) -> {
             observed.countDown();
             try {
                 await(release);
@@ -295,12 +295,12 @@ class CommandFuturesTest {
             assertEquals(List.of(1, 2), order);
             assertTrue(threads.stream().allMatch(name -> name.contains("Completions")));
             var caller = Thread.currentThread();
-            assertSame(caller, first.thenApply(value -> Thread.currentThread()).get());
+            assertSame(caller, first.thenApply(_ -> Thread.currentThread()).get());
             try (var executor = Executors.newSingleThreadExecutor(
                     Thread.ofVirtual().name("chosen-callback").factory())) {
                 assertEquals(
                         "chosen-callback",
-                        first.thenApplyAsync(value -> Thread.currentThread().getName(), executor)
+                        first.thenApplyAsync(_ -> Thread.currentThread().getName(), executor)
                                 .get());
             }
             query.exit();
@@ -414,12 +414,12 @@ class CommandFuturesTest {
             query.connect();
             var first = query.getAsyncApi().whoAmI();
             var second = query.getAsyncApi().whoAmI();
-            first.thenAccept(value -> {
+            first.thenAccept(_ -> {
                 entered.countDown();
                 while (release.getCount() != 0) {
                     try {
                         release.await();
-                    } catch (InterruptedException ignored) {
+                    } catch (InterruptedException _) {
                         // Keep waiting for the release.
                     }
                 }
@@ -430,7 +430,7 @@ class CommandFuturesTest {
                 await(secondResponse);
                 assertTimeout(Duration.ofMillis(700), query::close);
                 // The response can have been accepted or be terminated by close, but must settle.
-                assertTrue(second.handle((value, failure) -> true).get(2, TimeUnit.SECONDS));
+                assertTrue(second.handle((_, _) -> true).get(2, TimeUnit.SECONDS));
             } finally {
                 release.countDown();
             }
@@ -477,7 +477,7 @@ class CommandFuturesTest {
                         .setQueryPort(peer.port())
                         .setCommandCapacity(1))) {
             var mutation = query.getAsyncApi().channels().create("must-not-send", java.util.Map.of());
-            mutation.whenComplete((value, failure) -> {
+            mutation.whenComplete((_, _) -> {
                 entered.countDown();
                 try {
                     await(release);
@@ -582,7 +582,7 @@ class CommandFuturesTest {
                     while (release.getCount() != 0) {
                         try {
                             await(release);
-                        } catch (InterruptedException e) {
+                        } catch (InterruptedException _) {
                             interrupted = true;
                         }
                     }
@@ -590,7 +590,7 @@ class CommandFuturesTest {
                 }
             };
             query.connect();
-            var transfer = query.getAsyncApi().files().download(FileLocation.of(0, "/test"), output);
+            var transfer = query.getAsyncApi().files().download(FileLocation.ofServer("/test"), output);
             try {
                 await(entered);
                 assertTrue(transfer.cancel(false));

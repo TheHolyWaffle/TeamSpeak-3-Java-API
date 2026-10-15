@@ -3,6 +3,7 @@ package com.github.theholywaffle.teamspeak3.api.event;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
@@ -13,15 +14,16 @@ class ChannelMovedEventTest {
     @Test
     void usesNotificationOrderRatherThanChannelInfoProperty() {
         var event = event("cid=3 cpid=2 order=7 invokerid=4 invokername=actor reasonid=1");
-        assertEquals(3, event.getChannelId());
-        assertEquals(2, event.getChannelParentId());
-        assertEquals(7, event.getChannelOrder());
+        assertEquals(ChannelId.of(3), event.getChannelId());
+        assertEquals(Optional.of(ChannelId.of(2)), event.getChannelParentId());
+        assertEquals(Optional.of(ChannelId.of(7)), event.getChannelOrder());
         assertEquals(Optional.of(ClientId.of(4)), event.getInvokerId());
     }
 
     @Test
     void distinguishesFirstSiblingFromAbsentOrder() {
-        assertEquals(0, event("cid=3 cpid=2 order=0").getChannelOrder());
+        assertEquals(Optional.empty(), event("cid=3 cpid=0 order=0").getChannelParentId());
+        assertEquals(Optional.empty(), event("cid=3 cpid=2 order=0").getChannelOrder());
         var missing = assertThrows(
                 TS3InvalidValueException.class, () -> event("cid=3 cpid=2").getChannelOrder());
         assertEquals("order", missing.getProperty());

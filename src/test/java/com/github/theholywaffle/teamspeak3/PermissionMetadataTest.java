@@ -3,6 +3,7 @@ package com.github.theholywaffle.teamspeak3;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.github.theholywaffle.teamspeak3.api.BPermissionType;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.IPermissionType;
 import com.github.theholywaffle.teamspeak3.api.PermissionGrant;
@@ -67,7 +68,7 @@ class PermissionMetadataTest {
                                     .withSkip());
             api.permissions()
                     .add(
-                            PermissionTarget.channel(4),
+                            PermissionTarget.channel(ChannelId.of(4)),
                             PermissionGrant.of(permissions.get(2).name(), 41));
             var error = assertThrows(
                     TS3CommandFailedException.class, () -> api.permissions().idByName("i_unknown_permission"));
@@ -107,7 +108,7 @@ class PermissionMetadataTest {
                     TS3CommandFailedException.class,
                     () -> api.permissions()
                             .add(
-                                    PermissionTarget.channel(4),
+                                    PermissionTarget.channel(ChannelId.of(4)),
                                     PermissionGrant.of(IPermissionType.I_CHANNEL_NEEDED_JOIN_POWER.getName(), 41)));
             assertEquals(2568, error.getError().getId());
             int failedId = error.getError().getFailedPermissionId().orElseThrow();

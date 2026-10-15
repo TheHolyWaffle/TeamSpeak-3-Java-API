@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
@@ -61,7 +62,7 @@ public final class ClientApiAsync {
     /** @see ClientApi#isOnline(ClientId) */
     public CompletableFuture<Boolean> isOnline(ClientId clientId) {
         return QueryRequests.recover(
-                requests.response(ClientCommands.clientInfo(clientId.value()), ignored -> true),
+                requests.response(ClientCommands.clientInfo(clientId.value()), _ -> true),
                 QueryRequests.INVALID_CLIENT_ID,
                 false);
     }
@@ -73,21 +74,22 @@ public final class ClientApiAsync {
                 response -> !response.getResponses().isEmpty());
     }
 
-    /** @see ClientApi#move(ClientId, int) */
-    public CompletableFuture<Void> move(ClientId clientId, int channelId) {
+    /** @see ClientApi#move(ClientId, ChannelId) */
+    public CompletableFuture<Void> move(ClientId clientId, ChannelId channelId) {
         return move(clientId, channelId, null);
     }
 
-    /** @see ClientApi#move(ClientId, int, String) */
-    public CompletableFuture<Void> move(ClientId clientId, int channelId, String channelPassword) {
-        return requests.run(ClientCommands.clientMove(clientId.value(), channelId, channelPassword));
+    /** @see ClientApi#move(ClientId, ChannelId, String) */
+    public CompletableFuture<Void> move(ClientId clientId, ChannelId channelId, String channelPassword) {
+        return requests.run(ClientCommands.clientMove(clientId.value(), channelId.value(), channelPassword));
     }
 
-    /** @see ClientApi#moveAll(Collection, int, String) */
-    public CompletableFuture<Void> moveAll(Collection<ClientId> clientIds, int channelId, String channelPassword) {
+    /** @see ClientApi#moveAll(Collection, ChannelId, String) */
+    public CompletableFuture<Void> moveAll(
+            Collection<ClientId> clientIds, ChannelId channelId, String channelPassword) {
         int[] ids = QueryRequests.values(clientIds);
         if (ids.length == 0) return CompletableFuture.completedFuture(null);
-        return requests.run(ClientCommands.clientMove(ids, channelId, channelPassword));
+        return requests.run(ClientCommands.clientMove(ids, channelId.value(), channelPassword));
     }
 
     /** @see ClientApi#kickFromChannel(String, ClientId...) */

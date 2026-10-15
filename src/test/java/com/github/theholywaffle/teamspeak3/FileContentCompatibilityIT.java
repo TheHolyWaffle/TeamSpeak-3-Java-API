@@ -3,8 +3,12 @@ package com.github.theholywaffle.teamspeak3;
 import static com.github.theholywaffle.teamspeak3.FutureAssertions.eventually;
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
+import com.github.theholywaffle.teamspeak3.api.ClientFileTransferId;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
+import com.github.theholywaffle.teamspeak3.api.ServerFileTransferId;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.wrapper.FileTransferParameters;
 import com.github.theholywaffle.teamspeak3.commands.FileCommands;
 import java.nio.file.Files;
@@ -13,7 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalLong;
+import java.util.Optional;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -29,19 +33,19 @@ class FileContentCompatibilityIT {
             try (var query = new TS3Query(server.config(target.protocol))) {
                 query.connect();
                 var api = query.getApi();
-                api.selectVirtualServerById(1);
+                api.selectVirtualServerById(VirtualServerId.of(1));
                 for (String command : List.of("ftinitupload", "ftinitdownload", "ftlist", "ftstop", "ftgetfileinfo")) {
                     var help = api.executeRawCommand("help " + command).getRawResponse();
                     assertTrue(help.startsWith("Usage: " + command));
                     evidence.add("help " + command + "\n" + help);
                 }
-                int cid = api.channels()
+                ChannelId cid = api.channels()
                         .create("file-content-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"));
                 byte[] bytes = "actual bytes 日本語 | literal \\s\n".getBytes(java.nio.charset.StandardCharsets.UTF_8);
                 api.files().createDirectory(FileLocation.of(cid, "/contents"));
                 String name = "/contents/content 日本語.txt";
                 var upload = api.executeRawCommand(
-                                FileCommands.ftInitUpload(1, name, cid, "", bytes.length, true, false)
+                                FileCommands.ftInitUpload(1, name, cid.value(), "", bytes.length, true, false)
                                         .toString())
                         .getFirstResponse()
                         .orElseThrow();
@@ -63,8 +67,9 @@ class FileContentCompatibilityIT {
                 assertTrue(info.isFile());
                 assertEquals(name, info.getPath());
                 String second = "/contents/second.bin";
-                var secondUpload = api.executeRawCommand(FileCommands.ftInitUpload(6, second, cid, "", 1, true, false)
-                                .toString())
+                var secondUpload = api.executeRawCommand(
+                                FileCommands.ftInitUpload(6, second, cid.value(), "", 1, true, false)
+                                        .toString())
                         .getFirstResponse()
                         .orElseThrow();
                 upload(new byte[] {42}, mapped(server, secondUpload.getMap()));
@@ -81,24 +86,23 @@ class FileContentCompatibilityIT {
                 assertEquals(Map.of(name, (long) bytes.length, second, 1L), sizes);
                 evidence.add("positive file-info fields="
                         + new java.util.TreeSet<>(info.getMap().keySet()));
-                var download = api.executeRawCommand(
-                                FileCommands.ftInitDownload(2, name, cid, "", 0).encoded())
+                var download = api.executeRawCommand(FileCommands.ftInitDownload(2, name, cid.value(), "", 0)
+                                .encoded())
                         .getFirstResponse()
                         .orElseThrow();
                 assertEquals(bytes.length, download.requireLong("size"));
                 assertArrayEquals(bytes, download(mapped(server, download.getMap())));
                 var pending = api.executeRawCommand(
-                                FileCommands.ftInitUpload(3, "/pending.bin", cid, "", 100, true, false)
+                                FileCommands.ftInitUpload(3, "/pending.bin", cid.value(), "", 100, true, false)
                                         .toString())
                         .getFirstResponse()
                         .orElseThrow();
-                int transfer = pending.requireInt("serverftfid");
-                assertTrue(transfer >= 0);
+                var transfer = ServerFileTransferId.of(pending.requireInt("serverftfid"));
                 var listed = api.files().transfers().stream()
-                        .filter(row -> row.getServerTransferId() == transfer)
+                        .filter(row -> row.getServerTransferId().equals(transfer))
                         .toList();
                 assertEquals(1, listed.size());
-                assertEquals(3, listed.getFirst().getClientTransferId());
+                assertEquals(ClientFileTransferId.of(3), listed.getFirst().getClientTransferId());
                 assertEquals(api.whoAmI().getId(), listed.getFirst().getClientId());
                 evidence.add("pending transfer fields="
                         + new java.util.TreeSet<>(listed.getFirst().getMap().keySet()));
@@ -110,16 +114,17 @@ class FileContentCompatibilityIT {
                     socket.getOutputStream().flush();
                     eventually(
                             () -> api.files().transfers().stream()
-                                    .anyMatch(row -> row.getServerTransferId() == transfer && row.isActive()),
+                                    .anyMatch(row -> row.getServerTransferId().equals(transfer) && row.isActive()),
                             "Authenticated partial upload must become active");
                     api.executeRawCommand("ftstop serverftfid=" + transfer + " delete=1");
                     assertEquals(-1, socket.getInputStream().read(), "Stopped upload must close its data socket");
                 }
-                assertTrue(api.files().transfers().stream().noneMatch(row -> row.getServerTransferId() == transfer));
+                assertTrue(api.files().transfers().stream()
+                        .noneMatch(row -> row.getServerTransferId().equals(transfer)));
                 byte[] icon = java.util.Base64.getDecoder()
                         .decode(
                                 "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aXh8AAAAASUVORK5CYII=");
-                long iconId = FileTransferHelper.getIconId(icon);
+                var iconId = FileTransferHelper.getIconId(icon);
                 var iconUpload = api.executeRawCommand(
                                 FileCommands.ftInitUpload(4, "/icon_" + iconId, 0, "", icon.length, true, false)
                                         .toString())
@@ -128,11 +133,11 @@ class FileContentCompatibilityIT {
                 upload(icon, mapped(server, iconUpload.getMap()));
                 eventually(
                         () -> api.files().icons().stream()
-                                .anyMatch(row -> row.getIconId().equals(OptionalLong.of(iconId))
+                                .anyMatch(row -> row.getIconId().equals(Optional.of(iconId))
                                         && row.getFileSize() == icon.length),
                         "Uploaded icon must become complete");
                 var icons = api.files().icons().stream()
-                        .filter(row -> row.getIconId().equals(OptionalLong.of(iconId)))
+                        .filter(row -> row.getIconId().equals(Optional.of(iconId)))
                         .toList();
                 assertEquals(1, icons.size());
                 assertEquals(icon.length, icons.getFirst().getFileSize());
@@ -143,7 +148,7 @@ class FileContentCompatibilityIT {
                 assertArrayEquals(icon, download(mapped(server, iconDownload.getMap())));
                 api.files().deleteIcons(iconId);
                 assertTrue(api.files().icons().stream()
-                        .noneMatch(row -> row.getIconId().equals(OptionalLong.of(iconId))));
+                        .noneMatch(row -> row.getIconId().equals(Optional.of(iconId))));
                 api.files()
                         .delete(java.util.Arrays.stream(new String[] {name, second})
                                 .map(path -> FileLocation.of(cid, path))

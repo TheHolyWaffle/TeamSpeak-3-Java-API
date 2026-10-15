@@ -9,7 +9,7 @@ public final class PrivilegeKeyCommands {
         throw new Error("No instances");
     }
 
-    public static Command privilegeKeyAdd(PrivilegeKeyType type, int groupId, int channelId, String description) {
+    public static Command privilegeKeyAdd(PrivilegeKeyType type, long groupId, long channelId, String description) {
         if (type == null) {
             throw new IllegalArgumentException("Privilege key type cannot be null");
         }

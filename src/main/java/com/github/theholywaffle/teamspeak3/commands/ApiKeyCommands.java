@@ -42,7 +42,7 @@ public final class ApiKeyCommands {
                 .build();
     }
 
-    public static Command apiKeyDelete(int id) {
+    public static Command apiKeyDelete(long id) {
         return new CommandBuilder("apikeydel").add(new KeyValueParam("id", id)).build();
     }
 }

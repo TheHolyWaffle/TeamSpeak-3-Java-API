@@ -119,7 +119,7 @@ class CommandQueue {
             }
             var entry = new Entry(command, work);
             sendQueue.add(entry);
-            var _ = command.getFuture().whenComplete((value, failure) -> {
+            var _ = command.getFuture().whenComplete((_, _) -> {
                 if (entry.isCancelled()) removeUnsent(entry);
             });
             canTransfer.signalAll();
@@ -253,7 +253,7 @@ class CommandQueue {
             try {
                 completion.run();
             } finally {
-                entry.work.whenComplete((value, failure) -> admission.release());
+                entry.work.whenComplete((_, _) -> admission.release());
             }
         });
     }
@@ -315,7 +315,7 @@ class CommandQueue {
             while (!isEmpty() && !deadline.expired()) {
                 try {
                     canTransfer.awaitNanos(deadline.remaining());
-                } catch (InterruptedException e) {
+                } catch (InterruptedException _) {
                     Thread.currentThread().interrupt();
                     break;
                 }
@@ -330,7 +330,7 @@ class CommandQueue {
         boolean admitted = false;
         try {
             admitted = admission.tryAcquire(deadline.remaining(), TimeUnit.NANOSECONDS);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException _) {
             Thread.currentThread().interrupt();
         }
         // Best effort: shutDown settles every remaining command.

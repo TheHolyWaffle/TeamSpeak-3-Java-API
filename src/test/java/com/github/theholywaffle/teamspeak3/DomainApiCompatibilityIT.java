@@ -4,10 +4,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.github.theholywaffle.teamspeak3.api.BanRequest;
 import com.github.theholywaffle.teamspeak3.api.ChannelGroupFilter;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
+import com.github.theholywaffle.teamspeak3.api.MessageId;
 import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
+import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
@@ -52,12 +56,12 @@ class DomainApiCompatibilityIT {
                         Duration.ofSeconds(3),
                         Duration.ofSeconds(15),
                         1024,
-                        (host, advertised, port) -> new InetSocketAddress(ts3.getHost(), ts3.getMappedPort(port))));
-        int lobby = 0;
+                        (_, _, port) -> new InetSocketAddress(ts3.getHost(), ts3.getMappedPort(port))));
+        ChannelId lobby = null;
         try (var observer = new TS3Query(ts3.config(target.protocol));
                 var actor = new TS3Query(files)) {
             observer.connect();
-            observer.getApi().selectVirtualServerById(1, "observer-" + target);
+            observer.getApi().selectVirtualServerById(VirtualServerId.of(1), "observer-" + target);
             observer.getApi().events().register(TS3EventType.TEXT_PRIVATE);
             observer.subscribe(new TS3EventAdapter() {
                 @Override
@@ -67,7 +71,7 @@ class DomainApiCompatibilityIT {
             });
             actor.connect();
             var api = actor.getApi();
-            api.selectVirtualServerById(1);
+            api.selectVirtualServerById(VirtualServerId.of(1));
             ts3.record(target + "-domain-api", api.instance().version());
             ClientId observerId = observer.getApi().whoAmI().getId();
             String sharedUid = observer.getApi().whoAmI().getUniqueIdentifier();
@@ -81,17 +85,17 @@ class DomainApiCompatibilityIT {
             var welcome = messages.poll(10, TimeUnit.SECONDS);
             assertNotNull(welcome, "Online branch must message the observer");
             assertEquals("Welcome to the lobby", welcome.getMessage());
-            assertEquals(lobby, observer.getApi().whoAmI().getChannelId());
+            assertEquals(lobby, observer.getApi().whoAmI().getChannelId().orElseThrow());
             evidence.add("sync: created Lobby " + lobby + ", moved and messaged observer " + observerId);
 
             assertEquals(Optional.empty(), api.clients().findByUniqueId("ServerQuery"));
             assertTrue(
                     api.databaseClients().findByUniqueId("ServerQuery").isPresent(),
                     "The guest identity exists offline");
-            int reused = CommonWorkflow.prepareLobby(actor.getAsyncApi(), "ServerQuery", RULES)
+            ChannelId reused = CommonWorkflow.prepareLobby(actor.getAsyncApi(), "ServerQuery", RULES)
                     .get(30, TimeUnit.SECONDS);
             assertEquals(lobby, reused, "Async form must find the existing channel");
-            int created = lobby;
+            ChannelId created = lobby;
             evidence.add(
                     "async: reused Lobby " + reused + ", stored an offline message for the offline guest identity");
 
@@ -103,15 +107,15 @@ class DomainApiCompatibilityIT {
                     false);
             assertArrayEquals(RULES, api.files().downloadBytes(FileLocation.of(created, "/rules.txt")));
             api.channels().delete(created, true);
-            lobby = 0;
+            lobby = null;
             assertTrue(api.channels().findByName("Lobby", false).isEmpty());
             observer.exit();
             actor.exit();
         } finally {
-            if (lobby > 0)
+            if (lobby != null)
                 try (var cleanup = new TS3Query(ts3.config(target.protocol))) {
                     cleanup.connect();
-                    cleanup.getApi().selectVirtualServerById(1);
+                    cleanup.getApi().selectVirtualServerById(VirtualServerId.of(1));
                     cleanup.getApi().channels().delete(lobby, true);
                 }
         }
@@ -126,30 +130,35 @@ class DomainApiCompatibilityIT {
         try (var query = new TS3Query(ts3.config(target.protocol))) {
             query.connect();
             var api = query.getApi();
-            api.selectVirtualServerById(1);
+            api.selectVirtualServerById(VirtualServerId.of(1));
             String absent = "absent-" + target;
             assertEquals(Optional.empty(), api.clients().findByUniqueId(UNKNOWN_UID));
             assertEquals(Optional.empty(), api.databaseClients().findByUniqueId(UNKNOWN_UID));
-            assertEquals(Optional.empty(), api.messages().getOffline(999_999));
+            assertEquals(Optional.empty(), api.messages().getOffline(MessageId.of(999_999)));
             assertEquals(Optional.empty(), api.servers().findIdByPort(1));
             assertEquals(
-                    Optional.of(1),
+                    Optional.of(VirtualServerId.of(1)),
                     api.servers().findIdByPort(api.servers().info().getPort()));
             assertEquals(Optional.empty(), api.channels().findByName(absent, true));
             assertEquals(Optional.empty(), api.clients().findByName(absent, true));
             assertEquals(List.of(), api.channels().search(absent));
             assertEquals(List.of(), api.clients().search(absent));
             assertEquals(List.of(), api.databaseClients().searchCustomProperty("absent-key", "%"));
-            assertNotNull(api.channelGroups().members(ChannelGroupFilter.all().inChannel(1)));
+            assertNotNull(api.channelGroups().members(ChannelGroupFilter.all().inChannel(ChannelId.of(1))));
             evidence.add(
                     "Optional.empty: unknown UID (online/database), message 999999, port 1, absent names; empty lists: channel/client search, custom search");
 
-            failsWith(768, "channelinfo", () -> api.channels().info(9_999), evidence);
+            failsWith(768, "channelinfo", () -> api.channels().info(ChannelId.of(9_999)), evidence);
             failsWith(512, "clientinfo", () -> api.clients().info(ClientId.of(9_999)), evidence);
             failsWith(1540, "clientinfo", () -> api.clients().info(ClientId.of(999_999)), evidence);
             failsWith(512, "clientdbinfo", () -> api.databaseClients().info(ClientDatabaseId.of(9_999)), evidence);
-            failsWith(2052, "ftgetfileinfo", () -> api.files().info(FileLocation.of(1, "/" + absent)), evidence);
-            failsWith(2560, "servergroupclientlist", () -> api.serverGroups().members(9_999), evidence);
+            failsWith(
+                    2052,
+                    "ftgetfileinfo",
+                    () -> api.files().info(FileLocation.of(ChannelId.of(1), "/" + absent)),
+                    evidence);
+            failsWith(
+                    2560, "servergroupclientlist", () -> api.serverGroups().members(ServerGroupId.of(9_999)), evidence);
             failsWith(1538, "banadd", () -> api.bans().add(BanRequest.myTeamSpeakId("not-a-valid-id")), evidence);
             failsWith(512, "messageadd", () -> api.messages().sendOffline(UNKNOWN_UID, "absent", "absent"), evidence);
 
@@ -157,7 +166,7 @@ class DomainApiCompatibilityIT {
                     api.bans().add(BanRequest.myTeamSpeakId("empty").withReason("domain " + target)),
                     api.bans()::delete)) {
                 assertTrue(api.bans().list().stream()
-                        .anyMatch(row -> row.getId() == ban.id()
+                        .anyMatch(row -> row.getId().equals(ban.id())
                                 && row.getBannedMyTeamSpeakId().equals(java.util.Optional.of("empty"))));
             }
             evidence.add("myTeamSpeak-only ban rule mytsid=empty accepted and deleted");
@@ -171,7 +180,7 @@ class DomainApiCompatibilityIT {
     @Timeout(120)
     void localFailureCategories(ServerQueryCompatibilityIT.Target target) throws Exception {
         var config = ts3.config(target.protocol)
-                .setSessionConfiguration(SessionConfiguration.forServer(1))
+                .setSessionConfiguration(SessionConfiguration.forServer(VirtualServerId.of(1)))
                 .setReconnectStrategy(ReconnectStrategy.constantBackoff(1000));
         var query = new TS3Query(config);
         try {
@@ -179,7 +188,10 @@ class DomainApiCompatibilityIT {
             var unsupported = assertThrows(
                     TS3UnsupportedOperationException.class, () -> query.getApi().setNickname("other"));
             assertFalse(unsupported.isOutcomeUnknown());
-            assertEquals(1, query.getApi().whoAmI().getVirtualServerId(), "Rejected session change sends nothing");
+            assertEquals(
+                    Optional.of(VirtualServerId.of(1)),
+                    query.getApi().whoAmI().getVirtualServerId(),
+                    "Rejected session change sends nothing");
             query.exit();
         } finally {
             query.close();

@@ -97,7 +97,7 @@ class Connection {
         else current.failRemainingCommands();
         try {
             channel.close();
-        } catch (IOException ignored) {
+        } catch (IOException _) {
             // The connection is being torn down either way.
         }
         Thread[] threads;

@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ServerQueryInfo;
@@ -187,13 +188,13 @@ public class TS3BaseApiAsync {
         return requests.run(ClientCommands.clientUpdate(properties));
     }
 
-    /** @see TS3BaseApi#moveQuery(int) */
-    public CompletableFuture<Void> moveQuery(int channelId) {
+    /** @see TS3BaseApi#moveQuery(ChannelId) */
+    public CompletableFuture<Void> moveQuery(ChannelId channelId) {
         return moveQuery(channelId, null);
     }
 
-    /** @see TS3BaseApi#moveQuery(int, String) */
-    public CompletableFuture<Void> moveQuery(int channelId, String channelPassword) {
-        return requests.run(ClientCommands.clientMove(0, channelId, channelPassword));
+    /** @see TS3BaseApi#moveQuery(ChannelId, String) */
+    public CompletableFuture<Void> moveQuery(ChannelId channelId, String channelPassword) {
+        return requests.run(ClientCommands.clientMove(0, channelId.value(), channelPassword));
     }
 }

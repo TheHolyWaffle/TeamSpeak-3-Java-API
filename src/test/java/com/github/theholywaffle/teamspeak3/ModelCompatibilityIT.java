@@ -2,11 +2,16 @@ package com.github.theholywaffle.teamspeak3;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.github.theholywaffle.teamspeak3.api.BanId;
 import com.github.theholywaffle.teamspeak3.api.BanRequest;
 import com.github.theholywaffle.teamspeak3.api.ChannelGroupFilter;
+import com.github.theholywaffle.teamspeak3.api.ChannelGroupId;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
 import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
+import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 import com.github.theholywaffle.teamspeak3.api.event.BaseEvent;
 import com.github.theholywaffle.teamspeak3.api.event.ChannelCreateEvent;
@@ -72,9 +77,9 @@ class ModelCompatibilityIT {
             observer.connect();
             var api = observer.getApi();
             inspect(api.whoAmI(), evidence, failures);
-            api.selectVirtualServerById(1);
+            api.selectVirtualServerById(VirtualServerId.of(1));
             api.events().register(TS3EventType.SERVER, TS3EventType.TEXT_PRIVATE);
-            api.events().register(TS3EventType.CHANNEL, 0);
+            api.events().register(TS3EventType.CHANNEL);
             try (var subscription = observer.subscribe(new TS3EventAdapter() {
                 @Override
                 public void onClientJoin(ClientJoinEvent e) {
@@ -133,16 +138,16 @@ class ModelCompatibilityIT {
             })) {
                 actor.connect();
                 var actorApi = actor.getApi();
-                actorApi.selectVirtualServerById(1);
+                actorApi.selectVirtualServerById(VirtualServerId.of(1));
                 var actorId = actorApi.whoAmI().getId();
-                int parent = actorApi.channels()
+                ChannelId parent = actorApi.channels()
                         .create("models-parent-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"));
-                int child = actorApi.channels()
+                ChannelId child = actorApi.channels()
                         .create("models-child-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"));
                 String serverName = api.servers().info().getName();
                 var databaseClient = api.databaseClients().list().getFirst().getDatabaseId();
-                int banId = api.bans().add(BanRequest.ip("10.44.4.4").withReason("models " + target));
-                String key = api.privilegeKeys().createForServerGroup(6, "models " + target);
+                BanId banId = api.bans().add(BanRequest.ip("10.44.4.4").withReason("models " + target));
+                String key = api.privilegeKeys().createForServerGroup(ServerGroupId.of(6), "models " + target);
                 var login = api.queryLogins().create("models-" + target, databaseClient);
                 String upload = "/models-" + target + ".bin";
                 try {
@@ -154,8 +159,8 @@ class ModelCompatibilityIT {
                     actorApi.messages().sendPrivate(api.whoAmI().getId(), "models " + target);
                     actorApi.servers().edit(Map.of(VirtualServerProperty.VIRTUALSERVER_NAME, serverName + " models"));
                     api.servers().edit(Map.of(VirtualServerProperty.VIRTUALSERVER_NAME, serverName));
-                    api.serverGroups().addMember(7, databaseClient);
-                    api.channelGroups().assign(5, 1, databaseClient);
+                    api.serverGroups().addMember(ServerGroupId.of(7), databaseClient);
+                    api.channelGroups().assign(ChannelGroupId.of(5), ChannelId.of(1), databaseClient);
                     api.databaseClients().setCustomProperty(databaseClient, "models", target.name());
                     api.messages()
                             .sendOffline(
@@ -183,7 +188,7 @@ class ModelCompatibilityIT {
                             api.channels().list(),
                             api.instance().bindings(),
                             api.serverGroups().list(),
-                            api.serverGroups().members(7),
+                            api.serverGroups().members(ServerGroupId.of(7)),
                             api.serverGroups().ofClient(databaseClient),
                             api.channelGroups().list(),
                             api.channelGroups().members(ChannelGroupFilter.all()),
@@ -192,12 +197,12 @@ class ModelCompatibilityIT {
                             api.bans().list(),
                             api.privilegeKeys().list(),
                             api.permissions().list(),
-                            api.permissions().assigned(PermissionTarget.serverGroup(6)),
-                            api.permissions().overview(1, databaseClient),
+                            api.permissions().assigned(PermissionTarget.serverGroup(ServerGroupId.of(6))),
+                            api.permissions().overview(ChannelId.of(1), databaseClient),
                             api.permissions().assignments("i_client_talk_power"),
                             api.queryLogins().list(),
-                            api.files().list(FileLocation.of(1, "/")),
-                            api.files().info(List.of(FileLocation.of(1, upload))),
+                            api.files().list(FileLocation.of(ChannelId.of(1), "/")),
+                            api.files().info(List.of(FileLocation.of(ChannelId.of(1), upload))),
                             api.files().transfers())) {
                         assertFalse(rows.isEmpty(), "Every exercised listing returns rows");
                         assertThrows(UnsupportedOperationException.class, () -> rows.remove(0));
@@ -207,7 +212,7 @@ class ModelCompatibilityIT {
                     try (var recipient = new TS3Query(ts3.config(target.protocol)
                             .setLoginCredentials("models-" + target, login.getQueryClientLoginPassword()))) {
                         recipient.connect();
-                        recipient.getApi().selectVirtualServerById(1);
+                        recipient.getApi().selectVirtualServerById(VirtualServerId.of(1));
                         var inbox = recipient.getApi().messages().listOffline();
                         assertFalse(inbox.isEmpty());
                         for (var message : inbox) {
@@ -224,7 +229,7 @@ class ModelCompatibilityIT {
                     api.privilegeKeys().delete(key);
                     api.bans().delete(banId);
                     api.databaseClients().deleteCustomProperty(databaseClient, "models");
-                    api.serverGroups().removeMember(7, databaseClient);
+                    api.serverGroups().removeMember(ServerGroupId.of(7), databaseClient);
                     actorApi.channels().delete(parent, true);
                     actor.exit();
                 }

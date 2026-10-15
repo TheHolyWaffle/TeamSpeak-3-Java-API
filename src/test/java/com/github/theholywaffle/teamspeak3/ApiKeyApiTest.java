@@ -2,8 +2,10 @@ package com.github.theholywaffle.teamspeak3;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.github.theholywaffle.teamspeak3.api.ApiKeyId;
 import com.github.theholywaffle.teamspeak3.api.ApiKeyScope;
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.commands.ApiKeyCommands;
 import java.time.Duration;
@@ -52,8 +54,8 @@ class ApiKeyApiTest {
             var expiring = keys.add(ApiKeyScope.READ, Duration.ofDays(14));
             assertEquals(Optional.of("BAsecret"), expiring.getSecret());
             assertFalse(expiring.toString().contains("BAsecret"));
-            assertEquals(4, expiring.getId());
-            assertEquals(0, expiring.getVirtualServerId());
+            assertEquals(ApiKeyId.of(4), expiring.getId());
+            assertEquals(Optional.empty(), expiring.getVirtualServerId());
             assertEquals(ClientDatabaseId.of(1), expiring.getOwner());
             assertEquals(ApiKeyScope.READ, expiring.getScope());
             assertFalse(expiring.isUnlimited());
@@ -65,19 +67,21 @@ class ApiKeyApiTest {
             assertTrue(unlimited.isUnlimited());
             assertEquals(Optional.empty(), unlimited.getTimeLeft());
             assertEquals(Optional.empty(), unlimited.getExpires());
-            assertEquals(1, unlimited.getVirtualServerId());
+            assertEquals(Optional.of(VirtualServerId.of(1)), unlimited.getVirtualServerId());
 
             assertEquals(List.of(), keys.list());
             var owned = keys.list(ClientDatabaseId.of(7));
             assertEquals(Optional.empty(), owned.getFirst().getSecret());
             var all = keys.listAll();
-            assertEquals(List.of(4, 5), all.stream().map(key -> key.getId()).toList());
+            assertEquals(
+                    List.of(ApiKeyId.of(4), ApiKeyId.of(5)),
+                    all.stream().map(key -> key.getId()).toList());
             assertEquals(ApiKeyScope.UNKNOWN, all.get(1).getScope());
 
-            keys.delete(5);
+            keys.delete(ApiKeyId.of(5));
             assertEquals(
                     5123,
-                    assertThrows(TS3CommandFailedException.class, () -> keys.delete(999))
+                    assertThrows(TS3CommandFailedException.class, () -> keys.delete(ApiKeyId.of(999)))
                             .getErrorId());
             query.exit();
         }
@@ -97,6 +101,7 @@ class ApiKeyApiTest {
         assertEquals(
                 "apikeyadd scope=write lifetime=0",
                 ApiKeyCommands.apiKeyAdd(ApiKeyScope.WRITE, Duration.ZERO, null).encoded());
+        assertThrows(IllegalArgumentException.class, () -> ApiKeyId.of(0));
         assertEquals(ApiKeyScope.MANAGE, ApiKeyScope.fromName("manage"));
         assertEquals(ApiKeyScope.UNKNOWN, ApiKeyScope.fromName("unknown"));
     }

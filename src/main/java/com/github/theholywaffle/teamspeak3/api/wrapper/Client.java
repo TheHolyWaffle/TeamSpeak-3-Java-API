@@ -1,8 +1,12 @@
 package com.github.theholywaffle.teamspeak3.api.wrapper;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelGroupId;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
+import com.github.theholywaffle.teamspeak3.api.IconId;
+import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -42,12 +46,12 @@ public class Client extends Wrapper {
                 .orElse(List.of());
     }
 
-    public int getChannelGroupId() {
-        return requireInt(ClientProperty.CLIENT_CHANNEL_GROUP_ID);
+    public ChannelGroupId getChannelGroupId() {
+        return requireId(ClientProperty.CLIENT_CHANNEL_GROUP_ID, ChannelGroupId::new);
     }
 
-    public int getChannelId() {
-        return requireInt(ClientProperty.CID);
+    public ChannelId getChannelId() {
+        return requireId(ClientProperty.CID, ChannelId::new);
     }
 
     /**
@@ -81,8 +85,9 @@ public class Client extends Wrapper {
         return findText(ClientProperty.CLIENT_ESTIMATED_LOCATION);
     }
 
-    public long getIconId() {
-        return requireLong(ClientProperty.CLIENT_ICON_ID);
+    /** @return the client's icon, or empty if it has none */
+    public Optional<IconId> getIconId() {
+        return requireIconId(ClientProperty.CLIENT_ICON_ID);
     }
 
     public ClientId getId() {
@@ -95,8 +100,8 @@ public class Client extends Wrapper {
     }
 
     /** @return the ID of the channel from which the client's channel group is inherited */
-    public int getInheritedChannelGroupId() {
-        return requireInt(ClientProperty.CLIENT_CHANNEL_GROUP_INHERITED_CHANNEL_ID);
+    public ChannelId getInheritedChannelGroupId() {
+        return requireId(ClientProperty.CLIENT_CHANNEL_GROUP_INHERITED_CHANNEL_ID, ChannelId::new);
     }
 
     /** @return the client's IP address, or empty if the server does not reveal it */
@@ -118,8 +123,8 @@ public class Client extends Wrapper {
     }
 
     /** @return the IDs of the client's server groups, in received order */
-    public List<Integer> getServerGroups() {
-        return requireIntList(ClientProperty.CLIENT_SERVERGROUPS);
+    public List<ServerGroupId> getServerGroups() {
+        return requireIdList(ClientProperty.CLIENT_SERVERGROUPS, ServerGroupId::new);
     }
 
     public int getTalkPower() {
@@ -157,7 +162,7 @@ public class Client extends Wrapper {
      *
      * @return whether {@link #getServerGroups()} contains the given server group ID
      */
-    public boolean isInServerGroup(int serverGroupId) {
+    public boolean isInServerGroup(ServerGroupId serverGroupId) {
         return getServerGroups().contains(serverGroupId);
     }
 

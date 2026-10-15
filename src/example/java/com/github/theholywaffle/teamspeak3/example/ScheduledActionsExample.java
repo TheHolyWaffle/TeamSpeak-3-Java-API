@@ -22,23 +22,21 @@ import java.util.concurrent.TimeUnit;
  * Pokes, messages, kicks and moves clients who join the server at random intervals, using the
  * asynchronous API from a single scheduler thread. Runs until Enter or end of input.
  */
-public final class TrollExample {
+public final class ScheduledActionsExample {
 
     private static final String[] MESSAGES = {
-        "Get off my server, damn kids!",
-        "Tell me a joke!",
-        "A virus has been detected",
-        "Move out of this channel or you will be banned in 15 seconds.",
-        "Say something :3",
-        "Boo!"
+        "Hello from the Java API example.",
+        "This is a scheduled test message.",
+        "You are connected to a test server.",
+        "Scheduled actions run every 30 to 60 seconds."
     };
 
-    private TrollExample() {}
+    private ScheduledActionsExample() {}
 
     public static void main(String[] args) {
         ExampleSettings settings = ExampleSettings.fromEnvironment();
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        Map<ClientId, ScheduledFuture<?>> trolls = new ConcurrentHashMap<>();
+        Map<ClientId, ScheduledFuture<?>> tasks = new ConcurrentHashMap<>();
         try (TS3Query query = new TS3Query(settings.config())) {
             query.connect();
 
@@ -52,16 +50,16 @@ public final class TrollExample {
                 @Override
                 public void onClientJoin(ClientJoinEvent e) {
                     ClientId client = e.getClientId();
-                    trolls.put(
+                    tasks.put(
                             client,
                             scheduler.scheduleWithFixedDelay(
-                                    () -> troll(async, client), random(10, 20), random(30, 60), TimeUnit.SECONDS));
+                                    () -> act(async, client), random(10, 20), random(30, 60), TimeUnit.SECONDS));
                 }
 
                 @Override
                 public void onClientLeave(ClientLeaveEvent e) {
-                    ScheduledFuture<?> troll = trolls.remove(e.getClientId());
-                    if (troll != null) troll.cancel(false);
+                    ScheduledFuture<?> task = tasks.remove(e.getClientId());
+                    if (task != null) task.cancel(false);
                 }
             });
             api.events().register(TS3EventType.SERVER);
@@ -74,7 +72,7 @@ public final class TrollExample {
         }
     }
 
-    private static void troll(TS3ApiAsync api, ClientId client) {
+    private static void act(TS3ApiAsync api, ClientId client) {
         String message = MESSAGES[ThreadLocalRandom.current().nextInt(MESSAGES.length)];
         CompletableFuture<Void> action = switch (ThreadLocalRandom.current().nextInt(4)) {
             case 0 -> api.clients().poke(client, message);
@@ -87,7 +85,7 @@ public final class TrollExample {
                 });
         };
         action.exceptionally(failure -> {
-            System.err.println("Could not troll client " + client + ": " + failure.getMessage());
+            System.err.println("Could not act on client " + client + ": " + failure.getMessage());
             return null;
         });
     }

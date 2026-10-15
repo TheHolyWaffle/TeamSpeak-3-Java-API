@@ -22,14 +22,14 @@ public final class ChannelCommands {
         return builder.build();
     }
 
-    public static Command channelDelete(int channelId, boolean force) {
+    public static Command channelDelete(long channelId, boolean force) {
         CommandBuilder builder = new CommandBuilder("channeldelete");
         builder.add(new KeyValueParam("cid", channelId));
         builder.add(new KeyValueParam("force", force));
         return builder.build();
     }
 
-    public static Command channelEdit(int channelId, Map<ChannelProperty, String> options) {
+    public static Command channelEdit(long channelId, Map<ChannelProperty, String> options) {
         CommandBuilder builder = new CommandBuilder("channeledit");
         builder.add(new KeyValueParam("cid", channelId));
         builder.addProperties(options);
@@ -46,7 +46,7 @@ public final class ChannelCommands {
                 .build();
     }
 
-    public static Command channelInfo(int channelId) {
+    public static Command channelInfo(long channelId) {
         return new CommandBuilder("channelinfo")
                 .add(new KeyValueParam("cid", channelId))
                 .build();
@@ -64,7 +64,7 @@ public final class ChannelCommands {
         return builder.build();
     }
 
-    public static Command channelMove(int channelId, int channelParentId, int order) {
+    public static Command channelMove(long channelId, long channelParentId, long order) {
         CommandBuilder builder = new CommandBuilder("channelmove");
         builder.add(new KeyValueParam("cid", channelId));
         builder.add(new KeyValueParam("cpid", channelParentId));

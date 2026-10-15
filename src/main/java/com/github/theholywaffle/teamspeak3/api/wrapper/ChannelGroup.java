@@ -1,7 +1,10 @@
 package com.github.theholywaffle.teamspeak3.api.wrapper;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelGroupId;
+import com.github.theholywaffle.teamspeak3.api.IconId;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
 import java.util.Map;
+import java.util.Optional;
 
 public class ChannelGroup extends Wrapper {
 
@@ -9,8 +12,8 @@ public class ChannelGroup extends Wrapper {
         super(map);
     }
 
-    public int getId() {
-        return requireInt("cgid");
+    public ChannelGroupId getId() {
+        return requireId("cgid", ChannelGroupId::new);
     }
 
     public String getName() {
@@ -22,8 +25,9 @@ public class ChannelGroup extends Wrapper {
         return requireCode("type", PermissionGroupDatabaseType::fromIndex);
     }
 
-    public long getIconId() {
-        return requireLong("iconid");
+    /** @return the group's icon, or empty if it has none */
+    public Optional<IconId> getIconId() {
+        return requireIconId("iconid");
     }
 
     public boolean isSavedInDatabase() {

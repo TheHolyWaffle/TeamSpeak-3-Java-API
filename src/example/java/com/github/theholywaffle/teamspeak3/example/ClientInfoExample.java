@@ -2,6 +2,7 @@ package com.github.theholywaffle.teamspeak3.example;
 
 import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3Query;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Channel;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 import java.util.Map;
@@ -25,7 +26,7 @@ public final class ClientInfoExample {
             api.selectVirtualServerById(settings.virtualServerId());
             api.setNickname(settings.nickname());
 
-            Map<Integer, Channel> channels =
+            Map<ChannelId, Channel> channels =
                     api.channels().list().stream().collect(Collectors.toMap(Channel::getId, Function.identity()));
 
             System.out.println("Server version: " + api.instance().version().version());

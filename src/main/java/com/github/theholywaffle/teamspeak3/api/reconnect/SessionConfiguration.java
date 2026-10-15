@@ -1,10 +1,13 @@
 package com.github.theholywaffle.teamspeak3.api.reconnect;
 
 import com.github.theholywaffle.teamspeak3.TS3Api;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Immutable session state restored before queued commands on every connection.
@@ -14,21 +17,21 @@ import java.util.Objects;
  * @param nickname query nickname, or null to retain the server default
  * @param subscriptions ordered notification registrations
  */
-public record SessionConfiguration(int virtualServerId, String nickname, List<Subscription> subscriptions) {
+public record SessionConfiguration(VirtualServerId virtualServerId, String nickname, List<Subscription> subscriptions) {
     /**
      * One notification registration.
      * @param eventType event type
-     * @param channelId channel ID, or -1 to omit it
+     * @param channelId the one channel to observe, or empty for the event type's default
      */
-    public record Subscription(TS3EventType eventType, int channelId) {
+    public record Subscription(TS3EventType eventType, Optional<ChannelId> channelId) {
         public Subscription {
             Objects.requireNonNull(eventType, "eventType");
-            if (channelId < -1) throw new IllegalArgumentException("Channel ID must be >= -1");
+            Objects.requireNonNull(channelId, "channelId");
         }
     }
 
     public SessionConfiguration {
-        if (virtualServerId <= 0) throw new IllegalArgumentException("Virtual server ID must be positive");
+        Objects.requireNonNull(virtualServerId, "virtualServerId");
         subscriptions = List.copyOf(subscriptions);
         if (nickname != null && nickname.isEmpty()) throw new IllegalArgumentException("Nickname must not be empty");
     }
@@ -37,7 +40,7 @@ public record SessionConfiguration(int virtualServerId, String nickname, List<Su
      * @param id target virtual server ID
      * @return an empty session for that server
      */
-    public static SessionConfiguration forServer(int id) {
+    public static SessionConfiguration forServer(VirtualServerId id) {
         return new SessionConfiguration(id, null, List.of());
     }
 
@@ -50,13 +53,25 @@ public record SessionConfiguration(int virtualServerId, String nickname, List<Su
     }
 
     /**
-     * @param type event type
-     * @param channelId channel ID
+     * @param type event type; channel event types observe every channel
      * @return a copy with the appended registration
      */
-    public SessionConfiguration withSubscription(TS3EventType type, int channelId) {
+    public SessionConfiguration withSubscription(TS3EventType type) {
+        return withSubscription(new Subscription(type, Optional.empty()));
+    }
+
+    /**
+     * @param type event type
+     * @param channelId the one channel to observe
+     * @return a copy with the appended registration
+     */
+    public SessionConfiguration withSubscription(TS3EventType type, ChannelId channelId) {
+        return withSubscription(new Subscription(type, Optional.of(channelId)));
+    }
+
+    private SessionConfiguration withSubscription(Subscription subscription) {
         var copy = new ArrayList<>(subscriptions);
-        copy.add(new Subscription(type, channelId));
+        copy.add(subscription);
         return new SessionConfiguration(virtualServerId, nickname, copy);
     }
 
@@ -67,7 +82,12 @@ public record SessionConfiguration(int virtualServerId, String nickname, List<Su
     public void restore(TS3Api api) {
         api.selectVirtualServerById(virtualServerId);
         if (nickname != null) api.setNickname(nickname);
-        for (Subscription subscription : subscriptions)
-            api.events().register(subscription.eventType(), subscription.channelId());
+        for (Subscription subscription : subscriptions) {
+            subscription
+                    .channelId()
+                    .ifPresentOrElse(
+                            channel -> api.events().register(subscription.eventType(), channel),
+                            () -> api.events().register(subscription.eventType()));
+        }
     }
 }

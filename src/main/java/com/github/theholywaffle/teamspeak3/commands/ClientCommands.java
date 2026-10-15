@@ -85,7 +85,7 @@ public final class ClientCommands {
         return builder.build();
     }
 
-    public static Command clientMove(int clientId, int channelId, String channelPassword) {
+    public static Command clientMove(int clientId, long channelId, String channelPassword) {
         CommandBuilder builder = new CommandBuilder("clientmove");
         builder.add(new KeyValueParam("clid", clientId));
         builder.add(new KeyValueParam("cid", channelId));
@@ -93,7 +93,7 @@ public final class ClientCommands {
         return builder.build();
     }
 
-    public static Command clientMove(int[] clientIds, int channelId, String channelPassword) {
+    public static Command clientMove(int[] clientIds, long channelId, String channelPassword) {
         if (clientIds == null || clientIds.length == 0) {
             throw new IllegalArgumentException("Client ID array cannot be null or empty");
         }

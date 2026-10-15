@@ -13,7 +13,7 @@ public final class FileCommands {
         throw new Error("No instances");
     }
 
-    public static Command ftCreateDir(String path, int channelId, String channelPassword) {
+    public static Command ftCreateDir(String path, long channelId, String channelPassword) {
         CommandBuilder builder = new CommandBuilder("ftcreatedir");
         builder.add(new KeyValueParam("cid", channelId));
         builder.add(new KeyValueParam("cpw", channelPassword));
@@ -21,7 +21,7 @@ public final class FileCommands {
         return builder.build();
     }
 
-    public static Command ftDeleteFile(int channelId, String channelPassword, String... filePaths) {
+    public static Command ftDeleteFile(long channelId, String channelPassword, String... filePaths) {
         if (filePaths == null || filePaths.length == 0) {
             throw new IllegalArgumentException("File array cannot be null or empty");
         }
@@ -35,7 +35,7 @@ public final class FileCommands {
         return builder.build();
     }
 
-    public static Command ftGetFileInfo(int channelId, String channelPassword, String... filePaths) {
+    public static Command ftGetFileInfo(long channelId, String channelPassword, String... filePaths) {
         if (filePaths == null || filePaths.length == 0) {
             throw new IllegalArgumentException("File array cannot be null or empty");
         }
@@ -45,7 +45,7 @@ public final class FileCommands {
                 .toList());
     }
 
-    public static Command ftGetFileInfo(int[] channelIds, String[] channelPasswords, String[] filePaths) {
+    public static Command ftGetFileInfo(long[] channelIds, String[] channelPasswords, String[] filePaths) {
         if (channelIds == null || channelIds.length == 0) {
             throw new IllegalArgumentException("Channel ID array cannot be null or empty");
         }
@@ -71,14 +71,14 @@ public final class FileCommands {
                 .build();
     }
 
-    private static List<Parameter> fileEntry(int channelId, String channelPassword, String path) {
+    private static List<Parameter> fileEntry(long channelId, String channelPassword, String path) {
         return List.of(
                 new KeyValueParam("cid", channelId),
                 new KeyValueParam("cpw", channelPassword),
                 new KeyValueParam("name", prefixSlash(path)));
     }
 
-    public static Command ftGetFileList(String directoryPath, int channelId, String channelPassword) {
+    public static Command ftGetFileList(String directoryPath, long channelId, String channelPassword) {
         if (directoryPath == null) throw new IllegalArgumentException("Directory path cannot be null");
 
         CommandBuilder builder = new CommandBuilder("ftgetfilelist");
@@ -94,7 +94,7 @@ public final class FileCommands {
     }
 
     public static Command ftInitDownload(
-            int transferId, String path, int channelId, String channelPassword, long seekPosition) {
+            int transferId, String path, long channelId, String channelPassword, long seekPosition) {
         if (seekPosition < 0) throw new IllegalArgumentException("Negative download seek position");
         CommandBuilder builder = new CommandBuilder("ftinitdownload");
         builder.add(new KeyValueParam("clientftfid", transferId));
@@ -109,7 +109,7 @@ public final class FileCommands {
     public static Command ftInitUpload(
             int transferId,
             String path,
-            int channelId,
+            long channelId,
             String channelPassword,
             long size,
             boolean overwrite,
@@ -132,7 +132,7 @@ public final class FileCommands {
         return new CommandBuilder("ftlist").build();
     }
 
-    public static Command ftRenameFile(String oldPath, String newPath, int channelId, String channelPassword) {
+    public static Command ftRenameFile(String oldPath, String newPath, long channelId, String channelPassword) {
         if (oldPath == null) throw new IllegalArgumentException("Old file path cannot be null");
         if (newPath == null) throw new IllegalArgumentException("New file path cannot be null");
 
@@ -147,9 +147,9 @@ public final class FileCommands {
     public static Command ftRenameFile(
             String oldPath,
             String newPath,
-            int oldChannelId,
+            long oldChannelId,
             String oldChannelPassword,
-            int newChannelId,
+            long newChannelId,
             String newChannelPassword) {
         if (oldPath == null) throw new IllegalArgumentException("Old file path cannot be null");
         if (newPath == null) throw new IllegalArgumentException("New file path cannot be null");

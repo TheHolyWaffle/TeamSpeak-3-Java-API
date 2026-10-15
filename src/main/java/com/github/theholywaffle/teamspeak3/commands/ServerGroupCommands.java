@@ -23,30 +23,30 @@ public final class ServerGroupCommands {
         return builder.build();
     }
 
-    public static Command serverGroupAddClient(int groupId, int clientDBId) {
+    public static Command serverGroupAddClient(long groupId, long clientDBId) {
         CommandBuilder builder = new CommandBuilder("servergroupaddclient");
         builder.add(new KeyValueParam("sgid", groupId));
         builder.add(new KeyValueParam("cldbid", clientDBId));
         return builder.build();
     }
 
-    public static Command serverGroupClientList(int groupId) {
+    public static Command serverGroupClientList(long groupId) {
         CommandBuilder builder = new CommandBuilder("servergroupclientlist");
         builder.add(new KeyValueParam("sgid", groupId));
         builder.add(new OptionParam("names"));
         return builder.build();
     }
 
-    public static Command serverGroupCopy(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
+    public static Command serverGroupCopy(long sourceGroupId, long targetGroupId, PermissionGroupDatabaseType type) {
         return serverGroupCopy(sourceGroupId, targetGroupId, "name", type);
     }
 
-    public static Command serverGroupCopy(int sourceGroupId, String groupName, PermissionGroupDatabaseType type) {
+    public static Command serverGroupCopy(long sourceGroupId, String groupName, PermissionGroupDatabaseType type) {
         return serverGroupCopy(sourceGroupId, 0, groupName, type);
     }
 
     private static Command serverGroupCopy(
-            int sourceGroupId, int targetGroupId, String groupName, PermissionGroupDatabaseType type) {
+            long sourceGroupId, long targetGroupId, String groupName, PermissionGroupDatabaseType type) {
         if (type == null) {
             throw new IllegalArgumentException("Group type cannot be null");
         }
@@ -62,14 +62,14 @@ public final class ServerGroupCommands {
         return builder.build();
     }
 
-    public static Command serverGroupDel(int id, boolean force) {
+    public static Command serverGroupDel(long id, boolean force) {
         CommandBuilder builder = new CommandBuilder("servergroupdel");
         builder.add(new KeyValueParam("sgid", id));
         builder.add(new KeyValueParam("force", force));
         return builder.build();
     }
 
-    public static Command serverGroupDelClient(int groupId, int clientDBId) {
+    public static Command serverGroupDelClient(long groupId, long clientDBId) {
         CommandBuilder builder = new CommandBuilder("servergroupdelclient");
         builder.add(new KeyValueParam("sgid", groupId));
         builder.add(new KeyValueParam("cldbid", clientDBId));
@@ -80,7 +80,7 @@ public final class ServerGroupCommands {
         return new CommandBuilder("servergrouplist").build();
     }
 
-    public static Command serverGroupRename(int id, String groupName) {
+    public static Command serverGroupRename(long id, String groupName) {
         if (groupName == null || groupName.isEmpty()) {
             throw new IllegalArgumentException("Server group name must be a non-empty string");
         }
@@ -91,7 +91,7 @@ public final class ServerGroupCommands {
         return builder.build();
     }
 
-    public static Command serverGroupsByClientId(int clientDBId) {
+    public static Command serverGroupsByClientId(long clientDBId) {
         return new CommandBuilder("servergroupsbyclientid")
                 .add(new KeyValueParam("cldbid", clientDBId))
                 .build();

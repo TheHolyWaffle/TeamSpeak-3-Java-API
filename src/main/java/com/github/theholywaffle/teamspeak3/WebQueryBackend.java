@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3UnsupportedOperationException;
 import com.github.theholywaffle.teamspeak3.commands.Command;
@@ -16,7 +17,7 @@ record WebQueryBackend(TS3WebQuery query, String scope) implements QueryBackend 
     }
 
     @Override
-    public CompletableFuture<QueryBackend> onVirtualServer(int serverId) {
+    public CompletableFuture<QueryBackend> onVirtualServer(VirtualServerId serverId) {
         return CompletableFuture.completedFuture(new WebQueryBackend(query, TS3WebQuery.serverScope(serverId)));
     }
 

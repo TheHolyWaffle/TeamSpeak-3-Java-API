@@ -23,7 +23,7 @@ public class DisconnectingConnectionHandler implements ConnectionHandler {
 
     @Override
     public void onDisconnect(TS3Query ts3Query) {
-        log.error("[Connection] Disconnected from TS3 server");
+        log.warn("Disconnected from TS3 server");
 
         if (userConnectionHandler != null) {
             userConnectionHandler.onDisconnect(ts3Query);

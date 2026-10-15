@@ -2,6 +2,7 @@ package com.github.theholywaffle.teamspeak3;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
@@ -75,9 +76,9 @@ class CommonWorkflowTest {
             });
             query.connect();
 
-            assertEquals(5, CommonWorkflow.prepareLobby(query.getApi(), "online", RULES));
+            assertEquals(ChannelId.of(5), CommonWorkflow.prepareLobby(query.getApi(), "online", RULES));
             assertEquals(
-                    5,
+                    ChannelId.of(5),
                     CommonWorkflow.prepareLobby(query.getAsyncApi(), "offline", RULES)
                             .get(5, TimeUnit.SECONDS));
 

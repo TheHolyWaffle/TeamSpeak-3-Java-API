@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 import java.util.concurrent.CompletableFuture;
@@ -24,7 +25,7 @@ interface QueryBackend {
      * selects it with {@code use}, so it stays selected for the session; Web Query only changes the
      * request URL.
      */
-    CompletableFuture<QueryBackend> onVirtualServer(int serverId);
+    CompletableFuture<QueryBackend> onVirtualServer(VirtualServerId serverId);
 
     /** Runs a file transfer, or fails it when the backend has no file-transfer support. */
     <T> CompletableFuture<T> withFileTransfers(Function<FileTransfers, CompletableFuture<T>> transfer);

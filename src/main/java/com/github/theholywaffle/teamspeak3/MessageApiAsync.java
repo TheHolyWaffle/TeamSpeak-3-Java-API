@@ -1,8 +1,11 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
+import com.github.theholywaffle.teamspeak3.api.MessageId;
 import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Message;
 import com.github.theholywaffle.teamspeak3.commands.ClientCommands;
 import com.github.theholywaffle.teamspeak3.commands.MessageCommands;
@@ -34,10 +37,10 @@ public final class MessageApiAsync {
         return send(TextMessageTargetMode.CHANNEL, 0, message);
     }
 
-    /** @see MessageApi#sendChannel(int, String) */
-    public CompletableFuture<Void> sendChannel(int channelId, String message) {
+    /** @see MessageApi#sendChannel(ChannelId, String) */
+    public CompletableFuture<Void> sendChannel(ChannelId channelId, String message) {
         return CommandFutures.compose(
-                requests.run(ClientCommands.clientMove(0, channelId, null)), ignored -> sendChannel(message));
+                requests.run(ClientCommands.clientMove(0, channelId.value(), null)), _ -> sendChannel(message));
     }
 
     /** @see MessageApi#sendServer(String) */
@@ -45,8 +48,8 @@ public final class MessageApiAsync {
         return send(TextMessageTargetMode.SERVER, 0, message);
     }
 
-    /** @see MessageApi#sendServer(int, String) */
-    public CompletableFuture<Void> sendServer(int serverId, String message) {
+    /** @see MessageApi#sendServer(VirtualServerId, String) */
+    public CompletableFuture<Void> sendServer(VirtualServerId serverId, String message) {
         return CommandFutures.compose(
                 requests.backend().onVirtualServer(serverId),
                 backend -> new MessageApiAsync(new QueryRequests(backend)).sendServer(message));
@@ -62,10 +65,11 @@ public final class MessageApiAsync {
         return requests.models(MessageCommands.messageList(), Message::new);
     }
 
-    /** @see MessageApi#getOffline(int) */
-    public CompletableFuture<Optional<String>> getOffline(int messageId) {
+    /** @see MessageApi#getOffline(MessageId) */
+    public CompletableFuture<Optional<String>> getOffline(MessageId messageId) {
         return requests.optional(
-                MessageCommands.messageGet(messageId), row -> row.getMap().get("message"));
+                MessageCommands.messageGet(messageId.value()),
+                row -> row.getMap().get("message"));
     }
 
     /** @see MessageApi#sendOffline(String, String, String) */
@@ -73,14 +77,14 @@ public final class MessageApiAsync {
         return requests.run(MessageCommands.messageAdd(uniqueId, subject, message));
     }
 
-    /** @see MessageApi#deleteOffline(int) */
-    public CompletableFuture<Void> deleteOffline(int messageId) {
-        return requests.run(MessageCommands.messageDel(messageId));
+    /** @see MessageApi#deleteOffline(MessageId) */
+    public CompletableFuture<Void> deleteOffline(MessageId messageId) {
+        return requests.run(MessageCommands.messageDel(messageId.value()));
     }
 
-    /** @see MessageApi#setOfflineRead(int, boolean) */
-    public CompletableFuture<Void> setOfflineRead(int messageId, boolean read) {
-        return requests.run(MessageCommands.messageUpdateFlag(messageId, read));
+    /** @see MessageApi#setOfflineRead(MessageId, boolean) */
+    public CompletableFuture<Void> setOfflineRead(MessageId messageId, boolean read) {
+        return requests.run(MessageCommands.messageUpdateFlag(messageId.value(), read));
     }
 
     private CompletableFuture<Void> send(TextMessageTargetMode mode, int targetId, String message) {

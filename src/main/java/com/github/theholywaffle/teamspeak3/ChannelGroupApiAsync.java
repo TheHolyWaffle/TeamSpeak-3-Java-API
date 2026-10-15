@@ -1,6 +1,8 @@
 package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelGroupFilter;
+import com.github.theholywaffle.teamspeak3.api.ChannelGroupId;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ChannelGroup;
@@ -28,54 +30,57 @@ public final class ChannelGroupApiAsync {
     }
 
     /** @see ChannelGroupApi#create(String) */
-    public CompletableFuture<Integer> create(String name) {
+    public CompletableFuture<ChannelGroupId> create(String name) {
         return create(name, null);
     }
 
     /** @see ChannelGroupApi#create(String, PermissionGroupDatabaseType) */
-    public CompletableFuture<Integer> create(String name, PermissionGroupDatabaseType type) {
-        return requests.createdId(ChannelGroupCommands.channelGroupAdd(name, type), "cgid");
+    public CompletableFuture<ChannelGroupId> create(String name, PermissionGroupDatabaseType type) {
+        return requests.id(ChannelGroupCommands.channelGroupAdd(name, type), "cgid", ChannelGroupId::new);
     }
 
-    /** @see ChannelGroupApi#copy(int, String, PermissionGroupDatabaseType) */
-    public CompletableFuture<Integer> copy(int sourceGroupId, String name, PermissionGroupDatabaseType type) {
-        return requests.createdId(ChannelGroupCommands.channelGroupCopy(sourceGroupId, name, type), "cgid");
+    /** @see ChannelGroupApi#copy(ChannelGroupId, String, PermissionGroupDatabaseType) */
+    public CompletableFuture<ChannelGroupId> copy(
+            ChannelGroupId sourceGroupId, String name, PermissionGroupDatabaseType type) {
+        return requests.id(
+                ChannelGroupCommands.channelGroupCopy(sourceGroupId.value(), name, type), "cgid", ChannelGroupId::new);
     }
 
-    /** @see ChannelGroupApi#overwrite(int, int, PermissionGroupDatabaseType) */
-    public CompletableFuture<Void> overwrite(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
-        if (targetGroupId <= 0)
-            throw new IllegalArgumentException("Target group ID must be positive; use copy to create a group");
-        return requests.run(ChannelGroupCommands.channelGroupCopy(sourceGroupId, targetGroupId, type));
+    /** @see ChannelGroupApi#overwrite(ChannelGroupId, ChannelGroupId, PermissionGroupDatabaseType) */
+    public CompletableFuture<Void> overwrite(
+            ChannelGroupId sourceGroupId, ChannelGroupId targetGroupId, PermissionGroupDatabaseType type) {
+        return requests.run(ChannelGroupCommands.channelGroupCopy(sourceGroupId.value(), targetGroupId.value(), type));
     }
 
-    /** @see ChannelGroupApi#rename(int, String) */
-    public CompletableFuture<Void> rename(int groupId, String name) {
-        return requests.run(ChannelGroupCommands.channelGroupRename(groupId, name));
+    /** @see ChannelGroupApi#rename(ChannelGroupId, String) */
+    public CompletableFuture<Void> rename(ChannelGroupId groupId, String name) {
+        return requests.run(ChannelGroupCommands.channelGroupRename(groupId.value(), name));
     }
 
-    /** @see ChannelGroupApi#delete(int) */
-    public CompletableFuture<Void> delete(int groupId) {
+    /** @see ChannelGroupApi#delete(ChannelGroupId) */
+    public CompletableFuture<Void> delete(ChannelGroupId groupId) {
         return delete(groupId, true);
     }
 
-    /** @see ChannelGroupApi#delete(int, boolean) */
-    public CompletableFuture<Void> delete(int groupId, boolean force) {
-        return requests.run(ChannelGroupCommands.channelGroupDel(groupId, force));
+    /** @see ChannelGroupApi#delete(ChannelGroupId, boolean) */
+    public CompletableFuture<Void> delete(ChannelGroupId groupId, boolean force) {
+        return requests.run(ChannelGroupCommands.channelGroupDel(groupId.value(), force));
     }
 
     /** @see ChannelGroupApi#members(ChannelGroupFilter) */
     public CompletableFuture<List<ChannelGroupClient>> members(ChannelGroupFilter filter) {
         return requests.rows(
                 ChannelGroupCommands.channelGroupClientList(
-                        filter.channelId().orElse(0),
-                        filter.clientDatabaseId().map(ClientDatabaseId::value).orElse(0),
-                        filter.groupId().orElse(0)),
+                        filter.channelId().map(ChannelId::value).orElse(0L),
+                        filter.clientDatabaseId().map(ClientDatabaseId::value).orElse(0L),
+                        filter.groupId().map(ChannelGroupId::value).orElse(0L)),
                 ChannelGroupClient::from);
     }
 
-    /** @see ChannelGroupApi#assign(int, int, ClientDatabaseId) */
-    public CompletableFuture<Void> assign(int groupId, int channelId, ClientDatabaseId clientDatabaseId) {
-        return requests.run(ChannelGroupCommands.setClientChannelGroup(groupId, channelId, clientDatabaseId.value()));
+    /** @see ChannelGroupApi#assign(ChannelGroupId, ChannelId, ClientDatabaseId) */
+    public CompletableFuture<Void> assign(
+            ChannelGroupId groupId, ChannelId channelId, ClientDatabaseId clientDatabaseId) {
+        return requests.run(ChannelGroupCommands.setClientChannelGroup(
+                groupId.value(), channelId.value(), clientDatabaseId.value()));
     }
 }

@@ -2,10 +2,12 @@ package com.github.theholywaffle.teamspeak3;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
 import com.github.theholywaffle.teamspeak3.api.UploadMode;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3AuthenticationFailedException;
@@ -60,7 +62,7 @@ class TS3WebQueryTest {
 
     private final BlockingQueue<Request> requests = new LinkedBlockingQueue<>();
     private final ExecutorService serverThreads = Executors.newVirtualThreadPerTaskExecutor();
-    private volatile Function<Request, Reply> responder = request -> new Reply(200, OK);
+    private volatile Function<Request, Reply> responder = _ -> new Reply(200, OK);
     private HttpServer server;
 
     @BeforeEach
@@ -109,35 +111,39 @@ class TS3WebQueryTest {
             assertEquals("3.13.8", query.getApi().instance().version().version());
             assertEquals(new Request("POST", "/prefix/version", null, KEY, "application/json", "{}"), requests.take());
 
-            responder = request -> new Reply(200, "{\"body\":[{\"cid\":\"5\"}],\"status\":{\"code\":0}}");
+            responder = _ -> new Reply(200, "{\"body\":[{\"cid\":\"5\"}],\"status\":{\"code\":0}}");
             assertEquals(
-                    5, query.getApi(3).channels().create("a b|c", Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
+                    ChannelId.of(5),
+                    query.getApi(VirtualServerId.of(3))
+                            .channels()
+                            .create("a b|c", Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
             Request create = requests.take();
             assertEquals("/prefix/3/channelcreate", create.path());
             assertEquals("{\"channel_name\":\"a b|c\",\"channel_flag_permanent\":\"1\"}", create.body());
             assertNull(create.rawQuery(), "the API key never appears in the URL");
 
-            responder = request -> new Reply(200, "{\"status\":{\"code\":0}}");
-            query.getApiByPort(9987).channels().delete(5);
+            responder = _ -> new Reply(200, "{\"status\":{\"code\":0}}");
+            query.getApiByPort(9987).channels().delete(ChannelId.of(5));
             assertEquals("/prefix/byport/9987/channeldelete", requests.take().path());
-            CommandFutures.join(query.getAsyncApi(2).channels().delete(5));
+            CommandFutures.join(
+                    query.getAsyncApi(VirtualServerId.of(2)).channels().delete(ChannelId.of(5)));
             assertEquals("/prefix/2/channeldelete", requests.take().path());
-            CommandFutures.join(query.getAsyncApiByPort(1).channels().delete(5));
+            CommandFutures.join(query.getAsyncApiByPort(1).channels().delete(ChannelId.of(5)));
             assertEquals("/prefix/byport/1/channeldelete", requests.take().path());
         }
     }
 
     @Test
     void sendsAServerMessageToTheAddressedVirtualServer() throws Exception {
-        responder = request -> new Reply(200, "{\"status\":{\"code\":0}}");
+        responder = _ -> new Reply(200, "{\"status\":{\"code\":0}}");
         try (var query = new TS3WebQuery(config().build())) {
-            query.getApi().messages().sendServer(2, "hi");
+            query.getApi().messages().sendServer(VirtualServerId.of(2), "hi");
             Request request = requests.take();
             assertEquals("/prefix/2/sendtextmessage", request.path());
             assertEquals("{\"targetmode\":\"3\",\"target\":\"0\",\"msg\":\"hi\"}", request.body());
             assertThrows(
                     IllegalArgumentException.class,
-                    () -> query.getApi().messages().sendServer(0, "hi"));
+                    () -> query.getApi().messages().sendServer(VirtualServerId.of(0), "hi"));
         }
     }
 
@@ -146,8 +152,8 @@ class TS3WebQueryTest {
         try (var query = new TS3WebQuery(config().build())) {
             assertSame(query.getApi(), query.getApi());
             assertSame(query.getAsyncApi(), query.getAsyncApi());
-            assertThrows(IllegalArgumentException.class, () -> query.getApi(0));
-            assertThrows(IllegalArgumentException.class, () -> query.getAsyncApi(-1));
+            assertThrows(IllegalArgumentException.class, () -> query.getApi(VirtualServerId.of(0)));
+            assertThrows(IllegalArgumentException.class, () -> query.getAsyncApi(VirtualServerId.of(-1)));
             assertThrows(IllegalArgumentException.class, () -> query.getApiByPort(0));
             assertThrows(IllegalArgumentException.class, () -> query.getAsyncApiByPort(65536));
         }
@@ -156,8 +162,8 @@ class TS3WebQueryTest {
     @Test
     void sessionEventAndFileOperationsFailLocallyWithoutARequest() {
         try (var query = new TS3WebQuery(config().build())) {
-            TS3BaseApi api = query.getApi(1);
-            TS3BaseApiAsync async = query.getAsyncApi(1);
+            TS3BaseApi api = query.getApi(VirtualServerId.of(1));
+            TS3BaseApiAsync async = query.getAsyncApi(VirtualServerId.of(1));
             // Session methods are not part of the Web Query API; their raw commands still fail locally.
             List<Runnable> operations = List.of(
                     () -> api.executeRawCommand("use sid=1"),
@@ -169,12 +175,12 @@ class TS3WebQueryTest {
                     () -> api.events().subscribe(new TS3EventAdapter() {}),
                     () -> async.events().subscribe(new TS3EventAdapter() {}),
                     () -> api.events().register(TS3EventType.SERVER),
-                    () -> api.files().list(FileLocation.of(1, "/")),
+                    () -> api.files().list(FileLocation.of(ChannelId.of(1), "/")),
                     () -> api.files().transfers(),
-                    () -> api.files().createDirectory(FileLocation.of(1, "/d")),
-                    () -> api.files().upload(FileLocation.of(1, "/f"), new byte[] {1}, UploadMode.CREATE),
-                    () -> api.files().downloadBytes(FileLocation.of(1, "/f")),
-                    () -> api.files().download(FileLocation.of(1, "/f"), new ByteArrayOutputStream()),
+                    () -> api.files().createDirectory(FileLocation.of(ChannelId.of(1), "/d")),
+                    () -> api.files().upload(FileLocation.of(ChannelId.of(1), "/f"), new byte[] {1}, UploadMode.CREATE),
+                    () -> api.files().downloadBytes(FileLocation.of(ChannelId.of(1), "/f")),
+                    () -> api.files().download(FileLocation.of(ChannelId.of(1), "/f"), new ByteArrayOutputStream()),
                     () -> api.files().uploadIcon(new byte[] {1, 2, 3}),
                     () -> api.files().uploadIcon(new java.io.ByteArrayInputStream(new byte[] {1}), 1),
                     () -> api.files().icons(),
@@ -191,25 +197,25 @@ class TS3WebQueryTest {
     @Test
     void translatesServerAndAuthenticationErrors() {
         try (var query = new TS3WebQuery(config().build())) {
-            responder = request -> new Reply(200, "{\"status\":{\"code\":768,\"message\":\"invalid channelID\"}}");
+            responder = _ -> new Reply(200, "{\"status\":{\"code\":768,\"message\":\"invalid channelID\"}}");
             var failed = assertThrows(
                     TS3CommandFailedException.class,
-                    () -> query.getApi(1).channels().info(9));
+                    () -> query.getApi(VirtualServerId.of(1)).channels().info(ChannelId.of(9)));
             assertEquals(768, failed.getErrorId());
             assertTrue(failed.matchesQueryError(768));
 
-            responder = request -> new Reply(
+            responder = _ -> new Reply(
                     401,
                     "{\"status\":{\"code\":5120,\"extra_message\":\"command not in api key scope\","
                             + "\"message\":\"out of scope\"}}");
             var denied = assertThrows(
                     TS3AuthenticationFailedException.class,
-                    () -> query.getApi(1).channels().delete(1));
+                    () -> query.getApi(VirtualServerId.of(1)).channels().delete(ChannelId.of(1)));
             assertEquals(5120, denied.getErrorId());
             assertEquals("channeldelete", denied.getCommandName());
             assertFalse(denied.isOutcomeUnknown());
 
-            responder = request -> new Reply(502, "<html>proxy error</html>");
+            responder = _ -> new Reply(502, "<html>proxy error</html>");
             var proxy = assertThrows(
                     TS3HttpException.class, () -> query.getApi().instance().version());
             assertEquals(502, proxy.getStatusCode());
@@ -220,7 +226,7 @@ class TS3WebQueryTest {
     @Test
     void expiredRequestsHaveAnUnknownOutcome() throws Exception {
         var release = new CountDownLatch(1);
-        responder = request -> {
+        responder = _ -> {
             awaitQuietly(release);
             return new Reply(200, OK);
         };
@@ -259,7 +265,7 @@ class TS3WebQueryTest {
     void boundsRequestsInFlightAndReleasesCapacity() throws Exception {
         var arrived = new CountDownLatch(1);
         var release = new CountDownLatch(1);
-        responder = request -> {
+        responder = _ -> {
             arrived.countDown();
             awaitQuietly(release);
             return new Reply(200, OK);
@@ -271,7 +277,7 @@ class TS3WebQueryTest {
                     TS3QueueFullException.class, () -> query.getApi().instance().version());
             release.countDown();
             assertEquals("3.13.8", CommandFutures.join(first).version());
-            responder = request -> new Reply(200, OK);
+            responder = _ -> new Reply(200, OK);
             assertEquals("3.13.8", awaitCapacity(query).version());
         }
     }
@@ -280,7 +286,7 @@ class TS3WebQueryTest {
     void cancellingARequestReleasesItsCapacity() throws Exception {
         var arrived = new CountDownLatch(1);
         var release = new CountDownLatch(1);
-        responder = request -> {
+        responder = _ -> {
             arrived.countDown();
             awaitQuietly(release);
             return new Reply(200, OK);
@@ -289,7 +295,7 @@ class TS3WebQueryTest {
             var pending = query.getAsyncApi().instance().version();
             assertTrue(arrived.await(5, TimeUnit.SECONDS));
             assertTrue(pending.cancel(true));
-            responder = request -> new Reply(200, OK);
+            responder = _ -> new Reply(200, OK);
             assertEquals("3.13.8", awaitCapacity(query).version());
         } finally {
             release.countDown();
@@ -300,7 +306,7 @@ class TS3WebQueryTest {
     void closeAbortsRequestsRejectsNewOnesAndTerminatesWorkers() throws Exception {
         var arrived = new CountDownLatch(1);
         var release = new CountDownLatch(1);
-        responder = request -> {
+        responder = _ -> {
             arrived.countDown();
             awaitQuietly(release);
             return new Reply(200, OK);
@@ -351,7 +357,8 @@ class TS3WebQueryTest {
             for (int i = 1; i <= 50; i++) {
                 int cid = i;
                 futures.add(CommandFutures.map(
-                        query.getAsyncApi(1).channels().info(cid), info -> cid + "=" + info.getName()));
+                        query.getAsyncApi(VirtualServerId.of(1)).channels().info(ChannelId.of(cid)),
+                        info -> cid + "=" + info.getName()));
             }
             for (int i = 1; i <= 50; i++) {
                 assertEquals(i + "=c" + i, CommandFutures.join(futures.get(i - 1)));
@@ -374,7 +381,7 @@ class TS3WebQueryTest {
     private static void awaitQuietly(CountDownLatch latch) {
         try {
             var _ = latch.await(10, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException _) {
             Thread.currentThread().interrupt();
         }
     }

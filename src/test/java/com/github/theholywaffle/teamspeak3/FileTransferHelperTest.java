@@ -384,9 +384,9 @@ class FileTransferHelperTest {
                         socket.getOutputStream().write(7);
                         Thread.sleep(20);
                     }
-                } catch (IOException expectedWhenClientAborts) {
+                } catch (IOException _) {
                     // The client aborts the transfer on purpose.
-                } catch (InterruptedException failure) {
+                } catch (InterruptedException _) {
                     Thread.currentThread().interrupt();
                 }
             });
@@ -422,7 +422,7 @@ class FileTransferHelperTest {
                     try {
                         socket.connect(
                                 new InetSocketAddress(InetAddress.getLoopbackAddress(), listener.getLocalPort()), 100);
-                    } catch (SocketTimeoutException expected) {
+                    } catch (SocketTimeoutException _) {
                         saturated = true;
                         break;
                     }

@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3.api.wrapper;
 
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerStatus;
 import java.time.Duration;
@@ -13,8 +14,8 @@ public class VirtualServer extends Wrapper {
         super(map);
     }
 
-    public int getId() {
-        return requireInt(VirtualServerProperty.VIRTUALSERVER_ID);
+    public VirtualServerId getId() {
+        return requireId(VirtualServerProperty.VIRTUALSERVER_ID, VirtualServerId::new);
     }
 
     public int getPort() {

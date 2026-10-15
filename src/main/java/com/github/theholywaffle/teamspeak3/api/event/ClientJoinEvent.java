@@ -1,8 +1,12 @@
 package com.github.theholywaffle.teamspeak3.api.event;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelGroupId;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
+import com.github.theholywaffle.teamspeak3.api.IconId;
+import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
 import java.util.List;
 import java.util.Optional;
@@ -13,12 +17,14 @@ public class ClientJoinEvent extends BaseEvent {
         super(wrapper);
     }
 
-    public int getClientFromId() {
-        return requireInt("cfid");
+    /** @return the channel the client came from, or empty when it connected to the server ({@code 0}) */
+    public Optional<ChannelId> getClientFromId() {
+        return requireOptionalId("cfid", ChannelId::new);
     }
 
-    public int getClientTargetId() {
-        return requireInt("ctid");
+    /** @return the channel the client joined */
+    public ChannelId getClientTargetId() {
+        return requireId("ctid", ChannelId::new);
     }
 
     public ClientId getClientId() {
@@ -65,8 +71,8 @@ public class ClientJoinEvent extends BaseEvent {
         return requireDatabaseId(ClientProperty.CLIENT_DATABASE_ID);
     }
 
-    public int getClientChannelGroupId() {
-        return requireInt(ClientProperty.CLIENT_CHANNEL_GROUP_ID);
+    public ChannelGroupId getClientChannelGroupId() {
+        return requireId(ClientProperty.CLIENT_CHANNEL_GROUP_ID, ChannelGroupId::new);
     }
 
     public int getAmountOfServerGroups() {
@@ -74,8 +80,8 @@ public class ClientJoinEvent extends BaseEvent {
     }
 
     /** @return the IDs of the client's server groups, in received order */
-    public List<Integer> getClientServerGroups() {
-        return requireIntList(ClientProperty.CLIENT_SERVERGROUPS);
+    public List<ServerGroupId> getClientServerGroups() {
+        return requireIdList(ClientProperty.CLIENT_SERVERGROUPS, ServerGroupId::new);
     }
 
     public boolean isClientAway() {
@@ -132,8 +138,9 @@ public class ClientJoinEvent extends BaseEvent {
         return requireInt(ClientProperty.CLIENT_NEEDED_SERVERQUERY_VIEW_POWER);
     }
 
-    public long getClientIconId() {
-        return requireLong(ClientProperty.CLIENT_ICON_ID);
+    /** @return the client's icon, or empty if it has none */
+    public Optional<IconId> getClientIconId() {
+        return requireIconId(ClientProperty.CLIENT_ICON_ID);
     }
 
     public boolean isClientChannelCommander() {
@@ -145,8 +152,9 @@ public class ClientJoinEvent extends BaseEvent {
         return findText(ClientProperty.CLIENT_COUNTRY);
     }
 
-    public int getClientInheritedChannelGroupId() {
-        return requireInt(ClientProperty.CLIENT_CHANNEL_GROUP_INHERITED_CHANNEL_ID);
+    /** @return the ID of the channel from which the client's channel group is inherited */
+    public ChannelId getClientInheritedChannelGroupId() {
+        return requireId(ClientProperty.CLIENT_CHANNEL_GROUP_INHERITED_CHANNEL_ID, ChannelId::new);
     }
 
     @Override

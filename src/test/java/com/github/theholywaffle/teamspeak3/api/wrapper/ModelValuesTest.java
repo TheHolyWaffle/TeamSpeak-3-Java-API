@@ -3,17 +3,24 @@ package com.github.theholywaffle.teamspeak3.api.wrapper;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelBannerMode;
+import com.github.theholywaffle.teamspeak3.api.ChannelGroupId;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
+import com.github.theholywaffle.teamspeak3.api.ClientFileTransferId;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.Codec;
+import com.github.theholywaffle.teamspeak3.api.IconId;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupDatabaseType;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupType;
 import com.github.theholywaffle.teamspeak3.api.PermissionTarget;
 import com.github.theholywaffle.teamspeak3.api.PrivilegeKeyType;
+import com.github.theholywaffle.teamspeak3.api.ServerFileTransferId;
+import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import com.github.theholywaffle.teamspeak3.api.Snapshot;
 import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerStatus;
 import com.github.theholywaffle.teamspeak3.api.event.ClientJoinEvent;
+import com.github.theholywaffle.teamspeak3.api.event.ClientLeaveEvent;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException;
 import com.github.theholywaffle.teamspeak3.commands.ServerGroupCommands;
@@ -45,9 +52,9 @@ class ModelValuesTest {
         assertEquals(ClientId.of(5), client.getId());
         assertFalse(client.getMap().containsKey("injected"));
         assertUnsupported(() -> client.getMap().put("clid", "7"));
-        assertUnsupported(() -> client.getServerGroups().add(9));
+        assertUnsupported(() -> client.getServerGroups().add(ServerGroupId.of(9)));
         assertUnsupported(() -> client.getBadgeGUIDs().clear());
-        assertEquals(List.of(6, 8), client.getServerGroups());
+        assertEquals(List.of(ServerGroupId.of(6), ServerGroupId.of(8)), client.getServerGroups());
         assertEquals(List.of("a", "b"), client.getBadgeGUIDs());
         assertTrue(client.hasOverwolf());
 
@@ -89,7 +96,7 @@ class ModelValuesTest {
 
         // A malformed property only affects the getters that read it.
         var channel = new Channel(Map.of("cid", "3", "channel_name", "a", "channel_codec", "opus"));
-        assertEquals(3, channel.getId());
+        assertEquals(ChannelId.of(3), channel.getId());
         assertEquals("a", channel.getName());
         assertEquals(
                 Optional.of("opus"),
@@ -101,7 +108,9 @@ class ModelValuesTest {
         var channel = new Channel(Map.of("cid", "3", "channel_codec", "99"));
         assertEquals(Codec.UNKNOWN, channel.getCodec());
         assertEquals("99", channel.getMap().get("channel_codec"));
-        assertEquals(ChannelBannerMode.UNKNOWN, new ChannelInfo(3, Map.of("channel_banner_mode", "7")).getBannerMode());
+        assertEquals(
+                ChannelBannerMode.UNKNOWN,
+                new ChannelInfo(ChannelId.of(3), Map.of("channel_banner_mode", "7")).getBannerMode());
         assertEquals(
                 VirtualServerStatus.UNKNOWN,
                 new VirtualServer(Map.of("virtualserver_status", "hibernating")).getStatus());
@@ -206,13 +215,123 @@ class ModelValuesTest {
     }
 
     @Test
+    void entityIdsAreLongBackedAndZeroIsNone() {
+        assertThrows(IllegalArgumentException.class, () -> ChannelId.of(0));
+        assertThrows(IllegalArgumentException.class, () -> ServerGroupId.of(-1));
+        assertThrows(IllegalArgumentException.class, () -> ClientFileTransferId.of(-1));
+        assertEquals("0", ClientFileTransferId.of(0).toString());
+        assertNotEquals((Object) ServerGroupId.of(2), ChannelGroupId.of(2));
+        long beyondInt = 1L + Integer.MAX_VALUE;
+        assertEquals(ChannelId.of(beyondInt), new Channel(Map.of("cid", Long.toString(beyondInt))).getId());
+        assertEquals(
+                ClientDatabaseId.of(beyondInt),
+                new DatabaseClient(Map.of("cldbid", Long.toString(beyondInt))).getDatabaseId());
+        assertEquals(
+                Optional.of("0"),
+                assertThrows(TS3InvalidValueException.class, () -> new Channel(Map.of("cid", "0")).getId())
+                        .getRawValue());
+
+        assertEquals(Optional.empty(), new Channel(Map.of("pid", "0")).getParentChannelId());
+        assertEquals(Optional.of(ChannelId.of(2)), new Channel(Map.of("pid", "2")).getParentChannelId());
+        assertThrows(TS3InvalidValueException.class, () -> new Channel(Map.of()).getParentChannelId());
+        assertThrows(TS3InvalidValueException.class, () -> new Channel(Map.of("pid", "-1")).getParentChannelId());
+        var unselected = new ServerQueryInfo(
+                Map.of("virtualserver_id", "0", "client_channel_id", "0", "client_origin_server_id", "0"));
+        assertEquals(Optional.empty(), unselected.getVirtualServerId());
+        assertEquals(Optional.empty(), unselected.getChannelId());
+        assertEquals(Optional.empty(), unselected.getOriginServerId());
+        assertEquals(Optional.empty(), new QueryLogin(Map.of("sid", "0")).getVirtualServerId());
+        assertEquals(Optional.empty(), new FileInfo(Map.of("cid", "0")).getChannelId());
+
+        var serverKey = new PrivilegeKey(Map.of("token_type", "0", "token_id1", "6", "token_id2", "0"));
+        assertEquals(Optional.of(ServerGroupId.of(6)), serverKey.getServerGroupId());
+        assertEquals(Optional.empty(), serverKey.getChannelGroupId());
+        assertEquals(Optional.empty(), serverKey.getChannelId());
+        var channelKey = new PrivilegeKey(Map.of("token_type", "1", "token_id1", "5", "token_id2", "3"));
+        assertEquals(Optional.empty(), channelKey.getServerGroupId());
+        assertEquals(Optional.of(ChannelGroupId.of(5)), channelKey.getChannelGroupId());
+        assertEquals(Optional.of(ChannelId.of(3)), channelKey.getChannelId());
+
+        assertEquals(
+                List.of(ServerGroupId.of(2), ServerGroupId.of(beyondInt)),
+                new Client(Map.of("client_servergroups", "2," + beyondInt)).getServerGroups());
+        assertThrows(
+                TS3InvalidValueException.class,
+                () -> new Client(Map.of("client_servergroups", "2,0")).getServerGroups());
+
+        var transfer = new FileTransfer(Map.of("clientftfid", "0", "serverftfid", "7"));
+        assertEquals(ClientFileTransferId.of(0), transfer.getClientTransferId());
+        assertEquals(ServerFileTransferId.of(7), transfer.getServerTransferId());
+    }
+
+    @Test
+    void clientEventsMapChannelSentinelsAndBanDuration() {
+        var join = event(ClientJoinEvent::new, "cfid=0 ctid=1 clid=4");
+        assertEquals(Optional.empty(), join.getClientFromId());
+        assertEquals(ChannelId.of(1), join.getClientTargetId());
+
+        var banned = event(
+                ClientLeaveEvent::new,
+                "cfid=1 ctid=0 reasonid=6 invokerid=8 invokername=serveradmin invokeruid=serveradmin"
+                        + " reasonmsg=probe bantime=0 clid=10");
+        assertEquals(ChannelId.of(1), banned.getClientFromId());
+        assertEquals(Optional.empty(), banned.getClientTargetId());
+        assertEquals(OptionalInt.of(6), banned.getReasonId());
+        assertEquals(Optional.of(Duration.ZERO), banned.getBanDuration());
+        assertEquals(
+                Optional.of(Duration.ofMinutes(10)),
+                event(ClientLeaveEvent::new, "cfid=1 ctid=0 reasonid=6 bantime=600 clid=10")
+                        .getBanDuration());
+
+        var kicked = event(
+                ClientLeaveEvent::new,
+                "cfid=1 ctid=0 reasonid=5 invokerid=4 invokername=serveradmin invokeruid=serveradmin"
+                        + " reasonmsg=bye clid=7");
+        assertEquals(OptionalInt.of(5), kicked.getReasonId());
+        assertEquals(Optional.empty(), kicked.getBanDuration());
+    }
+
+    @Test
+    void iconIdsAreUnsignedAndZeroIsNone() {
+        var icon = Optional.of(IconId.of(3815707113L));
+        assertEquals(icon, new ServerGroup(Map.of("iconid", "-479260183")).getIconId());
+        assertEquals(icon, new ChannelGroup(Map.of("iconid", "-479260183")).getIconId());
+        assertEquals(icon, new ServerGroup(Map.of("iconid", "3815707113")).getIconId());
+        assertEquals(Optional.empty(), new ChannelGroup(Map.of("iconid", "0")).getIconId());
+        assertEquals(icon, new Channel(Map.of("channel_icon_id", "3815707113")).getIconId());
+        assertEquals(icon, new Client(Map.of("client_icon_id", "-479260183")).getIconId());
+        assertEquals(icon, new VirtualServerInfo(Map.of("virtualserver_icon_id", "3815707113")).getIconId());
+        assertEquals(Optional.empty(), new VirtualServerInfo(Map.of("virtualserver_icon_id", "0")).getIconId());
+        assertEquals(icon, new DatabaseClientInfo(Map.of("client_icon_id", "3815707113")).getIconId());
+        assertEquals(Optional.empty(), new DatabaseClientInfo(Map.of()).getIconId());
+        assertEquals(
+                icon,
+                event(ClientJoinEvent::new, "clid=4 client_icon_id=-479260183").getClientIconId());
+        assertEquals(icon, new IconFile(Map.of("name", "icon_3815707113")).getIconId());
+        assertEquals(Optional.empty(), new IconFile(Map.of("name", "icon_0")).getIconId());
+        assertEquals(Optional.empty(), new IconFile(Map.of("name", "icon_4294967296")).getIconId());
+        assertEquals(
+                Optional.empty(),
+                assertThrows(TS3InvalidValueException.class, () -> new ServerGroup(Map.of()).getIconId())
+                        .getRawValue());
+        assertEquals(
+                Optional.of("4294967296"),
+                assertThrows(
+                                TS3InvalidValueException.class,
+                                () -> new ServerGroup(Map.of("iconid", "4294967296")).getIconId())
+                        .getRawValue());
+        assertThrows(
+                TS3InvalidValueException.class, () -> new ServerGroup(Map.of("iconid", "-2147483649")).getIconId());
+    }
+
+    @Test
     void optionalFieldsDistinguishUnsetValues() {
         var entry =
                 new FileListEntry(Map.of("name", "x", "path", "/", "size", "0", "incompletesize", "3", "type", "1"));
         assertTrue(entry.isStillUploading());
         assertEquals(3, entry.getFileSize());
         assertFalse(new FileListEntry(Map.of("size", "4")).isStillUploading());
-        assertEquals(OptionalLong.empty(), new IconFile(Map.of("name", "not-an-icon")).getIconId());
+        assertEquals(Optional.empty(), new IconFile(Map.of("name", "not-an-icon")).getIconId());
 
         var search = new PermissionAssignment(Map.of("t", "0", "id1", "6", "id2", "0", "p", "221"));
         assertEquals(OptionalInt.empty(), search.getValue());
@@ -231,10 +350,10 @@ class ModelValuesTest {
         assertEquals(Optional.empty(), new FileTransferParameters(Map.of("status", "0", "msg", "ok")).findFailure());
         assertEquals(Optional.empty(), new FileTransferParameters(Map.of("status", "1281")).findFailure());
         assertEquals(
-                OptionalInt.of(5),
+                Optional.of(ChannelId.of(5)),
                 new ClientInfo(ClientId.of(1), Map.of("client_default_channel", "/5")).getDefaultChannel());
         assertEquals(
-                OptionalInt.empty(),
+                Optional.empty(),
                 new ClientInfo(ClientId.of(1), Map.of("client_default_channel", "")).getDefaultChannel());
         assertEquals(Optional.empty(), new Client(Map.of("client_country", "")).getCountry());
     }
@@ -265,7 +384,9 @@ class ModelValuesTest {
         assertEquals(new Client(Map.of("clid", "1")), new Client(new HashMap<>(Map.of("clid", "1"))));
         assertNotEquals(new Client(Map.of("clid", "1")), new Wrapper(Map.of("clid", "1")));
         assertNotEquals(new ClientInfo(ClientId.of(1), Map.of()), new ClientInfo(ClientId.of(2), Map.of()));
-        assertEquals(new ChannelInfo(4, Map.of()).hashCode(), new ChannelInfo(4, Map.of()).hashCode());
+        assertEquals(
+                new ChannelInfo(ChannelId.of(4), Map.of()).hashCode(),
+                new ChannelInfo(ChannelId.of(4), Map.of()).hashCode());
     }
 
     private static <T> T event(Function<Wrapper, T> constructor, String raw) {

@@ -236,15 +236,6 @@ spotless {
     }
 }
 
-// Development-only JVMs on the test classpath.
-tasks.register<JavaExec>("devServer") {
-    description = "Starts a disposable TS3 server; -PdevOnce=true exits after its smoke test."
-    classpath = sourceSets.test.get().runtimeClasspath
-    mainClass = "com.github.theholywaffle.teamspeak3.DevelopmentServer"
-    args(providers.gradleProperty("devServer").orElse("ts3").get(), providers.gradleProperty("devOnce").orElse("false").get())
-    standardInput = System.`in`
-}
-
 tasks.register<JavaExec>("runExample") {
     description = "Runs one example (-Pexample=ClientInfoExample) with the TS3_* environment variables."
     classpath = sourceSets.test.get().runtimeClasspath

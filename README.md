@@ -5,10 +5,6 @@ TeamSpeak 3 Java API
 A Java library for the TeamSpeak 3 ServerQuery interface: server administration, notifications
 and file transfers over raw TCP or SSH, and optionally administration over HTTP(S) Web Query.
 
-> This branch is the 2.0 development line. It needs Java 25 and contains intentional breaking
-> changes; see [migrating from 1.x](#migrating-from-1x). The Javadoc badge shows the latest
-> published release.
-
 - [Requirements and compatibility](#requirements-and-compatibility)
 - [Installation](#installation)
 - [Quick start](#quick-start)
@@ -16,39 +12,34 @@ and file transfers over raw TCP or SSH, and optionally administration over HTTP(
 - [Using the API](#using-the-api): [domain APIs](#domain-apis), [futures](#asynchronous-api-and-futures),
   [events](#events), [deadlines](#deadlines-and-closing), [reconnects](#reconnect-guarantees),
   [file transfers](#file-transfers), [SSH trust](#ssh-host-key-trust), [logging](#logging),
-  [flood rate](#flood-rate), [Web Query](#web-query)
+  [flood rate](#flood-rate), [Web Query](#web-query), [upgrading from 1.x](#upgrading-from-1x)
 - [Configuration reference](#configuration-reference)
 - [Development](#development)
 - [Getting help](#getting-help)
 
 ## Requirements and compatibility
 
-- **Java 25 or newer** to build and run; no preview features. Java 8–24 are not supported by 2.0.
+- **Java 25 or newer** to build and run; no preview features.
 - **A TeamSpeak 3 server** with ServerQuery enabled, and a query login (`serveradmin` or one created
   in the TeamSpeak client under *Tools → ServerQuery Login*).
-- **Docker** only for the [local development server](#run-an-example) and the
-  [integration tests](#integration-tests). Using the library needs no Docker.
 
 | Server | Transport | Status |
 | --- | --- | --- |
-| TeamSpeak 3 server 3.13.8 (official Docker image, Linux amd64) | Raw TCP (port 10011) | Verified by the integration suite in CI |
-| TeamSpeak 3 server 3.13.8 (official Docker image, Linux amd64) | SSH (port 10022) | Verified by the integration suite in CI |
-| TeamSpeak 3 server 3.13.8 (official Docker image, Linux amd64) | Web Query over HTTP (10080) and HTTPS (10443) | Optional, new in 2.0; verified by the integration suite in CI |
+| TeamSpeak 3 server 3.13.8 (Linux amd64) | Raw TCP (port 10011) | Verified by the integration suite in CI |
+| TeamSpeak 3 server 3.13.8 (Linux amd64) | SSH (port 10022) | Verified by the integration suite in CI |
+| TeamSpeak 3 server 3.13.8 (Linux amd64) | Web Query over HTTP (10080) and HTTPS (10443) | Verified by the integration suite in CI |
 | Other TeamSpeak 3 server versions | Raw TCP, SSH, Web Query | Not verified |
 | TeamSpeak 6 | — | Not supported |
 
-On Apple Silicon the TS3 image runs under Docker's
-amd64 emulation; that is not native arm64 support. The ServerQuery commands themselves are
-described in the `doc/` and `serverquerydocs/` folders shipped with every TS3 server
-(an unofficial copy of the [ServerQuery manual](https://www.teamspeak-info.de/downloads/ts3_serverquery_manual.pdf)
+The TS3 server download documents ServerQuery in `doc/serverquery/serverquery.html`, each command in
+`serverquerydocs/` and Web Query in `doc/webquery.md` (an unofficial copy of the [ServerQuery manual](https://www.teamspeak-info.de/downloads/ts3_serverquery_manual.pdf)
 is also available). Voice, audio and screen sharing are out of scope.
 
 ## Installation
 
 The library is published to [Maven Central](https://central.sonatype.com/artifact/com.github.theholywaffle/teamspeak3-api)
 as one regular JAR with sources and Javadoc. Its POM brings in SSHJ, the patched Bouncy Castle
-modules, the SLF4J API and Gson (JSON for Web Query). 2.0 no longer publishes a standalone `with-dependencies` JAR; see
-the [migration guide](MIGRATION.md#java-25-and-dependencies).
+modules, the SLF4J API and Gson (JSON for Web Query).
 
 ```xml
 <dependency>
@@ -70,7 +61,7 @@ add `requires com.github.theholywaffle.teamspeak3;` to your `module-info.java`. 
 
 ### Verify a release
 
-Every release from 2.0.0 on is built and published by this repository's
+Releases are built and published by this repository's
 [`release.yml`](.github/workflows/release.yml) with a signed GitHub build provenance attestation.
 Maven Central does not show it, so verify a downloaded artifact with the
 [GitHub CLI](https://cli.github.com/):
@@ -89,6 +80,7 @@ independently: rebuilding the tagged commit yields byte-identical artifacts.
 import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3Config;
 import com.github.theholywaffle.teamspeak3.TS3Query;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 
 TS3Config config = new TS3Config()
         .setHost("ts.example.net")
@@ -97,7 +89,7 @@ TS3Config config = new TS3Config()
 try (TS3Query query = new TS3Query(config)) {
     query.connect();                       // connects and logs in
     TS3Api api = query.getApi();
-    api.selectVirtualServerById(1);
+    api.selectVirtualServerById(VirtualServerId.of(1));
     api.setNickname("PutPutBot");
     api.messages().sendChannel("PutPutBot is online!");
     query.exit();                          // optional graceful quit; close() follows
@@ -111,11 +103,7 @@ with `.setProtocol(TS3Query.Protocol.SSH)`; it requires the login and a trusted
 
 ## Run an example
 
-The [examples](src/example/java/com/github/theholywaffle/teamspeak3/example) are compiled by every
-build, so they cannot drift from the API. They contain no hosts or passwords: everything comes from
-environment variables.
-
-| Example | Shows |
+| [Example](src/example/java/com/github/theholywaffle/teamspeak3/example) | Shows |
 | --- | --- |
 | `ClientInfoExample` | Listing channels and clients, then disconnecting |
 | `CreateChannelExample` | Creating, reading and deleting a channel |
@@ -123,44 +111,19 @@ environment variables.
 | `ChatBotExample` | Event subscription and replying to `!ping` / `hello` in a channel |
 | `EventListenerExample` | Every event type and the query's event statistics |
 | `ReconnectExample` | Reconnect strategy, session restoration, retry policy and asynchronous commands |
-| `TrollExample` | The asynchronous API driven by a scheduler |
+| `ScheduledActionsExample` | The asynchronous API driven by a scheduler |
 | `WebQueryExample` | [Web Query](#web-query) with an API key: listing clients, creating and deleting a channel |
 
 Long-running examples stop when you press Enter (or close standard input).
 
-### Against a disposable local server
+Set the variables for your server and run an example by name with JDK 25 in `JAVA_HOME`:
 
-Needs JDK 25 in `JAVA_HOME` and a running Docker daemon. Read the
-[TeamSpeak 3 server license](https://hub.docker.com/_/teamspeak) first; the development server
-accepts it on your behalf.
+```sh
+export TS3_HOST='ts.example.net' TS3_USERNAME='serveradmin' TS3_PASSWORD='…'
+./gradlew -q runExample -Pexample=ClientInfoExample
+```
 
-1. In a first terminal, start the development server:
-
-   ```sh
-   ./gradlew devServer
-   ```
-
-   When it is ready, it prints `export` lines with the host, the mapped ports, a disposable
-   `serveradmin` password, an SSH trust file, and a Web Query API key and certificate for this
-   session, then waits. Keep it running.
-
-2. In a second terminal in the same directory, paste the first `export` line and run an example:
-
-   ```sh
-   export TS3_HOST='127.0.0.1' TS3_USERNAME='serveradmin' TS3_PASSWORD='…' …   # copied from terminal 1
-   ./gradlew -q runExample -Pexample=ClientInfoExample
-   ```
-
-   Choose any example with `-Pexample=<name>`. To use SSH instead of raw TCP, also paste the
-   second `export` line. `WebQueryExample` needs only the third `export` line. On Windows PowerShell, set each variable as `$env:TS3_HOST = '127.0.0.1'`
-   and use `gradlew.bat`.
-
-3. Press Enter in the first terminal to stop the server. All data, ports, keys and trust files are
-   discarded; the next start is a clean server.
-
-### Against your own server
-
-Set the variables yourself and run the same Gradle command:
+On Windows PowerShell, set each variable as `$env:TS3_HOST = 'ts.example.net'` and use `gradlew.bat`.
 
 | Variable | Required | Meaning |
 | --- | :---: | --- |
@@ -172,33 +135,36 @@ Set the variables yourself and run the same Gradle command:
 | `TS3_NICKNAME` | no | Query nickname, default `Java API example` |
 | `TS3_FLOOD_RATE` | no | `default` (350 ms between commands) or `unlimited` for an allowlisted IP; see [flood rate](#flood-rate) |
 | `TS3_SSH_KNOWN_HOSTS` | no | OpenSSH trust file for SSH, default `~/.ssh/known_hosts` |
-| `TS3_FILE_TRANSFER_HOST`, `TS3_FILE_TRANSFER_PORT` | no | Reachable file transfer endpoint when the server's advertised one is not (NAT, Docker) |
+| `TS3_FILE_TRANSFER_HOST`, `TS3_FILE_TRANSFER_PORT` | no | Reachable file transfer endpoint when the server's advertised one is not (NAT, Docker); set both or neither |
 | `TS3_COMMUNICATIONS_LOGGING` | no | `true` to log the (redacted) protocol at DEBUG |
 | `TS3_WEBQUERY_URI`, `TS3_API_KEY` | `WebQueryExample` only | Web Query endpoint, such as `https://host:10443`, and API key; with the optional variables below and `TS3_VIRTUAL_SERVER_ID`, the only ones `WebQueryExample` reads |
 | `TS3_WEBQUERY_CERTIFICATE` | no | PEM certificate(s) to trust for HTTPS instead of the JDK trust store |
 | `TS3_WEBQUERY_PLAINTEXT` | no | `true` to allow an `http://` endpoint, which sends the key unencrypted |
 
 Examples change server state (channels, files, icons, messages) and clean up after themselves where
-possible. `TrollExample` pokes, kicks and moves real clients: only run it on a test server.
+possible. `ScheduledActionsExample` pokes, kicks and moves real clients: only run it on a test server.
 
 ## Using the API
 
 ### Domain APIs
 
 `query.getApi()` returns a `TS3Api`. It holds the ServerQuery session operations (`login`,
-`logout`, `selectVirtualServerById`, `selectVirtualServerByPort`) on top of `TS3BaseApi`, the API
-shared with [Web Query](#web-query): query-client operations such as `setNickname` and `whoAmI`, and
-one domain API per area: `channels()`, `clients()`, `databaseClients()`, `serverGroups()`,
+`logout`, `selectVirtualServerById`, `selectVirtualServerByPort`, `deselectVirtualServer`) on top of
+`TS3BaseApi`, the API shared with [Web Query](#web-query): query-client operations such as
+`setNickname` and `whoAmI`, and one domain API per area: `channels()`, `clients()`, `databaseClients()`, `serverGroups()`,
 `channelGroups()`, `permissions()`, `bans()`, `complaints()`, `messages()`, `files()`,
 `privilegeKeys()`, `queryLogins()`, `apiKeys()`, `servers()`, `instance()` and `events()`.
 
 - Calls block until the server answers and throw a `TS3Exception` subtype on failure:
   `TS3CommandFailedException` (server error, with its ID), `TS3TransportException` (connection
-  unavailable), `TS3TimeoutException`, `TS3QueueFullException`, `TS3UnsupportedOperationException`
-  and `TS3FileTransferFailedException`. `isOutcomeUnknown()` tells whether a failed command may still
+  unavailable), `TS3TimeoutException`, `TS3QueueFullException`, `TS3UnsupportedOperationException`,
+  `TS3FileTransferFailedException` and `TS3InvalidValueException` (a response value that cannot be
+  parsed). `isOutcomeUnknown()` tells whether a failed command may still
   have run on the server.
-- Lookups that can find nothing return an empty `Optional` or list; no method returns `null` or `-1`.
-- Responses are immutable models with typed values such as `ClientId` and `ClientDatabaseId`.
+- Lookups that can find nothing return an empty `Optional` or list, never `null`.
+- Responses are immutable models with typed values such as `ClientId`, `ChannelId` and
+  `ServerGroupId`; methods take the same ID types. Where TeamSpeak sends `0` for "none", such as the
+  parent of a top-level channel, the getter returns an empty `Optional`.
 
 See the [Javadoc](https://www.javadoc.io/doc/com.github.theholywaffle/teamspeak3-api).
 
@@ -246,19 +212,21 @@ alive until it is closed. A keep-alive `whoami` is sent after 60 seconds without
 Reconnecting is off by default: a lost connection closes the query. With a reconnect strategy,
 the library guarantees:
 
-- The login, virtual server, nickname and event registrations from `setSessionConfiguration` are
-  restored, in order, before any queued command is sent. Listeners stay subscribed.
+- The login from `setLoginCredentials`, then the virtual server, nickname and event registrations from
+  `setSessionConfiguration` are restored, in order, before any queued command is sent. Listeners stay subscribed.
 - Commands not yet sent keep their order and are sent after restoration.
 - A command that was sent but not answered is **never resent** by default: it fails with
-  `TS3UnknownOutcomeException`. Only reads you name in `CommandRetryPolicy.safeReads(...)` are replayed.
+  `TS3UnknownOutcomeException`. Only reads you name in `CommandRetryPolicy.safeReads(...)` are replayed;
+  it accepts `whoami`, `version`, `serverinfo`, `serverlist`, `channellist`, `channelinfo`, `clientlist`
+  and `clientinfo`.
 - Built-in backoff strategies stop after ten attempts (`withMaxAttempts` changes this) and then close
   the query.
 
 ```java
 config.setLoginCredentials(user, password)
-      .setSessionConfiguration(SessionConfiguration.forServer(1)
+      .setSessionConfiguration(SessionConfiguration.forServer(VirtualServerId.of(1))
               .withNickname("PutPutBot")
-              .withSubscription(TS3EventType.TEXT_CHANNEL, -1))
+              .withSubscription(TS3EventType.TEXT_CHANNEL))
       .setReconnectStrategy(ReconnectStrategy.exponentialBackoff())
       .setCommandRetryPolicy(CommandRetryPolicy.safeReads(1, "whoami"));
 ```
@@ -277,9 +245,12 @@ the library) and supports resume. Limitations:
   `FileTransferEndpointResolver` in `FileTransferConfig`.
 - Byte-array downloads and icon buffering are limited to 16 MiB by default; stream larger files.
   Socket reads time out after 4 seconds and a whole transfer after 5 minutes by default.
-- Only the TS3 file protocol is supported. A cancelled or failed upload can leave a partial file.
-- Channel and client icons are assigned with the `i_icon_id` permission using the ID's signed
-  32-bit value; TS3 rejects the `channel_icon_id` and `client_icon_id` properties.
+- Only the TS3 file protocol is supported. A cancelled or failed upload can leave a partial file;
+  uploading the same icon again replaces it.
+- Icons are identified by `IconId`, which `uploadIcon` returns and every `getIconId()` reports
+  (empty when there is no icon). Assign one with the `i_icon_id` permission:
+  `permissions().add(PermissionTarget.channel(id), PermissionGrant.icon(iconId))`; TS3 rejects the
+  `channel_icon_id` and `client_icon_id` properties.
 
 ### SSH host key trust
 
@@ -289,8 +260,8 @@ with `setSshHostKeyPolicy`:
 
 - `SshHostKeyPolicy.knownHosts(path)`: a dedicated OpenSSH trust file, read strictly.
 - `SshHostKeyPolicy.pinnedKey(publicKey)`: one independently verified key.
-- `SshHostKeyPolicy.trustOnFirstUse(path)`: stores the first key seen per host and port in an existing
-  application-owned file and rejects later changes. Only use it where the first connection is trusted.
+- `SshHostKeyPolicy.trustOnFirstUse(path)`: stores the first key seen per host and port in an
+  application-owned file, whose directory must exist, and rejects later changes. Only use it where the first connection is trusted.
 
 The client authenticates with password, then keyboard-interactive. It uses SSHJ's default algorithms,
 which still include legacy ones; compression is off.
@@ -325,8 +296,8 @@ server's `query_ip_allowlist.txt` (`query_ip_whitelist.txt` before TS3 3.13).
 
 `TS3WebQuery` runs the same domain APIs over a TS3 server's HTTP(S) Web Query interface, authenticated
 by an API key (create one with `api.apiKeys()`). Each command is an independent request addressed to
-the instance (`getApi()`), a virtual server ID (`getApi(1)`) or a voice port (`getApiByPort(9987)`).
-There is no session, so its API is the shared `TS3BaseApi`, without `login` or `selectVirtualServer*`.
+the instance (`getApi()`), a virtual server ID (`getApi(VirtualServerId.of(1))`) or a voice port (`getApiByPort(9987)`).
+There is no session, so its API is the shared `TS3BaseApi`, without `login` or virtual server selection.
 Events and file operations fail with `TS3UnsupportedOperationException`; keep a RAW or SSH query for
 those. HTTPS is required unless
 plaintext is explicitly allowed. Rejected keys raise `TS3AuthenticationFailedException`; responses
@@ -335,21 +306,22 @@ without a usable status, for example from a proxy, raise `TS3HttpException`.
 ```java
 var config = WebQueryConfig.builder(URI.create("https://ts.example.org:10443"), apiKey).build();
 try (TS3WebQuery query = new TS3WebQuery(config)) {
-    query.getApi(1).channels().list().forEach(channel -> System.out.println(channel.getName()));
+    query.getApi(VirtualServerId.of(1)).channels().list().forEach(channel -> System.out.println(channel.getName()));
 }
 ```
 
-### Migrating from 1.x
+### Upgrading from 1.x
 
-2.0 changes the build requirements, the API shape, futures, models, defaults and security behavior.
-Follow the [2.0 migration guide](MIGRATION.md): it has an upgrade checklist, the changed
-defaults and a replacement for every 1.3.1 API method.
+The [migration guide](MIGRATION.md) has an upgrade checklist, the defaults that differ from 1.x and a
+replacement for every 1.3.1 API method.
 
 ## Configuration reference
 
 `TS3Config` is a reusable builder; `new TS3Query(config)` or `config.build()` takes an immutable,
-validated snapshot. Invalid values throw `IllegalArgumentException` (or `IllegalStateException` for an
-inconsistent retry configuration) before any connection is opened.
+validated snapshot. Invalid values throw `IllegalArgumentException` before any connection is opened;
+`null` for a policy, session, file transfer configuration or transport factory throws
+`NullPointerException`, and a retry policy without a session configuration throws
+`IllegalStateException`.
 
 | Setting | Default | Description |
 | --- | --- | --- |
@@ -392,7 +364,7 @@ The Gradle Wrapper downloads and verifies the pinned Gradle version, so no Gradl
 needed; the first build needs internet access. Gradle runs on JDK 25 and downloads one if none is
 installed.
 `build` compiles the library and the examples, runs the unit tests, and applies the formatting,
-static analysis, Javadoc and coverage checks. It needs no Docker and publishes nothing. Run
+static analysis, Javadoc and coverage checks. It publishes nothing. Run
 `./gradlew spotlessApply` to fix formatting.
 
 ### Integration tests
@@ -401,14 +373,10 @@ static analysis, Javadoc and coverage checks. It needs no Docker and publishes n
 ./gradlew build integrationTest
 ```
 
-Starts disposable TS3 servers in Docker and runs the RAW, SSH and Web Query compatibility suites, every
-example and the development server launcher. A missing Docker daemon fails the build instead of skipping
-tests.
-
-### Local development server
-
-`./gradlew devServer` starts a disposable server for manual testing, as
-shown in [run an example](#run-an-example). Add `-PdevOnce=true` to exit after its own smoke test.
+Starts disposable TS3 servers in Docker with Testcontainers and runs the RAW, SSH and Web Query
+compatibility suites and every example. The containers accept the
+[TeamSpeak 3 server license](https://hub.docker.com/_/teamspeak) on your behalf. A missing Docker daemon
+fails the build instead of skipping tests.
 
 ## Getting help
 

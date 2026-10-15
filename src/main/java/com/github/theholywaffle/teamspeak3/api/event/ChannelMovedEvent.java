@@ -1,7 +1,9 @@
 package com.github.theholywaffle.teamspeak3.api.event;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
+import java.util.Optional;
 
 public class ChannelMovedEvent extends BaseEvent {
 
@@ -9,16 +11,18 @@ public class ChannelMovedEvent extends BaseEvent {
         super(wrapper);
     }
 
-    public int getChannelId() {
-        return requireInt(ChannelProperty.CID);
+    public ChannelId getChannelId() {
+        return requireId(ChannelProperty.CID, ChannelId::new);
     }
 
-    public int getChannelParentId() {
-        return requireInt(ChannelProperty.CPID);
+    /** @return the new parent channel, or empty if the channel moved to the top level */
+    public Optional<ChannelId> getChannelParentId() {
+        return requireOptionalId(ChannelProperty.CPID, ChannelId::new);
     }
 
-    public int getChannelOrder() {
-        return requireInt("order");
+    /** @return the sibling channel the channel is now sorted below, or empty if it is the first */
+    public Optional<ChannelId> getChannelOrder() {
+        return requireOptionalId("order", ChannelId::new);
     }
 
     @Override

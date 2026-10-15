@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.commands.QueryCommands;
 import java.util.concurrent.CompletableFuture;
 
@@ -25,14 +26,14 @@ public class TS3ApiAsync extends TS3BaseApiAsync {
         return requests.run(QueryCommands.logOut());
     }
 
-    /** @see TS3Api#selectVirtualServerById(int) */
-    public CompletableFuture<Void> selectVirtualServerById(int id) {
+    /** @see TS3Api#selectVirtualServerById(VirtualServerId) */
+    public CompletableFuture<Void> selectVirtualServerById(VirtualServerId id) {
         return selectVirtualServerById(id, null);
     }
 
-    /** @see TS3Api#selectVirtualServerById(int, String) */
-    public CompletableFuture<Void> selectVirtualServerById(int id, String nickname) {
-        return requests.run(QueryCommands.useId(id, nickname));
+    /** @see TS3Api#selectVirtualServerById(VirtualServerId, String) */
+    public CompletableFuture<Void> selectVirtualServerById(VirtualServerId id, String nickname) {
+        return requests.run(QueryCommands.useId(id.value(), nickname));
     }
 
     /** @see TS3Api#selectVirtualServerByPort(int) */
@@ -43,5 +44,10 @@ public class TS3ApiAsync extends TS3BaseApiAsync {
     /** @see TS3Api#selectVirtualServerByPort(int, String) */
     public CompletableFuture<Void> selectVirtualServerByPort(int port, String nickname) {
         return requests.run(QueryCommands.usePort(port, nickname));
+    }
+
+    /** @see TS3Api#deselectVirtualServer() */
+    public CompletableFuture<Void> deselectVirtualServer() {
+        return requests.run(QueryCommands.useInstance());
     }
 }

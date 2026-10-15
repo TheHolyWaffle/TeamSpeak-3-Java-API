@@ -1,7 +1,10 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
+import com.github.theholywaffle.teamspeak3.api.MessageId;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Message;
 import java.util.List;
 import java.util.Optional;
@@ -44,7 +47,7 @@ public final class MessageApi {
      * @param channelId the channel ID
      * @param message the message
      */
-    public void sendChannel(int channelId, String message) {
+    public void sendChannel(ChannelId channelId, String message) {
         CommandFutures.join(async.sendChannel(channelId, message));
     }
 
@@ -64,7 +67,7 @@ public final class MessageApi {
      * @param serverId the virtual server ID
      * @param message the message
      */
-    public void sendServer(int serverId, String message) {
+    public void sendServer(VirtualServerId serverId, String message) {
         CommandFutures.join(async.sendServer(serverId, message));
     }
 
@@ -92,7 +95,7 @@ public final class MessageApi {
      * @param messageId the message ID
      * @return the body, which may be empty; empty if no such message exists
      */
-    public Optional<String> getOffline(int messageId) {
+    public Optional<String> getOffline(MessageId messageId) {
         return CommandFutures.join(async.getOffline(messageId));
     }
 
@@ -112,7 +115,7 @@ public final class MessageApi {
      *
      * @param messageId the message ID
      */
-    public void deleteOffline(int messageId) {
+    public void deleteOffline(MessageId messageId) {
         CommandFutures.join(async.deleteOffline(messageId));
     }
 
@@ -122,7 +125,7 @@ public final class MessageApi {
      * @param messageId the message ID
      * @param read whether the message is read
      */
-    public void setOfflineRead(int messageId, boolean read) {
+    public void setOfflineRead(MessageId messageId, boolean read) {
         CommandFutures.join(async.setOfflineRead(messageId, read));
     }
 }

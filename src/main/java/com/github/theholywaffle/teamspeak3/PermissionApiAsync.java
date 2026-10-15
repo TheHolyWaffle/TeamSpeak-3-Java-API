@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.PermissionGrant;
 import com.github.theholywaffle.teamspeak3.api.PermissionGroupType;
@@ -56,10 +57,12 @@ public final class PermissionApiAsync {
         return requests.models(PermissionCommands.permFind(permissionName), PermissionAssignment::new);
     }
 
-    /** @see PermissionApi#overview(int, ClientDatabaseId) */
-    public CompletableFuture<List<PermissionAssignment>> overview(int channelId, ClientDatabaseId clientDatabaseId) {
+    /** @see PermissionApi#overview(ChannelId, ClientDatabaseId) */
+    public CompletableFuture<List<PermissionAssignment>> overview(
+            ChannelId channelId, ClientDatabaseId clientDatabaseId) {
         return requests.models(
-                PermissionCommands.permOverview(channelId, clientDatabaseId.value()), PermissionAssignment::new);
+                PermissionCommands.permOverview(channelId.value(), clientDatabaseId.value()),
+                PermissionAssignment::new);
     }
 
     /** @see PermissionApi#reset() */

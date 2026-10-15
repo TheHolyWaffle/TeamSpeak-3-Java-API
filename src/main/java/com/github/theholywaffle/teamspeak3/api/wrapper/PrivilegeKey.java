@@ -1,8 +1,12 @@
 package com.github.theholywaffle.teamspeak3.api.wrapper;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelGroupId;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.PrivilegeKeyType;
+import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import java.time.Instant;
 import java.util.Map;
+import java.util.Optional;
 
 public class PrivilegeKey extends Wrapper {
 
@@ -27,12 +31,19 @@ public class PrivilegeKey extends Wrapper {
         return getType() == PrivilegeKeyType.CHANNEL_GROUP;
     }
 
-    public int getGroupId() {
-        return requireInt("token_id1");
+    /** @return the server group the key grants, or empty if it grants a channel group */
+    public Optional<ServerGroupId> getServerGroupId() {
+        return isServerGroupToken() ? Optional.of(requireId("token_id1", ServerGroupId::new)) : Optional.empty();
     }
 
-    public int getChannelId() {
-        return requireInt("token_id2");
+    /** @return the channel group the key grants, or empty if it grants a server group */
+    public Optional<ChannelGroupId> getChannelGroupId() {
+        return isChannelGroupToken() ? Optional.of(requireId("token_id1", ChannelGroupId::new)) : Optional.empty();
+    }
+
+    /** @return the channel of a channel group key, or empty for a server group key */
+    public Optional<ChannelId> getChannelId() {
+        return requireOptionalId("token_id2", ChannelId::new);
     }
 
     public Instant getCreated() {

@@ -90,7 +90,7 @@ class EventManager {
             for (Wrapper data : DefaultArrayResponse.parse(notifyBody).getResponses()) {
                 fireEvent(constructor.apply(data));
             }
-        } catch (RuntimeException failure) {
+        } catch (RuntimeException _) {
             malformedNotification();
         }
     }
@@ -119,7 +119,7 @@ class EventManager {
     void awaitTermination(Deadline deadline) {
         try {
             executor.awaitTermination(deadline.remaining(), TimeUnit.NANOSECONDS);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException _) {
             Thread.currentThread().interrupt();
         }
     }
@@ -155,7 +155,7 @@ class EventManager {
             running = true;
             try {
                 executor.execute(this);
-            } catch (RejectedExecutionException failure) {
+            } catch (RejectedExecutionException _) {
                 rejected.incrementAndGet();
                 dropped.addAndGet(events.size());
                 events.clear();

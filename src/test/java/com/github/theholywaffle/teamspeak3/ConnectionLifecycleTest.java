@@ -61,7 +61,7 @@ class ConnectionLifecycleTest {
             var _ = whoami.thenRun(() -> {
                 try {
                     Thread.sleep(100);
-                } catch (InterruptedException e) {
+                } catch (InterruptedException _) {
                     Thread.currentThread().interrupt();
                 }
             });
@@ -98,7 +98,7 @@ class ConnectionLifecycleTest {
     @Test
     void doubleAndConcurrentCloseOfIdleSocket() throws Exception {
         var release = new CountDownLatch(1);
-        try (var peer = new FakeServerQuery(p -> release.await(5, TimeUnit.SECONDS))) {
+        try (var peer = new FakeServerQuery(_ -> release.await(5, TimeUnit.SECONDS))) {
             var query = new TS3Query(config(peer.port()));
             query.connect();
             assertEquals(TS3Query.State.CONNECTED, query.getState());
@@ -141,7 +141,7 @@ class ConnectionLifecycleTest {
             while (stop.getCount() != 0) {
                 try {
                     p.write("clid=1\nnotifytextmessage\n");
-                } catch (Exception closed) {
+                } catch (Exception _) {
                     return;
                 }
                 Thread.sleep(20);
@@ -209,7 +209,7 @@ class ConnectionLifecycleTest {
         var refused = new TS3Query(config(port));
         assertThrows(TS3ConnectionFailedException.class, refused::connect);
         terminated(refused);
-        try (var peer = new FakeServerQuery(p -> Thread.sleep(500))) {
+        try (var peer = new FakeServerQuery(_ -> Thread.sleep(500))) {
             var query = new TS3Query(config(peer.port()).setConnectionHandler(new ConnectionHandler() {
                 @Override
                 public void onConnect(TS3Api api) {
@@ -238,14 +238,14 @@ class ConnectionLifecycleTest {
             terminated(query);
         }
         var entered = new CountDownLatch(1);
-        try (var peer = new FakeServerQuery(p -> Thread.sleep(1000))) {
+        try (var peer = new FakeServerQuery(_ -> Thread.sleep(1000))) {
             var query = new TS3Query(config(peer.port()).setConnectionHandler(new ConnectionHandler() {
                 @Override
                 public void onConnect(TS3Api api) {
                     entered.countDown();
                     try {
                         Thread.sleep(5000);
-                    } catch (InterruptedException expected) {
+                    } catch (InterruptedException _) {
                         Thread.currentThread().interrupt();
                     }
                 }
@@ -263,7 +263,7 @@ class ConnectionLifecycleTest {
     @Test
     void closeDuringInitializationDoesNotWaitForConnectMonitor() throws Exception {
         var entered = new CountDownLatch(1);
-        try (var peer = new FakeServerQuery(p -> Thread.sleep(1000))) {
+        try (var peer = new FakeServerQuery(_ -> Thread.sleep(1000))) {
             var query = new TS3Query(config(peer.port())
                     .setHandshakeTimeout(Duration.ofSeconds(5))
                     .setConnectionHandler(new ConnectionHandler() {
@@ -288,7 +288,7 @@ class ConnectionLifecycleTest {
     @Test
     void blockedSocketWriteIsAbortedByDeadlineAndByClose() throws Exception {
         for (boolean timeout : new boolean[] {true, false}) {
-            try (var peer = new FakeServerQuery(p -> Thread.sleep(1500))) {
+            try (var peer = new FakeServerQuery(_ -> Thread.sleep(1500))) {
                 var query = new TS3Query(config(peer.port())
                         .setCommandResponseTimeout(timeout ? Duration.ofMillis(700) : Duration.ofSeconds(5)));
                 try {
@@ -323,7 +323,7 @@ class ConnectionLifecycleTest {
 
     @Test
     void exitBoundsDrainingWhenServerNeverResponds() throws Exception {
-        try (var peer = new FakeServerQuery(p -> Thread.sleep(1000))) {
+        try (var peer = new FakeServerQuery(_ -> Thread.sleep(1000))) {
             var query = new TS3Query(config(peer.port()).setCommandResponseTimeout(Duration.ofSeconds(5)));
             query.connect();
             var pending = query.getAsyncApi().whoAmI();
@@ -371,7 +371,7 @@ class ConnectionLifecycleTest {
         var connected = new CompletableFuture<Long>();
         var disconnected = new CountDownLatch(1);
         // Remain silent until the client closes, rather than ending negotiation via a peer timer.
-        try (var peer = new FakeServerQuery(p -> disconnected.await(5, TimeUnit.SECONDS))) {
+        try (var peer = new FakeServerQuery(_ -> disconnected.await(5, TimeUnit.SECONDS))) {
             var settings = config(peer.port())
                     .setProtocol(TS3Query.Protocol.SSH)
                     .setConnectTimeout(Duration.ofMillis(50))
@@ -455,7 +455,7 @@ class ConnectionLifecycleTest {
     @Test
     void closeFromInitializationCallbackIsBounded() throws Exception {
         var reference = new java.util.concurrent.atomic.AtomicReference<TS3Query>();
-        try (var peer = new FakeServerQuery(p -> Thread.sleep(500))) {
+        try (var peer = new FakeServerQuery(_ -> Thread.sleep(500))) {
             var query = new TS3Query(config(peer.port()).setConnectionHandler(new ConnectionHandler() {
                 @Override
                 public void onConnect(TS3Api api) {

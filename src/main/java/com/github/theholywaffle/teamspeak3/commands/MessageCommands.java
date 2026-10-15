@@ -20,13 +20,13 @@ public final class MessageCommands {
         return builder.build();
     }
 
-    public static Command messageDel(int messageId) {
+    public static Command messageDel(long messageId) {
         return new CommandBuilder("messagedel")
                 .add(new KeyValueParam("msgid", messageId))
                 .build();
     }
 
-    public static Command messageGet(int messageId) {
+    public static Command messageGet(long messageId) {
         return new CommandBuilder("messageget")
                 .add(new KeyValueParam("msgid", messageId))
                 .build();
@@ -36,7 +36,7 @@ public final class MessageCommands {
         return new CommandBuilder("messagelist").build();
     }
 
-    public static Command messageUpdateFlag(int messageId, boolean read) {
+    public static Command messageUpdateFlag(long messageId, boolean read) {
         CommandBuilder builder = new CommandBuilder("messageupdateflag");
         builder.add(new KeyValueParam("msgid", messageId));
         builder.add(new KeyValueParam("flag", read));

@@ -175,7 +175,7 @@ public final class ConsumerApp {
             try (var query = new TS3Query(config)) {
                 query.connect();
                 throw new IllegalStateException("SSH must reject a non-SSH peer");
-            } catch (TS3ConnectionFailedException expected) {
+            } catch (TS3ConnectionFailedException _) {
                 refuse.get(5, TimeUnit.SECONDS);
             }
         }

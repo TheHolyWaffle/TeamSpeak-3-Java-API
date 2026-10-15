@@ -35,7 +35,7 @@ final class CallerStreams {
             try {
                 new CountDownLatch(1).await();
                 throw new AssertionError();
-            } catch (InterruptedException failure) {
+            } catch (InterruptedException _) {
                 throw new InterruptedIOException();
             }
         }

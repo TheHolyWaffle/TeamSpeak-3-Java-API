@@ -56,7 +56,7 @@ public final class QueryCommands {
         return new CommandBuilder("quit").build();
     }
 
-    public static Command serverNotifyRegister(TS3EventType eventType, int channelId) {
+    public static Command serverNotifyRegister(TS3EventType eventType, long channelId) {
         if (eventType == null) {
             throw new IllegalArgumentException("Event type cannot be null");
         }
@@ -71,12 +71,16 @@ public final class QueryCommands {
         return new CommandBuilder("servernotifyunregister").build();
     }
 
-    public static Command useId(int id, String nickname) {
+    public static Command useId(long id, String nickname) {
         CommandBuilder builder = new CommandBuilder("use");
         builder.add(new KeyValueParam("sid", id));
         builder.add(new OptionParam("virtual"));
         builder.addIf(nickname != null, new KeyValueParam("client_nickname", nickname));
         return builder.build();
+    }
+
+    public static Command useInstance() {
+        return new CommandBuilder("use").add(new KeyValueParam("sid", 0)).build();
     }
 
     public static Command usePort(int port, String nickname) {

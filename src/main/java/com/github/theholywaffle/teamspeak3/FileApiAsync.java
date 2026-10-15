@@ -1,7 +1,9 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
+import com.github.theholywaffle.teamspeak3.api.IconId;
 import com.github.theholywaffle.teamspeak3.api.UploadMode;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3FileTransferFailedException;
@@ -45,19 +47,19 @@ public final class FileApiAsync {
     /** @see FileApi#list(FileLocation) */
     public CompletableFuture<List<FileListEntry>> list(FileLocation directory) {
         return requests.models(
-                FileCommands.ftGetFileList(directory.path(), directory.channelId(), directory.channelPassword()),
+                FileCommands.ftGetFileList(directory.path(), channel(directory), directory.channelPassword()),
                 FileListEntry::new);
     }
 
     /** @see FileApi#info(FileLocation) */
     public CompletableFuture<FileInfo> info(FileLocation file) {
         return requests.model(
-                FileCommands.ftGetFileInfo(file.channelId(), file.channelPassword(), file.path()), FileInfo::new);
+                FileCommands.ftGetFileInfo(channel(file), file.channelPassword(), file.path()), FileInfo::new);
     }
 
     /** @see FileApi#info(List) */
     public CompletableFuture<List<FileInfo>> info(List<FileLocation> files) {
-        int[] channels = files.stream().mapToInt(FileLocation::channelId).toArray();
+        long[] channels = files.stream().mapToLong(FileApiAsync::channel).toArray();
         String[] passwords = files.stream().map(FileLocation::channelPassword).toArray(String[]::new);
         String[] paths = files.stream().map(FileLocation::path).toArray(String[]::new);
         return requests.models(FileCommands.ftGetFileInfo(channels, passwords, paths), FileInfo::new);
@@ -66,7 +68,7 @@ public final class FileApiAsync {
     /** @see FileApi#createDirectory(FileLocation) */
     public CompletableFuture<Void> createDirectory(FileLocation directory) {
         return requests.run(
-                FileCommands.ftCreateDir(directory.path(), directory.channelId(), directory.channelPassword()));
+                FileCommands.ftCreateDir(directory.path(), channel(directory), directory.channelPassword()));
     }
 
     /** @see FileApi#delete(FileLocation) */
@@ -79,25 +81,24 @@ public final class FileApiAsync {
         if (files.isEmpty()) throw new IllegalArgumentException("At least one file is required");
         FileLocation first = files.getFirst();
         for (FileLocation file : files) {
-            if (file.channelId() != first.channelId()
-                    || !Objects.equals(file.channelPassword(), first.channelPassword())) {
+            if (channel(file) != channel(first) || !Objects.equals(file.channelPassword(), first.channelPassword())) {
                 throw new IllegalArgumentException("Files deleted together must share a channel and password");
             }
         }
         String[] paths = files.stream().map(FileLocation::path).toArray(String[]::new);
-        return requests.run(FileCommands.ftDeleteFile(first.channelId(), first.channelPassword(), paths));
+        return requests.run(FileCommands.ftDeleteFile(channel(first), first.channelPassword(), paths));
     }
 
     /** @see FileApi#move(FileLocation, FileLocation) */
     public CompletableFuture<Void> move(FileLocation from, FileLocation to) {
-        Command command = from.channelId() == to.channelId()
-                ? FileCommands.ftRenameFile(from.path(), to.path(), from.channelId(), from.channelPassword())
+        Command command = channel(from) == channel(to)
+                ? FileCommands.ftRenameFile(from.path(), to.path(), channel(from), from.channelPassword())
                 : FileCommands.ftRenameFile(
                         from.path(),
                         to.path(),
-                        from.channelId(),
+                        channel(from),
                         from.channelPassword(),
-                        to.channelId(),
+                        channel(to),
                         to.channelPassword());
         return requests.run(command);
     }
@@ -116,7 +117,7 @@ public final class FileApiAsync {
                 helper -> FileCommands.ftInitUpload(
                         helper.getClientTransferId(),
                         target.path(),
-                        target.channelId(),
+                        channel(target),
                         target.channelPassword(),
                         length,
                         mode == UploadMode.OVERWRITE,
@@ -143,7 +144,7 @@ public final class FileApiAsync {
         Objects.requireNonNull(out, "out");
         return executeTransfer(
                 helper -> FileCommands.ftInitDownload(
-                        helper.getClientTransferId(), file.path(), file.channelId(), file.channelPassword(), offset),
+                        helper.getClientTransferId(), file.path(), channel(file), file.channelPassword(), offset),
                 "Download failed",
                 (helper, params, operation) -> {
                     helper.downloadFile(out, params, offset, operation);
@@ -155,7 +156,7 @@ public final class FileApiAsync {
     public CompletableFuture<byte[]> downloadBytes(FileLocation file) {
         return executeTransfer(
                 helper -> FileCommands.ftInitDownload(
-                        helper.getClientTransferId(), file.path(), file.channelId(), file.channelPassword(), 0),
+                        helper.getClientTransferId(), file.path(), channel(file), file.channelPassword(), 0),
                 "Download failed",
                 FileTransferHelper::downloadBytes);
     }
@@ -163,7 +164,7 @@ public final class FileApiAsync {
     /** @see FileApi#icons() */
     public CompletableFuture<List<IconFile>> icons() {
         return CommandFutures.map(
-                list(FileLocation.of(0, "/icons/")),
+                list(FileLocation.ofServer("/icons/")),
                 files -> files.stream()
                         .filter(file -> !file.isDirectory() && !file.isStillUploading())
                         .map(file -> new IconFile(file.getMap()))
@@ -171,7 +172,7 @@ public final class FileApiAsync {
     }
 
     /** @see FileApi#uploadIcon(InputStream, long) */
-    public CompletableFuture<Long> uploadIcon(InputStream data, long length) {
+    public CompletableFuture<IconId> uploadIcon(InputStream data, long length) {
         Objects.requireNonNull(data, "data");
         if (length < 0) throw new IllegalArgumentException("Negative icon length");
         return requests.backend().withFileTransfers(files -> {
@@ -194,30 +195,33 @@ public final class FileApiAsync {
     }
 
     /** @see FileApi#uploadIcon(byte[]) */
-    public CompletableFuture<Long> uploadIcon(byte[] data) {
-        long iconId = FileTransferHelper.getIconId(data);
-        var upload = CommandFutures.map(upload(iconLocation(iconId), data, UploadMode.CREATE), ignored -> iconId);
-        return QueryRequests.recover(upload, QueryRequests.FILE_EXISTS, iconId);
+    public CompletableFuture<IconId> uploadIcon(byte[] data) {
+        IconId iconId = FileTransferHelper.getIconId(data);
+        return CommandFutures.map(upload(iconLocation(iconId), data, UploadMode.OVERWRITE), _ -> iconId);
     }
 
-    /** @see FileApi#downloadIcon(long, OutputStream) */
-    public CompletableFuture<Long> downloadIcon(long iconId, OutputStream out) {
+    /** @see FileApi#downloadIcon(IconId, OutputStream) */
+    public CompletableFuture<Long> downloadIcon(IconId iconId, OutputStream out) {
         return download(iconLocation(iconId), out);
     }
 
-    /** @see FileApi#downloadIcon(long) */
-    public CompletableFuture<byte[]> downloadIcon(long iconId) {
+    /** @see FileApi#downloadIcon(IconId) */
+    public CompletableFuture<byte[]> downloadIcon(IconId iconId) {
         return downloadBytes(iconLocation(iconId));
     }
 
-    /** @see FileApi#deleteIcons(long...) */
-    public CompletableFuture<Void> deleteIcons(long... iconIds) {
-        return delete(
-                Arrays.stream(iconIds).mapToObj(FileApiAsync::iconLocation).toList());
+    /** @see FileApi#deleteIcons(IconId...) */
+    public CompletableFuture<Void> deleteIcons(IconId... iconIds) {
+        return delete(Arrays.stream(iconIds).map(FileApiAsync::iconLocation).toList());
     }
 
-    private static FileLocation iconLocation(long iconId) {
-        return FileLocation.of(0, "/icon_" + iconId);
+    private static FileLocation iconLocation(IconId iconId) {
+        return FileLocation.ofServer("/icon_" + iconId.value());
+    }
+
+    /** TeamSpeak addresses the virtual server's own files as channel {@code 0}. */
+    private static long channel(FileLocation location) {
+        return location.channelId().map(ChannelId::value).orElse(0L);
     }
 
     @FunctionalInterface
@@ -276,7 +280,7 @@ public final class FileApiAsync {
 
     private static CompletableFuture<Void> abortOnCancel(FileTransferHelper.Operation operation) {
         var cancellation = new CompletableFuture<Void>();
-        var _ = cancellation.whenComplete((value, failure) -> operation.abort());
+        var _ = cancellation.whenComplete((_, _) -> operation.abort());
         return cancellation;
     }
 

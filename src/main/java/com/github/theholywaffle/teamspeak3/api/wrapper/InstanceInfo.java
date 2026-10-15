@@ -1,5 +1,7 @@
 package com.github.theholywaffle.teamspeak3.api.wrapper;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelGroupId;
+import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import com.github.theholywaffle.teamspeak3.api.ServerInstanceProperty;
 import java.time.Duration;
 import java.util.Map;
@@ -29,8 +31,8 @@ public class InstanceInfo extends Wrapper {
         return requireLimit(ServerInstanceProperty.SERVERINSTANCE_MAX_UPLOAD_TOTAL_BANDWIDTH);
     }
 
-    public int getGuestServerQueryGroup() {
-        return requireInt(ServerInstanceProperty.SERVERINSTANCE_GUEST_SERVERQUERY_GROUP);
+    public ServerGroupId getGuestServerQueryGroup() {
+        return requireId(ServerInstanceProperty.SERVERINSTANCE_GUEST_SERVERQUERY_GROUP, ServerGroupId::new);
     }
 
     public int getMaxFloodCommands() {
@@ -45,20 +47,20 @@ public class InstanceInfo extends Wrapper {
         return requireSeconds(ServerInstanceProperty.SERVERINSTANCE_SERVERQUERY_BAN_TIME);
     }
 
-    public int getServerAdminGroup() {
-        return requireInt(ServerInstanceProperty.SERVERINSTANCE_TEMPLATE_SERVERADMIN_GROUP);
+    public ServerGroupId getServerAdminGroup() {
+        return requireId(ServerInstanceProperty.SERVERINSTANCE_TEMPLATE_SERVERADMIN_GROUP, ServerGroupId::new);
     }
 
-    public int getDefaultServerGroup() {
-        return requireInt(ServerInstanceProperty.SERVERINSTANCE_TEMPLATE_SERVERDEFAULT_GROUP);
+    public ServerGroupId getDefaultServerGroup() {
+        return requireId(ServerInstanceProperty.SERVERINSTANCE_TEMPLATE_SERVERDEFAULT_GROUP, ServerGroupId::new);
     }
 
-    public int getChannelAdminGroup() {
-        return requireInt(ServerInstanceProperty.SERVERINSTANCE_TEMPLATE_CHANNELADMIN_GROUP);
+    public ChannelGroupId getChannelAdminGroup() {
+        return requireId(ServerInstanceProperty.SERVERINSTANCE_TEMPLATE_CHANNELADMIN_GROUP, ChannelGroupId::new);
     }
 
-    public int getDefaultChannelGroup() {
-        return requireInt(ServerInstanceProperty.SERVERINSTANCE_TEMPLATE_CHANNELDEFAULT_GROUP);
+    public ChannelGroupId getDefaultChannelGroup() {
+        return requireId(ServerInstanceProperty.SERVERINSTANCE_TEMPLATE_CHANNELDEFAULT_GROUP, ChannelGroupId::new);
     }
 
     public int getPermissionsVersion() {

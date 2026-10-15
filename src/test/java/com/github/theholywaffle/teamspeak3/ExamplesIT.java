@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.github.theholywaffle.teamspeak3.TS3Query.Protocol;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventAdapter;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.event.TextMessageEvent;
@@ -62,7 +63,7 @@ class ExamplesIT {
             "FileTransferExample",
                     new Expectation("Stream download (30 bytes): Hello file transferring world!", SERVER_QUERY),
             "ReconnectExample", new Expectation("Deleted channels [", SERVER_QUERY),
-            "TrollExample", new Expectation("Waiting for clients to join.", SERVER_QUERY),
+            "ScheduledActionsExample", new Expectation("Waiting for clients to join.", SERVER_QUERY),
             "WebQueryExample", new Expectation("Events need a RAW or SSH query: ", WEB_QUERY));
 
     @TempDir
@@ -107,7 +108,7 @@ class ExamplesIT {
             bot.awaitOutput("Running.", Duration.ofSeconds(60));
             query.connect();
             TS3Api api = query.getApi();
-            api.selectVirtualServerById(1);
+            api.selectVirtualServerById(VirtualServerId.of(1));
             CompletableFuture<String> reply = new CompletableFuture<>();
             api.events().subscribe(new TS3EventAdapter() {
                 @Override

@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ApiKeyId;
 import com.github.theholywaffle.teamspeak3.api.ApiKeyScope;
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ApiKey;
@@ -49,8 +50,8 @@ public final class ApiKeyApiAsync {
         return requests.models(ApiKeyCommands.apiKeyListAll(), ApiKey::new);
     }
 
-    /** @see ApiKeyApi#delete(int) */
-    public CompletableFuture<Void> delete(int id) {
-        return requests.run(ApiKeyCommands.apiKeyDelete(id));
+    /** @see ApiKeyApi#delete(ApiKeyId) */
+    public CompletableFuture<Void> delete(ApiKeyId id) {
+        return requests.run(ApiKeyCommands.apiKeyDelete(id.value()));
     }
 }

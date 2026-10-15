@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
@@ -101,7 +102,7 @@ public final class ClientApi {
      * @param clientId the client ID
      * @param channelId the target channel
      */
-    public void move(ClientId clientId, int channelId) {
+    public void move(ClientId clientId, ChannelId channelId) {
         CommandFutures.join(async.move(clientId, channelId));
     }
 
@@ -112,7 +113,7 @@ public final class ClientApi {
      * @param channelId the target channel
      * @param channelPassword the channel password, or {@code null}
      */
-    public void move(ClientId clientId, int channelId, String channelPassword) {
+    public void move(ClientId clientId, ChannelId channelId, String channelPassword) {
         CommandFutures.join(async.move(clientId, channelId, channelPassword));
     }
 
@@ -123,7 +124,7 @@ public final class ClientApi {
      * @param channelId the target channel
      * @param channelPassword the channel password, or {@code null}
      */
-    public void moveAll(Collection<ClientId> clientIds, int channelId, String channelPassword) {
+    public void moveAll(Collection<ClientId> clientIds, ChannelId channelId, String channelPassword) {
         CommandFutures.join(async.moveAll(clientIds, channelId, channelPassword));
     }
 

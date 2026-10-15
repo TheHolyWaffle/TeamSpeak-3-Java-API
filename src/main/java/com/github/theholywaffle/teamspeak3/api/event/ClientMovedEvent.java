@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3.api.event;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Channel;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
@@ -17,8 +18,8 @@ public class ClientMovedEvent extends BaseEvent {
      *
      * @see Channel#getId()
      */
-    public int getTargetChannelId() {
-        return requireInt("ctid");
+    public ChannelId getTargetChannelId() {
+        return requireId("ctid", ChannelId::new);
     }
 
     public ClientId getClientId() {

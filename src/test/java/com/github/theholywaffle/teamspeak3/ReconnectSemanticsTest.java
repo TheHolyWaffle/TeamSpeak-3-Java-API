@@ -2,7 +2,9 @@ package com.github.theholywaffle.teamspeak3;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3ConnectionFailedException;
@@ -25,6 +27,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -33,10 +36,10 @@ import org.junit.jupiter.api.Timeout;
 
 @Timeout(value = 10, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
 class ReconnectSemanticsTest {
-    private static final SessionConfiguration SESSION = SessionConfiguration.forServer(7)
+    private static final SessionConfiguration SESSION = SessionConfiguration.forServer(VirtualServerId.of(7))
             .withNickname("reconnect-bot")
-            .withSubscription(TS3EventType.SERVER, -1)
-            .withSubscription(TS3EventType.CHANNEL, 12);
+            .withSubscription(TS3EventType.SERVER)
+            .withSubscription(TS3EventType.CHANNEL, ChannelId.of(12));
 
     private TS3Config config(int port) {
         return new TS3Config()
@@ -91,8 +94,8 @@ class ReconnectSemanticsTest {
                 var unknown = assertThrows(
                         TS3UnknownOutcomeException.class, () -> FutureAssertions.read(first, 2, TimeUnit.SECONDS));
                 assertEquals("channelcreate", unknown.getCommandName());
-                assertEquals(22, second.get(2, TimeUnit.SECONDS));
-                assertEquals(23, third.get(2, TimeUnit.SECONDS));
+                assertEquals(ChannelId.of(22), second.get(2, TimeUnit.SECONDS));
+                assertEquals(ChannelId.of(23), third.get(2, TimeUnit.SECONDS));
                 query.exit();
                 server.await();
                 closed(query);
@@ -128,7 +131,7 @@ class ReconnectSemanticsTest {
                 var waiting = query.getAsyncApi().instance().version();
                 drop.countDown();
                 assertEquals(ClientId.of(42), read.get(2, TimeUnit.SECONDS).getId());
-                assertEquals(7, read.get().getVirtualServerId());
+                assertEquals(Optional.of(VirtualServerId.of(7)), read.get().getVirtualServerId());
                 assertEquals("test", waiting.get(2, TimeUnit.SECONDS).version());
                 query.exit();
                 server.await();
@@ -327,7 +330,7 @@ class ReconnectSemanticsTest {
                         () -> FutureAssertions.read(query.getAsyncApi().whoAmI(), 1, TimeUnit.SECONDS));
                 assertThrows(
                         TS3UnsupportedOperationException.class,
-                        () -> query.getApi().selectVirtualServerById(8));
+                        () -> query.getApi().selectVirtualServerById(VirtualServerId.of(8)));
                 assertThrows(
                         TS3UnsupportedOperationException.class,
                         () -> query.getApi().setNickname("other"));
@@ -536,13 +539,13 @@ class ReconnectSemanticsTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> ReconnectStrategy.constantBackoff(10).withMaxAttempts(0));
-        assertThrows(IllegalArgumentException.class, () -> SessionConfiguration.forServer(0));
+        assertThrows(IllegalArgumentException.class, () -> SessionConfiguration.forServer(VirtualServerId.of(0)));
         assertThrows(
                 IllegalStateException.class,
                 () -> new TS3Query(new TS3Config().setCommandRetryPolicy(CommandRetryPolicy.safeReads(1, "whoami"))));
         var config = config(1);
         try (var query = new TS3Query(config)) {
-            config.setSessionConfiguration(SessionConfiguration.forServer(8));
+            config.setSessionConfiguration(SessionConfiguration.forServer(VirtualServerId.of(8)));
             assertSame(SESSION, query.getConfig().getSessionConfiguration());
             config.setCommandRetryPolicy(CommandRetryPolicy.safeReads(1, "whoami"));
             assertNotSame(config.getCommandRetryPolicy(), query.getConfig().getCommandRetryPolicy());

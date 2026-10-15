@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.event.TS3EventType;
 import com.github.theholywaffle.teamspeak3.api.event.TS3Listener;
@@ -23,14 +24,14 @@ public final class EventApiAsync {
     /** @see EventApi#register(TS3EventType...) */
     public CompletableFuture<Void> register(TS3EventType... eventTypes) {
         var registrations = Arrays.stream(eventTypes)
-                .map(type -> register(type, defaultChannel(type)))
+                .map(type -> requests.run(QueryCommands.serverNotifyRegister(type, defaultChannel(type))))
                 .toList();
         return QueryRequests.discard(CommandFutures.all(registrations));
     }
 
-    /** @see EventApi#register(TS3EventType, int) */
-    public CompletableFuture<Void> register(TS3EventType eventType, int channelId) {
-        return requests.run(QueryCommands.serverNotifyRegister(eventType, channelId));
+    /** @see EventApi#register(TS3EventType, ChannelId) */
+    public CompletableFuture<Void> register(TS3EventType eventType, ChannelId channelId) {
+        return requests.run(QueryCommands.serverNotifyRegister(eventType, channelId.value()));
     }
 
     /** @see EventApi#registerAll() */

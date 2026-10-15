@@ -1,6 +1,7 @@
 package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.Snapshot;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ConnectionInfo;
 import com.github.theholywaffle.teamspeak3.api.wrapper.CreatedVirtualServer;
@@ -32,8 +33,8 @@ public final class VirtualServerApiAsync {
     }
 
     /** @see VirtualServerApi#findIdByPort(int) */
-    public CompletableFuture<Optional<Integer>> findIdByPort(int port) {
-        var id = requests.optionalInteger(VirtualServerCommands.serverIdGetByPort(port), "server_id");
+    public CompletableFuture<Optional<VirtualServerId>> findIdByPort(int port) {
+        var id = requests.optionalId(VirtualServerCommands.serverIdGetByPort(port), "server_id", VirtualServerId::new);
         return QueryRequests.recover(id, QueryRequests.INVALID_SERVER_ID, Optional.empty());
     }
 
@@ -42,24 +43,24 @@ public final class VirtualServerApiAsync {
         return requests.one(VirtualServerCommands.serverCreate(name, properties), CreatedVirtualServer::from);
     }
 
-    /** @see VirtualServerApi#delete(int) */
-    public CompletableFuture<Void> delete(int serverId) {
-        return requests.run(VirtualServerCommands.serverDelete(serverId));
+    /** @see VirtualServerApi#delete(VirtualServerId) */
+    public CompletableFuture<Void> delete(VirtualServerId serverId) {
+        return requests.run(VirtualServerCommands.serverDelete(serverId.value()));
     }
 
-    /** @see VirtualServerApi#start(int) */
-    public CompletableFuture<Void> start(int serverId) {
-        return requests.run(VirtualServerCommands.serverStart(serverId));
+    /** @see VirtualServerApi#start(VirtualServerId) */
+    public CompletableFuture<Void> start(VirtualServerId serverId) {
+        return requests.run(VirtualServerCommands.serverStart(serverId.value()));
     }
 
-    /** @see VirtualServerApi#stop(int) */
-    public CompletableFuture<Void> stop(int serverId) {
+    /** @see VirtualServerApi#stop(VirtualServerId) */
+    public CompletableFuture<Void> stop(VirtualServerId serverId) {
         return stop(serverId, null);
     }
 
-    /** @see VirtualServerApi#stop(int, String) */
-    public CompletableFuture<Void> stop(int serverId, String reason) {
-        return requests.run(VirtualServerCommands.serverStop(serverId, reason));
+    /** @see VirtualServerApi#stop(VirtualServerId, String) */
+    public CompletableFuture<Void> stop(VirtualServerId serverId, String reason) {
+        return requests.run(VirtualServerCommands.serverStop(serverId.value(), reason));
     }
 
     /** @see VirtualServerApi#info() */

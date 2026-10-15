@@ -73,7 +73,7 @@ public final class CommandFutures {
 
         private RequestFuture(Runnable cancelRequest) {
             this.cancelRequest = new AtomicReference<>(cancelRequest);
-            var _ = whenComplete((value, failure) -> this.cancelRequest.set(null));
+            var _ = whenComplete((_, _) -> this.cancelRequest.set(null));
         }
 
         @Override
@@ -124,7 +124,7 @@ public final class CommandFutures {
         var result = CompletableFuture.allOf(snapshot.toArray(CompletableFuture[]::new))
                 .thenApply(_ -> snapshot.stream().map(CompletableFuture::join).toList());
         for (var request : snapshot) {
-            var _ = request.whenComplete((value, failure) -> {
+            var _ = request.whenComplete((_, failure) -> {
                 if (failure != null) result.completeExceptionally(unwrap(failure));
             });
         }

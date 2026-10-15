@@ -73,7 +73,7 @@ public class FileCommandsTest {
 
     @Test
     public void ftGetFileInfoArray_EmptyChannelIDArrayException() {
-        final int[] channelIds = {};
+        final long[] channelIds = {};
         Assertions.assertThrows(
                 IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(channelIds, null, null));
     }
@@ -85,7 +85,7 @@ public class FileCommandsTest {
 
     @Test
     public void ftGetFileInfoArray_EmptyFileArrayException() {
-        final int[] channelIds = {1};
+        final long[] channelIds = {1};
         final String[] filePaths = {};
         Assertions.assertThrows(
                 IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(channelIds, null, filePaths));
@@ -93,14 +93,14 @@ public class FileCommandsTest {
 
     @Test
     public void ftGetFileInfoArray_NullFileArrayException() {
-        final int[] channelIds = {1};
+        final long[] channelIds = {1};
         Assertions.assertThrows(
                 IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(channelIds, null, null));
     }
 
     @Test
     public void ftGetFileInfoArray_ChannelIDsLengthFilePathsLengthException() {
-        final int[] channelIds = {1};
+        final long[] channelIds = {1};
         final String[] filePaths = {"dir1", "dir2"};
         Assertions.assertThrows(
                 IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(channelIds, null, filePaths));
@@ -108,7 +108,7 @@ public class FileCommandsTest {
 
     @Test
     public void ftGetFileInfoArray_PasswordsLengthFilePathsLengthException() {
-        final int[] channelIds = {1, 2};
+        final long[] channelIds = {1, 2};
         final String[] channelPasswords = {null};
         final String[] filePaths = {"dir1", "dir2"};
         Assertions.assertThrows(
@@ -118,7 +118,7 @@ public class FileCommandsTest {
 
     @Test
     public void ftGetFileInfoArray_NullFilePathException() {
-        final int[] channelIds = {1};
+        final long[] channelIds = {1};
         final String[] filePaths = {null};
         Assertions.assertThrows(
                 IllegalArgumentException.class, () -> FileCommands.ftGetFileInfo(channelIds, null, filePaths));
@@ -126,7 +126,7 @@ public class FileCommandsTest {
 
     @Test
     public void ftGetFileInfoArray() {
-        final int[] channelIds = {1, 2};
+        final long[] channelIds = {1, 2};
         final String[] channelPasswords = {null, "pass2"};
         final String[] filePaths = {"dir1", "/dir2"};
         final String expected = "ftgetfileinfo cid=1 cpw= name=\\/dir1|cid=2 cpw=pass2 name=\\/dir2";

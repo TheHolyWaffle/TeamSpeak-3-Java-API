@@ -2,6 +2,7 @@ package com.github.theholywaffle.teamspeak3.example;
 
 import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3Query;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ChannelInfo;
 import java.util.Map;
@@ -25,10 +26,11 @@ public final class CreateChannelExample {
 
             Map<ChannelProperty, String> properties = Map.of(
                     ChannelProperty.CHANNEL_FLAG_PERMANENT, "1",
-                    ChannelProperty.CPID, String.valueOf(api.whoAmI().getChannelId()),
+                    ChannelProperty.CPID,
+                            api.whoAmI().getChannelId().orElseThrow().toString(),
                     ChannelProperty.CHANNEL_TOPIC, "Created by the Java API example");
 
-            int channelId = api.channels().create("Java API example channel", properties);
+            ChannelId channelId = api.channels().create("Java API example channel", properties);
             try {
                 ChannelInfo info = api.channels().info(channelId);
                 System.out.println("Created channel " + channelId + " \"" + info.getName() + "\" with topic \""

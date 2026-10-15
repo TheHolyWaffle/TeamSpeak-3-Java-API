@@ -220,7 +220,7 @@ class EventResilienceTest {
                         .setCommandCapacity(1))) {
             query.connect();
             var first = query.getAsyncApi().whoAmI();
-            first.thenAccept(value -> {
+            first.thenAccept(_ -> {
                 entered.countDown();
                 await(release);
             });

@@ -1,6 +1,9 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelGroupId;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.PrivilegeKeyType;
+import com.github.theholywaffle.teamspeak3.api.ServerGroupId;
 import com.github.theholywaffle.teamspeak3.api.wrapper.PrivilegeKey;
 import com.github.theholywaffle.teamspeak3.commands.PrivilegeKeyCommands;
 import java.util.List;
@@ -24,18 +27,20 @@ public final class PrivilegeKeyApiAsync {
         return requests.models(PrivilegeKeyCommands.privilegeKeyList(), PrivilegeKey::new);
     }
 
-    /** @see PrivilegeKeyApi#createForServerGroup(int, String) */
-    public CompletableFuture<String> createForServerGroup(int serverGroupId, String description) {
+    /** @see PrivilegeKeyApi#createForServerGroup(ServerGroupId, String) */
+    public CompletableFuture<String> createForServerGroup(ServerGroupId serverGroupId, String description) {
         return requests.string(
-                PrivilegeKeyCommands.privilegeKeyAdd(PrivilegeKeyType.SERVER_GROUP, serverGroupId, 0, description),
+                PrivilegeKeyCommands.privilegeKeyAdd(
+                        PrivilegeKeyType.SERVER_GROUP, serverGroupId.value(), 0, description),
                 "token");
     }
 
-    /** @see PrivilegeKeyApi#createForChannelGroup(int, int, String) */
-    public CompletableFuture<String> createForChannelGroup(int channelGroupId, int channelId, String description) {
+    /** @see PrivilegeKeyApi#createForChannelGroup(ChannelGroupId, ChannelId, String) */
+    public CompletableFuture<String> createForChannelGroup(
+            ChannelGroupId channelGroupId, ChannelId channelId, String description) {
         return requests.string(
                 PrivilegeKeyCommands.privilegeKeyAdd(
-                        PrivilegeKeyType.CHANNEL_GROUP, channelGroupId, channelId, description),
+                        PrivilegeKeyType.CHANNEL_GROUP, channelGroupId.value(), channelId.value(), description),
                 "token");
     }
 

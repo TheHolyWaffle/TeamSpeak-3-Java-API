@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3.api.wrapper;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import java.util.Map;
 
@@ -10,8 +11,8 @@ public class Channel extends ChannelBase {
     }
 
     @Override
-    public int getId() {
-        return requireInt(ChannelProperty.CID);
+    public ChannelId getId() {
+        return requireId(ChannelProperty.CID, ChannelId::new);
     }
 
     public int getTotalClientsFamily() {

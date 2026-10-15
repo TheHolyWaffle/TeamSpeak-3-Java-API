@@ -4,6 +4,7 @@ import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3ApiAsync;
 import com.github.theholywaffle.teamspeak3.TS3Config;
 import com.github.theholywaffle.teamspeak3.TS3Query;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.TextMessageTargetMode;
@@ -23,7 +24,7 @@ import java.util.concurrent.CompletionException;
 
 /**
  * Reconnects automatically after a connection loss. Restart the server while the example runs
- * (for the development server: {@code docker restart <container-id>}) to watch it reconnect.
+ * to watch it reconnect.
  * Runs until Enter or end of input.
  */
 public final class ReconnectExample {
@@ -40,7 +41,7 @@ public final class ReconnectExample {
                 // queued command is sent.
                 .setSessionConfiguration(SessionConfiguration.forServer(settings.virtualServerId())
                         .withNickname(settings.nickname())
-                        .withSubscription(TS3EventType.TEXT_CHANNEL, -1))
+                        .withSubscription(TS3EventType.TEXT_CHANNEL))
                 // Ten attempts with jittered exponential backoff, then the query closes.
                 .setReconnectStrategy(ReconnectStrategy.exponentialBackoff())
                 // Only explicitly named reads are replayed; a sent channelcreate is never sent twice.
@@ -81,7 +82,7 @@ public final class ReconnectExample {
     }
 
     private static void createAndDeleteChannels(TS3ApiAsync api) {
-        List<CompletableFuture<Integer>> creates = new ArrayList<>();
+        List<CompletableFuture<ChannelId>> creates = new ArrayList<>();
         for (char letter : "Hello".toCharArray()) {
             String name = "Reconnect example " + letter;
             creates.add(api.channels().create(name, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")));
@@ -89,8 +90,8 @@ public final class ReconnectExample {
 
         // Unsent commands survive a reconnect in order. A sent mutation whose response was lost
         // fails instead: reconcile with the server before deciding to retry it.
-        List<Integer> created = new ArrayList<>();
-        for (CompletableFuture<Integer> create : creates) {
+        List<ChannelId> created = new ArrayList<>();
+        for (CompletableFuture<ChannelId> create : creates) {
             try {
                 created.add(create.join());
             } catch (CompletionException e) {
@@ -99,7 +100,7 @@ public final class ReconnectExample {
         }
         System.out.println("Created channels " + created);
 
-        for (int channelId : created) {
+        for (ChannelId channelId : created) {
             api.channels().delete(channelId, true).join();
         }
         System.out.println("Deleted channels " + created);

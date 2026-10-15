@@ -2,6 +2,7 @@ package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
+import com.github.theholywaffle.teamspeak3.api.IconId;
 import com.github.theholywaffle.teamspeak3.api.UploadMode;
 import com.github.theholywaffle.teamspeak3.api.wrapper.FileInfo;
 import com.github.theholywaffle.teamspeak3.api.wrapper.FileListEntry;
@@ -177,27 +178,30 @@ public final class FileApi {
     }
 
     /**
-     * Uploads an icon. The stream is buffered in memory to compute the icon ID. An existing identical icon is not an error.
-     * Assign the ID to a channel, client or group through its {@code i_icon_id} permission using the signed
-     * 32-bit form {@code (int) iconId}.
+     * Uploads an icon. The stream is buffered in memory to compute the icon ID. An existing icon with the same ID is
+     * replaced, which also repairs a partial upload.
+     * Assign it to a channel, client or group with
+     * {@link com.github.theholywaffle.teamspeak3.api.PermissionGrant#icon(IconId) PermissionGrant.icon(iconId)}.
      *
      * @param data the PNG or other image content
      * @param length the number of bytes to read
      * @return the icon ID
+     * @throws IllegalArgumentException if the content's CRC32 is 0, which TeamSpeak treats as no icon
      */
-    public long uploadIcon(InputStream data, long length) {
+    public IconId uploadIcon(InputStream data, long length) {
         return CommandFutures.join(async.uploadIcon(data, length));
     }
 
     /**
-     * Uploads an icon. An existing identical icon is not an error.
-     * Assign the ID to a channel, client or group through its {@code i_icon_id} permission using the signed
-     * 32-bit form {@code (int) iconId}.
+     * Uploads an icon. An existing icon with the same ID is replaced, which also repairs a partial upload.
+     * Assign it to a channel, client or group with
+     * {@link com.github.theholywaffle.teamspeak3.api.PermissionGrant#icon(IconId) PermissionGrant.icon(iconId)}.
      *
      * @param data the image content
      * @return the icon ID
+     * @throws IllegalArgumentException if the content's CRC32 is 0, which TeamSpeak treats as no icon
      */
-    public long uploadIcon(byte[] data) {
+    public IconId uploadIcon(byte[] data) {
         return CommandFutures.join(async.uploadIcon(data));
     }
 
@@ -208,7 +212,7 @@ public final class FileApi {
      * @param out the destination
      * @return the number of bytes written
      */
-    public long downloadIcon(long iconId, OutputStream out) {
+    public long downloadIcon(IconId iconId, OutputStream out) {
         return CommandFutures.join(async.downloadIcon(iconId, out));
     }
 
@@ -218,7 +222,7 @@ public final class FileApi {
      * @param iconId the icon ID
      * @return the icon content
      */
-    public byte[] downloadIcon(long iconId) {
+    public byte[] downloadIcon(IconId iconId) {
         return CommandFutures.join(async.downloadIcon(iconId));
     }
 
@@ -227,7 +231,7 @@ public final class FileApi {
      *
      * @param iconIds at least one icon ID
      */
-    public void deleteIcons(long... iconIds) {
+    public void deleteIcons(IconId... iconIds) {
         CommandFutures.join(async.deleteIcons(iconIds));
     }
 }

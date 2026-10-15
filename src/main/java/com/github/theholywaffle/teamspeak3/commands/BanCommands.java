@@ -35,7 +35,7 @@ public final class BanCommands {
         return builder.build();
     }
 
-    public static Command banDel(int banId) {
+    public static Command banDel(long banId) {
         return new CommandBuilder("bandel")
                 .add(new KeyValueParam("banid", banId))
                 .build();

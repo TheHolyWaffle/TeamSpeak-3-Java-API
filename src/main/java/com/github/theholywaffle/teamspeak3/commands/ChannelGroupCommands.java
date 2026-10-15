@@ -22,7 +22,7 @@ public final class ChannelGroupCommands {
         return builder.build();
     }
 
-    public static Command channelGroupClientList(int channelId, int clientDBId, int groupId) {
+    public static Command channelGroupClientList(long channelId, long clientDBId, long groupId) {
         CommandBuilder builder = new CommandBuilder("channelgroupclientlist");
         builder.addIf(channelId > 0, new KeyValueParam("cid", channelId));
         builder.addIf(clientDBId > 0, new KeyValueParam("cldbid", clientDBId));
@@ -30,16 +30,16 @@ public final class ChannelGroupCommands {
         return builder.build();
     }
 
-    public static Command channelGroupCopy(int sourceGroupId, int targetGroupId, PermissionGroupDatabaseType type) {
+    public static Command channelGroupCopy(long sourceGroupId, long targetGroupId, PermissionGroupDatabaseType type) {
         return channelGroupCopy(sourceGroupId, targetGroupId, "name", type);
     }
 
-    public static Command channelGroupCopy(int sourceGroupId, String groupName, PermissionGroupDatabaseType type) {
+    public static Command channelGroupCopy(long sourceGroupId, String groupName, PermissionGroupDatabaseType type) {
         return channelGroupCopy(sourceGroupId, 0, groupName, type);
     }
 
     private static Command channelGroupCopy(
-            int sourceGroupId, int targetGroupId, String groupName, PermissionGroupDatabaseType type) {
+            long sourceGroupId, long targetGroupId, String groupName, PermissionGroupDatabaseType type) {
         if (type == null) {
             throw new IllegalArgumentException("Group type cannot be null");
         }
@@ -55,7 +55,7 @@ public final class ChannelGroupCommands {
         return builder.build();
     }
 
-    public static Command channelGroupDel(int channelGroupId, boolean forced) {
+    public static Command channelGroupDel(long channelGroupId, boolean forced) {
         CommandBuilder builder = new CommandBuilder("channelgroupdel");
         builder.add(new KeyValueParam("cgid", channelGroupId));
         builder.add(new KeyValueParam("force", forced));
@@ -66,7 +66,7 @@ public final class ChannelGroupCommands {
         return new CommandBuilder("channelgrouplist").build();
     }
 
-    public static Command channelGroupRename(int groupId, String groupName) {
+    public static Command channelGroupRename(long groupId, String groupName) {
         if (groupName == null || groupName.isEmpty()) {
             throw new IllegalArgumentException("Channel group name must be a non-empty string");
         }
@@ -77,7 +77,7 @@ public final class ChannelGroupCommands {
         return builder.build();
     }
 
-    public static Command setClientChannelGroup(int groupId, int channelId, int clientDBId) {
+    public static Command setClientChannelGroup(long groupId, long channelId, long clientDBId) {
         CommandBuilder builder = new CommandBuilder("setclientchannelgroup");
         builder.add(new KeyValueParam("cgid", groupId));
         builder.add(new KeyValueParam("cid", channelId));

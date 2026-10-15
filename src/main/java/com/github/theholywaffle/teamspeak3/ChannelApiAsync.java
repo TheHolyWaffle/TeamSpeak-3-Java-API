@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Channel;
@@ -29,9 +30,9 @@ public final class ChannelApiAsync {
         return requests.models(ChannelCommands.channelList(), Channel::new);
     }
 
-    /** @see ChannelApi#info(int) */
-    public CompletableFuture<ChannelInfo> info(int channelId) {
-        return requests.model(ChannelCommands.channelInfo(channelId), map -> new ChannelInfo(channelId, map));
+    /** @see ChannelApi#info(ChannelId) */
+    public CompletableFuture<ChannelInfo> info(ChannelId channelId) {
+        return requests.model(ChannelCommands.channelInfo(channelId.value()), map -> new ChannelInfo(channelId, map));
     }
 
     /** @see ChannelApi#findByName(String, boolean) */
@@ -43,38 +44,41 @@ public final class ChannelApiAsync {
 
     /** @see ChannelApi#search(String) */
     public CompletableFuture<List<Channel>> search(String namePart) {
-        var ids = requests.integers(ChannelCommands.channelFind(namePart), "cid");
+        var ids = requests.ids(ChannelCommands.channelFind(namePart), "cid", ChannelId::new);
         return QueryRequests.recover(
                 QueryRequests.findByKey(ids, list(), Channel::getId), QueryRequests.INVALID_CHANNEL_ID, List.of());
     }
 
     /** @see ChannelApi#create(String, Map) */
-    public CompletableFuture<Integer> create(String name, Map<ChannelProperty, String> properties) {
-        return requests.createdId(ChannelCommands.channelCreate(name, properties), "cid");
+    public CompletableFuture<ChannelId> create(String name, Map<ChannelProperty, String> properties) {
+        return requests.id(ChannelCommands.channelCreate(name, properties), "cid", ChannelId::new);
     }
 
-    /** @see ChannelApi#edit(int, Map) */
-    public CompletableFuture<Void> edit(int channelId, Map<ChannelProperty, String> properties) {
-        return requests.run(ChannelCommands.channelEdit(channelId, properties));
+    /** @see ChannelApi#edit(ChannelId, Map) */
+    public CompletableFuture<Void> edit(ChannelId channelId, Map<ChannelProperty, String> properties) {
+        return requests.run(ChannelCommands.channelEdit(channelId.value(), properties));
     }
 
-    /** @see ChannelApi#delete(int) */
-    public CompletableFuture<Void> delete(int channelId) {
+    /** @see ChannelApi#delete(ChannelId) */
+    public CompletableFuture<Void> delete(ChannelId channelId) {
         return delete(channelId, true);
     }
 
-    /** @see ChannelApi#delete(int, boolean) */
-    public CompletableFuture<Void> delete(int channelId, boolean force) {
-        return requests.run(ChannelCommands.channelDelete(channelId, force));
+    /** @see ChannelApi#delete(ChannelId, boolean) */
+    public CompletableFuture<Void> delete(ChannelId channelId, boolean force) {
+        return requests.run(ChannelCommands.channelDelete(channelId.value(), force));
     }
 
-    /** @see ChannelApi#move(int, int) */
-    public CompletableFuture<Void> move(int channelId, int parentChannelId) {
-        return move(channelId, parentChannelId, 0);
+    /** @see ChannelApi#move(ChannelId, ChannelId) */
+    public CompletableFuture<Void> move(ChannelId channelId, ChannelId parentChannelId) {
+        return move(channelId, parentChannelId, null);
     }
 
-    /** @see ChannelApi#move(int, int, int) */
-    public CompletableFuture<Void> move(int channelId, int parentChannelId, int order) {
-        return requests.run(ChannelCommands.channelMove(channelId, parentChannelId, order));
+    /** @see ChannelApi#move(ChannelId, ChannelId, ChannelId) */
+    public CompletableFuture<Void> move(ChannelId channelId, ChannelId parentChannelId, ChannelId afterChannelId) {
+        return requests.run(ChannelCommands.channelMove(
+                channelId.value(),
+                QueryRequests.valueOrZero(parentChannelId),
+                QueryRequests.valueOrZero(afterChannelId)));
     }
 }

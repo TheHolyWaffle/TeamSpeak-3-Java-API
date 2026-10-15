@@ -45,21 +45,21 @@ class StreamReader implements Runnable {
             } catch (SocketTimeoutException socketTimeout) {
                 // Really disconnected or just no data transferred for <commandTimeout> milliseconds?
                 if (con.isTimedOut()) {
-                    log.error("Connection timed out.", socketTimeout);
+                    log.debug("Connection timed out", socketTimeout);
                     break;
                 } else {
                     continue;
                 }
             } catch (IOException io) {
                 if (!Thread.currentThread().isInterrupted()) {
-                    log.error("Connection error occurred.", io);
+                    log.debug("Connection error", io);
                 }
                 break;
             }
 
             if (line == null) {
                 // End of stream: connection terminated by server
-                log.error("Connection closed by the server.");
+                log.debug("Connection closed by the server");
                 break;
             } else if (line.isEmpty()) {
                 continue; // The server is sending garbage
@@ -85,7 +85,7 @@ class StreamReader implements Runnable {
 
         try {
             in.close();
-        } catch (IOException ignored) {
+        } catch (IOException _) {
             // Ignore
         }
 

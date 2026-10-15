@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3.api.wrapper;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException;
@@ -55,13 +56,11 @@ public class ClientInfo extends Client {
      * @return the ID of the channel the client asked to join on connect, or empty if none
      * @throws TS3InvalidValueException if the value is not a {@code /}-prefixed channel ID
      */
-    public OptionalInt getDefaultChannel() {
+    public Optional<ChannelId> getDefaultChannel() {
         return findParsed(
-                        ClientProperty.CLIENT_DEFAULT_CHANNEL.getName(),
-                        "a /-prefixed channel ID",
-                        ClientInfo::parseDefaultChannel)
-                .map(OptionalInt::of)
-                .orElse(OptionalInt.empty());
+                ClientProperty.CLIENT_DEFAULT_CHANNEL.getName(),
+                "a /-prefixed channel ID",
+                ClientInfo::parseDefaultChannel);
     }
 
     /** @return the privilege key the client used on connect, or empty if none */
@@ -171,14 +170,14 @@ public class ClientInfo extends Client {
                 "clientinfo does not report talk status; use Client#isTalking from clientlist");
     }
 
-    private static int parseDefaultChannel(String value) {
+    private static ChannelId parseDefaultChannel(String value) {
         if (!value.startsWith("/")) throw new IllegalArgumentException("Missing / prefix");
-        return Integer.parseInt(value.substring(1));
+        return new ChannelId(Long.parseLong(value.substring(1)));
     }
 
     @Override
     public boolean equals(Object other) {
-        return super.equals(other) && clientId.equals(((ClientInfo) other).clientId);
+        return super.equals(other) && other instanceof ClientInfo info && clientId.equals(info.clientId);
     }
 
     @Override

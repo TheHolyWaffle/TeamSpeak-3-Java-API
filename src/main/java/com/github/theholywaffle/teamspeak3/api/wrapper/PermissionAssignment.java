@@ -47,8 +47,8 @@ public class PermissionAssignment extends Wrapper {
      *
      * @return the major ID of the source of this assignment as described above
      */
-    public int getMajorId() {
-        return requireInt("id1");
+    public long getMajorId() {
+        return requireLong("id1");
     }
 
     /**
@@ -65,8 +65,8 @@ public class PermissionAssignment extends Wrapper {
      *
      * @return the minor ID of the source of this assignment as described above
      */
-    public int getMinorId() {
-        return requireInt("id2");
+    public long getMinorId() {
+        return requireLong("id2");
     }
 
     /**

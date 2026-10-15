@@ -40,15 +40,15 @@ class KeepAlive implements Runnable {
                 long idleTime = idleMillis.getAsLong();
                 if (idleTime >= intervalMillis) {
                     // Server errors still count as activity; only interruption or a local failure stops the loop.
-                    probe.get().handle((value, failure) -> null).get();
+                    probe.get().handle((_, _) -> null).get();
                 } else {
                     Thread.sleep(intervalMillis - idleTime);
                 }
             }
-        } catch (InterruptedException ignored) {
+        } catch (InterruptedException _) {
             // Thread stopped properly, ignore
         } catch (Exception e) {
-            log.warn("KeepAlive thread has stopped!", e);
+            log.warn("KeepAlive stopped", e);
             onFailure.run();
         }
     }

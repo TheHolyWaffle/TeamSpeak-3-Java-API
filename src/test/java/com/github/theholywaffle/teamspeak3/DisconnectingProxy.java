@@ -45,7 +45,7 @@ final class DisconnectingProxy implements AutoCloseable {
         return Thread.ofVirtual().start(() -> {
             try {
                 from.getInputStream().transferTo(to.getOutputStream());
-            } catch (IOException expectedWhenDropped) {
+            } catch (IOException _) {
                 // The proxy drops connections on purpose.
             } finally {
                 closeSocket(from);
@@ -68,7 +68,7 @@ final class DisconnectingProxy implements AutoCloseable {
         if (socket != null)
             try {
                 socket.close();
-            } catch (IOException ignored) {
+            } catch (IOException _) {
                 // Already closed.
             }
     }

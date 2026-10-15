@@ -1,5 +1,6 @@
 package com.github.theholywaffle.teamspeak3;
 
+import com.github.theholywaffle.teamspeak3.api.IconId;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.FileTransferParameters;
 import java.io.IOException;
@@ -132,7 +133,7 @@ class FileTransferHelper implements AutoCloseable {
             if (socket != null) {
                 try {
                     socket.close();
-                } catch (IOException ignored) {
+                } catch (IOException _) {
                     // The transfer outcome is already decided.
                 }
             }
@@ -239,10 +240,12 @@ class FileTransferHelper implements AutoCloseable {
         }
     }
 
-    static long getIconId(byte[] data) {
+    static IconId getIconId(byte[] data) {
         final CRC32 crc32 = new CRC32();
         crc32.update(data);
-        return crc32.getValue();
+        long crc = crc32.getValue();
+        if (crc == 0) throw new IllegalArgumentException("Icon content has CRC32 0, which TeamSpeak treats as no icon");
+        return IconId.of(crc);
     }
 
     static byte[] readFully(InputStream dataIn, long dataLength, int limit, Operation operation) throws IOException {

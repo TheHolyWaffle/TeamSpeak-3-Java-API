@@ -1,7 +1,9 @@
 package com.github.theholywaffle.teamspeak3.api.wrapper;
 
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import java.time.Instant;
 import java.util.Map;
+import java.util.Optional;
 
 public class FileInfo extends Wrapper {
 
@@ -12,10 +14,10 @@ public class FileInfo extends Wrapper {
     /**
      * Gets the ID of the channel this file is stored on.
      *
-     * @return the ID of the file's channel
+     * @return the ID of the file's channel, or empty for the virtual server's own files, such as icons
      */
-    public int getChannelId() {
-        return requireInt("cid");
+    public Optional<ChannelId> getChannelId() {
+        return requireOptionalId("cid", ChannelId::new);
     }
 
     /**

@@ -5,10 +5,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.github.theholywaffle.teamspeak3.CallerStreams.Input;
 import com.github.theholywaffle.teamspeak3.CallerStreams.Output;
+import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ChannelProperty;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
 import com.github.theholywaffle.teamspeak3.api.UploadMode;
+import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3FileTransferFailedException;
 import java.io.*;
@@ -43,7 +45,7 @@ class FileTransferCompatibilityIT {
                             Duration.ofSeconds(3),
                             Duration.ofSeconds(15),
                             1024,
-                            (host, advertised, port) -> {
+                            (host, _, port) -> {
                                 assertEquals(server.getHost(), host);
                                 assertEquals(30033, port);
                                 resolutions.incrementAndGet();
@@ -53,14 +55,14 @@ class FileTransferCompatibilityIT {
                 query.connect();
                 var api = query.getApi();
                 var async = query.getAsyncApi();
-                api.selectVirtualServerById(1);
+                api.selectVirtualServerById(VirtualServerId.of(1));
                 server.record(target + "-reliable-files-server", api.instance().version());
                 for (String command : List.of("ftinitupload", "ftinitdownload", "ftstop"))
                     evidence.add("help " + command + "\n"
                             + api.executeRawCommand("help " + command).getRawResponse());
                 evidence.add(
                         "query=" + target + ", fileSocket=plaintext TCP, mappedPort=" + server.getMappedPort(30033));
-                int cid = api.channels()
+                ChannelId cid = api.channels()
                         .create("reliable-files-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"));
                 byte[] bytes = new byte[65537];
                 new Random(442).nextBytes(bytes);
@@ -173,7 +175,7 @@ class FileTransferCompatibilityIT {
                         try {
                             new CountDownLatch(1).await();
                             throw new AssertionError();
-                        } catch (InterruptedException failure) {
+                        } catch (InterruptedException _) {
                             throw new InterruptedIOException("cancelled caller read");
                         }
                     }
@@ -221,7 +223,7 @@ class FileTransferCompatibilityIT {
                         try {
                             new CountDownLatch(1).await();
                             throw new AssertionError();
-                        } catch (InterruptedException expected) {
+                        } catch (InterruptedException _) {
                             Thread.currentThread().interrupt();
                         }
                     }
@@ -241,19 +243,45 @@ class FileTransferCompatibilityIT {
                         .decode(
                                 "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aXh8AAAAASUVORK5CYII=");
                 var iconSource = new Input(icon);
-                long iconId = api.files().uploadIcon(iconSource, icon.length);
+                var iconId = api.files().uploadIcon(iconSource, icon.length);
                 assertEquals(FileTransferHelper.getIconId(icon), iconId);
                 assertFalse(iconSource.closed);
                 eventually(
                         () -> api.files().icons().stream()
-                                .anyMatch(row -> row.getIconId().equals(java.util.OptionalLong.of(iconId))
+                                .anyMatch(row -> row.getIconId().equals(java.util.Optional.of(iconId))
                                         && row.getFileSize() == icon.length),
                         "Icon size");
                 assertArrayEquals(icon, api.files().downloadIcon(iconId));
                 assertEquals(iconId, api.files().uploadIcon(icon));
+                assertArrayEquals(icon, api.files().downloadIcon(iconId));
                 api.files().deleteIcons(iconId);
                 evidence.add(
-                        "bounded asynchronous icon stream buffering, exact icon bytes, duplicate-icon recovery and ownership passed");
+                        "bounded asynchronous icon stream buffering, exact icon bytes, identical re-upload and ownership passed");
+
+                var iconLocation = FileLocation.ofServer("/icon_" + iconId);
+                assertThrows(
+                        TS3FileTransferFailedException.class,
+                        () -> api.files()
+                                .upload(
+                                        iconLocation,
+                                        new Input(Arrays.copyOf(icon, 20)),
+                                        icon.length,
+                                        UploadMode.CREATE));
+                eventually(
+                        () -> api.files().icons().stream()
+                                .anyMatch(row -> row.getIconId().equals(java.util.Optional.of(iconId))
+                                        && row.getFileSize() == 20),
+                        "Partial icon is retained");
+                awaitReleasedTransfers(api, "Partial icon upload stops");
+                assertEquals(iconId, api.files().uploadIcon(icon));
+                eventually(
+                        () -> api.files().icons().stream()
+                                .anyMatch(row -> row.getIconId().equals(java.util.Optional.of(iconId))
+                                        && row.getFileSize() == icon.length),
+                        "Repaired icon size");
+                assertArrayEquals(icon, api.files().downloadIcon(iconId));
+                api.files().deleteIcons(iconId);
+                evidence.add("icon upload replaces a partial icon left by a failed upload (#356)");
                 assertTrue(resolutions.get() >= 10);
                 evidence.add("endpoint resolver calls=" + resolutions.get());
                 api.channels().delete(cid, true);

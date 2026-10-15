@@ -1,5 +1,7 @@
 package com.github.theholywaffle.teamspeak3.api.wrapper;
 
+import com.github.theholywaffle.teamspeak3.api.ClientFileTransferId;
+import com.github.theholywaffle.teamspeak3.api.ServerFileTransferId;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -19,8 +21,9 @@ public class FileTransferParameters extends Wrapper {
      *
      * @return the client's file transfer ID
      */
-    public int getClientTransferId() {
-        return requireInt("clientftfid");
+    public ClientFileTransferId getClientTransferId() {
+        return requireParsed(
+                "clientftfid", "a client file transfer ID", id -> new ClientFileTransferId(Integer.parseInt(id)));
     }
 
     /**
@@ -29,8 +32,9 @@ public class FileTransferParameters extends Wrapper {
      *
      * @return the server's file transfer ID
      */
-    public int getServerTransferId() {
-        return requireInt("serverftfid");
+    public ServerFileTransferId getServerTransferId() {
+        return requireParsed(
+                "serverftfid", "a server file transfer ID", id -> new ServerFileTransferId(Integer.parseInt(id)));
     }
 
     /**

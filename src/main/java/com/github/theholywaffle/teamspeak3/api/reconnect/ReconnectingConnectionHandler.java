@@ -61,7 +61,7 @@ public class ReconnectingConnectionHandler implements ConnectionHandler {
     public void onDisconnect(TS3Query ts3Query) {
         // Announce disconnect and run user connection handler
         log.info(
-                "[Connection] Disconnected from TS3 server - reconnecting up to {} times, delay capped at {}ms",
+                "Disconnected from TS3 server, reconnecting up to {} times, delay capped at {}ms",
                 maxAttempts,
                 timeoutCap);
         if (userConnectionHandler != null) {
@@ -73,7 +73,7 @@ public class ReconnectingConnectionHandler implements ConnectionHandler {
             if (Thread.currentThread().isInterrupted() || ts3Query.getState() != TS3Query.State.DISCONNECTED) return;
             try {
                 Thread.sleep(jitterDelay(timeout));
-            } catch (InterruptedException e) {
+            } catch (InterruptedException _) {
                 Thread.currentThread().interrupt();
                 return;
             }
@@ -81,8 +81,8 @@ public class ReconnectingConnectionHandler implements ConnectionHandler {
             try {
                 ts3Query.connect();
                 return;
-            } catch (TS3ConnectionFailedException conFailed) {
-                log.debug("[Connection] Reconnect attempt {} failed", attempt + 1);
+            } catch (TS3ConnectionFailedException e) {
+                log.debug("Reconnect attempt {} failed", attempt + 1, e);
             } catch (IllegalStateException stateChanged) {
                 if (ts3Query.getState() == TS3Query.State.CLOSED
                         || ts3Query.getState() == TS3Query.State.CLOSING
@@ -91,7 +91,7 @@ public class ReconnectingConnectionHandler implements ConnectionHandler {
             }
             timeout = nextDelay(timeout);
         }
-        log.warn("[Connection] Reconnect attempts exhausted ({})", maxAttempts);
+        log.warn("Reconnect attempts exhausted ({})", maxAttempts);
         ts3Query.close();
     }
 

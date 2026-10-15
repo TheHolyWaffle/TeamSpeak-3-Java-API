@@ -11,13 +11,13 @@ public final class DatabaseClientCommands {
         throw new Error("No instances");
     }
 
-    public static Command clientDBDelete(int clientDBId) {
+    public static Command clientDBDelete(long clientDBId) {
         return new CommandBuilder("clientdbdelete")
                 .add(new KeyValueParam("cldbid", clientDBId))
                 .build();
     }
 
-    public static Command clientDBEdit(int clientDBId, Map<ClientProperty, String> options) {
+    public static Command clientDBEdit(long clientDBId, Map<ClientProperty, String> options) {
         CommandBuilder builder = new CommandBuilder("clientdbedit");
         builder.add(new KeyValueParam("cldbid", clientDBId));
         builder.addProperties(options);
@@ -35,7 +35,7 @@ public final class DatabaseClientCommands {
         return builder.build();
     }
 
-    public static Command clientDBInfo(int clientDBId) {
+    public static Command clientDBInfo(long clientDBId) {
         return new CommandBuilder("clientdbinfo")
                 .add(new KeyValueParam("cldbid", clientDBId))
                 .build();
