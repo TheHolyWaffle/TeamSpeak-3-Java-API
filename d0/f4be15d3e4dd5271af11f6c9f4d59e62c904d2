@@ -1,0 +1,14 @@
+.github/renovate.json5
+  h_b0b95817cb397c 5,12-13,23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d0f4be15d3e4dd5271af11f6c9f4d59e62c904d2",
+  "prompts": {},
+  "humans": {
+    "h_b0b95817cb397c": {
+      "author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
