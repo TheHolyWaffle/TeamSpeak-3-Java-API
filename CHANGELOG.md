@@ -5,6 +5,14 @@ modernization release is 2.0.0; its notes also cover tasks #429 and #430, which
 merged before release automation existed. To upgrade from 1.x, follow the
 [2.0 migration guide](MIGRATION.md).
 
+## [2.0.0-beta.2](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/compare/v2.0.0-beta.1...v2.0.0-beta.2) (2026-10-15)
+
+
+### Features
+
+* add temporary server passwords and client UID lookup ([#517](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/issues/517)) ([8c32879](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/commit/8c328794b616c0472fe2214942381f06f9d9fc93))
+* complete server administration APIs and simplify listeners ([#515](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/issues/515)) ([f4ca91c](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/commit/f4ca91c58d3590c2a8d188ddc06107cf88c0f681))
+
 ## [2.0.0-beta.1](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/compare/v1.3.1...v2.0.0-beta.1) (2026-10-15)
 
 
