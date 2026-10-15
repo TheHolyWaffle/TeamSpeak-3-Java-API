@@ -14,9 +14,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
-/** Keeps docs/api-migration.md complete and resolvable against the 2.0 API. */
+/** Keeps the MIGRATION.md operation inventory complete and resolvable against the 2.0 API. */
 class ApiMigrationInventoryTest {
-    private static final Path GUIDE = Path.of("docs", "api-migration.md");
+    private static final Path GUIDE = Path.of("MIGRATION.md");
     private static final Pattern ROW =
             Pattern.compile("^\\| `([^`]+)` \\| (Retained|Replaced|Removed|Deferred) \\| `([^`]+)` \\|.*\\|$");
     private static final Pattern DOMAIN_CALL = Pattern.compile("(\\w+)\\(\\)\\.(\\w+)\\(.*");

@@ -1,70 +1,101 @@
-# 2.0 domain API, errors and absent results
+# Migrating from 1.x to 2.0
 
-Issue #443 replaces the two 238-method `TS3Api` / `TS3ApiAsync` surfaces with small
-domain APIs, defines one exception hierarchy and stops signalling absence with `null`
-or `-1`. This is an intentional source and binary break for 2.0.0: recompile and use the
-[operation inventory](#operation-inventory) to migrate each call. TeamSpeak 3 RAW and
-SSH are the supported transports; scope and support are unchanged otherwise.
+2.0.0 is a major release with intentional source, binary and behavior breaks. Nothing is kept for
+compatibility: recompile against 2.0, then work through the checklist below. The
+[Javadoc](https://www.javadoc.io/doc/com.github.theholywaffle/teamspeak3-api) describes every type in
+detail; this guide only covers what changed.
+
+## Checklist
+
+1. [Move to Java 25](#java-25-and-dependencies) and replace the standalone JAR with the regular
+   dependency.
+2. [Add one SLF4J 2.0 provider](#logging).
+3. [Call the domain APIs](#api-shape) instead of the flat `TS3Api`/`TS3ApiAsync` methods; the
+   [operation inventory](#operation-inventory) maps every 1.3.1 method.
+4. [Replace `CommandFuture`](#futures) with `CompletableFuture`.
+5. [Handle `Optional` results and the new exception types](#errors-and-absent-results).
+6. [Update model getters](#models-and-values) to the typed values.
+7. [Review configuration, deadlines and closing](#configuration-and-closing).
+8. [Provision SSH host keys](#ssh-host-keys-and-transports) and check the
+   [changed defaults](#changed-defaults).
+9. [Move reconnect session state into the configuration](#reconnect-and-retry).
+10. [Use subscription handles for events](#events) and size the queues.
+11. [Check file transfer limits](#file-transfers).
+12. Review the [behavior changes the compiler cannot find](#behavior-the-compiler-cannot-find).
+
+## Java 25 and dependencies
+
+- Java 8–24 are not supported; classes are Java 25 bytecode (class file version 69). The Maven
+  coordinates `com.github.theholywaffle:teamspeak3-api` and the package names are unchanged.
+- The `with-dependencies` JAR and the `full` Maven profile are gone. Depend on the regular JAR with
+  Maven or Gradle; its POM brings in SSHJ, Bouncy Castle, the SLF4J 2.0 API and Gson. Without a build
+  tool, collect the runtime dependencies once, for example with
+  `mvn dependency:copy-dependencies -DincludeScope=runtime`, and run with `java -cp "app.jar:lib/*"`.
+- On the module path the JAR is the automatic module `com.github.theholywaffle.teamspeak3`:
+  `requires com.github.theholywaffle.teamspeak3;`.
+- Copy examples from [`src/example/java`](src/example/java), not from 1.x.
+
+## Logging
+
+The library uses the SLF4J **2.0** API and ships no provider. SLF4J 1.7 bindings (such as
+`slf4j-simple` 1.7 or `slf4j-log4j12`) are ignored: add exactly one 2.0 provider, or SLF4J prints a
+warning and discards the output. The standalone JAR's bundled SimpleLogger is gone;
+[`src/example/simplelogger.properties`](src/example/simplelogger.properties) has the same
+configuration. Communication logs and the `toString()` of commands, responses and configuration
+redact passwords, privilege keys, API keys and file transfer keys.
 
 ## API shape
 
-`query.getApi()` and `query.getAsyncApi()` keep the session operations and expose one
-accessor per domain. Each domain exists twice with identical operations: `XApi` returns
-values and `XApiAsync` returns `CompletableFuture`s.
+`TS3Api` and `TS3ApiAsync` keep only the session operations (`login`, `logout`, `whoAmI`,
+`selectVirtualServerById`, `selectVirtualServerByPort`, `setNickname`, `updateClient`, `moveQuery`,
+`executeRawCommand`). Everything else moved to one domain API per area, each with a sync and an
+async variant:
 
-| Accessor | Sync / async class | Scope |
-| --- | --- | --- |
-| `bans()` | `BanApi` / `BanApiAsync` | Ban rules and banning connected clients |
-| `channels()` | `ChannelApi` / `ChannelApiAsync` | Channel list, lookup, creation, editing, moving and deletion |
-| `channelGroups()` | `ChannelGroupApi` / `ChannelGroupApiAsync` | Channel groups and their memberships |
-| `clients()` | `ClientApi` / `ClientApiAsync` | Connected clients: lookup, move, kick, poke, edit |
-| `complaints()` | `ComplaintApi` / `ComplaintApiAsync` | Complaints |
-| `databaseClients()` | `DatabaseClientApi` / `DatabaseClientApiAsync` | Database clients and custom properties |
-| `events()` | `EventApi` / `EventApiAsync` | Server notification registration and local listeners |
-| `files()` | `FileApi` / `FileApiAsync` | File repository, transfers and icons |
-| `instance()` | `InstanceApi` / `InstanceApiAsync` | Instance info/edit, host info, version, bindings, logs, process stop |
-| `messages()` | `MessageApi` / `MessageApiAsync` | Private/channel/server/broadcast text and offline messages |
-| `permissions()` | `PermissionApi` / `PermissionApiAsync` | Permission metadata and assignments for every holder |
-| `privilegeKeys()` | `PrivilegeKeyApi` / `PrivilegeKeyApiAsync` | Privilege keys |
-| `queryLogins()` | `QueryLoginApi` / `QueryLoginApiAsync` | ServerQuery logins |
-| `serverGroups()` | `ServerGroupApi` / `ServerGroupApiAsync` | Server groups and their members |
-| `servers()` | `VirtualServerApi` / `VirtualServerApiAsync` | Virtual server lifecycle; info, edit, snapshots and logs of the selected server |
+| Accessor | Scope |
+| --- | --- |
+| `bans()` | Ban rules and banning connected clients |
+| `channels()` | Channel list, lookup, creation, editing, moving and deletion |
+| `channelGroups()` | Channel groups and their memberships |
+| `clients()` | Connected clients: lookup, move, kick, poke, edit |
+| `complaints()` | Complaints |
+| `databaseClients()` | Database clients and custom properties |
+| `events()` | Server notification registration and local listeners |
+| `files()` | File repository, transfers and icons |
+| `instance()` | Instance info/edit, host info, version, bindings, logs, process stop |
+| `messages()` | Private/channel/server/broadcast text and offline messages |
+| `permissions()` | Permission metadata and assignments for every holder |
+| `privilegeKeys()` | Privilege keys |
+| `queryLogins()` | ServerQuery logins |
+| `serverGroups()` | Server groups and their members |
+| `servers()` | Virtual server lifecycle; info, edit, snapshots and logs of the selected server |
 
-The entry points retain `login`, `logout`, `whoAmI`, `selectVirtualServerById`,
-`selectVirtualServerByPort`, `setNickname`, `updateClient`, `moveQuery` and
-`executeRawCommand`.
-
-**One implementation.** Each operation is implemented once, in the asynchronous
-domain class, on one shared command path (bounded admission, deadlines, retry policy,
-cancellation and error translation). A synchronous method only waits for that future
-with the existing uninterruptible `CommandFutures.join` adapter. Facades are plain
-one-line delegations; generating them would add a build step without removing
-meaningful maintenance. Instead, `DomainApiParityTest` fails the build when a sync and
-async domain differ in any operation, parameter or result type.
-
-**Request objects** replace long or nullable positional argument lists:
+Request objects replace long or nullable positional argument lists:
 
 | Value | Replaces |
 | --- | --- |
 | `BanRequest.ip(..)` / `name(..)` / `uniqueId(..)` / `myTeamSpeakId(..)` with `with…` | four nullable patterns, a seconds count and a nullable reason |
 | `ClientBan.of(ids...)` with `withDuration`, `withReason`, `continuingOnError` | `banClient`/`banClients` overloads |
 | `PermissionTarget.serverGroup/channelGroup/channel/client/channelClient` | five families of add/delete/list methods |
-| `PermissionGrant.of(name or enum, value)` with `withNegated()`, `withSkip()` | positional `negated`/`skipped` booleans; unsupported flags are rejected locally |
+| `PermissionGrant.of(name or enum, value)` with `withNegated()`, `withSkip()` | positional `negated`/`skipped` booleans |
 | `FileLocation.of(channelId, path)` with `withChannelPassword(..)` | path/channel/nullable-password triples and parallel arrays |
-| `UploadMode.CREATE` / `OVERWRITE` / `RESUME` | the `overwrite` and `resume` booleans, which could conflict |
+| `UploadMode.CREATE` / `OVERWRITE` / `RESUME` | the `overwrite` and `resume` booleans |
 | `ChannelGroupFilter.all()` with `inChannel`, `ofClient`, `inGroup` | `-1` "ignore" sentinels |
 
-Lists returned by domain methods are unmodifiable.
+Other API changes:
 
-## Common workflow
+- `TS3Query`, `TS3Config`, `ReconnectStrategy` and many models are `final` or records; wrap or compose
+  them instead of subclassing.
+- `BPermissionType.getId()` and `IPermissionType.getId()` are removed; resolve IDs with
+  `permissions().idByName(...)`.
+- The public `commands` packages are command builders used by the domain APIs. Their parameter classes
+  are records, `Command.encoded()` returns the wire text and some obsolete overloads are removed. Use
+  the domain APIs, or `executeRawCommand` for commands they do not cover.
 
-Ensure a permanent "Lobby" channel with a join power, publish its rules file, and
-welcome a user by unique identifier: move and message them if they are connected,
-otherwise leave an offline message. The 2.0 forms below are the executed code of
-`CommonWorkflow`, run by `CommonWorkflowTest` (scripted) and
-`DomainApiCompatibilityIT.commonWorkflow` (TS3 3.13.8 RAW and SSH).
+### Example
 
-Before, synchronous (compiled against `c685be8`, the integration branch before #443):
+Ensure a permanent "Lobby" channel, publish its rules file, and welcome a user by unique identifier.
+
+1.3.1:
 
 ```java
 static int prepareLobby(TS3Api api, String uniqueId, byte[] rules) {
@@ -78,14 +109,15 @@ static int prepareLobby(TS3Api api, String uniqueId, byte[] rules) {
         ClientInfo client = api.getClientByUId(uniqueId);
         api.moveClient(client.getId(), lobby);
         api.sendPrivateMessage(client.getId(), "Welcome to the lobby");
-    } catch (TS3Exception offline) {
-        if (!offline.matchesQueryError(512)) throw offline;
+    } catch (TS3CommandFailedException offline) {
+        if (offline.getError().getId() != 512) throw offline;
         api.sendOfflineMessage(uniqueId, "Lobby", "Welcome to the lobby");
     }
     return lobby;
+}
 ```
 
-After, synchronous:
+2.0, synchronous:
 
 ```java
 static int prepareLobby(TS3Api api, String uniqueId, byte[] rules) {
@@ -107,29 +139,7 @@ static int prepareLobby(TS3Api api, String uniqueId, byte[] rules) {
 }
 ```
 
-Before, asynchronous:
-
-```java
-static CompletableFuture<Integer> prepareLobby(TS3ApiAsync api, String uniqueId, byte[] rules) {
-    return api.getChannelByNameExact("Lobby", false)
-            .thenCompose(existing -> existing != null
-                    ? CompletableFuture.completedFuture(existing.getId())
-                    : api.createChannel(
-                            "Lobby", Collections.singletonMap(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1")))
-            .thenCompose(lobby -> api.addChannelPermission(lobby, "i_channel_needed_join_power", 10)
-                    .thenCompose(done -> api.uploadFileDirect(rules, "/rules.txt", true, lobby))
-                    .thenCompose(done -> api.getClientByUId(uniqueId)
-                            .thenCompose(client -> api.moveClient(client.getId(), lobby)
-                                    .thenCompose(moved ->
-                                            api.sendPrivateMessage(client.getId(), "Welcome to the lobby"))))
-                    .exceptionallyCompose(failure -> CommandFutures.unwrap(failure) instanceof TS3Exception offline
-                                    && offline.matchesQueryError(512)
-                            ? api.sendOfflineMessage(uniqueId, "Lobby", "Welcome to the lobby")
-                            : CompletableFuture.failedFuture(failure))
-                    .thenApply(done -> lobby));
-```
-
-After, asynchronous:
+2.0, asynchronous:
 
 ```java
 static CompletableFuture<Integer> prepareLobby(TS3ApiAsync api, String uniqueId, byte[] rules) {
@@ -153,119 +163,181 @@ static CompletableFuture<Integer> prepareLobby(TS3ApiAsync api, String uniqueId,
 }
 ```
 
-| Measure (non-blank lines, characters without indentation; Palantir Java Format) | Before sync | After sync | Before async | After async |
-| --- | --- | --- | --- | --- |
-| Lines | 16 | 17 | 17 | 19 |
-| Characters | 715 | 687 | 961 | 898 |
-| `null` checks | 1 | 0 | 1 | 0 |
+## Futures
 
-The old form needs a `null` check and must catch server error 512, because an offline
-unique identifier produced `clientinfo clid=-1`. Checking `isClientOnline` first instead
-costs an extra command and still races with the client leaving. The new form has no
-`null` checks, no `-1` sentinels and no positional `overwrite` boolean; absence is part
-of the result type. Both send the same commands on success.
+`CommandFuture` and its listener interfaces are removed. Async methods and `Command.getFuture()`
+return `CompletableFuture`.
 
-## Errors
+| 1.x | 2.0 |
+| --- | --- |
+| `onSuccess(listener)` | `thenAccept` for short work; `thenAcceptAsync(listener, executor)` for application work |
+| `onFailure(listener)` | `whenCompleteAsync((value, failure) -> ..., executor)` or `exceptionally` for recovery |
+| `map(fn)` / `then(fn)` | `thenApply(fn)` / `thenCompose(fn)` |
+| `immediate(value)` | `CompletableFuture.completedFuture(value)` |
+| `ofAll(requests)` | `CommandFutures.all(requests)` |
+| `ofAny(requests)` | No direct equivalent: `CompletableFuture.anyOf` also completes on the first failure |
+| `getUninterruptibly()` | The synchronous `TS3Api`, or `CommandFutures.join(future)` |
+| `set(value)` / `fail(error)` | `complete(value)` / `completeExceptionally(error)` on your own futures only |
+| `isSuccessful()` / `hasFailed()` | `state() == Future.State.SUCCESS` / `state() == Future.State.FAILED` |
 
-Every failure is a `TS3Exception`. Category is the type; whether the command may still
-have run is `isOutcomeUnknown()`, so handlers need no type checks for retry decisions.
+Callbacks run on one ordered, query-owned worker. Keep inline callbacks short, never wait
+synchronously for another command inside one, and move blocking work to your own executor with the
+`*Async` methods. Timed `get` and `orTimeout` only stop waiting; the command still runs. Cancelling the
+original API future removes a command that was not sent yet.
 
-| Type | Meaning | `isOutcomeUnknown()` |
+## Errors and absent results
+
+Every failure is a `TS3Exception` subtype. `isOutcomeUnknown()` tells whether a failed command may still
+have run; reconcile such mutations with the server before retrying.
+
+| Type | Meaning |
+| --- | --- |
+| `TS3CommandFailedException` | The server answered with an error (`getErrorId()`) |
+| `TS3TransportException` | Base type for connection failures |
+| ↳ `TS3ConnectionFailedException` | Connecting, authentication or initialization failed |
+| ↳ `TS3QueryShutDownException` | Closed or disconnected before the command was written |
+| &nbsp;&nbsp;↳ `TS3UnknownOutcomeException` | The connection ended after the command was written |
+| `TS3TimeoutException` | A queue-wait or response deadline expired |
+| `TS3QueueFullException` | Command capacity exhausted; nothing was sent |
+| `TS3UnsupportedOperationException` | The configuration or transport does not support the operation |
+| `TS3InvalidValueException` | A required response value is missing or malformed |
+| `TS3FileTransferFailedException` | The file socket or a caller stream failed |
+
+`TS3UnknownErrorException` and `TS3UnknownEventException` were never thrown and are removed.
+`TS3ConnectionFailedException` and `TS3QueryShutDownException` now extend `TS3TransportException`, so
+existing catch blocks keep working. Async results complete with these types as the cause;
+`CommandFutures.unwrap` returns it.
+
+Nothing returns `null` or `-1` any more:
+
+- Lookups by name, unique identifier or port return `Optional`. For example `getClientByUId` failed
+  with error 512 for an offline client; `clients().findByUniqueId` returns an empty `Optional`.
+- Searches and lists return an empty list when nothing matches.
+- Reads by ID still fail with the server's error when the entity does not exist.
+- Required values that are missing fail with `TS3InvalidValueException` instead of defaulting to `-1`,
+  `""` or an object full of defaults.
+
+## Models and values
+
+Response models and events are immutable. Getters return typed values: `ClientId`,
+`ClientDatabaseId`, `Instant`, `Duration`, `Optional*`, unmodifiable lists instead of arrays, and
+records such as `Binding` and `Snapshot`. Enums gain static lookups such as `fromIndex`/`fromName`;
+`PermissionGroupType`, `PermissionGroupDatabaseType`, `PrivilegeKeyType` and `TextMessageTargetMode`
+return a new `UNKNOWN` constant where they returned `null`.
+
+| 1.x | 2.0 |
+| --- | --- |
+| `wrapper.get/getInt/getLong/getDouble/getBoolean(name)` (defaults `""`/`-1`/`false`) | `find*` (optional) or `require*` (throwing) |
+| `DefaultArrayResponse.getFirstResponse()` returning `Wrapper.EMPTY` | `Optional<Wrapper>` |
+| `int` client / database IDs in models, events and parameters | `ClientId` / `ClientDatabaseId` |
+| `Date` timestamps, `int`/`long` durations | `Instant`, `Duration` |
+| `Client.getServerGroups()` `int[]`, `getBadgeGUIDs()` `String[]` | `List<Integer>`, `List<String>` |
+| `ClientJoinEvent.getClientServerGroups()` comma-separated `String` | `List<Integer>` |
+| `ChannelBase.getBannerMode()`, `getBannerGraphicsUrl()` | only on `ChannelInfo` |
+| `VirtualServerInfo.getBandwidthReceivedLastMinute()` `int` | `long` |
+| `ServerGroup.getSaveDb()` `int` | `isSavedInDatabase()` |
+| `PrivilegeKey.getType()` `int` | `PrivilegeKeyType` |
+| `FileTransferParameters.getStatus()`, `getQueryError()` | `OptionalInt`, `findFailure()` |
+| `IconFile.getIconId()` `-1` | `OptionalLong` |
+| `ClientInfo(int, Map)`, `ClientInfo.getDefaultChannel()` `-1` | `ClientInfo(ClientId, Map)`, `OptionalInt` |
+| `Snapshot.get()` | `Snapshot.data()` |
+
+## Configuration and closing
+
+- `TS3Config` is a reusable builder; `new TS3Query(config)` or `config.build()` takes an immutable
+  `QueryConfig` snapshot. Later builder changes do not affect existing queries. Invalid values fail
+  before connecting: a null host means `127.0.0.1`; blank hosts, partial credentials and SSH without
+  credentials are rejected.
+- `TS3Query` is `AutoCloseable`: use try-with-resources. `close()` aborts immediately; `exit()` drains
+  and sends `quit` within half the close budget. `getState()` reports the lifecycle; a closed query
+  cannot connect again, and `connect()` while connected throws.
+- `setCommandTimeout(int)` is removed: use `setCommandResponseTimeout(Duration)`. Connect, handshake,
+  queue wait, command response and close each have their own deadline; traffic no longer extends a
+  pending command's deadline, and a response timeout closes the connection.
+- An open query keeps the JVM alive until it is closed.
+
+## SSH host keys and transports
+
+1.x silently accepted unknown SSH host keys and stored them in `~/.ssh/known_ts3_hosts`. 2.0 verifies
+them against `~/.ssh/known_hosts` (as `[host]:port` for non-standard ports) and rejects unknown and
+changed keys. Choose another policy with `setSshHostKeyPolicy`:
+
+- `SshHostKeyPolicy.knownHosts(path)`: an OpenSSH trust file. Pass `~/.ssh/known_ts3_hosts` to keep
+  using keys you reviewed under 1.x.
+- `SshHostKeyPolicy.pinnedKey(publicKey)`: one independently verified key.
+- `SshHostKeyPolicy.trustOnFirstUse(path)`: stores the first key per host and port and rejects later
+  changes.
+
+Custom transports implement `QueryTransportFactory` and are set with `setTransportFactory`.
+
+## Changed defaults
+
+| Setting | 1.3.1 | 2.0 |
 | --- | --- | --- |
-| `TS3CommandFailedException` | The server answered with an error. `getErrorId()`, `getCommandName()`, `getError()` | `false` |
-| `TS3TransportException` | Base type for connection failures | `false` unless a subtype says so |
-| ↳ `TS3ConnectionFailedException` | Connecting, authentication or initialization failed | `false` |
-| ↳ `TS3QueryShutDownException` | Closed or disconnected before the command was written | `false` |
-| &nbsp;&nbsp;↳ `TS3UnknownOutcomeException` | The connection ended after the command was written | `true` |
-| `TS3TimeoutException` | A deadline expired: `Phase.QUEUE_WAIT` (never written) or `Phase.RESPONSE` (written; the connection is closed) | `true` only for `RESPONSE` |
-| `TS3QueueFullException` | Command capacity exhausted; nothing was sent | `false` |
-| `TS3UnsupportedOperationException` | The configuration or data does not support the operation | `false` |
-| `TS3FileTransferFailedException` | The separate file socket or a caller stream failed; an upload may leave a partial file | `false` (describes the ServerQuery command) |
+| SSH host keys | Accept and store unknown keys | Strict `~/.ssh/known_hosts` |
+| Command response deadline | 4 s, renewed by any traffic | 4 s, fixed per command; timeout closes the connection |
+| Connect, handshake, queue wait, close | Raw TCP: no connect deadline; SSH: the command timeout; queue wait and close unbounded | 4 s each |
+| Command queue | Unbounded | 1024 commands, then `TS3QueueFullException` |
+| Event delivery | Unbounded queue per listener on an unbounded thread pool | 4 threads, 256 waiting events per subscription, newest dropped on overflow |
+| Reconnect backoff attempts | Unlimited | 10 (`withMaxAttempts`) |
+| Commands sent before a disconnect | Resent after reconnect | Fail with an unknown outcome; only named safe reads are replayed |
+| File transfers | No limits | 4 s connect/read, 5 min per transfer, 16 MiB in memory |
+| Logging API | SLF4J 1.7 | SLF4J 2.0 |
 
-Changes from the previous integration branch:
+Unchanged: raw TCP on port 10011 and SSH on 10022, `FloodRate.DEFAULT` (350 ms), reconnect
+`disconnect()` by default and communications logging off.
 
-- A queue-wait expiry was a plain `TS3Exception`; it is now `TS3TimeoutException`
-  with `Phase.QUEUE_WAIT`.
-- The command whose own response deadline expired failed with
-  `TS3UnknownOutcomeException`; it now fails with `TS3TimeoutException`
-  (`Phase.RESPONSE`). Other in-flight commands still use `TS3UnknownOutcomeException`.
-  Code that caught `TS3UnknownOutcomeException` to reconcile mutations should test
-  `isOutcomeUnknown()` instead.
-- Session-changing commands rejected under reconnect without `SessionConfiguration`
-  fail with `TS3UnsupportedOperationException` instead of a plain `TS3Exception`;
-  commands submitted while a query without a restorable session is disconnected fail with
-  `TS3QueryShutDownException`.
-- `ClientInfo.isTalking()` throws `TS3UnsupportedOperationException` instead of
-  `java.lang.UnsupportedOperationException`.
-- `TS3ConnectionFailedException` and `TS3QueryShutDownException` now extend
-  `TS3TransportException`; existing catch blocks for them keep working.
-- `TS3UnknownErrorException` and `TS3UnknownEventException` were never thrown and
-  are removed.
+## Reconnect and retry
 
-Synchronous methods throw these types directly. Asynchronous results complete with
-them as the cause of `ExecutionException` or `CompletionException`;
-`CommandFutures.unwrap` returns the cause.
+Reconnecting stays off by default. With a reconnect strategy:
 
-## Absent results and failures
+- Put credentials in `setLoginCredentials` and the virtual server, nickname and event registrations in
+  `setSessionConfiguration` instead of `onConnect`. They are restored in order before queued commands
+  continue. Keep observation, such as refreshing the query client ID, in `onConnect`.
+- While a restorable session is configured, session-changing commands (`login`, `logout`, `use`,
+  `clientupdate`, `servernotifyregister`, `servernotifyunregister`) fail with
+  `TS3UnsupportedOperationException`. Configure a new query for a different session.
+- A command that was sent but not answered is never resent unless you name it in
+  `CommandRetryPolicy.safeReads(...)`; it fails with `TS3UnknownOutcomeException`. Do not resubmit
+  failed mutations blindly.
+- Built-in backoff gives up after 10 attempts and closes the query; `ReconnectingConnectionHandler`
+  constructors take the attempt limit explicitly.
 
-- **Lookups by name, unique identifier or port** return `Optional`: absent is empty,
-  never `null`. Other server errors still fail.
-- **Searches and lists** return an empty list when nothing matches, including the
-  server's "database empty result set" (1281) and the "no match" errors of
-  `channelfind` (768) and `clientfind` (512).
-- **Reads by ID** fail with the server's error when the entity does not exist
-  (for example 768 for `channels().info`, 512 for `clients().info`/`databaseClients().info`,
-  2052 for `files().info`, 2560 for `serverGroups().members`).
-- **Required results** never fall back to defaults. A read that the server answers
-  without a row, or a creation without its ID/token, fails with `TS3Exception`
-  instead of returning `-1`, `""` or an object full of defaults.
+## Events
 
-Evidence from TS3 3.13.8 for each mapped case, asserted on RAW and SSH by
-`DomainApiCompatibilityIT.absentResultsAndFailures`:
+`addTS3Listeners`/`removeTS3Listeners` are removed. `api.events().subscribe(listener)` (or
+`query.subscribe`) returns an `EventSubscription`; close it to remove the listener. Registering
+notification types with the server is a separate `api.events().register(...)` call. Listeners run on
+`setEventCallbackThreads` threads, one event at a time per subscription; when a subscription's queue
+(`setListenerQueueCapacity`) is full the newest events are dropped. Overflow, listener failures and
+unknown notifications are counted in `query.getEventStatistics()`.
 
-| Request | Server answer | 2.0 result |
-| --- | --- | --- |
-| `clients().findByUniqueId` for an unknown UID | `clientgetids`: empty (1281) | `Optional.empty()` |
-| `databaseClients().findByUniqueId` for an unknown UID | `clientdbfind -uid`: empty (1281) | `Optional.empty()` |
-| `messages().getOffline` for an unknown ID | `messageget`: empty (1281) | `Optional.empty()` |
-| `servers().findIdByPort` for an unused port | `serveridgetbyport`: error 1024 | `Optional.empty()` |
-| `channels().findByName` / `clients().findByName` without a match | filtered list | `Optional.empty()` |
-| `channels().search` / `clients().search` without a match | `channelfind` 768 / `clientfind` 512 | empty list |
-| `channels().info` / `clients().info` / `databaseClients().info` for unknown IDs | 768 / 512 / 512 | `TS3CommandFailedException` |
-| `files().info` for a missing file | 2052 | `TS3CommandFailedException` |
-| `clients().info` for an out-of-range ID such as 999999 | 1540 | `TS3CommandFailedException` |
-| `serverGroups().members` for an unknown group | 2560 | `TS3CommandFailedException` |
-| `messages().sendOffline` to an unknown UID | 512 | `TS3CommandFailedException` |
-| `bans().add(BanRequest.myTeamSpeakId("empty"))` / a malformed myTeamSpeak ID | ban ID / 1538 | rule created / `TS3CommandFailedException` |
+## File transfers
 
-`clients().findByUniqueId` also treats a client that disconnects between its two
-commands (512 from `clientinfo`) as absent. A myTeamSpeak-only ban rule, documented by `help banadd`
-and previously rejected locally, is now accepted.
+File transfers have finite deadlines and a 16 MiB limit for in-memory downloads and icons; stream
+larger files to your own `OutputStream`. Streams you pass are never closed by the library. Cancelling
+the original future aborts the transfer. Behind NAT or Docker, configure a
+`FileTransferEndpointResolver` in `FileTransferConfig`. File data still uses a separate, unencrypted
+socket, even with SSH.
 
-### Audit of previous null/-1 documentation
+## Behavior the compiler cannot find
 
-| Previous documentation | Actual behavior before #443 | 2.0 |
-| --- | --- | --- |
-| `TS3Api` class: "many methods in this class will return `null` or `-1` if a command fails" | Inaccurate. Server errors always threw `TS3CommandFailedException` (sync) or failed the future (async). `-1`/`""`/default models appeared when a **successful** response had no row or field: an empty (1281) answer to a single-row read went through `Wrapper.EMPTY`. | Removed. Required rows/fields fail with `TS3Exception` (`TS3InvalidValueException` since #444); absent lookups are `Optional`. |
-| `getChannelByNameExact`, `getClientByNameExact`: "`null` if no … was found" | Accurate | `Optional` |
-| `getDatabaseClientByUId`: "`null` if no client was found" | Accurate (1281) | `Optional` |
-| `getOfflineMessage`: "`null` if there was no message with that ID" | Accurate (1281); an explicit empty body was `""` | `Optional`; an empty body is `Optional.of("")` |
-| `getClientByUId` (no absence documented) | An offline UID failed with error 512 from `clientinfo clid=-1` | `Optional` |
-| `getServerIdByPort` (no absence documented) | An unused port failed with 1024 | `Optional` |
-| `getPermissionIdByName`, `getPermissionValue`, token/password results (no absence documented) | An empty answer returned `-1` or `""` | `TS3Exception` |
-| `copyServerGroup(int, int, …)`, fixed in #473 | Returned the requested target ID | `overwrite` returns nothing |
-| `getChannelGroupClients(int, int, int)`: "set to `-1` to ignore" | Accurate | `ChannelGroupFilter` |
+These changes keep their signatures, so recompiling does not reveal them:
+
+- deadlines on every phase, timeouts closing the connection and the finite command queue;
+- no automatic resend of sent commands after a reconnect, and a bounded number of reconnect attempts;
+- strict SSH host key verification;
+- event delivery on several threads, with overflow dropping the newest events;
+- `Optional`/empty results instead of `null` or `-1` behind APIs that kept their name;
+- secrets redacted in logs and `toString()`;
+- an SLF4J 1.7 binding no longer producing output.
 
 ## Operation inventory
 
-Every public operation of the previous `TS3Api` and `TS3ApiAsync` (identical sets of
-238 signatures at `c685be8`) has exactly one row. **Retained**: same entry point and
-parameters. **Replaced**: moved to a domain or reshaped, same capability.
-**Removed**: an intentional convenience overload or variant with the replacement shown.
-No operation is deferred. `ApiMigrationInventoryTest` checks that this table covers
-238 distinct signatures and that every replacement exists in the 2.0 API. Since #444,
-client (`clid`) and client database (`cldbid`) parameters below are `ClientId` and
-`ClientDatabaseId`; see the [response model guide](models-and-values.md#identifier-types).
+Every public method of the 1.3.1 `TS3Api` and `TS3ApiAsync` (identical sets of 238 signatures) has one
+row. **Retained**: same entry point and parameters. **Replaced**: moved to a domain API or reshaped,
+same capability. **Removed**: a convenience overload or variant, with its replacement. Client (`clid`)
+and client database (`cldbid`) parameters are `ClientId` and `ClientDatabaseId`.
 
 | Previous operation | Status | 2.0 replacement | Notes |
 | --- | --- | --- | --- |
@@ -507,26 +579,3 @@ client (`clid`) and client database (`cldbid`) parameters below are `ClientId` a
 | `usePrivilegeKey(String)` | Replaced | `privilegeKeys().use(token)` |  |
 | `usePrivilegeKey(PrivilegeKey)` | Removed | `privilegeKeys().use(token)` | pass `key.getToken()` |
 | `whoAmI()` | Retained | `whoAmI()` |  |
-
-## Verification and boundaries
-
-- Live (TS3 3.13.8 RAW and SSH): the common workflow in both forms, every absent/failure
-  row above, myTeamSpeak-only ban rules, local unsupported/closed-query failures, and the
-  existing compatibility suites, which now call the domain methods.
-- Scripted only: response/queue timeouts, permission commands per holder, `ClientBan`
-  (banning a client needs a regular voice client) and request-object validation.
-  Earlier live boundaries still apply, for example query clients cannot receive
-  client permissions (512) or consume privilege keys (516).
-- The `commands` packages stay public. Consumers cannot execute their `Command` objects,
-  so they are not operations of the API; hiding them needs JPMS exports, which #447
-  decides. Model immutability and typed values are covered by the
-  [response model guide](models-and-values.md) (#444).
-
-## Release intent and migration
-
-`feat!`, planned **2.0.0**. BREAKING CHANGE: `TS3Api`/`TS3ApiAsync` operations move to
-domain APIs with request objects; absent lookups return `Optional`; required results fail
-instead of returning `-1`/`""`/defaults; queue-wait and response deadlines fail with
-`TS3TimeoutException`; sealed session changes fail with `TS3UnsupportedOperationException`;
-`TS3UnknownErrorException`/`TS3UnknownEventException` are removed. Migrate with the
-inventory above. No dependency, protocol, default or transport change.

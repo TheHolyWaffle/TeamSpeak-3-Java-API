@@ -8,7 +8,7 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.Channel;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-/** The common workflow measured in docs/api-migration.md; keep both forms identical to the guide. */
+/** The common workflow shown in MIGRATION.md; keep both forms identical to the guide. */
 final class CommonWorkflow {
     private CommonWorkflow() {}
 

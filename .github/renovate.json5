@@ -1,4 +1,4 @@
-// Version updates for everything the build pins. See docs/maintenance.md.
+// Version updates for everything the build pins.
 {
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: ['config:recommended', ':semanticCommits', ':automergeMinor', ':automergeDigest'],
