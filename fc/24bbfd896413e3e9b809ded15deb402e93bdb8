@@ -1,0 +1,34 @@
+scripts/audit_forks.py
+  s_1b5bea48fe9492::t_dae57c2d84f1ab 80
+  s_1b5bea48fe9492::t_671a5bad0d0ca2 192-200
+  s_1b5bea48fe9492::t_0dcdf7722ffd4a 77-79
+  s_1b5bea48fe9492::t_f0597a094cca78 81-83,189-191
+  s_1b5bea48fe9492::t_837f5d136afc5b 201-203
+  s_1b5bea48fe9492::t_04a6a5003556ab 1-76,84-188,204-272
+scripts/test_audit_forks.py
+  s_1b5bea48fe9492::t_18af141ece2d87 1-52,55-69,71-112
+  s_1b5bea48fe9492::t_dae57c2d84f1ab 53-54,70
+FORK_REVIEW.md
+  s_1b5bea48fe9492::t_0dc2b5cd12b6c4 9-10,214-215
+  s_1b5bea48fe9492::t_876ed0b28c6d2f 1-8,11-213,216-223
+scripts/README.md
+  s_1b5bea48fe9492::t_32edb3e2133618 1-106
+.gitignore
+  s_1b5bea48fe9492::t_32edb3e2133618 24-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fc24bbfd896413e3e9b809ded15deb402e93bdb8",
+  "prompts": {},
+  "sessions": {
+    "s_1b5bea48fe9492": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a14110-66bc-7a63-970c-2d31b2300856",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
