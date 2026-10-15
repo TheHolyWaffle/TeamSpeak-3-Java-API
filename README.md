@@ -168,12 +168,6 @@ possible. `ScheduledActionsExample` pokes, kicks and moves real clients: only ru
 
 See the [Javadoc](https://www.javadoc.io/doc/com.github.theholywaffle/teamspeak3-api).
 
-For a last-known nickname and identity, including offline clients, use
-`api.databaseClients().findIdentityByUniqueId(uid)` or
-`findIdentityByDatabaseId(databaseId)`. Each sends one command and returns an
-`Optional<ClientIdentity>`; full database information remains available through `info` and
-`findByUniqueId`.
-
 ### Asynchronous API and futures
 
 `query.getAsyncApi()` offers the same operations returning JDK `CompletableFuture`s. Responses

@@ -21,6 +21,3 @@
 
 # Idea Files
 /.idea
-
-# Python maintenance scripts
-__pycache__/
