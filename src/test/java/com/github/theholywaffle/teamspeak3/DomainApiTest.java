@@ -24,6 +24,7 @@ import com.github.theholywaffle.teamspeak3.api.exception.TS3InvalidValueExceptio
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
@@ -125,7 +126,11 @@ class DomainApiTest {
             var api = query.getApi();
             api.selectVirtualServerById(VirtualServerId.of(1));
             api.deselectVirtualServer();
-            assertEquals(Optional.empty(), api.whoAmI().getVirtualServerId());
+            var whoAmI = api.whoAmI();
+            assertEquals(Optional.empty(), whoAmI.getVirtualServerId());
+            assertEquals(Optional.empty(), whoAmI.getId());
+            assertEquals(OptionalInt.empty(), whoAmI.getVirtualServerPort());
+            assertEquals(Optional.empty(), whoAmI.getChannelId());
             query.exit();
             peer.await();
         }

@@ -14,10 +14,11 @@ import java.util.Optional;
  * Authentication uses TS3Config login credentials (RAW login or SSH authentication).
  * A virtual server ID is mandatory, avoiding a reconnect to an implicit server.
  * @param virtualServerId stable target virtual server ID
- * @param nickname query nickname, or null to retain the server default
+ * @param nickname query nickname, or empty to retain the server default
  * @param subscriptions ordered notification registrations
  */
-public record SessionConfiguration(VirtualServerId virtualServerId, String nickname, List<Subscription> subscriptions) {
+public record SessionConfiguration(
+        VirtualServerId virtualServerId, Optional<String> nickname, List<Subscription> subscriptions) {
     /**
      * One notification registration.
      * @param eventType event type
@@ -32,8 +33,10 @@ public record SessionConfiguration(VirtualServerId virtualServerId, String nickn
 
     public SessionConfiguration {
         Objects.requireNonNull(virtualServerId, "virtualServerId");
+        Objects.requireNonNull(nickname, "nickname");
         subscriptions = List.copyOf(subscriptions);
-        if (nickname != null && nickname.isEmpty()) throw new IllegalArgumentException("Nickname must not be empty");
+        if (nickname.filter(String::isEmpty).isPresent())
+            throw new IllegalArgumentException("Nickname must not be empty");
     }
 
     /**
@@ -41,7 +44,7 @@ public record SessionConfiguration(VirtualServerId virtualServerId, String nickn
      * @return an empty session for that server
      */
     public static SessionConfiguration forServer(VirtualServerId id) {
-        return new SessionConfiguration(id, null, List.of());
+        return new SessionConfiguration(id, Optional.empty(), List.of());
     }
 
     /**
@@ -49,7 +52,7 @@ public record SessionConfiguration(VirtualServerId virtualServerId, String nickn
      * @return a copy with that nickname
      */
     public SessionConfiguration withNickname(String name) {
-        return new SessionConfiguration(virtualServerId, name, subscriptions);
+        return new SessionConfiguration(virtualServerId, Optional.of(name), subscriptions);
     }
 
     /**
@@ -81,9 +84,13 @@ public record SessionConfiguration(VirtualServerId virtualServerId, String nickn
      */
     public void restore(TS3Api api) {
         api.selectVirtualServerById(virtualServerId);
-        if (nickname != null) api.setNickname(nickname);
+        nickname.ifPresent(api::setNickname);
         for (Subscription subscription : subscriptions) {
-            api.events().register(subscription.eventType(), subscription.channelId());
+            subscription
+                    .channelId()
+                    .ifPresentOrElse(
+                            channelId -> api.events().register(subscription.eventType(), channelId),
+                            () -> api.events().register(subscription.eventType()));
         }
     }
 }

@@ -9,6 +9,7 @@ import com.github.theholywaffle.teamspeak3.api.ServerGroupType;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Permission;
 import com.github.theholywaffle.teamspeak3.api.wrapper.PermissionAssignment;
 import com.github.theholywaffle.teamspeak3.api.wrapper.PermissionInfo;
+import com.github.theholywaffle.teamspeak3.api.wrapper.PermissionSource;
 import java.util.List;
 
 /**
@@ -79,9 +80,9 @@ public final class PermissionApi {
      * Lists every holder that has a permission assigned.
      *
      * @param permissionName the permission name
-     * @return the assignments; empty if no holder has the permission
+     * @return where the permission is assigned, without values; empty if no holder has the permission
      */
-    public List<PermissionAssignment> assignments(String permissionName) {
+    public List<PermissionSource> assignments(String permissionName) {
         return CommandFutures.join(async.assignments(permissionName));
     }
 

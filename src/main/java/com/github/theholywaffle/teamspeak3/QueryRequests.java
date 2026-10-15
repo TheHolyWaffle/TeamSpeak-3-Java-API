@@ -72,10 +72,6 @@ final class QueryRequests {
         return response(command, response -> response.getFirstResponse().map(fn));
     }
 
-    CompletableFuture<Optional<Integer>> optionalInteger(Command command, String property) {
-        return optional(command, row -> row.requireInt(property));
-    }
-
     CompletableFuture<String> string(Command command, String property) {
         return one(command, row -> row.require(property));
     }
@@ -106,9 +102,8 @@ final class QueryRequests {
             CompletableFuture<Optional<K>> id, Function<K, CompletableFuture<T>> lookup) {
         return CommandFutures.compose(
                 id,
-                found -> found.isEmpty()
-                        ? CompletableFuture.completedFuture(Optional.empty())
-                        : CommandFutures.map(lookup.apply(found.get()), Optional::of));
+                found -> found.map(key -> CommandFutures.map(lookup.apply(key), Optional::of))
+                        .orElseGet(() -> CompletableFuture.completedFuture(Optional.empty())));
     }
 
     static <T> Optional<T> firstNamed(List<T> items, Function<T, String> name, String expected, boolean ignoreCase) {

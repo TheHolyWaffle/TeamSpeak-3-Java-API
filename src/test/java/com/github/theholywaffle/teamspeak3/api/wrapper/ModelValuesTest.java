@@ -208,9 +208,11 @@ class ModelValuesTest {
         assertEquals(OptionalInt.empty(), join.getReasonId());
         assertEquals(List.of(), join.getClientServerGroups());
         assertEquals(0, join.getAmountOfServerGroups());
-        var serverInvoked = event(TextMessageEvent::new, "targetmode=3 msg=x invokerid=0 invokername=Server");
+        var serverInvoked =
+                event(TextMessageEvent::new, "targetmode=3 msg=x invokerid=0 invokername=Server invokeruid reasonmsg");
         assertEquals(Optional.of(ClientId.of(0)), serverInvoked.getInvokerId());
         assertEquals(Optional.empty(), serverInvoked.getInvokerUniqueId());
+        assertEquals(Optional.empty(), serverInvoked.getReasonMessage());
         assertEquals(Optional.empty(), serverInvoked.getTargetClientId());
     }
 
@@ -335,13 +337,11 @@ class ModelValuesTest {
         assertFalse(new FileListEntry(Map.of("size", "4")).isStillUploading());
         assertEquals(Optional.empty(), new IconFile(Map.of("name", "not-an-icon")).getIconId());
 
-        var search = new PermissionAssignment(Map.of("t", "0", "id1", "6", "id2", "0", "p", "221"));
-        assertEquals(OptionalInt.empty(), search.getValue());
-        assertEquals(Optional.empty(), search.isNegated());
         var overview = new PermissionAssignment(
                 Map.of("t", "0", "id1", "6", "id2", "0", "p", "221", "v", "75", "n", "0", "s", "1"));
-        assertEquals(OptionalInt.of(75), overview.getValue());
-        assertEquals(Optional.of(true), overview.isSkipped());
+        assertEquals(75, overview.getValue());
+        assertFalse(overview.isNegated());
+        assertTrue(overview.isSkipped());
 
         var parameters = new FileTransferParameters(Map.of("ftkey", "k", "port", "30033", "seekpos", "0"));
         assertEquals(Optional.empty(), parameters.findFailure());

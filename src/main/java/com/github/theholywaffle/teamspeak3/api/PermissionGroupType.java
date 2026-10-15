@@ -1,9 +1,9 @@
 package com.github.theholywaffle.teamspeak3.api;
 
-import com.github.theholywaffle.teamspeak3.api.wrapper.PermissionAssignment;
+import com.github.theholywaffle.teamspeak3.api.wrapper.PermissionSource;
 
 /**
- * An enum describing where a {@link PermissionAssignment} originates from.
+ * An enum describing where a {@link PermissionSource} originates from.
  */
 public enum PermissionGroupType {
 

@@ -657,7 +657,7 @@ class WebQueryCompatibilityIT {
                     created.publish(e);
                 }
             });
-            ClientId observerId = observed.whoAmI().getId();
+            ClientId observerId = observed.whoAmI().getId().orElseThrow();
             var api = query.getApi(VirtualServerId.of(1));
             var webClient = api.whoAmI();
             evidence.add("web client " + new TreeMap<>(webClient.getMap()));

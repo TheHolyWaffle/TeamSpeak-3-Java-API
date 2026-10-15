@@ -49,7 +49,7 @@ class FileTransferApiTest {
         FutureAssertions.awaitCommandAdmission(query);
         assertEquals(
                 ClientId.of(42),
-                query.getAsyncApi().whoAmI().get(2, TimeUnit.SECONDS).getId());
+                query.getAsyncApi().whoAmI().get(2, TimeUnit.SECONDS).getId().orElseThrow());
         query.exit();
     }
 
@@ -120,7 +120,8 @@ class FileTransferApiTest {
             var pending = query.getAsyncApi().whoAmI();
             assertEquals(0, query.commandAdmission(true).availablePermits());
             query.connect();
-            assertEquals(ClientId.of(42), pending.get(2, TimeUnit.SECONDS).getId());
+            assertEquals(
+                    ClientId.of(42), pending.get(2, TimeUnit.SECONDS).getId().orElseThrow());
             assertArrayEquals(bytes, received.get(2, TimeUnit.SECONDS));
             FutureAssertions.awaitCommandAdmission(query);
             query.exit();

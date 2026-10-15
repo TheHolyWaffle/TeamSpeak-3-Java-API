@@ -7,7 +7,7 @@ import com.github.theholywaffle.teamspeak3.api.wrapper.ApiKey;
 import com.github.theholywaffle.teamspeak3.commands.ApiKeyCommands;
 import java.time.Duration;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -25,24 +25,22 @@ public final class ApiKeyApiAsync {
 
     /** @see ApiKeyApi#add(ApiKeyScope, Duration) */
     public CompletableFuture<ApiKey> add(ApiKeyScope scope, Duration lifetime) {
-        return requests.model(ApiKeyCommands.apiKeyAdd(scope, lifetime, null), ApiKey::new);
+        return requests.model(ApiKeyCommands.apiKeyAdd(scope, lifetime, Optional.empty()), ApiKey::new);
     }
 
     /** @see ApiKeyApi#add(ApiKeyScope, Duration, ClientDatabaseId) */
     public CompletableFuture<ApiKey> add(ApiKeyScope scope, Duration lifetime, ClientDatabaseId owner) {
-        Objects.requireNonNull(owner, "owner");
-        return requests.model(ApiKeyCommands.apiKeyAdd(scope, lifetime, owner), ApiKey::new);
+        return requests.model(ApiKeyCommands.apiKeyAdd(scope, lifetime, Optional.of(owner)), ApiKey::new);
     }
 
     /** @see ApiKeyApi#list() */
     public CompletableFuture<List<ApiKey>> list() {
-        return requests.models(ApiKeyCommands.apiKeyList(null), ApiKey::new);
+        return requests.models(ApiKeyCommands.apiKeyList(Optional.empty()), ApiKey::new);
     }
 
     /** @see ApiKeyApi#list(ClientDatabaseId) */
     public CompletableFuture<List<ApiKey>> list(ClientDatabaseId owner) {
-        Objects.requireNonNull(owner, "owner");
-        return requests.models(ApiKeyCommands.apiKeyList(owner), ApiKey::new);
+        return requests.models(ApiKeyCommands.apiKeyList(Optional.of(owner)), ApiKey::new);
     }
 
     /** @see ApiKeyApi#listAll() */

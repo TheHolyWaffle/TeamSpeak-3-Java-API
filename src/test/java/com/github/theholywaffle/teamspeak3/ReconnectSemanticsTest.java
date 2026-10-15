@@ -130,7 +130,8 @@ class ReconnectSemanticsTest {
                 assertTrue(received.await(1, TimeUnit.SECONDS));
                 var waiting = query.getAsyncApi().instance().version();
                 drop.countDown();
-                assertEquals(ClientId.of(42), read.get(2, TimeUnit.SECONDS).getId());
+                assertEquals(
+                        ClientId.of(42), read.get(2, TimeUnit.SECONDS).getId().orElseThrow());
                 assertEquals(Optional.of(VirtualServerId.of(7)), read.get().getVirtualServerId());
                 assertEquals("test", waiting.get(2, TimeUnit.SECONDS).version());
                 query.exit();

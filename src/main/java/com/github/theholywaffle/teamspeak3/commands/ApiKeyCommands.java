@@ -15,9 +15,9 @@ public final class ApiKeyCommands {
 
     /**
      * @param lifetime whole days, or {@link Duration#ZERO} for a key that never expires
-     * @param owner the owning client, or {@code null} for the invoker
+     * @param owner the owning client, or empty for the invoker
      */
-    public static Command apiKeyAdd(ApiKeyScope scope, Duration lifetime, ClientDatabaseId owner) {
+    public static Command apiKeyAdd(ApiKeyScope scope, Duration lifetime, Optional<ClientDatabaseId> owner) {
         if (scope == null || scope == ApiKeyScope.UNKNOWN) {
             throw new IllegalArgumentException("API key scope must be MANAGE, WRITE or READ");
         }
@@ -27,15 +27,13 @@ public final class ApiKeyCommands {
         return new CommandBuilder("apikeyadd")
                 .add(new KeyValueParam("scope", scope.getName()))
                 .add(new KeyValueParam("lifetime", lifetime.toDays()))
-                .addIfPresent("cldbid", Optional.ofNullable(owner))
+                .addIfPresent("cldbid", owner)
                 .build();
     }
 
-    /** @param owner the owning client, or {@code null} for the invoker */
-    public static Command apiKeyList(ClientDatabaseId owner) {
-        return new CommandBuilder("apikeylist")
-                .addIfPresent("cldbid", Optional.ofNullable(owner))
-                .build();
+    /** @param owner the owning client, or empty for the invoker */
+    public static Command apiKeyList(Optional<ClientDatabaseId> owner) {
+        return new CommandBuilder("apikeylist").addIfPresent("cldbid", owner).build();
     }
 
     public static Command apiKeyListAll() {

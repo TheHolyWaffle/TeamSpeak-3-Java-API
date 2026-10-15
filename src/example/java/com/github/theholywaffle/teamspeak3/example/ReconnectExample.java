@@ -49,7 +49,7 @@ public final class ReconnectExample {
                 .setConnectionHandler(new ConnectionHandler() {
                     @Override
                     public void onConnect(TS3Api api) {
-                        clientId = api.whoAmI().getId();
+                        clientId = api.whoAmI().getId().orElseThrow();
                         System.out.println("Connected as client " + clientId);
                     }
 

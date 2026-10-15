@@ -37,8 +37,8 @@ class CommandFuturesTest {
                 var query = query(peer)) {
             query.connect();
             var source = query.getAsyncApi().whoAmI();
-            var one = source.thenApply(value -> value.getId().value() + 1);
-            var two = source.thenApply(value -> value.getId().value() * 2);
+            var one = source.thenApply(value -> value.getId().orElseThrow().value() + 1);
+            var two = source.thenApply(value -> value.getId().orElseThrow().value() * 2);
             var thrown = new IllegalArgumentException("callback");
             var bad = source.thenApply(_ -> {
                 throw thrown;
@@ -50,7 +50,7 @@ class CommandFuturesTest {
                     thrown,
                     assertThrows(ExecutionException.class, () -> bad.get(2, TimeUnit.SECONDS))
                             .getCause());
-            assertEquals(ClientId.of(3), source.get().getId());
+            assertEquals(ClientId.of(3), source.get().getId().orElseThrow());
             query.exit();
             peer.await();
         } finally {
@@ -230,7 +230,7 @@ class CommandFuturesTest {
             var next = query.getAsyncApi().whoAmI();
             assertFalse(next.isDone());
             query.connect();
-            assertEquals(ClientId.of(2), next.get(2, TimeUnit.SECONDS).getId());
+            assertEquals(ClientId.of(2), next.get(2, TimeUnit.SECONDS).getId().orElseThrow());
             FutureAssertions.awaitCommandAdmission(query);
             query.exit();
             peer.await();
@@ -258,7 +258,7 @@ class CommandFuturesTest {
             var next = query.getAsyncApi().whoAmI();
             respond.countDown();
             assertThrows(CancellationException.class, sent::get);
-            assertEquals(ClientId.of(2), next.get(2, TimeUnit.SECONDS).getId());
+            assertEquals(ClientId.of(2), next.get(2, TimeUnit.SECONDS).getId().orElseThrow());
             query.exit();
             peer.await();
         } finally {
@@ -287,7 +287,7 @@ class CommandFuturesTest {
             for (var future : List.of(first, second))
                 future.thenAccept(value -> {
                     threads.add(Thread.currentThread().getName());
-                    order.add(value.getId().value());
+                    order.add(value.getId().orElseThrow().value());
                     completed.countDown();
                 });
             respond.countDown();
@@ -358,7 +358,7 @@ class CommandFuturesTest {
                             .getCause());
             var next = query.getAsyncApi().whoAmI();
             respond.countDown();
-            assertEquals(ClientId.of(2), next.get(2, TimeUnit.SECONDS).getId());
+            assertEquals(ClientId.of(2), next.get(2, TimeUnit.SECONDS).getId().orElseThrow());
             query.exit();
             peer.await();
         } finally {
@@ -493,7 +493,8 @@ class CommandFuturesTest {
                 var next = query.getAsyncApi().whoAmI();
                 assertFalse(next.isDone());
                 query.connect();
-                assertEquals(ClientId.of(2), next.get(2, TimeUnit.SECONDS).getId());
+                assertEquals(
+                        ClientId.of(2), next.get(2, TimeUnit.SECONDS).getId().orElseThrow());
             } finally {
                 release.countDown();
                 cancelling.join(5000);
@@ -607,7 +608,11 @@ class CommandFuturesTest {
                 assertEquals(1, query.commandAdmission(true).availablePermits());
                 assertEquals(
                         ClientId.of(2),
-                        query.getAsyncApi().whoAmI().get(2, TimeUnit.SECONDS).getId());
+                        query.getAsyncApi()
+                                .whoAmI()
+                                .get(2, TimeUnit.SECONDS)
+                                .getId()
+                                .orElseThrow());
                 FutureAssertions.awaitCommandAdmission(query);
                 query.exit();
                 peer.await();

@@ -491,7 +491,7 @@ public class Wrapper {
      * @throws TS3InvalidValueException if the value is not a 32-bit integer
      */
     protected final Optional<IconId> findIconId(Property property) {
-        return findParsed(property.getName(), ICON_ID, Wrapper::parseIconId).flatMap(id -> id);
+        return findParsed(property.getName(), ICON_ID, Wrapper::parseIconId).flatMap(Function.identity());
     }
 
     /**
@@ -634,7 +634,7 @@ public class Wrapper {
      */
     protected final <T extends EntityId> Optional<T> findId(String propertyName, LongFunction<T> type) {
         return findParsed(propertyName, NONNEGATIVE_ID, value -> optionalId(value, type))
-                .flatMap(id -> id);
+                .flatMap(Function.identity());
     }
 
     /**

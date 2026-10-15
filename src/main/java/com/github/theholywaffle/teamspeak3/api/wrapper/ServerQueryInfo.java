@@ -11,6 +11,7 @@ import com.github.theholywaffle.teamspeak3.api.VirtualServerProperty;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerStatus;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 /**
  * A class containing information about a server query, returned by the
@@ -53,10 +54,11 @@ public class ServerQueryInfo extends Wrapper {
     /**
      * Gets the client ID of the server query.
      *
-     * @return the server query's client ID; {@code 0} until a virtual server is selected
+     * @return the server query's client ID, or empty until a virtual server is selected (TeamSpeak sends {@code 0})
      */
-    public ClientId getId() {
-        return requireClientId("client_id");
+    public Optional<ClientId> getId() {
+        ClientId id = requireClientId("client_id");
+        return id.value() == 0 ? Optional.empty() : Optional.of(id);
     }
 
     /**
@@ -127,14 +129,12 @@ public class ServerQueryInfo extends Wrapper {
 
     /**
      * Gets the port used by the currently selected virtual server.
-     * <p>
-     * If no virtual server has been selected yet, this method will return {@code 0}.
-     * </p>
      *
-     * @return the port used by the current virtual server or {@code 0} if none is selected
+     * @return the port used by the current virtual server, or empty if none is selected (TeamSpeak sends {@code 0})
      */
-    public int getVirtualServerPort() {
-        return requireInt(VirtualServerProperty.VIRTUALSERVER_PORT);
+    public OptionalInt getVirtualServerPort() {
+        int port = requireInt(VirtualServerProperty.VIRTUALSERVER_PORT);
+        return port == 0 ? OptionalInt.empty() : OptionalInt.of(port);
     }
 
     /**

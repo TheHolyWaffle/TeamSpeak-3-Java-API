@@ -180,14 +180,14 @@ class ServerQueryCompatibilityIT {
                 query.connect();
                 var before = query.getApi().whoAmI();
                 assertEquals(Optional.of(VirtualServerId.of(1)), before.getVirtualServerId());
-                assertEquals(session.nickname(), before.getNickname());
+                assertEquals(session.nickname(), Optional.of(before.getNickname()));
                 proxy.drop();
                 assertTrue(restored.await(15, TimeUnit.SECONDS), "Configured session must reconnect");
                 assertEquals(2, transports.size());
                 assertNotSame(transports.get(0), transports.get(1));
                 var after = query.getApi().whoAmI();
                 assertEquals(Optional.of(VirtualServerId.of(1)), after.getVirtualServerId());
-                assertEquals(session.nickname(), after.getNickname());
+                assertEquals(session.nickname(), Optional.of(after.getNickname()));
                 // This privileged operation proves authentication was restored; its event proves the subscription.
                 ChannelId channel = query.getApi()
                         .channels()
@@ -253,7 +253,7 @@ class ServerQueryCompatibilityIT {
             })) {
                 actor.connect();
                 actor.getApi().selectVirtualServerById(VirtualServerId.of(1));
-                actorId.set(actor.getApi().whoAmI().getId());
+                actorId.set(actor.getApi().whoAmI().getId().orElseThrow());
                 assertTrue(joined.await(5, TimeUnit.SECONDS));
                 ChannelId channel = observer.getApi()
                         .channels()
@@ -304,8 +304,8 @@ class ServerQueryCompatibilityIT {
             api.selectVirtualServerById(VirtualServerId.of(1));
             observer.getApi().selectVirtualServerById(VirtualServerId.of(1));
             server.record(target.name(), api.instance().version());
-            ClientId actorId = api.whoAmI().getId();
-            assertNotEquals(actorId, observer.getApi().whoAmI().getId());
+            ClientId actorId = api.whoAmI().getId().orElseThrow();
+            assertNotEquals(actorId, observer.getApi().whoAmI().getId().orElseThrow());
             observer.getApi().events().register(TS3EventType.CHANNEL);
             try (var subscription = observer.subscribe(new TS3EventAdapter() {
                 @Override
@@ -459,8 +459,8 @@ class ServerQueryCompatibilityIT {
                 assertTrue(help.startsWith("Usage: " + command));
                 evidence.add("help " + command + "\n" + help);
             }
-            ClientId observerId = observer.getApi().whoAmI().getId();
-            assertNotEquals(observerId, api.whoAmI().getId());
+            ClientId observerId = observer.getApi().whoAmI().getId().orElseThrow();
+            assertNotEquals(observerId, api.whoAmI().getId().orElseThrow());
             try (var channels = new ChannelCleanup(api)) {
                 ChannelId channel = channels.track(api.channels()
                         .create(
@@ -732,7 +732,7 @@ class ServerQueryCompatibilityIT {
             actor.getApi().selectVirtualServerById(VirtualServerId.of(1));
             actor.getApi().setNickname("key-actor-" + target);
             var identity = actor.getApi().whoAmI();
-            ClientId observerId = api.whoAmI().getId();
+            ClientId observerId = api.whoAmI().getId().orElseThrow();
             assertNotEquals(observerId, identity.getId());
             server.record(target.name(), api.instance().version());
             for (String command :
@@ -1094,9 +1094,9 @@ class ServerQueryCompatibilityIT {
                 subject.connect();
                 subject.getApi().selectVirtualServerById(VirtualServerId.of(1));
                 var identity = subject.getApi().whoAmI();
-                ClientId id = identity.getId();
+                ClientId id = identity.getId().orElseThrow();
                 assertNotEquals(invoker.getId(), id);
-                assertNotEquals(observer.getApi().whoAmI().getId(), id);
+                assertNotEquals(observer.getApi().whoAmI().getId().orElseThrow(), id);
                 var join = joins.poll(5, TimeUnit.SECONDS);
                 assertNotNull(join);
                 evidence.add("join " + new java.util.TreeMap<>(join.getMap()));
@@ -1228,7 +1228,7 @@ class ServerQueryCompatibilityIT {
         assertEquals(java.util.OptionalInt.of(reason), event.getReasonId());
         assertEquals(invoker != null, event.getMap().containsKey("invokerid"));
         if (invoker != null) {
-            assertEquals(Optional.of(invoker.getId()), event.getInvokerId());
+            assertEquals(invoker.getId(), event.getInvokerId());
             assertEquals(Optional.of(invoker.getNickname()), event.getInvokerName());
             assertEquals(Optional.of(invoker.getUniqueIdentifier()), event.getInvokerUniqueId());
         } else {
@@ -1262,7 +1262,8 @@ class ServerQueryCompatibilityIT {
             server.record(target.name(), api.instance().version());
             api.setNickname("server-edit-" + target);
             var actorInfo = api.whoAmI();
-            assertNotEquals(actorInfo.getId(), observer.getApi().whoAmI().getId());
+            assertNotEquals(
+                    actorInfo.getId(), observer.getApi().whoAmI().getId().orElseThrow());
             for (String command : java.util.List.of(
                     "serverinfo",
                     "serverlist",
@@ -1401,7 +1402,7 @@ class ServerQueryCompatibilityIT {
         assertNotNull(event, "Expected server-edit notification from independent actor");
         evidence.add("server edit " + new java.util.TreeMap<>(event.getMap()));
         assertEquals(name, event.require(VirtualServerProperty.VIRTUALSERVER_NAME));
-        assertEquals(Optional.of(actorInfo.getId()), event.getInvokerId());
+        assertEquals(actorInfo.getId(), event.getInvokerId());
         assertEquals(Optional.of(actorInfo.getNickname()), event.getInvokerName());
         assertEquals(Optional.of(actorInfo.getUniqueIdentifier()), event.getInvokerUniqueId());
         assertTrue(event.getMap().containsKey("reasonid"));
@@ -1437,7 +1438,7 @@ class ServerQueryCompatibilityIT {
             api.setNickname(nickname);
             var actorInfo = api.whoAmI();
             assertEquals(nickname, actorInfo.getNickname());
-            ClientId observerId = recipient.whoAmI().getId();
+            ClientId observerId = recipient.whoAmI().getId().orElseThrow();
             assertNotEquals(actorInfo.getId(), observerId);
             assertFalse(actorInfo.getUniqueIdentifier().isBlank());
             for (String command :
@@ -1587,7 +1588,7 @@ class ServerQueryCompatibilityIT {
         evidence.add("message " + new java.util.TreeMap<>(event.getMap()));
         assertEquals(mode, event.getTargetMode());
         assertEquals(message, event.getMessage());
-        assertEquals(Optional.of(actorInfo.getId()), event.getInvokerId());
+        assertEquals(actorInfo.getId(), event.getInvokerId());
         assertEquals(Optional.of(actorInfo.getNickname()), event.getInvokerName());
         assertEquals(Optional.of(actorInfo.getUniqueIdentifier()), event.getInvokerUniqueId());
         assertEquals(
@@ -2213,9 +2214,6 @@ class ServerQueryCompatibilityIT {
                 assertFalse(assignment.getMap().containsKey("v"), "permfind returns identities, not assignment values");
                 assertFalse(assignment.getMap().containsKey("n"));
                 assertFalse(assignment.getMap().containsKey("s"));
-                assertEquals(java.util.OptionalInt.empty(), assignment.getValue());
-                assertEquals(Optional.empty(), assignment.isNegated());
-                assertEquals(Optional.empty(), assignment.isSkipped());
                 evidence.add("assignment search " + new java.util.TreeMap<>(assignment.getMap()));
                 api.permissions()
                         .add(PermissionTarget.serverGroup(serverGroup.id()), PermissionGrant.of(integerName, 37));

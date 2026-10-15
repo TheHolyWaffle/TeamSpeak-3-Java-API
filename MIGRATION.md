@@ -249,6 +249,8 @@ return a new `UNKNOWN` constant where they returned `null`.
 | `int` file transfer IDs (`clientftfid`, `serverftfid`) | `ClientFileTransferId`, `ServerFileTransferId` (`int`-backed) |
 | `PrivilegeKey.getGroupId()`/`getChannelId()`, `PrivilegeKeyUsedEvent.getPrivilegeKeyGroupId()`/`getPrivilegeKeyChannelId()` | `getGrant()` on both: a sealed `PrivilegeKeyGrant`, either `ServerGroupGrant(serverGroupId)` or `ChannelGroupGrant(channelGroupId, channelId)` |
 | `PermissionAssignment.getMajorId()`/`getMinorId()` `int` | `long` |
+| `PermissionAssignment` from `getPermissionAssignments` (`permfind`), whose value and flags defaulted | `PermissionSource`, without value and flags; `permissions().overview(..)` still returns `PermissionAssignment` |
+| `ServerQueryInfo.getId()`/`getVirtualServerPort()` `0` before a virtual server is selected | `Optional<ClientId>`, `OptionalInt` |
 | `Date` timestamps, `int`/`long` durations | `Instant`, `Duration` |
 | `Client.getServerGroups()` `int[]`, `getBadgeGUIDs()` `String[]` | `List<ServerGroupId>`, `List<String>` |
 | `ClientJoinEvent.getClientServerGroups()` comma-separated `String` | `List<ServerGroupId>` |
@@ -489,7 +491,7 @@ results use the [typed IDs](#models-and-values): `ClientId`, `ClientDatabaseId`,
 | `getOfflineMessage(int)` | Replaced | `messages().getOffline(messageId)` | returns `Optional<String>` instead of `null` for a missing message |
 | `getOfflineMessage(Message)` | Removed | `messages().getOffline(messageId)` | pass `message.getId()` |
 | `getOfflineMessages()` | Replaced | `messages().listOffline()` |  |
-| `getPermissionAssignments(String)` | Replaced | `permissions().assignments(name)` |  |
+| `getPermissionAssignments(String)` | Replaced | `permissions().assignments(name)` | returns `PermissionSource`, which has no value or flags |
 | `getPermissionIdByName(String)` | Replaced | `permissions().idByName(name)` |  |
 | `getPermissionIdsByName(String...)` | Replaced | `permissions().idsByName(names...)` | returns `List<Integer>` instead of `int[]` |
 | `getPermissionOverview(int, int)` | Replaced | `permissions().overview(channelId, cldbid)` |  |
@@ -599,4 +601,4 @@ results use the [typed IDs](#models-and-values): `ClientId`, `ClientDatabaseId`,
 | `uploadIconDirect(byte[])` | Replaced | `files().uploadIcon(data)` | returns `IconId` |
 | `usePrivilegeKey(String)` | Replaced | `privilegeKeys().use(token)` |  |
 | `usePrivilegeKey(PrivilegeKey)` | Removed | `privilegeKeys().use(token)` | pass `key.getToken()` |
-| `whoAmI()` | Retained | `whoAmI()` |  |
+| `whoAmI()` | Retained | `whoAmI()` | `getId()` and `getVirtualServerPort()` are empty before a virtual server is selected |

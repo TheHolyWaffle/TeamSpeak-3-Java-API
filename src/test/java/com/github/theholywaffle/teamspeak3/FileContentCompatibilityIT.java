@@ -112,7 +112,8 @@ class FileContentCompatibilityIT {
                         .toList();
                 assertEquals(1, listed.size());
                 assertEquals(ClientFileTransferId.of(3), listed.getFirst().getClientTransferId());
-                assertEquals(api.whoAmI().getId(), listed.getFirst().getClientId());
+                assertEquals(
+                        api.whoAmI().getId().orElseThrow(), listed.getFirst().getClientId());
                 evidence.add("pending transfer fields="
                         + new java.util.TreeSet<>(listed.getFirst().getMap().keySet()));
                 try (var socket = new java.net.Socket()) {

@@ -5,7 +5,6 @@ import com.github.theholywaffle.teamspeak3.commands.parameter.ArrayParameter;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 import com.github.theholywaffle.teamspeak3.commands.parameter.Parameter;
 import java.util.List;
-import java.util.Objects;
 
 /** File commands; TeamSpeak addresses the virtual server's own files as channel {@code 0}. */
 public final class FileCommands {
@@ -27,7 +26,7 @@ public final class FileCommands {
         FileLocation first = files.getFirst();
         for (FileLocation file : files) {
             if (!file.channelId().equals(first.channelId())
-                    || !Objects.equals(file.channelPassword(), first.channelPassword())) {
+                    || !file.channelPassword().equals(first.channelPassword())) {
                 throw new IllegalArgumentException("Files deleted together must share a channel and password");
             }
         }
@@ -50,7 +49,7 @@ public final class FileCommands {
     private static List<Parameter> fileEntry(FileLocation file) {
         return List.of(
                 channelId("cid", file),
-                new KeyValueParam("cpw", file.channelPassword()),
+                channelPassword("cpw", file),
                 new KeyValueParam("name", prefixSlash(file.path())));
     }
 
@@ -98,7 +97,7 @@ public final class FileCommands {
         addChannel(builder, from);
         if (!from.channelId().equals(to.channelId())) {
             builder.add(channelId("tcid", to));
-            builder.add(new KeyValueParam("tcpw", to.channelPassword()));
+            builder.add(channelPassword("tcpw", to));
         }
         builder.add(new KeyValueParam("oldname", prefixSlash(from.path())));
         builder.add(new KeyValueParam("newname", prefixSlash(to.path())));
@@ -107,7 +106,11 @@ public final class FileCommands {
 
     private static void addChannel(CommandBuilder builder, FileLocation location) {
         builder.add(channelId("cid", location));
-        builder.add(new KeyValueParam("cpw", location.channelPassword()));
+        builder.add(channelPassword("cpw", location));
+    }
+
+    private static KeyValueParam channelPassword(String key, FileLocation location) {
+        return new KeyValueParam(key, location.channelPassword().orElse(""));
     }
 
     private static KeyValueParam channelId(String key, FileLocation location) {

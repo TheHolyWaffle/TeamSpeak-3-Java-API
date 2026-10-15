@@ -35,8 +35,7 @@ public final class EventApiAsync {
         return register(eventType, Optional.of(channelId));
     }
 
-    /** @see EventApi#register(TS3EventType, Optional) */
-    public CompletableFuture<Void> register(TS3EventType eventType, Optional<ChannelId> channelId) {
+    private CompletableFuture<Void> register(TS3EventType eventType, Optional<ChannelId> channelId) {
         return requests.run(QueryCommands.serverNotifyRegister(eventType, channelId));
     }
 

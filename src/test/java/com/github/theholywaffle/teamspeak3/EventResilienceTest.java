@@ -188,7 +188,11 @@ class EventResilienceTest {
                 await(duplicateMoves);
                 assertEquals(
                         ClientId.of(2),
-                        query.getAsyncApi().whoAmI().get(3, TimeUnit.SECONDS).getId());
+                        query.getAsyncApi()
+                                .whoAmI()
+                                .get(3, TimeUnit.SECONDS)
+                                .getId()
+                                .orElseThrow());
                 assertEquals(1, query.getEventStatistics().unknownNotifications());
                 assertEquals(1, query.getEventStatistics().malformedNotifications());
                 assertEquals(1, query.getEventStatistics().listenerFailures());
@@ -241,7 +245,8 @@ class EventResilienceTest {
                         assertEquals(
                                 ClientId.of(2),
                                 FutureAssertions.read(query.getAsyncApi().whoAmI())
-                                        .getId());
+                                        .getId()
+                                        .orElseThrow());
                         break;
                     } catch (TS3QueueFullException full) {
                         if (System.nanoTime() >= until) throw full;

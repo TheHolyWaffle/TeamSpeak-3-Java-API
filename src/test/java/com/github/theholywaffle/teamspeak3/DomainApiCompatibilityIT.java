@@ -73,7 +73,7 @@ class DomainApiCompatibilityIT {
             var api = actor.getApi();
             api.selectVirtualServerById(VirtualServerId.of(1));
             ts3.record(target + "-domain-api", api.instance().version());
-            ClientId observerId = observer.getApi().whoAmI().getId();
+            ClientId observerId = observer.getApi().whoAmI().getId().orElseThrow();
             String sharedUid = observer.getApi().whoAmI().getUniqueIdentifier();
             assertEquals(
                     observerId,

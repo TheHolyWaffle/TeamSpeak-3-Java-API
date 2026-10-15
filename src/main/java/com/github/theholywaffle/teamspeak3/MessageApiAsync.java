@@ -67,8 +67,7 @@ public final class MessageApiAsync {
 
     /** @see MessageApi#getOffline(MessageId) */
     public CompletableFuture<Optional<String>> getOffline(MessageId messageId) {
-        return requests.optional(
-                MessageCommands.messageGet(messageId), row -> row.getMap().get("message"));
+        return requests.optional(MessageCommands.messageGet(messageId), row -> row.require("message"));
     }
 
     /** @see MessageApi#sendOffline(String, String, String) */

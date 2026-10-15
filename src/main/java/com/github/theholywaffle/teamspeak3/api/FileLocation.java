@@ -9,13 +9,14 @@ import java.util.Optional;
  *
  * @param channelId the channel owning the file, or empty for server files
  * @param path the absolute path, for example {@code "/docs/readme.txt"}
- * @param channelPassword the channel password, or {@code null} if none is required
+ * @param channelPassword the channel password, or empty if none is required
  */
-public record FileLocation(Optional<ChannelId> channelId, String path, String channelPassword) {
+public record FileLocation(Optional<ChannelId> channelId, String path, Optional<String> channelPassword) {
 
     public FileLocation {
         Objects.requireNonNull(channelId, "channelId");
         Objects.requireNonNull(path, "path");
+        Objects.requireNonNull(channelPassword, "channelPassword");
         if (path.isEmpty()) throw new IllegalArgumentException("Path must not be empty");
     }
 
@@ -25,7 +26,7 @@ public record FileLocation(Optional<ChannelId> channelId, String path, String ch
      * @return a location that needs no channel password
      */
     public static FileLocation of(ChannelId channelId, String path) {
-        return new FileLocation(Optional.of(channelId), path, null);
+        return new FileLocation(Optional.of(channelId), path, Optional.empty());
     }
 
     /**
@@ -33,15 +34,15 @@ public record FileLocation(Optional<ChannelId> channelId, String path, String ch
      * @return a location outside any channel
      */
     public static FileLocation ofServer(String path) {
-        return new FileLocation(Optional.empty(), path, null);
+        return new FileLocation(Optional.empty(), path, Optional.empty());
     }
 
     /**
-     * @param password the channel password, or {@code null} if none is required
+     * @param password the channel password
      * @return a copy using the given channel password
      */
     public FileLocation withChannelPassword(String password) {
-        return new FileLocation(channelId, path, password);
+        return new FileLocation(channelId, path, Optional.of(password));
     }
 
     /**

@@ -112,6 +112,6 @@ public class FileTransferParameters extends Wrapper {
      * @return the failure message, or empty if none was reported
      */
     public Optional<String> getMessage() {
-        return find("msg");
+        return findText("msg");
     }
 }

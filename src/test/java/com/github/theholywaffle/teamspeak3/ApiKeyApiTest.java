@@ -91,16 +91,21 @@ class ApiKeyApiTest {
     void rejectsLifetimesAndScopesTheServerCannotRepresent() {
         for (Duration invalid : List.of(Duration.ofDays(-1), Duration.ofHours(36), Duration.ofSeconds(1))) {
             assertThrows(
-                    IllegalArgumentException.class, () -> ApiKeyCommands.apiKeyAdd(ApiKeyScope.READ, invalid, null));
+                    IllegalArgumentException.class,
+                    () -> ApiKeyCommands.apiKeyAdd(ApiKeyScope.READ, invalid, Optional.empty()));
         }
-        assertThrows(IllegalArgumentException.class, () -> ApiKeyCommands.apiKeyAdd(ApiKeyScope.READ, null, null));
-        assertThrows(IllegalArgumentException.class, () -> ApiKeyCommands.apiKeyAdd(null, Duration.ZERO, null));
         assertThrows(
                 IllegalArgumentException.class,
-                () -> ApiKeyCommands.apiKeyAdd(ApiKeyScope.UNKNOWN, Duration.ZERO, null));
+                () -> ApiKeyCommands.apiKeyAdd(ApiKeyScope.READ, null, Optional.empty()));
+        assertThrows(
+                IllegalArgumentException.class, () -> ApiKeyCommands.apiKeyAdd(null, Duration.ZERO, Optional.empty()));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> ApiKeyCommands.apiKeyAdd(ApiKeyScope.UNKNOWN, Duration.ZERO, Optional.empty()));
         assertEquals(
                 "apikeyadd scope=write lifetime=0",
-                ApiKeyCommands.apiKeyAdd(ApiKeyScope.WRITE, Duration.ZERO, null).encoded());
+                ApiKeyCommands.apiKeyAdd(ApiKeyScope.WRITE, Duration.ZERO, Optional.empty())
+                        .encoded());
         assertThrows(IllegalArgumentException.class, () -> ApiKeyId.of(0));
         assertEquals(ApiKeyScope.MANAGE, ApiKeyScope.fromName("manage"));
         assertEquals(ApiKeyScope.UNKNOWN, ApiKeyScope.fromName("unknown"));

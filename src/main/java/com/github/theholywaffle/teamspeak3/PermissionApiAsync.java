@@ -14,6 +14,7 @@ import com.github.theholywaffle.teamspeak3.api.ServerGroupType;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Permission;
 import com.github.theholywaffle.teamspeak3.api.wrapper.PermissionAssignment;
 import com.github.theholywaffle.teamspeak3.api.wrapper.PermissionInfo;
+import com.github.theholywaffle.teamspeak3.api.wrapper.PermissionSource;
 import com.github.theholywaffle.teamspeak3.commands.Command;
 import com.github.theholywaffle.teamspeak3.commands.PermissionCommands;
 import java.util.List;
@@ -58,8 +59,8 @@ public final class PermissionApiAsync {
     }
 
     /** @see PermissionApi#assignments(String) */
-    public CompletableFuture<List<PermissionAssignment>> assignments(String permissionName) {
-        return requests.models(PermissionCommands.permFind(permissionName), PermissionAssignment::new);
+    public CompletableFuture<List<PermissionSource>> assignments(String permissionName) {
+        return requests.models(PermissionCommands.permFind(permissionName), PermissionSource::new);
     }
 
     /** @see PermissionApi#overview(ChannelId, ClientDatabaseId) */

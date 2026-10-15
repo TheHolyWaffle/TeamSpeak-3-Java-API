@@ -28,7 +28,7 @@ public class TextMessageEvent extends BaseEvent {
      * <li>If this is not an event for a private message, this method returns an empty optional</li>
      * </ul>
      *
-     * @return the client ID of the recipient
+     * @return the client ID of the recipient, or empty if this is not a private message
      */
     public Optional<ClientId> getTargetClientId() {
         return findClientId("target");

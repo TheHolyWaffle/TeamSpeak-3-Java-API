@@ -139,7 +139,7 @@ class ModelCompatibilityIT {
                 actor.connect();
                 var actorApi = actor.getApi();
                 actorApi.selectVirtualServerById(VirtualServerId.of(1));
-                var actorId = actorApi.whoAmI().getId();
+                var actorId = actorApi.whoAmI().getId().orElseThrow();
                 ChannelId parent = actorApi.channels()
                         .create("models-parent-" + target, Map.of(ChannelProperty.CHANNEL_FLAG_PERMANENT, "1"));
                 ChannelId child = actorApi.channels()
@@ -156,7 +156,7 @@ class ModelCompatibilityIT {
                     actorApi.channels().edit(child, Map.of(ChannelProperty.CHANNEL_PASSWORD, "secret"));
                     actorApi.channels().move(child, parent);
                     api.clients().move(actorId, parent);
-                    actorApi.messages().sendPrivate(api.whoAmI().getId(), "models " + target);
+                    actorApi.messages().sendPrivate(api.whoAmI().getId().orElseThrow(), "models " + target);
                     actorApi.servers().edit(Map.of(VirtualServerProperty.VIRTUALSERVER_NAME, serverName + " models"));
                     api.servers().edit(Map.of(VirtualServerProperty.VIRTUALSERVER_NAME, serverName));
                     api.serverGroups().addMember(ServerGroupId.of(7), databaseClient);
