@@ -68,7 +68,7 @@ public class ReconnectingConnectionHandler implements ConnectionHandler {
             userConnectionHandler.onDisconnect(ts3Query);
         }
 
-        long timeout = startTimeout;
+        int timeout = startTimeout;
         for (int attempt = 0; attempt < maxAttempts; attempt++) {
             if (Thread.currentThread().isInterrupted() || ts3Query.getState() != TS3Query.State.DISCONNECTED) return;
             try {
@@ -103,8 +103,9 @@ public class ReconnectingConnectionHandler implements ConnectionHandler {
         return maxAttempts;
     }
 
-    long nextDelay(long delay) {
-        return (long) Math.min(timeoutCap, Math.ceil(delay * multiplier) + addend);
+    int nextDelay(int delay) {
+        long grown = Math.round(Math.ceil(delay * multiplier) + addend);
+        return Math.clamp(grown, delay, timeoutCap);
     }
 
     static long jitterDelay(long upperBound) {

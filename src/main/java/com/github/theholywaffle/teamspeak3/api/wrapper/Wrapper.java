@@ -524,10 +524,7 @@ public class Wrapper {
      * @throws TS3InvalidValueException if the value is not a nonnegative integer
      */
     protected final Optional<ClientId> findClientId(String propertyName) {
-        OptionalInt id = findInt(propertyName);
-        return id.isEmpty()
-                ? Optional.empty()
-                : Optional.of(ClientId.of((int) nonNegative(propertyName, id.getAsInt())));
+        return findParsed(propertyName, NONNEGATIVE_ID, value -> ClientId.of(Integer.parseInt(value)));
     }
 
     /**
@@ -610,7 +607,7 @@ public class Wrapper {
      * @throws TS3InvalidValueException if the property is missing or not a nonnegative integer
      */
     protected final <T extends EntityId> Optional<T> requireOptionalId(String propertyName, LongFunction<T> type) {
-        return toId(propertyName, requireLong(propertyName), type);
+        return requireParsed(propertyName, NONNEGATIVE_ID, value -> optionalId(value, type));
     }
 
     /**
@@ -636,8 +633,8 @@ public class Wrapper {
      * @throws TS3InvalidValueException if the value is not a nonnegative integer
      */
     protected final <T extends EntityId> Optional<T> findId(String propertyName, LongFunction<T> type) {
-        OptionalLong id = findLong(propertyName);
-        return id.isEmpty() ? Optional.empty() : toId(propertyName, id.getAsLong(), type);
+        return findParsed(propertyName, NONNEGATIVE_ID, value -> optionalId(value, type))
+                .flatMap(id -> id);
     }
 
     /**
@@ -656,8 +653,9 @@ public class Wrapper {
         return groups;
     }
 
-    private <T extends EntityId> Optional<T> toId(String propertyName, long id, LongFunction<T> type) {
-        return nonNegative(propertyName, id) == 0 ? Optional.empty() : Optional.of(type.apply(id));
+    private static <T extends EntityId> Optional<T> optionalId(String value, LongFunction<T> type) {
+        long id = Long.parseLong(value);
+        return id == 0 ? Optional.empty() : Optional.of(type.apply(id));
     }
 
     /**
@@ -690,12 +688,7 @@ public class Wrapper {
      * @throws TS3InvalidValueException if the property is missing or not a nonnegative integer
      */
     protected final <T> T requireNonNegativeId(String propertyName, IntFunction<T> type) {
-        return type.apply((int) nonNegative(propertyName, requireInt(propertyName)));
-    }
-
-    private long nonNegative(String propertyName, long value) {
-        if (value < 0) throw new TS3InvalidValueException(propertyName, map.get(propertyName), NONNEGATIVE_ID, null);
-        return value;
+        return requireParsed(propertyName, NONNEGATIVE_ID, value -> type.apply(Integer.parseInt(value)));
     }
 
     /**
