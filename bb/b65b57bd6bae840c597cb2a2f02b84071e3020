@@ -1,0 +1,19 @@
+MIGRATION.md
+  s_77dc16926901f8::t_935072d29fab29 83,96-97,250
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bbb65b57bd6bae840c597cb2a2f02b84071e3020",
+  "prompts": {},
+  "sessions": {
+    "s_77dc16926901f8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "92ee9e25-41f9-4702-a3a3-2b89b3c2d5c4",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
