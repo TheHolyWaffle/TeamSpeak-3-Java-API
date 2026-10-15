@@ -1,0 +1,26 @@
+.github/renovate.json5
+  h_b0b95817cb397c 1
+CHANGELOG.md
+  h_b0b95817cb397c 6
+MIGRATION.md
+  h_b0b95817cb397c 1-45,49-52,54-72,79,81,84,86-92,94,96-98,112-113,117,120,142,166,168-169,171-275,277-333,337-340
+README.md
+  h_b0b95817cb397c 22,36,40,51,68,84,137,203,211,233,242,267,296,333,345-346,377,395,406,413,415-419
+src/test/java/com/github/theholywaffle/teamspeak3/ApiMigrationInventoryTest.java
+  h_b0b95817cb397c 17,19
+src/test/java/com/github/theholywaffle/teamspeak3/CommonWorkflow.java
+  h_b0b95817cb397c 11
+src/test/java/com/github/theholywaffle/teamspeak3/DocumentationTest.java
+  h_b0b95817cb397c 27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f97795a5c81adc96c8a8f001ffb47f4379e10c1d",
+  "prompts": {},
+  "humans": {
+    "h_b0b95817cb397c": {
+      "author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
