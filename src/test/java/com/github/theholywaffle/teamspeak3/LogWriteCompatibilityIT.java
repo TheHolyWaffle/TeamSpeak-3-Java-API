@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.github.theholywaffle.teamspeak3.api.LogLevel;
 import com.github.theholywaffle.teamspeak3.api.VirtualServerId;
-import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,8 +37,8 @@ class LogWriteCompatibilityIT {
                     for (var level : LogLevel.values()) {
                         String marker = "issue441-log-" + sid + "-" + level.getIndex() + " 日本語 | literal \\s";
                         markers.add(marker);
-                        api.executeRawCommand(
-                                "logadd loglevel=" + level.getIndex() + " logmsg=" + CommandEncoding.encode(marker));
+                        if (sid == 0) api.addLogEntry(level, marker);
+                        else query.getAsyncApi().addLogEntry(level, marker).get(5, TimeUnit.SECONDS);
                     }
                     String scope = sid == 0 ? " instance=1" : "";
                     long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);

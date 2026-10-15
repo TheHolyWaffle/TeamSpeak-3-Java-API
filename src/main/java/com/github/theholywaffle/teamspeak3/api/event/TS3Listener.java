@@ -2,37 +2,35 @@ package com.github.theholywaffle.teamspeak3.api.event;
 
 /**
  * Interface used to listen to events from a TeamSpeak3 server.
- * <p><i>
- * Directly using this interface requires implementing all listener methods, even if you don't intend to use them.
- * Consider extending {@link TS3EventAdapter} instead.
- * </i></p>
+ * <p>All callbacks default to no-ops. Implement only the events you need;
+ * {@link TS3EventAdapter} remains available for existing subclasses.</p>
  *
  * @see com.github.theholywaffle.teamspeak3.TS3Query#subscribe(TS3Listener)
  * @see com.github.theholywaffle.teamspeak3.EventApi#subscribe(TS3Listener)
  */
 public interface TS3Listener {
 
-    void onTextMessage(TextMessageEvent e);
+    default void onTextMessage(TextMessageEvent e) {}
 
-    void onClientJoin(ClientJoinEvent e);
+    default void onClientJoin(ClientJoinEvent e) {}
 
-    void onClientLeave(ClientLeaveEvent e);
+    default void onClientLeave(ClientLeaveEvent e) {}
 
-    void onServerEdit(ServerEditedEvent e);
+    default void onServerEdit(ServerEditedEvent e) {}
 
-    void onChannelEdit(ChannelEditedEvent e);
+    default void onChannelEdit(ChannelEditedEvent e) {}
 
-    void onChannelDescriptionChanged(ChannelDescriptionEditedEvent e);
+    default void onChannelDescriptionChanged(ChannelDescriptionEditedEvent e) {}
 
-    void onClientMoved(ClientMovedEvent e);
+    default void onClientMoved(ClientMovedEvent e) {}
 
-    void onChannelCreate(ChannelCreateEvent e);
+    default void onChannelCreate(ChannelCreateEvent e) {}
 
-    void onChannelDeleted(ChannelDeletedEvent e);
+    default void onChannelDeleted(ChannelDeletedEvent e) {}
 
-    void onChannelMoved(ChannelMovedEvent e);
+    default void onChannelMoved(ChannelMovedEvent e) {}
 
-    void onChannelPasswordChanged(ChannelPasswordChangedEvent e);
+    default void onChannelPasswordChanged(ChannelPasswordChangedEvent e) {}
 
-    void onPrivilegeKeyUsed(PrivilegeKeyUsedEvent e);
+    default void onPrivilegeKeyUsed(PrivilegeKeyUsedEvent e) {}
 }

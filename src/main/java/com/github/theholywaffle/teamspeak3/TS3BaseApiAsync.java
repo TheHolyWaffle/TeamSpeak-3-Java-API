@@ -2,11 +2,13 @@ package com.github.theholywaffle.teamspeak3;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelId;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
+import com.github.theholywaffle.teamspeak3.api.LogLevel;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.wrapper.ServerQueryInfo;
 import com.github.theholywaffle.teamspeak3.commands.ClientCommands;
 import com.github.theholywaffle.teamspeak3.commands.CommandEncoding;
 import com.github.theholywaffle.teamspeak3.commands.QueryCommands;
+import com.github.theholywaffle.teamspeak3.commands.ServerCommands;
 import com.github.theholywaffle.teamspeak3.commands.response.DefaultArrayResponse;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -74,6 +76,11 @@ public class TS3BaseApiAsync {
         queryLogins = new QueryLoginApiAsync(requests);
         serverGroups = new ServerGroupApiAsync(requests);
         servers = new VirtualServerApiAsync(requests);
+    }
+
+    /** @see TS3BaseApi#addLogEntry(LogLevel, String) */
+    public CompletableFuture<Void> addLogEntry(LogLevel level, String message) {
+        return requests.run(ServerCommands.logAdd(level, message));
     }
 
     /** @return asynchronous Web Query API key administration */

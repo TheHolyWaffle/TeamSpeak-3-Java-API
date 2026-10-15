@@ -3,6 +3,7 @@ package com.github.theholywaffle.teamspeak3;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
 import com.github.theholywaffle.teamspeak3.api.IconId;
+import com.github.theholywaffle.teamspeak3.api.ServerFileTransferId;
 import com.github.theholywaffle.teamspeak3.api.UploadMode;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3CommandFailedException;
 import com.github.theholywaffle.teamspeak3.api.exception.TS3FileTransferFailedException;
@@ -81,6 +82,11 @@ public final class FileApiAsync {
     /** @see FileApi#transfers() */
     public CompletableFuture<List<FileTransfer>> transfers() {
         return requests.models(FileCommands.ftList(), FileTransfer::new);
+    }
+
+    /** @see FileApi#stop(ServerFileTransferId, boolean) */
+    public CompletableFuture<Void> stop(ServerFileTransferId transferId, boolean delete) {
+        return requests.run(FileCommands.ftStop(transferId, delete));
     }
 
     /** @see FileApi#upload(FileLocation, InputStream, long, UploadMode) */

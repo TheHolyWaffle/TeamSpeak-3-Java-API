@@ -29,6 +29,30 @@ class EventResilienceTest {
     }
 
     @Test
+    void singleCallbackListenerIgnoresUnhandledEventsAndAdapterStillReceivesMessages() {
+        var received = new CountDownLatch(2);
+        try (var query = new TS3Query(new TS3Config())) {
+            query.subscribe(new TS3Listener() {
+                @Override
+                public void onTextMessage(TextMessageEvent event) {
+                    assertEquals("1", event.getMessage());
+                    received.countDown();
+                }
+            });
+            query.subscribe(new TS3EventAdapter() {
+                @Override
+                public void onTextMessage(TextMessageEvent event) {
+                    received.countDown();
+                }
+            });
+            query.getEventManager().fireEvent(listener -> listener.onClientJoin(null));
+            query.getEventManager().fireEvent(event(1));
+            await(received);
+            assertEquals(0, query.getEventStatistics().listenerFailures());
+        }
+    }
+
+    @Test
     void overflowDropsNewestAndPreservesOrderingAfterThrowingCallback() throws Exception {
         var entered = new CountDownLatch(1);
         var release = new CountDownLatch(1);

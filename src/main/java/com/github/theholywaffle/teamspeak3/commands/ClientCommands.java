@@ -1,6 +1,7 @@
 package com.github.theholywaffle.teamspeak3.commands;
 
 import com.github.theholywaffle.teamspeak3.api.ChannelId;
+import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.ClientId;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 import com.github.theholywaffle.teamspeak3.api.ReasonIdentifier;
@@ -39,6 +40,21 @@ public final class ClientCommands {
 
         return new CommandBuilder("clientgetdbidfromuid")
                 .add(new KeyValueParam("cluid", clientUId))
+                .build();
+    }
+
+    public static Command clientGetNameFromUId(String uniqueId) {
+        if (uniqueId == null || uniqueId.isEmpty()) {
+            throw new IllegalArgumentException("Client unique ID must be a non-empty string");
+        }
+        return new CommandBuilder("clientgetnamefromuid")
+                .add(new KeyValueParam("cluid", uniqueId))
+                .build();
+    }
+
+    public static Command clientGetNameFromDbId(ClientDatabaseId databaseId) {
+        return new CommandBuilder("clientgetnamefromdbid")
+                .add(new KeyValueParam("cldbid", databaseId))
                 .build();
     }
 

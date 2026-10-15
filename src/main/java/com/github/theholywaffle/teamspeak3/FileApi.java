@@ -3,6 +3,7 @@ package com.github.theholywaffle.teamspeak3;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
 import com.github.theholywaffle.teamspeak3.api.IconId;
+import com.github.theholywaffle.teamspeak3.api.ServerFileTransferId;
 import com.github.theholywaffle.teamspeak3.api.UploadMode;
 import com.github.theholywaffle.teamspeak3.api.wrapper.FileInfo;
 import com.github.theholywaffle.teamspeak3.api.wrapper.FileListEntry;
@@ -107,6 +108,17 @@ public final class FileApi {
      */
     public List<FileTransfer> transfers() {
         return CommandFutures.join(async.transfers());
+    }
+
+    /**
+     * Stops a running server-side transfer, including one discovered through {@link #transfers()}.
+     * This is separate from cancelling a local upload or download future.
+     *
+     * @param transferId the server-side transfer ID
+     * @param delete whether to delete the incomplete uploaded file
+     */
+    public void stop(ServerFileTransferId transferId, boolean delete) {
+        CommandFutures.join(async.stop(transferId, delete));
     }
 
     /**

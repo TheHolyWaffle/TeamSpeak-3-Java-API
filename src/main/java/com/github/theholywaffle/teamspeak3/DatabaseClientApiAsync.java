@@ -3,10 +3,12 @@ package com.github.theholywaffle.teamspeak3;
 import com.github.theholywaffle.teamspeak3.api.ClientDatabaseId;
 import com.github.theholywaffle.teamspeak3.api.ClientProperty;
 import com.github.theholywaffle.teamspeak3.api.CommandFutures;
+import com.github.theholywaffle.teamspeak3.api.wrapper.ClientIdentity;
 import com.github.theholywaffle.teamspeak3.api.wrapper.CustomPropertyAssignment;
 import com.github.theholywaffle.teamspeak3.api.wrapper.DatabaseClient;
 import com.github.theholywaffle.teamspeak3.api.wrapper.DatabaseClientInfo;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Wrapper;
+import com.github.theholywaffle.teamspeak3.commands.ClientCommands;
 import com.github.theholywaffle.teamspeak3.commands.CustomPropertyCommands;
 import com.github.theholywaffle.teamspeak3.commands.DatabaseClientCommands;
 import java.util.Collections;
@@ -73,6 +75,22 @@ public final class DatabaseClientApiAsync {
         var id = requests.optional(
                 DatabaseClientCommands.clientDBFind(uniqueId, true), row -> row.requireDatabaseId("cldbid"));
         return QueryRequests.thenLookup(id, this::info);
+    }
+
+    /** @see DatabaseClientApi#findIdentityByUniqueId(String) */
+    public CompletableFuture<Optional<ClientIdentity>> findIdentityByUniqueId(String uniqueId) {
+        return QueryRequests.recover(
+                requests.optional(ClientCommands.clientGetNameFromUId(uniqueId), ClientIdentity::from),
+                QueryRequests.INVALID_CLIENT_ID,
+                Optional.empty());
+    }
+
+    /** @see DatabaseClientApi#findIdentityByDatabaseId(ClientDatabaseId) */
+    public CompletableFuture<Optional<ClientIdentity>> findIdentityByDatabaseId(ClientDatabaseId databaseId) {
+        return QueryRequests.recover(
+                requests.optional(ClientCommands.clientGetNameFromDbId(databaseId), ClientIdentity::from),
+                QueryRequests.INVALID_CLIENT_ID,
+                Optional.empty());
     }
 
     /** @see DatabaseClientApi#edit(ClientDatabaseId, Map) */

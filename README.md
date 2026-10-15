@@ -168,6 +168,12 @@ possible. `ScheduledActionsExample` pokes, kicks and moves real clients: only ru
 
 See the [Javadoc](https://www.javadoc.io/doc/com.github.theholywaffle/teamspeak3-api).
 
+For a last-known nickname and identity, including offline clients, use
+`api.databaseClients().findIdentityByUniqueId(uid)` or
+`findIdentityByDatabaseId(databaseId)`. Each sends one command and returns an
+`Optional<ClientIdentity>`; full database information remains available through `info` and
+`findByUniqueId`.
+
 ### Asynchronous API and futures
 
 `query.getAsyncApi()` offers the same operations returning JDK `CompletableFuture`s. Responses
@@ -179,10 +185,11 @@ runs. Cancelling the original future removes a command that has not been sent ye
 ### Events
 
 Receiving events needs two steps: register the notification types with the server, and subscribe a
-local listener.
+local listener. All `TS3Listener` callbacks default to no-ops, so implement only the
+events you need. Existing `TS3EventAdapter` subclasses continue to work.
 
 ```java
-EventSubscription subscription = api.events().subscribe(new TS3EventAdapter() {
+EventSubscription subscription = api.events().subscribe(new TS3Listener() {
     @Override
     public void onClientJoin(ClientJoinEvent e) {
         System.out.println(e.getClientNickname() + " joined");
@@ -252,6 +259,10 @@ the library) and supports resume. Limitations:
   `permissions().add(PermissionTarget.channel(id), PermissionGrant.icon(iconId))`; TS3 rejects the
   `channel_icon_id` and `client_icon_id` properties.
 
+To stop a server-side transfer returned by `api.files().transfers()`, call
+`api.files().stop(transfer.getServerTransferId(), deleteIncompleteFile)`. This can stop a
+transfer independently of a local upload/download future. File commands require RAW or SSH.
+
 ### SSH host key trust
 
 SSH connections verify the server's host key; unknown and changed keys are rejected. By default the
@@ -285,6 +296,10 @@ See the [SLF4J manual](https://www.slf4j.org/manual.html). `setEnableCommunicati
 every command and response at DEBUG with passwords, privilege keys, API keys and file transfer keys
 redacted; other data such as IP addresses and messages is logged unchanged. This
 [SimpleLogger configuration](src/example/simplelogger.properties) shows that output.
+
+Write an entry to the TeamSpeak server log with `api.addLogEntry(LogLevel.INFO, "message")`.
+The selected virtual server and permissions determine the destination; this command has no
+explicit instance-log selector. This is separate from the library's SLF4J logging.
 
 ### Flood rate
 

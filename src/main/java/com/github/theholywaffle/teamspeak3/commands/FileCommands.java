@@ -1,6 +1,7 @@
 package com.github.theholywaffle.teamspeak3.commands;
 
 import com.github.theholywaffle.teamspeak3.api.FileLocation;
+import com.github.theholywaffle.teamspeak3.api.ServerFileTransferId;
 import com.github.theholywaffle.teamspeak3.commands.parameter.ArrayParameter;
 import com.github.theholywaffle.teamspeak3.commands.parameter.KeyValueParam;
 import com.github.theholywaffle.teamspeak3.commands.parameter.Parameter;
@@ -85,6 +86,13 @@ public final class FileCommands {
         builder.add(new KeyValueParam("resume", resume));
         builder.add(new KeyValueParam("proto", 0)); // Use current (old) protocol for as long as possible
         return builder.build();
+    }
+
+    public static Command ftStop(ServerFileTransferId transferId, boolean delete) {
+        return new CommandBuilder("ftstop")
+                .add(new KeyValueParam("serverftfid", transferId.value()))
+                .add(new KeyValueParam("delete", delete))
+                .build();
     }
 
     public static Command ftList() {

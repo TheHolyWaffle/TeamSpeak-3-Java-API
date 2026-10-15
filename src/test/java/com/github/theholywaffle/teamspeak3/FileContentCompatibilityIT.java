@@ -97,40 +97,59 @@ class FileContentCompatibilityIT {
                         .orElseThrow();
                 assertEquals(bytes.length, download.requireLong("size"));
                 assertArrayEquals(bytes, download(mapped(server, download.getMap())));
-                var pending = api.executeRawCommand(FileCommands.ftInitUpload(
-                                        3,
-                                        FileLocation.of(cid, "/pending.bin").withChannelPassword(""),
-                                        100,
-                                        true,
-                                        false)
-                                .toString())
-                        .getFirstResponse()
-                        .orElseThrow();
-                var transfer = ServerFileTransferId.of(pending.requireInt("serverftfid"));
-                var listed = api.files().transfers().stream()
-                        .filter(row -> row.getServerTransferId().equals(transfer))
-                        .toList();
-                assertEquals(1, listed.size());
-                assertEquals(ClientFileTransferId.of(3), listed.getFirst().getClientTransferId());
-                assertEquals(
-                        api.whoAmI().getId().orElseThrow(), listed.getFirst().getClientId());
-                evidence.add("pending transfer fields="
-                        + new java.util.TreeSet<>(listed.getFirst().getMap().keySet()));
-                try (var socket = new java.net.Socket()) {
-                    socket.connect(new java.net.InetSocketAddress(server.getHost(), server.getMappedPort(30033)), 5000);
-                    socket.setSoTimeout(5000);
-                    socket.getOutputStream()
-                            .write(pending.require("ftkey").getBytes(java.nio.charset.StandardCharsets.UTF_8));
-                    socket.getOutputStream().flush();
+                for (boolean delete : new boolean[] {false, true}) {
+                    var pending = api.executeRawCommand(FileCommands.ftInitUpload(
+                                            3,
+                                            FileLocation.of(cid, "/pending-" + delete + ".bin")
+                                                    .withChannelPassword(""),
+                                            100,
+                                            true,
+                                            false)
+                                    .toString())
+                            .getFirstResponse()
+                            .orElseThrow();
+                    var transfer = ServerFileTransferId.of(pending.requireInt("serverftfid"));
+                    var listed = api.files().transfers().stream()
+                            .filter(row -> row.getServerTransferId().equals(transfer))
+                            .toList();
+                    assertEquals(1, listed.size());
+                    assertEquals(ClientFileTransferId.of(3), listed.getFirst().getClientTransferId());
+                    assertEquals(
+                            api.whoAmI().getId().orElseThrow(),
+                            listed.getFirst().getClientId());
+                    evidence.add("pending transfer fields="
+                            + new java.util.TreeSet<>(listed.getFirst().getMap().keySet()));
+                    try (var socket = new java.net.Socket()) {
+                        socket.connect(
+                                new java.net.InetSocketAddress(server.getHost(), server.getMappedPort(30033)), 5000);
+                        socket.setSoTimeout(5000);
+                        socket.getOutputStream()
+                                .write(pending.require("ftkey").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                        socket.getOutputStream().write(new byte[] {1, 2, 3});
+                        socket.getOutputStream().flush();
+                        eventually(
+                                () -> api.files().transfers().stream()
+                                        .anyMatch(
+                                                row -> row.getServerTransferId().equals(transfer) && row.isActive()),
+                                "Authenticated partial upload must become active");
+                        if (delete) api.files().stop(transfer, true);
+                        else
+                            query.getAsyncApi()
+                                    .files()
+                                    .stop(transfer, false)
+                                    .get(5, java.util.concurrent.TimeUnit.SECONDS);
+                        assertEquals(-1, socket.getInputStream().read(), "Stopped upload must close its data socket");
+                    }
+                    assertTrue(api.files().transfers().stream()
+                            .noneMatch(row -> row.getServerTransferId().equals(transfer)));
                     eventually(
-                            () -> api.files().transfers().stream()
-                                    .anyMatch(row -> row.getServerTransferId().equals(transfer) && row.isActive()),
-                            "Authenticated partial upload must become active");
-                    api.executeRawCommand("ftstop serverftfid=" + transfer + " delete=1");
-                    assertEquals(-1, socket.getInputStream().read(), "Stopped upload must close its data socket");
+                            () -> api.files().list(FileLocation.of(cid, "/")).stream()
+                                            .anyMatch(file -> file.getName().endsWith("pending-" + delete + ".bin"))
+                                    == !delete,
+                            "The delete flag controls whether the partial upload remains");
+                    evidence.add("stopped transfer delete=" + delete);
+                    if (!delete) api.files().delete(FileLocation.of(cid, "/pending-false.bin"));
                 }
-                assertTrue(api.files().transfers().stream()
-                        .noneMatch(row -> row.getServerTransferId().equals(transfer)));
                 byte[] icon = java.util.Base64.getDecoder()
                         .decode(
                                 "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aXh8AAAAASUVORK5CYII=");
