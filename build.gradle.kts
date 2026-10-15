@@ -25,12 +25,6 @@ sourceSets {
     }
 }
 
-// An on-demand developer tool; neither build/check nor integrationTest runs the audit.
-val auditSourceSet = sourceSets.create("audit") {
-    compileClasspath += sourceSets.test.get().runtimeClasspath
-    runtimeClasspath += sourceSets.test.get().runtimeClasspath
-}
-
 dependencies {
     api(libs.sshj)
     api(libs.slf4j.api)
@@ -70,25 +64,6 @@ tasks.compileTestJava {
     // observe their side effects.
     options.compilerArgs.add("-Xlint:-try")
     options.errorprone.disable("FutureReturnValueIgnored")
-}
-
-tasks.named<JavaCompile>(auditSourceSet.compileJavaTaskName) {
-    // The audit reuses the disposable server fixture, whose close() may be interrupted.
-    options.compilerArgs.add("-Xlint:-try")
-}
-
-tasks.register<JavaExec>("auditServerQueryCommands") {
-    description = "Reports live TS3 ServerQuery command coverage; requires Docker and runs no tests."
-    group = "help"
-    classpath = auditSourceSet.runtimeClasspath
-    mainClass = "com.github.theholywaffle.teamspeak3.ServerQueryCommandAudit"
-    args(
-        layout.buildDirectory.dir("serverquery-audit").get().asFile.absolutePath,
-        layout.projectDirectory.dir("src/main/java/com/github/theholywaffle/teamspeak3/commands").asFile.absolutePath,
-        providers.gradleProperty("auditProtocol").orElse("RAW").get(),
-        providers.gradleProperty("auditImage").orElse("").get(),
-    )
-    doNotTrackState("Reads the live command inventory on every invocation")
 }
 
 tasks.withType<Jar>().configureEach {

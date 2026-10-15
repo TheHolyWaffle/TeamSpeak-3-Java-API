@@ -387,9 +387,6 @@ compatibility suites and every example. The containers accept the
 [TeamSpeak 3 server license](https://hub.docker.com/_/teamspeak) on your behalf. A missing Docker daemon
 fails the build instead of skipping tests.
 
-Run `./gradlew auditServerQueryCommands` for an on-demand command coverage report in
-`build/serverquery-audit/` (requires Docker).
-
 ## Getting help
 
 Ask questions in [Discussions](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/discussions) and

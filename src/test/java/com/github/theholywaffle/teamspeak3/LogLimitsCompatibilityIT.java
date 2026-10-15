@@ -9,23 +9,24 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 class LogLimitsCompatibilityIT {
+    @RegisterExtension
+    static final TeamSpeakContainer server = new TeamSpeakContainer();
+
     @ParameterizedTest
     @EnumSource(ServerQueryCompatibilityIT.Target.class)
     @Timeout(90)
     void rejectsRequestsAboveOneHundredLines(ServerQueryCompatibilityIT.Target target) throws Exception {
         var evidence = new ArrayList<String>();
-        try (var server = new TeamSpeakContainer()) {
-            server.start();
-            try (var query = new TS3Query(server.config(target.protocol))) {
-                query.connect();
-                evidence.add("version=" + query.getApi().instance().version());
-                query.getApi().selectVirtualServerById(VirtualServerId.of(1));
-                verifyLogLimits(query.getApi(), evidence);
-            }
+        try (var query = new TS3Query(server.config(target.protocol))) {
+            query.connect();
+            evidence.add("version=" + query.getApi().instance().version());
+            query.getApi().selectVirtualServerById(VirtualServerId.of(1));
+            verifyLogLimits(query.getApi(), evidence);
         } finally {
             var path = Path.of("build", "compatibility", target + "-log-limits.txt");
             Files.createDirectories(path.getParent());
