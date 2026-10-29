@@ -16,7 +16,7 @@ junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 testcontainers = "org.testcontainers:testcontainers:2.0.5"
 # Build tools, listed here so Renovate updates them.
-errorprone-core = "com.google.errorprone:error_prone_core:2.50.0"
+errorprone-core = "com.google.errorprone:error_prone_core:2.51.0"
 jacoco-agent = { module = "org.jacoco:org.jacoco.agent", version.ref = "jacoco" }
 jreleaser = "org.jreleaser:jreleaser-tool-provider:1.26.0"
 palantir-java-format = { module = "com.palantir.javaformat:palantir-java-format", version.ref = "palantir-java-format" }
