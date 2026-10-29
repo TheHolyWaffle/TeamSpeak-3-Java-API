@@ -81,6 +81,8 @@ tasks.jar {
 }
 
 tasks.javadoc {
+    // Gradle keys the tool by language version only, but patch releases change the generated HTML.
+    inputs.property("javadocRuntimeVersion", javadocTool.map { it.metadata.javaRuntimeVersion })
     (options as StandardJavadocDocletOptions).apply {
         memberLevel = JavadocMemberLevel.PROTECTED
         windowTitle = "TeamSpeak 3 Java API $version API"
