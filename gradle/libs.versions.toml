@@ -7,7 +7,7 @@ slf4j = "2.0.20"
 bouncycastle-bom = "org.bouncycastle:bc-jdk18on-bom:1.86.2"
 bouncycastle-pkix = { module = "org.bouncycastle:bcpkix-jdk18on" }
 bouncycastle-prov = { module = "org.bouncycastle:bcprov-jdk18on" }
-gson = "com.google.code.gson:gson:2.14.0"
+gson = "com.google.code.gson:gson:2.15.0"
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 sshj = "com.hierynomus:sshj:0.41.2"
