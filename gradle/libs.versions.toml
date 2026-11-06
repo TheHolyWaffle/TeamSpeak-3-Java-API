@@ -22,5 +22,5 @@ jreleaser = "org.jreleaser:jreleaser-tool-provider:1.26.0"
 palantir-java-format = { module = "com.palantir.javaformat:palantir-java-format", version.ref = "palantir-java-format" }
 
 [plugins]
-errorprone = "net.ltgt.errorprone:5.1.1"
+errorprone = "net.ltgt.errorprone:5.2.0"
 spotless = "com.diffplug.spotless:8.10.4"
