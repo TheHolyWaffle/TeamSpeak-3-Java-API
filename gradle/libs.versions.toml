@@ -23,4 +23,4 @@ palantir-java-format = { module = "com.palantir.javaformat:palantir-java-format"
 
 [plugins]
 errorprone = "net.ltgt.errorprone:5.2.0"
-spotless = "com.diffplug.spotless:8.10.4"
+spotless = "com.diffplug.spotless:8.11.0"
