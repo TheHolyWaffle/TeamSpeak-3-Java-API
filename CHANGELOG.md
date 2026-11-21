@@ -5,6 +5,15 @@ modernization release is 2.0.0; its notes also cover tasks #429 and #430, which
 merged before release automation existed. To upgrade from 1.x, follow the
 [2.0 migration guide](MIGRATION.md).
 
+## [2.0.0-beta.3](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/compare/v2.0.0-beta.2...v2.0.0-beta.3) (2026-11-21)
+
+
+### Bug Fixes
+
+* **deps:** update dependency com.google.code.gson:gson to v2.15.0 ([#524](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/issues/524)) ([97aac38](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/commit/97aac38b5608a3af56d29dfc3a0678f37a248930))
+* **deps:** update dependency com.hierynomus:sshj to v0.41.2 ([#518](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/issues/518)) ([3a3b30a](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/commit/3a3b30aa9361f7b58c11dd0f73b70ffd0b5ed3da))
+* **deps:** update dependency org.bouncycastle:bc-jdk18on-bom to v1.87 ([#538](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/issues/538)) ([10a39af](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/commit/10a39afcfeb1449d9739a32b55e9fcd289c026dd))
+
 ## [2.0.0-beta.2](https://github.com/TheHolyWaffle/TeamSpeak-3-Java-API/compare/v2.0.0-beta.1...v2.0.0-beta.2) (2026-10-15)
 
 
