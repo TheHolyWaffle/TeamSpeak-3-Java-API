@@ -304,12 +304,47 @@ dependencies {
     jreleaserTool(libs.jreleaser)
 }
 
+// JReleaser's pomchecker resolves the published POM's BOM imports with Maven, which cannot read Gradle's
+// cache. Serving them from a local Maven repository keeps Central rate limits from failing the check.
+val publishedBoms = configurations.create("publishedBoms") {
+    isCanBeConsumed = false
+    isTransitive = false
+    withDependencies {
+        configurations.runtimeElements.get().allDependencies
+            .withType<ModuleDependency>()
+            .filter { it.attributes.getAttribute(Category.CATEGORY_ATTRIBUTE)?.name == Category.REGULAR_PLATFORM }
+            .forEach { add(project.dependencies.create("${it.group}:${it.name}:${it.version}@pom")) }
+    }
+}
+val pomcheckerRepository = layout.buildDirectory.dir("pomchecker-repository")
+val preparePomcheckerRepository = tasks.register("pomcheckerRepository") {
+    description = "Copies the published POM's imported BOMs from Gradle's cache into a Maven local repository."
+    val boms = publishedBoms.incoming.artifacts.resolvedArtifacts
+    val repository = pomcheckerRepository
+    inputs.files(publishedBoms)
+    outputs.dir(repository)
+    doLast {
+        val root = repository.get().asFile
+        root.deleteRecursively()
+        boms.get().forEach {
+            val id = it.id.componentIdentifier as ModuleComponentIdentifier
+            it.file.copyTo(root.resolve("${id.group.replace('.', '/')}/${id.module}/${id.version}/${it.file.name}"))
+        }
+    }
+}
+
 // Signs build/staging-deploy and deploys it to Central; run publish first. -PdryRun validates the bundle
 // without uploading.
 tasks.register<JavaExec>("jreleaserDeploy") {
     description = "Signs and deploys build/staging-deploy to Maven Central with JReleaser."
     group = PublishingPlugin.PUBLISH_TASK_GROUP
     mustRunAfter(tasks.named("publish"))
+    dependsOn(preparePomcheckerRepository)
+    // JReleaser launches pomchecker as a script that passes JAVA_OPTS to its JVM.
+    val javaOpts = providers.environmentVariable("JAVA_OPTS").orNull
+    environment(
+        "JAVA_OPTS",
+        listOfNotNull(javaOpts, "-Dmaven.repo.local=" + pomcheckerRepository.get().asFile).joinToString(" "))
     classpath = files(jreleaserTool)
     mainClass = "org.jreleaser.tool.JReleaser"
     args("deploy", "--config-file", "jreleaser.yml", "--output-directory", "build")
