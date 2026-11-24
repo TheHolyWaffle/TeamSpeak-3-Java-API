@@ -1,0 +1,19 @@
+build.gradle.kts
+  s_8f22658028e807::t_c940308435d1d2 307-335,342-347
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "995799661b13b0be50352b55a38b0526cf255a2d",
+  "prompts": {},
+  "sessions": {
+    "s_8f22658028e807": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a20d98-7f30-7fd0-b425-f23645c43044",
+        "model": "gpt-6.2-astra"
+      },
+      "human_author": "TheHolyWaffle <TheHolyWaffle@users.noreply.github.com>"
+    }
+  }
+}
